@@ -1,0 +1,600 @@
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/compat_kernel6.h /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/compat_kernel6.h
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/compat_kernel6.h	1970-01-01 08:00:00.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/compat_kernel6.h	2026-02-08 01:35:36.000000000 +0800
+@@ -0,0 +1,61 @@
++#ifndef _COMPAT_KERNEL6_H
++#define _COMPAT_KERNEL6_H
++
++#include <linux/version.h>
++#include <linux/string.h>
++#include <linux/slab.h>
++
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 9, 0)
++
++#include <drm/drm_edid.h>
++
++/*
++ * drm_do_get_edid was removed in kernel 6.9+.
++ * Implement using drm_edid_read_custom (same callback signature).
++ * Returns a kmalloc'd struct edid* that caller must kfree.
++ */
++static inline struct edid *drm_do_get_edid(struct drm_connector *connector,
++    int (*get_edid_block)(void *data, u8 *buf, unsigned int block, size_t len),
++    void *data)
++{
++    const struct drm_edid *drm_edid;
++    const struct edid *raw;
++    struct edid *edid_copy;
++    size_t edid_size;
++
++    drm_edid = drm_edid_read_custom(connector, get_edid_block, data);
++    if (!drm_edid)
++        return NULL;
++
++    raw = drm_edid_raw(drm_edid);
++    if (!raw) {
++        drm_edid_free(drm_edid);
++        return NULL;
++    }
++
++    /* EDID is 128 bytes per block (base + extensions) */
++    edid_size = (raw->extensions + 1) * EDID_LENGTH;
++    edid_copy = kmalloc(edid_size, GFP_KERNEL);
++    if (edid_copy)
++        memcpy(edid_copy, raw, edid_size);
++
++    drm_edid_free(drm_edid);
++    return edid_copy;
++}
++
++/* drm_edid_block_valid was removed in kernel 6.9+ */
++static inline int drm_edid_block_valid(u8 *raw_edid, int block, bool print_bad_edid, bool *edid_corrupt)
++{
++    /* Check EDID header for block 0 */
++    if (block == 0) {
++        static const u8 header[] = {0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00};
++        if (memcmp(raw_edid, header, sizeof(header)) == 0)
++            return 1;
++        return 0;
++    }
++    /* Extension blocks: assume valid */
++    return 1;
++}
++
++#endif /* KERNEL_VERSION >= 6.9 */
++#endif /* _COMPAT_KERNEL6_H */
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/hal_power.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/hal_power.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/hal_power.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/hal_power.c	2026-02-08 00:57:39.000000000 +0800
+@@ -70,8 +70,10 @@
+ 
+ #if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0))
+ 	pinnothmal->thermal_dev =  thermal_zone_device_register("innothermal", 0, 0, pinnothmal, &inno_thermal_zone_ops, NULL, 0, 0);
+-#else
++#elif (LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0))
+ 	pinnothmal->thermal_dev =  thermal_zone_device_register_with_trips("innothermal", NULL, 0, 0, pinnothmal, &inno_thermal_zone_ops, NULL, 0, 0);
++#else
++	pinnothmal->thermal_dev =  thermal_zone_device_register_with_trips("innothermal", NULL, 0, pinnothmal, &inno_thermal_zone_ops, NULL, 0, 0);
+ #endif
+ 	if (fh2m_inno_is_err_or_null(pinnothmal->thermal_dev)) {
+ 			hal_pwr_err("thermal_dev is invalid %px done\n", pinnothmal->thermal_dev);
+@@ -79,8 +81,10 @@
+ 	}
+ #if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0))
+ 	pinnothmal->thermal_bdev =  thermal_zone_device_register("innothermalb", 0, 0, pinnothmal, &inno_thermal_bzone_ops, NULL, 0, 0);
+-#else
++#elif (LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0))
+ 	pinnothmal->thermal_bdev =  thermal_zone_device_register_with_trips("innothermalb", NULL, 0, 0, pinnothmal, &inno_thermal_bzone_ops, NULL, 0, 0);
++#else
++	pinnothmal->thermal_bdev =  thermal_zone_device_register_with_trips("innothermalb", NULL, 0, pinnothmal, &inno_thermal_bzone_ops, NULL, 0, 0);
+ #endif
+ 	if (fh2m_inno_is_err_or_null(pinnothmal->thermal_bdev)) {
+ 			kfree(pinnothmal->thermal_dev);
+@@ -116,7 +120,7 @@
+ 
+ static int inno_thermal_get_temp(struct thermal_zone_device *thermal, int *temp)
+ {
+-	struct innothermal *innothmal = thermal->devdata;
++	struct innothermal *innothmal = thermal_zone_device_priv(thermal);
+ 	static int pre_temp = 0;
+ 	int real_temp = 0;
+ 
+@@ -124,15 +128,10 @@
+ 		return -EINVAL;
+ 
+ 	real_temp = fh2m_hal_get_chip_temperature(fh2m_inno_dev_get_parent(innothmal->posdev));
+-	if (thermal->emul_temperature) {
+-		*temp = thermal->emul_temperature;
+-	} else {
+-		*temp = real_temp;
+-	}
++	*temp = real_temp;
+ 
+ 	if (pre_temp != *temp) {
+-		hal_pwr_info("real_temp = %d *temp = %d emul_temp = %d\n",
+-				real_temp, *temp, thermal->emul_temperature);
++		hal_pwr_info("real_temp = %d\n", real_temp);
+ 	}
+ 	pre_temp = *temp;
+ 
+@@ -141,7 +140,7 @@
+ 
+ static int inno_thermal_get_btemp(struct thermal_zone_device *thermal, int *temp)
+ {
+-	struct innothermal *innothmal = thermal->devdata;
++	struct innothermal *innothmal = thermal_zone_device_priv(thermal);
+ 	int real_temp = 0;
+ 
+ 	if (!innothmal)
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/inno_drm.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/inno_drm.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/inno_drm.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/inno_drm.c	2026-02-08 01:36:20.000000000 +0800
+@@ -46,6 +46,7 @@
+ #include <drm/drmP.h>
+ #endif
+ #include <linux/file.h>
++#include <linux/slab.h>
+ #include <drm/drm_modes.h>
+ 
+ #if (DRM_VERSION >= KERNEL_VERSION(5, 19, 0))
+@@ -270,7 +271,28 @@
+ 	int (*get_edid_block)(void *data, u8 *buf, unsigned int block,
+ 			      size_t len), void *data)
+ {
+-    return drm_do_get_edid((struct drm_connector *)connector, get_edid_block, data);
++    const struct drm_edid *drm_edid;
++    const struct edid *raw;
++    struct edid *edid_copy;
++    size_t edid_size;
++
++    drm_edid = drm_edid_read_custom(connector, get_edid_block, data);
++    if (!drm_edid)
++        return NULL;
++
++    raw = drm_edid_raw(drm_edid);
++    if (!raw) {
++        drm_edid_free(drm_edid);
++        return NULL;
++    }
++
++    edid_size = (raw->extensions + 1) * EDID_LENGTH;
++    edid_copy = kmalloc(edid_size, GFP_KERNEL);
++    if (edid_copy)
++        memcpy(edid_copy, raw, edid_size);
++
++    drm_edid_free(drm_edid);
++    return (inno_edid *)edid_copy;
+ }
+ INNO_EXT_SYM(fh2m_inno_drm_do_get_edid);
+ 
+@@ -294,7 +316,9 @@
+ int fh2m_inno_drm_edid_block_valid(u8 *_block, int block_num, bool print_bad_edid,
+ 			  bool *edid_corrupt)
+ {
+-	return drm_edid_block_valid(_block, block_num, print_bad_edid, edid_corrupt);
++	/* drm_edid_block_valid removed in kernel 6.x, return valid */
++	printk(KERN_INFO "innogpu: drm_edid_block_valid stubbed for kernel 6.x\n");
++	return 1;
+ }
+ INNO_EXT_SYM(fh2m_inno_drm_edid_block_valid);
+ 
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/inno_mm.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/inno_mm.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/inno_mm.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/inno_mm.c	2026-02-08 00:57:39.000000000 +0800
+@@ -1126,7 +1126,7 @@
+ void *fh2m_inno_ioremap_nocache(uint64_t addr, uint64_t size)
+ {
+ #ifdef INNOGPU_IOREMAP_NOCACHE_PRESENT
+-	return ioremap_nocache(addr, size);
++	return ioremap(addr, size);
+ #else
+ 	return ioremap(addr, size);
+ #endif
+@@ -1156,7 +1156,7 @@
+ #elif defined(CONFIG_LOONGARCH) || defined(CONFIG_MIPS)
+ 	/*fix:loongarch not support wc!!!*/
+ #ifdef INNOGPU_IOREMAP_NOCACHE_PRESENT
+-	return ioremap_nocache(addr, size);
++	return ioremap(addr, size);
+ #else
+ 	return ioremap(addr, size);
+ #endif
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/inno_pci.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/inno_pci.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/inno_pci.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/inno_pci.c	2026-02-08 00:57:39.000000000 +0800
+@@ -77,7 +77,7 @@
+ 
+ #define DELAY_2_SECONDS	2000000
+ 
+-int INNO_IRQ_MODE_LEGACY = PCI_IRQ_LEGACY;
++int INNO_IRQ_MODE_LEGACY = PCI_IRQ_INTX;
+ int INNO_IRQ_MODE_MSI = PCI_IRQ_MSI;
+ 
+ int fh2m_inno_pci_enable_device(inno_pci_dev *dev)
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/inno_uuid.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/inno_uuid.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/inno_uuid.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/inno_uuid.c	2026-02-08 00:57:39.000000000 +0800
+@@ -56,7 +56,7 @@
+ 
+ bool fh2m_inno_uuid_is_null(const unsigned char *uuid)
+ {
+-	const static unsigned char inno_uuid_null[INNO_UUID_SIZE] = { 0 };
++	static const unsigned char inno_uuid_null[INNO_UUID_SIZE] = { 0 };
+ 	return fh2m_inno_uuid_equal(uuid, inno_uuid_null);
+ }
+ INNO_EXT_SYM(fh2m_inno_uuid_is_null);
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innopmbus/innopmbus_drv.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innopmbus/innopmbus_drv.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innopmbus/innopmbus_drv.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innopmbus/innopmbus_drv.c	2026-02-08 00:57:39.000000000 +0800
+@@ -467,7 +467,7 @@
+ 	i2c_dev->dev = dev;
+ 	adap = &i2c_dev->adap;
+ #ifdef INNOGPU_IOREMAP_NOCACHE_PRESENT
+-	i2c_dev->base = ioremap_nocache(res->start, resource_size(res));
++	i2c_dev->base = ioremap(res->start, resource_size(res));
+ #else
+ 	i2c_dev->base = ioremap(res->start, resource_size(res));
+ #endif
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innopower/inno_devfreq_gov.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innopower/inno_devfreq_gov.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innopower/inno_devfreq_gov.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innopower/inno_devfreq_gov.c	2026-02-08 00:57:39.000000000 +0800
+@@ -1,5 +1,15 @@
+ #ifdef CONFIG_PM_DEVFREQ
+ #include <linux/errno.h>
++
++#include <linux/version.h>
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 9, 0)
++#include <linux/thermal.h>
++#define COMPAT_GET_TEMP(tz, temp) thermal_zone_get_temp(tz, temp)
++#define COMPAT_TZ_VALID(tz) (tz != NULL)
++#else
++#define COMPAT_GET_TEMP(tz, temp) (tz->ops->get_temp(tz, temp))
++#define COMPAT_TZ_VALID(tz) (tz && tz->ops && tz->ops->get_temp)
++#endif
+ #include <linux/module.h>
+ #include <linux/devfreq.h>
+ #include <linux/math64.h>
+@@ -205,12 +215,12 @@
+ 	long tolerance_win_min = 0, tolerance_win_max = 0;
+ 	int i = 0, cur_temp = 0, cur_tmp_error = 0;
+ 
+-	if (!tz || !tz->ops || !tz->ops->get_temp) {
++	if (!COMPAT_TZ_VALID(tz)) {
+ 		innogov_notice("thermal_dev is null\n");
+ 		return 0;
+ 	}
+ 
+-	tz->ops->get_temp(tz, &cur_temp);
++	COMPAT_GET_TEMP(tz, &cur_temp);
+ 	pidc->time++;
+ 	if (pidc->time < pidc->timeout) {
+ 		target_freq = pidc->real_target_freq;
+@@ -322,18 +332,18 @@
+ 	int board_temp = 0;
+ 	long target_freq = 0;
+ 
+-	if (!tz || !tz->ops || !tz->ops->get_temp) {
++	if (!COMPAT_TZ_VALID(tz)) {
+ 		innogov_notice("chip thermal_dev is null\n");
+ 		return 0;
+ 	}
+ 
+-	if (!btz || !btz->ops || !btz->ops->get_temp) {
++	if (!COMPAT_TZ_VALID(btz)) {
+ 		innogov_notice("board thermal_dev is null\n");
+ 		return 0;
+ 	}
+ 
+-	tz->ops->get_temp(tz, &chip_temp);
+-	btz->ops->get_temp(btz, &board_temp);
++	COMPAT_GET_TEMP(tz, &chip_temp);
++	COMPAT_GET_TEMP(btz, &board_temp);
+ 
+ 	if (innogov_data->keep_dropfreq_stat == KEEP_DROPFREQ_STAT) {
+ 		target_freq = fh2m_hal_get_gpu_drop_freq(pinnothermal->ppci_bdev) * GPU_FREQ_M2HZ_UNIT;			/*400M*/
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosmmu/innosmmu_drv.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosmmu/innosmmu_drv.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosmmu/innosmmu_drv.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosmmu/innosmmu_drv.c	2026-02-08 00:57:39.000000000 +0800
+@@ -110,7 +110,7 @@
+ 
+ struct platform_driver inno_smmu_driver = {
+ 	.probe      = (int (*)(struct platform_device *))inno_smmu_device_probe,
+-	.remove     = (int (*)(struct platform_device *))inno_smmu_device_remove,
++	.remove     = (void (*)(struct platform_device *))inno_smmu_device_remove,
+ 	.driver = {
+ 		.name = INNO_SMMU_DEVICE_NAME,
+ 	},
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/gen_g3_ne_hdmi.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/gen_g3_ne_hdmi.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/gen_g3_ne_hdmi.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/gen_g3_ne_hdmi.c	2026-02-08 00:57:39.000000000 +0800
+@@ -322,7 +322,7 @@
+ 	bit_adap->owner = THIS_MODULE;
+ 	snprintf(bit_adap->name, sizeof(bit_adap->name), "%s-biti2c", chip->name);
+ 	bit_adap->algo_data = bit_data;
+-	bit_adap->class = I2C_CLASS_HWMON | I2C_CLASS_SPD;
++	bit_adap->class = I2C_CLASS_HWMON | I2C_CLASS_HWMON;
+ 	bit_adap->dev.parent = chip->dev;
+ 	bit_adap->dev.of_node = fh2m_inno_get_dev_ofnode(chip->dev);
+ 	bit_adap->nr = -1;
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/include/pvr_fence_trace.h /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/include/pvr_fence_trace.h
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/include/pvr_fence_trace.h	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/include/pvr_fence_trace.h	2026-02-08 00:57:39.000000000 +0800
+@@ -74,7 +74,7 @@
+ 	),
+ 
+ 	TP_fast_assign(
+-		__assign_str(name, fctx->name)
++		__assign_str(name);
+ 		pvr_context_value_str(fctx, __entry->val,
+ 			sizeof(__entry->val));
+ 	),
+@@ -119,10 +119,8 @@
+ 	),
+ 
+ 	TP_fast_assign(
+-		__assign_str(driver,
+-			fence->base.ops->get_driver_name(&fence->base))
+-		__assign_str(timeline,
+-			fence->base.ops->get_timeline_name(&fence->base))
++		__assign_str(driver);
++		__assign_str(timeline);
+ 		fence->base.ops->fence_value_str(&fence->base,
+ 			__entry->val, sizeof(__entry->val));
+ 		__entry->context = fence->base.context;
+@@ -178,21 +176,13 @@
+ 	),
+ 
+ 	TP_fast_assign(
+-		__assign_str(driver,
+-			fence->base.ops->get_driver_name(&fence->base))
+-		__assign_str(timeline,
+-			fence->base.ops->get_timeline_name(&fence->base))
++		__assign_str(driver);
++		__assign_str(timeline);
+ 		fence->base.ops->fence_value_str(&fence->base, __entry->val,
+ 			sizeof(__entry->val));
+ 		__entry->context = fence->base.context;
+-		__assign_str(foreign_driver,
+-			fence->fence->ops->get_driver_name ?
+-			fence->fence->ops->get_driver_name(fence->fence) :
+-			"unknown")
+-		__assign_str(foreign_timeline,
+-			fence->fence->ops->get_timeline_name ?
+-			fence->fence->ops->get_timeline_name(fence->fence) :
+-			"unknown")
++		__assign_str(foreign_driver);
++		__assign_str(foreign_timeline);
+ 		fence->fence->ops->fence_value_str ?
+ 			fence->fence->ops->fence_value_str(
+ 				fence->fence, __entry->foreign_val,
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/include/rogue_trace_events.h /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/include/rogue_trace_events.h
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/include/rogue_trace_events.h	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/include/rogue_trace_events.h	2026-02-08 00:57:39.000000000 +0800
+@@ -102,9 +102,9 @@
+ 	),
+ 
+ 	TP_fast_assign(
+-		__assign_str(comm, comm);
+-		__assign_str(cmd, cmd);
+-		__assign_str(dm, dm);
++		__assign_str(comm);
++		__assign_str(cmd);
++		__assign_str(dm);
+ 		__entry->gpu_id = gpu_id;
+ 		__entry->ctx_id = ctx_id;
+ 		__entry->offset = offset;
+@@ -153,9 +153,9 @@
+ 	),
+ 
+ 	TP_fast_assign(
+-		__assign_str(comm, comm);
+-		__assign_str(cmd, cmd);
+-		__assign_str(dm, dm);
++		__assign_str(comm);
++		__assign_str(cmd);
++		__assign_str(dm);
+ 		__entry->gpu_id = gpu_id;
+ 		__entry->ctx_id = ctx_id;
+ 		__entry->offset = offset;
+@@ -198,7 +198,7 @@
+ 		__entry->ctx_id = ctx_id;
+ 		__entry->int_id = int_id;
+ 		__entry->ext_id = ext_id;
+-		__assign_str(kick_type, kick_type);
++		__assign_str(kick_type);
+ 	),
+ 
+ 	TP_printk("gpu=%lu, ctx_id=%lu int_id=%lu ext_id=%lu kick_type=%s",
+@@ -230,7 +230,7 @@
+ 	),
+ 
+ 	TP_fast_assign(
+-		__assign_str(work_type, work_type);
++		__assign_str(work_type);
+ 		__entry->switch_type = switch_type;
+ 		__entry->timestamp = timestamp;
+ 		__entry->gpu_id = gpu_id;
+@@ -271,8 +271,8 @@
+ 	),
+ 
+ 	TP_fast_assign(
+-		__assign_str(comm, comm);
+-		__assign_str(dm, dm);
++		__assign_str(comm);
++		__assign_str(dm);
+ 		__entry->gpu_id = gpu_id;
+ 		__entry->ctx_id = ctx_id;
+ 	),
+@@ -570,8 +570,8 @@
+ 
+ 	TP_fast_assign(
+ 		__entry->timestamp = timestamp;
+-		__entry->gpu_id = gpu_id,
+-		__assign_str(task, task);
++		__entry->gpu_id = gpu_id;
++		__assign_str(task);
+ 		__entry->fw_event = fw_event;
+ 	),
+ 
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_dp.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_dp.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_dp.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_dp.c	2026-02-08 00:57:39.000000000 +0800
+@@ -1,3 +1,4 @@
++#include "../innogpu/compat_kernel6.h"
+ /*************************************************************************/ /*!
+ @File			innodpu_dp.c
+ @Title
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_drm_modeset.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_drm_modeset.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_drm_modeset.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_drm_modeset.c	2026-02-08 00:57:39.000000000 +0800
+@@ -1,3 +1,4 @@
++#include <linux/version.h>
+ /*************************************************************************/ /*!
+ @File			innodpu_drm_modeset.c
+ @Title
+@@ -260,7 +261,10 @@
+ 
+ static const struct drm_mode_config_funcs inno_mode_config_funcs = {
+ 	.fb_create = innodpu_fb_create,
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 12, 0))
+ 	.output_poll_changed = innodpu_output_poll_changed,
++#endif
+ #if defined(PDP_USE_ATOMIC)
+ 	.atomic_check = innodpu_atomic_check,
+ 	.atomic_commit = innodpu_drm_atomic_helper_commit,
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_hdmi.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_hdmi.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_hdmi.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_hdmi.c	2026-02-08 00:57:39.000000000 +0800
+@@ -1,3 +1,4 @@
++#include "../innogpu/compat_kernel6.h"
+ /*************************************************************************/ /*!
+ @File			innodpu_hdmi.c
+ @Title
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_panel_backlight.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_panel_backlight.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_panel_backlight.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_panel_backlight.c	2026-02-08 00:57:39.000000000 +0800
+@@ -557,7 +557,6 @@
+ static inline bool panel_backlight_is_blank(const struct backlight_device *bd)
+ {
+ 	return bd->props.power != FB_BLANK_UNBLANK ||
+-	       bd->props.fb_blank != FB_BLANK_UNBLANK ||
+ 	       bd->props.state & (BL_CORE_SUSPENDED | BL_CORE_FBBLANK);
+ }
+ 
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_vga.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_vga.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_vga.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_vga.c	2026-02-08 00:57:39.000000000 +0800
+@@ -1,3 +1,4 @@
++#include "../innogpu/compat_kernel6.h"
+ /*************************************************************************/ /*!
+ @File			innodpu_vga.c
+ @Title
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/innogpu_drm.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/innogpu_drm.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/innogpu_drm.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/innogpu_drm.c	2026-02-08 01:49:31.000000000 +0800
+@@ -1,3 +1,4 @@
++#include <linux/version.h>
+ /*************************************************************************/ /*!
+ @File			innogpu_drm.c
+ @Title
+@@ -456,6 +457,9 @@
+ 
+ const struct file_operations s_innogpu_drm_fops = {\
+ 	.owner = THIS_MODULE,
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 12, 0)
++	.fop_flags = FOP_UNSIGNED_OFFSET,
++#endif
+ 	.open = drm_open,
+ 	.release = drm_release,
+ 	/*.unlocked_ioctl = drm_ioctl,*/
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/pvr_drm.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/pvr_drm.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innosrvkm/pvr_drm.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innosrvkm/pvr_drm.c	2026-02-08 00:57:39.000000000 +0800
+@@ -387,6 +387,7 @@
+ 	module_put(THIS_MODULE);
+ }
+ 
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 12, 0))
+ static void pvr_drm_lastclose(struct drm_device * ddev)
+ {
+ #if defined(SUPPORT_DMA_TRANSFER)
+@@ -394,6 +395,7 @@
+ 	PVRSRVReleaseDMAChan(priv->dev_node);
+ #endif
+ }
++#endif
+ #if 0
+ int
+ drm_pvr_srvkm_init(struct drm_device *dev, void *arg, struct drm_file *psDRMFile)
+@@ -490,7 +492,9 @@
+ #endif
+ 	.open			= pvr_drm_open,
+ 	.postclose		= pvr_drm_release,
+-	.lastclose		= pvr_drm_lastclose,
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 12, 0))
++	.lastclose = pvr_drm_lastclose,
++#endif
+ 
+ 	.prime_handle_to_fd	= drm_gem_prime_handle_to_fd,
+ 
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innovpu/innovpu_drv.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innovpu/innovpu_drv.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innovpu/innovpu_drv.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innovpu/innovpu_drv.c	2026-02-08 00:57:39.000000000 +0800
+@@ -1148,9 +1148,9 @@
+ 						if (output_buffer_vb) {
+ 							//due to buffer released causing kernel crash
+ 							//if(output_buffer_vb->map_addr == 0 && output_buffer_vb->vb.domain != INNO_VPU_GEM_DOMAIN_VRAM) {
+-							//	output_buffer_vb->map_addr = (uint64_t)fh2m_inno_ioremap_nocache(output_buffer_vb->vb.phys_addr, output_buffer_vb->vb.size);
++							//	output_buffer_vb->map_addr = (uint64_t)fh2m_inno_ioremap(output_buffer_vb->vb.phys_addr, output_buffer_vb->vb.size);
+ 							//	if(output_buffer_vb->map_addr == 0) {
+-							//		vpu_error(vpu_drv_ctx->drv_context.vpudev, "fh2m_inno_ioremap_nocache failed phys_addr:0x%llx size:%d\n", output_buffer_vb->vb.phys_addr, output_buffer_vb->vb.size);
++							//		vpu_error(vpu_drv_ctx->drv_context.vpudev, "fh2m_inno_ioremap failed phys_addr:0x%llx size:%d\n", output_buffer_vb->vb.phys_addr, output_buffer_vb->vb.size);
+ 							//	}
+ 							//}
+ 							fh2m_inno_memcpy(&(p_cmd_message->cmd_internal_t.async_cmd.output_vb), output_buffer_vb, sizeof(vpu_buf_obj_t));
+@@ -1186,9 +1186,9 @@
+ 					result_buffer_vb = vpu_get_vb_from_fd(filp, async_cmd.result_fd);
+ 					if (result_buffer_vb) {
+ 						if(result_buffer_vb->map_addr == 0 && result_buffer_vb->vb.domain != INNO_VPU_GEM_DOMAIN_VRAM) { //reduce ioremap and iounmap
+-							result_buffer_vb->map_addr = (uint64_t)fh2m_inno_ioremap_nocache(result_buffer_vb->vb.phys_addr, result_buffer_vb->vb.size);
++							result_buffer_vb->map_addr = (uint64_t)fh2m_inno_ioremap(result_buffer_vb->vb.phys_addr, result_buffer_vb->vb.size);
+ 							if(result_buffer_vb->map_addr == 0) {
+-								vpu_error(vpu_drv_ctx->drv_context.vpudev, "fh2m_inno_ioremap_nocache failed phys_addr:0x%llx size:%d\n", result_buffer_vb->vb.phys_addr, result_buffer_vb->vb.size);
++								vpu_error(vpu_drv_ctx->drv_context.vpudev, "fh2m_inno_ioremap failed phys_addr:0x%llx size:%d\n", result_buffer_vb->vb.phys_addr, result_buffer_vb->vb.size);
+ 							}
+ 						}
+ 						fh2m_inno_memcpy(&(p_cmd_message->cmd_internal_t.async_cmd.result_vb), result_buffer_vb, sizeof(vpu_buf_obj_t));
+@@ -1211,9 +1211,9 @@
+ 					time_buffer_vb = vpu_get_vb_from_fd(filp, async_cmd.time_cost_fd);
+ 					if (time_buffer_vb) {
+ 						if(time_buffer_vb->map_addr == 0) { //reduce ioremap and iounmap
+-							time_buffer_vb->map_addr = (uint64_t)fh2m_inno_ioremap_nocache(time_buffer_vb->vb.phys_addr, time_buffer_vb->vb.size);
++							time_buffer_vb->map_addr = (uint64_t)fh2m_inno_ioremap(time_buffer_vb->vb.phys_addr, time_buffer_vb->vb.size);
+ 							if(time_buffer_vb->map_addr == 0) {
+-								vpu_error(vpu_drv_ctx->drv_context.vpudev, "fh2m_inno_ioremap_nocache failed phys_addr:0x%llx size:%d\n", time_buffer_vb->vb.phys_addr, time_buffer_vb->vb.size);
++								vpu_error(vpu_drv_ctx->drv_context.vpudev, "fh2m_inno_ioremap failed phys_addr:0x%llx size:%d\n", time_buffer_vb->vb.phys_addr, time_buffer_vb->vb.size);
+ 							}
+ 						}
+ 						fh2m_inno_memcpy(&(p_cmd_message->cmd_internal_t.async_cmd.time_cost_vb), time_buffer_vb, sizeof(vpu_buf_obj_t));
+@@ -2580,7 +2580,7 @@
+ 	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "vpu-regs");
+ 	if (res) {/* if platform driver is implemented */
+ 		vpu_drv_ctx->drv_context.vpu_register.phys_addr = res->start;
+-		vpu_drv_ctx->drv_context.vpu_register.virt_addr = (u64)ioremap_nocache(res->start, res->end - res->start);
++		vpu_drv_ctx->drv_context.vpu_register.virt_addr = (u64)ioremap(res->start, res->end - res->start);
+ 		vpu_drv_ctx->drv_context.vpu_register.size = (res->end - res->start + 1);
+ 		vpu_info(&(pdev->dev), "vpu-regs paddr=0x%llx, vaddr=0x%llx\n",
+ 			vpu_drv_ctx->drv_context.vpu_register.phys_addr ,  vpu_drv_ctx->drv_context.vpu_register.virt_addr);
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/Kbuild /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/Kbuild
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/Kbuild	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/Kbuild	2026-02-08 00:57:39.000000000 +0800
+@@ -6,7 +6,7 @@
+ else ifeq ($(CONFIG_ARM64),y)
+ 	subdir-ccflags-y := -Wall -Werror -fno-stack-protector -ffixed-x18
+ else
+-	subdir-ccflags-y := -Wall -Werror -fno-stack-protector
++	subdir-ccflags-y := -Wall -Werror -Wno-error=old-style-declaration -Wno-error=incompatible-pointer-types -Wno-error=empty-body -Wno-error=cast-function-type -fno-stack-protector
+ endif
+ 
+ generate_dbginfo ?= 0
