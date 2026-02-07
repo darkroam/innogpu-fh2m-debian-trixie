@@ -6,6 +6,22 @@
 
 ---
 
+## 🚀 快速安装 / Quick Install
+
+从 [Releases](https://github.com/timhant/innogpu-fh2m-debian-trixie/releases) 下载 `.deb` 包，三条命令搞定：
+
+```bash
+sudo apt install dkms build-essential linux-headers-$(uname -r)
+sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-1.deb
+sudo reboot
+```
+
+安装过程全自动：编译内核模块 → 安装固件 → 配置 X11 → 完成！
+
+> 💡 如果你只是想让显卡工作，下载 .deb 安装即可，无需阅读以下技术细节。
+
+---
+
 ## 中文说明
 
 ### 背景
@@ -124,12 +140,15 @@ The official driver only supports domestic Chinese Linux distributions (UOS, Kyl
 
 ### Quick Start
 
+Download the `.deb` package from [Releases](https://github.com/timhant/innogpu-fh2m-debian-trixie/releases):
+
 ```bash
-git clone https://github.com/timhant/innogpu-fh2m-debian-trixie.git
-cd innogpu-fh2m-debian-trixie
-sudo ./scripts/install.sh /path/to/innogpu-fh2m_3.3.3.42-*.deb
+sudo apt install dkms build-essential linux-headers-$(uname -r)
+sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-1.deb
 sudo reboot
 ```
+
+The package auto-compiles the kernel module via DKMS, installs firmware, and configures X11.
 
 ### Key Patches
 
