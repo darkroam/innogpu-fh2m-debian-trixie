@@ -140,7 +140,13 @@ sudo ldconfig
 sudo systemctl restart gdm
 ```
 
-> ⚠️ 系统更新或重新安装 innogpu deb 包后，`0-innogpu.conf` 可能会被重新创建，需再次执行上述命令。`install.sh` 脚本已自动处理此问题。
+> ⚠️ 官方 innogpu-fh2m 包还附带了 `sw-inno-gl.service`（systemd 服务），每次开机都会重新创建 `0-innogpu.conf`。必须 mask 掉：
+> ```bash
+> sudo rm -f /etc/systemd/system/sw-inno-gl.service /etc/systemd/system/multi-user.target.wants/sw-inno-gl.service
+> sudo ln -sf /dev/null /etc/systemd/system/sw-inno-gl.service
+> sudo systemctl daemon-reload
+> ```
+> `install.sh` 和 patched-2 的 .deb 包已自动处理此问题。
 
 **问题 2：innogpu_dri.so 与 mesa 不兼容**
 
@@ -217,7 +223,13 @@ sudo systemctl restart gdm
 
 **Root cause**: The official deb creates `/etc/ld.so.conf.d/0-innogpu.conf`, which makes innogpu's `libgbm.so` take priority over mesa's. This innogpu libgbm tries to load `innogpu_dri.so`, which is incompatible with mesa, causing a segfault in `gbm_create_device()`. The `install.sh` script handles this automatically, but system updates may restore the file.
 
-> ⚠️ After reinstalling the innogpu deb or running system updates, you may need to re-run these commands.
+> ⚠️ The official innogpu-fh2m package also ships `sw-inno-gl.service`, a systemd service that recreates `0-innogpu.conf` on every boot. You must mask it:
+> ```bash
+> sudo rm -f /etc/systemd/system/sw-inno-gl.service /etc/systemd/system/multi-user.target.wants/sw-inno-gl.service
+> sudo ln -sf /dev/null /etc/systemd/system/sw-inno-gl.service
+> sudo systemctl daemon-reload
+> ```
+> The `install.sh` script and the patched-2 `.deb` handle this automatically.
 
 ### Hardware Tested
 

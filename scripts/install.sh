@@ -98,11 +98,22 @@ if [[ -f /etc/gdm3/daemon.conf ]]; then
     log "Disabled Wayland in GDM"
 fi
 
+# Mask sw-inno-gl.service (official package service that recreates 0-innogpu.conf on every boot)
+if [[ -f /lib/systemd/system/sw-inno-gl.service ]] || \
+   [[ -L /etc/systemd/system/sw-inno-gl.service ]] || \
+   [[ -f /etc/systemd/system/multi-user.target.wants/sw-inno-gl.service ]]; then
+    rm -f /etc/systemd/system/sw-inno-gl.service
+    rm -f /etc/systemd/system/multi-user.target.wants/sw-inno-gl.service
+    ln -sf /dev/null /etc/systemd/system/sw-inno-gl.service
+    systemctl daemon-reload 2>/dev/null || true
+    log "Masked sw-inno-gl.service (prevents 0-innogpu.conf recreation on boot)"
+fi
+
 # Remove innogpu ldconfig override (userspace libs may not be compatible)
 if [[ -f /etc/ld.so.conf.d/0-innogpu.conf ]]; then
-    rm -f /etc/ld.so.conf.d/0-innogpu.conf
+    mv -f /etc/ld.so.conf.d/0-innogpu.conf /etc/ld.so.conf.d/0-innogpu.conf.disabled
     ldconfig
-    log "Removed innogpu ldconfig override"
+    log "Disabled innogpu ldconfig override"
 fi
 
 # Rename incompatible DRI driver if present
