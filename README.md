@@ -12,7 +12,7 @@
 
 ```bash
 sudo apt install dkms build-essential linux-headers-$(uname -r)
-sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-1.deb
+sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-2.deb
 sudo reboot
 ```
 
@@ -175,7 +175,7 @@ Download the `.deb` package from [Releases](https://github.com/timhant/innogpu-f
 
 ```bash
 sudo apt install dkms build-essential linux-headers-$(uname -r)
-sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-1.deb
+sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-2.deb
 sudo reboot
 ```
 
