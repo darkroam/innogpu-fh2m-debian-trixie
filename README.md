@@ -122,6 +122,37 @@ lspci -v -s $(lspci | grep 1ec8 | cut -d' ' -f1)
 2. **Wayland**：尚不支持，需使用 X11（GDM 中禁用 Wayland）。
 3. **固件版本**：必须使用 v3.3 包中的固件（`fh2m.fw`），v3.2 固件与 v3.3 内核驱动不兼容。
 
+### 故障排除：重启后黑屏 / GDM 无法启动
+
+如果安装驱动后重启黑屏，GDM 日志显示 `Session never registered, failing`，通常是以下两个原因：
+
+**问题 1：innogpu 用户空间库劫持系统 libgbm**
+
+官方 deb 包会创建 `/etc/ld.so.conf.d/0-innogpu.conf`，将 innogpu 的用户空间库路径（`/usr/lib/x86_64-linux-gnu/innogpu-fh2m/`）加入动态链接搜索路径，且 `0-` 前缀使其优先级最高。
+
+这会导致 Xorg 通过 modesetting → glamor → GBM 链路加载到 innogpu 的 `libgbm.so`，而该 libgbm 依赖 `innogpu_dri.so`。由于 innogpu_dri.so 与 mesa 不兼容（已被我们移除），libgbm 在 `gbm_create_device()` 时触发 **段错误（SEGV）**，Xorg 崩溃。
+
+**修复：**
+```bash
+# SSH 登录后执行
+sudo mv /etc/ld.so.conf.d/0-innogpu.conf /etc/ld.so.conf.d/0-innogpu.conf.disabled
+sudo ldconfig
+sudo systemctl restart gdm
+```
+
+> ⚠️ 系统更新或重新安装 innogpu deb 包后，`0-innogpu.conf` 可能会被重新创建，需再次执行上述命令。`install.sh` 脚本已自动处理此问题。
+
+**问题 2：innogpu_dri.so 与 mesa 不兼容**
+
+如果 `/usr/lib/x86_64-linux-gnu/dri/innogpu_dri.so` 存在，mesa 加载器会尝试加载它，导致 `undefined symbol: _glapi_tls_Dispatch` 错误。
+
+**修复：**
+```bash
+sudo mv /usr/lib/x86_64-linux-gnu/dri/innogpu_dri.so \
+        /usr/lib/x86_64-linux-gnu/dri/innogpu_dri.so.bak
+sudo systemctl restart gdm
+```
+
 ### 故事
 
 这套补丁诞生于 2026 年 2 月 8 日凌晨的一次通宵 debug session。一台搭载国产 Hygon CPU + 芯动 Fantasy II-M GPU 的笔记本（Suma-N40），安装 Debian Trixie 后 GPU 驱动完全无法编译。
@@ -166,6 +197,27 @@ The package auto-compiles the kernel module via DKMS, installs firmware, and con
 - **No 3D acceleration**: Userspace libraries incompatible with Debian Trixie's mesa
 - **X11 only**: Wayland not yet supported
 - **Firmware**: Must use v3.3 firmware (included in official package)
+
+### Troubleshooting: Black Screen / GDM Fails After Reboot
+
+If you see a black screen after installing the driver and GDM logs show `Session never registered, failing`, SSH into the machine and run:
+
+```bash
+# Fix 1: Remove innogpu ld.so override (hijacks system libgbm → Xorg SEGV)
+sudo mv /etc/ld.so.conf.d/0-innogpu.conf /etc/ld.so.conf.d/0-innogpu.conf.disabled
+sudo ldconfig
+
+# Fix 2: Disable incompatible DRI driver (causes _glapi_tls_Dispatch error)
+sudo mv /usr/lib/x86_64-linux-gnu/dri/innogpu_dri.so \
+        /usr/lib/x86_64-linux-gnu/dri/innogpu_dri.so.bak
+
+# Restart display manager
+sudo systemctl restart gdm
+```
+
+**Root cause**: The official deb creates `/etc/ld.so.conf.d/0-innogpu.conf`, which makes innogpu's `libgbm.so` take priority over mesa's. This innogpu libgbm tries to load `innogpu_dri.so`, which is incompatible with mesa, causing a segfault in `gbm_create_device()`. The `install.sh` script handles this automatically, but system updates may restore the file.
+
+> ⚠️ After reinstalling the innogpu deb or running system updates, you may need to re-run these commands.
 
 ### Hardware Tested
 
