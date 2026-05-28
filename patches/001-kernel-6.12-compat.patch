@@ -598,3 +598,16 @@ diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' 
  endif
  
  generate_dbginfo ?= 0
+
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/inno_task.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/inno_task.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/inno_task.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/inno_task.c	2026-05-28 11:26:00.000000000 +0800
+@@ -402,7 +402,7 @@
+ 	flush_scheduled_work();
+ #else
+ #if defined(INNOGPU_ATRRIBUTE_WARNING_PRESENT)
+-	flush_workqueue(system_wq);
++	// flush_workqueue(system_wq);
+ #endif
+ #endif
+ }

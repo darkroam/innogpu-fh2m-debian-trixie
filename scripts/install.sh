@@ -69,14 +69,14 @@ log "Applying kernel 6.12 compatibility patches..."
 cd "$DKMS_SRC"
 
 # Try to apply; if already applied, skip
-if patch -p3 --dry-run -N < "$PATCH_FILE" > /dev/null 2>&1; then
-    patch -p3 -N < "$PATCH_FILE"
+if patch -p3 -d / --dry-run -N < "$PATCH_FILE" > /dev/null 2>&1; then
+    patch -p3 -d / -N < "$PATCH_FILE"
     log "Patches applied successfully"
-elif patch -p3 --dry-run -R < "$PATCH_FILE" > /dev/null 2>&1; then
+elif patch -p3 -d / --dry-run -R < "$PATCH_FILE" > /dev/null 2>&1; then
     log "Patches already applied, skipping"
 else
     warn "Patch may not apply cleanly — attempting with fuzz..."
-    patch -p3 -N --fuzz=3 < "$PATCH_FILE" || error "Failed to apply patches"
+    patch -p3 -d / -N --fuzz=3 < "$PATCH_FILE" || error "Failed to apply patches"
 fi
 
 # --- Build with DKMS ---
