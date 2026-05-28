@@ -7,15 +7,38 @@
 # g0m_soc_hw_init -> g0m_soc_setpll call with five NOPs.
 #
 # Usage:
-#   sudo ./scripts/patch-skip-first-gpupll.sh [kernel-version]
+#   sudo innogpu-skip-first-gpupll [kernel-version]
+#   sudo /usr/share/innogpu-fh2m-trixie/patch-skip-first-gpupll.sh [kernel-version]
 #
 # Default kernel-version: uname -r
 
 set -euo pipefail
 
 KVER="${1:-$(uname -r)}"
-KO="/lib/modules/${KVER}/kernel/drivers/gpu/drm/innogpu/innogpu.ko"
-BACKUP_DIR="/lib/modules/${KVER}/kernel/drivers/gpu/drm/innogpu/backup"
+BASE_DIR="/lib/modules/${KVER}/kernel/drivers/gpu/drm/innogpu"
+KO="${BASE_DIR}/innogpu.ko"
+
+# DKMS on Debian installs compressed modules under updates/dkms by default.
+# Normalize it to the historical uncompressed path before applying the binary patch,
+# so user commands like find ... -iname 'innogpu.ko' and this helper both work.
+if [[ ! -f "$KO" ]]; then
+    DKMS_XZ="/lib/modules/${KVER}/updates/dkms/innogpu.ko.xz"
+    DKMS_ZST="/lib/modules/${KVER}/updates/dkms/innogpu.ko.zst"
+    DKMS_KO="/lib/modules/${KVER}/updates/dkms/innogpu.ko"
+    mkdir -p "$BASE_DIR"
+    if [[ -f "$DKMS_XZ" ]]; then
+        xz -dc "$DKMS_XZ" > "$KO"
+        echo "Decompressed DKMS module: $DKMS_XZ -> $KO"
+    elif [[ -f "$DKMS_ZST" ]]; then
+        zstd -dc "$DKMS_ZST" > "$KO"
+        echo "Decompressed DKMS module: $DKMS_ZST -> $KO"
+    elif [[ -f "$DKMS_KO" ]]; then
+        cp -a "$DKMS_KO" "$KO"
+        echo "Copied DKMS module: $DKMS_KO -> $KO"
+    fi
+fi
+
+BACKUP_DIR="${BASE_DIR}/backup"
 BACKUP="${BACKUP_DIR}/innogpu.ko.pre-skip-first-gpupll"
 
 if [[ $EUID -ne 0 ]]; then
