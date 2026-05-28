@@ -90,48 +90,14 @@ dkms install innogpu-kernel/2.2 -k "$KERNEL_VER" --force 2>&1 | tail -5
 # --- Post-install configuration ---
 log "Configuring system..."
 
-# Disable Wayland in GDM (innogpu doesn't support it well yet)
-if [[ -f /etc/gdm3/daemon.conf ]]; then
-    sed -i 's/#WaylandEnable=false/WaylandEnable=false/' /etc/gdm3/daemon.conf
-    grep -q 'WaylandEnable=false' /etc/gdm3/daemon.conf || \
-        sed -i '/\[daemon\]/a WaylandEnable=false' /etc/gdm3/daemon.conf
-    log "Disabled Wayland in GDM"
+# Reusable helper: disable vendor userspace GL/GBM pieces that conflict with
+# Debian Mesa, then use the kernel DRM driver through Xorg modesetting.
+USERSPACE_HELPER="$SCRIPT_DIR/scripts/disable-incompatible-userspace.sh"
+if [[ -x "$USERSPACE_HELPER" ]]; then
+    "$USERSPACE_HELPER"
+else
+    warn "Userspace compatibility helper not found: $USERSPACE_HELPER"
 fi
-
-# Mask sw-inno-gl.service (official package service that recreates 0-innogpu.conf on every boot)
-if [[ -f /lib/systemd/system/sw-inno-gl.service ]] || \
-   [[ -L /etc/systemd/system/sw-inno-gl.service ]] || \
-   [[ -f /etc/systemd/system/multi-user.target.wants/sw-inno-gl.service ]]; then
-    rm -f /etc/systemd/system/sw-inno-gl.service
-    rm -f /etc/systemd/system/multi-user.target.wants/sw-inno-gl.service
-    ln -sf /dev/null /etc/systemd/system/sw-inno-gl.service
-    systemctl daemon-reload 2>/dev/null || true
-    log "Masked sw-inno-gl.service (prevents 0-innogpu.conf recreation on boot)"
-fi
-
-# Remove innogpu ldconfig override (userspace libs may not be compatible)
-if [[ -f /etc/ld.so.conf.d/0-innogpu.conf ]]; then
-    mv -f /etc/ld.so.conf.d/0-innogpu.conf /etc/ld.so.conf.d/0-innogpu.conf.disabled
-    ldconfig
-    log "Disabled innogpu ldconfig override"
-fi
-
-# Rename incompatible DRI driver if present
-if [[ -f /usr/lib/x86_64-linux-gnu/dri/innogpu_dri.so ]]; then
-    mv /usr/lib/x86_64-linux-gnu/dri/innogpu_dri.so \
-       /usr/lib/x86_64-linux-gnu/dri/innogpu_dri.so.bak
-    log "Disabled incompatible innogpu DRI driver (mesa version mismatch)"
-fi
-
-# Create xorg.conf for modesetting driver
-cat > /etc/X11/xorg.conf << 'XORG'
-Section "Device"
-    Identifier "innogpu"
-    Driver "modesetting"
-    Option "kmsdev" "/dev/dri/card0"
-EndSection
-XORG
-log "Created /etc/X11/xorg.conf for modesetting driver"
 
 # Disable Xvfb/x11vnc if they conflict
 for svc in xvfb x11vnc novnc; do
