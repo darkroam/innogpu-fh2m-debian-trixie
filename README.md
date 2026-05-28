@@ -2,8 +2,6 @@
 
 **Patches to compile the Innosilicon Fantasy II-M (innogpu fh2m) GPU kernel driver on Debian Trixie (kernel 6.12)**
 
-[中文版](#中文说明) | [English](#english)
-
 ---
 
 ## 🚀 快速安装 / Quick Install
@@ -19,6 +17,8 @@ sudo reboot
 安装过程全自动：编译内核模块 → 安装固件 → 配置 X11 → 完成！
 
 > 💡 如果你只是想让显卡工作，下载 .deb 安装即可，无需阅读以下技术细节。
+>
+> ⚠️ Debian Trixie `6.12.88+deb13-amd64` 上的实测结果见下方“6.12.88+deb13-amd64 实测安装方案”。该内核还需要一个额外的 `flush_workqueue(system_wq)` 编译修复，以及在部分 Fantasy II-M 机器上跳过第一次 GPU PLL 初始化调用，否则可能在 `set_pll_reg` 处 Oops。
 
 ---
 
@@ -36,7 +36,7 @@ sudo reboot
 |------|------|
 | GPU | Innosilicon Fantasy II-M (风华2号-M) |
 | PCI ID | `1ec8:9810` |
-| 测试平台 | Suma-N40 笔记本 (Hygon C86 3350M, 16GB RAM) |
+| 测试平台 | X7h笔记本 |
 | 操作系统 | Debian Trixie (13), kernel 6.12.63+deb13-amd64 |
 | 驱动版本 | innogpu-fh2m 3.3.3.42 |
 
@@ -116,6 +116,170 @@ ls -la /dev/dri/card0
 lspci -v -s $(lspci | grep 1ec8 | cut -d' ' -f1)
 ```
 
+
+### 6.12.88+deb13-amd64 实测安装方案
+
+本节记录在 Debian Trixie `6.12.88+deb13-amd64` 上实际点亮 Fantasy II-M 的完整思路，便于重装系统后按本仓库复现。
+
+#### 核心思路
+
+1. 先让官方 `innogpu-fh2m_3.3.3.42` 包释放 DKMS 源码和固件。
+2. 对 `/usr/src/innogpu-kernel-2.2` 应用 kernel 6.12 兼容补丁。
+3. 额外处理 kernel 6.12.88 的 `flush_workqueue(system_wq)` 警告：6.12 会对 flush system-wide workqueue 报 warning，驱动构建时又启用了 `-Werror`，因此必须注释掉 `innogpu/inno_task.c` 中的该调用。本仓库的 `patches/001-kernel-6.12-compat.patch` 已包含这个修复。
+4. 如果模块能编译但 `modprobe innogpu` 在 `set_pll_reg -> g0m_soc_setpll -> g0m_soc_hw_init` Oops，说明该机器的第一次 GPU PLL 初始化会访问无效寄存器地址。当前可用 workaround 是对最终 `innogpu.ko` 做二进制补丁，把 `g0m_soc_hw_init` 中第一次调用 `g0m_soc_setpll` 的 `call` 改成 5 个 NOP。
+5. 只在手动加载成功后再启用开机加载。不要在会 Oops 的模块上直接配置 `/etc/modules-load.d/innogpu.conf`。
+6. 持久化时只使用发行版工具更新 initramfs：`update-initramfs -u -k 6.12.88+deb13-amd64`。不要手动 cpio 解包/重打 initrd，容易破坏启动所需 metadata/hooks，导致 VFS/rootfs panic。
+
+#### 重装后推荐步骤
+
+```bash
+# 0. 确认目标内核
+uname -r
+# 期望: 6.12.88+deb13-amd64
+
+# 1. 安装依赖和官方驱动包
+sudo apt install dkms build-essential linux-headers-$(uname -r)
+sudo dpkg -i /path/to/innogpu-fh2m_3.3.3.42-*.deb || sudo apt -f install
+
+# 2. 应用本仓库补丁
+cd /usr/src/innogpu-kernel-2.2
+sudo patch -p3 -d / -N --fuzz=3 < /path/to/innogpu-fh2m-debian-trixie/patches/001-kernel-6.12-compat.patch
+
+# 3. DKMS 构建和安装
+sudo dkms build innogpu-kernel/2.2 -k $(uname -r) --force
+sudo dkms install innogpu-kernel/2.2 -k $(uname -r) --force
+
+# 4. 基础配置：必须开启 firmware_en
+printf '%s\n' 'options innogpu firmware_en=1' | sudo tee /etc/modprobe.d/innogpu.conf
+sudo depmod -a $(uname -r)
+```
+
+#### 如果 `modprobe innogpu` 在 set_pll_reg Oops
+
+仓库提供了可复用脚本：
+
+```bash
+sudo /path/to/innogpu-fh2m-debian-trixie/scripts/patch-skip-first-gpupll.sh $(uname -r)
+```
+
+脚本会备份当前 `innogpu.ko`，把第一次 GPU PLL 初始化调用改成 NOP，并自动运行 `depmod`。
+
+如果需要手动处理，先不要配置开机加载。如果已经配置过，请先禁用：
+
+```bash
+sudo rm -f /etc/modules-load.d/innogpu.conf
+sudo depmod -a $(uname -r)
+sudo reboot
+```
+
+重启到干净状态后，对安装后的模块做 binary workaround：
+
+```bash
+KVER=$(uname -r)
+KO=/lib/modules/$KVER/kernel/drivers/gpu/drm/innogpu/innogpu.ko
+sudo mkdir -p /lib/modules/$KVER/kernel/drivers/gpu/drm/innogpu/backup
+sudo cp -a "$KO" "/lib/modules/$KVER/kernel/drivers/gpu/drm/innogpu/backup/innogpu.ko.pre-skip-first-gpupll"
+
+sudo python3 - <<'PY'
+from pathlib import Path
+import subprocess
+kver = subprocess.check_output(['uname', '-r'], text=True).strip()
+p = Path(f'/lib/modules/{kver}/kernel/drivers/gpu/drm/innogpu/innogpu.ko')
+b = bytearray(p.read_bytes())
+# For innogpu-fh2m 3.3.3.42 on 6.12.88, .text file offset is 0x40 and
+# the first g0m_soc_hw_init -> g0m_soc_setpll call is at .text+0x46392.
+off = 0x40 + 0x46392
+old = bytes.fromhex('e8 09 fd ff ff')
+new = bytes.fromhex('90 90 90 90 90')
+if b[off:off+5] == new:
+    print('already patched')
+elif b[off:off+5] == old:
+    b[off:off+5] = new
+    p.write_bytes(b)
+    print('patched skip-first-gpupll')
+else:
+    raise SystemExit(f'unexpected bytes at {off:#x}: {b[off:off+5].hex(" ")}')
+PY
+
+sudo depmod -a "$KVER"
+```
+
+如启用了 Secure Boot 或模块签名策略，需要在二进制补丁后重新签名模块；否则签名会失效。
+
+#### 手动加载验证
+
+```bash
+sudo dmesg -C
+sudo modprobe drm
+sudo modprobe drm_display_helper
+sudo modprobe drm_kms_helper
+sudo modprobe i2c-algo-bit
+sudo modprobe snd-pcm
+sudo modprobe innogpu
+
+lspci -nnk | grep -EA4 '1ec8|VGA|Display|3D'
+ls -l /dev/dri /dev/fb0
+cat /sys/module/innogpu/parameters/firmware_en
+```
+
+成功状态应类似：
+
+```text
+Kernel driver in use: inno-drv
+/dev/dri/card0
+/dev/dri/renderD128
+/dev/fb0
+/sys/module/innogpu/parameters/firmware_en = 1
+/sys/class/graphics/fb0/name = innogpudrmfb
+```
+
+确认没有 Oops/soft lockup 后，再启用开机加载和 initramfs 更新：
+
+```bash
+printf '%s\n' 'innogpu' | sudo tee /etc/modules-load.d/innogpu.conf
+sudo depmod -a $(uname -r)
+sudo update-initramfs -u -k $(uname -r)
+sudo reboot
+```
+
+重启后再次验证：
+
+```bash
+uname -r
+lsmod | grep '^innogpu'
+lspci -nnk | grep -EA4 '1ec8|VGA|Display|3D'
+ls -l /dev/dri /dev/fb0
+cat /sys/module/innogpu/parameters/firmware_en
+```
+
+#### Xorg / TTY 登录修复
+
+本驱动目前建议使用 X11 modesetting，不要加载官方不兼容的 Mesa/GBM 用户态库：
+
+```bash
+# 禁用官方 ld.so override，避免 innogpu libgbm 劫持系统 Mesa
+sudo mv /etc/ld.so.conf.d/0-innogpu.conf /etc/ld.so.conf.d/0-innogpu.conf.disabled 2>/dev/null || true
+sudo ldconfig
+
+# 防止官方服务开机重新创建 0-innogpu.conf
+sudo rm -f /etc/systemd/system/sw-inno-gl.service /etc/systemd/system/multi-user.target.wants/sw-inno-gl.service
+sudo ln -sf /dev/null /etc/systemd/system/sw-inno-gl.service
+sudo systemctl daemon-reload
+
+# 禁用与 Debian Mesa 不兼容的 DRI driver
+sudo mv /usr/lib/x86_64-linux-gnu/dri/innogpu_dri.so \
+        /usr/lib/x86_64-linux-gnu/dri/innogpu_dri.so.bak 2>/dev/null || true
+
+# 使用 modesetting DDX
+sudo tee /etc/X11/xorg.conf >/dev/null <<'XORG'
+Section "Device"
+    Identifier "gpu"
+    Driver "modesetting"
+    Option "kmsdev" "/dev/dri/card0"
+EndSection
+XORG
+```
+
 ### 已知限制
 
 1. **3D 加速**：用户空间库（libEGL、libGLX 等）与 Debian Trixie 的 mesa 版本不兼容（`_glapi_tls_Dispatch` 符号缺失）。当前使用 modesetting + 软件渲染，桌面流畅但无 GPU 加速。
@@ -158,92 +322,3 @@ sudo mv /usr/lib/x86_64-linux-gnu/dri/innogpu_dri.so \
         /usr/lib/x86_64-linux-gnu/dri/innogpu_dri.so.bak
 sudo systemctl restart gdm
 ```
-
-### 故事
-
-这套补丁诞生于 2026 年 2 月 8 日凌晨的一次通宵 debug session。一台搭载国产 Hygon CPU + 芯动 Fantasy II-M GPU 的笔记本（Suma-N40），安装 Debian Trixie 后 GPU 驱动完全无法编译。
-
-经过数小时的内核源码分析和逐个修复 13 类 API 不兼容问题，最终在凌晨 2 点成功点亮了屏幕，让 GNOME 桌面在这台国产硬件上流畅运行。
-
----
-
-## English
-
-### Overview
-
-This repository provides patches to compile the **Innosilicon Fantasy II-M (innogpu fh2m)** GPU kernel driver (v3.3.3.42) on **Debian Trixie (13)** with **kernel 6.12**.
-
-The official driver only supports domestic Chinese Linux distributions (UOS, Kylin) based on older kernels. These patches fix 13 categories of kernel API incompatibilities introduced between kernel 5.x and 6.12.
-
-### Quick Start
-
-Download the `.deb` package from [Releases](https://github.com/timhant/innogpu-fh2m-debian-trixie/releases):
-
-```bash
-sudo apt install dkms build-essential linux-headers-$(uname -r)
-sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-2.deb
-sudo reboot
-```
-
-The package auto-compiles the kernel module via DKMS, installs firmware, and configures X11.
-
-### Key Patches
-
-- `ioremap_nocache` → `ioremap`
-- `PCI_IRQ_LEGACY` → `PCI_IRQ_INTX`
-- Thermal subsystem opaque struct migration
-- `drm_do_get_edid` → `drm_edid_read_custom` (full reimplementation)
-- `FOP_UNSIGNED_OFFSET` flag for kernel 6.12 DRM file operations
-- `__assign_str` macro parameter change (6.10+)
-- `drm_driver.lastclose` removal (6.12)
-- Various `const` ordering and return type fixes
-
-### Known Limitations
-
-- **No 3D acceleration**: Userspace libraries incompatible with Debian Trixie's mesa
-- **X11 only**: Wayland not yet supported
-- **Firmware**: Must use v3.3 firmware (included in official package)
-
-### Troubleshooting: Black Screen / GDM Fails After Reboot
-
-If you see a black screen after installing the driver and GDM logs show `Session never registered, failing`, SSH into the machine and run:
-
-```bash
-# Fix 1: Remove innogpu ld.so override (hijacks system libgbm → Xorg SEGV)
-sudo mv /etc/ld.so.conf.d/0-innogpu.conf /etc/ld.so.conf.d/0-innogpu.conf.disabled
-sudo ldconfig
-
-# Fix 2: Disable incompatible DRI driver (causes _glapi_tls_Dispatch error)
-sudo mv /usr/lib/x86_64-linux-gnu/dri/innogpu_dri.so \
-        /usr/lib/x86_64-linux-gnu/dri/innogpu_dri.so.bak
-
-# Restart display manager
-sudo systemctl restart gdm
-```
-
-**Root cause**: The official deb creates `/etc/ld.so.conf.d/0-innogpu.conf`, which makes innogpu's `libgbm.so` take priority over mesa's. This innogpu libgbm tries to load `innogpu_dri.so`, which is incompatible with mesa, causing a segfault in `gbm_create_device()`. The `install.sh` script handles this automatically, but system updates may restore the file.
-
-> ⚠️ The official innogpu-fh2m package also ships `sw-inno-gl.service`, a systemd service that recreates `0-innogpu.conf` on every boot. You must mask it:
-> ```bash
-> sudo rm -f /etc/systemd/system/sw-inno-gl.service /etc/systemd/system/multi-user.target.wants/sw-inno-gl.service
-> sudo ln -sf /dev/null /etc/systemd/system/sw-inno-gl.service
-> sudo systemctl daemon-reload
-> ```
-> The `install.sh` script and the patched-2 `.deb` handle this automatically.
-
-### Hardware Tested
-
-- **GPU**: Innosilicon Fantasy II-M (PCI ID `1ec8:9810`)
-- **CPU**: Hygon C86 3350M (x86_64, Zen-based)
-- **Platform**: Suma-N40 laptop
-- **OS**: Debian Trixie (13), kernel 6.12.63
-
-### License
-
-The patches themselves are released under **MIT License**.
-
-The original driver source is © Innosilicon Technology Ltd., licensed under **Dual MIT/GPL**. You must obtain the official driver package from Innosilicon to use these patches.
-
----
-
-*Made with 🔧 and ☕ at 2 AM, Feb 8, 2026*
