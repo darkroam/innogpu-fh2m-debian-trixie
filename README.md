@@ -19,7 +19,7 @@ Debian Trixie kernel 6.12 上的 Innosilicon Fantasy II-M / 风华 2 号 M（inn
 
 ```bash
 sudo apt install dkms build-essential linux-headers-$(uname -r)
-sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-5.deb
+sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-6.deb
 ```
 
 安装包会做这些事：
@@ -29,6 +29,8 @@ sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-5.deb
 - 写入 `options innogpu firmware_en=1`
 - 禁用容易冲突的官方 userspace/GL 配置
 - 安装 `innogpu-skip-first-gpupll` 辅助脚本
+- 安装 `innogpu-disable-incompatible-userspace` 辅助脚本
+- patched-6 已将第一次 G0M GPU PLL 初始化 workaround 应用到 DKMS 源对象，正常不需要再手动 NOP
 - 默认不启用开机自动加载，避免未验证模块导致重启黑屏或 Oops
 
 ## 验证模块已生成
@@ -54,13 +56,15 @@ innogpu-kernel/2.2, 6.12.90+deb13-amd64, x86_64: installed
    ```text
    options innogpu firmware_en=1
    ```
-3. 如果模块在 `set_pll_reg -> g0m_soc_setpll -> g0m_soc_hw_init` 附近 Oops，使用二进制 workaround：跳过第一次 GPU PLL 初始化调用。
+3. 如果模块在 `set_pll_reg -> g0m_soc_setpll -> g0m_soc_hw_init` 附近 Oops，根因是第一次 G0M GPU PLL 初始化访问无效寄存器地址；patched-6 默认在 DKMS 源对象中跳过这一次调用，旧包可用 `innogpu-skip-first-gpupll` 补救。
 4. 只在手动 `modprobe innogpu` 成功、没有 Oops/soft lockup 后，再启用开机加载。
 5. 更新 initramfs 时只用发行版工具 `update-initramfs`，不要手动 cpio 解包/重打 initrd。
 
-## 应用 PLL workaround
+## PLL workaround
 
-如果是 6.12.88/6.12.90，建议在首次手动加载前先执行：
+patched-6 已经把该 workaround 应用到 DKMS 源对象，安装后直接构建出的模块应已跳过第一次 G0M GPU PLL 初始化调用。
+
+如果你是从旧包升级，或手动替换过 DKMS 源码/模块，可重新执行：
 
 ```bash
 sudo innogpu-skip-first-gpupll $(uname -r)
@@ -151,7 +155,8 @@ ls -l /usr/bin/innogpu-skip-first-gpupll /usr/sbin/innogpu-skip-first-gpupll
 - `flush_workqueue(system_wq)` 构建警告修复
 - `firmware_en=1` 默认配置
 - 禁用有冲突的官方 GL/userspace 配置
-- `innogpu-skip-first-gpupll` runtime workaround
+- `innogpu-skip-first-gpupll` runtime/source-object workaround
+- `innogpu-disable-incompatible-userspace` Mesa/GBM 清理脚本
 - DKMS/postinst PATH 修复，避免找不到 `/usr/sbin/dkms`
 - 兼容 DKMS 生成的 `updates/dkms/innogpu.ko.xz`
 
@@ -159,8 +164,10 @@ ls -l /usr/bin/innogpu-skip-first-gpupll /usr/sbin/innogpu-skip-first-gpupll
 
 - `patches/001-kernel-6.12-compat.patch`：源码兼容补丁
 - `scripts/install.sh`：从官方包安装并打补丁的旧流程
-- `scripts/patch-skip-first-gpupll.sh`：PLL workaround 脚本
-- `innogpu-fh2m-trixie_3.3.3.42-patched-*.deb`：Release 包，不纳入 git 跟踪
+- `scripts/patch-skip-first-gpupll.sh`：PLL workaround 脚本，可 patch DKMS 源对象或已安装模块
+- `scripts/disable-incompatible-userspace.sh`：禁用不兼容的官方 GL/GBM/DRI 用户态配置，切到 modesetting
+- `scripts/build-patched6.sh`：从 patched-5 重包 patched-6
+- `innogpu-fh2m-trixie_3.3.3.42-patched-*.deb`：Release 包
 
 ## 安全原则
 
