@@ -1,176 +1,127 @@
 # innogpu-fh2m-debian-trixie
 
-Debian Trixie kernel 6.12 上的 Innosilicon Fantasy II-M / 风华 2 号 M（innogpu fh2m）驱动打包与兼容修复。
+Debian Trixie kernel 6.12 上的 Innosilicon Fantasy II-M / 风华2号M（innogpu fh2m）驱动打包与兼容修复。
 
-目标：安装后能为当前内核构建 DKMS 模块，手动验证加载成功后，再启用开机自动加载。
+目标：内核 DKMS 模块 + Xorg DDX 硬件加速。
 
-## 支持状态
+## 当前状态
 
-已在以下内核上排障/验证过构建流程：
+| 阶段 | 状态 |
+|------|------|
+| 内核模块编译 (DKMS) | ✓ patched-6/7/8 均通过 |
+| 内核模块加载 | ✓ modprobe 成功，Driver OK，Firmware OK |
+| /dev/dri 设备 | ✓ card0 + renderD128 |
+| Xorg modesetting + llvmpipe | ✓ 安全回退 |
+| Xorg innogpu DDX | 进展中（详见下文） |
+| 硬件 GL 加速 | 待完成 |
 
-- 6.12.88+deb13-amd64
-- 6.12.90+deb13-amd64
+## 已尝试的用户态来源
 
-驱动来源：官方 innogpu-fh2m 3.3.3.42。
+### 1. 麒麟 V10 系统盘 (`/mnt/kylin-root`)
 
-## 快速安装
+已挂载同型号机器的麒麟操作系统硬盘。
 
-从 Releases 下载最新 deb 后：
+- 包名：`innogpu-fh2m`，版本 `3.2.1.16-v10.2-kylin`
+- 包含完整用户态栈：DRI、EGL、GLX、Vulkan、OpenCL、Xorg DDX
+- **结果：Xorg DDX 崩溃** — 该 DDX 为 Xorg video ABI 24 (Xorg 1.20.4) 编译，Debian Trixie 是 ABI 25，即使 `IgnoreABI` 仍然 segfault
+- 二进制路径线索：
+  - `G0M_DDK_V119RTM_RELEASE_BUILD_PIPELINE_DDK`
+  - `../source/include/xorg-1.20.4/privates.h`
 
-```bash
-sudo apt install dkms build-essential linux-headers-$(uname -r)
-sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-6.deb
+### 2. 麒麟 V11 Server ISO
+
+- 文件：`~/downloads/Kylin-Server-V11-2503-Release-General-20250715-X86_64.iso`
+- RPM 系统，无 innogpu-fh2m 包
+- chroot 搜索在线源也无结果
+
+### 3. Kylin 在线源
+
+- `archive.kylinos.cn/kylin/KYLIN-ALL` — 仅有 `innogpu-fh2m_3.2.1.16-v10.2-kylin_amd64.deb`（同 #1）
+- `archive2.kylinos.cn/DEB/KYLIN_DEB` V11 — 无 innogpu
+- `updates.kylinos.cn/NS/V11/2503` — chroot dnf search 无结果
+
+### 4. Deepin V23 / beige 社区源 ✓ 最佳候选
+
+URL：
+```
+https://community-packages.deepin.com/deepin/beige/pool/commercial/i/innogpu-fh2m/
 ```
 
-安装包会做这些事：
-
-- 安装 DKMS 源码和固件
-- 为当前内核构建并安装 innogpu 模块
-- 写入 `options innogpu firmware_en=1`
-- 禁用容易冲突的官方 userspace/GL 配置
-- 安装 `innogpu-skip-first-gpupll` 辅助脚本
-- 安装 `innogpu-disable-incompatible-userspace` 辅助脚本
-- patched-6 已将第一次 G0M GPU PLL 初始化 workaround 应用到 DKMS 源对象，正常不需要再手动 NOP
-- 默认不启用开机自动加载，避免未验证模块导致重启黑屏或 Oops
-
-## 验证模块已生成
-
-Debian DKMS 可能把模块压缩安装为 `.ko.xz`，所以查询时用 `innogpu.ko*`：
-
-```bash
-/usr/sbin/dkms status | grep innogpu
-find /lib/modules/$(uname -r) -iname 'innogpu.ko*'
+AMD64 包：
+```
+innogpu-fh2m_20250421190503-debug_amd64.deb  (78 MB)
+SHA256: b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2
 ```
 
-正常应看到类似：
+本地路径：`/home/ok/src/innogpu-fh2m_20250421190503-debug_amd64.deb`
 
-```text
-innogpu-kernel/2.2, 6.12.90+deb13-amd64, x86_64: installed
-/lib/modules/6.12.90+deb13-amd64/updates/dkms/innogpu.ko.xz
+解包位置：`/home/ok/src/innogpu-fh2m-deepin-202504/`
+
+**关键差异**：
+- DDX: Xorg video ABI 25.2，匹配 Debian Trixie ✓
+- DRI: Mesa 23.1.3（vs 麒麟版 Mesa 22.1.3）
+- 完整用户态库，包括 swrast_inno_dri.so, innogpu_drv_video.so, innogpu_gbm.so
+- DKMS 内核源码已更新（~50个文件与 patched-6 基准不同）
+
+**Xorg 测试**：Deepin DDX 可在去掉 vendor GBM backend 后正常启动（无 segfault）
+
+### 5. Linglong 仓库
+
+GitHub: `linglongdev/cn.innosilicon.driver.innogpu.fh2m`
+引用的 deb 与 #4 相同。
+
+## 非重启 Xorg 测试进展
+
+对 Deepin 202504 DDX 的测试结果：
+
+| 测试 | 结果 |
+|------|------|
+| 完整安装含 GBM backend | segfault in `innogpu_gbm.so` → `gbm_create_device` |
+| 去掉 `innogpu_gbm.so` | segfault in `libEGL_inno.so` → `gbm_device_get_fd` |
+| 去掉 GBM backend + 去掉 EGL vendor allowlist | **Xorg 启动成功！** SWRAST GL 回退 |
+| 禁用 glamor | 同"去掉 GBM"结果 |
+
+**结论**：Deepin 202504 DDX 可在 Debian Trixie 上工作，但 vendor 提供的 GBM backend (`innogpu_gbm.so` → `libinnogpu_gbm.so`) 与 Debian 的 libgbm 不兼容。去掉它可以获得正常的 Xorg 显示，GL 由 Mesa swrast 提供。
+
+## 当前库版本对比
+
+| 文件 | 麒麟 V10 | Deepin 202504 |
+|------|----------|---------------|
+| innogpu_drv.so (DDX) | ABI 24 | ABI 25 ✓ |
+| innogpu_dri.so (Mesa) | Mesa 22.1.3 | Mesa 23.1.3 |
+| libEGL_inno.so | 有 | 有 |
+| libGLX_inno.so | 有 | 有 |
+| swrast_inno_dri.so | 无 | 有 |
+| innogpu_gbm.so | 无 | 有（崩溃问题） |
+| innogpu_drv_video.so | 无 | 有 |
+| DKMS 源码 | 旧版 | 新版（~50文件差异） |
+
+## 仓库文件
+
+```
+patches/001-kernel-6.12-compat.patch    — kernel 6.12 兼容补丁
+scripts/install.sh                      — 从官方包安装的旧流程
+scripts/build-patched6.sh               — 打包 patched-6（含 PLL workaround）
+scripts/build-patched7.sh               — 打包 patched-7（含实验性用户态安装器）
+scripts/patch-skip-first-gpupll.sh     — PLL workaround
+scripts/disable-incompatible-userspace.sh — 恢复安全 modesetting
+scripts/install-kylin-userspace.sh      — 从麒麟/UOS/Deepin root 安装用户态
+scripts/test-xorg-once.sh              — 非重启 Xorg 测试
+*.deb                                   — Release 包
 ```
 
-## 6.12.88 / 6.12.90 主要思路
-
-1. 先用 DKMS 为目标内核构建模块。
-2. 确认 `/etc/modprobe.d/innogpu.conf` 包含：
-   ```text
-   options innogpu firmware_en=1
-   ```
-3. 如果模块在 `set_pll_reg -> g0m_soc_setpll -> g0m_soc_hw_init` 附近 Oops，根因是第一次 G0M GPU PLL 初始化访问无效寄存器地址；patched-6 默认在 DKMS 源对象中跳过这一次调用，旧包可用 `innogpu-skip-first-gpupll` 补救。
-4. 只在手动 `modprobe innogpu` 成功、没有 Oops/soft lockup 后，再启用开机加载。
-5. 更新 initramfs 时只用发行版工具 `update-initramfs`，不要手动 cpio 解包/重打 initrd。
-
-## PLL workaround
-
-patched-6 已经把该 workaround 应用到 DKMS 源对象，安装后直接构建出的模块应已跳过第一次 G0M GPU PLL 初始化调用。
-
-如果你是从旧包升级，或手动替换过 DKMS 源码/模块，可重新执行：
+## 快速安装（安全路径）
 
 ```bash
-sudo innogpu-skip-first-gpupll $(uname -r)
-```
-
-脚本会：
-
-- 自动处理 DKMS 默认路径 `/lib/modules/$KVER/updates/dkms/innogpu.ko.xz`
-- 解压/复制到 `/lib/modules/$KVER/kernel/drivers/gpu/drm/innogpu/innogpu.ko`
-- 备份原模块
-- 将第一次 `g0m_soc_hw_init -> g0m_soc_setpll` 调用改成 NOP
-- 运行 `depmod -a $KVER`
-
-如果普通用户 PATH 找不到命令，可用完整路径：
-
-```bash
-sudo /usr/bin/innogpu-skip-first-gpupll $(uname -r)
-```
-
-## 手动加载验证
-
-```bash
+sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-8.deb
 sudo modprobe innogpu
-
-find /lib/modules/$(uname -r) -iname 'innogpu.ko*'
-ls -l /dev/dri /dev/fb* 2>/dev/null || true
-cat /sys/module/innogpu/parameters/firmware_en
-lspci -nnk | grep -EA4 '1ec8|VGA|Display|3D'
+cat /proc/driver/innogpu/gpu00/status   # 应显示 Driver OK, Firmware OK
 ```
 
-成功后通常应看到：
+## 下一步计划
 
-- `/dev/dri/card0`
-- `/dev/dri/renderD128`
-- `/sys/module/innogpu/parameters/firmware_en = 1`
-- `lspci` 中 `Kernel driver in use: inno-drv`
-
-如果 `modprobe` 出现 Oops/soft lockup：
-
-```bash
-sudo rm -f /etc/modules-load.d/innogpu.conf
-sudo depmod -a $(uname -r)
-sudo reboot
-```
-
-重启后再从干净状态排查，不要在 Oops 后反复 rmmod/modprobe。
-
-## 启用开机自动加载
-
-确认手动加载稳定后再启用：
-
-```bash
-printf '%s\n' innogpu | sudo tee /etc/modules-load.d/innogpu.conf
-sudo depmod -a $(uname -r)
-sudo update-initramfs -u -k $(uname -r)
-sudo reboot
-```
-
-重启后验证：
-
-```bash
-lsmod | grep '^innogpu'
-ls -l /dev/dri /dev/fb* 2>/dev/null || true
-cat /sys/module/innogpu/parameters/firmware_en
-```
-
-## 如果安装后找不到模块或命令
-
-模块查询：
-
-```bash
-find /lib/modules/$(uname -r) -iname 'innogpu.ko*'
-/usr/sbin/dkms status | grep innogpu
-```
-
-注意 `.ko.xz` 是正常的 DKMS 压缩模块，不是缺失。
-
-命令查询：
-
-```bash
-command -v innogpu-skip-first-gpupll
-ls -l /usr/bin/innogpu-skip-first-gpupll /usr/sbin/innogpu-skip-first-gpupll
-```
-
-## 本仓库补丁包含
-
-- kernel 6.9+ / 6.12 API 兼容修复
-- `flush_workqueue(system_wq)` 构建警告修复
-- `firmware_en=1` 默认配置
-- 禁用有冲突的官方 GL/userspace 配置
-- `innogpu-skip-first-gpupll` runtime/source-object workaround
-- `innogpu-disable-incompatible-userspace` Mesa/GBM 清理脚本
-- DKMS/postinst PATH 修复，避免找不到 `/usr/sbin/dkms`
-- 兼容 DKMS 生成的 `updates/dkms/innogpu.ko.xz`
-
-## 文件
-
-- `patches/001-kernel-6.12-compat.patch`：源码兼容补丁
-- `scripts/install.sh`：从官方包安装并打补丁的旧流程
-- `scripts/patch-skip-first-gpupll.sh`：PLL workaround 脚本，可 patch DKMS 源对象或已安装模块
-- `scripts/disable-incompatible-userspace.sh`：禁用不兼容的官方 GL/GBM/DRI 用户态配置，切到 modesetting
-- `scripts/build-patched6.sh`：从 patched-5 重包 patched-6
-- `innogpu-fh2m-trixie_3.3.3.42-patched-*.deb`：Release 包
-
-## 安全原则
-
-- 不要在模块尚未手动验证成功前启用 `/etc/modules-load.d/innogpu.conf`
-- 不要手动 cpio 重打 initrd
-- Oops 后先禁用 autoload 并重启到干净状态，再继续测试
+1. [ ] 更新 install-kylin-userspace.sh：跳过 GBM backend
+2. [ ] 创建 build-patched9.sh
+3. [ ] 非重启验证：安装 Deepin 用户态（不含 GBM backend），测试 DDX + DRI
+4. [ ] 如通过，启用开机自动加载，重启验证
+5. [ ] 更新 README
