@@ -7,10 +7,10 @@ set -euo pipefail
 log() { echo "[innogpu-userspace] $*"; }
 move_if_exists() {
     local src="$1" dst="$2"
-    if [[ -e "$src" && ! -e "$dst" ]]; then
+    if [[ ( -e "$src" || -L "$src" ) && ! ( -e "$dst" || -L "$dst" ) ]]; then
         mv -f "$src" "$dst"
         log "disabled $src -> $dst"
-    elif [[ -e "$src" && -e "$dst" ]]; then
+    elif [[ ( -e "$src" || -L "$src" ) && ( -e "$dst" || -L "$dst" ) ]]; then
         rm -f "$src"
         log "removed duplicate $src (backup already exists: $dst)"
     fi
@@ -31,6 +31,8 @@ fi
 
 for conf in \
     /etc/ld.so.conf.d/0-innogpu.conf \
+    /etc/ld.so.conf.d/0-innogpu-hwgl.conf \
+    /etc/ld.so.conf.d/0-innogpu-legacy.conf \
     /etc/ld.so.conf.d/0-innogpu-i386.conf \
     /etc/ld.so.conf.d/innogpu.conf; do
     move_if_exists "$conf" "${conf}.disabled"
@@ -81,6 +83,33 @@ Section "Device"
 EndSection
 XORG
 log "configured /etc/X11/xorg.conf for modesetting"
+
+mkdir -p /etc/X11/xorg.conf.d
+cat > /etc/X11/xorg.conf.d/20-innogpu-display.conf <<'XORG'
+Section "ServerFlags"
+    Option "BlankTime" "0"
+    Option "StandbyTime" "0"
+    Option "SuspendTime" "0"
+    Option "OffTime" "0"
+EndSection
+
+Section "Monitor"
+    Identifier "eDP-1"
+    Option "DPMS" "false"
+EndSection
+
+Section "Monitor"
+    Identifier "DP-1"
+    Option "DPMS" "false"
+EndSection
+XORG
+log "configured /etc/X11/xorg.conf.d/20-innogpu-display.conf to keep local panel awake"
+
+if command -v innogpu-repair-dri-nodes >/dev/null 2>&1; then
+    innogpu-repair-dri-nodes || true
+elif [[ -x "$(dirname "$0")/repair-dri-nodes.sh" ]]; then
+    "$(dirname "$0")/repair-dri-nodes.sh" || true
+fi
 
 if [[ -f /etc/gdm3/daemon.conf ]]; then
     if grep -q '^#\?WaylandEnable=' /etc/gdm3/daemon.conf; then

@@ -1,0 +1,77 @@
+diff --git a/innosrvkm/innodpu_connector.c b/innosrvkm/innodpu_connector.c
+--- a/innosrvkm/innodpu_connector.c
++++ b/innosrvkm/innodpu_connector.c
+@@ -2442,26 +2442,29 @@ int innodpu_get_connector_backlight_mode(inno_dev *dev, unsigned int reg_module)
+ 
+ 	version = fh2m_hal_hwinfo_version(pdev);
+ 	if (version < 0) {
+-		fh2m_innodpu_err(dev, "hwinfo version failed, Use default DDCCI\n");
+-		return CONNECTOR_BACKLIGHT_DDCCI;
++		fh2m_innodpu_err(dev, "hwinfo version failed, use PWM0 backlight fallback\n");
++		return CONNECTOR_BACKLIGHT_PWM0;
+ 	}
+ 
+ 	if (version >= 0x7) {
+ 		connector_id = innodpu_get_connector_id(pdev, reg_module);
+ 		if (connector_id < 0) {
+-			fh2m_innodpu_err(dev, "connector_id failed, Use default DDCCI\n");
+-			return CONNECTOR_BACKLIGHT_DDCCI;
++			fh2m_innodpu_err(dev, "connector_id failed, use PWM0 backlight fallback\n");
++			return CONNECTOR_BACKLIGHT_PWM0;
+ 		}
+ 
+ 		ret = fh2m_hal_get_backlight_mode(pdev, connector_id, &mode);
+ 		if (ret < 0) {
+-			fh2m_innodpu_err(dev, "fh2m_hal_get_backlight_mode failed, Use default DDCCI\n");
+-			mode = CONNECTOR_BACKLIGHT_DDCCI;
++			fh2m_innodpu_err(dev, "fh2m_hal_get_backlight_mode failed, use PWM0 backlight fallback\n");
++			mode = CONNECTOR_BACKLIGHT_PWM0;
+ 		}
+ 	} else {
+-		mode = CONNECTOR_BACKLIGHT_DDCCI;
++		mode = CONNECTOR_BACKLIGHT_PWM0;
+ 	}
+ 
++	if (mode == CONNECTOR_BACKLIGHT_DDCCI)
++		mode = CONNECTOR_BACKLIGHT_PWM0;
++
+ 	conn_info(dev, "backlight_mode:%d\n", mode);
+ 
+ 	return mode;
+ }
+diff --git a/innosrvkm/innodpu_panel_backlight.c b/innosrvkm/innodpu_panel_backlight.c
+--- a/innosrvkm/innodpu_panel_backlight.c
++++ b/innosrvkm/innodpu_panel_backlight.c
+@@ -51,9 +51,9 @@
+ #include "innodpu_panel_backlight.h"
+ #include "inno_lock.h"
+ 
+-static bool s_bl_en_ctrl = false;
++static bool s_bl_en_ctrl = true;
+ module_param(s_bl_en_ctrl, bool, 0644);
+-MODULE_PARM_DESC(s_bl_en_ctrl, "PWM & BL_EN CTRL enable(default: disabled)");
++MODULE_PARM_DESC(s_bl_en_ctrl, "PWM & BL_EN CTRL enable(default: enabled on FH2M)");
+ 
+ /* TODO:
+  * Implement HDR, right now we just implement the bare minimum to bring us back into SDR mode so we
+@@ -942,8 +942,18 @@ int inno_panel_backlight_init(struct inno_panel *panel, inno_dev *pdev,
+ 			return -EINVAL;
+ 		}
+ 	} else {
+-		dev_warn(panel->dev, "does not currently support backlightmode.\n");
+-		return -EINVAL;
++		dev_warn(panel->dev,
++			 "unsupported backlight mode %u, falling back to PWM0\n",
++			 backlight_mode);
++		bl->pwm_ctrl_reg = REG_ENTITY0000;
++		bl->pwm_clock_reg = REG_ENTITY0001;
++		bl->pwm_start_reg = REG_ENTITY0002;
++		bl->pwm_end_reg  = REG_ENTITY0003;
++		bl->pwm_reg_type = REG_M_PWM;
++		bl->pwm_clock = fh2m_hal_get_pll(pdev, PLL_CBUS);
++		if (!bl->pwm_clock)
++			bl->pwm_clock = 128;
++		bl->pwm_clock = bl->pwm_clock * 1000000;
+ 	}
+ 
+ register_bl:

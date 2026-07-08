@@ -1,125 +1,55 @@
 #!/bin/bash
-# ============================================================
-# innogpu-fh2m Debian Trixie (kernel 6.12) Installation Script
-# ============================================================
-# This script patches and installs the Innosilicon Fantasy II-M
-# (innogpu fh2m) GPU driver on Debian Trixie with kernel 6.12.
-#
-# Prerequisites:
-#   - Debian Trixie (13) with kernel 6.12.x
-#   - Innosilicon official driver package:
-#     innogpu-fh2m_3.3.3.42-driver-linux-desktop-sp-generic_amd64.deb
-#   - Build tools: dkms, build-essential, linux-headers
-#
-# Usage:
-#   sudo ./install.sh /path/to/innogpu-fh2m_3.3.3.42-*.deb
-# ============================================================
+# Main installer wrapper for this repository.
 
-set -e
+set -euo pipefail
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
+ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+cd "$ROOT"
 
-log()   { echo -e "${GREEN}[INFO]${NC} $*"; }
-warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
-error() { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
+usage() {
+    cat <<'USAGE'
+Usage:
+  sudo scripts/install.sh [--prereqs] [--patched8|--patched17]
 
-# --- Checks ---
-[[ $EUID -ne 0 ]] && error "Please run as root (sudo)"
-[[ -z "$1" ]] && error "Usage: $0 /path/to/innogpu-fh2m_3.3.3.42-*.deb"
-[[ ! -f "$1" ]] && error "File not found: $1"
+Default:
+  sudo scripts/install.sh --patched17
 
-DEB_PATH="$(realpath "$1")"
-SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-PATCH_FILE="$SCRIPT_DIR/patches/001-kernel-6.12-compat.patch"
-KERNEL_VER="$(uname -r)"
+Options:
+  --prereqs    Install Debian package prerequisites first.
+  --patched8   Install the stable rollback package.
+  --patched17  Install the current successful package.
 
-[[ ! -f "$PATCH_FILE" ]] && error "Patch file not found: $PATCH_FILE"
+Hardware GL userspace is intentionally a second step after patched-17 reboot:
+  scripts/prepare-deepin-userspace-root.sh
+  sudo scripts/run-local-ddx-vt-test.sh
+  sudo scripts/install-deepin-desktop-hwgl-trial.sh
+USAGE
+}
 
-log "Kernel version: $KERNEL_VER"
-log "Driver package: $DEB_PATH"
+install_prereqs=0
+target=patched17
 
-# --- Check kernel version ---
-KMAJOR=$(echo "$KERNEL_VER" | cut -d. -f1)
-KMINOR=$(echo "$KERNEL_VER" | cut -d. -f2)
-if [[ "$KMAJOR" -lt 6 ]] || { [[ "$KMAJOR" -eq 6 ]] && [[ "$KMINOR" -lt 9 ]]; }; then
-    warn "Kernel $KERNEL_VER may not need these patches (designed for 6.9+)"
-    read -p "Continue anyway? [y/N] " -n 1 -r
-    echo
-    [[ ! $REPLY =~ ^[Yy]$ ]] && exit 0
-fi
-
-# --- Install dependencies ---
-log "Installing build dependencies..."
-apt-get install -y dkms build-essential linux-headers-"$KERNEL_VER" 2>/dev/null || \
-    warn "Some packages may already be installed"
-
-# --- Extract and install official driver ---
-log "Installing official driver package (this extracts source + firmware)..."
-dpkg -i "$DEB_PATH" 2>/dev/null || apt-get install -f -y 2>/dev/null || true
-
-# --- Verify DKMS source exists ---
-DKMS_SRC="/usr/src/innogpu-kernel-2.2"
-[[ ! -d "$DKMS_SRC" ]] && error "DKMS source not found at $DKMS_SRC — driver package may have failed to extract"
-
-# --- Apply patches ---
-log "Applying kernel 6.12 compatibility patches..."
-cd "$DKMS_SRC"
-
-# Try to apply; if already applied, skip
-if patch -p3 -d / --dry-run -N < "$PATCH_FILE" > /dev/null 2>&1; then
-    patch -p3 -d / -N < "$PATCH_FILE"
-    log "Patches applied successfully"
-elif patch -p3 -d / --dry-run -R < "$PATCH_FILE" > /dev/null 2>&1; then
-    log "Patches already applied, skipping"
-else
-    warn "Patch may not apply cleanly — attempting with fuzz..."
-    patch -p3 -d / -N --fuzz=3 < "$PATCH_FILE" || error "Failed to apply patches"
-fi
-
-# --- Build with DKMS ---
-log "Building kernel module with DKMS..."
-dkms build innogpu-kernel/2.2 -k "$KERNEL_VER" --force 2>&1 | tail -5
-
-# --- Install ---
-log "Installing kernel module..."
-dkms install innogpu-kernel/2.2 -k "$KERNEL_VER" --force 2>&1 | tail -5
-
-# --- Post-install configuration ---
-log "Configuring system..."
-
-# Reusable helper: disable vendor userspace GL/GBM pieces that conflict with
-# Debian Mesa, then use the kernel DRM driver through Xorg modesetting.
-USERSPACE_HELPER="$SCRIPT_DIR/scripts/disable-incompatible-userspace.sh"
-if [[ -x "$USERSPACE_HELPER" ]]; then
-    "$USERSPACE_HELPER"
-else
-    warn "Userspace compatibility helper not found: $USERSPACE_HELPER"
-fi
-
-# Disable Xvfb/x11vnc if they conflict
-for svc in xvfb x11vnc novnc; do
-    if systemctl is-enabled "$svc" 2>/dev/null | grep -q enabled; then
-        systemctl disable "$svc" 2>/dev/null
-        log "Disabled conflicting service: $svc"
-    fi
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --prereqs) install_prereqs=1 ;;
+        --patched8) target=patched8 ;;
+        --patched17) target=patched17 ;;
+        -h|--help) usage; exit 0 ;;
+        *) echo "ERROR: unknown option: $1" >&2; usage >&2; exit 2 ;;
+    esac
+    shift
 done
 
-# --- Done ---
-echo ""
-log "============================================"
-log "  Installation complete!"
-log "============================================"
-log ""
-log "  Please reboot to load the new driver."
-log ""
-log "  After reboot, verify with:"
-log "    dmesg | grep innogpu"
-log "    ls /dev/dri/card0"
-log ""
-log "  NOTE: 3D acceleration requires compatible"
-log "  userspace libraries from Innosilicon."
-log "  Currently using modesetting (2D + software 3D)."
-log "============================================"
+if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
+    echo "ERROR: run as root: sudo $0" >&2
+    exit 1
+fi
+
+if [[ "$install_prereqs" == "1" ]]; then
+    "$ROOT/scripts/install-prereqs-debian.sh"
+fi
+
+case "$target" in
+    patched8) exec "$ROOT/scripts/install-patched8-and-check.sh" ;;
+    patched17) exec "$ROOT/scripts/install-patched17-and-check.sh" ;;
+esac

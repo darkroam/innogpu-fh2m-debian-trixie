@@ -1,0 +1,64 @@
+diff --git a/innosrvkm/innodpu_panel_pwr.c b/innosrvkm/innodpu_panel_pwr.c
+--- a/innosrvkm/innodpu_panel_pwr.c
++++ b/innosrvkm/innodpu_panel_pwr.c
+@@ -559,8 +559,16 @@ struct inno_panel* panel_pwr_create(struct drm_device *drm_dev,
+ 	switch(plat) {
+ 	case CHIP_G1_SOC:
+ 	case CHIP_G1P_SOC:
+-		dev_warn(drm_dev->dev, "current only support g0m/g0c platform.\n");
+-		return NULL;
++	case CHIP_G1_PAL:
++	case CHIP_G1_NE:
++	case CHIP_G1P_PAL:
++	case CHIP_G1P_NE:
++	case CHIP_G0_PAL:
++	case CHIP_G0_NE:
++	case CHIP_G0M_PAL:
++	case CHIP_G0M_NE:
++		dev_warn(drm_dev->dev, "platform %d uses FH2M panel GPIO fallback.\n", plat);
++		fallthrough;
+ 	case CHIP_G0_SOC:
+ 	case CHIP_G0M_SOC:
+ 		panel->pwr_gpio_index = 0; /* pwr by hw */
+diff --git a/innosrvkm/innodpu_panel_backlight.c b/innosrvkm/innodpu_panel_backlight.c
+--- a/innosrvkm/innodpu_panel_backlight.c
++++ b/innosrvkm/innodpu_panel_backlight.c
+@@ -913,8 +913,16 @@ int inno_panel_backlight_init(struct inno_panel *panel, inno_dev *pdev,
+ 		switch(plat) {
+ 		case CHIP_G1_SOC:
+ 		case CHIP_G1P_SOC:
+-			dev_warn(panel->dev, "current only support g0m/g0c platform.\n");
+-			return -EINVAL;
++		case CHIP_G1_PAL:
++		case CHIP_G1_NE:
++		case CHIP_G1P_PAL:
++		case CHIP_G1P_NE:
++		case CHIP_G0_PAL:
++		case CHIP_G0_NE:
++		case CHIP_G0M_PAL:
++		case CHIP_G0M_NE:
++			dev_warn(panel->dev, "platform %d uses FH2M PWM backlight fallback.\n", plat);
++			fallthrough;
+ 		case CHIP_G0_SOC:
+ 		case CHIP_G0M_SOC:
+ 			/* default config */
+@@ -937,8 +945,17 @@ int inno_panel_backlight_init(struct inno_panel *panel, inno_dev *pdev,
+ 			}
+ 			break;
+ 		default:
+-			dev_warn(panel->dev, "does not currently support platform.\n");
+-			return -EINVAL;
++			dev_warn(panel->dev, "unknown platform %d uses FH2M PWM backlight fallback.\n", plat);
++			bl->pwm_ctrl_reg = REG_ENTITY0000;
++			bl->pwm_clock_reg = REG_ENTITY0001;
++			bl->pwm_start_reg = REG_ENTITY0002;
++			bl->pwm_end_reg  = REG_ENTITY0003;
++			bl->pwm_reg_type = REG_M_PWM;
++			bl->pwm_clock = fh2m_hal_get_pll(pdev, PLL_CBUS);
++			if (!bl->pwm_clock)
++				bl->pwm_clock = 128;
++			bl->pwm_clock = bl->pwm_clock * 1000000;
++			break;
+ 		}
+ 	} else {
+ 		dev_warn(panel->dev,

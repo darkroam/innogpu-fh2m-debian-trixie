@@ -1,0 +1,29 @@
+diff --git a/innosrvkm/innodpu_panel_backlight.c b/innosrvkm/innodpu_panel_backlight.c
+--- a/innosrvkm/innodpu_panel_backlight.c
++++ b/innosrvkm/innodpu_panel_backlight.c
+@@ -973,9 +973,14 @@ int inno_panel_backlight_init(struct inno_panel *panel, inno_dev *pdev,
+ 	}
+ 
+ register_bl:
++	if (bl->max_brightness > 0)
++		bl->default_brightness = bl->max_brightness;
++
+ 	props.type       = BACKLIGHT_RAW;
+ 	props.brightness = bl->default_brightness;
+ 	props.max_brightness = bl->max_brightness;
++	props.power = FB_BLANK_UNBLANK;
++	props.state = 0;
+ 	bl->last_brightness  = props.brightness;
+ 	bl->base = devm_backlight_device_register(panel->dev, "panel_backlight",
+ 						  panel->dev, bl,
+@@ -985,6 +990,10 @@ int inno_panel_backlight_init(struct inno_panel *panel, inno_dev *pdev,
+ 
+ 	panel->backlight = bl->base;
+ 	bl->panel = panel;
++	bl->base->props.brightness = bl->default_brightness;
++	bl->base->props.power = FB_BLANK_UNBLANK;
++	bl->base->props.state = 0;
++	backlight_update_status(bl->base);
+ 
+ 	DRM_DEBUG_KMS("backlight used %s",
+ 				  (bl->sdr_uses_aux || bl->vesa_uses_aux) ? "aux" : "pwm");

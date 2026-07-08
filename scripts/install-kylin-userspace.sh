@@ -1,6 +1,6 @@
 #!/bin/bash
 # Install Innosilicon FH2M userspace GL stack copied from a mounted Kylin/UOS root
-# or from /home/ok/src/innogpu-kylin-userspace-backup/root.
+# or from $HOME/src/innogpu-kylin-userspace-backup/root.
 #
 # Debian Trixie warning: Kylin innogpu_drv.so is Xorg video ABI 24, while
 # Debian Trixie Xorg is ABI 25. This installer avoids the previous global
@@ -13,10 +13,10 @@ log() { echo "[innogpu-kylin-userspace] $*"; }
 err() { echo "ERROR: $*" >&2; exit 1; }
 
 if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
-    err "run as root: sudo $0 [/mnt/kylin-root|/home/ok/src/innogpu-kylin-userspace-backup/root]"
+    err "run as root: sudo $0 [/mnt/kylin-root|$HOME/src/innogpu-kylin-userspace-backup/root]"
 fi
 
-SRC_ROOT="${1:-/home/ok/src/innogpu-kylin-userspace-backup/root}"
+SRC_ROOT="${1:-${INNOGPU_KYLIN_ROOT:-$HOME/src/innogpu-kylin-userspace-backup/root}}"
 [[ -d "$SRC_ROOT" ]] || err "source root not found: $SRC_ROOT"
 
 require_file() {
@@ -124,6 +124,12 @@ EndSection
 XORG
 
 ldconfig
+
+if command -v innogpu-repair-dri-nodes >/dev/null 2>&1; then
+    innogpu-repair-dri-nodes || true
+elif [[ -x "$(dirname "$0")/repair-dri-nodes.sh" ]]; then
+    "$(dirname "$0")/repair-dri-nodes.sh" || true
+fi
 
 log "installed candidate config. Validate without reboot with:"
 log "  sudo innogpu-test-xorg-once"

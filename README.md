@@ -1,125 +1,213 @@
 # innogpu-fh2m-debian-trixie
 
-Debian Trixie kernel 6.12 上的 Innosilicon Fantasy II-M / 风华2号M（innogpu fh2m）驱动打包与兼容修复。
+Debian Trixie kernel 6.12 上的 Innosilicon Fantasy II-M / 风华2号M 驱动打包、兼容修复和验证记录。
 
-## 当前状态
+## 当前结论
 
-| 阶段 | 状态 |
-|------|------|
-| 内核模块编译 (DKMS) | ✓ patched-6/7/8/9 均通过 |
-| 内核模块加载 | ✓ 自动加载正常，Driver OK，Firmware OK |
-| /dev/dri 设备 | ✓ card0 + renderD128 |
-| Xorg modesetting + llvmpipe | ✓ 安全回退，随时可用 |
-| Xorg innogpu DDX | ✓ 重启验证通过，EDID/显示/输入正常 |
-| 硬件 GLAMOR 加速 | ✗ GBM backend 不兼容 |
-| 当前 GL | Mesa llvmpipe 软件渲染 |
-| 硬件 OpenGL/EGL/Vulkan | 待 GBM backend 解决 |
+当前可用版本是 `innogpu-fh2m-trixie 3.3.3.42-patched-17`。
 
-## 核心阻塞问题
+| 项目 | 状态 |
+| --- | --- |
+| DKMS 内核模块 | 通过，基于 Deepin 202504 DKMS 源码 |
+| Debian 6.12 兼容 | 通过，包含 kernel 6.12 修复 |
+| 本机启动显示 | 通过，tty1、Xorg、dwm 可用 |
+| DRM/fbdev 节点 | 通过，`card0`、`renderD128`、`fb0` 可用 |
+| Deepin 用户态硬件 GL | 通过 |
+| 当前 OpenGL renderer | `Fantasy II-M` |
+| 回退点 | `patched-8` 和 `patched-17` 均保留 |
 
-**GLAMOR 硬件加速**需要 vendor GBM backend (`innogpu_gbm.so`)，但当前 Deepin 202504 的 GBM backend 与 Debian 6.12 内核 DRM 栈不兼容：
+最终验证基线见 [baselines/final-summary.md](baselines/final-summary.md)。
 
-| 尝试 | 结果 |
-|------|------|
-| 系统 libgbm + vendor GBM backend | segfault in `gbm_create_device` |
-| vendor libgbm (LD_PRELOAD) + vendor GBM backend | 同样 segfault |
-| 禁用 GBM backend（当前方案） | DDX 正常工作，GL 回退到 llvmpipe |
+## 路径约定
 
-GBM backend 崩溃发生在 `gbm_create_device` 深层调用中，与 Debian 6.12 DRM ioctl/ABI 变化有关。
-
-## 等效命令：安装硬件 DDX（当前推荐）
+脚本不再写死本机用户目录。默认约定如下，可按实际环境覆盖：
 
 ```bash
-sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-9.deb
-sudo modprobe innogpu
-sudo innogpu-install-kylin-userspace /home/ok/src/innogpu-fh2m-deepin-202504/root
-sudo innogpu-test-xorg-once   # 验证 Xorg 不崩溃
+export INNOGPU_ROOT="${INNOGPU_ROOT:-$HOME/src/innogpu-fh2m-debian-trixie}"
+export INNOGPU_DEEPIN_ROOT="${INNOGPU_DEEPIN_ROOT:-$INNOGPU_ROOT/third_party/innogpu-fh2m-deepin-202504/root}"
+export INNOGPU_X_USER="${INNOGPU_X_USER:-$USER}"
+export INNOGPU_X_HOME="${INNOGPU_X_HOME:-$HOME}"
+```
+
+## 保留的关键包
+
+| 文件 | 用途 |
+| --- | --- |
+| `innogpu-fh2m-trixie_3.3.3.42-patched-8.deb` | 原始稳定回退点，不修改 |
+| `innogpu-fh2m-trixie_3.3.3.42-patched-17.deb` | 当前成功版本，Deepin 202504 基线 + 本设备显示修复 + 硬件 GL |
+| `innogpu-fh2m_20250421190503-debug_amd64.deb` | Deepin 202504 用户态 GL/DDX 来源 |
+
+这些 `.deb` 不纳入 git；从 release 独立下载后放到仓库根目录即可。`.gitignore` 会忽略所有 `.deb`。
+
+Deepin deb 放置和解包位置：
+
+| 内容 | 位置 | 是否进 git |
+| --- | --- | --- |
+| Deepin 原始包 | `./innogpu-fh2m_20250421190503-debug_amd64.deb` | 否 |
+| Deepin 解包目录 | `./third_party/innogpu-fh2m-deepin-202504/root/` | 否 |
+| patched-17 构建用 DKMS 源码 | `./third_party/innogpu-fh2m-deepin-202504/root/usr/src/innogpu-kernel-2.2/` | 否，脚本自动从 deb 解包 |
+
+`scripts/prepare-deepin-userspace-root.sh` 会从仓库根目录的 Deepin deb 解包出 `third_party/.../root`。`scripts/build-patched17-deepin-local-display.sh` 构建 patched-17 时会使用其中的 Deepin DKMS 源码，再叠加本仓库 `patches/` 中的本机适配补丁。
+
+## 新设备安装
+
+新 Debian Trixie 设备 clone 本仓库后，先从 release 下载显卡驱动安装所需的两个 patched 包和 Deepin 202504 用户态 deb，并放到仓库根目录。
+
+还需要通过 Debian 安装系统依赖：
+
+```bash
+cd "$INNOGPU_ROOT"
+sudo scripts/install-prereqs-debian.sh
+```
+
+完整流程见 [docs/new-device-install.md](docs/new-device-install.md)。
+
+安装状态验证：
+
+```bash
+cd "$INNOGPU_ROOT"
+scripts/verify-install-status.sh
+```
+
+如果要验证当前确实是指定版本：
+
+```bash
+scripts/verify-install-status.sh 3.3.3.42-patched-17
+scripts/verify-install-status.sh 3.3.3.42-patched-8
+```
+
+## 构建 patched-17
+
+```bash
+cd "$INNOGPU_ROOT"
+scripts/build-patched17-deepin-local-display.sh
+```
+
+`patched-17` 的构建逻辑：
+
+- 以 `patched-8` 包装和安全回退能力为基础。
+- 替换为 Deepin 202504 DKMS 源码。
+- 应用 Debian 6.12 兼容补丁。
+- 应用本设备需要的 local connector ACPI map 和 DP/fbcon fallback。
+- 不再沿用旧版本 DKMS 源码继续堆补丁。
+
+## 安装和验证
+
+安装当前成功包：
+
+```bash
+cd "$INNOGPU_ROOT"
+sudo scripts/install-patched17-and-check.sh
+```
+
+验证当前状态：
+
+```bash
+cd "$INNOGPU_ROOT"
+scripts/check-innogpu-progress.sh
+scripts/check-desktop-hwgl.sh
+sudo scripts/check-post-reboot-hwgl.sh
+```
+
+期望结果：
+
+```text
+PASS_DESKTOP_HWGL
+PASS_POST_REBOOT_HWGL
+PASS_CURRENT_XORG_HWGL_RUNTIME
+PASS_VENDOR_DDX_RUNTIME_ACCELERATION
+```
+
+## 回退流程
+
+如果 patched-17 安装或重启后显示异常，优先回退 patched-8：
+
+```bash
+cd "$INNOGPU_ROOT"
+sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-8.deb
+sudo scripts/disable-incompatible-userspace.sh
+printf '%s\n' innogpu | sudo tee /etc/modules-load.d/innogpu.conf
+sudo depmod -a "$(uname -r)"
+sudo update-initramfs -u -k "$(uname -r)"
 sudo reboot
 ```
 
-重启后 Xorg 自动使用 innogpu DDX（EDID、显示、输入正常），GL 由 Mesa llvmpipe 提供。
+如果只需要恢复 tty1 登录提示，不安装包、不重启：
 
-**恢复安全 modesetting：**
 ```bash
-sudo innogpu-disable-incompatible-userspace && sudo reboot
+cd "$INNOGPU_ROOT"
+sudo scripts/restore-tty1-login.sh
 ```
 
-## 已尝试的用户态来源
+如果只需要恢复软件渲染 Xorg/dwm：
 
-### 1. 麒麟 V10 系统盘 (`/mnt/kylin-root`)
-
-- 包名：`innogpu-fh2m`，版本 `3.2.1.16-v10.2-kylin`
-- DDX 为 Xorg video ABI 24 (Xorg 1.20.4)，Debian Trixie ABI 25 不兼容
-- 源码线索：`G0M_DDK_V119RTM_RELEASE_BUILD_PIPELINE_DDK`
-
-### 2. 麒麟 V11 Server ISO
-
-- `~/downloads/Kylin-Server-V11-2503-Release-General-20250715-X86_64.iso`
-- RPM 系统，无 innogpu-fh2m 包
-
-### 3. Kylin 在线源
-
-- `archive.kylinos.cn/kylin/KYLIN-ALL` — 仅 `3.2.1.16-v10.2-kylin`（同 #1）
-- `archive2.kylinos.cn/DEB/KYLIN_DEB` V11 — 无 innogpu
-- `updates.kylinos.cn/NS/V11/2503` — chroot dnf search 无结果
-
-### 4. Deepin V23 / beige 社区源 ✓ 最佳候选
-
-```
-https://community-packages.deepin.com/deepin/beige/pool/commercial/i/innogpu-fh2m/
-  innogpu-fh2m_20250421190503-debug_amd64.deb  78 MB
-  innogpu-fh2m_202504211717-debug_loong64.deb   33 MB
-  innogpu-fh2m_20250421190503-debug_arm64.deb   29 MB
+```bash
+cd "$INNOGPU_ROOT"
+sudo scripts/prepare-soft-xorg-dwm.sh
 ```
 
-AMD64 SHA256: `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2`
+## 主要脚本
 
-本地：`/home/ok/src/innogpu-fh2m_20250421190503-debug_amd64.deb`
-解包：`/home/ok/src/innogpu-fh2m-deepin-202504/`
+| 脚本 | 说明 |
+| --- | --- |
+| `scripts/build-patched17-deepin-local-display.sh` | 构建当前成功包 |
+| `scripts/build-patched10-deepin.sh` | 通用 Deepin DKMS 基线打包入口 |
+| `scripts/install-prereqs-debian.sh` | 新 Debian 系统安装前置依赖 |
+| `scripts/install.sh` | 当前主安装入口，默认安装 patched-17 |
+| `scripts/install-patched17-and-check.sh` | 安装 patched-17 并做基础检查 |
+| `scripts/install-patched8-and-check.sh` | 安装 patched-8 回退点 |
+| `scripts/uninstall-patched17.sh` | 卸载当前 patched-17 包 |
+| `scripts/uninstall-patched8.sh` | 卸载当前 patched-8 包 |
+| `scripts/prepare-deepin-userspace-root.sh` | 从仓库内 Deepin deb 解包用户态库 |
+| `scripts/verify-install-status.sh` | 只读验证安装状态、DKMS、节点和 Xorg/GL 状态 |
+| `scripts/check-innogpu-progress.sh` | 汇总当前系统状态 |
+| `scripts/check-desktop-hwgl.sh` | 验证当前桌面硬件 GL |
+| `scripts/check-post-reboot-hwgl.sh` | 验证重启后持久状态 |
+| `scripts/disable-incompatible-userspace.sh` | 禁用不兼容用户态并回到安全配置 |
+| `scripts/prepare-soft-xorg-dwm.sh` | 准备软件渲染 Xorg/dwm |
+| `scripts/restore-tty1-login.sh` | 恢复 tty1 用户名密码登录提示 |
+| `scripts/repair-dri-nodes.sh` | 修复缺失的 DRM/fbdev 节点 |
 
-关键优势：
-- DDX: Xorg video ABI 25.2 ✓
-- DRI: Mesa 23.1.3
-- 包含 swrast_inno_dri.so, innogpu_drv_video.so, innogpu_gbm.so
-- DKMS 内核源码已更新（~50个文件与 patched-6 基准不同）
+## 代码库结构
 
-### 5. Linglong 仓库
-
-GitHub: `linglongdev/cn.innosilicon.driver.innogpu.fh2m`
-引用的 deb 与 #4 相同。
-
-### 6. 麒麟系统盘备份
-
-`/home/ok/src/innogpu-kylin-userspace-backup/` （66 MB tar.gz）
-含麒麟 V10 完整 innogpu 用户态栈、dpkg metadata、Xorg 日志。
-
-## 备份文件
-
-| 文件 | 大小 | 说明 |
-|------|------|------|
-| `/home/ok/src/innogpu-kylin-userspace-backup/` | - | 麒麟 V10 用户态备份目录 |
-| `/home/ok/src/innogpu-kylin-userspace-backup.tar.gz` | 66 MB | 麒麟 V10 用户态打包 |
-| `/home/ok/src/innogpu-fh2m_20250421190503-debug_amd64.deb` | 78 MB | Deepin 202504 deb |
-| `/home/ok/src/innogpu-fh2m-deepin-202504/` | - | Deepin deb 解包目录 |
-| `/home/ok/readme-gpu` | - | 首次调查记录 |
-
-## 仓库文件
-
-```
-patches/001-kernel-6.12-compat.patch      — kernel 6.12 兼容补丁
-scripts/install.sh                        — 从官方包安装的旧流程
-scripts/build-patched6.sh                 — 打包 patched-6（PLL workaround）
-scripts/build-patched7.sh                 — 打包 patched-7（用户态安装器）
-scripts/build-patched9.sh                 — 打包 patched-9（当前推荐）
-scripts/patch-skip-first-gpupll.sh       — PLL workaround
-scripts/disable-incompatible-userspace.sh — 恢复安全 modesetting
-scripts/install-kylin-userspace.sh        — 从麒麟/UOS/Deepin root 安装用户态（跳过 GBM backend）
-scripts/test-xorg-once.sh                — 非重启 Xorg 测试
-*.deb                                     — Release 包
+```text
+.
+├── README.md
+├── LICENSE
+├── .gitignore
+├── patches/
+├── scripts/
+├── tools/
+├── docs/
+├── baselines/
+├── third_party/
+└── *.deb
 ```
 
-## 下一步
+| 路径 | 说明 |
+| --- | --- |
+| `patches/` | Debian 6.12 兼容、本机显示/TTY/fbcon 修复补丁。 |
+| `scripts/` | 构建、安装、回退、硬件 GL 启用、状态验证和显示恢复脚本。 |
+| `tools/` | EGL/GBM/X11 最小化探针源码，用于排查用户态 GL。 |
+| `docs/` | 新设备安装、清理过程、维护说明。 |
+| `baselines/` | 最终验证结果和精简基线，不再保存大量原始 Xorg 日志。 |
+| `third_party/` | Deepin 202504 deb 的解包输出目录；该目录不进 git，可由脚本重建。 |
+| `*.deb` | release 下载到仓库根目录的外部包；被 `.gitignore` 忽略，不进 git。 |
 
-1. 寻找 GBM backend 的修复或更新版（新 Deepin/UOS 包可能有兼容 Debian 6.12 的版本）
-2. 或获取 GBM backend 源码后在 Debian 6.12 上重新编译
-3. GBM backend 解决后再测试 GLAMOR 硬件加速、eglinfo、Vulkan
+关键入口：
+
+| 入口 | 用途 |
+| --- | --- |
+| `scripts/install.sh` | 默认安装 patched-17，可加 `--prereqs` 安装 Debian 依赖。 |
+| `scripts/verify-install-status.sh` | 安装后只读验证包、DKMS、驱动、节点、Xorg/GL 状态。 |
+| `scripts/prepare-deepin-userspace-root.sh` | 从根目录 Deepin deb 解包用户态库到 `third_party/`。 |
+| `scripts/install-patched8-and-check.sh` | 安装 patched-8 回退点。 |
+| `scripts/install-patched17-and-check.sh` | 安装当前 patched-17 成功点。 |
+
+## 文档
+
+| 文件 | 说明 |
+| --- | --- |
+| [docs/new-device-install.md](docs/new-device-install.md) | 新 Debian 设备从 clone 到安装/卸载 |
+| [docs/cleanup-20260708.md](docs/cleanup-20260708.md) | 本次仓库整理过程和取舍 |
+| [baselines/final-summary.md](baselines/final-summary.md) | 最终成功基线摘要 |
