@@ -115,6 +115,72 @@ PASS_DESKTOP_HWGL
 PASS_POST_REBOOT_HWGL
 ```
 
+## Internal Speaker Audio
+
+本设备内置喇叭使用 HDA codec `Conexant SN6180`。PCI 设备是：
+
+```text
+0000:06:00.6 Audio device [1d94:14c9]
+```
+
+Debian 的 `snd_hda_intel` 模块存在，但默认 PCI alias 不匹配 `1d94:14c9`，所以新系统上通常会出现：
+
+- `InnosiliconCard` 只显示 `DP0/HDMI0/HDMI1` 数字音频。
+- 内置喇叭没有对应的 `SN6180 Analog` 输出。
+- `lspci -nnk -s 06:00.6` 没有 `Kernel driver in use`。
+
+安装持久化修复：
+
+```bash
+cd "$INNOGPU_ROOT"
+sudo scripts/install-hygon-hda-audio.sh
+```
+
+如果需要直接播放一次测试音：
+
+```bash
+sudo scripts/install-hygon-hda-audio.sh --test-sound
+```
+
+安装后验证：
+
+```bash
+lspci -nnk -s 06:00.6
+aplay -l
+amixer -c Intel sget Speaker
+wpctl status
+systemctl status hygon-hda-audio.service --no-pager
+systemctl --user status hygon-hda-audio-user.service --no-pager
+```
+
+期望看到：
+
+```text
+Kernel driver in use: snd_hda_intel
+card ... Intel [HDA Intel], device 0: SN6180 Analog [SN6180 Analog]
+Speaker ... [on]
+hygon-hda-audio.service ... enabled/active
+hygon-hda-audio-user.service ... enabled/inactive or active after successful oneshot run
+```
+
+脚本写入的系统文件：
+
+```text
+/etc/modules-load.d/hygon-hda-audio.conf
+/etc/systemd/system/hygon-hda-audio.service
+```
+
+脚本会直接维护当前用户的 ALSA/PipeWire 配置：
+
+```text
+~/.config/alsa/asoundrc
+~/.asoundrc -> ~/.config/alsa/asoundrc
+~/.config/systemd/user/hygon-hda-audio-user.service
+~/.local/bin/hygon-hda-audio-user-apply
+```
+
+不要全局导出 `ALSA_CONFIG_PATH="$XDG_CONFIG_HOME/alsa/asoundrc"`。`ALSA_CONFIG_PATH` 会替换系统 `/usr/share/alsa/alsa.conf`，不是追加配置，会导致 PipeWire/WirePlumber 只能看到虚拟输出或 `off` profile。脚本会注释掉 `.profile`/`.zprofile` 中的该导出，并使用 `~/.asoundrc` 标准方式加载用户 ALSA 默认输出。
+
 ## Installation Status Checks
 
 `scripts/verify-install-status.sh` 是只读检查脚本，不会修改系统。它检查：

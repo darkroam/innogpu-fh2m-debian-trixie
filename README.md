@@ -14,6 +14,7 @@ Debian Trixie kernel 6.12 上的 Innosilicon Fantasy II-M / 风华2号M 驱动�
 | DRM/fbdev 节点 | 通过，`card0`、`renderD128`、`fb0` 可用 |
 | Deepin 用户态硬件 GL | 通过 |
 | 当前 OpenGL renderer | `Fantasy II-M` |
+| 内置喇叭 | 通过，`06:00.6 [1d94:14c9]` 手动绑定 `snd_hda_intel` 后为 `SN6180 Analog` |
 | 回退点 | `patched-8` 和 `patched-17` 均保留 |
 
 最终验证基线见 [baselines/final-summary.md](baselines/final-summary.md)。
@@ -109,6 +110,30 @@ scripts/check-desktop-hwgl.sh
 sudo scripts/check-post-reboot-hwgl.sh
 ```
 
+内置喇叭修复：
+
+```bash
+cd "$INNOGPU_ROOT"
+sudo scripts/install-hygon-hda-audio.sh
+```
+
+该脚本会：
+
+- 加载 `snd_hda_intel`。
+- 将 `0000:06:00.6 [1d94:14c9]` 绑定到 `snd_hda_intel`。
+- 安装 `hygon-hda-audio.service`，开机后自动恢复绑定。
+- 安装用户级 `hygon-hda-audio-user.service`，在 PipeWire/WirePlumber 启动后恢复默认输出和喇叭 mixer。
+- 保留 `~/.config/alsa/asoundrc` 作为用户 ALSA 配置文件，并通过 `~/.asoundrc` 标准方式加载。
+- 禁用全局 `ALSA_CONFIG_PATH`，避免 PipeWire/WirePlumber 无法枚举硬件输出。
+- 将 PipeWire 默认输出切到 `HDA Intel 模拟立体声`。
+- 打开 `Master`、`Speaker`，并关闭 HDA `Auto-Mute Mode`。
+
+可选播放测试音：
+
+```bash
+sudo scripts/install-hygon-hda-audio.sh --test-sound
+```
+
 期望结果：
 
 ```text
@@ -156,6 +181,7 @@ sudo scripts/prepare-soft-xorg-dwm.sh
 | `scripts/install.sh` | 当前主安装入口，默认安装 patched-17 |
 | `scripts/install-patched17-and-check.sh` | 安装 patched-17 并做基础检查 |
 | `scripts/install-patched8-and-check.sh` | 安装 patched-8 回退点 |
+| `scripts/install-hygon-hda-audio.sh` | 持久化内置 HDA 喇叭修复 |
 | `scripts/uninstall-patched17.sh` | 卸载当前 patched-17 包 |
 | `scripts/uninstall-patched8.sh` | 卸载当前 patched-8 包 |
 | `scripts/prepare-deepin-userspace-root.sh` | 从仓库内 Deepin deb 解包用户态库 |
