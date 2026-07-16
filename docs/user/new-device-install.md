@@ -63,4 +63,10 @@ sudo scripts/install-hygon-hda-audio.sh --test-sound
 
 patched-17 安装脚本会安装显示命令和会话入口。首次启动 Xorg 前可先运行只读 fixture；进入 X11
 后按 `verification.md` 检查 `xdisplay.sh --status`。项目不会复制完整个人 dotfiles，dwm 的键位、
-状态栏、壁纸、Picom、输入法和代理仍由桌面配置自行提供。
+状态栏、壁纸、输入法和代理仍由桌面配置自行提供。Picom 是下述独立可选流程。
+
+## 可选 Picom GLX 合成器
+
+显卡驱动、Xorg 和硬件 GL 验证完成后，再按 `picom-install.md` 安装 patched Picom。该流程独立
+clone 固定 Picom 源码、应用项目 patch、安装配置和注册 X11 会话入口；不要把 Picom 构建目录或
+二进制加入本仓库，也不要在首次显卡启动验证前同时启用合成器。

@@ -36,3 +36,14 @@
 - 当前 X11 只读比较确认仓库 watcher 与运行来源一致，合盖外屏 `health=ready`。
 
 完整迁移记录见 `display-integration.md`。
+
+## 2026-07-17 Picom GLX 兼容流程吸纳
+
+- 从 dotfiles 提交 `7747c2d` 和当前配置恢复 Picom/xcompmgr 启动、v13 动画、发白排查、st 不透明
+  规则和最终模糊配置的处理历史。
+- 从上游 Picom `6d676824` 的本机源码差异导出 explicit uniform location shader 探测 patch。
+- 保存与当前运行文件逐字一致的 `picom.conf`，增加独立会话、依赖、构建和用户安装脚本。
+- 在 `/tmp` 干净 clone 中完成 patch 和 46 步构建；GLX diagnostics 确认为 Fantasy II-M 硬件加速。
+- 用户安装器和会话选择各 3 项通过，当前运行 Picom 未停止或替换。
+
+完整记录见 `picom-integration.md`。

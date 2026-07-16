@@ -1,0 +1,33 @@
+diff --git a/src/backend/gl/gl_common.c b/src/backend/gl/gl_common.c
+index 28c94983..5004af8c 100644
+--- a/src/backend/gl/gl_common.c
++++ b/src/backend/gl/gl_common.c
+@@ -1058,4 +1058,9 @@ static const struct {
+-bool gl_init(struct gl_data *gd, session_t *ps) {
+-	if (!epoxy_has_gl_extension("GL_ARB_explicit_uniform_location")) {
+-		log_error("GL_ARB_explicit_uniform_location support is required but "
+-		          "missing.");
++static bool gl_can_compile_explicit_uniform_location(void) {
++	static const char shader_source[] =
++	    "#version 330\n"
++	    "#extension GL_ARB_explicit_uniform_location : enable\n"
++	    "layout(location = 0) uniform float opacity;\n"
++	    "void main() { gl_Position = vec4(opacity); }\n";
++
++	GLuint shader = gl_create_shader(GL_VERTEX_SHADER, shader_source);
++	if (shader == 0) {
+@@ -1063,0 +1069,14 @@ bool gl_init(struct gl_data *gd, session_t *ps) {
++	glDeleteShader(shader);
++	gl_check_err();
++	return true;
++}
++
++bool gl_init(struct gl_data *gd, session_t *ps) {
++	if (!epoxy_has_gl_extension("GL_ARB_explicit_uniform_location") &&
++	    !gl_can_compile_explicit_uniform_location()) {
++		log_error("GL_ARB_explicit_uniform_location support is required but missing.");
++		return false;
++	} else if (!epoxy_has_gl_extension("GL_ARB_explicit_uniform_location")) {
++		log_warn("GL_ARB_explicit_uniform_location is not listed by the driver, "
++		         "but shader compilation succeeded; continuing.");
++	}

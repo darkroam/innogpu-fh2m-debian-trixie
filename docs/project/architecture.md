@@ -16,6 +16,8 @@ release 中的外部 deb
        -> X11 会话中的 xdisplay.sh --watch
             -> lid + DRM connector + RandR
             -> 显示布局与热插拔收敛
+       -> patched Picom GLX
+            -> 圆角、模糊、动画和窗口合成
 
 PCI 0000:06:00.6 [1d94:14c9]
   -> hygon-hda-audio.service
@@ -28,6 +30,8 @@ PCI 0000:06:00.6 [1d94:14c9]
 | 路径 | 职责 |
 | --- | --- |
 | `patches/` | Deepin DKMS 源码针对 Debian 6.12 和本设备的内核补丁 |
+| `patches/picom/` | 针对 Innogpu GL 扩展声明缺失的 Picom 源码补丁 |
+| `config/` | 项目维护的用户态配置模板，不包含完整个人 dotfiles |
 | `scripts/` | 构建、安装、回退、诊断、显示管理、音频固化和验证入口 |
 | `tools/` | EGL、GBM、X11 和 loader 的最小探针源码 |
 | `tests/` | 可重复运行的静态 fixture 和脚本回归测试 |
@@ -72,6 +76,15 @@ Innogpu 钩子注入。仓库已使用通用 `scripts/xdisplay.sh` 替换旧硬�
 
 系统服务负责驱动绑定，用户服务在 PipeWire/WirePlumber 启动后恢复默认 sink 和 mixer。不得全局
 导出 `ALSA_CONFIG_PATH` 指向用户配置，因为该变量会替换系统 ALSA 配置并破坏设备 profile 枚举。
+
+## X11 合成器
+
+Picom 使用 Innogpu 硬件 GLX。驱动的 GLSL 编译器能够编译 explicit uniform location，但扩展字符串
+没有声明 `GL_ARB_explicit_uniform_location`，上游 Picom 因此在创建 backend 前提前退出。项目
+补丁只在最小 shader 实际编译成功时继续，编译失败仍保持上游拒绝行为，不伪造其他 GL 能力。
+
+Picom 属于独立用户态组件，不进入显卡驱动 deb。项目固定上游提交、保存 patch、配置和会话启动
+片段；源码仍从上游单独 clone。Picom 未安装时会话片段可回退到 `xcompmgr`。
 
 ## 配置边界
 

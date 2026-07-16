@@ -37,7 +37,7 @@
 
 ```sh
 git diff --check
-rg -n '/home/ok|MiWiFi|serverauth\.[[:alnum:]]' README.md docs scripts tests
+rg -n '/home/ok|MiWiFi|serverauth\.[[:alnum:]]' README.md docs scripts tests config patches
 bash -n scripts/*.sh
 ```
 

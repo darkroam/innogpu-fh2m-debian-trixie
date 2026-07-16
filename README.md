@@ -13,6 +13,7 @@ Debian Trixie kernel 6.12 上 Innosilicon Fantasy II-M / 风华2号M 的驱动�
 | tty1、Xorg、dwm | 通过 |
 | DRM/fbdev | `card0`、`renderD128`、`fb0` 可用 |
 | 硬件 GL | renderer 为 `Fantasy II-M`，历史验证通过 |
+| Picom GLX | patched v13 正在运行，圆角、模糊、动画保留，全局透明关闭 |
 | 内置喇叭 | `1d94:14c9 -> snd_hda_intel -> SN6180`，重启验证通过 |
 | 显示 watcher | 已吸纳；fixture、安装器、测试包构建和当前 X11 只读状态通过 |
 
@@ -47,12 +48,16 @@ sudo scripts/install-patched17-and-check.sh
 sudo scripts/install-hygon-hda-audio.sh
 ```
 
+patched Picom GLX 的独立安装见 [Picom 安装与恢复](docs/user/picom-install.md)。它不随显卡驱动 deb
+自动安装，失败时也不需要回退 DKMS。
+
 ## 文档
 
 ### 项目现状
 
 - [项目架构](docs/project/architecture.md)
 - [显示管理](docs/project/display-management.md)
+- [Picom 合成器](docs/project/compositor-management.md)
 - [音频管理](docs/project/audio-management.md)
 - [依赖与外部文件](docs/project/dependencies.md)
 - [维护策略](docs/project/maintenance-policy.md)
@@ -61,6 +66,7 @@ sudo scripts/install-hygon-hda-audio.sh
 
 - [当前 TODO](docs/planning/todo.md)
 - [显示代码吸纳计划](docs/planning/display-integration.md)
+- [Picom 吸纳计划](docs/planning/picom-integration.md)
 - [实施历史](docs/planning/history.md)
 - [挂起项](docs/planning/suspended.md)
 
@@ -70,6 +76,7 @@ sudo scripts/install-hygon-hda-audio.sh
 - [状态验证](docs/user/verification.md)
 - [故障恢复](docs/user/recovery.md)
 - [显示切换](docs/user/display-guide.md)
+- [Picom 安装与恢复](docs/user/picom-install.md)
 
 历史材料见 [docs/archive](docs/archive/)，精简验证证据见 [baselines](baselines/README.md)。
 
@@ -79,6 +86,7 @@ sudo scripts/install-hygon-hda-audio.sh
 .
 |-- README.md
 |-- patches/
+|-- config/
 |-- scripts/
 |-- tools/
 |-- tests/

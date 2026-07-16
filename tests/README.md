@@ -16,3 +16,15 @@ tests/xdisplay/run-install-tests.sh
 [`docs/planning/display-integration.md`](../docs/planning/display-integration.md)。
 
 不得提交测试运行产生的锁文件、日志、runtime 目录或本机绝对路径。
+
+Picom 用户配置安装器测试：
+
+```sh
+tests/picom/run-install-tests.sh
+tests/picom/run-session-tests.sh
+```
+
+这些测试只写入 `/tmp` 下的临时 HOME，并用假命令验证 Picom 优先级、xcompmgr 回退和单实例，
+不启动真实 Picom 或 xcompmgr。
+
+当前 Picom 安装器和会话测试分别为 3 项通过。

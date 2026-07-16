@@ -28,7 +28,8 @@ while IFS= read -r -d '' file; do
 done < <(find README.md docs baselines tests -type f -name '*.md' -print0)
 
 personal_refs="$(
-    rg -n '/home/ok|MiWiFi|serverauth\.[[:alnum:]]' README.md docs scripts tests 2>/dev/null |
+    rg -n '/home/ok|MiWiFi|serverauth\.[[:alnum:]]' \
+        README.md docs scripts tests config patches 2>/dev/null |
         rg -v '不得写死 `/home/ok`|rg -n .*/home/ok' || true
 )"
 if [[ -n "$personal_refs" ]]; then
@@ -38,11 +39,13 @@ fi
 
 for path in \
     docs/project/architecture.md \
+    docs/project/compositor-management.md \
     docs/project/display-management.md \
     docs/project/maintenance-policy.md \
     docs/planning/todo.md \
     docs/planning/history.md \
     docs/user/new-device-install.md \
+    docs/user/picom-install.md \
     docs/user/verification.md \
     docs/user/recovery.md; do
     [[ -f "$path" ]] || fail "required document is missing: $path"

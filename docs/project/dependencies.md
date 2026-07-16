@@ -30,6 +30,18 @@
 `displayselect` 可选使用 `setbg`、`remaps`、`dunst` 和 `notify-send` 完成桌面后处理，这些命令
 不是项目安装依赖；缺失或失败时布局操作仍应成功。
 
+## Picom 外部源码
+
+Picom 源码不复制进本仓库。当前基线为上游 `yshui/picom` 的 `next` 提交：
+
+```text
+6d676824c457a933c52e3e92c5a1856466f90545
+```
+
+构建依赖和安装命令由 `scripts/install-picom-prereqs-debian.sh` 与
+`scripts/build-patched-picom.sh` 管理。`xcompmgr` 是 Picom 二进制不存在时的轻量回退，不用于验证
+GLX 补丁。
+
 ## 路径约定
 
 ```sh
