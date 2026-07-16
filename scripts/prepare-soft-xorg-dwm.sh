@@ -10,10 +10,13 @@ if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
 fi
 
 ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+SOURCE_DIR="$ROOT/scripts"
+if [[ ! -d "$SOURCE_DIR" ]]; then
+    SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
 X_USER="${INNOGPU_X_USER:-${SUDO_USER:-${USER:-}}}"
 X_HOME="${INNOGPU_X_HOME:-$(getent passwd "$X_USER" 2>/dev/null | cut -d: -f6)}"
 X_HOME="${X_HOME:-$HOME}"
-X_GROUP="$(id -gn "$X_USER" 2>/dev/null || printf '%s\n' "$X_USER")"
 
 echo "Recovery if this makes Xorg worse:"
 echo "  cd \"$ROOT\""
@@ -52,18 +55,15 @@ done
 [[ -w /sys/class/graphics/fb0/blank ]] && printf '0\n' > /sys/class/graphics/fb0/blank || true
 [[ -w /sys/module/kernel/parameters/consoleblank ]] && printf '0\n' > /sys/module/kernel/parameters/consoleblank || true
 
-echo "[4/6] Installing X11 panel mode recovery helpers for user $X_USER..."
-install -d -o "$X_USER" -g "$X_GROUP" -m 0755 "$X_HOME/.local/bin"
-if [[ -x "$ROOT/scripts/restore-dp1-mode-x11.sh" ]]; then
-    install -o "$X_USER" -g "$X_GROUP" -m 0755 "$ROOT/scripts/restore-dp1-mode-x11.sh" "$X_HOME/.local/bin/innogpu-restore-dp1-mode-x11"
-fi
-if [[ -f "$ROOT/scripts/xdisplay.sh.with-innogpu-restore" ]]; then
-    if [[ -e "$X_HOME/.local/bin/xdisplay.sh" && ! -e "$X_HOME/.local/bin/xdisplay.sh.before-innogpu-soft" ]]; then
-        cp -a "$X_HOME/.local/bin/xdisplay.sh" "$X_HOME/.local/bin/xdisplay.sh.before-innogpu-soft"
-        chown "$X_USER:$X_GROUP" "$X_HOME/.local/bin/xdisplay.sh.before-innogpu-soft" || true
-    fi
-    install -o "$X_USER" -g "$X_GROUP" -m 0755 "$ROOT/scripts/xdisplay.sh.with-innogpu-restore" "$X_HOME/.local/bin/xdisplay.sh"
-fi
+echo "[4/6] Installing X11 display management for user $X_USER..."
+[[ -x "$SOURCE_DIR/install-xdisplay-user.sh" ]] || {
+    echo "ERROR: display installer is missing: $SOURCE_DIR/install-xdisplay-user.sh" >&2
+    exit 1
+}
+INNOGPU_DISPLAY_SOURCE_DIR="$SOURCE_DIR" \
+INNOGPU_X_USER="$X_USER" \
+INNOGPU_X_HOME="$X_HOME" \
+    "$SOURCE_DIR/install-xdisplay-user.sh"
 
 echo "[5/6] Keeping tty1 at login prompt if Xorg is currently not requested..."
 init_cmd="$(tr '\0' ' ' </proc/1/cmdline 2>/dev/null || true)"

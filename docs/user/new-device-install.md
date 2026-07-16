@@ -27,6 +27,14 @@ cd "$INNOGPU_ROOT"
 sudo scripts/install-patched17-and-check.sh
 ```
 
+该脚本还会为执行 `sudo` 的桌面用户安装显示命令和 X11 会话启动入口，但不会在安装过程中启动
+watcher 或改变当前 RandR 布局。使用 root 直接安装或目标桌面用户不是 `SUDO_USER` 时应显式
+传入目标用户，例如：
+
+```sh
+sudo INNOGPU_X_USER="$USER" INNOGPU_X_HOME="$HOME" scripts/install-patched17-and-check.sh
+```
+
 需要重启时，先阅读 `recovery.md` 并确认 `patched-8` deb 在仓库根目录。重启后先验证 TTY、Xorg、
 dwm 和基础驱动状态，再启用 Deepin 硬件 GL 用户态。
 
@@ -53,6 +61,6 @@ sudo scripts/install-hygon-hda-audio.sh --test-sound
 
 ## 显示会话
 
-当前安装流程会准备 Xorg/dwm 和显示辅助工具。显示 watcher 新实现尚在吸纳阶段，具体状态以
-`../project/display-management.md` 为准；在该文档改为“仓库已生效”前，不应假设新 clone 已包含
-本机 dotfiles 的全部显示行为。
+patched-17 安装脚本会安装显示命令和会话入口。首次启动 Xorg 前可先运行只读 fixture；进入 X11
+后按 `verification.md` 检查 `xdisplay.sh --status`。项目不会复制完整个人 dotfiles，dwm 的键位、
+状态栏、壁纸、Picom、输入法和代理仍由桌面配置自行提供。

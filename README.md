@@ -14,7 +14,7 @@ Debian Trixie kernel 6.12 上 Innosilicon Fantasy II-M / 风华2号M 的驱动�
 | DRM/fbdev | `card0`、`renderD128`、`fb0` 可用 |
 | 硬件 GL | renderer 为 `Fantasy II-M`，历史验证通过 |
 | 内置喇叭 | `1d94:14c9 -> snd_hda_intel -> SN6180`，重启验证通过 |
-| 新显示 watcher 吸纳 | 文档阶段完成，代码尚未进入本仓库 |
+| 显示 watcher | 已吸纳；fixture、安装器、测试包构建和当前 X11 只读状态通过 |
 
 “历史通过”不能替代当前运行检查。安装后应执行 `docs/user/verification.md` 中的命令。
 

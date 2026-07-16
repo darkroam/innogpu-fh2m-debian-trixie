@@ -53,6 +53,18 @@ elif command -v innogpu-disable-incompatible-userspace >/dev/null 2>&1; then
 fi
 
 echo
+echo "Installing X11 display management for the desktop user..."
+if [[ -x "$ROOT/scripts/install-xdisplay-user.sh" ]]; then
+    "$ROOT/scripts/install-xdisplay-user.sh"
+elif [[ -x /usr/share/innogpu-fh2m-trixie/install-xdisplay-user.sh ]]; then
+    INNOGPU_DISPLAY_SOURCE_DIR=/usr/share/innogpu-fh2m-trixie \
+        /usr/share/innogpu-fh2m-trixie/install-xdisplay-user.sh
+else
+    echo "ERROR: install-xdisplay-user.sh is missing" >&2
+    exit 1
+fi
+
+echo
 echo "Enabling boot autoload..."
 install -d -m 0755 /etc/modules-load.d
 printf '%s\n' innogpu > /etc/modules-load.d/innogpu.conf

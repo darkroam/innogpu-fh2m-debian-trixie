@@ -61,8 +61,9 @@ Xorg/RandR
 ```
 
 通用引擎不得硬编码外屏名称、数量或分辨率。本设备非标准内屏候选和模式恢复通过明确的
-Innogpu 钩子注入。当前仓库仍包含旧显示脚本，替换工作记录在
-`../planning/display-integration.md`；完成代码吸纳和验证前，不把目标 watcher 描述为仓库已生效行为。
+Innogpu 钩子注入。仓库已使用通用 `scripts/xdisplay.sh` 替换旧硬编码脚本，并通过
+`install-xdisplay-user.sh` 将会话入口安装到目标用户；吸纳和验证记录见
+`../planning/display-integration.md`。
 
 ## 音频
 

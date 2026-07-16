@@ -10,8 +10,6 @@ if ! command -v xrandr >/dev/null 2>&1; then
     exit 0
 fi
 
-xset s off -dpms dpms force on >/dev/null 2>&1 || true
-
 get_output_line() {
     xrandr 2>/dev/null | awk -v output="$OUTPUT" '$1 == output && $2 == "connected" { print; exit }'
 }
@@ -56,7 +54,7 @@ while [ "$i" -lt 15 ]; do
     fi
 
     if is_connected_without_mode; then
-        xset s off -dpms dpms force on >/dev/null 2>&1 || true
+        xset dpms force on >/dev/null 2>&1 || true
 
         if ! xrandr 2>/dev/null | grep -q "^  ${MODE} "; then
             xrandr --newmode "$MODE" 154.00 1920 1968 2000 2080 1200 1203 1209 1235 +hsync -vsync >/dev/null 2>&1 || true

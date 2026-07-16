@@ -1,0 +1,4 @@
+#!/bin/sh
+
+printf '%s\n' "$*" >> "${FAKE_RESTORE_CALLS:-/dev/null}"
+exit 0

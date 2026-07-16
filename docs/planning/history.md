@@ -25,5 +25,14 @@
 - `1f8790b Document display framebuffer diagnostics`
 - `5628c6e Fix dock display convergence`
 
-该实现已在本机通过 fixture、当前 X11、热插拔、开合盖和重启验证。本项目尚未吸纳代码，迁移状态以
-`display-integration.md` 为准。
+该实现已在本机通过 fixture、当前 X11、热插拔、开合盖和重启验证。
+
+## 2026-07-16 显示代码吸纳
+
+- 吸纳通用 `xdisplay.sh`、共享锁 `displayselect`、设备恢复钩子和净化后的 fixture。
+- 删除旧的硬编码 `xdisplay.sh.with-innogpu-restore`。
+- 新增可独立测试的用户会话安装器，并接入 patched-17 安装、软件 Xorg 准备和 deb 构建流程。
+- fixture 共 27 项、用户安装器 4 项通过；patched-17 测试包在 `/tmp` 完整重建并核对内容。
+- 当前 X11 只读比较确认仓库 watcher 与运行来源一致，合盖外屏 `health=ready`。
+
+完整迁移记录见 `display-integration.md`。

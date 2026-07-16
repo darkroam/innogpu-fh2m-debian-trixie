@@ -23,16 +23,23 @@ sudo scripts/check-post-reboot-hwgl.sh
 
 ## 显示管理
 
-代码吸纳完成后使用：
-
 ```sh
-xdisplay.sh --status
+scripts/xdisplay.sh --status
 xrandr --current
 cat /sys/class/tty/tty0/active
 ```
 
 `--status` 应只读，并报告 lid、输出 connection/geometry/mode、stale/pending、health 和锁路径。
 实机验证必须同时看 RandR 状态和物理屏幕，不能只看 `connected`。
+
+仓库回归测试：
+
+```sh
+tests/xdisplay/run-stage2-tests.sh
+tests/xdisplay/run-stage2-watch-tests.sh
+tests/xdisplay/run-stage4-regression-tests.sh
+tests/xdisplay/run-install-tests.sh
+```
 
 ## 内置音频
 
