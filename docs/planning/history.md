@@ -47,3 +47,13 @@
 - 用户安装器和会话选择各 3 项通过，当前运行 Picom 未停止或替换。
 
 完整记录见 `picom-integration.md`。
+
+## 2026-08-13 Picom GLX 能力判断修复复核
+
+- 反查 `third_party/` 中的 Innogpu 用户态库：当前仓库只保存预编译 `.so`，没有可直接修改的
+  OpenGL 扩展表源码；驱动库字符串和 GLSL 诊断表明 `layout(location = ...)` 编译能力存在，
+  但运行时扩展列表未暴露该名称。
+- 保持驱动包不变，采用现有 `patches/picom/001-probe-explicit-uniform-location.patch`，让
+  Picom 在扩展缺失时编译最小 shader，失败仍阻止 GLX，成功才继续。
+- Picom release/debugoptimized 构建、单元测试和真实 `DISPLAY=:0` GLX 启动验证通过；运行日志
+  只出现兼容 warning。该特例仍由 Picom 用户态 patch 所有，未加入 DKMS deb。

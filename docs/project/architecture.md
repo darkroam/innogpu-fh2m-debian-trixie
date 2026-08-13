@@ -83,6 +83,10 @@ Picom 使用 Innogpu 硬件 GLX。驱动的 GLSL 编译器能够编译 explicit 
 没有声明 `GL_ARB_explicit_uniform_location`，上游 Picom 因此在创建 backend 前提前退出。项目
 补丁只在最小 shader 实际编译成功时继续，编译失败仍保持上游拒绝行为，不伪造其他 GL 能力。
 
+这是本设备图形用户态的特例边界：能力判断由下游 Picom 的运行时 shader 探测承担，不通过修改
+预编译 Innogpu `.so` 或增加显卡型号白名单解决。该探测不能移入通用显示脚本，也不能视为所有
+Innogpu 或其他 GPU 的默认能力；驱动用户态、Picom 基线或 GLSL 编译器变化后必须重新验证。
+
 Picom 属于独立用户态组件，不进入显卡驱动 deb。项目固定上游提交、保存 patch、配置和会话启动
 片段；源码仍从上游单独 clone。Picom 未安装时会话片段可回退到 `xcompmgr`。
 

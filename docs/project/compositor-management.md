@@ -3,11 +3,11 @@
 ## 当前状态
 
 本机运行 Picom v13，源码基线为上游提交
-`6d676824c457a933c52e3e92c5a1856466f90545`。安装位置为 `/usr/local/bin/picom`，当前已验证二进制
-SHA-256 为：
+`6d676824c457a933c52e3e92c5a1856466f90545`。安装位置为 `/usr/local/bin/picom`，2026-08-13
+重新构建并验证的二进制 SHA-256 为：
 
 ```text
-172e6640a28eac2deeb3ff16750d1fb773e2eaa0e6961c2781bffed19d9a13de
+cfc6296364c6b8c9b2ddc5cf32862ee5ff36797feb5992a33ce3cfca3ff1fdc9
 ```
 
 该哈希只记录本机当前构建证据；编译器或依赖变化后哈希可以变化，不能作为跨设备安装条件。
@@ -15,7 +15,7 @@ SHA-256 为：
 仓库 patch SHA-256 为
 `9df67d95fe7677f0614f465915cbab06dd694ee4be407b55155e0be544fb21ae`；项目配置与当前运行配置
 逐字一致，SHA-256 为
-`b6728844e6857224c8731a8d31962ca91e3a965be393e7a1c0b53b9d3031cf18`。
+`cf25c6a1cdde819ab2877811f20a392883ef7e8a96a80cc40648d42c047ab730`。
 
 ## 原始问题
 
@@ -67,6 +67,10 @@ Picom 存在但 GLX 初始化失败时不自动掩盖错误，应先检查日志
 - 当前设备尚未安装 `xcompmgr`，所以运行中的 Picom 不受影响，但立即回退前需先执行
   `sudo apt install xcompmgr`；新设备 Picom 依赖脚本会自动安装它。
 - patch 固定到提交 `6d676824`，升级 Picom 时必须重新审查，不能跳过基线检查强行应用。
+- 2026-08-13 使用最终下游源码重新构建并安装 Picom；实际 X11 会话记录
+  `GL_ARB_explicit_uniform_location is not listed by the driver, but shader compilation succeeded; continuing.`，
+  进程持续运行，未再出现 `Failed to setup OpenGL`。安装前二进制保留为
+  `/usr/local/bin/picom.before-capability`；该路径是本机回退证据，不作为安装器必需文件。
 
 ## 所有权边界
 
