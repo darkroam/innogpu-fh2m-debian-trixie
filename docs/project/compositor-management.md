@@ -15,7 +15,7 @@ cfc6296364c6b8c9b2ddc5cf32862ee5ff36797feb5992a33ce3cfca3ff1fdc9
 仓库 patch SHA-256 为
 `9df67d95fe7677f0614f465915cbab06dd694ee4be407b55155e0be544fb21ae`；项目配置与当前运行配置
 逐字一致，SHA-256 为
-`cf25c6a1cdde819ab2877811f20a392883ef7e8a96a80cc40648d42c047ab730`。
+`3c25d73e3d0c9f5de64d2f582cf6645aef956100f61e2eee69ae23277a7fa5c8`。
 
 ## 原始问题
 
@@ -41,7 +41,8 @@ Picom 处理不是一次配置替换，实际经过以下步骤：
 3. 适配 Picom v13 配置语法，删除旧 `animation-for-*` 选项，改用 `animations` preset。
 4. 针对桌面发白依次隔离模糊和透明度：确认问题不是 st 源码，也不是单独由模糊造成；恢复 st，
    删除全局非活动窗口透明，并给 st 增加 100% opacity 规则。
-5. 保留最终可用的 `dual_kawase` 模糊、圆角、淡入淡出和轻量动画，阴影保持关闭。
+5. 保留最终可用的 `dual_kawase` 模糊、10px 圆角、低强度阴影、淡入淡出和轻量动画；
+   Fcitx/Fcitx5 通过 `class_g *= 'fcitx'` 排除动画、阴影、圆角和背景模糊。
 6. 确认上游 Picom 因驱动扩展字符串缺项拒绝 GLX，修改 Picom 为实际 shader 编译探测，完成构建
    并安装到 `/usr/local/bin/picom`。
 7. 通过持续日志确认兼容 warning 后 Picom 继续运行，当前进程实际使用 patched 二进制和
@@ -49,9 +50,14 @@ Picom 处理不是一次配置替换，实际经过以下步骤：
 
 ## 当前配置
 
-项目配置使用 `backend = "glx"`，保留 10px 圆角、`dual_kawase` 模糊、淡入淡出和轻量动画。
+项目配置使用 `backend = "glx"`，保留 10px 圆角、低强度阴影、`dual_kawase` 模糊、淡入淡出和轻量动画。
 为避免整个桌面发白，全局 active/inactive opacity 均保持 100%，并显式让 st、mpv、OBS、Gimp
-等窗口不透明。当前阴影关闭，模糊强度为 4。
+等窗口不透明。阴影为 `radius=10`、`offset-y=2`、`opacity=0.28`，模糊强度为 4。
+
+动画按触发器分别固定：`open` 使用 `appear`（0.14s/0.96），`show` 使用较快的 `appear`
+（0.11s/0.98），`close` 使用 `disappear`（0.09s/0.98），`hide` 使用更短的 `disappear`
+（0.08s/0.99）；DWM 的平铺和移动使用 `geometry-change`（0.10s）。Fcitx/Fcitx5 命中
+`animation-exclude`，不会参与这些动画。
 
 会话启动只允许一个 Picom 进程，并写入用户 cache 日志。Picom 不存在时尝试启动 `xcompmgr`；
 Picom 存在但 GLX 初始化失败时不自动掩盖错误，应先检查日志再手工回退。
