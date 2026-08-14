@@ -44,12 +44,33 @@ PCI 0000:06:00.6 [1d94:14c9]
 
 ## 驱动与图形用户态
 
-当前成功包为 `innogpu-fh2m-trixie 3.3.3.42-patched-17`。DKMS 源码以 Deepin 202504 为基线，
-叠加 Debian 6.12 兼容、G0M PLL、DRM/fbdev 和本地 connector 修复。`patched-8` 保留为显示启动
-回退点，不继续修改。
+`innogpu-fh2m-trixie 3.3.3.42-patched-20` 是当前已安装并通过 PVR、Xorg/GLX 和真实 VT fbterm
+验收的版本，`patched-17` 是当前可用回退包。后续包统一以 Deepin 202504 原包为唯一技术基线，在其 DKMS 源码上叠加
+Debian 6.12 兼容、G0M PLL、DRM/fbdev 和本地 connector 修复，并保留同一原包中的完整用户态 ABI
+集合。`patched-8` 只保留为更早的历史回滚物，不再参与设计、构建或实现对照。
 
 Deepin 202504 deb 同时提供硬件 GL/DDX 用户态。内核模块成功、DRM 节点存在和 Xorg 出图不能
 单独证明硬件加速可用；必须分别验证 renderer、direct rendering、DRI、GLX 和 Present。
+
+### 驱动包构建基线
+
+后续候选包必须直接解包 `innogpu-fh2m_20250421190503-debug_amd64.deb`，以其中的 DKMS 源码、
+固件、预编译对象、DRI、GBM、GLAPI、GLVND、Xorg DDX 和相互链接关系作为同一个不可拆分的基线，
+然后只在 Deepin DKMS 源码上按版本应用仓库补丁，并用本项目已审查的 Debian maintainer scripts
+替换上游安装脚本。禁止从任一历史 patched 包复制用户态文件或控制脚本后再局部替换源码。
+
+因此：
+
+- Deepin 202504 原包是后续版本唯一的源码、用户态 ABI 和打包载荷基线；
+- `patched-8` 只是历史回滚点，`patched-17` 是一次不延续 patched-8 实现谱系的重建，两者都不是
+  后续版本的实现父版本；
+- `patched-18` 的 fbdev 补丁本身已通过 mmap 验证，但其旧构建流程错误地复用了 patched-8 的包载荷
+  和控制脚本，因此不能作为后续打包基线；
+- `patched-19` 是第一个执行完整 Deepin 202504 载荷规则的历史候选，关键 vendor 文件哈希和 DRI
+  未解析符号检查已通过；
+- `patched-20` 在完整 Deepin 202504 载荷上保留 `fb_io_mmap` 并加入 PVR 初始化诊断，已通过运行时
+  PVR、隔离 Xorg/GLX 和真实 VT `fbterm` 验收；诊断补丁不应直接作为长期日志方案；
+- DRI、GBM、GLAPI、GLVND 和 DDX 必须来自同一 Deepin 发布，禁止跨版本混配或只替换其中一个文件。
 
 ## 显示管理
 

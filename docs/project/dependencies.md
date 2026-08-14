@@ -6,12 +6,18 @@
 
 | 文件 | 用途 |
 | --- | --- |
-| `innogpu-fh2m-trixie_3.3.3.42-patched-8.deb` | 稳定显示回退点 |
-| `innogpu-fh2m-trixie_3.3.3.42-patched-17.deb` | 当前成功驱动包 |
+| `innogpu-fh2m-trixie_3.3.3.42-patched-8.deb` | 早期历史回滚物，不用于后续构建或实现参考 |
+| `innogpu-fh2m-trixie_3.3.3.42-patched-17.deb` | 当前可用回退包，不作为后续构建基线 |
+| `innogpu-fh2m-trixie_3.3.3.42-patched-18.deb` | framebuffer mmap 历史候选，不作为后续基线 |
+| `innogpu-fh2m-trixie_3.3.3.42-patched-19.deb` | 完整 Deepin 202504 载荷历史候选，已通过离线一致性检查 |
+| `innogpu-fh2m-trixie_3.3.3.42-patched-20.deb` | 当前安装并通过 PVR、Xorg/GLX、fbterm 验收的诊断候选 |
 | `innogpu-fh2m_20250421190503-debug_amd64.deb` | Deepin 202504 DKMS/GL/DDX 来源 |
 
 `scripts/prepare-deepin-userspace-root.sh` 将 Deepin deb 解包到被 git 忽略的
 `third_party/innogpu-fh2m-deepin-202504/root/`。
+
+Deepin 202504 原包是后续版本唯一的技术基线。构建必须保留其中同源的 DRI、GBM、GLAPI、GLVND
+和 DDX 载荷，只允许在其 DKMS 源码上叠加仓库补丁；历史 patched 包不得再作为 `BASE_DEB`。
 
 ## Debian 包
 

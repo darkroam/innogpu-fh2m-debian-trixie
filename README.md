@@ -7,15 +7,23 @@ Debian Trixie kernel 6.12 上 Innosilicon Fantasy II-M / 风华2号M 的驱动�
 
 | 项目 | 当前状态 |
 | --- | --- |
-| 驱动包 | `3.3.3.42-patched-17`，基于 Deepin 202504 DKMS 源码 |
-| 回退点 | `patched-8`，保留且不继续修改 |
+| 驱动包 | 当前运行并已验收 `3.3.3.42-patched-20`，基于完整 Deepin 202504 原包 |
+| 回退点 | `patched-17`；`patched-8` 仅保留为更早的历史回滚物 |
 | Debian 6.12 / DKMS | 通过 |
 | tty1、Xorg、dwm | 通过 |
-| DRM/fbdev | `card0`、`renderD128`、`fb0` 可用 |
-| 硬件 GL | renderer 为 `Fantasy II-M`，历史验证通过 |
+| DRM/fbdev | `card0`、`renderD128`、`fb0` 节点、ioctl 和 `mmap()` 可用；真实 VT `fbterm` 通过 |
+| 硬件 GL | renderer 为 `Fantasy II-M`，Xorg/GLX direct rendering 和加速通过 |
 | Picom GLX | patched v13 正在运行，圆角、模糊、动画保留，全局透明关闭 |
 | 内置喇叭 | `1d94:14c9 -> snd_hda_intel -> SN6180`，重启验证通过 |
 | 显示 watcher | 已吸纳；fixture、安装器、测试包构建和当前 X11 只读状态通过 |
+
+`patched-18` 是针对 patched-17 framebuffer `mmap()` 返回 `ENODEV` 的历史候选；其旧构建流程曾
+混用 patched-8 用户态载荷，不能作为后续基线。该故障确认后续版本必须以 Deepin 202504 原包的
+完整载荷为唯一技术基线，不能再以 patched-8 或 patched-17/18 的包内容继续派生。
+
+`patched-19` 是按上述规则完成的第一个完整载荷候选，作为 patched-20 的构建基础和历史记录保留。
+当前已安装并验收的 patched-20 在此基础上保留 `fb_io_mmap`，并加入临时 PVR 初始化诊断；正式长期
+运行包应在确认后移除或限速该诊断补丁。
 
 “历史通过”不能替代当前运行检查。安装后应执行 `docs/user/verification.md` 中的命令。
 
@@ -26,6 +34,7 @@ Debian Trixie kernel 6.12 上 Innosilicon Fantasy II-M / 风华2号M 的驱动�
 ```text
 innogpu-fh2m-trixie_3.3.3.42-patched-8.deb
 innogpu-fh2m-trixie_3.3.3.42-patched-17.deb
+innogpu-fh2m-trixie_3.3.3.42-patched-20.deb
 innogpu-fh2m_20250421190503-debug_amd64.deb
 ```
 
@@ -33,8 +42,13 @@ innogpu-fh2m_20250421190503-debug_amd64.deb
 export INNOGPU_ROOT="$HOME/src/innogpu-fh2m-debian-trixie"
 cd "$INNOGPU_ROOT"
 sudo scripts/install-prereqs-debian.sh
+# The existing helper installs the patched-17 fallback package.
 sudo scripts/install-patched17-and-check.sh
 ```
+
+新设备部署当前已验收的 patched-20 时，应使用 release 中的
+`innogpu-fh2m-trixie_3.3.3.42-patched-20.deb` 和对应安装流程；`install-patched17-and-check.sh`
+仅用于保留的 patched-17 回退路径。
 
 重启或启用硬件 GL 前，先阅读：
 

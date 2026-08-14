@@ -4,7 +4,17 @@
 set -euo pipefail
 
 ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-DEEPIN_DEB="${INNOGPU_DEEPIN_DEB:-$ROOT/innogpu-fh2m_20250421190503-debug_amd64.deb}"
+if [[ -z "${INNOGPU_DEEPIN_DEB:-}" ]]; then
+    for candidate in \
+        "$ROOT/debs/innogpu-fh2m_20250421190503-debug_amd64.deb" \
+        "$ROOT/innogpu-fh2m_20250421190503-debug_amd64.deb"; do
+        if [[ -f "$candidate" ]]; then
+            INNOGPU_DEEPIN_DEB="$candidate"
+            break
+        fi
+    done
+fi
+DEEPIN_DEB="${INNOGPU_DEEPIN_DEB:-}"
 OUT_ROOT="${INNOGPU_DEEPIN_ROOT:-$ROOT/third_party/innogpu-fh2m-deepin-202504/root}"
 
 if [[ -d "$OUT_ROOT/usr" ]]; then

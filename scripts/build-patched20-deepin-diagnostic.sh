@@ -1,0 +1,16 @@
+#!/bin/bash
+set -euo pipefail
+
+ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+cd "$ROOT"
+
+PATCH_VERSION=20 \
+APPLY_LOCAL_CONNECTOR_ACPI_MAP=1 \
+APPLY_DP_FBCON_FALLBACK=1 \
+APPLY_PANEL_BACKLIGHT_FALLBACK=0 \
+APPLY_PANEL_PLATFORM_FALLBACK=0 \
+APPLY_BACKLIGHT_FORCE_INITIAL_ENABLE=0 \
+APPLY_FBDEV_IO_MMAP=1 \
+APPLY_PVR_INIT_DIAGNOSTIC=1 \
+OUT_DEB=innogpu-fh2m-trixie_3.3.3.42-patched-20.deb \
+    scripts/build-deepin-coherent.sh

@@ -1,0 +1,24 @@
+--- a/innosrvkm/innogpu_drm.c
++++ b/innosrvkm/innogpu_drm.c
+@@ -215,6 +215,11 @@
+ 	struct drm_pvr_srvkm_init_data *data = arg;
+ 	struct pvr_drm_private *priv = innogpu_drm_to_pvr_private(dev);
+ 	int iErr = 0;
++	int init_module = data ? data->init_module : -1;
++	int state_before = (priv && priv->dev_node) ? priv->dev_node->eDevState : -1;
++
++	pr_info("innogpu: srvkm_init module=%d priv=%p dev_node=%p state_before=%d\n",
++		init_module, priv, priv ? priv->dev_node : NULL, state_before);
+ 
+ 	switch (data->init_module)
+ 	{
+@@ -236,6 +241,10 @@
+ 		}
+ 	}
+ 
++	pr_info("innogpu: srvkm_init module=%d ret=%d state_after=%d\n",
++		init_module, iErr,
++		(priv && priv->dev_node) ? priv->dev_node->eDevState : -1);
++
+ 	return iErr;
+ }
