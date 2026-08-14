@@ -13,6 +13,7 @@
 | [patched-20 运行时验收](patched-20-runtime.md) | 完整 Deepin 202504 载荷越过 PVR、隔离 Xorg/GLX 和真实 VT 门槛；诊断补丁仍非长期方案 |
 | [patched-20 旧辅助载荷](patched-20-legacy-helper-payload.md) | 运行验收 deb 早于 xdisplay 所有权收敛，版本不可复用，包不可直接发布 |
 | [Picom GL 能力判断](picom-explicit-uniform-location.md) | 下游 Picom 用最小 shader 验证能力，不修改预编译驱动库或伪造扩展字符串 |
+| [fbterm YPan 显示错位](fbterm-ypan-rendering.md) | fbdev 快速平移会造成越界感和跨会话残留；强制 redraw 已在真实 VT 验证 |
 
 ## 使用规则
 

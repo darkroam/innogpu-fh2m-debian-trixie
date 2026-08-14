@@ -20,14 +20,14 @@ Debian Trixie kernel 6.12 上 Innosilicon Fantasy II-M / 风华 2 号 M 的驱�
 | p21 验收状态 | 两次一致构建、离线包审计、部署与当前设备运行验收通过；跨硬件发布待评审 |
 | 唯一技术基线 | Deepin `20250421190503-debug` 完整原包；历史 patched 包不得作为后续载荷父版本 |
 | 当前回退点 | patched-17；patched-8 只保留为更早的历史恢复物 |
-| DRM/fbdev | `card0`、`renderD128`、`fb0` 可用，`/dev/fb0 mmap()` 和 `FBIOPAN_DISPLAY` 已通过 |
+| DRM/fbdev | `card0`、`renderD128`、`fb0` 和 mmap 可用；fbterm 需使用已验证的 redraw 模式避开 YPan 显示错位 |
 | 硬件 GL | renderer 为 `Fantasy II-M`，direct rendering、DRI3、GLX、Present 和加速通过 |
 | Picom | patched v13 的运行时 shader 能力探测已验证；Picom 不进入显卡驱动 deb |
 | 内置音频 | `1d94:14c9 -> snd_hda_intel -> SN6180`，ALSA/PipeWire 重启验证通过 |
 | X11 显示管理 | xdisplay 由 dotconfig 仓库独立维护；本项目只提供 Innogpu 输出候选、模式恢复钩子和会话接入 |
 
 当前可以确认的是“p21 在当前设备上工作”。它已通过 PVR/firmware、DRM/fbdev、当前桌面 GLX、
-隔离 Xorg、真实 VT fbterm、xdisplay、Picom 和音频状态验收。历史 p20 deb 生成于 xdisplay 所有权
+隔离 Xorg、真实 VT fbterm redraw、xdisplay、Picom 和音频状态验收。历史 p20 deb 生成于 xdisplay 所有权
 收敛之前，不能用当前源码以相同版本号重建或推广；p21 的公开发布仍需要跨设备验证。
 
 patched-21 的精确定义、禁止载荷、构建证据格式和未来运行门槛见

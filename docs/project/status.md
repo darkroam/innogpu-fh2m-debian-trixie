@@ -15,9 +15,9 @@
 | 运行验收状态 | p21 的两次一致构建、离线审计、部署、重启和当前设备运行验收均通过 | [`patched-21` 证据](../patches/patched-21-release-candidate.md) |
 | 源码/用户态基线 | Deepin 202504 完整原包，不混用历史 patched 包 | `scripts/build-deepin-coherent.sh` |
 | 固件与 PVR | `fh2m.fw`、`fh2m.sh` 已加载，Driver/Firmware 为 OK，错误计数为 0 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
-| DRM/fbdev | `card0`、`renderD128`、`fb0` 可用；真实 VT fbterm 通过 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
+| DRM/fbdev | `card0`、`renderD128`、`fb0` 和 mmap 可用；fbterm 使用 redraw 模式通过真实 VT 持续滚动验证 | [`fbterm YPan 记录`](../incidents/fbterm-ypan-rendering.md) |
 | Xorg/GLX | 当前桌面和隔离 `:9/vt8` 的 Xorg、`xdpyinfo`、`glxinfo` 全部通过；硬件加速启用 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
-| 真实 VT | 操作者确认普通用户 fbterm 可绘制并正常退出 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
+| 真实 VT | 普通用户 fbterm 可绘制和退出；禁用 YPan 后长输出、清屏及跨会话显示正常 | [`fbterm YPan 记录`](../incidents/fbterm-ypan-rendering.md) |
 | 显示管理 | dotconfig 维护 xdisplay 2.0.0；本项目只维护设备钩子和会话接入 | [`display-management.md`](display-management.md) |
 | Picom | patched v13 正在使用 Innogpu GLX，配置独立于驱动包 | `patches/picom/`、`docs/project/compositor-management.md` |
 | 音频 | HDA 内置喇叭、PipeWire 默认 sink 和启动服务均正常 | `docs/project/audio-management.md` |
@@ -34,6 +34,7 @@
 | patched-18 用户态 ABI 混配 | 禁止从历史 deb 拼接用户态，统一以 Deepin 202504 原包重建 | 事故记录 |
 | patched-18 缺少 shader 固件导致 PVR BAD | 从 Deepin 原包保留完整 `fh2m.fw/fh2m.sh/fh2c.fw/fh2c.sh` | coherent 构建及事故记录 |
 | Picom 未声明 `GL_ARB_explicit_uniform_location` 而提前退出 | 运行时编译最小 shader 验证能力，成功后继续 | Picom patch |
+| fbterm 快速滚动造成清屏错位和跨会话残留 | 增加可配置 redraw 模式及退出偏移复位，默认/16px 字体均通过真实 VT 验证 | fbterm 用户态补丁 |
 | 显示引擎曾在本仓库形成重复副本 | 明确由 dotconfig 单独维护；本项目只注入 Innogpu 设备契约 | 显示集成阶段 |
 
 ## 当前未解决或需要后续处理
@@ -51,6 +52,8 @@
    `XDISPLAY_INTERNAL_OUTPUTS`、`XDISPLAY_RESTORE_COMMAND` 和会话接入仍兼容。
 7. patched-21 的实际 deb 哈希、离线包审计与当前设备运行证据已记录；公开发布前仍需完成跨设备
    矩阵、release 审阅和回退演练。
+8. 当前驱动仍报告 YPan 能力，但 stock fbterm 的加速滚动存在显示错位；用户态 redraw 已验证，
+   内核侧应撤销能力声明还是修复平移语义尚未决定。
 
 ## 证据保留规则
 

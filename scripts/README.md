@@ -15,6 +15,7 @@
 | `build-patched20-deepin-diagnostic.sh` | 停用护栏 | 明确拒绝用当前辅助载荷复用已验收 patched-20 版本号 |
 | `prepare-deepin-userspace-root.sh` | 当前辅助 | 将 Deepin 原包解包到被忽略的 `third_party/` |
 | `build-patched-picom.sh` | 独立组件 | 构建/安装固定基线的 patched Picom，不进入驱动 deb |
+| `build-patched-fbterm.sh` | 独立组件 | 从 Debian fbterm 1.7-5 构建可配置 redraw 的用户本地版本，不进入驱动 deb |
 
 ## 支持的安装与恢复
 

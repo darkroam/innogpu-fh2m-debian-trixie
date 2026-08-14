@@ -25,6 +25,15 @@ tests/picom/run-session-tests.sh
 这些测试只写入 `/tmp` 下的临时 HOME，并用假命令验证 Picom 优先级、xcompmgr 回退和单实例，
 不启动真实 Picom 或 xcompmgr。
 
+fbterm redraw 补丁静态测试：
+
+```sh
+tests/fbterm/run-static-tests.sh
+```
+
+该测试检查构建入口语法以及配置开关、偏移复位和命令行接口是否保留，不访问 framebuffer。真实
+VT 的长输出、清屏和跨会话测试不能由 mock 替代，结果记录在事故文档中。
+
 Release 包边界测试：
 
 ```sh

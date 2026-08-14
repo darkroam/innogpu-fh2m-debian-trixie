@@ -9,6 +9,9 @@ third_party/innogpu-fh2m-deepin-202504/
 /debs/*
 !/debs/README.md
 
+# Local component builds are reproducible from scripts and source patches.
+/.build/
+
 # Keep only compact pass/fail markers from runtime baselines.
 /baselines/latest-current-xorg-hwgl-test/*
 !/baselines/latest-current-xorg-hwgl-test/result.txt

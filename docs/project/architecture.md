@@ -36,11 +36,12 @@ PCI 0000:06:00.6 [1d94:14c9]
 | --- | --- |
 | `patches/` | Deepin DKMS 源码针对 Debian 6.12 和本设备的内核补丁 |
 | `patches/picom/` | 针对 Innogpu GL 扩展声明缺失的 Picom 源码补丁 |
+| `patches/fbterm/` | 针对当前 fbdev YPan 语义差异的 fbterm 用户态兼容补丁 |
 | `debs/` | 本地 release/构建输入输出目录，`.deb` 被 Git 忽略，仅跟踪说明文件 |
 | `config/` | 项目维护的用户态配置模板，不包含完整个人 dotfiles |
 | `scripts/` | 构建、安装、回退、诊断、显示接入、音频固化和验证入口 |
 | `tools/` | EGL、GBM、X11、loader 的最小探针，以及确定性的厂商对象变换工具 |
-| `tests/` | 本项目脚本、Picom 会话和显示接入边界测试；xdisplay 引擎测试留在 dotconfig |
+| `tests/` | 本项目脚本、fbterm/Picom 和显示接入边界测试；xdisplay 引擎测试留在 dotconfig |
 | `docs/project/` | 架构、现状、依赖和维护边界 |
 | `docs/patches/` | 每个代码补丁的独立设计、验证和回退说明 |
 | `docs/incidents/` | 失败现场、根因推导、排除项和经验记录 |
@@ -131,6 +132,14 @@ Innogpu 或其他 GPU 的默认能力；驱动用户态、Picom 基线或 GLSL �
 
 Picom 属于独立用户态组件，不进入显卡驱动 deb。项目固定上游提交、保存 patch、配置和会话启动
 片段；源码仍从上游单独 clone。Picom 未安装时会话片段可回退到 `xcompmgr`。
+
+## framebuffer 终端
+
+驱动包负责提供可映射的 `/dev/fb0` 和准确的 fbdev 能力；fbterm 是独立用户态组件，不进入驱动 deb。
+当前驱动的 mmap 已通过，但其 YPan 快速滚动与 fbterm 1.7 的偏移管理不兼容，因此本项目保存
+`patches/fbterm/` 和独立构建入口，以 `scrolling=redraw` 保证正确显示。该规避不改变 framebuffer
+可见/虚拟尺寸，也不代表驱动 YPan 已修复；根因、对照证据和回归门槛见
+[`../incidents/fbterm-ypan-rendering.md`](../incidents/fbterm-ypan-rendering.md)。
 
 ## 配置边界
 

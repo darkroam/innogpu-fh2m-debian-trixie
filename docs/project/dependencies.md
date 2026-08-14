@@ -54,6 +54,20 @@ Picom 源码不复制进本仓库。当前基线为上游 `yshui/picom` 的 `nex
 `scripts/build-patched-picom.sh` 管理。`xcompmgr` 是 Picom 二进制不存在时的轻量回退，不用于验证
 GLX 补丁。
 
+## fbterm 外部源码
+
+fbterm 源码不复制进本仓库。兼容补丁固定面向 Debian `fbterm 1.7-5` 源码包，默认源码路径为
+`~/src/fbterm-1.7`。使用 Debian source repository 取得源码后，通过以下入口构建和安装：
+
+```sh
+scripts/build-patched-fbterm.sh
+scripts/build-patched-fbterm.sh --install
+```
+
+构建需要 C/C++ 工具链、`patch`、pkg-config、FreeType 和 Fontconfig 开发文件；已验证变体关闭当前
+设备不使用的 GPM 与 legacy VESA 支持。安装目标默认为 `~/.local/bin/fbterm`，不会覆盖 Debian 的
+`/usr/bin/fbterm`。
+
 ## 路径约定
 
 ```sh

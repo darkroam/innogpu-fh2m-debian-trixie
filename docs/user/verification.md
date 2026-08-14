@@ -130,9 +130,11 @@ patched-21 必须在真实 VT 验证 fbdev mmap 和 fbterm。通过 SSH 保存�
 fbterm
 ```
 
-普通用户出现“cannot change kernel keymap table”只表示 fbterm 快捷键受限；能够进入、绘制并正常
-退出即通过。段错误时使用 `strace -ff -o "$HOME/fbterm.strace" fbterm` 保存本机证据，但不要将
-trace、用户名或绝对 home 路径提交到仓库。
+普通用户出现“cannot change kernel keymap table”只表示 fbterm 快捷键受限。除进入、绘制和退出外，
+还必须验证长输出、`clear` 和至少两次退出/重入；当前设备使用 patched fbterm 的
+`scrolling=redraw`，详见 [YPan 事故记录](../incidents/fbterm-ypan-rendering.md)。段错误时使用
+`strace -ff -o "$HOME/fbterm.strace" fbterm` 保存本机证据，但不要将 trace、用户名或绝对 home
+路径提交到仓库。
 
 ## 显示管理接入
 

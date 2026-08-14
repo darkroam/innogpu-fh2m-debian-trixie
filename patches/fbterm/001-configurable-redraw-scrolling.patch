@@ -1,0 +1,41 @@
+--- a/src/fbdev.cpp
++++ b/src/fbdev.cpp
+@@ -22,0 +23 @@
++#include <string.h>
+@@ -29,0 +31 @@
++#include "fbconfig.h"
+@@ -97,0 +100,9 @@
++	s8 scrolling[16] = "auto";
++	Config::instance()->getOption("scrolling", scrolling, sizeof(scrolling));
++	bool force_redraw = !strcmp(scrolling, "redraw");
++
++	if (force_redraw && vinfo.yoffset) {
++		vinfo.yoffset = 0;
++		vinfo.vmode &= ~FB_VMODE_YWRAP;
++		ioctl(fbdev_fd, FBIOPAN_DISPLAY, &vinfo);
++	}
+@@ -99 +110 @@
+-	if (mRotateType == Rotate0 || mRotateType == Rotate180) {
++	if (!force_redraw && (mRotateType == Rotate0 || mRotateType == Rotate180)) {
+@@ -121,0 +133,5 @@
++	if (mScrollType != Redraw) {
++		mOffsetCur = 0;
++		setupOffset();
++	}
++
+--- a/src/fbconfig.cpp
++++ b/src/fbconfig.cpp
+@@ -204,0 +205,3 @@
++		"# framebuffer scrolling: auto enables supported hardware scrolling, redraw disables it\n"
++		"scrolling=auto\n"
++		"\n"
+@@ -239,0 +243 @@
++		{ "scrolling", required_argument, 0, 5 },
+@@ -269,0 +274 @@
++				"      --scrolling=MODE            framebuffer scrolling: auto or redraw\n"
+--- a/doc/fbterm.1.in
++++ b/doc/fbterm.1.in
+@@ -63,0 +64,3 @@
++\fB--scrolling=\fR\fImode\fR
++select framebuffer scrolling mode: \fIauto\fR enables supported hardware scrolling, while \fIredraw\fR disables it
++.TP
