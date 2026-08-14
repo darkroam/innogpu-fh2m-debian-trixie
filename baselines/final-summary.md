@@ -1,8 +1,8 @@
-# Final Innogpu FH2M Baseline
+# Historical patched-17 Baseline
 
 Date: 2026-07-08
 
-Final package:
+Package captured by this historical baseline:
 
 ```text
 innogpu-fh2m-trixie 3.3.3.42-patched-17
@@ -27,9 +27,12 @@ Working state:
 - OpenGL renderer is `Fantasy II-M`.
 - DRI3, GLX, Present, and xrandr provider reporting are available.
 
-Rollback points:
+Current interpretation:
 
 - `innogpu-fh2m-trixie_3.3.3.42-patched-8.deb`: stable pre-Deepin rollback package.
-- `innogpu-fh2m-trixie_3.3.3.42-patched-17.deb`: current successful package.
+- `innogpu-fh2m-trixie_3.3.3.42-patched-17.deb`: conservative automated baseline and current rollback package.
+- `innogpu-fh2m-trixie_3.3.3.42-patched-20.deb`: later diagnostic candidate, validated on the current machine; see `docs/project/status.md`.
+
+This file is retained as compact evidence for patched-17. It is not the current project status or a release declaration.
 
 The large raw Xorg/DDX logs were removed from the repo. They were useful during debugging but contained host-specific paths and duplicated the pass/fail evidence above.

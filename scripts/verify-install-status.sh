@@ -1,5 +1,5 @@
 #!/bin/bash
-# Read-only installation status verification for patched-8/patched-17/HWGL.
+# Read-only installation status verification for any installed package/HWGL state.
 
 set -u -o pipefail
 

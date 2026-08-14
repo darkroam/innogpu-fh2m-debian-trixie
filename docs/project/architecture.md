@@ -14,7 +14,7 @@ release 中的外部 deb
        -> DKMS: innogpu.ko + firmware
        -> /dev/dri/card*、renderD*、/dev/fb0
        -> Xorg innogpu DDX + Deepin 202504 GL 用户态
-       -> X11 会话中的 xdisplay.sh --watch
+       -> X11 会话中的 dotconfig `xdisplay watch`
             -> lid + DRM connector + RandR
             -> 显示布局与热插拔收敛
        -> patched Picom GLX
@@ -34,9 +34,9 @@ PCI 0000:06:00.6 [1d94:14c9]
 | `patches/picom/` | 针对 Innogpu GL 扩展声明缺失的 Picom 源码补丁 |
 | `debs/` | 本地 release/构建输入输出目录，`.deb` 被 Git 忽略，仅跟踪说明文件 |
 | `config/` | 项目维护的用户态配置模板，不包含完整个人 dotfiles |
-| `scripts/` | 构建、安装、回退、诊断、显示管理、音频固化和验证入口 |
-| `tools/` | EGL、GBM、X11 和 loader 的最小探针源码 |
-| `tests/` | 可重复运行的静态 fixture 和脚本回归测试 |
+| `scripts/` | 构建、安装、回退、诊断、显示接入、音频固化和验证入口 |
+| `tools/` | EGL、GBM、X11、loader 的最小探针，以及确定性的厂商对象变换工具 |
+| `tests/` | 本项目脚本、Picom 会话和显示接入边界测试；xdisplay 引擎测试留在 dotconfig |
 | `docs/project/` | 架构、现状、依赖和维护边界 |
 | `docs/patches/` | 每个代码补丁的独立设计、验证和回退说明 |
 | `docs/incidents/` | 失败现场、根因推导、排除项和经验记录 |
@@ -82,17 +82,19 @@ Deepin 202504 deb 同时提供硬件 GL/DDX 用户态。内核模块成功、DRM
 
 ```text
 Xorg/RandR
-  -> xprofile 启动 xdisplay.sh --watch
+  -> xprofile 启动 dotconfig 的 xdisplay watch
        -> 自动布局、热插拔、开合盖、stale 输出清理
 
-手动入口 displayselect
+dotconfig 的手动入口 displayselect
   -> 与 watcher 共用同一 DISPLAY 的 apply lock
 ```
 
-通用引擎不得硬编码外屏名称、数量或分辨率。本设备非标准内屏候选和模式恢复通过明确的
-Innogpu 钩子注入。仓库已使用通用 `scripts/xdisplay.sh` 替换旧硬编码脚本，并通过
-`install-xdisplay-user.sh` 将会话入口安装到目标用户；吸纳和验证记录见
-`../planning/display-integration.md`。
+通用引擎不得硬编码外屏名称、数量或分辨率。引擎源码、库、配置、命令和内部测试由 dotconfig
+独立维护。本项目只通过 `XDISPLAY_INTERNAL_OUTPUTS`、`XDISPLAY_RESTORE_COMMAND` 和
+`restore-dp1-mode-x11.sh` 注入本设备的非标准内屏候选与模式恢复动作；
+`install-xdisplay-user.sh` 只安装这些接入文件，不复制或覆盖 dotconfig 的显示引擎。当前契约见
+[`display-management.md`](display-management.md)，历史吸纳记录见
+[`../planning/display-integration.md`](../planning/display-integration.md)。
 
 ## 音频
 

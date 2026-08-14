@@ -1,35 +1,45 @@
 # innogpu-fh2m-debian-trixie
 
-Debian Trixie kernel 6.12 上 Innosilicon Fantasy II-M / 风华2号M 的驱动打包、兼容修复、
-显示管理、硬件 GL、内置音频和验证项目。
+Debian Trixie kernel 6.12 上 Innosilicon Fantasy II-M / 风华 2 号 M 的驱动打包、兼容修复、
+设备接入、硬件 GL、内置音频和验收项目。本文件是项目文档的唯一入口；当前结论以
+[`docs/project/status.md`](docs/project/status.md) 为权威来源。
 
-## 当前结论
+## 当前状态与结论
 
-| 项目 | 当前状态 |
+最后更新：2026-08-14。
+
+| 项目 | 当前结论 |
 | --- | --- |
-| 驱动包 | 当前运行并已验收 `3.3.3.42-patched-20`，基于完整 Deepin 202504 原包 |
-| 回退点 | `patched-17`；`patched-8` 仅保留为更早的历史回滚物 |
-| Debian 6.12 / DKMS | 通过 |
-| tty1、Xorg、dwm | 通过 |
-| DRM/fbdev | `card0`、`renderD128`、`fb0` 节点、ioctl 和 `mmap()` 可用；真实 VT `fbterm` 通过 |
-| 硬件 GL | renderer 为 `Fantasy II-M`，Xorg/GLX direct rendering 和加速通过 |
-| Picom GLX | patched v13 正在运行，圆角、模糊、动画保留，全局透明关闭 |
-| 内置喇叭 | `1d94:14c9 -> snd_hda_intel -> SN6180`，重启验证通过 |
-| 显示 watcher | 已吸纳；fixture、安装器、测试包构建和当前 X11 只读状态通过 |
+| 当前运行驱动 | `3.3.3.42-patched-20` 已在本机重启并完成 PVR、Xorg/GLX、fbdev 和真实 VT 验收 |
+| 发布判断 | patched-20 是诊断候选，不是可直接推广的新设备长期版本；`patch-008` 仍会重复写内核日志 |
+| 唯一技术基线 | Deepin `20250421190503-debug` 完整原包；历史 patched 包不得作为后续载荷父版本 |
+| 当前回退点 | patched-17；patched-8 只保留为更早的历史恢复物 |
+| DRM/fbdev | `card0`、`renderD128`、`fb0` 可用，`/dev/fb0 mmap()` 和 `FBIOPAN_DISPLAY` 已通过 |
+| 硬件 GL | renderer 为 `Fantasy II-M`，direct rendering、DRI3、GLX、Present 和加速通过 |
+| Picom | patched v13 的运行时 shader 能力探测已验证；Picom 不进入显卡驱动 deb |
+| 内置音频 | `1d94:14c9 -> snd_hda_intel -> SN6180`，ALSA/PipeWire 重启验证通过 |
+| X11 显示管理 | xdisplay 由 dotconfig 仓库独立维护；本项目只提供 Innogpu 输出候选、模式恢复钩子和会话接入 |
 
-`patched-18` 是针对 patched-17 framebuffer `mmap()` 返回 `ENODEV` 的历史候选；其旧构建流程曾
-混用 patched-8 用户态载荷，不能作为后续基线。该故障确认后续版本必须以 Deepin 202504 原包的
-完整载荷为唯一技术基线，不能再以 patched-8 或 patched-17/18 的包内容继续派生。
+当前可以确认的是“patched-20 在本机工作”，不能据此宣称它已经具备跨设备发布条件。下一长期候选
+必须重新从 Deepin 202504 原包构建，移除或限速 PVR 诊断，再重复 DKMS、固件、PVR、Xorg/GLX、
+正常桌面和真实 VT 全部门槛。
 
-`patched-19` 是按上述规则完成的第一个完整载荷候选，作为 patched-20 的构建基础和历史记录保留。
-当前已安装并验收的 patched-20 在此基础上保留 `fb_io_mmap`，并加入临时 PVR 初始化诊断；正式长期
-运行包应在确认后移除或限速该诊断补丁。
+## 从这里开始
 
-“历史通过”不能替代当前运行检查。安装后应执行 `docs/user/verification.md` 中的命令。
+| 需求 | 文档 |
+| --- | --- |
+| 了解当前版本、已解决和未解决问题 | [当前状态](docs/project/status.md) |
+| 理解驱动、用户态和组件边界 | [项目架构](docs/project/architecture.md) |
+| 在新设备上安装或准备回退 | [新设备安装](docs/user/new-device-install.md) |
+| 安装或重启后逐项验收 | [状态验证](docs/user/verification.md) |
+| 黑屏、Xorg 或驱动异常时恢复 | [故障恢复](docs/user/recovery.md) |
+| 了解每个补丁的实际启用状态 | [阶段补丁](docs/patches/README.md) |
+| 查看失败根因和排障经验 | [事故与经验](docs/incidents/README.md) |
+| 修改代码、文档或 release | [维护策略](docs/project/maintenance-policy.md) |
 
-## 快速开始
+## 新设备最小入口
 
-从 release 下载需要的文件到 `debs/`；它们被 git 忽略：
+从 release 下载外部包到 `debs/`。这些文件由 Git 忽略：
 
 ```text
 debs/innogpu-fh2m-trixie_3.3.3.42-patched-8.deb
@@ -38,95 +48,90 @@ debs/innogpu-fh2m-trixie_3.3.3.42-patched-20.deb
 debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 ```
 
+当前自动安装入口只面向 patched-17 回退/保守基线：
+
 ```sh
 export INNOGPU_ROOT="$HOME/src/innogpu-fh2m-debian-trixie"
 cd "$INNOGPU_ROOT"
 sudo scripts/install-prereqs-debian.sh
-# The existing helper installs the patched-17 fallback package.
 sudo scripts/install-patched17-and-check.sh
 ```
 
-新设备部署当前已验收的 patched-20 时，应使用 `debs/` 中的
-`innogpu-fh2m-trixie_3.3.3.42-patched-20.deb` 和对应安装流程；`install-patched17-and-check.sh`
-仅用于保留的 patched-17 回退路径。
+patched-20 只提供受控的手动安装和验收流程，不应被 `scripts/install.sh` 默认推广。执行前必须准备
+patched-17 回退包并阅读[新设备安装](docs/user/new-device-install.md)和
+[故障恢复](docs/user/recovery.md)。
 
-重启或启用硬件 GL 前，先阅读：
+## 组件所有权
 
-- [新设备安装](docs/user/new-device-install.md)
-- [状态验证](docs/user/verification.md)
-- [故障恢复](docs/user/recovery.md)
+### 驱动与用户态
 
-内置喇叭配置：
+本仓库拥有 Deepin 202504 coherent 构建器、内核补丁、设备恢复脚本、安装/回退入口和运行时探针。
+DRI、GBM、GLAPI、GLVND、DDX、固件和 maintainer scripts 必须保持同源，禁止从 patched-8、17、18
+或 19 中挑选单个文件拼入新包。
+
+### X11 显示管理
+
+xdisplay 引擎的唯一源码、配置、设计文档和测试位于 dotconfig 仓库：
+
+```text
+.local/bin/xdisplay
+.local/bin/xdisplay.sh
+.local/bin/displayselect
+.local/lib/xdisplay/
+.local/share/docs/project/display-device-adapter.md
+.local/share/test/display/xdisplay-adapter.sh
+```
+
+本项目不复制这些文件，也不测试 xdisplay 的内部状态机。这里只维护：
+
+```text
+scripts/restore-dp1-mode-x11.sh
+scripts/xdisplay-session.sh
+scripts/install-xdisplay-user.sh
+tests/xdisplay/run-install-tests.sh
+```
+
+其中安装器要求目标用户已经从 dotconfig 安装 xdisplay，然后只写入本设备的
+`XDISPLAY_INTERNAL_OUTPUTS`、`XDISPLAY_RESTORE_COMMAND` 和带边界标记的 X11 会话接入。
+
+### Picom 与音频
+
+patched Picom 使用独立源码和安装流程，见 [Picom 安装与恢复](docs/user/picom-install.md)。内置喇叭
+由独立 PCI HDA 控制器提供，使用：
 
 ```sh
 sudo scripts/install-hygon-hda-audio.sh
 ```
 
-patched Picom GLX 的独立安装见 [Picom 安装与恢复](docs/user/picom-install.md)。它不随显卡驱动 deb
-自动安装，失败时也不需要回退 DKMS。
-
-## 文档
-
-### 项目现状
-
-- [当前状态](docs/project/status.md)
-- [项目架构](docs/project/architecture.md)
-- [显示管理](docs/project/display-management.md)
-- [Picom 合成器](docs/project/compositor-management.md)
-- [音频管理](docs/project/audio-management.md)
-- [依赖与外部文件](docs/project/dependencies.md)
-- [维护策略](docs/project/maintenance-policy.md)
-
-### 计划与历史
-
-- [当前 TODO](docs/planning/todo.md)
-- [显示代码吸纳计划](docs/planning/display-integration.md)
-- [Picom 吸纳计划](docs/planning/picom-integration.md)
-- [实施历史](docs/planning/history.md)
-- [挂起项](docs/planning/suspended.md)
-
-### 阶段与经验
-
-- [阶段补丁](docs/patches/README.md)
-- [事故与经验](docs/incidents/README.md)
-
-### 用户说明
-
-- [新设备安装](docs/user/new-device-install.md)
-- [状态验证](docs/user/verification.md)
-- [故障恢复](docs/user/recovery.md)
-- [显示切换](docs/user/display-guide.md)
-- [Picom 安装与恢复](docs/user/picom-install.md)
-
-历史材料见 [docs/archive](docs/archive/)，精简验证证据见 [baselines](baselines/README.md)。
-
 ## 仓库结构
 
 ```text
 .
-|-- README.md
-|-- debs/          # 本地 release 包；只跟踪 README
-|-- patches/
-|-- config/
-|-- scripts/
-|-- tools/
-|-- tests/
+|-- README.md             # 唯一文档入口和当前结论
+|-- debs/                 # 本地 release 输入/输出；只跟踪 README
+|-- patches/              # 可审查的内核与 Picom 补丁
+|-- config/               # 项目拥有的配置模板
+|-- scripts/              # 构建、安装、恢复、集成和诊断入口
+|-- tools/                # 最小运行时探针和确定性的厂商对象变换工具
+|-- tests/                # 本项目脚本及组件边界测试
 |-- docs/
-|   |-- project/
-|   |-- patches/
-|   |-- incidents/
-|   |-- planning/
-|   |-- user/
-|   `-- archive/
-|-- baselines/
-`-- third_party/    # 生成目录，不进入 git
+|   |-- project/          # 当前架构、状态和维护契约
+|   |-- patches/          # 每个补丁的目的、启用状态和边界
+|   |-- incidents/        # 失败证据、根因和经验
+|   |-- planning/         # 历史、TODO 和挂起项
+|   |-- user/             # 安装、验证、使用和恢复
+|   `-- archive/          # 只读历史材料
+|-- baselines/            # 精简历史证据，不替代当前运行检查
+`-- third_party/          # 从外部 deb 生成，不进入 Git
 ```
 
-## 维护规则
+完整文档阅读顺序见 [docs/README.md](docs/README.md)，脚本风险和生命周期见
+[scripts/README.md](scripts/README.md)。
 
-代码修改前先更新文档中的目标、风险、验证和回退；代码完成后再次复核文档，只把实际通过的行为
-标记为当前生效。完整规则见 [维护策略](docs/project/maintenance-policy.md)。
+## 维护底线
 
-不要提交外部 deb、原始日志、缓存、EDID、凭据、本机绝对 home 路径或 `third_party/` 解包输出。
-脚本职责和稳定入口见 [scripts/README.md](scripts/README.md)，文档总入口见
-[docs/README.md](docs/README.md)。
+1. 后续候选只从完整 Deepin 202504 原包构建。
+2. 当前、历史、候选和回退必须在文档中明确区分。
+3. xdisplay 引擎变更只在 dotconfig 仓库进行，本项目只维护设备接入契约。
+4. 外部 deb、原始日志、EDID、凭据、认证文件和本机绝对 home 路径不得提交。
+5. 修改前先写目标、风险和回退；修改后运行对应测试并复核文档事实。

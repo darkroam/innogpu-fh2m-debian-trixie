@@ -9,6 +9,13 @@
 - 将 `debs/` 定义为本地 release/构建目录，仅跟踪说明文件，`.deb` 和 `third_party/` 继续忽略。
 - 集中整理开发、测试、隐私、载荷基线和回退约束，后续行为修改必须先更新文档再改代码。
 
+## 2026-08-14 显示引擎所有权收敛
+
+- 确认 dotconfig 已将 xdisplay 演进为独立命令和共享库，Innogpu 仓库中的旧单文件副本不再是当前实现。
+- 从本仓库移除 xdisplay、displayselect 和引擎内部 fixture，只保留设备恢复钩子、会话接入和边界测试。
+- 根 README、架构、显示说明和用户文档统一以 dotconfig 为 xdisplay 唯一源码权威。
+- 接入安装器改为要求目标用户预先安装 dotconfig xdisplay，禁止覆盖或降级当前显示引擎。
+
 ## 2026-07-08 仓库清理
 
 - 保留 `patched-8` 回退点和 `patched-17` 当前成功点。

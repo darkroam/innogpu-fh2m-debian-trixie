@@ -8,8 +8,9 @@
 
 ## 当前活动项
 
-本轮显示代码吸纳、安装集成、fixture、测试包构建、当前 X11 只读验证和文档复核均已完成。
-尚未实施的 manual marker 与单设备适配器不属于当前活动工作，统一记录在 `suspended.md`。
+显示引擎代码、配置和内部测试已收敛回 dotconfig 维护。本项目当前只保留 Innogpu 设备钩子、会话
+接入和安装边界测试；后续 xdisplay 功能不再在本仓库重复实现。跨项目实机矩阵记录在
+`suspended.md`。
 
 Picom patch、配置和安装流程已按 `picom-integration.md` 完成吸纳。升级上游 Picom 时需要重新
 审查固定基线 patch。

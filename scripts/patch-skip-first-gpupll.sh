@@ -14,6 +14,8 @@
 
 set -euo pipefail
 
+ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+
 patch_file() {
     local target="$1"
     local backup_suffix="${2:-pre-skip-first-gpupll}"
@@ -31,52 +33,7 @@ patch_file() {
         echo "Backup already exists: $backup"
     fi
 
-    python3 - "$target" <<'PY'
-from pathlib import Path
-import sys
-
-p = Path(sys.argv[1])
-b = bytearray(p.read_bytes())
-
-# First g0m_soc_hw_init -> g0m_soc_setpll call in innogpu 3.3.3.42.
-# In both innogpu.o_shipped and final innogpu.ko the relative CALL bytes are
-# unique for this call site:
-#   e8 09 fd ff ff  => call g0m_soc_setpll
-# Replace with five NOPs.  This is equivalent to skipping only the first GPU
-# PLL setup attempt while leaving later PLL setup calls untouched.
-old = bytes.fromhex('e8 09 fd ff ff')
-new = bytes.fromhex('90 90 90 90 90')
-
-old_hits = []
-new_hits = []
-start = 0
-while True:
-    i = b.find(old, start)
-    if i < 0:
-        break
-    old_hits.append(i)
-    start = i + 1
-
-start = 0
-while True:
-    i = b.find(new, start)
-    if i < 0:
-        break
-    new_hits.append(i)
-    start = i + 1
-
-if len(old_hits) == 1:
-    off = old_hits[0]
-    b[off:off+5] = new
-    p.write_bytes(b)
-    print(f'patched {p} at file offset {off:#x}: {old.hex(" ")} -> {new.hex(" ")}')
-elif len(old_hits) == 0 and new_hits:
-    print(f'already patched: {p} (NOP sequence present at {[hex(x) for x in new_hits[:5]]})')
-elif len(old_hits) == 0:
-    raise SystemExit(f'ERROR: patch pattern not found in {p}')
-else:
-    raise SystemExit(f'ERROR: ambiguous patch pattern in {p}: {[hex(x) for x in old_hits]}')
-PY
+    python3 "$ROOT/tools/patch-gpupll-object.py" "$target"
 }
 
 normalize_dkms_module() {

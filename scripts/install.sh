@@ -17,9 +17,9 @@ Default:
 Options:
   --prereqs    Install Debian package prerequisites first.
   --patched8   Install the stable rollback package.
-  --patched17  Install the current successful package.
+  --patched17  Install the conservative automated baseline and rollback package.
 
-Hardware GL userspace is intentionally a second step after patched-17 reboot:
+Hardware GL userspace is intentionally a second step after a patched-17 reboot:
   scripts/prepare-deepin-userspace-root.sh
   sudo scripts/run-local-ddx-vt-test.sh
   sudo scripts/install-deepin-desktop-hwgl-trial.sh

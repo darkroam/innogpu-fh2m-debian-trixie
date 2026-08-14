@@ -55,15 +55,17 @@ done
 [[ -w /sys/class/graphics/fb0/blank ]] && printf '0\n' > /sys/class/graphics/fb0/blank || true
 [[ -w /sys/module/kernel/parameters/consoleblank ]] && printf '0\n' > /sys/module/kernel/parameters/consoleblank || true
 
-echo "[4/6] Installing X11 display management for user $X_USER..."
-[[ -x "$SOURCE_DIR/install-xdisplay-user.sh" ]] || {
-    echo "ERROR: display installer is missing: $SOURCE_DIR/install-xdisplay-user.sh" >&2
-    exit 1
-}
-INNOGPU_DISPLAY_SOURCE_DIR="$SOURCE_DIR" \
-INNOGPU_X_USER="$X_USER" \
-INNOGPU_X_HOME="$X_HOME" \
-    "$SOURCE_DIR/install-xdisplay-user.sh"
+echo "[4/6] Connecting the optional dotconfig-owned X11 display engine for user $X_USER..."
+if [[ -x "$SOURCE_DIR/install-xdisplay-user.sh" ]]; then
+    if ! INNOGPU_DISPLAY_SOURCE_DIR="$SOURCE_DIR" \
+        INNOGPU_X_USER="$X_USER" \
+        INNOGPU_X_HOME="$X_HOME" \
+        "$SOURCE_DIR/install-xdisplay-user.sh"; then
+        echo "WARNING: xdisplay integration was skipped; the soft Xorg path remains usable" >&2
+    fi
+else
+    echo "WARNING: display integration installer is missing; the soft Xorg path remains usable" >&2
+fi
 
 echo "[5/6] Keeping tty1 at login prompt if Xorg is currently not requested..."
 init_cmd="$(tr '\0' ' ' </proc/1/cmdline 2>/dev/null || true)"

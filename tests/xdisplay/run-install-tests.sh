@@ -21,6 +21,13 @@ pass() {
     printf 'ok %02d - %s\n' "$tests" "$1"
 }
 
+install_fake_engine() {
+    home=$1
+    mkdir -p "$home/.local/bin"
+    printf '%s\n' '#!/bin/sh' 'exit 0' > "$home/.local/bin/xdisplay"
+    chmod 755 "$home/.local/bin/xdisplay"
+}
+
 run_installer() {
     home=$1
     INNOGPU_DISPLAY_SOURCE_DIR=$source_dir \
@@ -29,56 +36,61 @@ run_installer() {
         "$installer" >/dev/null
 }
 
+missing_home=$runtime/missing-home
+mkdir -p "$missing_home"
+if run_installer "$missing_home" 2>/dev/null; then
+    fail 'T01 integration succeeded without the dotconfig engine'
+fi
+pass 'missing dotconfig engine is rejected without installing a private copy'
+
 empty_home=$runtime/empty-home
-mkdir -p "$empty_home"
+install_fake_engine "$empty_home"
+cp "$empty_home/.local/bin/xdisplay" "$runtime/xdisplay-before"
 run_installer "$empty_home"
-cmp -s "$source_dir/xdisplay.sh" "$empty_home/.local/bin/xdisplay.sh" ||
-    fail 'T01 xdisplay source mismatch'
-cmp -s "$source_dir/displayselect" "$empty_home/.local/bin/displayselect" ||
-    fail 'T01 displayselect source mismatch'
+cmp -s "$runtime/xdisplay-before" "$empty_home/.local/bin/xdisplay" ||
+    fail 'T02 dotconfig-owned xdisplay was modified'
 cmp -s "$source_dir/xdisplay-session.sh" \
     "$empty_home/.config/x11/innogpu-display-session.sh" ||
-    fail 'T01 session source mismatch'
+    fail 'T02 session source mismatch'
+cmp -s "$source_dir/restore-dp1-mode-x11.sh" \
+    "$empty_home/.local/bin/innogpu-restore-dp1-mode-x11" ||
+    fail 'T02 device restore hook mismatch'
 grep -q 'BEGIN INNOGPU DISPLAY SESSION' "$empty_home/.config/x11/xprofile" ||
-    fail 'T01 session block missing'
-pass 'empty HOME receives exact display tools and one session block'
+    fail 'T02 session block missing'
+pass 'integration installs only the device hook and session entry'
 
 run_installer "$empty_home"
 [ "$(grep -c 'BEGIN INNOGPU DISPLAY SESSION' "$empty_home/.config/x11/xprofile")" -eq 1 ] ||
-    fail 'T02 duplicate session block added'
-[ ! -e "$empty_home/.local/bin/xdisplay.sh.before-innogpu-soft" ] ||
-    fail 'T02 identical managed watcher was backed up as a user version'
+    fail 'T03 duplicate session block added'
 pass 'repeated installation is idempotent'
 
 existing_home=$runtime/existing-home
-mkdir -p "$existing_home/.local/bin" "$existing_home/.config/x11"
-printf '%s\n' '#!/bin/sh' 'echo old-watcher' > "$existing_home/.local/bin/xdisplay.sh"
-chmod 755 "$existing_home/.local/bin/xdisplay.sh"
-printf '%s\n' '"$HOME/.local/bin/xdisplay.sh" --watch &' > \
+install_fake_engine "$existing_home"
+mkdir -p "$existing_home/.config/x11"
+printf '%s\n' '"$HOME/.local/bin/xdisplay" watch &' > \
     "$existing_home/.config/x11/xprofile"
 cp "$existing_home/.config/x11/xprofile" "$runtime/existing-xprofile"
 run_installer "$existing_home"
-grep -q 'old-watcher' "$existing_home/.local/bin/xdisplay.sh.before-innogpu-soft" ||
-    fail 'T03 previous watcher was not preserved'
 cmp -s "$runtime/existing-xprofile" "$existing_home/.config/x11/xprofile" ||
-    fail 'T03 existing watcher entry was modified'
+    fail 'T04 existing watcher entry was modified'
 pass 'existing watcher is preserved once and is not started twice'
 
 symlink_home=$runtime/symlink-home
+install_fake_engine "$symlink_home"
 mkdir -p "$symlink_home/.config/x11"
 printf '%s\n' '# existing profile' > "$symlink_home/.config/x11/profile-target"
 ln -s profile-target "$symlink_home/.config/x11/xprofile"
 run_installer "$symlink_home"
 [ -L "$symlink_home/.config/x11/xprofile" ] ||
-    fail 'T04 xprofile symlink was replaced'
+    fail 'T05 xprofile symlink was replaced'
 [ ! -L "$symlink_home/.config/x11/xprofile.before-innogpu-display" ] ||
-    fail 'T04 xprofile backup should be a regular snapshot'
+    fail 'T05 xprofile backup should be a regular snapshot'
 grep -qx '# existing profile' \
     "$symlink_home/.config/x11/xprofile.before-innogpu-display" ||
-    fail 'T04 xprofile target was not backed up'
+    fail 'T05 xprofile target was not backed up'
 grep -q 'BEGIN INNOGPU DISPLAY SESSION' \
     "$symlink_home/.config/x11/profile-target" ||
-    fail 'T04 session block was not appended through xprofile symlink'
+    fail 'T05 session block was not appended through xprofile symlink'
 pass 'xprofile symlink target is updated without replacing the symlink'
 
 printf 'PASS: %d display installer tests\n' "$tests"

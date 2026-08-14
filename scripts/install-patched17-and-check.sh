@@ -55,15 +55,18 @@ elif command -v innogpu-disable-incompatible-userspace >/dev/null 2>&1; then
 fi
 
 echo
-echo "Installing X11 display management for the desktop user..."
+echo "Connecting the optional dotconfig-owned X11 display engine..."
 if [[ -x "$ROOT/scripts/install-xdisplay-user.sh" ]]; then
-    "$ROOT/scripts/install-xdisplay-user.sh"
+    if ! "$ROOT/scripts/install-xdisplay-user.sh"; then
+        echo "WARNING: xdisplay integration was skipped; install xdisplay from dotconfig, then run scripts/install-xdisplay-user.sh" >&2
+    fi
 elif [[ -x /usr/share/innogpu-fh2m-trixie/install-xdisplay-user.sh ]]; then
-    INNOGPU_DISPLAY_SOURCE_DIR=/usr/share/innogpu-fh2m-trixie \
-        /usr/share/innogpu-fh2m-trixie/install-xdisplay-user.sh
+    if ! INNOGPU_DISPLAY_SOURCE_DIR=/usr/share/innogpu-fh2m-trixie \
+        /usr/share/innogpu-fh2m-trixie/install-xdisplay-user.sh; then
+        echo "WARNING: xdisplay integration was skipped; install xdisplay from dotconfig, then rerun the packaged integration installer" >&2
+    fi
 else
-    echo "ERROR: install-xdisplay-user.sh is missing" >&2
-    exit 1
+    echo "WARNING: install-xdisplay-user.sh is missing; driver installation continues without display integration" >&2
 fi
 
 echo

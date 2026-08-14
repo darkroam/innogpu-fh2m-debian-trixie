@@ -11,8 +11,9 @@
   但 DRI、GBM、GLAPI、GLVND、Xorg DDX、固件和 maintainer scripts 不得从历史 patched 包拼接。
 - `patched-8` 仅是历史回滚物，`patched-17/18/19` 是回退、故障或候选证据，不是后续实现父版本；
   已验证的 `patched-20` 仍属于诊断候选，不能把诊断日志当作长期默认行为。
-- 阶段补丁必须保持一个补丁一个目的，代码位于 `patches/`，设计、开关、验证和回退写入对应的
-  `docs/patches/patch-*.md`；不通过复制 `.so`、固件或 `.ko` 绕过构建失败。
+- 阶段补丁必须保持一个补丁一个目的：源码 diff 位于 `patches/`；无法表示为源码 diff 的厂商对象
+  变换使用 `tools/` 下的严格确定性工具；设计、开关、验证和回退写入对应的
+  `docs/patches/patch-*.md`。不得通过复制 `.so`、固件或 `.ko` 绕过构建失败。
 
 ### 代码与接口
 
@@ -20,6 +21,9 @@
   和文档，并保留兼容包装器；不得为了“整理目录”直接破坏外部调用。
 - 通用逻辑与设备特例分离：通用显示、安装和验证代码不得硬编码本机输出名、绝对 home 路径或
   固定模式；本机 connector、modeline 和恢复动作必须以明确钩子存在并写明边界。
+- xdisplay 引擎、命令、库、配置、设计文档和内部测试的唯一源码位于 dotconfig。本项目只维护
+  `XDISPLAY_INTERNAL_OUTPUTS`、`XDISPLAY_RESTORE_COMMAND`、设备恢复钩子和会话接入，不得再次
+  导入引擎副本。
 - 改变系统状态的脚本必须明确 root、重启、modeset、卸载和回退风险；只读检查不得偷偷执行
   modeset、热卸载驱动或覆盖活动用户配置。
 
@@ -70,6 +74,7 @@
 - DRI、GBM、GLAPI、GLVND 和 DDX 必须按同一 Deepin 发布整体部署，禁止从历史包局部恢复 `.so`。
 - 通用显示代码不得硬编码外屏名称、数量、固定外屏模式或本机绝对路径。
 - 本机内屏识别和 modeline 恢复必须保持为明确设备钩子。
+- xdisplay 行为修改和状态机测试在 dotconfig 完成；本仓库只测试 Innogpu 接入不覆盖引擎且保持幂等。
 - 不从活动 `/etc`、home 配置或隔离目录整包复制；只吸纳已审查、可复用且必要的文件。
 - 外部 deb、日志、缓存、EDID、序列号、凭据和临时测试运行目录不得提交。
 - 修改安装脚本时必须检查构建包清单、卸载清单和新设备流程是否同步。
@@ -80,9 +85,10 @@
 
 ```sh
 git diff --check
-rg -n '/home/ok|MiWiFi|serverauth\.[[:alnum:]]' README.md docs scripts tests config patches
+scripts/check-docs.sh
 bash -n scripts/*.sh
 ```
 
-还应检查 Markdown 内部链接和文档中出现的仓库相对路径是否存在。显示管理修改必须运行对应 fixture，
-并在不会破坏当前会话的前提下执行 `xdisplay.sh --status`；需要 modeset 的验证单独记录实机结果。
+还应检查 Markdown 内部链接和文档中出现的仓库相对路径是否存在。显示接入修改必须运行
+`tests/xdisplay/run-install-tests.sh`；xdisplay 引擎行为由 dotconfig 测试，必要的只读实机核对使用
+`xdisplay status`。需要 modeset 的验证单独记录实机结果。

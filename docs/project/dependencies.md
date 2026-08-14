@@ -28,14 +28,14 @@ Deepin 202504 原包是后续版本唯一的技术基线。构建必须保留其
 - `xserver-xorg-core`、`xinit`、`x11-xserver-utils`、`x11-utils`、`dwm`；
 - `mesa-utils`、`libgl1`、`libegl1`、`libgbm1`；
 - 音频修复使用的 `alsa-utils`、PipeWire、WirePlumber 和 `wpctl` 所属包；
-- 显示管理使用的 `xrandr`、`flock`、`dmenu`、`arandr`、`bc`、POSIX `awk`、`stat` 和
-  `timeout`；其中 `flock`/`setsid` 由 `util-linux` 提供。
+- Innogpu 显示接入要求目标用户已经从 dotconfig 安装 xdisplay；本项目设备钩子使用 `xrandr`，
+  会话接入使用 POSIX shell。
 
 新增脚本依赖时必须先更新本文和前置依赖安装脚本。可选命令缺失不能破坏驱动安装、TTY 或 Xorg
 基本启动。
 
-`displayselect` 可选使用 `setbg`、`remaps`、`dunst` 和 `notify-send` 完成桌面后处理，这些命令
-不是项目安装依赖；缺失或失败时布局操作仍应成功。
+xdisplay、`displayselect` 及其 `flock`、`timeout`、`dmenu`、`arandr`、`bc` 等依赖由 dotconfig
+声明和安装，本仓库不复制其依赖清单。Innogpu 接入变化时只需验证兼容环境变量、恢复钩子和会话入口。
 
 ## Picom 外部源码
 

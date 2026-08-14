@@ -17,4 +17,8 @@ if command -v innogpu-restore-dp1-mode-x11 >/dev/null 2>&1; then
     export XDISPLAY_RESTORE_COMMAND
 fi
 
-command -v xdisplay.sh >/dev/null 2>&1 && xdisplay.sh --watch &
+if command -v xdisplay >/dev/null 2>&1; then
+    xdisplay watch &
+elif command -v xdisplay.sh >/dev/null 2>&1; then
+    xdisplay.sh --watch &
+fi

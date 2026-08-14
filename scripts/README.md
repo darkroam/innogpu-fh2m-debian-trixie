@@ -1,39 +1,94 @@
-# 脚本入口与职责
+# 脚本入口、生命周期与风险
 
-`scripts/` 保留历史文件名作为稳定 API。安装器、测试、打包流程和外部文档直接调用这些路径，
-因此本轮不物理移动或批量改名；新增逻辑应优先抽成小函数或独立脚本，并在这里登记职责。
+`scripts/<name>` 是兼容接口。安装器、测试、release 和外部文档可能直接调用这些路径，因此不为目录
+美观批量改名；新增脚本必须在本文件登记所有权、状态改变范围和回退方式。
 
 ## 构建与打包
 
+| 入口 | 生命周期 | 职责 |
+| --- | --- | --- |
+| `build-deepin-coherent.sh` | 当前公共构建器 | 从完整 Deepin 202504 原包构建 coherent deb，所有功能由显式开关控制 |
+| `build-patched19-deepin-coherent.sh` | 历史固定包装 | 复现 patched-19 的已知开关集合 |
+| `build-patched20-deepin-diagnostic.sh` | 当前诊断候选 | 复现本机已验收的 patched-20，包含高频 PVR 诊断 |
+| `build-patched17-deepin-local-display.sh` | 停用护栏 | 明确拒绝把 patched-17 作为后续构建父版本 |
+| `build-patched18-deepin-local-display.sh` | 停用护栏 | 明确拒绝重建历史混合载荷 patched-18 |
+| `prepare-deepin-userspace-root.sh` | 当前辅助 | 将 Deepin 原包解包到被忽略的 `third_party/` |
+| `build-patched-picom.sh` | 独立组件 | 构建/安装固定基线的 patched Picom，不进入驱动 deb |
+
+## 支持的安装与恢复
+
+| 入口 | 风险 | 说明 |
+| --- | --- | --- |
+| `install-prereqs-debian.sh` | 修改软件包 | 安装 Debian 构建和运行依赖 |
+| `install.sh` | 修改驱动、需重启 | 只调度 patched-8/17；不把 patched-20 诊断候选设为默认 |
+| `install-patched17-and-check.sh` | 修改驱动、需重启 | 当前新设备保守入口和 patched-20 回退入口 |
+| `install-patched8-and-check.sh` | 修改驱动、需重启 | 更早的历史恢复入口 |
+| `uninstall-innogpu.sh` | 卸载驱动、需重启 | 通用卸载器；版本包装见 `uninstall-patched*.sh` |
+| `disable-incompatible-userspace.sh` | 修改 `/usr` 和 Xorg 配置 | 恢复软件渲染/兼容用户态边界 |
+| `restore-tty1-login.sh` | 修改系统服务 | 优先恢复可见 TTY 登录 |
+| `prepare-soft-xorg-dwm.sh` | 修改 Xorg/会话 | 准备软件 Xorg；若 dotconfig xdisplay 已存在则接入，否则保留软件路径并警告 |
+| `install-dri-node-repair-service.sh` | 安装系统服务 | 固化 DRM/fbdev 节点权限恢复 |
+| `install-hygon-hda-audio.sh` | 安装系统/用户服务 | 固化本机 HDA 和 PipeWire 恢复 |
+
+## 显示接入
+
+xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项目仅保留：
+
 | 入口 | 职责 |
 | --- | --- |
-| `build-deepin-coherent.sh` | 从 `debs/` 中的 Deepin 202504 原包应用补丁并构建 coherent deb |
-| `build-patched19-deepin-coherent.sh` | 历史 patched-19 的固定参数包装入口 |
-| `build-patched20-deepin-diagnostic.sh` | patched-20 诊断候选的固定参数包装入口 |
-| `prepare-deepin-userspace-root.sh` | 解包 Deepin 用户态到忽略的 `third_party/` 目录 |
-| `build-patched17-deepin-local-display.sh`、`build-patched18-deepin-local-display.sh` | 已停用的历史构建护栏，明确拒绝重建 |
+| `restore-dp1-mode-x11.sh` | 本设备固定 modeline 恢复钩子 |
+| `xdisplay-session.sh` | 注入本设备候选输出和恢复命令，启动已有 xdisplay |
+| `install-xdisplay-user.sh` | 安装上述接入，不复制或覆盖 xdisplay/displayselect/共享库 |
 
-## 安装、回退与系统集成
+详细契约见 [`docs/project/display-management.md`](../docs/project/display-management.md)。
 
-`install*.sh` 负责依赖、驱动包、用户态、音频和 X11 会话安装；`uninstall*.sh` 与
-`disable-incompatible-userspace.sh` 负责回退边界。`install-patched17-and-check.sh` 是当前保留的
-patched-17 回退入口，patched-8 仅用于更早历史恢复。
+## 只读与临时验证
 
-## 诊断与验证
+以下入口默认只读，或只创建 `/tmp`/`baselines/` 下的测试环境；带 VT/Xorg 的脚本仍可能短暂切换
+控制台，运行前必须阅读输出中的恢复命令：
 
-`check-*.sh`、`test-*.sh`、`run-*.sh` 和 `verify-install-status.sh` 只读检查或创建临时测试环境；
-改变系统状态的脚本必须在文件头和用户文档中明确标注 root、重启、modeset 或卸载风险。测试生成的
-原始日志留在本机临时目录或 `baselines/` 的忽略路径，Git 只保留精简结果。
+- `check-deepin-userspace-coherence.sh`
+- `check-desktop-hwgl.sh`
+- `check-innogpu-progress.sh`
+- `check-patched17-baseline.sh`
+- `check-post-reboot-hwgl.sh`
+- `check-soft-xorg-dwm.sh`
+- `test-current-xorg-hwgl-runtime.sh`
+- `test-isolated-deepin-egl-gbm.sh`
+- `test-isolated-deepin-hwgl.sh`
+- `test-isolated-deepin-xorg-ddx.sh`
+- `test-xorg-once.sh`
+- `run-local-ddx-vt-test.sh`
+- `run-deepin-gbm-egl.sh`
+- `run-deepin-surfaceless-egl.sh`
+- `verify-install-status.sh`
 
-## 显示与 Picom
+## 实验和历史入口
 
-`xdisplay.sh` 是 watcher 主实现，`displayselect` 是手动布局入口，`xdisplay-session.sh` 和
-`install-xdisplay-user.sh` 管理会话接入；`picom-session.sh`、`build-patched-picom.sh` 和
-`install-picom-user.sh` 管理独立 Picom 用户态流程。显示管理的详细职责见
-[`docs/project/display-management.md`](../docs/project/display-management.md)。
+以下脚本会改动活动驱动、用户态或 Xorg，不能进入默认安装流程，也不随 coherent release deb 发布：
+
+| 入口 | 状态与风险 |
+| --- | --- |
+| `install-kylin-userspace.sh` | 历史 Kylin/UOS 用户态实验，存在 Xorg ABI 24/25 混配风险 |
+| `install-experimental-hwgl.sh` | 历史完整 vendor GBM/EGL/GLX 实验，已知错误组合可令 Xorg 崩溃 |
+| `patch-skip-first-gpupll.sh` | 直接修改预编译对象或已安装模块；只用于受控构建/恢复 |
+| `try-hotload-patched17.sh` | 尝试热替换内核模块，图形会话繁忙时必须停止 |
+| `start-soft-xorg-dwm-from-ssh.sh` | 从 SSH 启动临时图形链路，必须保留 TTY 恢复手段 |
+| `display-recover-and-diagnose.sh` | 故障恢复编排，会修改显示/Xorg 状态 |
+| `install-deepin-desktop-hwgl-trial.sh` | 仅在本地 DDX 门槛通过后启用硬件 GL 试验 |
+| `mark-patched17-soft-baseline.sh` | 只适用于 patched-17 历史软渲染基线 |
+
+这些入口保留用于追溯或受控排障，但不得被描述为当前推荐安装方式。
+
+## 包载荷规则
+
+coherent 驱动 deb 只携带运行和恢复所需的 Innogpu 辅助脚本。历史 Kylin 用户态安装器、实验 HWGL
+安装器和直接二进制热补丁不得暴露为系统命令。仓库保留它们不等于 release 支持它们。
 
 ## 修改规则
 
-代码路径是兼容接口：改名或移动前必须扫描 `scripts/`、`config/`、`tests/`、桌面源码和服务入口，
-提供包装器并同步文档。完整的文档优先、验证、隐私和 release 约束见
-[`docs/project/maintenance-policy.md`](../docs/project/maintenance-policy.md)。
+1. 改名或移动前扫描 `scripts/`、`tests/`、配置、服务、桌面源码和文档，并提供兼容过渡。
+2. 改变系统状态的入口必须在文件头和用户文档中说明 root、重启、modeset、卸载和回退风险。
+3. 测试原始日志进入忽略路径，Git 只保留精简结果。
+4. 维护规则、隐私和 release 边界见
+   [`docs/project/maintenance-policy.md`](../docs/project/maintenance-policy.md)。

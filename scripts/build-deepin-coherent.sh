@@ -110,33 +110,8 @@ done
     find . \( -name '*.orig' -o -name '*.rej' \) -delete
 )
 
-python3 - "$DKMS_SRC/innogpu/innogpu.o_shipped" <<'PY'
-from pathlib import Path
-import sys
-
-p = Path(sys.argv[1])
-b = bytearray(p.read_bytes())
-old = bytes.fromhex("e8 09 fd ff ff")
-new = bytes.fromhex("90 90 90 90 90")
-hits = []
-start = 0
-while True:
-    offset = b.find(old, start)
-    if offset < 0:
-        break
-    hits.append(offset)
-    start = offset + 1
-
-if len(hits) == 1:
-    offset = hits[0]
-    b[offset:offset + 5] = new
-    p.write_bytes(b)
-    print(f"patched Deepin object at {offset:#x}")
-elif b.find(new) >= 0:
-    print("Deepin object already patched")
-else:
-    raise SystemExit(f"unexpected old pattern hits: {hits}")
-PY
+python3 "$ROOT/tools/patch-gpupll-object.py" \
+    "$DKMS_SRC/innogpu/innogpu.o_shipped"
 
 install -d \
     "$W/root/etc/ld.so.conf.d" \
@@ -147,15 +122,10 @@ printf '%s\n' '/usr/lib/x86_64-linux-gnu/innogpu-fh2m' \
     > "$W/root/etc/ld.so.conf.d/0-innogpu-hwgl.conf"
 
 helpers=(
-    patch-skip-first-gpupll.sh
     disable-incompatible-userspace.sh
-    install-kylin-userspace.sh
-    install-experimental-hwgl.sh
     repair-dri-nodes.sh
     test-xorg-once.sh
     restore-dp1-mode-x11.sh
-    xdisplay.sh
-    displayselect
     xdisplay-session.sh
     install-xdisplay-user.sh
     restore-tty1-login.sh
@@ -171,10 +141,7 @@ for helper in "${helpers[@]}"; do
 done
 
 declare -A command_targets=(
-    [innogpu-skip-first-gpupll]=patch-skip-first-gpupll.sh
     [innogpu-disable-incompatible-userspace]=disable-incompatible-userspace.sh
-    [innogpu-install-kylin-userspace]=install-kylin-userspace.sh
-    [innogpu-install-experimental-hwgl]=install-experimental-hwgl.sh
     [innogpu-repair-dri-nodes]=repair-dri-nodes.sh
     [innogpu-test-xorg-once]=test-xorg-once.sh
     [innogpu-restore-dp1-mode-x11]=restore-dp1-mode-x11.sh
