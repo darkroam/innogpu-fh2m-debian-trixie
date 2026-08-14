@@ -12,8 +12,10 @@
 - 首次重复构建暴露 archive 时间戳不稳定，随后要求公共构建器显式接收 `SOURCE_DATE_EPOCH`，p21
   固定为 `1786665600`；最终两份 deb 逐字一致。
 - 最终 p21 control 为 `amd64`、`Installed-Size=326128`，文件大小 79,528,788 字节，SHA-256 为
-  `15c1fab4b8a0f36985097e3d1651ff43fc09f00a2bda47058c380e1e561384cc`。包边界通过，系统仍安装
-  p20，运行验收待后续独立批次。
+  `15c1fab4b8a0f36985097e3d1651ff43fc09f00a2bda47058c380e1e561384cc`。包边界通过后部署 p21，
+  DKMS、签名、depmod 和 initramfs 均完成；不对安装前已加载模块做热切换。
+- 受控重启后验证 p21 当前设备运行通过：固件/PVR、DRM/fbdev、当前桌面与隔离 Xorg/GLX、真实 VT
+  fbterm、dotconfig xdisplay、Picom 和音频均正常。原始诊断不入 Git，仅保留脱敏摘要。
 
 ## 2026-08-14 文档与 release 目录重构
 

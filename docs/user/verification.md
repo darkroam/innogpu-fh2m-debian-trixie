@@ -2,10 +2,14 @@
 
 ## 驱动、DKMS 与节点
 
-当前本机验收目标是 patched-20：
+当前设备已部署并重启至 patched-21，且本次运行验收已通过；p20 仅为历史运行基线。本文仍是后续
+重新部署、内核或用户态升级、以及新硬件组合的操作流程：安装但尚未重启时，不得将 `/proc` 或 Xorg
+结果写为新包证据。
+
+重启后的目标包检查命令为：
 
 ```sh
-scripts/verify-install-status.sh 3.3.3.42-patched-20
+scripts/verify-install-status.sh 3.3.3.42-patched-21
 cat /proc/driver/innogpu/gpu00/status
 ls -l /dev/dri /dev/fb0
 ```
@@ -21,7 +25,7 @@ patched-21 的完整候选定义见
 
 ### 阶段 A：构建与离线包验证
 
-本阶段允许在当前 p20 会话中执行，不安装 deb、不运行 maintainer scripts、不调用 DKMS：
+本阶段可在任意当前会话中执行，不安装 deb、不运行 maintainer scripts、不调用 DKMS：
 
 ```sh
 tests/package/run-boundary-tests.sh
@@ -36,7 +40,7 @@ sha256sum debs/innogpu-fh2m-trixie_3.3.3.42-patched-21.deb
 验收标准：包名、版本、架构正确，release 审计返回 `PASS_RELEASE_PACKAGE_BOUNDARIES`，记录输出包
 SHA-256；同时确认包内没有 xdisplay 引擎副本、Kylin/实验安装器和直接 GPU PLL 热补丁入口。
 
-本阶段完成后文档只能标记：
+仅完成本阶段时，候选状态只能标记：
 
 ```text
 BUILD: PASS
@@ -46,7 +50,7 @@ REBOOT: NOT_REBOOTED
 RUNTIME_VALIDATION: PENDING
 ```
 
-### 阶段 B：未来安装前记录与回退准备
+### 阶段 B：安装前记录、回退准备与实际部署
 
 只有在阶段 A 的实际哈希和审计结果已写回文档并审阅后才进入本阶段。执行安装前保存：
 
@@ -57,10 +61,11 @@ dkms status innogpu-kernel
 scripts/verify-install-status.sh 3.3.3.42-patched-20
 ```
 
-同时确认 patched-17 回退 deb、SSH 或真实 TTY、`scripts/install-patched17-and-check.sh` 可用。
-安装 p21 会修改 DKMS、用户态图形库、initramfs 和后续启动行为，必须另行明确执行，不属于离线验收。
+本机已确认 patched-17 回退 deb、SSH/真实 TTY、当前内核 headers、DKMS 和可用磁盘空间，并已完成
+`dpkg -i` 部署。postinst 成功重建 DKMS、签名模块、运行 depmod 并生成 initramfs；`dpkg --verify`
+无输出。安装 p21 会改变后续启动使用的模块，但不会替换已加载的模块，因此本阶段不产生运行证据。
 
-### 阶段 C：未来安装和重启后的版本一致性
+### 阶段 C：安装和重启后的版本一致性
 
 受控安装并重启后，先检查版本身份，任何一处仍为 p20 都不能继续宣称 p21 运行通过：
 
@@ -75,7 +80,7 @@ cat /proc/driver/innogpu/gpu00/status
 预期安装包和当前内核的 DKMS 实例均为 p21，活动 `innogpu` 来自该内核模块目录，Driver/Firmware
 状态为 OK。只完成安装但未重启时，活动模块仍可能是旧版本，此时状态保持 `NOT_REBOOTED`。
 
-### 阶段 D：未来固件、PVR、节点和日志
+### 阶段 D：固件、PVR、节点和日志
 
 ```sh
 sudo journalctl -b -k --no-pager | \
@@ -88,7 +93,7 @@ p21 关闭 `patch-008`，因此不应再出现该补丁新增的成对
 `innogpu: srvkm_init module=... state_before/state_after` 高频日志。这里检查的是特定诊断行消失，
 不是要求内核日志完全没有 PVR 信息。
 
-### 阶段 E：未来 Xorg、硬件 GL、fbterm 与桌面
+### 阶段 E：Xorg、硬件 GL、fbterm 与桌面
 
 依次执行下文的 Xorg/硬件 GL 检查；只有临时 Xorg、`xdpyinfo`、`glxinfo` 和当前桌面检查均通过，
 才能标记硬件 GL 通过。然后在未被 Xorg 占用的真实 VT 运行 `fbterm`，确认进入、绘制和退出。
@@ -108,13 +113,13 @@ sudo scripts/check-post-reboot-hwgl.sh
 sudo scripts/test-current-xorg-hwgl-runtime.sh
 ```
 
-patched-20 的验收标志包括 `PASS_DESKTOP_HWGL`、`PASS_POST_REBOOT_HWGL` 和
+patched-21 的验收标志包括 `PASS_DESKTOP_HWGL`、`PASS_POST_REBOOT_HWGL` 和
 `PASS_CURRENT_XORG_HWGL_RUNTIME`。应确认 renderer 为 `Fantasy II-M`、direct rendering 启用，并有
 DRI3、GLX、Present 和 RANDR。提交中的 baseline 只是历史证据，不能替代当前设备检查。
 
 ## framebuffer 与真实 VT
 
-patched-20 必须在真实 VT 验证 fbdev mmap 和 fbterm。通过 SSH 保存内核日志后，切换到未运行 Xorg
+patched-21 必须在真实 VT 验证 fbdev mmap 和 fbterm。通过 SSH 保存内核日志后，切换到未运行 Xorg
 的真实 VT 执行：
 
 ```sh

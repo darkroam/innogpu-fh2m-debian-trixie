@@ -14,10 +14,48 @@
 BUILD: PASS
 PACKAGE_BOUNDARY: PASS
 REPRODUCIBILITY: PASS
-INSTALL: NOT_INSTALLED
-REBOOT: NOT_REBOOTED
-RUNTIME_VALIDATION: PENDING
+INSTALL: PASS
+REBOOT: PASS
+RUNTIME_VALIDATION: PASS_ON_CURRENT_DEVICE
 ```
+
+## 部署结果（重启前，2026-08-14）
+
+已使用经审计的 p21 deb 覆盖已安装的 p20 包。`dpkg` 的 postinst 成功完成 DKMS 重建、模块签名、
+`depmod` 与当前内核 initramfs 更新，未执行模块热卸载、Xorg 测试或重启。
+
+```text
+installed package: innogpu-fh2m-trixie 3.3.3.42-patched-21 amd64
+kernel: 6.12.96+deb13-amd64
+DKMS: innogpu-kernel/2.2, 6.12.96+deb13-amd64, x86_64: installed
+module path: /lib/modules/6.12.96+deb13-amd64/updates/dkms/innogpu.ko.xz
+initramfs: /boot/initrd.img-6.12.96+deb13-amd64 regenerated
+dpkg --verify: clean
+package source: patch-002/006/007 present; patch-008 diagnostic absent
+rollback: patched-17 deb available
+```
+
+安装开始前 `innogpu` 已加载；Debian/DKMS 用新模块文件替换磁盘文件不会替换内存中的实例。因此当前
+会话只能证明 p21 已部署，不能以任何 `/proc`、DRM、PVR、Xorg 或桌面结果证明 p21 已运行。必须由
+操作者执行一次受控重启，之后才进入运行验收。
+
+## 重启后运行验收结果（2026-08-14）
+
+受控重启后，p21 已在当前设备完成以下运行门槛：
+
+| 子系统 | 结果 | 证据摘要 |
+| --- | --- | --- |
+| 内核、DKMS 与 PVR | 通过 | p21 包与当前内核 DKMS 条目一致；`innogpu` 已加载，Driver/Firmware 均为 OK，错误计数为 0 |
+| 固件与诊断边界 | 通过 | 本次启动加载 `fh2m.fw` 和 `fh2m.sh`；未出现 patch-008 新增的 `srvkm_init` 诊断行 |
+| DRM/fbdev | 通过 | `card0`、`renderD128`、`fb0` 及按 PCI 路径的链接均存在 |
+| 当前桌面 Xorg/GLX | 通过 | Innogpu DDX、Fantasy II-M renderer、direct rendering、DRI3、GLX、Present、RANDR 均正常；`PASS_DESKTOP_HWGL` |
+| 隔离 Xorg/GLX | 通过 | 临时 `:9/vt8` 的 Xorg、`xdpyinfo`、`glxinfo` 均返回 0；`PASS_CURRENT_XORG_HWGL_RUNTIME` |
+| 真实 VT | 通过 | 操作者确认普通用户 `fbterm` 可进入、显示、输入并正常退出；键盘表快捷键权限警告不影响 framebuffer 验收 |
+| 显示会话 | 通过 | dotconfig xdisplay 为 `EXTERNAL_ONLY`、`health=ready`，Innogpu 模式恢复钩子可用 |
+| Picom 与音频 | 通过 | patched Picom v13 正在运行；HDA SN6180、PipeWire 默认内置扬声器 sink 与启动服务正常 |
+
+音频用户服务是一次性应用服务，启动后显示 `inactive (dead)` 且最近执行为 `SUCCESS` 属于预期，不是
+服务故障。验收只保留上述摘要；完整 Xorg、EDID、Xauth、主机标识和原始 journal 均不进入 Git。
 
 ## 目标
 
@@ -27,7 +65,7 @@ patched-20 已证明完整 Deepin 载荷配合 framebuffer 修复能够通过 PV
 1. 保留 p20 已验证的驱动补丁集合，但关闭只用于定位故障的 `patch-008`；
 2. 使用当前仓库已经收敛的辅助载荷，不再打包 dotconfig 拥有的 xdisplay 引擎；
 3. 使用新版本号重新建立包内容、哈希和后续运行证据之间的一一对应关系；
-4. 先验证可复现构建和 release 边界，本阶段不改变当前机器的已安装驱动或 X11 状态。
+4. 先验证可复现构建和 release 边界，再在保留回退条件下分阶段部署与验收。
 
 ## 固定输入
 
@@ -131,10 +169,10 @@ repeat build cmp: identical
 - 禁止载荷清单匹配数：0；
 - 解包源码标记：patch-002、patch-006、patch-007 存在，patch-008 诊断标记不存在；
 - p21 deb 被 `/debs/*` 规则忽略，不进入 Git；
-- 当前系统查询仍为 `3.3.3.42-patched-20`，证明本轮没有安装 p21。
+- 离线审计时系统仍为 `3.3.3.42-patched-20`；该部署前快照证明离线阶段没有安装 p21。
 
-这些结果只关闭构建与包边界门槛。没有执行 DKMS、安装、模块切换、测试 Xorg 或重启，因此 PVR、
-DRM/fbdev、Xorg/GLX、fbterm、显示管理和桌面运行状态仍必须保留为待验收。
+这些离线结果本身只关闭构建与包边界门槛，不能替代运行验收。在该快照之后才执行 DKMS、安装、
+受控重启和图形运行验收；其结果见本文开头，未来重新部署仍须重复整套运行门槛。
 
 ## 本次离线审计发现与固化经验
 
@@ -190,11 +228,13 @@ p21 只有在离线证据写回本文并经过审阅后才可进入实机阶段�
 - 停止把包内旧 p20 显示入口当作恢复路径，使用当前仓库脚本和 dotconfig xdisplay；
 - 明确安排一次受控重启；不能用热加载结果代替重启验收。
 
-本次 p21 构建任务不执行这些安装动作。
+上述条件已在本机满足并完成部署前检查：p17 回退 deb、当前内核 headers、DKMS 和可用磁盘空间均已
+确认，p21 包已安装。该段记录的是重启前状态；后续受控重启与运行验收结果已见本文开头的验收表。
 
 ## 安装后的运行验收
 
-未来安装并重启后，必须按 [`../user/verification.md`](../user/verification.md) 逐项重新建立证据：
+本机 p21 已通过本次完整运行验收；后续重新部署、内核/用户态升级或新硬件组合时，必须按
+[`../user/verification.md`](../user/verification.md) 重新建立以下证据：
 
 1. dpkg/DKMS/活动模块版本精确为 p21，不能沿用 p20 的运行结果；
 2. `fh2m.fw` 和 `fh2m.sh` 加载，PVR 进入 ACTIVE，且不再出现 patch-008 的重复诊断；

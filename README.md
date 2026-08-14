@@ -10,9 +10,10 @@ Debian Trixie kernel 6.12 上 Innosilicon Fantasy II-M / 风华 2 号 M 的驱�
 
 | 项目 | 当前结论 |
 | --- | --- |
-| 当前运行驱动 | `3.3.3.42-patched-20` 已在本机重启并完成 PVR、Xorg/GLX、fbdev 和真实 VT 验收 |
+| 当前运行驱动 | `3.3.3.42-patched-21` 已完成部署、重启、PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收 |
+| 历史运行基线 | `3.3.3.42-patched-20` 曾完成验收，但其旧辅助载荷使该包不可发布 |
 | 发布判断 | patched-20 仅是本机历史验收物；除高频 `patch-008` 外，其 deb 还含所有权收敛前的旧 xdisplay 辅助载荷，禁止发布或在新设备部署 |
-| 下一候选 | patched-21 已完成两次一致构建和离线包审计，SHA-256 为 `15c1fab4...1384cc`；未安装、未重启、运行待验收 |
+| p21 验收状态 | 两次一致构建、离线包审计、部署与当前设备运行验收通过；跨硬件发布待评审 |
 | 唯一技术基线 | Deepin `20250421190503-debug` 完整原包；历史 patched 包不得作为后续载荷父版本 |
 | 当前回退点 | patched-17；patched-8 只保留为更早的历史恢复物 |
 | DRM/fbdev | `card0`、`renderD128`、`fb0` 可用，`/dev/fb0 mmap()` 和 `FBIOPAN_DISPLAY` 已通过 |
@@ -21,14 +22,13 @@ Debian Trixie kernel 6.12 上 Innosilicon Fantasy II-M / 风华 2 号 M 的驱�
 | 内置音频 | `1d94:14c9 -> snd_hda_intel -> SN6180`，ALSA/PipeWire 重启验证通过 |
 | X11 显示管理 | xdisplay 由 dotconfig 仓库独立维护；本项目只提供 Innogpu 输出候选、模式恢复钩子和会话接入 |
 
-当前可以确认的是“已安装的 patched-20 在本机工作”，不能据此宣称它已经具备跨设备发布条件。
-该 deb 生成于 xdisplay 所有权收敛之前，不能用当前源码以相同版本号重建。下一候选必须使用大于 20
-的新版本号，从 Deepin 202504 原包构建，移除或限速 PVR 诊断，并重复包边界、DKMS、固件、PVR、
-Xorg/GLX、正常桌面和真实 VT 全部门槛。
+当前可以确认的是“p21 在当前设备上工作”。它已通过 PVR/firmware、DRM/fbdev、当前桌面 GLX、
+隔离 Xorg、真实 VT fbterm、xdisplay、Picom 和音频状态验收。历史 p20 deb 生成于 xdisplay 所有权
+收敛之前，不能用当前源码以相同版本号重建或推广；p21 的公开发布仍需要跨设备验证。
 
 patched-21 的精确定义、禁止载荷、构建证据格式和未来运行门槛见
-[patched-21 release candidate](docs/patches/patched-21-release-candidate.md)。它已通过离线构建和包边界，
-但仍需单独安装、重启并重新验收，不能继承 p20 的运行结论，也还不是新设备推荐版本。
+[patched-21 release candidate](docs/patches/patched-21-release-candidate.md)。它已完成当前设备验收，
+但跨硬件 release 评审完成前仍不是无条件的新设备推荐版本。
 
 ## 从这里开始
 
@@ -99,9 +99,9 @@ tests/xdisplay/run-install-tests.sh
 其中安装器要求目标用户已经从 dotconfig 安装 xdisplay，然后只写入本设备的
 `XDISPLAY_INTERNAL_OUTPUTS`、`XDISPLAY_RESTORE_COMMAND` 和带边界标记的 X11 会话接入。
 
-当前已安装的 patched-20 deb 早于此边界，`/usr/share/innogpu-fh2m-trixie/` 中仍有未激活的旧
-xdisplay 副本和旧安装器；它们不是当前源码，不得调用或发布。后续包由
-`scripts/check-release-package.sh` 强制拒绝这些文件。
+历史 patched-20 deb 早于此边界，曾在 `/usr/share/innogpu-fh2m-trixie/` 携带未激活的旧 xdisplay
+副本和旧安装器；它们不是当前源码，不得调用或发布。当前 p21 已移除这些文件，后续包由
+`scripts/check-release-package.sh` 强制拒绝它们。
 
 ### Picom 与音频
 

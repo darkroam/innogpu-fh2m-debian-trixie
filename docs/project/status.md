@@ -9,18 +9,18 @@
 
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
-| 驱动包 | `3.3.3.42-patched-20` 已安装并重启成功 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
+| 当前运行驱动 | `3.3.3.42-patched-21` 已安装、重启并完成本机 PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
+| 历史运行基线 | `3.3.3.42-patched-20` 曾完成运行验收，但 deb 含收敛前辅助载荷，仅保留为历史证据 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
 | 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |
-| 下一候选 | patched-21 已完成两次一致构建和离线包审计，SHA-256 为 `15c1fab4...1384cc`；尚未安装或运行验收 | [`patched-21` 证据](../patches/patched-21-release-candidate.md) |
+| 运行验收状态 | p21 的两次一致构建、离线审计、部署、重启和当前设备运行验收均通过 | [`patched-21` 证据](../patches/patched-21-release-candidate.md) |
 | 源码/用户态基线 | Deepin 202504 完整原包，不混用历史 patched 包 | `scripts/build-deepin-coherent.sh` |
-| 固件 | `fh2m.fw`、`fh2m.sh` 均成功加载 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
-| PVR services | `state_before=2 -> ret=0 -> state_after=3 (ACTIVE)` | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
-| DRM/fbdev | `card0`、`renderD128`、`fb0` 可用，fbdev mmap 成功 | patched-20 运行日志、fbterm trace |
-| Xorg/GLX | Xorg、`xdpyinfo`、`glxinfo` 全部通过；硬件加速启用 | `baselines/latest-current-xorg-hwgl-test/result.txt` |
-| 真实 VT | `fbterm rc=0`，可绘制并正常退出 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
+| 固件与 PVR | `fh2m.fw`、`fh2m.sh` 已加载，Driver/Firmware 为 OK，错误计数为 0 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
+| DRM/fbdev | `card0`、`renderD128`、`fb0` 可用；真实 VT fbterm 通过 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
+| Xorg/GLX | 当前桌面和隔离 `:9/vt8` 的 Xorg、`xdpyinfo`、`glxinfo` 全部通过；硬件加速启用 | `baselines/latest-current-xorg-hwgl-test/result.txt` |
+| 真实 VT | 操作者确认普通用户 fbterm 可绘制并正常退出 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | 显示管理 | dotconfig 维护 xdisplay 2.0.0；本项目只维护设备钩子和会话接入 | [`display-management.md`](display-management.md) |
-| Picom | Innogpu GLX 能力探测补丁已验证，配置独立于驱动包 | `patches/picom/`、`docs/project/compositor-management.md` |
-| 音频 | HDA 内置喇叭绑定和 PipeWire 恢复已验证 | `docs/project/audio-management.md` |
+| Picom | patched v13 正在使用 Innogpu GLX，配置独立于驱动包 | `patches/picom/`、`docs/project/compositor-management.md` |
+| 音频 | HDA 内置喇叭、PipeWire 默认 sink 和启动服务均正常 | `docs/project/audio-management.md` |
 
 ## 已解决问题
 
@@ -38,21 +38,19 @@
 
 ## 当前未解决或需要后续处理
 
-1. `patch-008` 的 PVR 诊断会对每次 services ioctl 写日志；正式长期运行包应移除或限速，不能把
-   当前诊断日志量当作稳定配置。
+1. p20 的 `patch-008` 历史诊断会对每次 services ioctl 写日志；p21 已关闭它，后续版本不得重新
+   启用高频日志而不同时定义限速、证据和回退策略。
 2. `hwinfo_g0m.bin` 仍缺失，但本次不阻止 PVR 进入 `ACTIVE`；是否需要该固件由后续硬件能力需求
    决定，不能仅凭缺失日志推断为故障。
 3. 普通用户运行 `fbterm` 时不能修改内核键盘表，内置滚屏和切换 VT 快捷键不可用；这不是
    framebuffer 映射故障，不应直接授予全局特权。
-4. 当前源码的包辅助文件已完成所有权收敛，patched-21 也已完成离线构建与包审计；但尚未安装、
-   重启或运行验收，不能作为已发布基线或替代当前 p20。
-5. 已安装 p20 的 `/usr/share/innogpu-fh2m-trixie/` 仍包含旧显示安装器；在升级到新包前不得调用包内
-   `innogpu-prepare-soft-xorg-dwm` 等会间接执行旧安装器的入口，应使用当前仓库脚本。
-6. 不同扩展坞、三块以上外屏、无盖桌面和多型号硬件的实机矩阵仍不完整。
-7. xdisplay 的适配器、状态机、配置和自定义布局由 dotconfig 独立演进；本项目只需持续验证
+4. p21 仅在当前设备、当前内核和当前显示组合完成验收；不同扩展坞、三块及以上外屏、无盖桌面和
+   多型号硬件的实机矩阵仍不完整。
+5. p20 的旧显示安装器已随 p21 包升级移除；后续只使用当前仓库接入脚本与 dotconfig xdisplay。
+6. xdisplay 的适配器、状态机、配置和自定义布局由 dotconfig 独立演进；本项目只需持续验证
    `XDISPLAY_INTERNAL_OUTPUTS`、`XDISPLAY_RESTORE_COMMAND` 和会话接入仍兼容。
-8. patched-21 的实际 deb 哈希和离线包审计已记录；后续实机门槛完成前，仍不能标记为可发布或
-   替代当前 p20。
+7. patched-21 的实际 deb 哈希、离线包审计与当前设备运行证据已记录；公开发布前仍需完成跨设备
+   矩阵、release 审阅和回退演练。
 
 ## 证据保留规则
 
@@ -62,10 +60,11 @@
 
 ## 发布判断
 
-当前 patched-20 是“本机已验证的历史诊断候选”，不是可发布基线。其运行结论不因辅助载荷审计而
-失效，但原 deb 禁止推广，当前源码也禁止复用 p20 版本号。下一版本必须从 Deepin 202504 完整原包
-重新构建，先移除或限速诊断日志，通过包边界审计，再重复本文件列出的全部运行门槛。
+patched-20 是“本机已验证的历史诊断候选”，不是可发布基线。其运行结论不因辅助载荷审计而失效，
+但原 deb 禁止推广，当前源码也禁止复用 p20 版本号。patched-21 已从 Deepin 202504 完整原包构建，
+关闭高频诊断并通过包边界和当前设备运行门槛；后续版本仍须重复这些门槛。
 `patched-17` 保留为回退点，`patched-8` 仅保留为历史回滚物。
 
 patched-21 已按上述要求从原包完成两次一致构建：关闭 `patch-008`，使用收敛后的辅助载荷，并通过
-包边界审计。本轮只生成和读取了 deb；未安装、未重启和未做运行验收必须继续作为显式状态保留。
+包边界审计。它已完成当前设备的部署、重启和完整图形运行验收，可以作为当前机器的稳定基线；公开
+发布仍受跨硬件矩阵与 release 审阅约束。

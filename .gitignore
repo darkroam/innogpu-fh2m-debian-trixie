@@ -18,5 +18,6 @@ third_party/innogpu-fh2m-deepin-202504/
 # Local runtime diagnostics can contain host paths, display cookies, and large logs.
 /desktop-hwgl-*.txt
 /post-reboot-hwgl-*.txt
+/baselines/desktop-hwgl-*.txt
 /ddx-vt-test-*.log
 /ddx-test-*/
