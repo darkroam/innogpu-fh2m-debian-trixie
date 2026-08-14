@@ -11,6 +11,10 @@
   但 DRI、GBM、GLAPI、GLVND、Xorg DDX、固件和 maintainer scripts 不得从历史 patched 包拼接。
 - `patched-8` 仅是历史回滚物，`patched-17/18/19` 是回退、故障或候选证据，不是后续实现父版本；
   已验证的 `patched-20` 仍属于诊断候选，不能把诊断日志当作长期默认行为。
+- 已发布、安装或形成验收证据的版本号禁止复用。辅助脚本、包清单或 maintainer script 发生变化时，
+  即使内核补丁不变也必须提升包版本，并重新建立对应的包边界和运行证据。
+- release wrapper 必须固定经过审阅的 `SOURCE_DATE_EPOCH`；同一源码、输入 deb、版本和开关重复构建
+  必须生成逐字一致的包。哈希不一致时先定位构建环境或时间戳来源，禁止选择其中一个直接发布。
 - 阶段补丁必须保持一个补丁一个目的：源码 diff 位于 `patches/`；无法表示为源码 diff 的厂商对象
   变换使用 `tools/` 下的严格确定性工具；设计、开关、验证和回退写入对应的
   `docs/patches/patch-*.md`。不得通过复制 `.so`、固件或 `.ko` 绕过构建失败。
@@ -35,6 +39,8 @@
   网络标识或硬件隐私数据。提交前必须执行隐私扫描并人工审查新增证据。
 - release 上传是源码提交之外的步骤；构建脚本输出包默认写入 `debs/`，不得因本地构建把二进制
   产物重新加入 Git。
+- release 前必须运行 `scripts/check-release-package.sh`。xdisplay 引擎副本、历史 Kylin/实验安装器
+  和直接二进制热补丁入口不得出现在 coherent 发布包中。
 
 ### 文档与验证
 

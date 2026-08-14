@@ -4,5 +4,5 @@
 set -euo pipefail
 
 echo "ERROR: patched-17 is a historical result and must not be rebuilt as a new baseline." >&2
-echo "Use scripts/build-patched19-deepin-coherent.sh for the Deepin 202504 full-payload build." >&2
+echo "Define a new version greater than 20 before using scripts/build-deepin-coherent.sh." >&2
 exit 2

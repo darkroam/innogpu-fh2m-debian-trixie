@@ -7,11 +7,12 @@
 
 | 入口 | 生命周期 | 职责 |
 | --- | --- | --- |
-| `build-deepin-coherent.sh` | 当前公共构建器 | 从完整 Deepin 202504 原包构建 coherent deb，所有功能由显式开关控制 |
-| `build-patched19-deepin-coherent.sh` | 历史固定包装 | 复现 patched-19 的已知开关集合 |
-| `build-patched20-deepin-diagnostic.sh` | 当前诊断候选 | 复现本机已验收的 patched-20，包含高频 PVR 诊断 |
+| `build-deepin-coherent.sh` | 当前公共构建器 | 从完整 Deepin 202504 原包构建 coherent deb，版本、release epoch 和所有功能均由显式参数控制 |
+| `build-patched21-deepin-release-candidate.sh` | 当前固定包装 | 以固定 p21 开关构建所有权收敛后的首个 release candidate；只构建，不安装 |
 | `build-patched17-deepin-local-display.sh` | 停用护栏 | 明确拒绝把 patched-17 作为后续构建父版本 |
 | `build-patched18-deepin-local-display.sh` | 停用护栏 | 明确拒绝重建历史混合载荷 patched-18 |
+| `build-patched19-deepin-coherent.sh` | 停用护栏 | 明确拒绝用当前辅助载荷复用 patched-19 版本号 |
+| `build-patched20-deepin-diagnostic.sh` | 停用护栏 | 明确拒绝用当前辅助载荷复用已验收 patched-20 版本号 |
 | `prepare-deepin-userspace-root.sh` | 当前辅助 | 将 Deepin 原包解包到被忽略的 `third_party/` |
 | `build-patched-picom.sh` | 独立组件 | 构建/安装固定基线的 patched Picom，不进入驱动 deb |
 
@@ -24,11 +25,22 @@
 | `install-patched17-and-check.sh` | 修改驱动、需重启 | 当前新设备保守入口和 patched-20 回退入口 |
 | `install-patched8-and-check.sh` | 修改驱动、需重启 | 更早的历史恢复入口 |
 | `uninstall-innogpu.sh` | 卸载驱动、需重启 | 通用卸载器；版本包装见 `uninstall-patched*.sh` |
+| `uninstall-patched17.sh` | 卸载驱动、需重启 | 仅允许卸载版本精确匹配 patched-17 的兼容包装 |
+| `uninstall-patched8.sh` | 卸载驱动、需重启 | 仅允许卸载版本精确匹配 patched-8 的兼容包装 |
 | `disable-incompatible-userspace.sh` | 修改 `/usr` 和 Xorg 配置 | 恢复软件渲染/兼容用户态边界 |
 | `restore-tty1-login.sh` | 修改系统服务 | 优先恢复可见 TTY 登录 |
 | `prepare-soft-xorg-dwm.sh` | 修改 Xorg/会话 | 准备软件 Xorg；若 dotconfig xdisplay 已存在则接入，否则保留软件路径并警告 |
+| `repair-dri-nodes.sh` | 修改 `/dev` 节点 | 根据 sysfs 设备号临时恢复缺失的 DRM/fbdev 节点 |
 | `install-dri-node-repair-service.sh` | 安装系统服务 | 固化 DRM/fbdev 节点权限恢复 |
 | `install-hygon-hda-audio.sh` | 安装系统/用户服务 | 固化本机 HDA 和 PipeWire 恢复 |
+
+## Picom 接入
+
+| 入口 | 状态改变范围 | 说明 |
+| --- | --- | --- |
+| `install-picom-prereqs-debian.sh` | 安装软件包 | 安装固定 Picom 基线的 Debian 构建依赖 |
+| `install-picom-user.sh` | 修改目标用户配置 | 安装项目 Picom 配置和单一 xprofile 会话入口 |
+| `picom-session.sh` | 启动用户进程 | 优先启动 patched Picom，缺失时回退 xcompmgr，并避免重复实例 |
 
 ## 显示接入
 
@@ -48,10 +60,12 @@ xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项
 控制台，运行前必须阅读输出中的恢复命令：
 
 - `check-deepin-userspace-coherence.sh`
+- `check-docs.sh`
 - `check-desktop-hwgl.sh`
 - `check-innogpu-progress.sh`
 - `check-patched17-baseline.sh`
 - `check-post-reboot-hwgl.sh`
+- `check-release-package.sh`
 - `check-soft-xorg-dwm.sh`
 - `test-current-xorg-hwgl-runtime.sh`
 - `test-isolated-deepin-egl-gbm.sh`
@@ -62,6 +76,10 @@ xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项
 - `run-deepin-gbm-egl.sh`
 - `run-deepin-surfaceless-egl.sh`
 - `verify-install-status.sh`
+
+其中 `check-docs.sh` 检查文档链接、隐私标记、稳定入口登记和固定版本护栏；
+`check-release-package.sh` 只解包读取指定 deb，核对版本、关键载荷、禁止文件和设备接入脚本，
+不会安装包。发布包边界的可重复 fixture 见 `tests/package/run-boundary-tests.sh`。
 
 ## 实验和历史入口
 

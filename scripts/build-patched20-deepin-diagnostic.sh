@@ -1,16 +1,9 @@
 #!/bin/bash
+# Historical builder retained only to prevent reuse of the validated version.
+
 set -euo pipefail
 
-ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-cd "$ROOT"
-
-PATCH_VERSION=20 \
-APPLY_LOCAL_CONNECTOR_ACPI_MAP=1 \
-APPLY_DP_FBCON_FALLBACK=1 \
-APPLY_PANEL_BACKLIGHT_FALLBACK=0 \
-APPLY_PANEL_PLATFORM_FALLBACK=0 \
-APPLY_BACKLIGHT_FORCE_INITIAL_ENABLE=0 \
-APPLY_FBDEV_IO_MMAP=1 \
-APPLY_PVR_INIT_DIAGNOSTIC=1 \
-OUT_DEB="${OUT_DEB:-$ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-20.deb}" \
-    scripts/build-deepin-coherent.sh
+echo "ERROR: patched-20 is the installed historical diagnostic artifact and must not be rebuilt." >&2
+echo "Its validated deb predates the current xdisplay/package ownership boundary." >&2
+echo "Define a new version greater than 20 before using scripts/build-deepin-coherent.sh." >&2
+exit 2

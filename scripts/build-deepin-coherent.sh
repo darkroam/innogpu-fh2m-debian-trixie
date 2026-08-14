@@ -7,8 +7,8 @@ set -euo pipefail
 ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$ROOT"
 
-PATCH_VERSION=${PATCH_VERSION:-19}
-OUT_DEB=${OUT_DEB:-$ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-${PATCH_VERSION}.deb}
+PATCH_VERSION=${PATCH_VERSION:-}
+SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-}
 APPLY_DP_FBCON_FALLBACK=${APPLY_DP_FBCON_FALLBACK:-0}
 APPLY_PANEL_BACKLIGHT_FALLBACK=${APPLY_PANEL_BACKLIGHT_FALLBACK:-0}
 APPLY_PANEL_PLATFORM_FALLBACK=${APPLY_PANEL_PLATFORM_FALLBACK:-0}
@@ -17,10 +17,18 @@ APPLY_LOCAL_CONNECTOR_ACPI_MAP=${APPLY_LOCAL_CONNECTOR_ACPI_MAP:-0}
 APPLY_FBDEV_IO_MMAP=${APPLY_FBDEV_IO_MMAP:-0}
 APPLY_PVR_INIT_DIAGNOSTIC=${APPLY_PVR_INIT_DIAGNOSTIC:-0}
 
-if [[ ! "$PATCH_VERSION" =~ ^[0-9]+$ ]] || (( PATCH_VERSION < 19 )); then
-    echo "ERROR: coherent Deepin builds start at patched-19" >&2
+if [[ ! "$PATCH_VERSION" =~ ^[0-9]+$ ]] || (( PATCH_VERSION <= 20 )); then
+    echo "ERROR: set PATCH_VERSION to a new version greater than 20" >&2
+    echo "Historical patched-19/20 artifacts predate the current package ownership boundary and must not be overwritten." >&2
     exit 1
 fi
+if [[ ! "$SOURCE_DATE_EPOCH" =~ ^[0-9]+$ ]] || (( SOURCE_DATE_EPOCH <= 0 )); then
+    echo "ERROR: set SOURCE_DATE_EPOCH to the reviewed release timestamp" >&2
+    echo "Fixed release timestamps are required for reproducible package bytes." >&2
+    exit 1
+fi
+export SOURCE_DATE_EPOCH
+OUT_DEB=${OUT_DEB:-$ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-${PATCH_VERSION}.deb}
 
 if [[ -z "${INNOGPU_DEEPIN_DEB:-}" ]]; then
     for candidate in \
@@ -160,12 +168,14 @@ done
 
 rm -rf "$W/root/DEBIAN"
 install -d "$W/root/DEBIAN"
+installed_size=$(du -sk --exclude=DEBIAN "$W/root" | awk '{print $1}')
 cat > "$W/root/DEBIAN/control" <<EOF
 Package: innogpu-fh2m-trixie
 Version: 3.3.3.42-patched-${PATCH_VERSION}
 Section: graphics
 Priority: optional
 Architecture: amd64
+Installed-Size: ${installed_size}
 Depends: dkms, build-essential, libdrm2, libepoxy0, libpixman-1-0, libwayland-server0, libxcb-randr0
 Recommends: linux-headers-amd64, libegl1, libgles2, libgl1, libglx0, libgles1, libglvnd0
 Conflicts: innogpu-fh2m, innogpu-fh2m-kernel-dkms, innogpu-kernel-dkms
@@ -262,6 +272,7 @@ EOF
 chmod 0755 "$W/root/DEBIAN/postinst" "$W/root/DEBIAN/prerm" "$W/root/DEBIAN/postrm"
 
 dpkg-deb --root-owner-group --build "$W/root" "$OUT_DEB"
+"$ROOT/scripts/check-release-package.sh" "$OUT_DEB"
 dpkg-deb -x "$OUT_DEB" "$W/verify"
 
 for relative in "${vendor_files[@]}"; do

@@ -10,6 +10,8 @@
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
 | 驱动包 | `3.3.3.42-patched-20` 已安装并重启成功 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
+| 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |
+| 下一候选 | patched-21 已完成两次一致构建和离线包审计，SHA-256 为 `15c1fab4...1384cc`；尚未安装或运行验收 | [`patched-21` 证据](../patches/patched-21-release-candidate.md) |
 | 源码/用户态基线 | Deepin 202504 完整原包，不混用历史 patched 包 | `scripts/build-deepin-coherent.sh` |
 | 固件 | `fh2m.fw`、`fh2m.sh` 均成功加载 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
 | PVR services | `state_before=2 -> ret=0 -> state_after=3 (ACTIVE)` | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
@@ -42,11 +44,15 @@
    决定，不能仅凭缺失日志推断为故障。
 3. 普通用户运行 `fbterm` 时不能修改内核键盘表，内置滚屏和切换 VT 快捷键不可用；这不是
    framebuffer 映射故障，不应直接授予全局特权。
-4. patched-17 安装脚本仍是回退路径，尚未抽象出通用的 patched-20 安装器；后续发布前应建立
-   明确的版本参数化安装流程。
-5. 不同扩展坞、三块以上外屏、无盖桌面和多型号硬件的实机矩阵仍不完整。
-6. xdisplay 的适配器、状态机、配置和自定义布局由 dotconfig 独立演进；本项目只需持续验证
+4. 当前源码的包辅助文件已完成所有权收敛，patched-21 也已完成离线构建与包审计；但尚未安装、
+   重启或运行验收，不能作为已发布基线或替代当前 p20。
+5. 已安装 p20 的 `/usr/share/innogpu-fh2m-trixie/` 仍包含旧显示安装器；在升级到新包前不得调用包内
+   `innogpu-prepare-soft-xorg-dwm` 等会间接执行旧安装器的入口，应使用当前仓库脚本。
+6. 不同扩展坞、三块以上外屏、无盖桌面和多型号硬件的实机矩阵仍不完整。
+7. xdisplay 的适配器、状态机、配置和自定义布局由 dotconfig 独立演进；本项目只需持续验证
    `XDISPLAY_INTERNAL_OUTPUTS`、`XDISPLAY_RESTORE_COMMAND` 和会话接入仍兼容。
+8. patched-21 的实际 deb 哈希和离线包审计已记录；后续实机门槛完成前，仍不能标记为可发布或
+   替代当前 p20。
 
 ## 证据保留规则
 
@@ -56,6 +62,10 @@
 
 ## 发布判断
 
-当前 patched-20 是“本机已验证的诊断候选”，不是长期发布基线。下一版本必须从 Deepin 202504
-完整原包重新构建，先移除或限速诊断日志，再重复本文件列出的全部门槛。`patched-17` 保留为回退点，
-`patched-8` 仅保留为历史回滚物。
+当前 patched-20 是“本机已验证的历史诊断候选”，不是可发布基线。其运行结论不因辅助载荷审计而
+失效，但原 deb 禁止推广，当前源码也禁止复用 p20 版本号。下一版本必须从 Deepin 202504 完整原包
+重新构建，先移除或限速诊断日志，通过包边界审计，再重复本文件列出的全部运行门槛。
+`patched-17` 保留为回退点，`patched-8` 仅保留为历史回滚物。
+
+patched-21 已按上述要求从原包完成两次一致构建：关闭 `patch-008`，使用收敛后的辅助载荷，并通过
+包边界审计。本轮只生成和读取了 deb；未安装、未重启和未做运行验收必须继续作为显式状态保留。

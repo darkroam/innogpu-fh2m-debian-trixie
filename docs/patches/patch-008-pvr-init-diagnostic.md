@@ -9,7 +9,7 @@
 
 - 代码：`patches/008-pvr-init-diagnostic.patch`。
 - 开关：`APPLY_PVR_INIT_DIAGNOSTIC=1`。
-- 入口：`scripts/build-patched20-deepin-diagnostic.sh`。
+- 历史入口：`scripts/build-patched20-deepin-diagnostic.sh`；当前仅保留为拒绝同版本重建的护栏。
 - 不改变 services 调用参数、错误映射或用户态库。
 
 ## 验证

@@ -8,6 +8,16 @@
 
 ## 当前活动项
 
+patched-21 已在 [`../patches/patched-21-release-candidate.md`](../patches/patched-21-release-candidate.md)
+固定输入、补丁集、辅助载荷和验证门槛。当前批次只完成：
+
+- [x] 静态检查与 7 项包边界 fixture；
+- [x] 从 Deepin 202504 原 deb 构建 p21，并以固定 epoch 重复构建确认逐字一致；
+- [x] 记录 control 字段、文件清单审计和 SHA-256；
+- [x] 保持 `NOT_INSTALLED`、`NOT_REBOOTED`、`RUNTIME_VALIDATION_PENDING`。
+
+实机安装、重启、PVR/Xorg/GLX/fbterm/显示验收属于后续独立批次，必须先审阅离线结果和回退准备。
+
 显示引擎代码、配置和内部测试已收敛回 dotconfig 维护。本项目当前只保留 Innogpu 设备钩子、会话
 接入和安装边界测试；后续 xdisplay 功能不再在本仓库重复实现。跨项目实机矩阵记录在
 `suspended.md`。

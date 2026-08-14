@@ -66,18 +66,45 @@ fi
 [[ -r tools/patch-gpupll-object.py ]] || fail "GPU PLL object patch tool is missing or unreadable"
 grep -Fq 'tools/patch-gpupll-object.py' scripts/build-deepin-coherent.sh ||
     fail "coherent builder does not invoke the GPU PLL object patch tool"
+
+if ! grep -Eq 'PATCH_VERSION.*<= 20' scripts/build-deepin-coherent.sh; then
+    fail "coherent builder does not reject historical version numbers through patched-20"
+fi
+grep -Fq 'export SOURCE_DATE_EPOCH' scripts/build-deepin-coherent.sh ||
+    fail "coherent builder does not export a reviewed reproducible-build epoch"
 for expected_setting in \
-    'PATCH_VERSION=20' \
+    'PATCH_VERSION=21' \
+    'SOURCE_DATE_EPOCH=1786665600' \
     'APPLY_DP_FBCON_FALLBACK=1' \
     'APPLY_PANEL_BACKLIGHT_FALLBACK=0' \
     'APPLY_PANEL_PLATFORM_FALLBACK=0' \
     'APPLY_BACKLIGHT_FORCE_INITIAL_ENABLE=0' \
     'APPLY_LOCAL_CONNECTOR_ACPI_MAP=1' \
     'APPLY_FBDEV_IO_MMAP=1' \
-    'APPLY_PVR_INIT_DIAGNOSTIC=1'; do
-    grep -Fq "$expected_setting" scripts/build-patched20-deepin-diagnostic.sh ||
-        fail "patched-20 wrapper is missing $expected_setting"
+    'APPLY_PVR_INIT_DIAGNOSTIC=0'; do
+    grep -Fq "$expected_setting" scripts/build-patched21-deepin-release-candidate.sh ||
+        fail "patched-21 wrapper is missing $expected_setting"
 done
+
+for historical_wrapper in \
+    scripts/build-patched17-deepin-local-display.sh \
+    scripts/build-patched18-deepin-local-display.sh \
+    scripts/build-patched19-deepin-coherent.sh \
+    scripts/build-patched20-deepin-diagnostic.sh; do
+    if "$historical_wrapper" >/dev/null 2>&1; then
+        fail "historical builder still succeeds: $historical_wrapper"
+    fi
+done
+
+while IFS= read -r script; do
+    name=${script##*/}
+    grep -Fq "\`$name\`" scripts/README.md || fail "script is not registered in scripts/README.md: $script"
+done < <(find scripts -maxdepth 1 -type f -name '*.sh' | sort)
+
+while IFS= read -r tool; do
+    name=${tool##*/}
+    grep -Fq "\`$name\`" tools/README.md || fail "tool is not registered in tools/README.md: $tool"
+done < <(find tools -maxdepth 1 -type f ! -name 'README.md' | sort)
 
 for path in \
     docs/project/architecture.md \
@@ -85,6 +112,8 @@ for path in \
     docs/project/compositor-management.md \
     docs/project/display-management.md \
     docs/project/maintenance-policy.md \
+    docs/patches/patched-21-release-candidate.md \
+    docs/incidents/patched-20-legacy-helper-payload.md \
     docs/planning/todo.md \
     docs/planning/history.md \
     docs/user/new-device-install.md \
@@ -94,7 +123,15 @@ for path in \
     [[ -f "$path" ]] || fail "required document is missing: $path"
 done
 
-for path in docs/patches/README.md docs/incidents/README.md scripts/README.md debs/README.md; do
+for path in \
+    docs/patches/README.md \
+    docs/incidents/README.md \
+    scripts/README.md \
+    tools/README.md \
+    tests/README.md \
+    tests/package/run-boundary-tests.sh \
+    scripts/check-release-package.sh \
+    debs/README.md; do
     [[ -f "$path" ]] || fail "required index is missing: $path"
 done
 

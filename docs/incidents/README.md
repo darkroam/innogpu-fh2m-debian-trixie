@@ -11,6 +11,7 @@
 | [patched-18 用户态混配](patched-18-userspace-mix.md) | 新 DKMS 源码与旧包用户态不能拼接，必须保留同一 Deepin 发布的完整 ABI 载荷 |
 | [patched-18 shader 固件](patched-18-shader-firmware.md) | shader 固件缺失使 RGX 进入 BAD，services open 后续返回 `ENODEV` |
 | [patched-20 运行时验收](patched-20-runtime.md) | 完整 Deepin 202504 载荷越过 PVR、隔离 Xorg/GLX 和真实 VT 门槛；诊断补丁仍非长期方案 |
+| [patched-20 旧辅助载荷](patched-20-legacy-helper-payload.md) | 运行验收 deb 早于 xdisplay 所有权收敛，版本不可复用，包不可直接发布 |
 | [Picom GL 能力判断](picom-explicit-uniform-location.md) | 下游 Picom 用最小 shader 验证能力，不修改预编译驱动库或伪造扩展字符串 |
 
 ## 使用规则

@@ -1,5 +1,20 @@
 # 实施历史
 
+## 2026-08-14 patched-21 候选定义与 release 护栏
+
+- 第三轮审计发现已验收 p20 deb 仍携带所有权收敛前的 xdisplay/实验辅助文件，因此保留其运行
+  结论但禁止发布和同版本重建。
+- 公共构建器改为只接受显式且大于 20 的版本，p17-p20 历史 wrapper 改为明确失败的兼容护栏。
+- 定义 patched-21：从 Deepin 202504 原包重建，启用 stage-000 和 patch-001/002/006/007，关闭
+  patch-003/004/005/008，不继承 p20 deb。
+- 增加 release 包边界审计及 `/tmp` fixture，拒绝私有 xdisplay 副本、实验入口、旧版本号和过期
+  设备接入脚本。本阶段只允许构建与离线验证，不安装、不重启。
+- 首次重复构建暴露 archive 时间戳不稳定，随后要求公共构建器显式接收 `SOURCE_DATE_EPOCH`，p21
+  固定为 `1786665600`；最终两份 deb 逐字一致。
+- 最终 p21 control 为 `amd64`、`Installed-Size=326128`，文件大小 79,528,788 字节，SHA-256 为
+  `15c1fab4b8a0f36985097e3d1651ff43fc09f00a2bda47058c380e1e561384cc`。包边界通过，系统仍安装
+  p20，运行验收待后续独立批次。
+
 ## 2026-08-14 文档与 release 目录重构
 
 - 将补丁说明拆为 `docs/patches/patch-*.md`，并为 patched-17 framebuffer、patched-18 用户态混配、

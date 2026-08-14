@@ -25,4 +25,15 @@ tests/picom/run-session-tests.sh
 这些测试只写入 `/tmp` 下的临时 HOME，并用假命令验证 Picom 优先级、xcompmgr 回退和单实例，
 不启动真实 Picom 或 xcompmgr。
 
+Release 包边界测试：
+
+```sh
+tests/package/run-boundary-tests.sh
+```
+
+该测试在 `/tmp` 中生成最小 fixture deb，验证新版本清洁包通过，以及私有 xdisplay 副本、复用
+patched-20 版本号、过期设备接入脚本、不完整 shader、错误架构和缺失 `Installed-Size` 会被
+`scripts/check-release-package.sh` 拒绝。它不读取或安装本机 `debs/` 中的真实驱动包，不运行 DKMS，
+也不改变活动 Xorg。
+
 测试数量以各脚本运行时输出为准，不在本文复制易过时的计数。

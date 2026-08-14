@@ -9,11 +9,15 @@
 ## 总体链路
 
 ```text
-release 中的外部 deb
-  -> scripts/install*.sh
+保守安装：patched-17 deb
+  -> scripts/install-patched17-and-check.sh
        -> DKMS: innogpu.ko + firmware
+       -> modesetting + Mesa llvmpipe
+
+coherent 候选 deb（下一版本必须 >20）
+  -> scripts/check-release-package.sh -> dpkg
+       -> DKMS + 同源 Deepin 202504 DDX/GL/固件
        -> /dev/dri/card*、renderD*、/dev/fb0
-       -> Xorg innogpu DDX + Deepin 202504 GL 用户态
        -> X11 会话中的 dotconfig `xdisplay watch`
             -> lid + DRM connector + RandR
             -> 显示布局与热插拔收敛
@@ -49,9 +53,10 @@ PCI 0000:06:00.6 [1d94:14c9]
 ## 驱动与图形用户态
 
 `innogpu-fh2m-trixie 3.3.3.42-patched-20` 是当前已安装并通过 PVR、Xorg/GLX 和真实 VT fbterm
-验收的版本，`patched-17` 是当前可用回退包。后续包统一以 Deepin 202504 原包为唯一技术基线，在其 DKMS 源码上叠加
-Debian 6.12 兼容、G0M PLL、DRM/fbdev 和本地 connector 修复，并保留同一原包中的完整用户态 ABI
-集合。`patched-8` 只保留为更早的历史回滚物，不再参与设计、构建或实现对照。
+验收的版本，`patched-17` 是当前可用回退包。p20 deb 同时是所有权收敛前的历史产物，包内辅助脚本
+不能代表当前源码；运行时验收与 release 载荷合规是两个独立结论。后续包统一以 Deepin 202504 原包
+为唯一技术基线，在其 DKMS 源码上叠加 Debian 6.12 兼容、G0M PLL、DRM/fbdev 和本地 connector
+修复，并保留同一原包中的完整用户态 ABI 集合。`patched-8` 只保留为更早的历史回滚物。
 
 Deepin 202504 deb 同时提供硬件 GL/DDX 用户态。内核模块成功、DRM 节点存在和 Xorg 出图不能
 单独证明硬件加速可用；必须分别验证 renderer、direct rendering、DRI、GLX 和 Present。
@@ -73,8 +78,18 @@ Deepin 202504 deb 同时提供硬件 GL/DDX 用户态。内核模块成功、DRM
 - `patched-19` 是第一个执行完整 Deepin 202504 载荷规则的历史候选，关键 vendor 文件哈希和 DRI
   未解析符号检查已通过；
 - `patched-20` 在完整 Deepin 202504 载荷上保留 `fb_io_mmap` 并加入 PVR 初始化诊断，已通过运行时
-  PVR、隔离 Xorg/GLX 和真实 VT `fbterm` 验收；诊断补丁不应直接作为长期日志方案；
+  PVR、隔离 Xorg/GLX 和真实 VT `fbterm` 验收；但其 deb 还包含收敛前的旧显示/实验辅助文件，
+  只能作为当前机器证据，不能发布或用当前源码以相同版本号重建；
 - DRI、GBM、GLAPI、GLVND 和 DDX 必须来自同一 Deepin 发布，禁止跨版本混配或只替换其中一个文件。
+
+当前 `build-deepin-coherent.sh` 只接受显式指定且大于 20 的新版本号，以及经过审阅的
+`SOURCE_DATE_EPOCH`。固定 wrapper 必须声明两者，使相同源码和输入重复构建得到逐字一致的 deb。
+构建完成后必须通过 `check-release-package.sh`，确认关键 ABI/固件存在、设备接入脚本与源码一致，
+并拒绝 xdisplay 引擎副本、Kylin/实验用户态安装器和直接二进制热补丁命令。
+
+patched-21 是该规则的首个实际输出：离线包边界与重复构建已通过，但尚未安装或运行验收。它的
+固定补丁矩阵和证据见
+[`../patches/patched-21-release-candidate.md`](../patches/patched-21-release-candidate.md)。
 
 ## 显示管理
 

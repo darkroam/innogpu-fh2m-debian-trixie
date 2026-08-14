@@ -11,7 +11,8 @@ Debian Trixie kernel 6.12 上 Innosilicon Fantasy II-M / 风华 2 号 M 的驱�
 | 项目 | 当前结论 |
 | --- | --- |
 | 当前运行驱动 | `3.3.3.42-patched-20` 已在本机重启并完成 PVR、Xorg/GLX、fbdev 和真实 VT 验收 |
-| 发布判断 | patched-20 是诊断候选，不是可直接推广的新设备长期版本；`patch-008` 仍会重复写内核日志 |
+| 发布判断 | patched-20 仅是本机历史验收物；除高频 `patch-008` 外，其 deb 还含所有权收敛前的旧 xdisplay 辅助载荷，禁止发布或在新设备部署 |
+| 下一候选 | patched-21 已完成两次一致构建和离线包审计，SHA-256 为 `15c1fab4...1384cc`；未安装、未重启、运行待验收 |
 | 唯一技术基线 | Deepin `20250421190503-debug` 完整原包；历史 patched 包不得作为后续载荷父版本 |
 | 当前回退点 | patched-17；patched-8 只保留为更早的历史恢复物 |
 | DRM/fbdev | `card0`、`renderD128`、`fb0` 可用，`/dev/fb0 mmap()` 和 `FBIOPAN_DISPLAY` 已通过 |
@@ -20,9 +21,14 @@ Debian Trixie kernel 6.12 上 Innosilicon Fantasy II-M / 风华 2 号 M 的驱�
 | 内置音频 | `1d94:14c9 -> snd_hda_intel -> SN6180`，ALSA/PipeWire 重启验证通过 |
 | X11 显示管理 | xdisplay 由 dotconfig 仓库独立维护；本项目只提供 Innogpu 输出候选、模式恢复钩子和会话接入 |
 
-当前可以确认的是“patched-20 在本机工作”，不能据此宣称它已经具备跨设备发布条件。下一长期候选
-必须重新从 Deepin 202504 原包构建，移除或限速 PVR 诊断，再重复 DKMS、固件、PVR、Xorg/GLX、
-正常桌面和真实 VT 全部门槛。
+当前可以确认的是“已安装的 patched-20 在本机工作”，不能据此宣称它已经具备跨设备发布条件。
+该 deb 生成于 xdisplay 所有权收敛之前，不能用当前源码以相同版本号重建。下一候选必须使用大于 20
+的新版本号，从 Deepin 202504 原包构建，移除或限速 PVR 诊断，并重复包边界、DKMS、固件、PVR、
+Xorg/GLX、正常桌面和真实 VT 全部门槛。
+
+patched-21 的精确定义、禁止载荷、构建证据格式和未来运行门槛见
+[patched-21 release candidate](docs/patches/patched-21-release-candidate.md)。它已通过离线构建和包边界，
+但仍需单独安装、重启并重新验收，不能继承 p20 的运行结论，也还不是新设备推荐版本。
 
 ## 从这里开始
 
@@ -44,7 +50,6 @@ Debian Trixie kernel 6.12 上 Innosilicon Fantasy II-M / 风华 2 号 M 的驱�
 ```text
 debs/innogpu-fh2m-trixie_3.3.3.42-patched-8.deb
 debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb
-debs/innogpu-fh2m-trixie_3.3.3.42-patched-20.deb
 debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 ```
 
@@ -57,8 +62,8 @@ sudo scripts/install-prereqs-debian.sh
 sudo scripts/install-patched17-and-check.sh
 ```
 
-patched-20 只提供受控的手动安装和验收流程，不应被 `scripts/install.sh` 默认推广。执行前必须准备
-patched-17 回退包并阅读[新设备安装](docs/user/new-device-install.md)和
+patched-20 只保留为当前机器的运行证据和回退起点，不再作为新设备安装选项。新候选的版本、补丁集
+和验证计划确定前，不应直接调用通用构建器。详见[新设备安装](docs/user/new-device-install.md)和
 [故障恢复](docs/user/recovery.md)。
 
 ## 组件所有权
@@ -94,6 +99,10 @@ tests/xdisplay/run-install-tests.sh
 其中安装器要求目标用户已经从 dotconfig 安装 xdisplay，然后只写入本设备的
 `XDISPLAY_INTERNAL_OUTPUTS`、`XDISPLAY_RESTORE_COMMAND` 和带边界标记的 X11 会话接入。
 
+当前已安装的 patched-20 deb 早于此边界，`/usr/share/innogpu-fh2m-trixie/` 中仍有未激活的旧
+xdisplay 副本和旧安装器；它们不是当前源码，不得调用或发布。后续包由
+`scripts/check-release-package.sh` 强制拒绝这些文件。
+
 ### Picom 与音频
 
 patched Picom 使用独立源码和安装流程，见 [Picom 安装与恢复](docs/user/picom-install.md)。内置喇叭
@@ -126,7 +135,7 @@ sudo scripts/install-hygon-hda-audio.sh
 ```
 
 完整文档阅读顺序见 [docs/README.md](docs/README.md)，脚本风险和生命周期见
-[scripts/README.md](scripts/README.md)。
+[scripts/README.md](scripts/README.md)，手工探针和对象工具见 [tools/README.md](tools/README.md)。
 
 ## 维护底线
 

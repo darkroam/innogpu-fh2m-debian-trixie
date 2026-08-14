@@ -1,15 +1,9 @@
 #!/bin/bash
+# Historical builder retained only to prevent reuse of a published version.
+
 set -euo pipefail
 
-ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-cd "$ROOT"
-
-PATCH_VERSION=19 \
-APPLY_LOCAL_CONNECTOR_ACPI_MAP=1 \
-APPLY_DP_FBCON_FALLBACK=1 \
-APPLY_PANEL_BACKLIGHT_FALLBACK=0 \
-APPLY_PANEL_PLATFORM_FALLBACK=0 \
-APPLY_BACKLIGHT_FORCE_INITIAL_ENABLE=0 \
-APPLY_FBDEV_IO_MMAP=1 \
-OUT_DEB="${OUT_DEB:-$ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-19.deb}" \
-    scripts/build-deepin-coherent.sh
+echo "ERROR: patched-19 is a historical artifact and its version number must not be rebuilt." >&2
+echo "The current package helper boundary differs from the original patched-19 payload." >&2
+echo "Define a new version greater than 20 before using scripts/build-deepin-coherent.sh." >&2
+exit 2
