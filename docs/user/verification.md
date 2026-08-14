@@ -9,7 +9,7 @@
 重启后的目标包检查命令为：
 
 ```sh
-scripts/verify-install-status.sh 3.3.3.42-patched-21
+scripts/verify-install-status.sh --require-reboot 3.3.3.42-patched-21
 cat /proc/driver/innogpu/gpu00/status
 ls -l /dev/dri /dev/fb0
 ```
@@ -58,7 +58,7 @@ RUNTIME_VALIDATION: PENDING
 dpkg-query -W -f='${Package} ${Version}\n' innogpu-fh2m-trixie
 uname -r
 dkms status innogpu-kernel
-scripts/verify-install-status.sh 3.3.3.42-patched-20
+scripts/verify-install-status.sh
 ```
 
 本机已确认 patched-17 回退 deb、SSH/真实 TTY、当前内核 headers、DKMS 和可用磁盘空间，并已完成
@@ -70,7 +70,7 @@ scripts/verify-install-status.sh 3.3.3.42-patched-20
 受控安装并重启后，先检查版本身份，任何一处仍为 p20 都不能继续宣称 p21 运行通过：
 
 ```sh
-scripts/verify-install-status.sh 3.3.3.42-patched-21
+scripts/verify-install-status.sh --require-reboot 3.3.3.42-patched-21
 dpkg-query -W -f='${Version}\n' innogpu-fh2m-trixie
 dkms status innogpu-kernel
 modinfo -F filename innogpu
@@ -78,7 +78,7 @@ cat /proc/driver/innogpu/gpu00/status
 ```
 
 预期安装包和当前内核的 DKMS 实例均为 p21，活动 `innogpu` 来自该内核模块目录，Driver/Firmware
-状态为 OK。只完成安装但未重启时，活动模块仍可能是旧版本，此时状态保持 `NOT_REBOOTED`。
+状态为 OK。`--require-reboot` 还要求包元数据早于当前启动；只完成安装但未重启时该命令必须失败。
 
 ### 阶段 D：固件、PVR、节点和日志
 

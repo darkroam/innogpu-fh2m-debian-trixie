@@ -4,9 +4,56 @@
 set -u -o pipefail
 
 ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-EXPECTED="${1:-}"
+EXPECTED=""
+REQUIRE_REBOOT=0
 kernel="$(uname -r)"
 failures=0
+
+usage() {
+    cat <<'USAGE'
+Usage: scripts/verify-install-status.sh [--require-reboot] [expected-version]
+
+Without --require-reboot, report installed package, DKMS, driver and desktop
+state. With --require-reboot, fail unless the package metadata predates the
+current boot and the required runtime driver state is present.
+USAGE
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --require-reboot) REQUIRE_REBOOT=1 ;;
+        -h|--help) usage; exit 0 ;;
+        --)
+            shift
+            if [[ $# -eq 1 && -z "$EXPECTED" ]]; then
+                EXPECTED="$1"
+                shift
+            fi
+            if [[ $# -gt 0 ]]; then
+                echo "ERROR: unexpected argument after --: $1" >&2
+                usage >&2
+                exit 2
+            fi
+            break
+            ;;
+        -*) echo "ERROR: unknown option: $1" >&2; usage >&2; exit 2 ;;
+        *)
+            if [[ -n "$EXPECTED" ]]; then
+                echo "ERROR: expected version was already provided: $EXPECTED" >&2
+                usage >&2
+                exit 2
+            fi
+            EXPECTED="$1"
+            ;;
+    esac
+    shift
+done
+
+if [[ $# -gt 0 ]]; then
+    echo "ERROR: unexpected argument: $1" >&2
+    usage >&2
+    exit 2
+fi
 
 section() {
     printf '\n===== %s =====\n' "$*"
@@ -44,6 +91,28 @@ else
     fail "innogpu-fh2m-trixie is not installed"
 fi
 
+section "Reboot Boundary"
+if [[ "$REQUIRE_REBOOT" == "1" ]]; then
+    if [[ "$process_namespace_unreliable" == "1" ]]; then
+        fail "cannot certify a reboot from an isolated process namespace"
+    else
+        boot_time="$(uptime -s 2>/dev/null || true)"
+        boot_epoch="$(date -d "$boot_time" +%s 2>/dev/null || true)"
+        package_record="/var/lib/dpkg/info/innogpu-fh2m-trixie.list"
+        package_epoch="$(stat -c '%Y' "$package_record" 2>/dev/null || true)"
+
+        if [[ ! "$boot_epoch" =~ ^[0-9]+$ ]] || [[ ! "$package_epoch" =~ ^[0-9]+$ ]]; then
+            fail "cannot determine whether package installation predates this boot"
+        elif (( package_epoch >= boot_epoch )); then
+            fail "package metadata is newer than this boot; reboot before accepting runtime evidence"
+        else
+            pass "package metadata predates the current boot"
+        fi
+    fi
+else
+    echo "reboot_boundary=NOT_REQUESTED"
+fi
+
 section "DKMS"
 if command -v dkms >/dev/null 2>&1 || [[ -x /sbin/dkms ]]; then
     dkms_bin="$(command -v dkms || printf '%s\n' /sbin/dkms)"
@@ -61,14 +130,31 @@ section "Kernel Module"
 if lsmod | grep -q '^innogpu'; then
     pass "innogpu module is loaded"
 else
-    warn "innogpu module is not loaded; reboot or modprobe may be required"
+    if [[ "$REQUIRE_REBOOT" == "1" ]]; then
+        fail "innogpu module is not loaded after the required reboot"
+    else
+        warn "innogpu module is not loaded; reboot or modprobe may be required"
+    fi
 fi
 if [[ -r /proc/driver/innogpu/gpu00/status ]]; then
     cat /proc/driver/innogpu/gpu00/status
     grep -q 'Driver Status:[[:space:]]*OK' /proc/driver/innogpu/gpu00/status && pass "Driver Status OK" || fail "Driver Status is not OK"
     grep -q 'Firmware Status:[[:space:]]*OK' /proc/driver/innogpu/gpu00/status && pass "Firmware Status OK" || fail "Firmware Status is not OK"
 else
-    warn "/proc/driver/innogpu/gpu00/status is not available"
+    if [[ "$REQUIRE_REBOOT" == "1" ]]; then
+        fail "/proc/driver/innogpu/gpu00/status is not available after the required reboot"
+    else
+        warn "/proc/driver/innogpu/gpu00/status is not available"
+    fi
+fi
+
+if [[ "$REQUIRE_REBOOT" == "1" ]]; then
+    module_file="$(modinfo -F filename innogpu 2>/dev/null || true)"
+    if [[ "$module_file" == "/lib/modules/$kernel/"* ]]; then
+        pass "innogpu module resolves under the current kernel"
+    else
+        fail "innogpu module does not resolve under /lib/modules/$kernel"
+    fi
 fi
 
 section "Device Nodes"
@@ -81,7 +167,13 @@ if [[ "$process_namespace_unreliable" == "1" ]]; then
 else
     [[ -e /dev/dri/card0 ]] && pass "/dev/dri/card0 exists" || fail "/dev/dri/card0 missing"
     [[ -e /dev/dri/renderD128 ]] && pass "/dev/dri/renderD128 exists" || fail "/dev/dri/renderD128 missing"
-    [[ -e /dev/fb0 ]] && pass "/dev/fb0 exists" || warn "/dev/fb0 missing"
+    if [[ -e /dev/fb0 ]]; then
+        pass "/dev/fb0 exists"
+    elif [[ "$REQUIRE_REBOOT" == "1" ]]; then
+        fail "/dev/fb0 missing after the required reboot"
+    else
+        warn "/dev/fb0 missing"
+    fi
 fi
 
 section "Boot Autoload"

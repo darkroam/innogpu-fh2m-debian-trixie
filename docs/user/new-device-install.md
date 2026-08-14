@@ -2,14 +2,16 @@
 
 ## 版本选择
 
-当前有两个不同用途的入口：
+当前版本的职责不同：
 
-- `patched-17` 是保守的自动安装入口，也是 patched-20 的当前回退点；
-- `patched-20` 已在本机完成 PVR、Xorg/GLX、fbdev 和真实 VT 验收，但包含高频 PVR 诊断和所有权
-  收敛前的旧辅助载荷，只作为当前机器的历史验收物，不再部署到新设备。
+| 版本 | 用途 | 新设备策略 |
+| --- | --- | --- |
+| `patched-21` | 当前设备已完成运行验收的候选 | 跨硬件矩阵、回退演练和 release 审阅完成前，不作为默认入口 |
+| `patched-17` | 保守自动安装和 p21 回退包 | 新设备首次安装使用此入口 |
+| `patched-8` | 更早历史回滚物 | 仅在 patched-17 无法恢复时使用 |
+| `patched-20` | 历史诊断与运行证据 | 禁止部署；旧辅助载荷不符合当前边界 |
 
-`patched-8` 只保留为 patched-17 失败后的更早历史回滚物。patched-18/19 是问题定位和 coherent
-构建演进记录，不是安装推荐版本。
+patched-18/19 是问题定位和 coherent 构建演进记录，不是安装推荐版本。
 
 ## 准备文件
 
@@ -72,9 +74,9 @@ sudo INNOGPU_X_USER="$USER" INNOGPU_X_HOME="$HOME" \
 软件 Xorg；需要复现历史硬件 GL 流程时再按 `verification.md` 分步执行。patched-17 的已知边界是
 `/dev/fb0 mmap()` 返回 `ENODEV`，因此真实 VT fbterm 会失败。
 
-## 当前机器历史候选：patched-20
+## 历史候选：patched-20
 
-patched-20 继续作为当前机器的已安装运行证据，其回退步骤见 `recovery.md`；它不是新设备安装选项。
+patched-20 仅保留运行证据，其回退步骤见 `recovery.md`；它不是新设备安装选项。
 该 deb 生成于 xdisplay 所有权收敛前，包内仍有旧引擎/实验辅助文件，且 `patch-008` 会高频写日志。
 当前 `build-patched20-deepin-diagnostic.sh` 仅作为拒绝版本复用的兼容护栏，不再生成包。
 
@@ -86,11 +88,11 @@ Deepin 202504 原包调用 `build-deepin-coherent.sh`。不得以 patched-8、17
 scripts/check-release-package.sh debs/<new-package>.deb
 ```
 
-在新的构建与运行证据完成前，新设备只使用 patched-17 保守入口。
+在 p21 完成跨硬件矩阵、回退演练和 release 审阅前，新设备只使用 patched-17 保守入口。
 
-当前已完成离线构建的下一候选是 patched-21，精确输入、补丁矩阵、清洁载荷边界和分阶段门槛见
-[`patched-21-release-candidate.md`](../patches/patched-21-release-candidate.md)。在该文档明确记录
-运行验收通过前，p21 仍不是本页的新设备推荐安装入口。
+patched-21 已完成当前设备的构建、包边界、部署、重启和运行验收。精确输入、补丁矩阵、清洁载荷边界
+和跨硬件发布前门槛见 [`patched-21-release-candidate.md`](../patches/patched-21-release-candidate.md)。
+它仍不是本页的新设备默认入口，因为发布矩阵尚未完成。
 
 ## 历史失败边界
 

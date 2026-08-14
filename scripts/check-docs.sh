@@ -13,6 +13,11 @@ fail() {
     failures=$((failures + 1))
 }
 
+require_text() {
+    local file=$1 text=$2
+    grep -Fq "$text" "$file" || fail "$file is missing required current-state text: $text"
+}
+
 while IFS= read -r -d '' file; do
     while IFS= read -r target; do
         [[ -n "$target" ]] || continue
@@ -86,6 +91,29 @@ for expected_setting in \
         fail "patched-21 wrapper is missing $expected_setting"
 done
 
+# Current p21 status is deliberately repeated only in navigational documents.
+# Keep these anchors synchronized with the detailed candidate record.
+require_text docs/patches/patched-21-release-candidate.md 'RUNTIME_VALIDATION: PASS_ON_CURRENT_DEVICE'
+require_text docs/project/status.md '`3.3.3.42-patched-21` 已安装、重启'
+require_text docs/patches/README.md 'p21 已在当前设备运行验收'
+require_text docs/project/dependencies.md '当前设备已完成运行验收的候选'
+require_text docs/project/architecture.md '当前设备运行验收均已通过'
+require_text docs/user/new-device-install.md 'patched-21 已完成当前设备的构建、包边界、部署、重启和运行验收'
+require_text docs/user/recovery.md 'patched-21 -> patched-17 -> patched-8'
+
+stale_p21_state="$(
+    rg -n 'p21 (仅离线验证|启用但未运行验证)|patched-21.*尚未安装或运行验收' \
+        README.md docs --glob '!docs/archive/**' 2>/dev/null || true
+)"
+if [[ -n "$stale_p21_state" ]]; then
+    printf '%s\n' "$stale_p21_state" >&2
+    fail "current documentation still describes p21 as offline-only or uninstalled"
+fi
+
+if rg -q 'baselines/latest-' docs/project/status.md; then
+    fail "current status must not cite unversioned historical baseline files as p21 evidence"
+fi
+
 for historical_wrapper in \
     scripts/build-patched17-deepin-local-display.sh \
     scripts/build-patched18-deepin-local-display.sh \
@@ -111,6 +139,7 @@ for path in \
     docs/project/status.md \
     docs/project/compositor-management.md \
     docs/project/display-management.md \
+    docs/project/glossary.md \
     docs/project/maintenance-policy.md \
     docs/patches/patched-21-release-candidate.md \
     docs/incidents/patched-20-legacy-helper-payload.md \

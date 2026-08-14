@@ -189,17 +189,17 @@ section "Known Remaining Gates"
 if [[ "$latest_post_reboot_hwgl_result" == "PASS_POST_REBOOT_HWGL" &&
       "$current_xorg_config" == "INNOGPU_DDX" && "$current_vendor_gl" == "ENABLED" &&
       "$latest_desktop_hwgl_result" == "PASS_DESKTOP_HWGL" ]]; then
-    echo "desktop_xorg_gl=PASS_DESKTOP_HWGL_CURRENT_CONFIG_MATCHES_HISTORY"
-    echo "ddx_xorg=PASS_VENDOR_DDX_RUNTIME_ACCELERATION"
-    echo "deepin_hwgl_trial_gate=PASSED_AND_INSTALLED"
-    echo "post_reboot_hwgl=PASS_POST_REBOOT_HWGL"
-    echo "remaining_gate=NONE"
+    echo "desktop_xorg_gl=HISTORIC_PASS_CURRENT_CONFIG_MATCHES"
+    echo "ddx_xorg=HISTORIC_PASS_CURRENT_CONFIG_MATCHES"
+    echo "deepin_hwgl_trial_gate=HISTORIC_PASS_NOT_CURRENT_RUNTIME_PROOF"
+    echo "post_reboot_hwgl=HISTORIC_PASS_NOT_CURRENT_RUNTIME_PROOF"
+    echo "remaining_gate=RUN_CURRENT_DESKTOP_AND_POST_REBOOT_VALIDATION"
 elif [[ "$current_xorg_config" == "INNOGPU_DDX" && "$current_vendor_gl" == "ENABLED" &&
       "$latest_desktop_hwgl_result" == "PASS_DESKTOP_HWGL" ]]; then
-    echo "desktop_xorg_gl=PASS_DESKTOP_HWGL_CURRENT_CONFIG_MATCHES_HISTORY"
-    echo "ddx_xorg=PASS_VENDOR_DDX_RUNTIME_ACCELERATION"
-    echo "deepin_hwgl_trial_gate=PASSED_AND_INSTALLED"
-    echo "remaining_gate=OPTIONAL_REBOOT_PERSISTENCE_CHECK"
+    echo "desktop_xorg_gl=HISTORIC_PASS_CURRENT_CONFIG_MATCHES"
+    echo "ddx_xorg=HISTORIC_PASS_CURRENT_CONFIG_MATCHES"
+    echo "deepin_hwgl_trial_gate=HISTORIC_PASS_NOT_CURRENT_RUNTIME_PROOF"
+    echo "remaining_gate=RUN_CURRENT_DESKTOP_AND_POST_REBOOT_VALIDATION"
 elif [[ "$current_xorg_config" == "MODESETTING_SOFT" || "$current_vendor_gl" != "ENABLED" ]]; then
     echo "desktop_xorg_gl=NOT_CURRENTLY_ENABLED"
     echo "ddx_xorg=${latest_ddx_result:-NOT_VERIFIED_RUN_LOCAL_TTY: $ROOT/scripts/run-local-ddx-vt-test.sh}"

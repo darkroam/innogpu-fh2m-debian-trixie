@@ -87,8 +87,8 @@ Deepin 202504 deb 同时提供硬件 GL/DDX 用户态。内核模块成功、DRM
 构建完成后必须通过 `check-release-package.sh`，确认关键 ABI/固件存在、设备接入脚本与源码一致，
 并拒绝 xdisplay 引擎副本、Kylin/实验用户态安装器和直接二进制热补丁命令。
 
-patched-21 是该规则的首个实际输出：离线包边界与重复构建已通过，但尚未安装或运行验收。它的
-固定补丁矩阵和证据见
+patched-21 是该规则的首个实际输出：离线包边界、重复构建和当前设备运行验收均已通过，但尚未完成
+跨硬件发布。它的固定补丁矩阵和证据见
 [`../patches/patched-21-release-candidate.md`](../patches/patched-21-release-candidate.md)。
 
 ## 显示管理

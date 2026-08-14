@@ -10,8 +10,8 @@
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb` | 当前可用回退包，不作为后续构建基线 |
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-18.deb` | framebuffer mmap 历史候选，不作为后续基线 |
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-19.deb` | 完整 Deepin 202504 载荷历史候选；含收敛前辅助载荷，不发布、不重建 |
-| `debs/innogpu-fh2m-trixie_3.3.3.42-patched-20.deb` | 当前安装并通过运行验收的历史诊断候选；含收敛前辅助载荷，不用于新设备 |
-| `debs/innogpu-fh2m-trixie_3.3.3.42-patched-21.deb` | 当前源码生成的离线候选；包边界和重复构建通过，尚未安装或运行验收 |
+| `debs/innogpu-fh2m-trixie_3.3.3.42-patched-20.deb` | 历史诊断候选；含收敛前辅助载荷，只保留证据，不用于新设备 |
+| `debs/innogpu-fh2m-trixie_3.3.3.42-patched-21.deb` | 当前设备已完成运行验收的候选；跨硬件发布审阅前不作为新设备默认入口 |
 | `debs/innogpu-fh2m_20250421190503-debug_amd64.deb` | Deepin 202504 DKMS/GL/DDX 来源 |
 
 构建和准备脚本优先查找 `debs/`，并保留仓库根目录旧路径作为兼容回退。

@@ -11,6 +11,10 @@
 4. [阶段补丁](patches/README.md)：每个补丁的目的、开关、验证和回退边界。
 5. [事故与经验](incidents/README.md)：失败证据、根因、排除项和后续门槛。
 6. [用户验证](user/verification.md)：安装或重启后的最小验收流程。
+7. [术语表](project/glossary.md)：首次接手时需要的硬件、图形与打包缩写。
+
+按需查阅：[依赖与外部文件](project/dependencies.md)、[显示接入使用](user/display-guide.md) 和
+[实施历史](planning/history.md)。
 
 代码入口索引：[`scripts/README.md`](../scripts/README.md) 记录稳定脚本、生命周期和风险；
 [`tools/README.md`](../tools/README.md) 记录构建期变换与诊断探针；

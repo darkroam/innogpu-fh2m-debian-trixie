@@ -16,7 +16,7 @@
 | 源码/用户态基线 | Deepin 202504 完整原包，不混用历史 patched 包 | `scripts/build-deepin-coherent.sh` |
 | 固件与 PVR | `fh2m.fw`、`fh2m.sh` 已加载，Driver/Firmware 为 OK，错误计数为 0 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | DRM/fbdev | `card0`、`renderD128`、`fb0` 可用；真实 VT fbterm 通过 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
-| Xorg/GLX | 当前桌面和隔离 `:9/vt8` 的 Xorg、`xdpyinfo`、`glxinfo` 全部通过；硬件加速启用 | `baselines/latest-current-xorg-hwgl-test/result.txt` |
+| Xorg/GLX | 当前桌面和隔离 `:9/vt8` 的 Xorg、`xdpyinfo`、`glxinfo` 全部通过；硬件加速启用 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | 真实 VT | 操作者确认普通用户 fbterm 可绘制并正常退出 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | 显示管理 | dotconfig 维护 xdisplay 2.0.0；本项目只维护设备钩子和会话接入 | [`display-management.md`](display-management.md) |
 | Picom | patched v13 正在使用 Innogpu GLX，配置独立于驱动包 | `patches/picom/`、`docs/project/compositor-management.md` |
@@ -28,9 +28,9 @@
 | --- | --- | --- |
 | Debian 6.12 与厂商内核接口不兼容 | 通过兼容补丁适配 DKMS 构建 | `patch-001` |
 | DP 输出在启动阶段无安全 fallback | 当前候选启用 DP fbcon fallback | `patch-002` |
-| 面板背光/平台注册和初始 enable 试验 | 历史补丁已保留，当前 patched-19/20 未启用 | `patch-003` 至 `patch-005` |
+| 面板背光/平台注册和初始 enable 试验 | 历史补丁已保留，当前 p21 未启用 | `patch-003` 至 `patch-005` |
 | 本机 connector 与 ACPI 映射差异 | 增加明确的设备映射钩子，不污染通用布局逻辑 | `patch-006` |
-| patched-17 的 `/dev/fb0 mmap()` 返回 `ENODEV` | `fb_mmap = fb_io_mmap`，patched-20 实机验证成功 | `patch-007` |
+| patched-17 的 `/dev/fb0 mmap()` 返回 `ENODEV` | `fb_mmap = fb_io_mmap`，p20 与 p21 均已通过真实 VT 验证 | `patch-007` |
 | patched-18 用户态 ABI 混配 | 禁止从历史 deb 拼接用户态，统一以 Deepin 202504 原包重建 | 事故记录 |
 | patched-18 缺少 shader 固件导致 PVR BAD | 从 Deepin 原包保留完整 `fh2m.fw/fh2m.sh/fh2c.fw/fh2c.sh` | coherent 构建及事故记录 |
 | Picom 未声明 `GL_ARB_explicit_uniform_location` 而提前退出 | 运行时编译最小 shader 验证能力，成功后继续 | Picom patch |

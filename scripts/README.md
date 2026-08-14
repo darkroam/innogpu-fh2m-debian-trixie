@@ -80,6 +80,8 @@ xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项
 其中 `check-docs.sh` 检查文档链接、隐私标记、稳定入口登记和固定版本护栏；
 `check-release-package.sh` 只解包读取指定 deb，核对版本、关键载荷、禁止文件和设备接入脚本，
 不会安装包。发布包边界的可重复 fixture 见 `tests/package/run-boundary-tests.sh`。
+`verify-install-status.sh --require-reboot VERSION` 用于运行验收：除常规状态外，它要求包元数据早于当前
+启动、驱动已加载、Driver/Firmware 为 OK 且 DRM/fbdev 节点存在；仅查询安装状态时不加该选项。
 
 ## 实验和历史入口
 

@@ -14,8 +14,8 @@
 | 003 | [panel-backlight-fallback](patch-003-panel-backlight-fallback.md) | `APPLY_PANEL_BACKLIGHT_FALLBACK=1` | 历史验证；当前关闭 |
 | 004 | [panel-platform-fallback](patch-004-panel-platform-fallback.md) | `APPLY_PANEL_PLATFORM_FALLBACK=1` | 历史验证；当前关闭 |
 | 005 | [backlight-initial-enable](patch-005-backlight-initial-enable.md) | `APPLY_BACKLIGHT_FORCE_INITIAL_ENABLE=1` | 历史验证；当前关闭 |
-| 006 | [local-connector-acpi-map](patch-006-local-connector-acpi-map.md) | `APPLY_LOCAL_CONNECTOR_ACPI_MAP=1` | patched-19/20/21 启用；p21 仅离线验证 |
-| 007 | [fbdev-io-mmap](patch-007-fbdev-io-mmap.md) | `APPLY_FBDEV_IO_MMAP=1` | patched-19/20 启用且实机通过；p21 启用但未运行验证 |
+| 006 | [local-connector-acpi-map](patch-006-local-connector-acpi-map.md) | `APPLY_LOCAL_CONNECTOR_ACPI_MAP=1` | patched-19/20/21 启用；p21 已在当前设备运行验收 |
+| 007 | [fbdev-io-mmap](patch-007-fbdev-io-mmap.md) | `APPLY_FBDEV_IO_MMAP=1` | patched-19/20/21 启用且实机通过；p21 真实 VT fbterm 已通过 |
 | 008 | [pvr-init-diagnostic](patch-008-pvr-init-diagnostic.md) | `APPLY_PVR_INIT_DIAGNOSTIC=1` | 仅 patched-20 诊断启用 |
 
 ## 用户态补丁
@@ -49,5 +49,5 @@ patched-19/20 的固定 wrapper 已改为拒绝执行，因为当前源码的辅
 ## 版本候选
 
 - [patched-21：所有权收敛后的首个 release candidate](patched-21-release-candidate.md)：固定启用
-  stage-000、patch-001/002/006/007，关闭 patch-003/004/005/008；分开记录构建、包边界与未来运行
-  验收，不能继承 p20 的包或运行证据。
+  stage-000、patch-001/002/006/007，关闭 patch-003/004/005/008；分开记录构建、包边界与运行
+  验收。p21 已完成当前设备运行验收，仍不能继承 p20 的包或运行证据，也尚未完成跨硬件发布。

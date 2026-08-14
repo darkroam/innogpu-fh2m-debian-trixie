@@ -5,13 +5,13 @@
 驱动回退顺序固定为：
 
 ```text
-patched-20 -> patched-17 -> patched-8
+patched-21 -> patched-17 -> patched-8
 ```
 
 patched-17 是当前保守回退点，patched-8 只在 patched-17 仍不能启动时使用。执行任何升级前都应把
 这两个 deb 放入 `debs/`，并保留 SSH 或真实 TTY 恢复通道。
 
-## patched-20 回退到 patched-17
+## patched-21 回退到 patched-17
 
 ```sh
 cd "$INNOGPU_ROOT"
@@ -24,7 +24,7 @@ sudo reboot
 ```
 
 必须整体切回 patched-17 的包和软件 Xorg 路径，禁止只替换一个 vendor `.so`。重启后使用
-`scripts/verify-install-status.sh 3.3.3.42-patched-17` 验证实际运行版本。
+`scripts/verify-install-status.sh --require-reboot 3.3.3.42-patched-17` 验证实际运行版本。
 
 ## patched-17 回退到 patched-8
 

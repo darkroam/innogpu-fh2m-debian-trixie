@@ -30,6 +30,18 @@ patched-21 的精确定义、禁止载荷、构建证据格式和未来运行门
 [patched-21 release candidate](docs/patches/patched-21-release-candidate.md)。它已完成当前设备验收，
 但跨硬件 release 评审完成前仍不是无条件的新设备推荐版本。
 
+## 版本选择
+
+| 目标 | 应使用的版本 | 原因 |
+| --- | --- | --- |
+| 当前已验收设备继续运行 | patched-21 | 当前设备、当前内核和当前显示组合已经通过完整验收 |
+| 新设备首次部署或 p21 故障回退 | patched-17 | 保守自动安装入口；跨硬件矩阵完成前不把 p21 作为默认部署包 |
+| patched-17 仍无法启动时的历史恢复 | patched-8 | 更早的回滚物，不参与后续构建 |
+| 查看历史诊断结论 | patched-20 | 只保留证据；旧辅助载荷使其禁止重新部署和发布 |
+
+“当前设备已验收”不等于“已完成跨硬件发布”。新设备必须按保守入口部署，除非 p21 的跨硬件矩阵、
+回退演练和 release 审阅均已完成。
+
 ## 从这里开始
 
 | 需求 | 文档 |
@@ -41,6 +53,7 @@ patched-21 的精确定义、禁止载荷、构建证据格式和未来运行门
 | 黑屏、Xorg 或驱动异常时恢复 | [故障恢复](docs/user/recovery.md) |
 | 了解每个补丁的实际启用状态 | [阶段补丁](docs/patches/README.md) |
 | 查看失败根因和排障经验 | [事故与经验](docs/incidents/README.md) |
+| 查询术语和版本角色 | [术语表](docs/project/glossary.md) |
 | 修改代码、文档或 release | [维护策略](docs/project/maintenance-policy.md) |
 
 ## 新设备最小入口
@@ -62,7 +75,7 @@ sudo scripts/install-prereqs-debian.sh
 sudo scripts/install-patched17-and-check.sh
 ```
 
-patched-20 只保留为当前机器的运行证据和回退起点，不再作为新设备安装选项。新候选的版本、补丁集
+patched-20 只保留为历史运行证据，不再作为新设备安装选项。新候选的版本、补丁集
 和验证计划确定前，不应直接调用通用构建器。详见[新设备安装](docs/user/new-device-install.md)和
 [故障恢复](docs/user/recovery.md)。
 
