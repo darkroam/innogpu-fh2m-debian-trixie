@@ -22,7 +22,7 @@
 | --- | --- | --- |
 | `install-prereqs-debian.sh` | 修改软件包 | 安装 Debian 构建和运行依赖 |
 | `install.sh` | 修改驱动、需重启 | 只调度 patched-8/17；不把 patched-20 诊断候选设为默认 |
-| `install-patched17-and-check.sh` | 修改驱动、需重启 | 当前新设备保守入口和 patched-20 回退入口 |
+| `install-patched17-and-check.sh` | 修改驱动、需重启 | 当前新设备保守入口和 patched-21 回退入口 |
 | `install-patched8-and-check.sh` | 修改驱动、需重启 | 更早的历史恢复入口 |
 | `uninstall-innogpu.sh` | 卸载驱动、需重启 | 通用卸载器；版本包装见 `uninstall-patched*.sh` |
 | `uninstall-patched17.sh` | 卸载驱动、需重启 | 仅允许卸载版本精确匹配 patched-17 的兼容包装 |

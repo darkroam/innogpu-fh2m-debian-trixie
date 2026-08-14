@@ -13,13 +13,22 @@
 
 patched-18/19 是问题定位和 coherent 构建演进记录，不是安装推荐版本。
 
-## 准备文件
+## 准备保守安装包
 
-clone 本仓库后，从 release 下载需要的外部包到 `debs/`：
+二进制 deb 不随 Git 提供。clone 本仓库后，先从维护者审阅的 release 记录取得以下两个包，并按记录
+核对版本和 SHA-256 后放入 `debs/`：
 
 ```text
 debs/innogpu-fh2m-trixie_3.3.3.42-patched-8.deb
 debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb
+```
+
+`patched-17` 是本次保守安装包，`patched-8` 只是在下一次启动失败时使用的本地回退包。没有该 release
+记录时应停止并向维护者取得包；不得以未知来源 deb 或禁止部署的 patched-20 替代。
+
+Deepin 原包不属于 patched-17 的安装前提。只有构建新的 coherent 候选时才需要另外取得：
+
+```text
 debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 ```
 
@@ -76,7 +85,8 @@ sudo INNOGPU_X_USER="$USER" INNOGPU_X_HOME="$HOME" \
 
 ## 历史候选：patched-20
 
-patched-20 仅保留运行证据，其回退步骤见 `recovery.md`；它不是新设备安装选项。
+patched-20 仅保留运行证据，不提供重新部署或回退到该版本的路径；它不是新设备安装选项。当前设备
+发生 p21 运行故障时，按 [`recovery.md`](recovery.md) 回退到 patched-17，再在必要时回退到 patched-8。
 该 deb 生成于 xdisplay 所有权收敛前，包内仍有旧引擎/实验辅助文件，且 `patch-008` 会高频写日志。
 当前 `build-patched20-deepin-diagnostic.sh` 仅作为拒绝版本复用的兼容护栏，不再生成包。
 

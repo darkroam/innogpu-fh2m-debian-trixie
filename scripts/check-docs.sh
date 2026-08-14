@@ -97,17 +97,22 @@ require_text docs/patches/patched-21-release-candidate.md 'RUNTIME_VALIDATION: P
 require_text docs/project/status.md '`3.3.3.42-patched-21` 已安装、重启'
 require_text docs/patches/README.md 'p21 已在当前设备运行验收'
 require_text docs/project/dependencies.md '当前设备已完成运行验收的候选'
-require_text docs/project/architecture.md '当前设备运行验收均已通过'
+require_text docs/project/architecture.md 'patched-21` 是当前设备已安装、重启'
+require_text debs/README.md '已在当前设备完成部署、重启和运行验收'
 require_text docs/user/new-device-install.md 'patched-21 已完成当前设备的构建、包边界、部署、重启和运行验收'
 require_text docs/user/recovery.md 'patched-21 -> patched-17 -> patched-8'
 
 stale_p21_state="$(
     rg -n 'p21 (仅离线验证|启用但未运行验证)|patched-21.*尚未安装或运行验收' \
-        README.md docs --glob '!docs/archive/**' 2>/dev/null || true
+        README.md docs debs --glob '!docs/archive/**' 2>/dev/null || true
 )"
 if [[ -n "$stale_p21_state" ]]; then
     printf '%s\n' "$stale_p21_state" >&2
     fail "current documentation still describes p21 as offline-only or uninstalled"
+fi
+
+if grep -Fq '3.3.3.42-patched-20` 是当前已安装' docs/project/architecture.md; then
+    fail "project architecture still describes historical patched-20 as the current installation"
 fi
 
 if rg -q 'baselines/latest-' docs/project/status.md; then

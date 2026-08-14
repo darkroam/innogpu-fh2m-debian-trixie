@@ -17,9 +17,9 @@ debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 本机保存的 patched-19/20 deb 生成于 xdisplay 所有权收敛之前，包内仍有旧显示引擎和实验辅助文件。
 它们只能作为历史/当前机器证据，不得上传为当前 release。当前源码禁止复用 19/20 版本号。
 
-当前本地 p21 输出已通过包边界和两次逐字一致构建，实际身份记录在
-[`patched-21-release-candidate.md`](../docs/patches/patched-21-release-candidate.md)。它尚未安装或完成
-运行验收，维护者不得仅凭文件位于 `debs/` 就上传 release。
+当前本地 p21 输出已通过包边界和两次逐字一致构建，并已在当前设备完成部署、重启和运行验收；实际身份
+记录在 [`patched-21-release-candidate.md`](../docs/patches/patched-21-release-candidate.md)。这不等于它
+已完成跨硬件 release：维护者不得仅凭文件位于 `debs/` 或当前设备通过就上传 release。
 
 ## 输出包
 

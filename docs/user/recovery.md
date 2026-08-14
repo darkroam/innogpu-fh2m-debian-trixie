@@ -11,10 +11,21 @@ patched-21 -> patched-17 -> patched-8
 patched-17 是当前保守回退点，patched-8 只在 patched-17 仍不能启动时使用。执行任何升级前都应把
 这两个 deb 放入 `debs/`，并保留 SSH 或真实 TTY 恢复通道。
 
+本页可以独立使用。先在可用 SSH 或 TTY 中设置仓库路径；仓库不在默认位置时，先把变量改为实际 clone
+目录。若检查失败，不要继续执行包替换命令：
+
+```sh
+export INNOGPU_ROOT="${INNOGPU_ROOT:-$HOME/src/innogpu-fh2m-debian-trixie}"
+test -x "$INNOGPU_ROOT/scripts/verify-install-status.sh" || {
+  printf '%s\n' "INNOGPU_ROOT is not an innogpu repository: $INNOGPU_ROOT" >&2
+  exit 1
+}
+cd "$INNOGPU_ROOT"
+```
+
 ## patched-21 回退到 patched-17
 
 ```sh
-cd "$INNOGPU_ROOT"
 sudo dpkg -i "$INNOGPU_ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb"
 sudo scripts/disable-incompatible-userspace.sh
 printf '%s\n' innogpu | sudo tee /etc/modules-load.d/innogpu.conf
@@ -29,7 +40,6 @@ sudo reboot
 ## patched-17 回退到 patched-8
 
 ```sh
-cd "$INNOGPU_ROOT"
 sudo dpkg -i "$INNOGPU_ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-8.deb"
 sudo scripts/disable-incompatible-userspace.sh
 printf '%s\n' innogpu | sudo tee /etc/modules-load.d/innogpu.conf

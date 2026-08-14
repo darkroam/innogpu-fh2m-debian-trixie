@@ -4,6 +4,10 @@ Debian Trixie kernel 6.12 上 Innosilicon Fantasy II-M / 风华 2 号 M 的驱�
 设备接入、硬件 GL、内置音频和验收项目。本文件是项目文档的唯一入口；当前结论以
 [`docs/project/status.md`](docs/project/status.md) 为权威来源。
 
+本项目面向维护特定 Innogpu 设备的操作者和开发者，不是可对任意显卡直接执行的通用驱动安装器。
+首次接手应先阅读“当前状态与结论”和[术语表](docs/project/glossary.md)，再按新设备安装或故障恢复
+文档操作；没有经过审阅的版本、外部 deb 或恢复通道时，不应直接运行构建或安装命令。
+
 ## 当前状态与结论
 
 最后更新：2026-08-14。
@@ -58,13 +62,17 @@ patched-21 的精确定义、禁止载荷、构建证据格式和未来运行门
 
 ## 新设备最小入口
 
-从 release 下载外部包到 `debs/`。这些文件由 Git 忽略：
+二进制 deb 不随 Git 发布。保守安装必须先取得经维护者审阅的 release 记录，并按其中的版本和
+SHA-256 把以下两个包放入 `debs/`：
 
 ```text
 debs/innogpu-fh2m-trixie_3.3.3.42-patched-8.deb
 debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb
-debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 ```
+
+没有该 release 记录时应停止并向维护者取得包，不能以未知来源 deb 或禁止部署的 patched-20 代替。
+Deepin `20250421190503-debug` 原包只在构建后续 coherent 候选时需要，保守的 patched-17 安装不使用它。
+完整的外部包角色、取得前提和安装步骤见[新设备安装](docs/user/new-device-install.md)。
 
 当前自动安装入口只面向 patched-17 回退/保守基线：
 
