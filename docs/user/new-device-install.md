@@ -2,14 +2,14 @@
 
 ## 准备文件
 
-clone 本仓库后，从 release 下载以下文件到仓库根目录：
+clone 本仓库后，从 release 下载以下文件到 `debs/`：
 
 ```text
-innogpu-fh2m-trixie_3.3.3.42-patched-8.deb
-innogpu-fh2m-trixie_3.3.3.42-patched-17.deb
-innogpu-fh2m-trixie_3.3.3.42-patched-18.deb
-innogpu-fh2m-trixie_3.3.3.42-patched-20.deb
-innogpu-fh2m_20250421190503-debug_amd64.deb
+debs/innogpu-fh2m-trixie_3.3.3.42-patched-8.deb
+debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb
+debs/innogpu-fh2m-trixie_3.3.3.42-patched-18.deb
+debs/innogpu-fh2m-trixie_3.3.3.42-patched-20.deb
+debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 ```
 
 这些文件被 `.gitignore` 忽略。`third_party/` 由脚本从 Deepin deb 重建，也不进入 git。
@@ -37,7 +37,7 @@ watcher 或改变当前 RandR 布局。使用 root 直接安装或目标桌面�
 sudo INNOGPU_X_USER="$USER" INNOGPU_X_HOME="$HOME" scripts/install-patched17-and-check.sh
 ```
 
-需要重启时，先阅读 `recovery.md` 并确认 `patched-17` deb 在仓库根目录。重启后先验证 TTY、Xorg、
+需要重启时，先阅读 `recovery.md` 并确认 `debs/` 中有 `patched-17` deb。重启后先验证 TTY、Xorg、
 dwm 和基础驱动状态，再启用 Deepin 硬件 GL 用户态。`patched-8` 只保留为更早的历史回滚物。
 
 ```sh
@@ -72,7 +72,7 @@ patched-19 的安装步骤仅用于历史复现，不是当前推荐版本；当
 需要 root 并会触发 DKMS 重建，不要在重要 X11 工作进行时热卸载当前模块：
 
 ```sh
-sudo dpkg -i "$INNOGPU_ROOT/innogpu-fh2m-trixie_3.3.3.42-patched-19.deb"
+sudo dpkg -i "$INNOGPU_ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-19.deb"
 /sbin/dkms status innogpu-kernel
 printf '%s\n' innogpu | sudo tee /etc/modules-load.d/innogpu.conf
 sudo depmod -a "$(uname -r)"
@@ -85,7 +85,7 @@ sudo reboot
 失败，使用保存的 patched-17 包回退并重启：
 
 ```sh
-sudo dpkg -i "$INNOGPU_ROOT/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb"
+sudo dpkg -i "$INNOGPU_ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb"
 printf '%s\n' innogpu | sudo tee /etc/modules-load.d/innogpu.conf
 sudo depmod -a "$(uname -r)"
 sudo update-initramfs -u -k "$(uname -r)"

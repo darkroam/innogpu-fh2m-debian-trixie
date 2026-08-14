@@ -3,7 +3,8 @@
 ## 目的
 
 本文面向维护者，说明 Innosilicon Fantasy II-M 在 Debian Trixie 上的驱动、显示、图形用户态、
-音频和安装脚本之间的职责边界。日常安装与恢复见 `../user/`，未完成工作见 `../planning/`。
+音频和安装脚本之间的职责边界。日常安装与恢复见 `../user/`，事故经验见 `../incidents/`，阶段补丁见
+`../patches/`，未完成工作见 `../planning/`。开发和重构必须遵守 `maintenance-policy.md` 中的不可变规则。
 
 ## 总体链路
 
@@ -31,11 +32,14 @@ PCI 0000:06:00.6 [1d94:14c9]
 | --- | --- |
 | `patches/` | Deepin DKMS 源码针对 Debian 6.12 和本设备的内核补丁 |
 | `patches/picom/` | 针对 Innogpu GL 扩展声明缺失的 Picom 源码补丁 |
+| `debs/` | 本地 release/构建输入输出目录，`.deb` 被 Git 忽略，仅跟踪说明文件 |
 | `config/` | 项目维护的用户态配置模板，不包含完整个人 dotfiles |
 | `scripts/` | 构建、安装、回退、诊断、显示管理、音频固化和验证入口 |
 | `tools/` | EGL、GBM、X11 和 loader 的最小探针源码 |
 | `tests/` | 可重复运行的静态 fixture 和脚本回归测试 |
 | `docs/project/` | 架构、现状、依赖和维护边界 |
+| `docs/patches/` | 每个代码补丁的独立设计、验证和回退说明 |
+| `docs/incidents/` | 失败现场、根因推导、排除项和经验记录 |
 | `docs/planning/` | 活动计划、历史、挂起项和迁移记录 |
 | `docs/user/` | 新设备安装、日常验证、显示使用和故障恢复 |
 | `docs/archive/` | 不再变化但仍有追溯价值的历史记录 |

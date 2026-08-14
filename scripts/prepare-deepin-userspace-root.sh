@@ -24,7 +24,7 @@ fi
 
 if [[ ! -f "$DEEPIN_DEB" ]]; then
     echo "ERROR: missing Deepin userspace deb: $DEEPIN_DEB" >&2
-    echo "Set INNOGPU_DEEPIN_DEB or put the release artifact in the repo root." >&2
+    echo "Set INNOGPU_DEEPIN_DEB or put the release artifact in $ROOT/debs/." >&2
     exit 1
 fi
 

@@ -4,6 +4,7 @@
 set -euo pipefail
 
 EXPECTED_VERSION="${1:-}"
+ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
 if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
     echo "ERROR: run as root: sudo $0 [expected-version]" >&2
@@ -30,7 +31,7 @@ cat <<EOF
 Removing innogpu-fh2m-trixie $installed.
 
 Recovery if this is not intended:
-  sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-17.deb
+  sudo dpkg -i "$ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb"
   sudo reboot
 
 EOF

@@ -25,7 +25,7 @@ while IFS= read -r -d '' file; do
             }
         ' "$file"
     )
-done < <(find README.md docs baselines tests -type f -name '*.md' -print0)
+done < <(find README.md docs scripts baselines tests -type f -name '*.md' -print0)
 
 personal_refs="$(
     rg -n '/home/ok|MiWiFi|serverauth\.[[:alnum:]]' \
@@ -39,6 +39,7 @@ fi
 
 for path in \
     docs/project/architecture.md \
+    docs/project/status.md \
     docs/project/compositor-management.md \
     docs/project/display-management.md \
     docs/project/maintenance-policy.md \
@@ -49,6 +50,10 @@ for path in \
     docs/user/verification.md \
     docs/user/recovery.md; do
     [[ -f "$path" ]] || fail "required document is missing: $path"
+done
+
+for path in docs/patches/README.md docs/incidents/README.md scripts/README.md debs/README.md; do
+    [[ -f "$path" ]] || fail "required index is missing: $path"
 done
 
 if (( failures > 0 )); then

@@ -8,7 +8,7 @@ ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$ROOT"
 
 PATCH_VERSION=${PATCH_VERSION:-19}
-OUT_DEB=${OUT_DEB:-innogpu-fh2m-trixie_3.3.3.42-patched-${PATCH_VERSION}.deb}
+OUT_DEB=${OUT_DEB:-$ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-${PATCH_VERSION}.deb}
 APPLY_DP_FBCON_FALLBACK=${APPLY_DP_FBCON_FALLBACK:-0}
 APPLY_PANEL_BACKLIGHT_FALLBACK=${APPLY_PANEL_BACKLIGHT_FALLBACK:-0}
 APPLY_PANEL_PLATFORM_FALLBACK=${APPLY_PANEL_PLATFORM_FALLBACK:-0}
@@ -49,6 +49,7 @@ fi
 
 W=$(mktemp -d /tmp/innogpu-deepin-coherent.XXXXXX)
 trap 'rm -rf "$W"' EXIT
+mkdir -p "$(dirname "$OUT_DEB")"
 mkdir -p "$W/root" "$W/verify"
 dpkg-deb -x "$DEEPIN_DEB" "$W/root"
 

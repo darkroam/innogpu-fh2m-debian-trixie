@@ -44,6 +44,8 @@ find_xauthority() {
 
 cd "$ROOT"
 
+[[ -n "$X_USER" ]] || fail "unable to determine the desktop user; set INNOGPU_X_USER"
+
 installed="$(dpkg-query -W -f='${Version}' innogpu-fh2m-trixie 2>/dev/null || true)"
 [[ "$installed" == "3.3.3.42-patched-17" ]] || fail "patched-17 is not installed (current: ${installed:-unknown})"
 
@@ -70,10 +72,10 @@ fi
 auth="$(find_xauthority || true)"
 [[ -n "$auth" ]] || fail "Xauthority not found"
 
-if [[ "$(id -un)" == "ok" ]]; then
+if [[ "$(id -un)" == "$X_USER" ]]; then
     glx="$(DISPLAY=:0 XAUTHORITY="$auth" glxinfo -B 2>/dev/null || true)"
 else
-    glx="$(su - ok -c "DISPLAY=:0 XAUTHORITY='$auth' glxinfo -B" 2>/dev/null || true)"
+    glx="$(su - "$X_USER" -c "DISPLAY=:0 XAUTHORITY='$auth' glxinfo -B" 2>/dev/null || true)"
 fi
 grep -qi 'llvmpipe' <<<"$glx" || fail "GL renderer is not llvmpipe or glxinfo failed"
 
@@ -86,7 +88,7 @@ mkdir -p "$STAMP_DIR"
     echo
     echo "Recovery to patched-17 soft baseline:"
     echo "  cd $ROOT"
-    echo "  sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-17.deb"
+    echo "  sudo dpkg -i \"$ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb\""
     echo "  sudo scripts/disable-incompatible-userspace.sh"
     echo "  printf '%s\\n' innogpu | sudo tee /etc/modules-load.d/innogpu.conf"
     echo "  sudo depmod -a \"\$(uname -r)\""
@@ -95,7 +97,7 @@ mkdir -p "$STAMP_DIR"
     echo
     echo "Fallback to patched-8:"
     echo "  cd $ROOT"
-    echo "  sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-8.deb"
+    echo "  sudo dpkg -i \"$ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-8.deb\""
     echo "  sudo scripts/disable-incompatible-userspace.sh"
     echo "  printf '%s\\n' innogpu | sudo tee /etc/modules-load.d/innogpu.conf"
     echo "  sudo depmod -a \"\$(uname -r)\""

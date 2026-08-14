@@ -21,13 +21,15 @@ first_existing() {
 }
 
 deb="${INNOGPU_PATCHED17_DEB:-$(first_existing \
+    "$ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb" \
     "$ROOT/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb" || true)}"
 fallback_deb="${INNOGPU_PATCHED8_DEB:-$(first_existing \
+    "$ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-8.deb" \
     "$ROOT/innogpu-fh2m-trixie_3.3.3.42-patched-8.deb" || true)}"
 kernel="$(uname -r)"
 
-[[ -f "$deb" ]] || { echo "Missing package: patched-17 deb. Put it in the repo root or set INNOGPU_PATCHED17_DEB." >&2; exit 1; }
-[[ -f "$fallback_deb" ]] || { echo "Missing fallback package: patched-8 deb. Put it in the repo root or set INNOGPU_PATCHED8_DEB." >&2; exit 1; }
+[[ -f "$deb" ]] || { echo "Missing package: patched-17 deb. Put it in $ROOT/debs/ or set INNOGPU_PATCHED17_DEB." >&2; exit 1; }
+[[ -f "$fallback_deb" ]] || { echo "Missing fallback package: patched-8 deb. Put it in $ROOT/debs/ or set INNOGPU_PATCHED8_DEB." >&2; exit 1; }
 
 cat <<RECOVERY
 Recovery if this fails or the next reboot is worse:

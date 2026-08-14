@@ -12,5 +12,5 @@ APPLY_PANEL_PLATFORM_FALLBACK=0 \
 APPLY_BACKLIGHT_FORCE_INITIAL_ENABLE=0 \
 APPLY_FBDEV_IO_MMAP=1 \
 APPLY_PVR_INIT_DIAGNOSTIC=1 \
-OUT_DEB=innogpu-fh2m-trixie_3.3.3.42-patched-20.deb \
+OUT_DEB="${OUT_DEB:-$ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-20.deb}" \
     scripts/build-deepin-coherent.sh

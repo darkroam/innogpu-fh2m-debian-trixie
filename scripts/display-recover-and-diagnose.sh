@@ -61,7 +61,7 @@ try_write() {
 section "Recovery if this makes the display worse"
 cat <<RECOVERY
 cd "$ROOT"
-sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-17.deb
+sudo dpkg -i "$ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb"
 sudo reboot
 RECOVERY
 

@@ -31,7 +31,7 @@ Recovery if the Deepin desktop hardware-GL trial fails:
 
 Full package rollback to patched-17:
   cd "$ROOT"
-  sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-17.deb
+  sudo dpkg -i "$ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb"
   sudo scripts/disable-incompatible-userspace.sh
   sudo reboot
 

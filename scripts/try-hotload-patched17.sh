@@ -55,7 +55,7 @@ kernel="$(uname -r)"
 echo "Recovery if hot reload makes the display worse:"
 cat <<RECOVERY
   cd "$ROOT"
-  sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-8.deb
+  sudo dpkg -i "$ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-8.deb"
   sudo scripts/disable-incompatible-userspace.sh
   printf '%s\n' innogpu | sudo tee /etc/modules-load.d/innogpu.conf
   sudo depmod -a "$kernel"

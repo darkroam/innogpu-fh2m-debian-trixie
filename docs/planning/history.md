@@ -1,10 +1,20 @@
 # 实施历史
 
+## 2026-08-14 文档与 release 目录重构
+
+- 将补丁说明拆为 `docs/patches/patch-*.md`，并为 patched-17 framebuffer、patched-18 用户态混配、
+  shader 固件、patched-20 运行时和 Picom 能力特例建立独立事故记录。
+- 增加当前状态唯一摘要、脚本职责索引和文档阅读入口；旧 `scripts/` 路径保持为稳定 API，不做
+  物理搬迁。
+- 将 `debs/` 定义为本地 release/构建目录，仅跟踪说明文件，`.deb` 和 `third_party/` 继续忽略。
+- 集中整理开发、测试、隐私、载荷基线和回退约束，后续行为修改必须先更新文档再改代码。
+
 ## 2026-07-08 仓库清理
 
 - 保留 `patched-8` 回退点和 `patched-17` 当前成功点。
 - 删除失败或过渡版本、重复日志和包含本机路径的大型原始基线。
-- 将外部 deb 改为 release 下载后放到仓库根目录，并由 `.gitignore` 排除。
+- 将外部 deb 改为 release 下载后放到仓库根目录，并由 `.gitignore` 排除（当前已迁移为 `debs/`，
+  该条保留为当时的历史状态）。
 - 清理脚本中的固定 home 路径，建立 `$INNOGPU_ROOT`、`$INNOGPU_X_USER` 等约定。
 
 完整历史记录见 `../archive/cleanup-20260708.md`。

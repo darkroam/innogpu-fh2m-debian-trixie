@@ -29,13 +29,13 @@ Debian Trixie kernel 6.12 上 Innosilicon Fantasy II-M / 风华2号M 的驱动�
 
 ## 快速开始
 
-从 release 下载以下文件到仓库根目录；它们被 git 忽略：
+从 release 下载需要的文件到 `debs/`；它们被 git 忽略：
 
 ```text
-innogpu-fh2m-trixie_3.3.3.42-patched-8.deb
-innogpu-fh2m-trixie_3.3.3.42-patched-17.deb
-innogpu-fh2m-trixie_3.3.3.42-patched-20.deb
-innogpu-fh2m_20250421190503-debug_amd64.deb
+debs/innogpu-fh2m-trixie_3.3.3.42-patched-8.deb
+debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb
+debs/innogpu-fh2m-trixie_3.3.3.42-patched-20.deb
+debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 ```
 
 ```sh
@@ -46,7 +46,7 @@ sudo scripts/install-prereqs-debian.sh
 sudo scripts/install-patched17-and-check.sh
 ```
 
-新设备部署当前已验收的 patched-20 时，应使用 release 中的
+新设备部署当前已验收的 patched-20 时，应使用 `debs/` 中的
 `innogpu-fh2m-trixie_3.3.3.42-patched-20.deb` 和对应安装流程；`install-patched17-and-check.sh`
 仅用于保留的 patched-17 回退路径。
 
@@ -69,6 +69,7 @@ patched Picom GLX 的独立安装见 [Picom 安装与恢复](docs/user/picom-ins
 
 ### 项目现状
 
+- [当前状态](docs/project/status.md)
 - [项目架构](docs/project/architecture.md)
 - [显示管理](docs/project/display-management.md)
 - [Picom 合成器](docs/project/compositor-management.md)
@@ -83,6 +84,11 @@ patched Picom GLX 的独立安装见 [Picom 安装与恢复](docs/user/picom-ins
 - [Picom 吸纳计划](docs/planning/picom-integration.md)
 - [实施历史](docs/planning/history.md)
 - [挂起项](docs/planning/suspended.md)
+
+### 阶段与经验
+
+- [阶段补丁](docs/patches/README.md)
+- [事故与经验](docs/incidents/README.md)
 
 ### 用户说明
 
@@ -99,6 +105,7 @@ patched Picom GLX 的独立安装见 [Picom 安装与恢复](docs/user/picom-ins
 ```text
 .
 |-- README.md
+|-- debs/          # 本地 release 包；只跟踪 README
 |-- patches/
 |-- config/
 |-- scripts/
@@ -106,12 +113,13 @@ patched Picom GLX 的独立安装见 [Picom 安装与恢复](docs/user/picom-ins
 |-- tests/
 |-- docs/
 |   |-- project/
+|   |-- patches/
+|   |-- incidents/
 |   |-- planning/
 |   |-- user/
 |   `-- archive/
 |-- baselines/
-|-- third_party/    # 生成目录，不进入 git
-`-- *.deb           # release 文件，不进入 git
+`-- third_party/    # 生成目录，不进入 git
 ```
 
 ## 维护规则
@@ -120,3 +128,5 @@ patched Picom GLX 的独立安装见 [Picom 安装与恢复](docs/user/picom-ins
 标记为当前生效。完整规则见 [维护策略](docs/project/maintenance-policy.md)。
 
 不要提交外部 deb、原始日志、缓存、EDID、凭据、本机绝对 home 路径或 `third_party/` 解包输出。
+脚本职责和稳定入口见 [scripts/README.md](scripts/README.md)，文档总入口见
+[docs/README.md](docs/README.md)。

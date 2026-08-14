@@ -6,7 +6,7 @@
 
 ```sh
 cd "$INNOGPU_ROOT"
-sudo dpkg -i innogpu-fh2m-trixie_3.3.3.42-patched-8.deb
+sudo dpkg -i "$INNOGPU_ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-8.deb"
 sudo scripts/disable-incompatible-userspace.sh
 printf '%s\n' innogpu | sudo tee /etc/modules-load.d/innogpu.conf
 sudo depmod -a "$(uname -r)"
