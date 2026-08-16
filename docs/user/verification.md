@@ -2,20 +2,24 @@
 
 ## 驱动、DKMS 与节点
 
-当前设备已部署并重启至 patched-21，且本次运行验收已通过；p20 仅为历史运行基线。本文仍是后续
+当前设备已部署并重启至 patched-22，已完成 connector/桌面烟测；patched-21 保留为完整图形验收基线，
+p20 仅为历史运行基线。本文仍是后续
 重新部署、内核或用户态升级、以及新硬件组合的操作流程：安装但尚未重启时，不得将 `/proc` 或 Xorg
 结果写为新包证据。
 
 重启后的目标包检查命令为：
 
 ```sh
-scripts/verify-install-status.sh --require-reboot 3.3.3.42-patched-21
+scripts/verify-install-status.sh --require-reboot 3.3.3.42-patched-22
 cat /proc/driver/innogpu/gpu00/status
 ls -l /dev/dri /dev/fb0
 ```
 
 验证 patched-17 回退时把期望版本改为 `3.3.3.42-patched-17`。期望 Driver/Firmware 为 OK，并存在
 `card0`、`renderD128` 和 `fb0`；版本不匹配时不能用当前模块结果证明新包通过。
+
+当前 p22 重启后已确认 PVR/固件为 OK、内置面板暴露为 DRM `eDP-1`、外接 HDMI 断开且 xdisplay
+开盖单屏状态正常；这不替代完整的电池合盖、外屏热插拔和外部电源矩阵。
 
 ## patched-21 分阶段验收
 
@@ -101,7 +105,23 @@ p21 关闭 `patch-008`，因此不应再出现该补丁新增的成对
 最后检查 dotconfig xdisplay、开合盖/热插拔、Picom 和正常桌面。显示管理状态必须用物理屏幕、
 `xdisplay status` 和 RandR 共同确认；Picom 或 xdisplay 的通过不能替代驱动、PVR 或 fbterm 证据。
 
-阶段 C-E 全部完成后，才允许把 p21 标记为 `RUNTIME_VALIDATION: PASS`。任一步失败应保存最小诊断、
+若验证 patched-22/`patch-009`，还必须记录 DRM connector 和 logind 的电源判断：
+
+```sh
+for prop in Docked OnExternalPower LidClosed; do
+  printf '%s=' "$prop"
+  busctl get-property org.freedesktop.login1 /org/freedesktop/login1 \
+    org.freedesktop.login1.Manager "$prop"
+done
+for f in /sys/class/drm/card0-*/status; do printf '%s=' "$f"; cat "$f"; done
+xrandr --current
+```
+
+候选的关键结果是：无外屏时内置面板不再制造假 `Docked`；电池合盖应挂起，外屏或外部电源存在时
+继续运行。外屏在电池合盖期间拔出后，必须另外确认 logind 是否主动重新评估已闭合的 lid；若未触发，
+只记录证据并停止，不在验证阶段临时加入第二套合盖处理器。
+
+阶段 C-E 全部完成后，才允许把对应版本标记为 `RUNTIME_VALIDATION: PASS`。任一步失败应保存最小诊断、
 执行回退并在 `docs/incidents/` 新建记录。
 
 ## Xorg 与硬件 GL

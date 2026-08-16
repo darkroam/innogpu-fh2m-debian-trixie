@@ -21,6 +21,9 @@ debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 记录在 [`patched-21-release-candidate.md`](../docs/patches/patched-21-release-candidate.md)。这不等于它
 已完成跨硬件 release：维护者不得仅凭文件位于 `debs/` 或当前设备通过就上传 release。
 
+当前本地 p22 输出已通过包边界检查，并已在当前设备完成安装、重启和 patch-009 connector/桌面烟测；
+其 SHA-256、限制条件和未完成的电源/合盖矩阵见 [`patch-009-local-internal-edp-connector.md`](../docs/patches/patch-009-local-internal-edp-connector.md)。
+
 ## 输出包
 
 构建脚本要求显式设置大于 20 的新版本号，并默认把输出写入本目录，例如：

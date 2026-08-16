@@ -127,7 +127,13 @@ else
 fi
 
 section "Kernel Module"
-if lsmod | grep -q '^innogpu'; then
+lsmod_bin="$(command -v lsmod 2>/dev/null || true)"
+if [[ -z "$lsmod_bin" && -x /sbin/lsmod ]]; then
+    lsmod_bin=/sbin/lsmod
+fi
+if [[ -z "$lsmod_bin" ]]; then
+    fail "lsmod command is missing"
+elif "$lsmod_bin" | awk '$1 == "innogpu" { found = 1 } END { exit found ? 0 : 1 }'; then
     pass "innogpu module is loaded"
 else
     if [[ "$REQUIRE_REBOOT" == "1" ]]; then
@@ -149,8 +155,17 @@ else
 fi
 
 if [[ "$REQUIRE_REBOOT" == "1" ]]; then
-    module_file="$(modinfo -F filename innogpu 2>/dev/null || true)"
-    if [[ "$module_file" == "/lib/modules/$kernel/"* ]]; then
+    modinfo_bin="$(command -v modinfo 2>/dev/null || true)"
+    if [[ -z "$modinfo_bin" && -x /sbin/modinfo ]]; then
+        modinfo_bin=/sbin/modinfo
+    fi
+    module_file=""
+    if [[ -n "$modinfo_bin" ]]; then
+        module_file="$("$modinfo_bin" -F filename innogpu 2>/dev/null || true)"
+    fi
+    if [[ -z "$modinfo_bin" ]]; then
+        fail "modinfo command is missing"
+    elif [[ "$module_file" == "/lib/modules/$kernel/"* ]]; then
         pass "innogpu module resolves under the current kernel"
     else
         fail "innogpu module does not resolve under /lib/modules/$kernel"

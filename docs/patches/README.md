@@ -17,6 +17,7 @@
 | 006 | [local-connector-acpi-map](patch-006-local-connector-acpi-map.md) | `APPLY_LOCAL_CONNECTOR_ACPI_MAP=1` | patched-19/20/21 启用；p21 已在当前设备运行验收 |
 | 007 | [fbdev-io-mmap](patch-007-fbdev-io-mmap.md) | `APPLY_FBDEV_IO_MMAP=1` | patched-19/20/21 启用且实机通过；p21 真实 VT fbterm 已通过 |
 | 008 | [pvr-init-diagnostic](patch-008-pvr-init-diagnostic.md) | `APPLY_PVR_INIT_DIAGNOSTIC=1` | 仅 patched-20 诊断启用 |
+| 009 | [local-internal-edp-connector](patch-009-local-internal-edp-connector.md) | `APPLY_LOCAL_INTERNAL_EDP=1` | patched-22 已安装并重启；connector/桌面烟测通过，电源与合盖矩阵待完成 |
 
 ## 用户态补丁
 
@@ -51,3 +52,5 @@ patched-19/20 的固定 wrapper 已改为拒绝执行，因为当前源码的辅
 - [patched-21：所有权收敛后的首个 release candidate](patched-21-release-candidate.md)：固定启用
   stage-000、patch-001/002/006/007，关闭 patch-003/004/005/008；分开记录构建、包边界与运行
   验收。p21 已完成当前设备运行验收，仍不能继承 p20 的包或运行证据，也尚未完成跨硬件发布。
+- patched-22：`scripts/build-patched22-local-lid.sh` 固定启用 patch-009，已从 Deepin 202504
+  原包构建、通过包边界检查并在当前设备重启；它只修正本机内置 DP0/eDP 语义，电源与合盖实机矩阵仍待完成。

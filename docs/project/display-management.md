@@ -56,12 +56,28 @@ watcher 必须由活动 X11 会话启动并继承 `DISPLAY`、`XAUTHORITY` 和�
 
 ## 本设备契约
 
-- DRM `DP-1`、`HDMI-A-1`、`HDMI-A-2` 当前映射为 RandR `eDP-1`、`HDMI-1`、`HDMI-2`。
-- `XDISPLAY_INTERNAL_OUTPUTS="eDP-1 DP-1"` 只补充非标准内屏候选，外屏始终由 RandR 动态发现。
+- patched-21 当前运行时仍观察到 DRM `DP-1`、`HDMI-A-1`、`HDMI-A-2`，对应 RandR
+  `eDP-1`、`HDMI-1`、`HDMI-2`；其中 DRM `DP-1` 是本机内置面板的错误 connector 类型。
+- patched-22 候选由 `patch-009` 在本机 `s_dpu_match=141` 且硬件模式查询失败时将该 DP0
+  connector 修正为 `eDP`。该候选尚未安装前，不得把 eDP sysfs 名称写成当前事实。
+- `XDISPLAY_INTERNAL_OUTPUTS="eDP-1 DP-1"` 是 dotconfig 兼容接入，p22 验证完成后仍可保留一段
+  过渡周期；外屏始终由 RandR 动态发现。connector 类型和 DRM 映射以本项目阶段补丁文档为准，
+  dotconfig 只消费其稳定的 X11 接入契约。
 - `XDISPLAY_RESTORE_COMMAND=innogpu-restore-dp1-mode-x11` 是兼容恢复入口；失败时必须由通用引擎
   降级到 RandR preferred/首项逻辑并保留可见输出。
 - `restore-dp1-mode-x11.sh` 中的 modeline 是本设备特例，不能进入 dotconfig 通用布局算法。
-- logind 决定合盖是否挂起；xdisplay 只在 X11 会话仍运行时处理布局。
+- logind 决定合盖是否挂起；xdisplay 只在 X11 会话仍运行时处理布局。当前目标配置为
+  `HandleLidSwitch=suspend`、`HandleLidSwitchExternalPower=ignore`、
+  `HandleLidSwitchDocked=ignore`：无外屏且电池合盖挂起，外屏或外部电源存在时继续运行。
+- 内置面板被误报为 DRM `DP-1` 时会产生假 `Docked`，这是驱动 connector 语义问题，不由 xdisplay
+  或适配器修补；权威修复记录见 [`patch-009`](../patches/patch-009-local-internal-edp-connector.md)。
+
+### 合盖与外屏断开
+
+标准 logind 会在合盖动作发生时重新计算 `Docked`。因此外屏接入、电池合盖时可以继续运行；外屏
+拔出后必须确认当前 systemd 是否会主动重新评估已闭合的 lid。若本机不触发挂起，只能在记录
+`Docked`、DRM hotplug 和 logind 日志后，另行增加窄范围的 DRM 热插拔触发接入；不得在 xdisplay
+中加入第二套合盖处理器。
 
 dotconfig 也支持可选的 `~/.config/x11/xdisplay-device.local` 适配器，但是否启用及其契约属于
 dotconfig。Innogpu 当前默认接入仍使用上述两个兼容环境变量，不要求适配器存在。

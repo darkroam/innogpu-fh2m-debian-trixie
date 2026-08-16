@@ -6,7 +6,8 @@
 
 | 版本 | 用途 | 新设备策略 |
 | --- | --- | --- |
-| `patched-21` | 当前设备已完成运行验收的候选 | 跨硬件矩阵、回退演练和 release 审阅完成前，不作为默认入口 |
+| `patched-22` | 当前设备 connector 修复验证包 | 电源/合盖矩阵、跨硬件矩阵和 release 审阅完成前，不作为默认入口 |
+| `patched-21` | 当前设备已完成完整运行验收的稳定基线 | 跨硬件矩阵、回退演练和 release 审阅完成前，不作为默认入口 |
 | `patched-17` | 保守自动安装和 p21 回退包 | 新设备首次安装使用此入口 |
 | `patched-8` | 更早历史回滚物 | 仅在 patched-17 无法恢复时使用 |
 | `patched-20` | 历史诊断与运行证据 | 禁止部署；旧辅助载荷不符合当前边界 |
@@ -98,7 +99,7 @@ Deepin 202504 原包调用 `build-deepin-coherent.sh`。不得以 patched-8、17
 scripts/check-release-package.sh debs/<new-package>.deb
 ```
 
-在 p21 完成跨硬件矩阵、回退演练和 release 审阅前，新设备只使用 patched-17 保守入口。
+在 p22/p21 完成跨硬件矩阵、回退演练和 release 审阅前，新设备只使用 patched-17 保守入口。
 
 patched-21 已完成当前设备的构建、包边界、部署、重启和运行验收。精确输入、补丁矩阵、清洁载荷边界
 和跨硬件发布前门槛见 [`patched-21-release-candidate.md`](../patches/patched-21-release-candidate.md)。

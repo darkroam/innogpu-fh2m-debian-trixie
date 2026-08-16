@@ -5,7 +5,7 @@
 驱动回退顺序固定为：
 
 ```text
-patched-21 -> patched-17 -> patched-8
+patched-22 -> patched-21 -> patched-17 -> patched-8
 ```
 
 patched-17 是当前保守回退点，patched-8 只在 patched-17 仍不能启动时使用。执行任何升级前都应把
@@ -22,6 +22,18 @@ test -x "$INNOGPU_ROOT/scripts/verify-install-status.sh" || {
 }
 cd "$INNOGPU_ROOT"
 ```
+
+## patched-22 回退到 patched-21
+
+```sh
+sudo dpkg -i "$INNOGPU_ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-21.deb"
+sudo depmod -a "$(uname -r)"
+sudo update-initramfs -u -k "$(uname -r)"
+sudo reboot
+```
+
+重启后使用 `scripts/verify-install-status.sh --require-reboot 3.3.3.42-patched-21` 验证稳定图形基线。
+必须整体切回 p21，禁止只替换一个 vendor `.so`。
 
 ## patched-21 回退到 patched-17
 

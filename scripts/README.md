@@ -9,6 +9,7 @@
 | --- | --- | --- |
 | `build-deepin-coherent.sh` | 当前公共构建器 | 从完整 Deepin 202504 原包构建 coherent deb，版本、release epoch 和所有功能均由显式参数控制 |
 | `build-patched21-deepin-release-candidate.sh` | 当前固定包装 | 以固定 p21 开关构建所有权收敛后的首个 release candidate；只构建，不安装 |
+| `build-patched22-local-lid.sh` | 当前设备验证包 | 以 patch-009 修正本机内置 eDP connector；脚本只构建，安装和重启由操作者显式执行 |
 | `build-patched17-deepin-local-display.sh` | 停用护栏 | 明确拒绝把 patched-17 作为后续构建父版本 |
 | `build-patched18-deepin-local-display.sh` | 停用护栏 | 明确拒绝重建历史混合载荷 patched-18 |
 | `build-patched19-deepin-coherent.sh` | 停用护栏 | 明确拒绝用当前辅助载荷复用 patched-19 版本号 |
@@ -23,7 +24,7 @@
 | --- | --- | --- |
 | `install-prereqs-debian.sh` | 修改软件包 | 安装 Debian 构建和运行依赖 |
 | `install.sh` | 修改驱动、需重启 | 只调度 patched-8/17；不把 patched-20 诊断候选设为默认 |
-| `install-patched17-and-check.sh` | 修改驱动、需重启 | 当前新设备保守入口和 patched-21 回退入口 |
+| `install-patched17-and-check.sh` | 修改驱动、需重启 | 当前新设备保守入口和 patched-21/22 深层回退入口 |
 | `install-patched8-and-check.sh` | 修改驱动、需重启 | 更早的历史恢复入口 |
 | `uninstall-innogpu.sh` | 卸载驱动、需重启 | 通用卸载器；版本包装见 `uninstall-patched*.sh` |
 | `uninstall-patched17.sh` | 卸载驱动、需重启 | 仅允许卸载版本精确匹配 patched-17 的兼容包装 |

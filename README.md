@@ -10,25 +10,28 @@ Debian Trixie kernel 6.12 上 Innosilicon Fantasy II-M / 风华 2 号 M 的驱�
 
 ## 当前状态与结论
 
-最后更新：2026-08-14。
+最后更新：2026-08-16。
 
 | 项目 | 当前结论 |
 | --- | --- |
-| 当前运行驱动 | `3.3.3.42-patched-21` 已完成部署、重启、PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收 |
+| 当前运行驱动 | `3.3.3.42-patched-22` 已安装并重启；PVR/固件、DRM connector、RandR 和 xdisplay 桌面烟测通过，完整合盖矩阵待完成 |
+| 稳定图形验收基线 | `3.3.3.42-patched-21` 已完成当前设备 PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收 |
 | 历史运行基线 | `3.3.3.42-patched-20` 曾完成验收，但其旧辅助载荷使该包不可发布 |
 | 发布判断 | patched-20 仅是本机历史验收物；除高频 `patch-008` 外，其 deb 还含所有权收敛前的旧 xdisplay 辅助载荷，禁止发布或在新设备部署 |
 | p21 验收状态 | 两次一致构建、离线包审计、部署与当前设备运行验收通过；跨硬件发布待评审 |
+| 合盖策略版本 | patched-22 已从 Deepin 202504 构建并通过包边界检查，且已在当前设备安装、重启；内置面板已呈现为 DRM eDP，完整合盖/电源/拔屏矩阵待完成，哈希见 [patch-009](docs/patches/patch-009-local-internal-edp-connector.md) |
 | 唯一技术基线 | Deepin `20250421190503-debug` 完整原包；历史 patched 包不得作为后续载荷父版本 |
-| 当前回退点 | patched-17；patched-8 只保留为更早的历史恢复物 |
+| 当前回退链 | patched-22 -> patched-21 -> patched-17；patched-8 只保留为更早的历史恢复物 |
 | DRM/fbdev | `card0`、`renderD128`、`fb0` 和 mmap 可用；fbterm 需使用已验证的 redraw 模式避开 YPan 显示错位 |
 | 硬件 GL | renderer 为 `Fantasy II-M`，direct rendering、DRI3、GLX、Present 和加速通过 |
 | Picom | patched v13 的运行时 shader 能力探测已验证；Picom 不进入显卡驱动 deb |
 | 内置音频 | `1d94:14c9 -> snd_hda_intel -> SN6180`，ALSA/PipeWire 重启验证通过 |
 | X11 显示管理 | xdisplay 由 dotconfig 仓库独立维护；本项目只提供 Innogpu 输出候选、模式恢复钩子和会话接入 |
 
-当前可以确认的是“p21 在当前设备上工作”。它已通过 PVR/firmware、DRM/fbdev、当前桌面 GLX、
-隔离 Xorg、真实 VT fbterm redraw、xdisplay、Picom 和音频状态验收。历史 p20 deb 生成于 xdisplay 所有权
-收敛之前，不能用当前源码以相同版本号重建或推广；p21 的公开发布仍需要跨设备验证。
+当前可以确认的是“patched-22 已在当前设备启动并修正 connector 语义”。实测包版本为
+`3.3.3.42-patched-22`，PVR/固件为 OK，内置面板从 DRM `DP-1` 变为 `eDP-1`，`Docked=false`，
+RandR 与 xdisplay 均正常。p21 仍是完整图形验收基线；电池合盖、外屏接入/拔出和外部电源矩阵尚未在
+p22 上全部完成。历史 p20 deb 生成于 xdisplay 所有权收敛之前，不能用当前源码以相同版本号重建或推广。
 
 patched-21 的精确定义、禁止载荷、构建证据格式和未来运行门槛见
 [patched-21 release candidate](docs/patches/patched-21-release-candidate.md)。它已完成当前设备验收，
@@ -38,7 +41,9 @@ patched-21 的精确定义、禁止载荷、构建证据格式和未来运行门
 
 | 目标 | 应使用的版本 | 原因 |
 | --- | --- | --- |
-| 当前已验收设备继续运行 | patched-21 | 当前设备、当前内核和当前显示组合已经通过完整验收 |
+| 当前设备运行观察 | patched-22 | connector 语义和桌面烟测已通过；完整电源/合盖矩阵完成前不作为无条件发布版本 |
+| 完整图形验收基线 | patched-21 | 当前设备、当前内核和当前显示组合已经通过完整验收 |
+| patched-22 故障回退 | patched-21 | p21 是当前设备的完整图形验收回退点 |
 | 新设备首次部署或 p21 故障回退 | patched-17 | 保守自动安装入口；跨硬件矩阵完成前不把 p21 作为默认部署包 |
 | patched-17 仍无法启动时的历史恢复 | patched-8 | 更早的回滚物，不参与后续构建 |
 | 查看历史诊断结论 | patched-20 | 只保留证据；旧辅助载荷使其禁止重新部署和发布 |

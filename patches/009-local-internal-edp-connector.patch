@@ -1,0 +1,56 @@
+--- a/innosrvkm/innodpu_connector.c
++++ b/innosrvkm/innodpu_connector.c
+@@ -1494,6 +1494,20 @@
+ 	return ret;
+ }
+ 
++/*
++ * This DPU match identifies the KaiTian X7 G1e internal panel on the
++ * current device.  Its DP0 connector is the built-in panel, but the
++ * optional hwinfo query is unavailable and otherwise falls back to DP.
++ */
++#define INNOGPU_LOCAL_INTERNAL_EDP_DPU_MATCH 141
++#define INNOGPU_LOCAL_INTERNAL_EDP_OUTPUT_INDEX 9
++
++static bool innodpu_local_internal_edp(unsigned int reg_module)
++{
++	return reg_module == REG_M_DP &&
++		s_dpu_match == INNOGPU_LOCAL_INTERNAL_EDP_DPU_MATCH;
++}
++
+ static void innodpu_logo_extime_blacklist(struct drm_device *drm_dev)
+ {
+ 	struct hw_board_info *match_board = NULL;
+@@ -1587,6 +1601,10 @@
+ 			output_mode = INNO_DRM_MODE_CONNECTOR_LVDS;
+ 		break;
+ 		}
++		if (innodpu_local_internal_edp(reg_module) &&
++			(hal_version < 0 || ret < 0) &&
++			output_mode == INNO_DRM_MODE_CONNECTOR_DisplayPort)
++			output_mode = INNO_DRM_MODE_CONNECTOR_eDP;
+ 	}
+ 
+ 	return output_mode;
+@@ -2464,6 +2482,10 @@
+ 
+ 	version = fh2m_hal_hwinfo_version(pdev);
+ 	if (version < 0) {
++		if (innodpu_local_internal_edp(reg_module)) {
++			conn_info(dev, "hwinfo unavailable; using local internal eDP output\n");
++			return INNOGPU_LOCAL_INTERNAL_EDP_OUTPUT_INDEX;
++		}
+ 		fh2m_innodpu_err(dev, "hwinfo version failed\n");
+ 		return -EFAULT;
+ 	}
+@@ -2477,6 +2499,10 @@
+ 
+ 		ret = fh2m_hal_get_output_mode(pdev, connector_id, &val);
+ 		if (ret < 0) {
++			if (innodpu_local_internal_edp(reg_module)) {
++				conn_info(dev, "output mode unavailable; using local internal eDP output\n");
++				return INNOGPU_LOCAL_INTERNAL_EDP_OUTPUT_INDEX;
++			}
+ 			fh2m_innodpu_err(dev, "fh2m_hal_get_output_mode failed, Using 0\n");
+ 			val = 0;
+ 		}
