@@ -59,8 +59,8 @@ watcher 必须由活动 X11 会话启动并继承 `DISPLAY`、`XAUTHORITY` 和�
 - patched-21 当前运行时仍观察到 DRM `DP-1`、`HDMI-A-1`、`HDMI-A-2`，对应 RandR
   `eDP-1`、`HDMI-1`、`HDMI-2`；其中 DRM `DP-1` 是本机内置面板的错误 connector 类型。
 - patched-22 候选由 `patch-009` 在本机 `s_dpu_match=141` 且硬件模式查询失败时将该 DP0
-  connector 修正为 `eDP`。该候选尚未安装前，不得把 eDP sysfs 名称写成当前事实。
-- `XDISPLAY_INTERNAL_OUTPUTS="eDP-1 DP-1"` 是 dotconfig 兼容接入，p22 验证完成后仍可保留一段
+  connector 修正为 `eDP`；该修复已由当前 p23 继承并在重启后验证。
+- `XDISPLAY_INTERNAL_OUTPUTS="eDP-1 DP-1"` 是 dotconfig 兼容接入，p23 验证完成后仍可保留一段
   过渡周期；外屏始终由 RandR 动态发现。connector 类型和 DRM 映射以本项目阶段补丁文档为准，
   dotconfig 只消费其稳定的 X11 接入契约。
 - `XDISPLAY_RESTORE_COMMAND=innogpu-restore-dp1-mode-x11` 是兼容恢复入口；失败时必须由通用引擎

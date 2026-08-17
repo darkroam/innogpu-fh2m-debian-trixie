@@ -91,13 +91,28 @@ for expected_setting in \
         fail "patched-21 wrapper is missing $expected_setting"
 done
 
+for expected_setting in \
+    'PATCH_VERSION=23' \
+    'SOURCE_DATE_EPOCH=1786924800' \
+    'APPLY_DP_FBCON_FALLBACK=1' \
+    'APPLY_LOCAL_CONNECTOR_ACPI_MAP=1' \
+    'APPLY_LOCAL_INTERNAL_EDP=1' \
+    'APPLY_FBDEV_IO_MMAP=1' \
+    'APPLY_PVR_INIT_DIAGNOSTIC=0' \
+    'APPLY_INVISIBLE_READ_NO_WRITEBACK=1'; do
+    grep -Fq "$expected_setting" scripts/build-patched23-invisible-read-fix.sh ||
+        fail "patched-23 wrapper is missing $expected_setting"
+done
+grep -Fq 'patches/023-invisible-read-no-writeback.patch' scripts/build-deepin-coherent.sh ||
+    fail "coherent builder does not apply the patched-23 driver fix"
+
 # The stable p21 evidence remains navigationally referenced while p22 is the
 # currently booted connector-classification candidate.
 require_text docs/patches/patched-21-release-candidate.md 'RUNTIME_VALIDATION: PASS_ON_CURRENT_DEVICE'
-require_text docs/project/status.md '`3.3.3.42-patched-21` 已安装、重启'
+require_text docs/project/status.md "\`3.3.3.42-patched-21\` 已安装、重启"
 require_text docs/patches/README.md 'p21 已在当前设备运行验收'
 require_text docs/project/dependencies.md '当前设备已完成运行验收的候选'
-require_text docs/project/architecture.md 'patched-22` 是当前设备已安装并重启'
+require_text docs/project/architecture.md 'patched-23` 是当前设备已安装并重启'
 require_text debs/README.md '已在当前设备完成部署、重启和运行验收'
 require_text docs/user/new-device-install.md 'patched-21 已完成当前设备的构建、包边界、部署、重启和运行验收'
 require_text docs/user/recovery.md 'patched-22 -> patched-21 -> patched-17 -> patched-8'

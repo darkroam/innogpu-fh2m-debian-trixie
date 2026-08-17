@@ -53,12 +53,14 @@ PCI 0000:06:00.6 [1d94:14c9]
 
 ## 驱动与图形用户态
 
-`innogpu-fh2m-trixie 3.3.3.42-patched-22` 是当前设备已安装并重启、完成 connector/桌面烟测的版本；
+`innogpu-fh2m-trixie 3.3.3.42-patched-23` 是当前设备已安装并重启、完成驱动/桌面和 invisible GEM
+最小探针验证的版本；
 `patched-21` 是当前设备已完成完整 PVR、Xorg/GLX 和真实 VT fbterm 验收的稳定图形基线，也是 p22 的直接回退点；`patched-17` 是新设备保守回退包。p20 deb 是所有权收敛前的历史运行证据，包内辅助
 脚本不能代表当前源码，禁止重新部署或发布；运行时验收与 release 载荷合规是两个独立结论。后续包统一
 以 Deepin 202504 原包为唯一技术基线，在其 DKMS 源码上叠加 Debian 6.12 兼容、G0M PLL、DRM/fbdev
-和本地 connector 修复，并保留同一原包中的完整用户态 ABI 集合。patched-21 使用
-`patch-006`；当前 patched-22 另加 `patch-009`，仅针对本机 DPU match 141 的内置 DP0/eDP 语义。
+和本地 connector/invisible GEM 修复，并保留同一原包中的完整用户态 ABI 集合。patched-21 使用
+`patch-006`；patched-22 另加 `patch-009`，patched-23 再加 `patch-023`。connector 修复仅针对本机
+DPU match 141 的内置 DP0/eDP 语义，invisible GEM 修复只跳过 READ staging 页的回写。
 `patched-8` 只保留为更早的历史回滚物。
 
 Deepin 202504 deb 同时提供硬件 GL/DDX 用户态。内核模块成功、DRM 节点存在和 Xorg 出图不能

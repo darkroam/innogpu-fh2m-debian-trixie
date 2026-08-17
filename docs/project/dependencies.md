@@ -12,7 +12,8 @@
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-19.deb` | 完整 Deepin 202504 载荷历史候选；含收敛前辅助载荷，不发布、不重建 |
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-20.deb` | 历史诊断候选；含收敛前辅助载荷，只保留证据，不用于新设备 |
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-21.deb` | 当前设备已完成运行验收的候选；跨硬件发布审阅前不作为新设备默认入口 |
-| `debs/innogpu-fh2m-trixie_3.3.3.42-patched-22.deb` | `patch-009` 当前设备运行包；connector/桌面烟测已通过，完整电源与合盖矩阵待完成；SHA-256 见 `docs/patches/patch-009-local-internal-edp-connector.md` |
+| `debs/innogpu-fh2m-trixie_3.3.3.42-patched-22.deb` | `patch-009` 直接回退包；connector/桌面烟测已通过，完整电源与合盖矩阵待完成 |
+| `debs/innogpu-fh2m-trixie_3.3.3.42-patched-23.deb` | `patch-023` 当前运行包；invisible READ 回写修复和基础图形验证已通过，Clash A/B 待完成；SHA-256 见 `docs/patches/patch-023-invisible-read-no-writeback.md` |
 | `debs/innogpu-fh2m_20250421190503-debug_amd64.deb` | Deepin 202504 DKMS/GL/DDX 来源 |
 
 构建和准备脚本优先查找 `debs/`，并保留仓库根目录旧路径作为兼容回退。

@@ -9,7 +9,7 @@
 
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
-| 当前运行驱动 | `3.3.3.42-patched-22` 已安装并重启；PVR/固件、DRM connector、RandR 和 xdisplay 桌面烟测通过 | [`patch-009` 验收](../patches/patch-009-local-internal-edp-connector.md) |
+| 当前运行驱动 | `3.3.3.42-patched-23` 已安装并重启；PVR/固件、DRM 节点、Xorg/GLX、DRI3 和最小 GEM 探针通过 | [`patch-023` 验收](../patches/patch-023-invisible-read-no-writeback.md) |
 | 稳定图形验收基线 | `3.3.3.42-patched-21` 已安装、重启并完成本机 PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | 历史运行基线 | `3.3.3.42-patched-20` 曾完成运行验收，但 deb 含收敛前辅助载荷，仅保留为历史证据 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
 | 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |
@@ -57,6 +57,9 @@
    内核侧应撤销能力声明还是修复平移语义尚未决定。
 9. patched-22/`patch-009` 已修正当前设备内置面板的 DRM connector 语义，重启后观察到 `eDP-1` 和
    `Docked=false`；电池合盖、外屏接入/拔出和外部电源矩阵尚未全部完成。
+10. FH2M invisible GEM 的只读 CPU mapping 在 VMA close 时无条件逐页执行 `SYS2GDDR`，已由独立
+    PDP 探针复现并由 patched-23 修复；p23 实机验证通过，Clash Verge 启动态 A/B 已完成；调查、
+    验收门槛与回退边界见 [`webkit-dmabuf-investigation.md`](../planning/webkit-dmabuf-investigation.md)。
 
 ## 证据保留规则
 

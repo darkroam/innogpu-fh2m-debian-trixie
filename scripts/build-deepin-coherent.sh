@@ -17,6 +17,7 @@ APPLY_LOCAL_CONNECTOR_ACPI_MAP=${APPLY_LOCAL_CONNECTOR_ACPI_MAP:-0}
 APPLY_LOCAL_INTERNAL_EDP=${APPLY_LOCAL_INTERNAL_EDP:-0}
 APPLY_FBDEV_IO_MMAP=${APPLY_FBDEV_IO_MMAP:-0}
 APPLY_PVR_INIT_DIAGNOSTIC=${APPLY_PVR_INIT_DIAGNOSTIC:-0}
+APPLY_INVISIBLE_READ_NO_WRITEBACK=${APPLY_INVISIBLE_READ_NO_WRITEBACK:-0}
 
 if [[ ! "$PATCH_VERSION" =~ ^[0-9]+$ ]] || (( PATCH_VERSION <= 20 )); then
     echo "ERROR: set PATCH_VERSION to a new version greater than 20" >&2
@@ -118,6 +119,9 @@ done
     fi
     if [[ "$APPLY_PVR_INIT_DIAGNOSTIC" == "1" ]]; then
         patch -p1 < "$ROOT/patches/008-pvr-init-diagnostic.patch"
+    fi
+    if [[ "$APPLY_INVISIBLE_READ_NO_WRITEBACK" == "1" ]]; then
+        patch -p1 < "$ROOT/patches/023-invisible-read-no-writeback.patch"
     fi
     find . \( -name '*.orig' -o -name '*.rej' \) -delete
 )

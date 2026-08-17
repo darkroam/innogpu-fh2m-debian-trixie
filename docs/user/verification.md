@@ -2,7 +2,7 @@
 
 ## 驱动、DKMS 与节点
 
-当前设备已部署并重启至 patched-22，已完成 connector/桌面烟测；patched-21 保留为完整图形验收基线，
+当前设备已部署并重启至 patched-23，已完成驱动、connector、桌面和 invisible GEM 最小探针验证；patched-21 保留为完整图形验收基线，
 p20 仅为历史运行基线。本文仍是后续
 重新部署、内核或用户态升级、以及新硬件组合的操作流程：安装但尚未重启时，不得将 `/proc` 或 Xorg
 结果写为新包证据。
@@ -10,7 +10,7 @@ p20 仅为历史运行基线。本文仍是后续
 重启后的目标包检查命令为：
 
 ```sh
-scripts/verify-install-status.sh --require-reboot 3.3.3.42-patched-22
+scripts/verify-install-status.sh --require-reboot 3.3.3.42-patched-23
 cat /proc/driver/innogpu/gpu00/status
 ls -l /dev/dri /dev/fb0
 ```
@@ -18,8 +18,9 @@ ls -l /dev/dri /dev/fb0
 验证 patched-17 回退时把期望版本改为 `3.3.3.42-patched-17`。期望 Driver/Firmware 为 OK，并存在
 `card0`、`renderD128` 和 `fb0`；版本不匹配时不能用当前模块结果证明新包通过。
 
-当前 p22 重启后已确认 PVR/固件为 OK、内置面板暴露为 DRM `eDP-1`、外接 HDMI 断开且 xdisplay
-开盖单屏状态正常；这不替代完整的电池合盖、外屏热插拔和外部电源矩阵。
+当前 p23 重启后已确认 PVR/固件为 OK、内置面板暴露为 DRM `eDP-1`、外接 HDMI 断开且 xdisplay
+开盖单屏状态正常；invisible GEM READ `munmap` 已显著下降，WRITE 读回验证通过。这不替代完整的
+电池合盖、外屏热插拔、外部电源矩阵和 Clash Verge 应用 A/B。
 
 ## patched-21 分阶段验收
 

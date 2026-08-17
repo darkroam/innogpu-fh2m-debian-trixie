@@ -10,6 +10,8 @@
 | `build-deepin-coherent.sh` | 当前公共构建器 | 从完整 Deepin 202504 原包构建 coherent deb，版本、release epoch 和所有功能均由显式参数控制 |
 | `build-patched21-deepin-release-candidate.sh` | 当前固定包装 | 以固定 p21 开关构建所有权收敛后的首个 release candidate；只构建，不安装 |
 | `build-patched22-local-lid.sh` | 当前设备验证包 | 以 patch-009 修正本机内置 eDP connector；脚本只构建，安装和重启由操作者显式执行 |
+| `build-patched23-invisible-read-fix.sh` | 离线修复候选 | 在 p22 补丁集合上增加 invisible READ mapping 释放不回写修复；只构建，不安装、不热切换 |
+| `check-deb-dkms-build.sh` | 离线编译检查 | 将指定候选 deb 解包到 `/tmp`，针对指定内核 headers 编译 `innogpu.ko` 并校验 vermagic；不注册或安装 DKMS |
 | `build-patched17-deepin-local-display.sh` | 停用护栏 | 明确拒绝把 patched-17 作为后续构建父版本 |
 | `build-patched18-deepin-local-display.sh` | 停用护栏 | 明确拒绝重建历史混合载荷 patched-18 |
 | `build-patched19-deepin-coherent.sh` | 停用护栏 | 明确拒绝用当前辅助载荷复用 patched-19 版本号 |

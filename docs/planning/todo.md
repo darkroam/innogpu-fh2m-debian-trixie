@@ -8,6 +8,19 @@
 
 ## 当前活动项
 
+### WebKit DMA-BUF 调查
+
+- [ ] 按 [`webkit-dmabuf-investigation.md`](webkit-dmabuf-investigation.md) 区分 DRM vblank、
+  GEM/PRIME 隐式同步和预编译 GBM/EGL 用户态问题。
+- [x] 完成不 modeset 的 vblank、KMS 拓扑和私有 CPU_PREP 路径探测。
+- [x] 用独立 PDP 探针确认 invisible READ mapping 的 `munmap` 无条件逐页回写缺陷。
+- [x] 制作只跳过 READ `SYS2GDDR` 的 `patch-023` / `patched-23` 离线候选，并补充 WRITE 回归探针。
+- [x] 离线调查期间保持 `patched-22` 不变；未安装候选、未更新 initramfs、未重启。
+- [x] 记录 p22/p21 包哈希和恢复命令。
+- [x] 部署后完成 READ/WRITE 最小探针和完整基础图形回归。
+- [x] 启动 Clash Verge 后完成 DMA-BUF 开启/禁用的应用级启动态 CPU A/B；本次未复现历史 2860% 忙等，
+  但启用 DMA-BUF 的主进程占用仍明显较高，因此继续保留禁用 DMA-BUF 的启动包装脚本。
+
 patched-21 已在 [`../patches/patched-21-release-candidate.md`](../patches/patched-21-release-candidate.md)
 固定输入、补丁集、辅助载荷和验证门槛。本机当前批次已完成：
 
