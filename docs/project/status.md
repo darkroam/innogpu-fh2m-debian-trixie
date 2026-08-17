@@ -1,6 +1,6 @@
 # 当前状态与问题清单
 
-最后更新：2026-08-17
+最后更新：2026-08-18
 
 本文件是项目当前运行状态的唯一摘要。历史过程、补丁细节和故障推导分别见
 [阶段补丁](../patches/README.md) 与 [事故和经验](../incidents/README.md)。
@@ -9,14 +9,14 @@
 
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
-| 当前运行驱动 | `3.3.3.42-patched-23` 已安装并重启；PVR/固件、DRM 节点、Xorg/GLX、DRI3 和最小 GEM 探针通过 | [`patch-023` 验收](../patches/patch-023-invisible-read-no-writeback.md) |
+| 当前运行驱动 | `3.3.3.42-patched-24` 已安装并重启至 `6.12.101+deb13-amd64`；Driver/Firmware、DKMS、DRM/fbdev 和自动加载通过 | [`patched-24` 验收](../patches/patched-24-kernel-612101.md) |
 | 稳定图形验收基线 | `3.3.3.42-patched-21` 已安装、重启并完成本机 PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | 历史运行基线 | `3.3.3.42-patched-20` 曾完成运行验收，但 deb 含收敛前辅助载荷，仅保留为历史证据 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
 | 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |
 | 运行验收状态 | p21 完整图形验收通过；p22 已完成 connector 分类和开盖桌面烟测，电源/合盖/拔屏矩阵待完成 | [`patch-009` 验收](../patches/patch-009-local-internal-edp-connector.md) |
 | 源码/用户态基线 | Deepin 202504 完整原包，不混用历史 patched 包 | `scripts/build-deepin-coherent.sh` |
-| 固件与 PVR | `fh2m.fw`、`fh2m.sh` 已加载，Driver/Firmware 为 OK，错误计数为 0 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
-| DRM/fbdev | `card0`、`renderD128`、`fb0` 和 mmap 可用；fbterm 使用 redraw 模式通过真实 VT 持续滚动验证 | [`fbterm YPan 记录`](../incidents/fbterm-ypan-rendering.md) |
+| 固件与 PVR | p24 `fh2m.fw`、`fh2m.sh` 已加载，Driver/Firmware 为 OK，错误计数为 0 | [`patched-24` 验收](../patches/patched-24-kernel-612101.md) |
+| DRM/fbdev | p24 `card0`、`renderD128`、`fb0` 可用；fbterm 使用 redraw 模式通过真实 VT 持续滚动验证 | [`patched-24` 验收](../patches/patched-24-kernel-612101.md) |
 | Xorg/GLX | 当前桌面和隔离 `:9/vt8` 的 Xorg、`xdpyinfo`、`glxinfo` 全部通过；硬件加速启用 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | 真实 VT | 普通用户 fbterm 可绘制和退出；禁用 YPan 后长输出、清屏及跨会话显示正常 | [`fbterm YPan 记录`](../incidents/fbterm-ypan-rendering.md) |
 | 显示管理 | dotconfig 维护 xdisplay 2.0.0；本项目只维护设备钩子和会话接入 | [`display-management.md`](display-management.md) |

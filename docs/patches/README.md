@@ -9,7 +9,7 @@
 | 阶段 | 代码补丁 | 构建开关/入口 | 状态 |
 | --- | --- | --- | --- |
 | 000 | [skip-first-gpupll](patch-000-skip-first-gpupll.md) | 始终应用 | patched-19/20/21 启用 |
-| 001 | [kernel-6.12](patch-001-kernel-6.12.md) | 始终应用 | patched-19/20/21 启用 |
+| 001 | [kernel-6.12](patch-001-kernel-6.12.md) | 始终应用 | patched-19/20/21/23/24 启用；p24 实机适配 6.12.101+ |
 | 002 | [dp-fbdev-fallback](patch-002-dp-fbdev-fallback.md) | `APPLY_DP_FBCON_FALLBACK=1` | patched-19/20/21 启用 |
 | 003 | [panel-backlight-fallback](patch-003-panel-backlight-fallback.md) | `APPLY_PANEL_BACKLIGHT_FALLBACK=1` | 历史验证；当前关闭 |
 | 004 | [panel-platform-fallback](patch-004-panel-platform-fallback.md) | `APPLY_PANEL_PLATFORM_FALLBACK=1` | 历史验证；当前关闭 |
@@ -62,4 +62,5 @@ patched-19/20 的固定 wrapper 已改为拒绝执行，因为当前源码的辅
   invisible READ mapping 释放时的无意义回写；deb 和 DKMS 离线编译已通过，当前未安装、不热切换。
 - patched-24：`scripts/build-patched24-kernel-612101.sh` 沿用 p23 全部开关，增加 Debian
   `6.12.101` 及以后 headers 的 `pci_resize_resource(..., exclude_bars)` 兼容分支；构建和安装前
-  必须重新执行对应内核的 DKMS 编译验证。
+  必须重新执行对应内核的 DKMS 编译验证；2026-08-18 已重启并确认 p24、DKMS、Driver/Firmware
+  和 DRM/fbdev 正常。

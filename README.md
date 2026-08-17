@@ -10,25 +10,25 @@ Debian Trixie kernel 6.12 上 Innosilicon Fantasy II-M / 风华 2 号 M 的驱�
 
 ## 当前状态与结论
 
-最后更新：2026-08-17。
+最后更新：2026-08-18。
 
 | 项目 | 当前结论 |
 | --- | --- |
-| 当前运行驱动 | `3.3.3.42-patched-23` 已安装并重启；驱动、Xorg/GLX、DRI3、Picom、READ/WRITE 探针和 Clash 启动态 A/B 通过 |
+| 当前运行驱动 | `3.3.3.42-patched-24` 已安装并重启至 `6.12.101+deb13-amd64`；Driver/Firmware、DKMS、DRM/fbdev 和自动加载通过 |
 | 稳定图形验收基线 | `3.3.3.42-patched-21` 已完成当前设备 PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收 |
 | 历史运行基线 | `3.3.3.42-patched-20` 曾完成验收，但其旧辅助载荷使该包不可发布 |
 | 发布判断 | patched-20 仅是本机历史验收物；除高频 `patch-008` 外，其 deb 还含所有权收敛前的旧 xdisplay 辅助载荷，禁止发布或在新设备部署 |
 | p21 验收状态 | 两次一致构建、离线包审计、部署与当前设备运行验收通过；跨硬件发布待评审 |
 | 合盖策略版本 | p23 继承 patched-22 的 connector 修复；内置面板呈现为 DRM eDP，完整合盖/电源/拔屏矩阵待完成，历史证据见 [patch-009](docs/patches/patch-009-local-internal-edp-connector.md) |
 | 唯一技术基线 | Deepin `20250421190503-debug` 完整原包；历史 patched 包不得作为后续载荷父版本 |
-| 当前回退链 | patched-23 -> patched-22 -> patched-21 -> patched-17；patched-8 只保留为更早的历史恢复物 |
+| 当前回退链 | patched-24 -> patched-23 -> patched-22 -> patched-21 -> patched-17；patched-8 只保留为更早的历史恢复物 |
 | DRM/fbdev | `card0`、`renderD128`、`fb0` 和 mmap 可用；fbterm 需使用已验证的 redraw 模式避开 YPan 显示错位 |
 | 硬件 GL | renderer 为 `Fantasy II-M`，direct rendering、DRI3、GLX、Present 和加速通过 |
 | Picom | patched v13 的运行时 shader 能力探测已验证；Picom 不进入显卡驱动 deb |
 | 内置音频 | `1d94:14c9 -> snd_hda_intel -> SN6180`，ALSA/PipeWire 重启验证通过 |
 | X11 显示管理 | xdisplay 由 dotconfig 仓库独立维护；本项目只提供 Innogpu 输出候选、模式恢复钩子和会话接入 |
 
-当前设备实测包版本为 `3.3.3.42-patched-23`，PVR/固件为 OK，内置面板为 DRM `eDP-1`，
+当前设备实测包版本为 `3.3.3.42-patched-24`，运行内核为 `6.12.101+deb13-amd64`，PVR/固件为 OK，内置面板为 DRM `eDP-1`，
 Xorg/GLX、DRI3、Picom 和 p23 invisible GEM 修复均通过。Clash Verge 启动态 A/B 已完成；p21 仍是
 完整图形验收基线，电池合盖、外屏接入/拔出和外部电源矩阵也尚未全部完成。
 
