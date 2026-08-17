@@ -10,7 +10,7 @@
 | `probe-egl-gbm.c` | 最小 C 探针 | 在指定用户态库环境中创建 GBM device 和 EGL/GLES2 context，报告 backend、renderer 与基本绘制错误，不修改系统配置 |
 | `probe-drm-topology.c` | 只读 KMS 探针 | 报告 DRM connector 物理尺寸、encoder、底层 CRTC ID/索引和 active mode，用于核对 WebKit 的 monitor 匹配结果；不 modeset |
 | `probe-drm-vblank.c` | 只读 DRM ioctl 探针 | 对指定 CRTC 重复执行带硬超时的相对 vblank wait，记录阻塞时间、序号和内核时间戳；不创建 framebuffer、不 modeset |
-| `probe-pdp-invisible-read.c` | 最小 PDP GEM 探针 | 创建单个 invisible GEM；READ 模式测量逐页读取和 munmap，WRITE 模式逐页写入、解除映射并以 READ mapping 验证回写；不提交 GPU 工作、不 modeset |
+| `probe-pdp-invisible-read.c` | 最小 PDP GEM 探针 | 创建单个 invisible GEM；READ 模式测量逐页读取和 munmap，WRITE 模式逐页写入、解除映射并以 READ mapping 验证回写；支持可选 page stride 测量稀疏访问；不提交 GPU 工作、不 modeset |
 | `probe-surfaceless-gles2.c` | 最小 C 探针 | 验证 surfaceless EGL/GLES2 初始化和基本绘制，用于区分 Xorg/DDX 与核心 EGL 路径故障 |
 | `probe-x11-egl-gles2.c` | 最小 C 探针 | 连接测试 X server 并验证 X11 EGL/GLES2 context，用于隔离 DDX/窗口系统路径 |
 | `trace-loader.c` | 诊断 shim | 通过 `LD_PRELOAD` 记录 vendor loader 选择、失败 ioctl，以及 PDP GEM 分配位置和 CPU_PREP/CPU_FINI 的 handle/flags；只用于受控诊断，不得进入发布包 |
@@ -24,3 +24,5 @@
 5. vblank 探针只允许针对已经活动的 CRTC；失败或返回过快时先保留原始输出，不得自动修改显示配置。
 6. KMS 拓扑探针直接使用 `linux-libc-dev` 提供的 DRM UAPI，不依赖 `libdrm-dev`；不得根据 XRandR
    输出编号猜测底层 CRTC 索引。
+7. `probe-pdp-invisible-read.c` 的第五个参数是页步长，默认 `1`；只用于测量稀疏 fault 行为，
+   不代表驱动预取策略，也不改变设备配置。

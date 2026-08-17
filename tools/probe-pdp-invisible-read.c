@@ -134,7 +134,7 @@ static const char *operation_name(enum mapping_operation operation)
 
 static int exercise_mapping(int fd, uint32_t handle, uint64_t map_offset,
 			    size_t map_size, size_t page_size,
-			    unsigned int iteration,
+			    size_t page_stride, unsigned int iteration,
 			    enum mapping_operation operation)
 {
 	const char *name = operation_name(operation);
@@ -175,7 +175,7 @@ static int exercise_mapping(int fd, uint32_t handle, uint64_t map_offset,
 			iteration, name, strerror(errno));
 		goto fail;
 	}
-	for (size_t offset = 0; offset < map_size; offset += page_size) {
+	for (size_t offset = 0; offset < map_size; ) {
 		size_t page_index = offset / page_size;
 
 		if (operation == MAPPING_WRITE)
@@ -188,6 +188,9 @@ static int exercise_mapping(int fd, uint32_t handle, uint64_t map_offset,
 		} else {
 			read_checksum += mapping[offset];
 		}
+		if (page_stride > (map_size - offset) / page_size)
+			break;
+		offset += page_size * page_stride;
 	}
 	if (timing_now(&touch_end)) {
 		fprintf(stderr, "iteration %u %s timing failed: %s\n",
@@ -249,6 +252,7 @@ int main(int argc, char **argv)
 	const char *access = argc > 4 ? argv[4] : "read";
 	uint64_t requested_size = 7646720;
 	uint64_t iterations_u64 = 3;
+	uint64_t page_stride_u64 = 1;
 	struct drm_pdp_gem_create create = {.flags = PDP_GEM_INVISIBLE};
 	struct drm_pdp_gem_mmap map = {0};
 	struct drm_pdp_gem_inv_get inv = {0};
@@ -260,9 +264,11 @@ int main(int argc, char **argv)
 	int result = 1;
 
 	if ((argc > 2 && parse_u64(argv[2], 1ULL << 30, &requested_size)) ||
-	    (argc > 3 && parse_u64(argv[3], 100, &iterations_u64)) || argc > 5) {
+	    (argc > 3 && parse_u64(argv[3], 100, &iterations_u64)) ||
+	    (argc > 5 && parse_u64(argv[5], 1ULL << 20, &page_stride_u64)) ||
+	    argc > 6 || !page_stride_u64) {
 		fprintf(stderr,
-			"usage: %s [render-device] [size-bytes] [iterations] [read|write]\n",
+			"usage: %s [render-device] [size-bytes] [iterations] [read|write] [page-stride]\n",
 			argv[0]);
 		return 2;
 	}
@@ -314,16 +320,19 @@ int main(int argc, char **argv)
 
 	printf("device=%s handle=%u requested_size=%" PRIu64
 	       " map_size=%zu pages=%zu offset=0x%" PRIx64 " iterations=%" PRIu64
-	       " access=%s\n", device, create.handle, requested_size, map_size,
-	       map_size / (size_t)page_size, map.offset, iterations_u64, access);
+	       " access=%s page_stride=%" PRIu64 "\n", device, create.handle,
+	       requested_size, map_size, map_size / (size_t)page_size, map.offset,
+	       iterations_u64, access, page_stride_u64);
 
 	for (unsigned int iteration = 1; iteration <= iterations_u64; iteration++) {
 		if (exercise_mapping(fd, create.handle, map.offset, map_size,
-				     (size_t)page_size, iteration, operation))
+				     (size_t)page_size, (size_t)page_stride_u64,
+				     iteration, operation))
 			goto out_close_gem;
 		if (operation == MAPPING_WRITE &&
 		    exercise_mapping(fd, create.handle, map.offset, map_size,
-				     (size_t)page_size, iteration, MAPPING_VERIFY))
+				     (size_t)page_size, (size_t)page_stride_u64,
+				     iteration, MAPPING_VERIFY))
 			goto out_close_gem;
 	}
 

@@ -26,6 +26,33 @@ debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 
 ## 输出包
 
+## Git Tag 与包对应
+
+每个可追溯的 deb 使用同名 annotated tag 标识其源码提交和 SHA-256。tag 不包含 deb 文件，发布时仍
+从本地 `debs/` 或 release 附件取得二进制：
+
+| 包 | Git tag | SHA-256 |
+| --- | --- | --- |
+| patched-17 | `patched-17` | `51e9bcbb074734b7f3218c0ad0882e3c4a069187524e66799af1571544a7f853` |
+| patched-21 | `patched-21` | `15c1fab4b8a0f36985097e3d1651ff43fc09f00a2bda47058c380e1e561384cc` |
+| patched-22 | `patched-22` | `aae8f966af7c5737037869a4e6ee5d081fd07d386dec67e0e799746ff6386ae9` |
+| patched-23 | `patched-23` | `da1479f6264406443616f342e917b7f95d5798c98b1874c5b5abed38a9012715` |
+
+patched-8 是更早的历史恢复包，当前仓库没有能与该 deb 逐字对应的构建提交，因此不创建会造成
+错误追溯的源码 tag；它继续由文件名和 SHA-256 记录。
+
+## 发布最终审阅
+
+发布前必须逐项确认：
+
+1. tag 指向的提交与对应文档、版本号和 SHA-256 一致。
+2. `scripts/check-release-package.sh`、`scripts/check-docs.sh`、Shell 语法检查和包边界测试通过。
+3. Deepin 原包来源、补丁开关、DKMS 构建、固件/用户态完整性和可复现构建证据齐全。
+4. 当前设备运行验证、跨硬件限制、已知问题和默认安装策略写入文档。
+5. patched-17 回退包可用，回退命令、SSH/TTY 恢复路径和风险说明经过实际演练；2026-08-17 已完成
+   patched-23 -> patched-17 -> patched-23 两次重启验证。
+6. release 附件只上传允许的 deb、哈希和说明，不上传历史 patched-20 或 Git 忽略目录中的无关包。
+
 构建脚本要求显式设置大于 20 的新版本号，并默认把输出写入本目录，例如：
 
 ```sh

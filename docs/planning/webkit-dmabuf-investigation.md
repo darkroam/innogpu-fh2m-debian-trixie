@@ -3,8 +3,10 @@
 ## 状态
 
 本调查于 2026-08-17 开始，当前已由独立 DRM/PDP 最小探针确认 FH2M invisible GEM 只读映射的
-释放路径存在缺陷；单变量 patched-23 已安装并完成一次重启后的驱动、桌面和最小探针验证。当前
-只剩 Clash Verge 应用级 CPU A/B，首个候选只修复 READ mapping 的无意义回写，不混入其他问题。
+释放路径存在缺陷；单变量 patched-23 已安装并完成一次重启后的驱动、桌面和最小探针验证。Clash
+Verge 应用级 CPU A/B 已完成；当前继续研究所有 DMA-BUF 应用共用的 invisible GEM READ 路径。
+首个候选只修复 READ mapping 的无意义回写，下一候选只考虑只读预取/批量 `GDDR2SYS`，不混入
+同步、vblank 或用户态 ABI 改动。
 
 当前安全 workaround 是只对 WebKit 应用设置：
 
@@ -38,11 +40,18 @@ WEBKIT_DISABLE_DMABUF_RENDERER=1
   READ mapping：逐页读取约消耗 92-108ms system CPU，随后的只读 `munmap` 仍消耗约 72-119ms
   system CPU。后者来自驱动逐页执行不必要的 `SYS2GDDR`，已经达到内核修复门槛。
 
-## 尚未确认
+## 已完成结论
 
-- 跳过 READ mapping 回写后，Clash Verge/WebKit 主进程的 system CPU 能降低多少。
-- 同一修复是否会影响 WRITE mapping 的数据回写、Xorg/GLX、Picom 或其他现有图形路径。
-- 同一问题是否影响除 WebKitGTK 2.52.5 之外的应用或其他 FH2M 设备。
+- p23 已完成 READ/WRITE、Xorg/GLX、Picom 和基础桌面回归；Clash 启动态 A/B 也已完成。
+- p23 只修改仓库中可审查的 DKMS 源码，未修改预编译用户态或 DMA 对象。
+
+## 范围边界
+
+- `innodma.o_shipped` 只有预编译对象，没有可维护的 DMA 描述符实现源码；不尝试修改其内部
+  `memcmp`、descriptor 或 completion wait。
+- WebKitGTK、GBM、EGL/GLVND 和 Clash Verge 不属于本仓库源码；不在本项目内重写这些组件。
+- 只有位于 `patches/`、`scripts/`、`tools/` 或完整 Deepin DKMS 源码中的改动，才进入候选优化。
+- 若瓶颈只存在于上述缺失源码中，结论记录为“已定位、当前项目不可修复”，保留应用级 workaround。
 
 ## 当前候选链路
 
@@ -117,7 +126,7 @@ WebKit WebProcess/GPUProcess 产生的 DMA-BUF 会在 UIProcess 中导入。需�
 | --- | ---: | ---: | ---: | --- |
 | `WEBKIT_DISABLE_DMABUF_RENDERER=1` | 5.13% | 1.60% | 27.05% | 正常退出 |
 | DMA-BUF + `WEBKIT_FORCE_VBLANK_TIMER=1` | 48.11% | 46.32% | 21.70% | 正常退出 |
-| DMA-BUF + 默认选择 | 待补采 | 待补采 | 待补采 | 未发出 WAIT_VBLANK，自动回退 timer，正常退出 |
+| DMA-BUF + 默认选择 | 已完成启动态采样 | 已完成启动态采样 | 已完成启动态采样 | 未发出 WAIT_VBLANK，自动回退 timer；短时空闲样本未复现历史极端忙等 |
 
 timer 组的高开销集中在 UIProcess 主线程，不在 `VBlankMonitor`。15 秒受控 `strace` 显示稳态
 CPU_PREP/CPU_FINI 均在微秒到亚毫秒内返回，没有单个慢 ioctl；仍需调用栈或更细粒度采样解释约
@@ -174,8 +183,47 @@ GEM，执行 READ CPU_PREP、逐页读取、CPU_FINI 和 `munmap`。它不加载
 1867 页读回均 `verify=pass`；WRITE `munmap` 保留约 87–129ms system CPU，说明只读优化没有
 改变写回语义。
 
-当前未发现 Clash Verge 进程，因此尚未重复应用级 A/B。启动包装脚本仍保留
-`WEBKIT_DISABLE_DMABUF_RENDERER=1`；应用级 A/B 需要在用户启动 Clash Verge 后单独采样。
+### p23 READ 成本缩放
+
+2026-08-17 在当前 p23、`/dev/dri/renderD128` 上使用同一独立探针，每个大小运行两轮 READ，
+只统计 `read_touch` 的 system CPU：
+
+| GEM 大小 | 页数 | system CPU |
+| ---: | ---: | ---: |
+| 1 MiB | 256 | 16.217–20.489ms |
+| 4 MiB | 1024 | 63.942–64.097ms |
+| 8 MiB | 2048 | 102.774–134.047ms |
+| 16 MiB | 4096 | 259.772–273.163ms |
+
+成本基本按页数线性增长，约为 `0.06–0.07ms/page`。相同探针的 READ `munmap` 只有约
+`0.2–7.4ms`，因此 p23 后主要瓶颈已从释放回写转为 page fault 中逐页 staging 分配和
+`GDDR2SYS` 搬运。
+
+同日使用探针的 `page_stride` 参数对 16 MiB GEM 做访问模式对照，每组运行两轮 READ：
+
+| 页步长 | 实际触碰页数 | system CPU |
+| ---: | ---: | ---: |
+| 1 | 4096 | 228.426–324.498ms |
+| 2 | 2048 | 107.890–137.653ms |
+| 4 | 1024 | 60.645–64.989ms |
+| 16 | 256 | 18.630–22.389ms |
+
+结果确认成本随实际 fault 页数增长，顺序访问存在预取收益空间；但稀疏访问不会自动触碰邻页，
+因此候选必须限制预取窗口、避免无界内存增长，并提供随机访问回归。
+
+### p23 内核调用栈采样
+
+2026-08-17 使用 `perf record -g --call-graph dwarf` 对 8 MiB、2048 页、stride=1 的单轮 READ
+探针采样，捕获 942 个 cycles 样本且无丢样本。调用栈占比显示：
+
+- `innodpu_gem_invisible_vram_vm_fault` 路径占约 `91.84%` 的子调用；
+- `fh2m_innodma_memcpy_for_smallbar_sg` 占约 `85.21%`，其中 DMA 描述符准备的 `memcmp` 约
+  `25.60%`，DMA 完成等待约 `14.21%`；
+- staging 的 `__vmalloc_node` 约 `4.96%`，`vmf_insert_pfn` 约 `1.39%`。
+
+因此已确认热点位于每页 DMA 提交和等待次数。DMA 实现主体位于 Deepin 原包的
+`innodma.o_shipped` 预编译对象，本仓库不把其内部优化作为后续任务，保留该证据用于上游或厂商
+修复参考。
 
 ## 首个修复候选边界
 
@@ -211,7 +259,9 @@ GEM，执行 READ CPU_PREP、逐页读取、CPU_FINI 和 `munmap`。它不加载
 9. 为只读 CPU mapping 设计“不执行 SYS2GDDR 回写”的最小内核补丁，并保留写映射的原行为；先
    离线编译，不热切换 p22。（patch-023 已实现并完成 p23 实机验证）
 10. 扩展最小 GBM 探针，覆盖 DMA-BUF fd、同设备 import 和重复释放。
-11. 为版本大于 22 的新候选分别设计 invisible READ mapping、未活动 CRTC vblank 和
+11. 为只读 page fault 设计受控预取/批量 `GDDR2SYS` 候选；必须保持稀疏访问、WRITE 语义和
+    内存上限安全。
+12. 为版本大于 22 的新候选分别设计 invisible READ mapping、未活动 CRTC vblank 和
    `dma_resv_usage_rw()` 补丁，不在同一首轮候选中混合变量。
 
 ## 验证门槛
@@ -223,6 +273,8 @@ GEM，执行 READ CPU_PREP、逐页读取、CPU_FINI 和 `munmap`。它不加载
 - 修改内核后必须重新执行 p21/p22 已有的 PVR、DRM/fbdev、Xorg/GLX、真实 VT、显示和 Picom 回归。
 - 修复后的独立探针中，READ touch 可以保留现有 `GDDR2SYS` 成本，但 READ `munmap` 的 system CPU
   应显著下降；WRITE 模式必须证明写入在解除映射后仍可读回。
+- 预取/批量候选必须提供随机页、顺序页、重复映射、内存峰值和 WRITE 回归数据；完成前不得安装
+  或重启。
 
 ## 风险与回退
 
