@@ -2,8 +2,9 @@
 
 ## 状态
 
-本调查于 2026-08-17 开始，当前已由独立 DRM/PDP 最小探针确认 FH2M invisible GEM 只读映射的
-释放路径存在缺陷；单变量 patched-23 已安装并完成一次重启后的驱动、桌面和最小探针验证。Clash
+本调查于 2026-08-17 开始；以下应用级调查记录以 patched-23 为实验快照，当前设备已升级至
+patched-24。独立 DRM/PDP 最小探针确认 FH2M invisible GEM 只读映射的释放路径存在缺陷；单变量
+patched-23 已安装并完成一次重启后的驱动、桌面和最小探针验证。Clash
 Verge 应用级 CPU A/B 已完成；当前继续研究所有 DMA-BUF 应用共用的 invisible GEM READ 路径。
 首个候选只修复 READ mapping 的无意义回写，下一候选只考虑只读预取/批量 `GDDR2SYS`，不混入
 同步、vblank 或用户态 ABI 改动。
@@ -19,7 +20,7 @@ WEBKIT_DISABLE_DMABUF_RENDERER=1
 
 ## 已知事实
 
-- 当前设备运行 `3.3.3.42-patched-23`；直接回退点是 `patched-22`，完整图形验收回退点是 `patched-21`。
+- 调查实验快照运行 `3.3.3.42-patched-23`；其直接回退点是 `patched-22`，完整图形验收回退点是 `patched-21`。
 - FH2M 的 Xorg/GLX、direct rendering、DRI3、Present 和 Picom GLX 已分别通过现有验收。
 - Clash Verge 在同一应用和配置下禁用 WebKit DMA-BUF renderer 后，窗口卡顿消失且 CPU 明显下降。
 - WebKitGTK 2.52.5 的 `WEBKIT_DISABLE_DMABUF_RENDERER` 位于 GTK UIProcess 的

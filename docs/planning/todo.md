@@ -26,7 +26,8 @@
 - [x] 完成 p23 invisible READ 成本的 1/4/8/16 MiB 尺寸缩放基线；确认主要成本按页数增长。
 - [x] 完成 page stride 1/2/4/16 访问模式基线；确认顺序访问适合受控预取，稀疏访问不能盲目预取。
 - [x] 定位 invisible READ 的 page fault/DMA 热点；DMA 描述符和 completion wait 位于预编译
-  `innodma.o_shipped`，超出本项目可维护源码范围，停止制作 patched-24 预取候选。
+  `innodma.o_shipped`，超出本项目可维护源码范围，不制作 READ 预取候选；patched-24 仅处理
+  Debian 6.12.101+ DKMS API 兼容。
 - [ ] 将可复现的热点、perf 数据和应用级 workaround 整理为上游/厂商修复报告。
 
 patched-21 已在 [`../patches/patched-21-release-candidate.md`](../patches/patched-21-release-candidate.md)

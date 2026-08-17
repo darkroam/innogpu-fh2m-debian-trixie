@@ -112,7 +112,7 @@ require_text docs/patches/patched-21-release-candidate.md 'RUNTIME_VALIDATION: P
 require_text docs/project/status.md "\`3.3.3.42-patched-21\` 已安装、重启"
 require_text docs/patches/README.md 'p21 已在当前设备运行验收'
 require_text docs/project/dependencies.md '当前设备已完成运行验收的候选'
-require_text docs/project/architecture.md 'patched-23` 是当前设备已安装并重启'
+require_text docs/project/architecture.md 'patched-24` 是当前设备已安装并重启'
 require_text debs/README.md '已在当前设备完成部署、重启和运行验收'
 require_text docs/user/new-device-install.md 'patched-21 已完成当前设备的构建、包边界、部署、重启和运行验收'
 require_text docs/user/recovery.md 'patched-22 -> patched-21 -> patched-17 -> patched-8'

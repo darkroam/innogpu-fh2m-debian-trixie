@@ -52,7 +52,8 @@
 6. xdisplay 的适配器、状态机、配置和自定义布局由 dotconfig 独立演进；本项目只需持续验证
    `XDISPLAY_INTERNAL_OUTPUTS`、`XDISPLAY_RESTORE_COMMAND` 和会话接入仍兼容。
 7. patched-21 的实际 deb 哈希、离线包审计与完整运行证据已记录；patched-22 的实际 hash、connector
-   烟测和重启证据已记录；patched-17 -> patched-23 回退恢复演练已通过，公开发布前仍需完成
+   烟测和重启证据已记录；patched-17 -> patched-23 回退恢复演练已通过，patched-24 的 6.12.101+
+   DKMS 兼容和重启证据已记录，公开发布前仍需完成
    电源/合盖/拔屏矩阵、跨设备矩阵和 release 审阅。
 8. 当前驱动仍报告 YPan 能力，但 stock fbterm 的加速滚动存在显示错位；用户态 redraw 已验证，
    内核侧应撤销能力声明还是修复平移语义尚未决定。
@@ -62,8 +63,7 @@
     PDP 探针复现并由 patched-23 修复；p23 实机验证通过，Clash Verge 启动态 A/B 已完成；调查、
     验收门槛与回退边界见 [`webkit-dmabuf-investigation.md`](../planning/webkit-dmabuf-investigation.md)。
 11. p23 的 READ page fault 成本已完成 1/4/8/16 MiB 缩放测量，约按 `0.06–0.07ms/page` 增长；
-    主要 DMA descriptor/wait 热点位于预编译 `innodma.o_shipped`，当前项目不制作 patched-24
-    预取候选。
+    主要 DMA descriptor/wait 热点位于预编译 `innodma.o_shipped`，当前项目不制作 READ 预取候选。
 
 ## 证据保留规则
 
