@@ -211,6 +211,30 @@ diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' 
  int INNO_IRQ_MODE_MSI = PCI_IRQ_MSI;
  
  int fh2m_inno_pci_enable_device(inno_pci_dev *dev)
+diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/inno_pci.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/inno_pci.c
+--- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/inno_pci.c	2025-05-28 14:30:42.000000000 +0800
++++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/inno_pci.c	2026-08-17 19:05:00.000000000 +0800
+@@ -405,11 +405,15 @@
+-static int inno_pci_resize_resource(struct pci_dev *dev, int resno, int size)
+-{
+-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
+-	return pci_resize_resource(dev, resno, size);
+-#else
+-	return 1;
+-#endif
+-}
++static int inno_pci_resize_resource(struct pci_dev *dev, int resno, int size)
++{
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 12, 101))
++	return pci_resize_resource(dev, resno, size, 0);
++#else
++	return pci_resize_resource(dev, resno, size);
++#endif
++#else
++	return 1;
++#endif
++}
 diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/inno_uuid.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/inno_uuid.c
 --- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/inno_uuid.c	2025-05-28 14:30:42.000000000 +0800
 +++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/inno_uuid.c	2026-02-08 00:57:39.000000000 +0800

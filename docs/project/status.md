@@ -27,7 +27,7 @@
 
 | 问题 | 修复/结论 | 阶段 |
 | --- | --- | --- |
-| Debian 6.12 与厂商内核接口不兼容 | 通过兼容补丁适配 DKMS 构建 | `patch-001` |
+| Debian 6.12 与厂商内核接口不兼容 | 通过兼容补丁适配 DKMS 构建；已补充 6.12.101 的 PCI resize API 参数变化 | `patch-001` |
 | DP 输出在启动阶段无安全 fallback | 当前候选启用 DP fbcon fallback | `patch-002` |
 | 面板背光/平台注册和初始 enable 试验 | 历史补丁已保留，当前 p21 未启用 | `patch-003` 至 `patch-005` |
 | 本机 connector 与 ACPI 映射差异 | `patch-006` 修正 DPU 映射；`patch-009` 进一步把本机内置 DP0 在 hwinfo 失败时标记为 eDP | `patch-006`、`patch-009` |
