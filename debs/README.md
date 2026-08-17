@@ -26,6 +26,18 @@ debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 
 ## 输出包
 
+### patched-17 文件边界
+
+patched-17 只保留以下 canonical 回退包：
+
+```text
+debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb
+```
+
+同版本的 `*_patched-17_amd64.deb` 是本机 `dpkg-repack` 生成的重打包副本，
+包内容和校验值不同，不属于已演练的回退产物，已从工作目录清除。安装脚本、回退文档
+和 `patched-17` tag 均只引用上面的 canonical 文件。
+
 ## Git Tag 与包对应
 
 每个可追溯的 deb 使用同名 annotated tag 标识其源码提交和 SHA-256。tag 不包含 deb 文件，发布时仍
@@ -40,6 +52,12 @@ debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 
 patched-8 是更早的历史恢复包，当前仓库没有能与该 deb 逐字对应的构建提交，因此不创建会造成
 错误追溯的源码 tag；它继续由文件名和 SHA-256 记录。
+
+`patch-001/005/008` 是源码阶段补丁，不是独立的 deb 发布版本：`patch-001` 当前作为
+Debian 6.12 兼容基础始终应用，`patch-005` 当前关闭，`patch-008` 仅用于 patched-20
+历史诊断且当前关闭，因此不为它们创建与 release 包混淆的同名 Git tag。patched-18/19/20
+同样是历史中间结果，且当前源码已禁止按原版本号重建；它们不创建 release tag。可安装、已
+完成对应追溯和验收的版本使用上表的 `patched-*` tag。
 
 ## 发布最终审阅
 
