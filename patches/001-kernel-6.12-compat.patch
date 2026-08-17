@@ -214,7 +214,7 @@ diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' 
 diff -ruN '--exclude=*.o' '--exclude=*.ko' '--exclude=*.mod*' '--exclude=.tmp*' '--exclude=Module.symvers' '--exclude=modules.order' /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/inno_pci.c /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/inno_pci.c
 --- /tmp/innogpu-orig/usr/src/innogpu-kernel-2.2/innogpu/inno_pci.c	2025-05-28 14:30:42.000000000 +0800
 +++ /tmp/innogpu-patched/usr/src/innogpu-kernel-2.2/innogpu/inno_pci.c	2026-08-17 19:05:00.000000000 +0800
-@@ -405,11 +405,15 @@
+@@ -405,8 +405,12 @@
 -static int inno_pci_resize_resource(struct pci_dev *dev, int resno, int size)
 -{
 -#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))

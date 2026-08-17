@@ -14,6 +14,7 @@
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-21.deb` | 当前设备已完成运行验收的候选；跨硬件发布审阅前不作为新设备默认入口 |
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-22.deb` | `patch-009` 直接回退包；connector/桌面烟测已通过，完整电源与合盖矩阵待完成 |
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-23.deb` | `patch-023` 当前运行包；invisible READ 回写、基础图形验证和 Clash 启动态 A/B 已完成；SHA-256 见 `docs/patches/patch-023-invisible-read-no-writeback.md` |
+| `debs/innogpu-fh2m-trixie_3.3.3.42-patched-24.deb` | patched-23 补丁集合加 `6.12.101+` PCI resize API 兼容；已通过 6.12.101 离线 DKMS 编译；SHA-256 见 `docs/patches/patched-24-kernel-612101.md` |
 | `debs/innogpu-fh2m_20250421190503-debug_amd64.deb` | Deepin 202504 DKMS/GL/DDX 来源 |
 
 构建和准备脚本优先查找 `debs/`，并保留仓库根目录旧路径作为兼容回退。
