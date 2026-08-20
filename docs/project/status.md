@@ -9,7 +9,7 @@
 
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
-| 当前运行驱动 | `3.3.3.42-patched-24` 已安装并重启至 `6.12.101+deb13-amd64`；Driver/Firmware、DKMS、DRM/fbdev 和自动加载通过 | [`patched-24` 验收](../patches/patched-24-kernel-612101.md) |
+| 当前运行驱动 | `3.3.3.42-patched-27` 已安装并重启至 `6.12.101+deb13-amd64`；Driver/Firmware、DKMS、DRM/fbdev、自动加载和桌面硬件 GL 通过 | [`patch-027` 验收](../patches/patch-027-foreign-dmabuf-lifecycle.md) |
 | 稳定图形验收基线 | `3.3.3.42-patched-21` 已安装、重启并完成本机 PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | 历史运行基线 | `3.3.3.42-patched-20` 曾完成运行验收，但 deb 含收敛前辅助载荷，仅保留为历史证据 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
 | 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |

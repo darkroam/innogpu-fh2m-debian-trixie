@@ -5,11 +5,11 @@ Debian Trixie 上 Innosilicon Fantasy II-M（FH2M）驱动、显示输出、硬�
 
 ## 当前状态
 
-最后更新：2026-08-20（能力普查落档）。设备驱动状态仍为 2026-08-18 的 patched-24。
+最后更新：2026-08-20（release 审阅：patched-27 为当前运行版本，构建可复现性已修复）。
 
-- 当前设备运行 `3.3.3.42-patched-24`，内核为 `6.12.101+deb13-amd64`。
-- patched-24 已重启验证：DKMS、Driver/Firmware、`/dev/dri/card0`、`renderD128`、`/dev/fb0`
-  和 boot autoload 正常。
+- 当前设备运行 `3.3.3.42-patched-27`，内核为 `6.12.101+deb13-amd64`。
+- patched-27 已重启验证：DKMS、Driver/Firmware、`/dev/dri/card0`、`renderD128`、`/dev/fb0`、
+  boot autoload 和桌面硬件 GL 正常；p25/26/27 的 deb 为可复现构建（见 [debs/README.md](debs/README.md)）。
 - p24 是 p23 行为基线加 `6.12.101+` 的 `pci_resize_resource()` 兼容修复；包、校验值和 tag
   见 [p24 验收记录](docs/patches/patched-24-kernel-612101.md) 和 [release 目录说明](debs/README.md)。
 - 当前设备此前已完成 p21 的完整 Xorg/GLX、DRI3、真实 VT、显示和 Picom 验收；p24 本次检查未把
@@ -36,6 +36,7 @@ Debian Trixie 上 Innosilicon Fantasy II-M（FH2M）驱动、显示输出、硬�
 | 依赖、外部包和目录结构 | [docs/project/dependencies.md](docs/project/dependencies.md) |
 | 失败过程和根因 | [docs/incidents/README.md](docs/incidents/README.md) |
 | 实施历史和待办 | [docs/planning/history.md](docs/planning/history.md)、[todo.md](docs/planning/todo.md) |
+| Release 审阅记录 | [docs/planning/release-review-2026-08-20.md](docs/planning/release-review-2026-08-20.md) |
 | 逆向工程与能力挖掘评估 | [docs/planning/reverse-engineering-assessment.md](docs/planning/reverse-engineering-assessment.md) |
 | FH2M 能力普查记录 | [docs/planning/capability-survey.md](docs/planning/capability-survey.md) |
 | 脚本使用和风险 | [scripts/README.md](scripts/README.md) |

@@ -50,9 +50,12 @@ debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb
 | patched-22 | `patched-22` | `aae8f966af7c5737037869a4e6ee5d081fd07d386dec67e0e799746ff6386ae9` |
 | patched-23 | `patched-23` | `da1479f6264406443616f342e917b7f95d5798c98b1874c5b5abed38a9012715` |
 | patched-24 | `patched-24` | `20ceccdcb507f80d2c41198046e037ce8fa6381f217c5861aad0dafdc4c01744` |
-| patched-25 | `patched-25` | `955950dd688ea50e51a0890389d1abe0054aba666174137e2ab269845ac8723f` |
-| patched-26 | `patched-26` | `51ddd8cbb024c5893f1d3d0cbdc6bc8f50490a8f0e8d4a9510a9bc3f0d92e14c` |
-| patched-27 | `patched-27` | `2586b072901bdc581f16e12d9ab6c8eb2022fb835b6bcd623991af0b42aa2d33` |
+| patched-25 | `patched-25` | `351f1f6e5a711ea4f4ed99a5ab8fe5ce51e7c13d089db38ae452bd85ace3038f` |
+| patched-26 | `patched-26` | `d213877c60ec3aad10cb9b16b79f0c38ab95a7cd3f8aa0a7f4f0e1bd433e27b1` |
+| patched-27 | `patched-27` | `f384159751fed249263591ff46758bb32327d0048e0669747050b66db1e33c6a` |
+
+说明：patched-25/26/27 的 SHA 为 2026-08-20 release 审阅修复构建可复现性（目录 mtime 归一化）后
+重建的值；每个包均以相同 wrapper 独立构建两次并逐字一致。
 
 patched-8 是更早的历史恢复包，当前仓库没有能与该 deb 逐字对应的构建提交，因此不创建会造成
 错误追溯的源码 tag；它继续由文件名和 SHA-256 记录。

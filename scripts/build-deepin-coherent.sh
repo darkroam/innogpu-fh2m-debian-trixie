@@ -291,6 +291,10 @@ EOF
 
 chmod 0755 "$W/root/DEBIAN/postinst" "$W/root/DEBIAN/prerm" "$W/root/DEBIAN/postrm"
 
+# Normalize every tree mtime to the reviewed epoch so the resulting data.tar
+# is byte-reproducible across builds (dpkg-deb preserves on-disk mtimes).
+find "$W/root" -exec touch -h -d "@$SOURCE_DATE_EPOCH" {} +
+
 dpkg-deb --root-owner-group --build "$W/root" "$OUT_DEB"
 "$ROOT/scripts/check-release-package.sh" "$OUT_DEB"
 dpkg-deb -x "$OUT_DEB" "$W/verify"

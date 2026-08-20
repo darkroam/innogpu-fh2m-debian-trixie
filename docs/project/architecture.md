@@ -53,9 +53,9 @@ PCI 0000:06:00.6 [1d94:14c9]
 
 ## 驱动与图形用户态
 
-`innogpu-fh2m-trixie 3.3.3.42-patched-24` 是当前设备已安装并重启、适配 Debian 6.12.101+
+`innogpu-fh2m-trixie 3.3.3.42-patched-27` 是当前设备已安装并重启、适配 Debian 6.12.101+
 并完成驱动、DKMS、DRM/fbdev 验证的版本；
-`patched-21` 是当前设备已完成完整 PVR、Xorg/GLX 和真实 VT fbterm 验收的稳定图形基线，也是 p22 的直接回退点；`patched-17` 是新设备保守回退包。p20 deb 是所有权收敛前的历史运行证据，包内辅助
+`patched-21` 是当前设备已完成完整 PVR、Xorg/GLX 和真实 VT fbterm 验收的稳定图形基线，也是 p22 的直接回退点；`patched-17` 是新设备保守回退包。p25/p26/p27 分别增加 dma_resv usage 语义、未活动 CRTC vblank 守卫和 foreign DMA-BUF 生命周期修复，均已通过本机实机验收（见 [patch-025](../patches/patch-025-dma-resv-usage-rw.md)、[patch-026](../patches/patch-026-inactive-crtc-vblank-guard.md)、[patch-027](../patches/patch-027-foreign-dmabuf-lifecycle.md)）。p20 deb 是所有权收敛前的历史运行证据，包内辅助
 脚本不能代表当前源码，禁止重新部署或发布；运行时验收与 release 载荷合规是两个独立结论。后续包统一
 以 Deepin 202504 原包为唯一技术基线，在其 DKMS 源码上叠加 Debian 6.12 兼容、G0M PLL、DRM/fbdev
 和本地 connector/invisible GEM 修复，并保留同一原包中的完整用户态 ABI 集合。patched-21 使用
