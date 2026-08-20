@@ -16,6 +16,7 @@
 | `trace-loader.c` | 诊断 shim | 通过 `LD_PRELOAD` 记录 vendor loader 选择、失败 ioctl，以及 PDP GEM 分配位置和 CPU_PREP/CPU_FINI 的 handle/flags；只用于受控诊断，不得进入发布包 |
 | `probe-vulkan-devices.c` | 最小 C 探针 | dlopen Vulkan loader，枚举实例版本/扩展、物理设备和队列族；不创建设备/队列、不渲染，无需 Vulkan 头文件 |
 | `probe-opencl-devices.c` | 最小 C 探针 | dlopen OpenCL ICD loader，枚举 platform/device 及关键能力（版本、扩展、内存、compute units）；不创建 context/queue，无需 OpenCL 头文件 |
+| `probe-vaapi.c` | 最小 C 探针 | 打开 DRM render 节点并 dlopen libva，枚举 VA-API 驱动、profile 与 entrypoint；不创建 surface/context、不编解码，无需 libva 头文件 |
 
 ## 使用约束
 
