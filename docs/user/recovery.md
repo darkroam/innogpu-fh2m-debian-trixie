@@ -5,7 +5,8 @@
 驱动回退顺序固定为：
 
 ```text
-patched-22 -> patched-21 -> patched-17 -> patched-8
+当前链：patched-27 -> patched-26 -> patched-25 -> patched-24 -> patched-23 -> patched-22
+历史链：patched-22 -> patched-21 -> patched-17 -> patched-8
 ```
 
 patched-17 是当前保守回退点，patched-8 只在 patched-17 仍不能启动时使用。执行任何升级前都应把

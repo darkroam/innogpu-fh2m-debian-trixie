@@ -4,10 +4,12 @@
 
 - [ ] 为每次新候选包建立独立的 `docs/patches/` 说明和 `docs/incidents/` 验收记录。
 - [ ] 将长期维护所需的脚本参数逐步收敛为可审查的配置，保持 `scripts/<name>` 兼容入口不变。
-- [ ] release 发布前确认 `debs/` 中包与当前状态文档的版本、哈希和验证证据一致。
+- [x] release 发布前确认 `debs/` 中包与当前状态文档的版本、哈希和验证证据一致（2026-08-20 release 审阅完成）。
 - [x] 实际演练 patched-17 回退：安装、重启、验证，再恢复 patched-23；两次重启后的 TTY、Xorg/dwm、
   DRM/fbdev、软件 llvmpipe 和硬件 GL 恢复均通过。
-- [ ] 完成 release 最终审阅：tag、哈希、包边界、可复现构建、跨硬件限制、回退路径和 release 附件。
+- [x] 完成 release 审阅主体：tag、哈希、包边界、可复现构建（含目录 mtime 修复）、回退路径和附件边界，
+  见 [release-review-2026-08-20.md](release-review-2026-08-20.md)。
+- [ ] 剩余发布工作：跨硬件实机矩阵（扩展坞/多屏/无盖桌面/其他机型）、电源/合盖矩阵、release 附件上传。
 
 ## 当前活动项
 
@@ -39,7 +41,7 @@ patched-21 已在 [`../patches/patched-21-release-candidate.md`](../patches/patc
 - [x] 在 p17 回退、DKMS、headers 和磁盘空间均已确认后部署 p21；完成受控重启；
 - [x] 完成 p21 的 PVR、DRM/fbdev、Xorg/GLX、真实 VT fbterm、xdisplay、Picom、音频和桌面验收。
 
-后续只保留发布前工作：扩展坞、三块及以上外屏、无盖桌面和其他硬件的实机矩阵，以及 release 审阅。
+后续只保留发布前工作：扩展坞、三块及以上外屏、无盖桌面和其他硬件的实机矩阵（release 审阅已于 2026-08-20 完成，见 [release-review-2026-08-20.md](release-review-2026-08-20.md)）。
 patched-17 回退演练已完成。任一验证失败先进入恢复路径和事故记录，不做模块热切换。
 
 显示引擎代码、配置和内部测试已收敛回 dotconfig 维护。本项目当前只保留 Innogpu 设备钩子、会话
@@ -66,7 +68,6 @@ Picom patch、配置和安装流程已按 `picom-integration.md` 完成吸纳。
   通过（CRTC 1 vblank 正常、CRTC 0/2 立即 EINVAL）。
 - [x] 落地内核接口修复（三）：foreign DMA-BUF 生命周期（patch-027 / patched-27）已实机验证
   通过（DRI3/PRIME 自导入回归正常；foreign 路径待第二设备）。
-- [ ] invisible READ 批量预取候选调研（调用方批量化，不修改 `innodma.o_shipped` 内部）。
 - [ ] invisible READ 批量预取候选调研（调用方批量化，不修改 `innodma.o_shipped` 内部）。
 - [ ] DVFS/功耗实测与调参评估。
 - [ ] 完成 `innogpu.o_shipped`（HAL）与 `innodma.o_shipped`（DMA）符号级分析，评估预编译核心替换路径。

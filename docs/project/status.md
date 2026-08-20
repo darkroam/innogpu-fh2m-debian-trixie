@@ -37,6 +37,10 @@
 | Picom 未声明 `GL_ARB_explicit_uniform_location` 而提前退出 | 运行时编译最小 shader 验证能力，成功后继续 | Picom patch |
 | fbterm 快速滚动造成清屏错位和跨会话残留 | 增加可配置 redraw 模式及退出偏移复位，默认/16px 字体均通过真实 VT 验证 | fbterm 用户态补丁 |
 | 显示引擎曾在本仓库形成重复副本 | 明确由 dotconfig 单独维护；本项目只注入 Innogpu 设备契约 | 显示集成阶段 |
+| CPU_PREP 的 dma_resv usage 语义错误（bool 直接当 enum 传） | patch-025 用 `dma_resv_usage_rw()` 修正；patched-25 实机验证（PDP READ/WRITE 回归通过） | `patch-025` |
+| 未活动 CRTC 的 vblank 请求成功返回后永久阻塞 | patch-026 拒绝无活动/无 mode 的 CRTC（返回 EINVAL）；patched-26 实机验证（CRTC 1 正常、CRTC 0/2 立即 EINVAL） | `patch-026` |
+| foreign DMA-BUF 导入类型混淆、attach 错误未处理、GTT export 映射泄漏 | patch-027 增加 ops 检查、IS_ERR 处理与 unmap 配对；patched-27 实机验证（DRI3/PRIME 自导入回归正常） | `patch-027` |
+| deb 构建不可复现（目录 mtime 未归一化） | release 审阅修复构建器（整树 mtime 归一化）；p25/26/27 重建为可复现 SHA | [release 审阅](../planning/release-review-2026-08-20.md) |
 
 ## 当前未解决或需要后续处理
 

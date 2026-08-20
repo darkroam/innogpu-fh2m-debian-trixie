@@ -67,3 +67,11 @@ patched-19/20 的固定 wrapper 已改为拒绝执行，因为当前源码的辅
   `6.12.101` 及以后 headers 的 `pci_resize_resource(..., exclude_bars)` 兼容分支；构建和安装前
   必须重新执行对应内核的 DKMS 编译验证；2026-08-18 已重启并确认 p24、DKMS、Driver/Firmware
   和 DRM/fbdev 正常。
+- patched-25：`scripts/build-patched25-dma-resv-fix.sh` 增加 patch-025（CPU_PREP 的 dma_resv
+  usage 语义修复）；已实机验证并合并、打 tag。
+- patched-26：`scripts/build-patched26-vblank-guard.sh` 增加 patch-026（未活动 CRTC vblank 守卫）；
+  已实机验证并合并、打 tag。
+- patched-27：`scripts/build-patched27-foreign-dmabuf.sh` 增加 patch-027（foreign DMA-BUF 生命周期
+  修复）；已实机验证并合并、打 tag。
+- p25/26/27 的 deb 均为可复现构建（[release 审阅](../planning/release-review-2026-08-20.md) 修复
+  目录 mtime 后重建），SHA 见 [debs/README.md](../../debs/README.md)。

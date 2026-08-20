@@ -17,3 +17,4 @@
 | GLX / EGL | X11 与无窗口图形环境使用的 OpenGL 上下文接口 | 本机桌面主路径是 GLX；EGL 诊断失败不能单独否定 GLX 结论 |
 | RandR | Xorg 的输出、模式和布局扩展 | 通用布局由 dotconfig 的 xdisplay 维护，本仓库仅提供设备钩子 |
 | TTY / VT | 文本登录终端和虚拟控制台 | 真实 VT 上的 fbterm 用于验证 fbdev，不能用 Xorg 桌面结果替代 |
+| SOURCE_DATE_EPOCH / 可复现构建 | 固定发布时间戳，使同一源码和开关重复构建逐字一致 | 构建器必须在打包前把整树 mtime 归一化到该 epoch（2026-08-20 release 审阅修复）；哈希不一致禁止直接发布 |

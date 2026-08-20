@@ -1,5 +1,17 @@
 # 实施历史
 
+## 2026-08-20 能力普查、三连正确性修复与 release 审阅
+
+- 完成 FH2M 能力普查（静态 + 实机）：Vulkan 1.3.264 / OpenCL 3.0 / GLX 4.3 / VA-API H264+HEVC
+  硬解等确认，落档 [capability-survey.md](capability-survey.md) 与
+  [reverse-engineering-assessment.md](reverse-engineering-assessment.md)。
+- patched-25（patch-025 dma_resv usage 语义）、patched-26（patch-026 未活动 CRTC vblank 守卫）、
+  patched-27（patch-027 foreign DMA-BUF 生命周期）各自独立分支开发，经离线编译、实机验证后
+  fast-forward 合并 main 并打 tag。
+- release 审阅（[release-review-2026-08-20.md](release-review-2026-08-20.md)）发现 **deb 构建
+  不可复现**：dpkg-deb 保留目录实际 mtime，未应用 SOURCE_DATE_EPOCH。修复构建器（构建前归一化
+  整树 mtime），p25/26/27 重建为可复现 SHA 并更新 tag。当前运行驱动为 patched-27。
+
 ## 2026-08-14 patched-21 候选定义与 release 护栏
 
 - 第三轮审计发现已验收 p20 deb 仍携带所有权收敛前的 xdisplay/实验辅助文件，因此保留其运行

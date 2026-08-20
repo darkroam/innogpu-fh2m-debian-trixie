@@ -98,22 +98,25 @@
 | P1 | DVFS/功耗实测 | 待执行 | `pvr_dvfs_device.c` 为源码；`BMC_GPU_FREQ/POWER/VOLTAGE` 符号可读 |
 | P2 | 未完成矩阵 | 待执行 | `hwinfo_g0m.bin` 影响、电源/合盖/拔屏/多屏矩阵、跨硬件验证（见 [status.md](../project/status.md)） |
 
-## 优化候选（未实施）
+## 优化候选
 
-### 已定位、可直接立项（源码层，无需逆向）
+状态：候选 1–3 已于 2026-08-20 落地（patched-25/26/27，均已实机验证并合并）；其余为未实施计划。
 
-1. `inno_gem_object_cpu_prep_ioctl()` 未用 `dma_resv_usage_rw(write)` 转换 READ/WRITE 语义；
-   静态审计已定位（见 [webkit-dmabuf-investigation.md](webkit-dmabuf-investigation.md)）。
-2. `pdp0_crtc_enable_vblank()` 对未活动 CRTC 无条件置位并返回成功，可让错误用户态永久阻塞。
-3. foreign DMA-BUF import 未处理 `dma_buf_attach()` error pointer；GTT export 缺
-   `dma_unmap_page()`。
+### 已落地（源码层）
+
+1. ✅ `dma_resv_usage_rw` 转换修复（[patch-025](../patches/patch-025-dma-resv-usage-rw.md) /
+   patched-25，已实机验证）。
+2. ✅ 未活动 CRTC vblank 守卫（[patch-026](../patches/patch-026-inactive-crtc-vblank-guard.md) /
+   patched-26，已实机验证）。
+3. ✅ foreign DMA-BUF 生命周期（[patch-027](../patches/patch-027-foreign-dmabuf-lifecycle.md) /
+   patched-27，已实机验证）。
+
+### 未实施
+
 4. invisible READ 批量预取：page fault 路径 `innodpu_gem_invisible_vram_vm_fault` 在源码，
    可在调用方按页窗口批量提交 `GDDR2SYS`，不必修改 `innodma.o_shipped` 内部。p23 已把 READ
    `munmap` 成本降约 97%，剩余 0.06–0.07ms/page 的 fault 搬运是主战场。
 5. `inno_apphint.c` 为源码：对照 DDK apphint 文档逐项评估用户态调优。
-
-### 基于谱系对照的新增机会
-
 6. 确认 DDK V119 对应开源 tag 后，移植上游已知 bugfix/性能 patch。
 7. DVFS 调参：频率/电压表符号可读，配合 BMC 实测做功耗-性能权衡。
 8. 用户态调用画像：扩展 `trace-loader.c` 到 GL/VK/OCL 路径，定位下一个热点。
