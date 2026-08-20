@@ -1,8 +1,9 @@
 #!/bin/bash
-# Run the FH2M capability survey probes (Vulkan + OpenCL + VA-API + sysfs snapshot).
-# Read-only: compiles the minimal probes into a temp dir, runs them, and saves the
-# raw output to a timestamped log. No modeset, no config change, no driver
-# modification.
+# Run the FH2M capability survey (Vulkan + OpenCL + VA-API + sysfs snapshot).
+# Read-only: compiles the minimal probes into a temp dir and runs them; when the
+# authoritative tools (vulkaninfo/clinfo/vainfo) are installed they are used as
+# the primary source for each section. Raw output is saved to a timestamped log.
+# No modeset, no config change, no driver modification.
 #
 # Usage:
 #   scripts/run-capability-survey.sh [--out DIR]
@@ -10,9 +11,9 @@
 #   --out DIR   write the log to DIR/capability-survey-<ts>.log (default:
 #               baselines/capability-survey-<ts>.log under the repo root)
 #
-# In a session with /dev/dri access (real desktop or TTY) the probes report the
+# In a session with /dev/dri access (real desktop or TTY) the survey reports the
 # Fantasy II-M device. Without DRM render nodes (e.g. unprivileged container)
-# they degrade gracefully and report the failure, which is itself evidence.
+# tools degrade gracefully and the failure is itself evidence.
 
 set -euo pipefail
 
@@ -55,15 +56,30 @@ echo "power: $(cat /sys/class/drm/card0/device/power/runtime_status 2>/dev/null 
 
 echo | tee -a "$OUT"
 echo "=== Vulkan enumeration ===" | tee -a "$OUT"
-"$BUILD_DIR/probe-vulkan-devices" | tee -a "$OUT" || true
+if command -v vulkaninfo >/dev/null 2>&1; then
+    vulkaninfo --summary 2>&1 | tee -a "$OUT" || true
+else
+    echo "(vulkaninfo not installed; using minimal probe)" | tee -a "$OUT"
+    "$BUILD_DIR/probe-vulkan-devices" | tee -a "$OUT" || true
+fi
 
 echo | tee -a "$OUT"
 echo "=== OpenCL enumeration ===" | tee -a "$OUT"
-"$BUILD_DIR/probe-opencl-devices" | tee -a "$OUT" || true
+if command -v clinfo >/dev/null 2>&1; then
+    clinfo 2>&1 | tee -a "$OUT" || true
+else
+    echo "(clinfo not installed; using minimal probe)" | tee -a "$OUT"
+    "$BUILD_DIR/probe-opencl-devices" | tee -a "$OUT" || true
+fi
 
 echo | tee -a "$OUT"
 echo "=== VA-API (video codec) enumeration ===" | tee -a "$OUT"
-"$BUILD_DIR/probe-vaapi" | tee -a "$OUT" || true
+if command -v vainfo >/dev/null 2>&1; then
+    vainfo 2>&1 | tee -a "$OUT" || true
+else
+    echo "(vainfo not installed; using minimal probe)" | tee -a "$OUT"
+    "$BUILD_DIR/probe-vaapi" | tee -a "$OUT" || true
+fi
 
 echo | tee -a "$OUT"
 echo "raw output saved to: $OUT" | tee -a "$OUT"
