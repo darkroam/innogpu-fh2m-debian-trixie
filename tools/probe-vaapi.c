@@ -71,6 +71,14 @@ static const char *profile_name(int p) {
         case 34: return "AV1Profile0";
         case 35: return "AV1Profile1";
         case 36: return "JPEGBaseline";
+        case 37: return "AV1Profile2";
+        case 38: return "AV1Profile3";
+        case 39: return "H264EnhancedBaseline";
+        case 40: return "H264EnhancedMain";
+        case 41: return "H264EnhancedHigh";
+        case 42: return "HEVCScc";
+        case 43: return "VP9Profile2_10b";
+        case 44: return "VP9Profile3_10b";
         default: return "?";
     }
 }
@@ -147,7 +155,7 @@ int main(void) {
             int *elist = calloc((size_t) cap ? (size_t) cap : 1, sizeof(int));
             nep = cap;
             VAStatus es = entrypoints(disp, plist[i], elist, &nep);
-            printf("  %-22s entrypoints:", profile_name(plist[i]));
+            printf("  %-22s [%d] entrypoints:", profile_name(plist[i]), plist[i]);
             if (es == 0) {
                 for (int e = 0; e < nep; e++) printf(" %s", entry_name(elist[e]));
             } else {
@@ -156,10 +164,32 @@ int main(void) {
             printf("\n");
             free(elist);
         } else {
-            printf("  %s\n", profile_name(plist[i]));
+            printf("  %s [%d]\n", profile_name(plist[i]), plist[i]);
         }
     }
     free(plist);
+
+    /* Probe common profiles directly even if not advertised, to check whether
+     * encode/decode is available for typical codecs. */
+    static const int probe_profiles[] = {
+        1 /*H264Main*/, 2 /*H264High*/, 22 /*HEVCMain*/, 23 /*HEVCMain10*/,
+        25 /*VP9Profile0*/, 34 /*AV1Profile0*/, 36 /*JPEGBaseline*/, 0 /*H264Baseline*/
+    };
+    printf("direct probes (even if not advertised):\n");
+    for (unsigned i = 0; i < sizeof probe_profiles / sizeof *probe_profiles; i++) {
+        int cap = maxep ? maxep(disp) : 32;
+        int *elist = calloc((size_t) cap ? (size_t) cap : 1, sizeof(int));
+        int nep = cap;
+        VAStatus es = entrypoints(disp, probe_profiles[i], elist, &nep);
+        printf("  %-22s [%d]:", profile_name(probe_profiles[i]), probe_profiles[i]);
+        if (es == 0 && nep > 0) {
+            for (int e = 0; e < nep; e++) printf(" %s", entry_name(elist[e]));
+            printf("\n");
+        } else {
+            printf(" (status=%d)\n", es);
+        }
+        free(elist);
+    }
     term(disp);
     close(fd);
     return 0;
