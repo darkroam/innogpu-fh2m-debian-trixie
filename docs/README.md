@@ -15,7 +15,8 @@
 
 按需查阅：[依赖与外部文件](project/dependencies.md)、[显示接入使用](user/display-guide.md)、
 [实施历史](planning/history.md)、[逆向工程与能力挖掘评估](planning/reverse-engineering-assessment.md)、
-[FH2M 能力普查记录](planning/capability-survey.md) 和 [release 审阅记录](planning/release-review-2026-08-20.md)。
+[FH2M 能力普查记录](planning/capability-survey.md)、[release 审阅记录](planning/release-review-2026-08-20.md)
+和 [DDK V119 对照表](planning/ddk-v119-mapping.md)。
 
 代码入口索引：[`scripts/README.md`](../scripts/README.md) 记录稳定脚本、生命周期和风险；
 [`tools/README.md`](../tools/README.md) 记录构建期变换与诊断探针；

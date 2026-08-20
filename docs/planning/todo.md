@@ -61,7 +61,9 @@ Picom patch、配置和安装流程已按 `picom-integration.md` 完成吸纳。
 - [x] 能力面普查（运行时部分）：Vulkan 1.3.264 / OpenCL 3.0 / GLX 4.3 / VA-API H264+HEVC 硬解已实机
   确认（vainfo/vulkaninfo/clinfo/drm_info 交叉验证），结果见 [capability-survey.md](capability-survey.md)。
 - [ ] 剩余运行时项：DVFS/功耗实测、CORE_ID/BVNC 直接读取、私有 libinno_codec.so 编码接口验证。
-- [ ] 建立 DDK V119 ↔ 开源 `pvrsrvkm`/Mesa 对照表，产出 `innosrvkm.o_shipped` 语义还原文档。
+- [x] 建立 DDK V119 ↔ 开源参照对照表：[ddk-v119-mapping.md](ddk-v119-mapping.md)。
+  （注：2019 开源 DDK 与 Fuchsia KM 当前不可得，对照基于主线 drm/imagination + Mesa pvr；
+  组件映射、UAPI/特性/用户态对比已落档，同谱系源码获取后可按节升级逐函数对照。）
 - [x] 落地内核接口修复（一）：`dma_resv_usage_rw` 转换修复（patch-025 / patched-25）已实机验证
   通过（Driver/Firmware OK、桌面 HWGL、PDP READ/WRITE 回归）。
 - [x] 落地内核接口修复（二）：未活动 CRTC vblank 守卫（patch-026 / patched-26）已实机验证

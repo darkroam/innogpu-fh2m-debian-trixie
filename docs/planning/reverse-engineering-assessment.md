@@ -140,7 +140,9 @@
 
 ### 中期（谱系重构）
 
-3. 建立 DDK V119 ↔ 开源 `pvrsrvkm`/Mesa 的逐文件对照表，产出 `innosrvkm.o_shipped` 语义还原文档。
+3. ✅ 建立 DDK V119 ↔ 开源参照对照表（[ddk-v119-mapping.md](ddk-v119-mapping.md)）：组件映射、
+   UAPI/特性/用户态对比已落档；2019 开源 DDK 与 Fuchsia KM 当前不可得，同谱系源码获取后
+   可按节升级逐函数对照。
 4. 评估 invisible READ 批量预取候选（优化候选 4）。
 
 ### 远期（定向 RE）
