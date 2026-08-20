@@ -57,6 +57,11 @@ for c in /sys/class/drm/card0-*/status; do
 done
 echo "gpu-info: $(cat /sys/class/drm/card0/device/gpu-info 2>/dev/null || echo n/a)" | tee -a "$OUT"
 echo "power: $(cat /sys/class/drm/card0/device/power/runtime_status 2>/dev/null || echo n/a)" | tee -a "$OUT"
+if command -v drm_info >/dev/null 2>&1; then
+    echo | tee -a "$OUT"
+    echo "=== drm_info (KMS topology) ===" | tee -a "$OUT"
+    drm_info 2>&1 | tee -a "$OUT" || true
+fi
 
 if [[ "$VAAPI_ONLY" -eq 1 ]]; then
     echo "=== VA-API only mode ===" | tee -a "$OUT"
