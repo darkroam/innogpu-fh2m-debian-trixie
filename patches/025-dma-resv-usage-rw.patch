@@ -1,0 +1,34 @@
+diff -ruN a/innosrvkm/include/innodpu_compatibility.h b/innosrvkm/include/innodpu_compatibility.h
+--- a/innosrvkm/include/innodpu_compatibility.h	2026-08-20 14:46:05.457118167 +0800
++++ b/innosrvkm/include/innodpu_compatibility.h	2026-08-20 14:46:05.469118276 +0800
+@@ -125,6 +125,11 @@
+ #define dma_resv_get_excl_rcu  reservation_object_get_excl_rcu
+ #define dma_resv_get_fences_rcu reservation_object_get_fences_rcu
+ #endif
++#if (DRM_VERSION >= KERNEL_VERSION(5, 19, 0))
++#define innodpu_dma_resv_usage_rw(write) dma_resv_usage_rw(write)
++#else
++#define innodpu_dma_resv_usage_rw(write) (write)
++#endif
+ 
+ #if (DRM_VERSION < KERNEL_VERSION(4, 20, 0))
+ #define vmf_insert_pfn vm_insert_pfn
+diff -ruN a/innosrvkm/innodpu_drm_gem.c b/innosrvkm/innodpu_drm_gem.c
+--- a/innosrvkm/innodpu_drm_gem.c	2026-08-20 14:46:05.461118204 +0800
++++ b/innosrvkm/innodpu_drm_gem.c	2026-08-20 14:46:05.477118349 +0800
+@@ -2599,13 +2599,13 @@
+ 	if (wait) {
+ 		long lerr;
+ 
+-		lerr = dma_resv_wait_timeout_rcu(innodpu_obj->resv, write, true, 30 * HZ);
++		lerr = dma_resv_wait_timeout_rcu(innodpu_obj->resv, innodpu_dma_resv_usage_rw(write), true, 30 * HZ);
+ 		if (!lerr)
+ 			err = -EBUSY;
+ 		else if (lerr < 0)
+ 			err = lerr;
+ 	} else {
+-		if (!dma_resv_test_signaled_rcu(innodpu_obj->resv, write))
++		if (!dma_resv_test_signaled_rcu(innodpu_obj->resv, innodpu_dma_resv_usage_rw(write)))
+ 			err = -EBUSY;
+ 	}
+ 	if (!err)

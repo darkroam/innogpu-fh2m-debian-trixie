@@ -123,6 +123,9 @@ done
     if [[ "$APPLY_INVISIBLE_READ_NO_WRITEBACK" == "1" ]]; then
         patch -p1 < "$ROOT/patches/023-invisible-read-no-writeback.patch"
     fi
+    if [[ "$APPLY_DMA_RESV_USAGE_FIX" == "1" ]]; then
+        patch -p1 < "$ROOT/patches/025-dma-resv-usage-rw.patch"
+    fi
     find . \( -name '*.orig' -o -name '*.rej' \) -delete
 )
 
