@@ -14,6 +14,7 @@
 | `build-patched24-kernel-612101.sh` | 内核兼容发布包 | 在 p23 补丁集合上增加 `6.12.101+` 的 `pci_resize_resource()` 兼容修复；只构建，不安装、不热切换 |
 | `build-patched25-dma-resv-fix.sh` | 离线正确性候选 | 在 p24 补丁集合上增加 patch-025 dma_resv usage 语义修复；只构建，不安装、不热切换 |
 | `build-patched26-vblank-guard.sh` | 离线正确性候选 | 在 p25 补丁集合上增加 patch-026 未活动 CRTC vblank 守卫；只构建，不安装、不热切换 |
+| `build-patched27-foreign-dmabuf.sh` | 离线正确性候选 | 在 p26 补丁集合上增加 patch-027 foreign DMA-BUF 生命周期修复；只构建，不安装、不热切换 |
 | `check-deb-dkms-build.sh` | 离线编译检查 | 将指定候选 deb 解包到 `/tmp`，针对指定内核 headers 编译 `innogpu.ko` 并校验 vermagic；不注册或安装 DKMS |
 | `build-patched17-deepin-local-display.sh` | 停用护栏 | 明确拒绝把 patched-17 作为后续构建父版本 |
 | `build-patched18-deepin-local-display.sh` | 停用护栏 | 明确拒绝重建历史混合载荷 patched-18 |

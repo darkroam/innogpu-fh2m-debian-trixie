@@ -20,6 +20,7 @@ APPLY_PVR_INIT_DIAGNOSTIC=${APPLY_PVR_INIT_DIAGNOSTIC:-0}
 APPLY_INVISIBLE_READ_NO_WRITEBACK=${APPLY_INVISIBLE_READ_NO_WRITEBACK:-0}
 APPLY_DMA_RESV_USAGE_FIX=${APPLY_DMA_RESV_USAGE_FIX:-0}
 APPLY_INACTIVE_CRTC_VBLANK_GUARD=${APPLY_INACTIVE_CRTC_VBLANK_GUARD:-0}
+APPLY_FOREIGN_DMABUF_LIFECYCLE_FIX=${APPLY_FOREIGN_DMABUF_LIFECYCLE_FIX:-0}
 
 if [[ ! "$PATCH_VERSION" =~ ^[0-9]+$ ]] || (( PATCH_VERSION <= 20 )); then
     echo "ERROR: set PATCH_VERSION to a new version greater than 20" >&2
@@ -130,6 +131,9 @@ done
     fi
     if [[ "$APPLY_INACTIVE_CRTC_VBLANK_GUARD" == "1" ]]; then
         patch -p1 < "$ROOT/patches/026-inactive-crtc-vblank-guard.patch"
+    fi
+    if [[ "$APPLY_FOREIGN_DMABUF_LIFECYCLE_FIX" == "1" ]]; then
+        patch -p1 < "$ROOT/patches/027-foreign-dmabuf-lifecycle.patch"
     fi
     find . \( -name '*.orig' -o -name '*.rej' \) -delete
 )

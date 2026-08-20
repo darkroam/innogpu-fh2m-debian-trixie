@@ -1,0 +1,87 @@
+diff -ruN a/innosrvkm/innodpu_drm_gem.c b/innosrvkm/innodpu_drm_gem.c
+--- a/innosrvkm/innodpu_drm_gem.c	2026-08-20 15:51:04.787478224 +0800
++++ b/innosrvkm/innodpu_drm_gem.c	2026-08-20 15:51:22.683464857 +0800
+@@ -899,6 +899,26 @@
+ static void innodpu_gem_prime_unmap_dma_buf(struct dma_buf_attachment *attach,
+ 	struct sg_table *sgt, enum dma_data_direction dir)
+ {
++	struct drm_gem_object *gem_obj = attach->dmabuf->priv;
++	innodpu_gem_object *innodpu_obj = to_innodpu_obj(gem_obj);
++	struct scatterlist *sg;
++	dma_addr_t raw;
++	int i;
++
++	/* Only the GTT branch of map_dma_buf created per-page DMA mappings
++	 * (dma_map_page); reverse them here. The "inno" attach path stored a
++	 * GTT-converted address, so recover the raw DMA address first. */
++	if (innodpu_obj && innodpu_obj->class == GTT && sgt->sgl) {
++		for_each_sg(sgt->sgl, sg, sgt->orig_nents, i) {
++			if (!sg_dma_address(sg))
++				continue;
++			if (attach->dev->driver && strstr(attach->dev->driver->name, "inno"))
++				raw = fh2m_gtt_paddr_to_cpu_paddr(attach->dev, sg_dma_address(sg));
++			else
++				raw = sg_dma_address(sg);
++			dma_unmap_page(attach->dev, raw, sg->length, dir);
++		}
++	}
+ 	fh2m_os_sg_free_table(sgt);
+ 	kfree(sgt);
+ }
+@@ -1169,21 +1189,24 @@
+ 
+ struct drm_gem_object *innodpu_gem_prime_import(struct drm_device *drm_dev, struct dma_buf *dma_buf)
+ {
+-	struct drm_gem_object *obj = dma_buf->priv;
+ 	struct innodpu_drm_private *dev_priv = innogpu_drm_to_display_private(drm_dev);
+ 	innodpu_gem_object *innodpu_obj = NULL;
+ 	struct dma_buf_attachment *attach = NULL;
+ 	struct drm_gem_object *gem_obj = NULL;
+ 
+-	if (obj->dev == drm_dev) {
+-		BUG_ON(dma_buf->ops != &s_innodpu_gem_prime_dmabuf_ops);
+-
+-		/*
+-		 * The dmabuf is one of ours, so return the associated
+-		 * PDP GEM object, rather than create a new one.
+-		 */
+-		drm_gem_object_get(obj);
+-		return obj;
++	/* dma_buf->priv is only a drm_gem_object for buffers exported by this
++	 * driver; check ops first to avoid type confusion on foreign buffers. */
++	if (dma_buf->ops == &s_innodpu_gem_prime_dmabuf_ops) {
++		struct drm_gem_object *obj = dma_buf->priv;
++
++		if (obj->dev == drm_dev) {
++			/*
++			 * The dmabuf is one of ours, so return the associated
++			 * PDP GEM object, rather than create a new one.
++			 */
++			drm_gem_object_get(obj);
++			return obj;
++		}
+ 	}
+ 
+ 	innodpu_obj = innodpu_gem_private_object_init(drm_dev, dma_buf->size, dma_buf->resv);
+@@ -1199,6 +1222,12 @@
+ 	innodpu_obj->is_duplicate = true;
+ 
+ 	attach = dma_buf_attach(dma_buf, drm_dev->dev);
++	if (IS_ERR(attach)) {
++		pr_err("[%s:%d] dma_buf_attach failed: %ld\n", __func__, __LINE__, PTR_ERR(attach));
++		drm_gem_object_release(gem_obj);
++		kfree(innodpu_obj);
++		return NULL;
++	}
+ 	get_dma_buf(dma_buf);
+ 
+ #if (DRM_VERSION >= KERNEL_VERSION(5, 2, 0))
+@@ -1207,7 +1236,7 @@
+         }
+ #endif
+         if (!gem_obj->name) {
+-                gem_obj->name = idr_alloc(&drm_dev->object_name_idr, obj, 1, 0, fh2m_hal_get_inno_gfp_kernel());
++                gem_obj->name = idr_alloc(&drm_dev->object_name_idr, gem_obj, 1, 0, fh2m_hal_get_inno_gfp_kernel());
+         }
+ 
+ 

@@ -21,6 +21,7 @@
 | 023 | [invisible-read-no-writeback](patch-023-invisible-read-no-writeback.md) | `APPLY_INVISIBLE_READ_NO_WRITEBACK=1` | patched-23 已安装、重启并完成驱动/桌面/最小探针验证；Clash 启动态 A/B 已完成 |
 | 025 | [dma-resv-usage-rw](patch-025-dma-resv-usage-rw.md) | `APPLY_DMA_RESV_USAGE_FIX=1` | patched-25 已实机验证：Driver/Firmware OK、桌面 HWGL、PDP READ/WRITE 回归通过 |
 | 026 | [inactive-crtc-vblank-guard](patch-026-inactive-crtc-vblank-guard.md) | `APPLY_INACTIVE_CRTC_VBLANK_GUARD=1` | patched-26 已实机验证：安装/HWGL 通过，CRTC 1 vblank 正常、CRTC 0/2 立即 EINVAL |
+| 027 | [foreign-dmabuf-lifecycle](patch-027-foreign-dmabuf-lifecycle.md) | `APPLY_FOREIGN_DMABUF_LIFECYCLE_FIX=1` | 补丁已编写；候选包构建验证中，未安装 |
 
 patched-24 不增加新的设备行为补丁；它沿用 patched-23 的补丁集合，并把 patch-001 的
 `6.12.101+` PCI API 兼容修复打包进去，供新内核 headers 的 DKMS 自动构建使用。
