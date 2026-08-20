@@ -34,51 +34,50 @@ typedef VAStatus (*vaQueryConfigProfiles_t)(VADisplay, int *, int *);
 typedef VAStatus (*vaQueryConfigEntrypoints_t)(VADisplay, int, int *, int *);
 
 static const char *profile_name(int p) {
+    /* Values per the authoritative libva VAProfile enum (va/va.h). */
     switch (p) {
-        case 0: return "H264Baseline";
-        case 1: return "H264Main";
-        case 2: return "H264High";
-        case 3: return "H264ConstrainedBaseline";
-        case 4: return "MPEG2Simple";
-        case 5: return "MPEG2Main";
-        case 6: return "H263Baseline";
-        case 8: return "MPEG4Simple";
-        case 9: return "MPEG4AdvancedSimple";
-        case 10: return "MPEG4Main";
-        case 11: return "H264StereoHigh";
-        case 12: return "H264Extended";
-        case 13: return "H264MultiviewHigh";
-        case 14: return "VC1Simple";
-        case 15: return "VC1Main";
-        case 16: return "VC1Advanced";
-        case 17: return "H264High10";
-        case 18: return "H264High422";
-        case 19: return "H264High444Predictive";
-        case 20: return "VP8Version0_3";
-        case 21: return "VP8Version0_3Hybrid";
-        case 22: return "HEVCMain";
-        case 23: return "HEVCMain10";
-        case 24: return "HEVCMainStillPicture";
-        case 25: return "VP9Profile0";
-        case 26: return "VP9Profile1";
-        case 27: return "VP9Profile2";
-        case 28: return "VP9Profile3";
-        case 29: return "HEVCMain12";
-        case 30: return "HEVCMain422_10";
-        case 31: return "HEVCMain422_12";
-        case 32: return "HEVCMain444_10";
-        case 33: return "HEVCMain444_12";
-        case 34: return "AV1Profile0";
-        case 35: return "AV1Profile1";
-        case 36: return "JPEGBaseline";
-        case 37: return "AV1Profile2";
-        case 38: return "AV1Profile3";
-        case 39: return "H264EnhancedBaseline";
-        case 40: return "H264EnhancedMain";
-        case 41: return "H264EnhancedHigh";
-        case 42: return "HEVCScc";
-        case 43: return "VP9Profile2_10b";
-        case 44: return "VP9Profile3_10b";
+        case -1: return "None(VideoProc)";
+        case 0: return "MPEG2Simple";
+        case 1: return "MPEG2Main";
+        case 2: return "MPEG4Simple";
+        case 3: return "MPEG4AdvancedSimple";
+        case 4: return "MPEG4Main";
+        case 5: return "H264Baseline(deprecated)";
+        case 6: return "H264Main";
+        case 7: return "H264High";
+        case 8: return "VC1Simple";
+        case 9: return "VC1Main";
+        case 10: return "VC1Advanced";
+        case 11: return "H263Baseline";
+        case 12: return "JPEGBaseline";
+        case 13: return "H264ConstrainedBaseline";
+        case 14: return "VP8Version0_3";
+        case 15: return "H264MultiviewHigh";
+        case 16: return "H264StereoHigh";
+        case 17: return "HEVCMain";
+        case 18: return "HEVCMain10";
+        case 19: return "VP9Profile0";
+        case 20: return "VP9Profile1";
+        case 21: return "VP9Profile2";
+        case 22: return "VP9Profile3";
+        case 23: return "HEVCMain12";
+        case 24: return "HEVCMain422_10";
+        case 25: return "HEVCMain422_12";
+        case 26: return "HEVCMain444";
+        case 27: return "HEVCMain444_10";
+        case 28: return "HEVCMain444_12";
+        case 29: return "HEVCSccMain";
+        case 30: return "HEVCSccMain10";
+        case 31: return "HEVCSccMain444";
+        case 32: return "AV1Profile0";
+        case 33: return "AV1Profile1";
+        case 34: return "HEVCSccMain444_10";
+        case 35: return "Protected";
+        case 36: return "H264High10";
+        case 37: return "VVCMain10";
+        case 38: return "VVCMultilayerMain10";
+        case 39: return "AV1Profile2";
+        case 40: return "H264High422";
         default: return "?";
     }
 }
@@ -172,8 +171,9 @@ int main(void) {
     /* Probe common profiles directly even if not advertised, to check whether
      * encode/decode is available for typical codecs. */
     static const int probe_profiles[] = {
-        1 /*H264Main*/, 2 /*H264High*/, 22 /*HEVCMain*/, 23 /*HEVCMain10*/,
-        25 /*VP9Profile0*/, 34 /*AV1Profile0*/, 36 /*JPEGBaseline*/, 0 /*H264Baseline*/
+        6 /*H264Main*/, 7 /*H264High*/, 13 /*H264ConstrainedBaseline*/,
+        17 /*HEVCMain*/, 18 /*HEVCMain10*/, 19 /*VP9Profile0*/,
+        32 /*AV1Profile0*/, 12 /*JPEGBaseline*/
     };
     printf("direct probes (even if not advertised):\n");
     for (unsigned i = 0; i < sizeof probe_profiles / sizeof *probe_profiles; i++) {
