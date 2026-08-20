@@ -119,44 +119,63 @@
 结论：**Vulkan ICD 本身有效且与标准 loader 兼容，失败仅因容器无 DRM render 节点**。真实设备上
 Vulkan 应可枚举 Fantasy II-M；需在真实会话用 `scripts/run-capability-survey.sh` 确认（待办）。
 
-## 运行时结果（2026-08-20 真实会话，`baselines/capability-survey-20260820-125930.log`）
+## 运行时结果（2026-08-20 真实会话，多份 baselines/capability-survey-*.log，最新 135901）
 
-### GLX（用户 `glxinfo -B`）
+### GLX（用户 glxinfo -B）
 
 - Renderer：Innosilicon / Fantasy II-M；direct rendering Yes；Accelerated yes
 - **OpenGL 4.3 core**、compat 3.0、GLES 3.2、GLES1 1.1（Mesa 派生栈版本 23.1.3）
 - Video memory：**1996MB**（与 gpu-info 2 GiB 一致，减去保留部分）
 
-### Vulkan（`vulkaninfo --summary`）
+### Vulkan（vulkaninfo --summary，多次运行一致）
 
 - **GPU0 = Fantasy II-M**：apiVersion 1.3.264，vendorID 0x1ec8，deviceID 0x35020023，
   **DISCRETE_GPU**，conformance **1.3.7.0**
-- driverID = `DRIVER_ID_IMAGINATION_PROPRIETARY`；driverName = **"InnoGPU B-Series Vulkan Driver"**
-  （确认 B 系列，与 BVNC B=35 一致）；driverInfo = `23.3@88877759`
-- deviceUUID 前段为 ASCII 编码的 BNC（`35 ... 1632 23`），与编译配置互相印证
+- driverID = DRIVER_ID_IMAGINATION_PROPRIETARY；driverName = **"InnoGPU B-Series Vulkan Driver"**
+  （确认 B 系列，与 BVNC B=35 一致）；driverInfo = 23.3@88877759
+- deviceUUID 前段为 ASCII 编码的 BNC（35 ... 1632 23），与编译配置互相印证
 - GPU1 = llvmpipe（CPU 回退，正常存在）
 - 容器诊断结论验证：**ICD 有效，实机开箱即可枚举**
 
-### OpenCL（`clinfo`）
+### OpenCL（clinfo，多次运行一致）
 
 - 平台：**InnoGPU / Innosilicon / OpenCL 3.0 / EMBEDDED_PROFILE**
-- 设备：**Max compute units 2**（与 G0M_SOC 1 SPU/2 clusters 一致）、**Max clock 1349 MHz**
+- 设备：**Fantasy II-M**、**Max compute units 2**（与 G0M_SOC 1 SPU/2 clusters 一致）、
+  **Max clock 1349 MHz**
 - OpenCL C 3.0 全特性：device_enqueue、pipes、subgroups、generic address space、int64、
   integer dot product 4x8bit（2.0 特性）；**fp16 硬件支持、无 double**（fp64 n/a）
 - 扩展：cl_khr_il_program（SPIR-V）、cl_khr_command_buffer、dma-buf 导入（khr+arm）、subgroup 全套
 - **conformance：v2021-10-04-00 通过**；Driver Version 23.3@88877759（与 Vulkan 同 DDK）
 
-### VA-API（探针，待复查）
+### VA-API（vainfo 权威 + 最小探针交叉验证）
 
-- 驱动加载成功：vendor "INNO-silicon Driver v1.0.0"（inno libva backend 1:1:0），libva 1.22
-- 首次 `vaQueryConfigProfiles` 返回 status=18（UNSUPPORTED_PROFILE）：驱动不支持"先查数量"调用
-  模式；探针已修复为固定缓冲直接填充重试，**待重跑确认 profile/entrypoint 列表**
+- 驱动：/usr/lib/x86_64-linux-gnu/dri/innogpu_drv_video.so，INNO-silicon Driver v1.0.0，libva 1.22
+- **硬解**：H264Main / H264High / H264ConstrainedBaseline / HEVCMain / HEVCMain10 全部
+  为 VAEntrypointVLD；另附 VAEntrypointStats（统计）
+- **后处理**：VAProfileNone 提供 VideoProc + Stats
+- **编码**：无任何 EncSlice 或 EncPicture entrypoint——**VA-API 只暴露解码**；编码符号
+  （InnoVaEncodeAvc、Wave627/677 Encoder）存在于私有 libinno_codec.so，实机可用性未验证
+  （可能走私有接口而非 VA-API）
+- 注：最小探针首次 query 返回 status=18（驱动不支持"先查数量"模式），已修复并交叉验证一致；
+  entrypoint 编号按权威 libva 枚举映射（12=Stats）
+
+### KMS / DRM（drm_info）
+
+- 驱动：innogpu（Innosilicon Technologies Gpu Driver）**version 2.19.88877759**（构建号与
+  Vulkan/OpenCL 的 23.3@88877759 一致）
+- 能力：**DRM_CAP_PRIME=3**（导入+导出）、ADDFB2_MODIFIERS=1、ATOMIC、UNIVERSAL_PLANES、
+  WRITEBACK_CONNECTORS、VBLANK_HIGH_CRTC；**SYNCOBJ=0 / SYNCOBJ_TIMELINE=0**（无显式同步对象，
+  关联 [webkit-dmabuf 调查](webkit-dmabuf-investigation.md) 的隐式同步路径）
+- 拓扑：3 个 CRTC、8 个 plane；connector 0=eDP（disconnected）、1=HDMI-A（disconnected）、
+  2=HDMI-A（connected，600x330mm，preferred 1920x1080@60，最高 1080p75）
+- framebuffer 上限 16384x16384；cursor 64x64
 
 ## 运行时待办
 
-- [ ] 重跑 VA-API 段：`scripts/run-capability-survey.sh --vaapi-only`（探针修复后）
-- [ ] DVFS/功耗实测：`/sys/class/drm/card0/device/` 下电源管理节点与 BMC 符号
-- [ ] 运行时读取 CORE_ID/BVNC 核对编译配置（1 SPU / 2 cluster）；deviceUUID 已间接印证
+- [ ] DVFS/功耗实测：/sys/class/drm/card0/device/ 下电源管理节点与 BMC 符号（部分 sysfs 已抓取：
+      power=runtime active）
+- [ ] 运行时读取 CORE_ID/BVNC 直接核对编译配置（deviceUUID 已间接印证 35/1632/23）
+- [ ] 私有 libinno_codec.so 编码接口的实机验证（非 VA-API 路径，需独立探针）
 
 ## 证据保留
 

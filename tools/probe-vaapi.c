@@ -82,12 +82,21 @@ static const char *profile_name(int p) {
     }
 }
 static const char *entry_name(int e) {
+    /* Values per the authoritative libva VAEntrypoint enum (va/va.h). */
     switch (e) {
         case 1: return "VLD(dec)";
-        case 7: return "EncSlice";
-        case 8: return "EncPicture";
+        case 2: return "IZZ";
+        case 3: return "IDCT";
+        case 4: return "MoComp";
+        case 5: return "Deblocking";
+        case 6: return "EncSlice";
+        case 7: return "EncPicture";
+        case 8: return "EncSliceLP";
         case 10: return "VideoProc";
-        case 12: return "ProtectedContent";
+        case 11: return "FEI";
+        case 12: return "Stats";
+        case 13: return "ProtectedTEEComm";
+        case 14: return "ProtectedContent";
         default: return "?";
     }
 }

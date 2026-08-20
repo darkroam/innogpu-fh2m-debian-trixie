@@ -56,8 +56,9 @@ Picom patch、配置和安装流程已按 `picom-integration.md` 完成吸纳。
 
 - [x] 能力面普查（静态部分）：RGX 特性表 dump（90 宏）、BVNC 35.V.1632.23、G0M_SOC 变体确认、
   Vulkan 128 唯一扩展/OpenCL 3.0/VA-API codec/IFBC 静态证据，已落档 [capability-survey.md](capability-survey.md)。
-- [ ] 能力面普查（运行时部分）：真实会话运行 scripts/run-capability-survey.sh，确认 Fantasy II-M
-  Vulkan/OpenCL 实机枚举、视频编解码、DVFS/功耗与 CORE_ID BVNC 核对（清单见 capability-survey.md）。
+- [x] 能力面普查（运行时部分）：Vulkan 1.3.264 / OpenCL 3.0 / GLX 4.3 / VA-API H264+HEVC 硬解已实机
+  确认（vainfo/vulkaninfo/clinfo/drm_info 交叉验证），结果见 [capability-survey.md](capability-survey.md)。
+- [ ] 剩余运行时项：DVFS/功耗实测、CORE_ID/BVNC 直接读取、私有 libinno_codec.so 编码接口验证。
 - [ ] 建立 DDK V119 ↔ 开源 `pvrsrvkm`/Mesa 对照表，产出 `innosrvkm.o_shipped` 语义还原文档。
 - [ ] 落地内核接口修复：`dma_resv_usage_rw` 转换、未活动 CRTC vblank 守卫、foreign DMA-BUF 生命周期，
   各自独立补丁。
