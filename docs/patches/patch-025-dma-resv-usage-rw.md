@@ -43,12 +43,17 @@
 
 ## 构建开关
 
-`APPLY_DMA_RESV_USAGE_FIX=1`（建议默认启用；候选包为 patched-25 或后续版本）。
+`APPLY_DMA_RESV_USAGE_FIX=1`；候选包为 `3.3.3.42-patched-25`，构建入口
+`scripts/build-patched25-dma-resv-fix.sh`（固定 SOURCE_DATE_EPOCH=1787184000）。
 
 ## 验证与回退
 
-- 离线验证：在 Deepin 202504 原包 DKMS 源码上叠加本补丁，对 `6.12.101+deb13-amd64`
-  headers 编译 `innogpu.ko` 成功且 vermagic 匹配；不安装、不热切换。
+- 离线验证（已完成）：`patches/025-dma-resv-usage-rw.patch` 在完整 p24 补丁集上干净应用，
+  对 `6.12.101+deb13-amd64` 编译 `innogpu.ko` 成功且 vermagic 匹配；不安装、不热切换。
+- 候选包（已构建）：`debs/innogpu-fh2m-trixie_3.3.3.42-patched-25.deb`，
+  SHA-256 `955950dd688ea50e51a0890389d1abe0054aba666174137e2ab269845ac8723f`；
+  `check-release-package.sh` 与 `check-deb-dkms-build.sh` 均通过（warnings=4421 为 Deepin
+  源码既有警告，与补丁无关）。
 - 实机验证门槛（由操作者在真实会话执行）：
   1. 安装候选包并重启，确认 DKMS、Driver/Firmware、DRM/fbdev 正常；
   2. 最小 PDP 探针 READ/WRITE CPU_PREP 行为回归（`tools/probe-pdp-invisible-read.c`）；

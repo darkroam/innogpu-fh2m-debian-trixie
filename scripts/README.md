@@ -12,6 +12,7 @@
 | `build-patched22-local-lid.sh` | 当前设备验证包 | 以 patch-009 修正本机内置 eDP connector；脚本只构建，安装和重启由操作者显式执行 |
 | `build-patched23-invisible-read-fix.sh` | 离线修复候选 | 在 p22 补丁集合上增加 invisible READ mapping 释放不回写修复；只构建，不安装、不热切换 |
 | `build-patched24-kernel-612101.sh` | 内核兼容发布包 | 在 p23 补丁集合上增加 `6.12.101+` 的 `pci_resize_resource()` 兼容修复；只构建，不安装、不热切换 |
+| `build-patched25-dma-resv-fix.sh` | 离线正确性候选 | 在 p24 补丁集合上增加 patch-025 dma_resv usage 语义修复；只构建，不安装、不热切换 |
 | `check-deb-dkms-build.sh` | 离线编译检查 | 将指定候选 deb 解包到 `/tmp`，针对指定内核 headers 编译 `innogpu.ko` 并校验 vermagic；不注册或安装 DKMS |
 | `build-patched17-deepin-local-display.sh` | 停用护栏 | 明确拒绝把 patched-17 作为后续构建父版本 |
 | `build-patched18-deepin-local-display.sh` | 停用护栏 | 明确拒绝重建历史混合载荷 patched-18 |
