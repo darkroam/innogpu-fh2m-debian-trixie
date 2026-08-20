@@ -48,3 +48,16 @@ patched-17 回退演练已完成。任一验证失败先进入恢复路径和事
 
 Picom patch、配置和安装流程已按 `picom-integration.md` 完成吸纳。升级上游 Picom 时需要重新
 审查固定基线 patch。
+
+## 逆向工程与能力挖掘
+
+状态：评估已落档于 [reverse-engineering-assessment.md](reverse-engineering-assessment.md)，
+以下实施项均未开始；每项落地前先补设计、验证与回退。
+
+- [ ] 能力面普查：Vulkan/OpenCL ICD 枚举、RGX 特性表 dump、BVNC/核心型号确认、视频/IFBC 能力确认。
+- [ ] 建立 DDK V119 ↔ 开源 `pvrsrvkm`/Mesa 对照表，产出 `innosrvkm.o_shipped` 语义还原文档。
+- [ ] 落地内核接口修复：`dma_resv_usage_rw` 转换、未活动 CRTC vblank 守卫、foreign DMA-BUF 生命周期，
+  各自独立补丁。
+- [ ] invisible READ 批量预取候选调研（调用方批量化，不修改 `innodma.o_shipped` 内部）。
+- [ ] DVFS/功耗实测与调参评估。
+- [ ] 完成 `innogpu.o_shipped`（HAL）与 `innodma.o_shipped`（DMA）符号级分析，评估预编译核心替换路径。

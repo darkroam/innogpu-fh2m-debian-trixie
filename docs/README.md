@@ -13,8 +13,8 @@
 6. [事故与经验](incidents/README.md)：失败证据、根因、排除项和后续门槛。
 7. [用户验证](user/verification.md)：安装或重启后的最小验收流程。
 
-按需查阅：[依赖与外部文件](project/dependencies.md)、[显示接入使用](user/display-guide.md) 和
-[实施历史](planning/history.md)。
+按需查阅：[依赖与外部文件](project/dependencies.md)、[显示接入使用](user/display-guide.md)、
+[实施历史](planning/history.md) 和 [逆向工程与能力挖掘评估](planning/reverse-engineering-assessment.md)。
 
 代码入口索引：[`scripts/README.md`](../scripts/README.md) 记录稳定脚本、生命周期和风险；
 [`tools/README.md`](../tools/README.md) 记录构建期变换与诊断探针；

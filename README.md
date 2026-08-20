@@ -36,6 +36,7 @@ Debian Trixie 上 Innosilicon Fantasy II-M（FH2M）驱动、显示输出、硬�
 | 依赖、外部包和目录结构 | [docs/project/dependencies.md](docs/project/dependencies.md) |
 | 失败过程和根因 | [docs/incidents/README.md](docs/incidents/README.md) |
 | 实施历史和待办 | [docs/planning/history.md](docs/planning/history.md)、[todo.md](docs/planning/todo.md) |
+| 逆向工程与能力挖掘评估 | [docs/planning/reverse-engineering-assessment.md](docs/planning/reverse-engineering-assessment.md) |
 | 脚本使用和风险 | [scripts/README.md](scripts/README.md) |
 
 完整文档索引见 [docs/README.md](docs/README.md)。
