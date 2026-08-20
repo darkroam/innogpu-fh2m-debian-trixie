@@ -20,6 +20,7 @@
 | 009 | [local-internal-edp-connector](patch-009-local-internal-edp-connector.md) | `APPLY_LOCAL_INTERNAL_EDP=1` | patched-22 已安装并重启；connector/桌面烟测通过，电源与合盖矩阵待完成 |
 | 023 | [invisible-read-no-writeback](patch-023-invisible-read-no-writeback.md) | `APPLY_INVISIBLE_READ_NO_WRITEBACK=1` | patched-23 已安装、重启并完成驱动/桌面/最小探针验证；Clash 启动态 A/B 已完成 |
 | 025 | [dma-resv-usage-rw](patch-025-dma-resv-usage-rw.md) | `APPLY_DMA_RESV_USAGE_FIX=1` | patched-25 已实机验证：Driver/Firmware OK、桌面 HWGL、PDP READ/WRITE 回归通过 |
+| 026 | [inactive-crtc-vblank-guard](patch-026-inactive-crtc-vblank-guard.md) | `APPLY_INACTIVE_CRTC_VBLANK_GUARD=1` | 补丁已编写并通过 6.12.101 离线 DKMS 编译；候选包构建中，未安装 |
 
 patched-24 不增加新的设备行为补丁；它沿用 patched-23 的补丁集合，并把 patch-001 的
 `6.12.101+` PCI API 兼容修复打包进去，供新内核 headers 的 DKMS 自动构建使用。
