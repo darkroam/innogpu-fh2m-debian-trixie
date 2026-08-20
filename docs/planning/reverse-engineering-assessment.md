@@ -2,9 +2,9 @@
 
 ## 状态
 
-- 本文件是 FH2M 驱动"逆向重建 / 能力挖掘 / 逻辑优化"的评估与任务计划。除能力普查的静态部分
-  已执行并记录于 [capability-survey.md](capability-survey.md) 外，其余内容均为未实施计划，
-  不描述任何当前已验证行为。
+- 本文件是 FH2M 驱动"逆向重建 / 能力挖掘 / 逻辑优化"的评估与任务计划。能力普查（静态 + 运行时）
+  已执行并记录于 [capability-survey.md](capability-survey.md)；其余内容（谱系重构、优化候选等）
+  均为未实施计划，不描述任何当前已验证行为。
 - 评估基于 Deepin 202504 原包解包树（`third_party/innogpu-fh2m-deepin-202504/root`）的静态勘察，
   以及既有运行证据（[webkit-dmabuf-investigation.md](webkit-dmabuf-investigation.md)、
   [patched-24 验收](../patches/patched-24-kernel-612101.md)）。
@@ -82,18 +82,21 @@
 重写 GL/Vulkan/OpenCL 用户态等于重写半个 Mesa，不做。远期可评估：若内核 ioctl 层收敛到接近
 主线 `pvr` UAPI，接入主线 Mesa `pvr` 驱动的可行性。这是远期选项，不是当前任务。
 
-## 能力挖掘任务（未实施）
+## 能力挖掘任务
 
-| 优先级 | 任务 | 说明 |
-| --- | --- | --- |
-| P0 | Vulkan 能力普查 | 隔离 ICD 环境运行 `vulkaninfo`，枚举 API 版本、扩展、队列族、feature 上界 |
-| P0 | OpenCL 能力普查 | 隔离 ICD 环境运行 `clinfo`，确认设备名、版本、双精度、image 支持 |
-| P0 | RGX 特性表 dump | 读取 `aui16_RGX_FEATURE_*` 表（FBCDC、MMU、META、cluster/TPU/SPU、ECC），产出硬件 IP 配置单 |
-| P1 | BVNC/核心型号确认 | 从 `innosrvkm.o_shipped` 读出 `APPHINT_ID_RGXBVNC`，作为开源谱系对照锚点 |
-| P1 | 视频编解码能力确认 | 查清 `libinno_codec.so` 与 `innogpu_drv_video.so` 接 VA-API/Xv 还是私有接口 |
-| P1 | IFBC 验证 | 确认 `libifbc.so` 帧缓冲压缩是否在扫描路径启用 |
-| P1 | DVFS/功耗实测 | `pvr_dvfs_device.c` 为源码；`BMC_GPU_FREQ/POWER/VOLTAGE` 符号可读，实测频率/功耗/温度曲线 |
-| P2 | 未完成矩阵 | `hwinfo_g0m.bin` 影响、电源/合盖/拔屏/多屏矩阵、跨硬件验证（见 [status.md](../project/status.md)） |
+状态：P0/P1 已执行（2026-08-20 落档于 [capability-survey.md](capability-survey.md)）；剩余项为
+运行时补充，不阻塞评估结论。
+
+| 优先级 | 任务 | 状态 | 说明 |
+| --- | --- | --- | --- |
+| P0 | Vulkan 能力普查 | 已完成 | 实机确认 1.3.264、128 唯一扩展（61 EXT + 64 KHR + 3 厂商）、队列族（vulkaninfo + 最小探针） |
+| P0 | OpenCL 能力普查 | 已完成 | 实机确认 OpenCL 3.0、2 CU、1349 MHz、fp16、conformance 通过（clinfo） |
+| P0 | RGX 特性表 dump | 已完成 | 90 个特性宏含数值，直接来自 `rgxconfig_km_35.V.1632.23.h` |
+| P1 | BVNC/核心型号确认 | 已完成 | BVNC 35.V.1632.23 + G0M_SOC 变体；deviceUUID 运行时印证 |
+| P1 | 视频编解码能力确认 | 已完成 | VA-API 硬解（H264/HEVC）实机确认；编码符号在私有 codec 库，实机未验证 |
+| P1 | IFBC 验证 | 静态确认 | `libifbc.so` 函数存在；扫描路径是否启用未实机验证 |
+| P1 | DVFS/功耗实测 | 待执行 | `pvr_dvfs_device.c` 为源码；`BMC_GPU_FREQ/POWER/VOLTAGE` 符号可读 |
+| P2 | 未完成矩阵 | 待执行 | `hwinfo_g0m.bin` 影响、电源/合盖/拔屏/多屏矩阵、跨硬件验证（见 [status.md](../project/status.md)） |
 
 ## 优化候选（未实施）
 

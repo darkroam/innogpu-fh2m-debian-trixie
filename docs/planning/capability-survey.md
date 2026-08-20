@@ -3,11 +3,12 @@
 ## 状态
 
 - 本记录对应 [reverse-engineering-assessment.md](reverse-engineering-assessment.md) 的"能力挖掘任务"
-  P0/P1 项。**静态/离线部分已执行并记录于本文件；运行时部分（需真实 DRM render 节点）已制成探针，
-  待真实会话执行。**
-- 普查在无特权容器内进行：无 `/dev/dri`、无 CAP、共享宿主 rootfs 与 sysfs。因此运行时 GPU
-  枚举只能验证"库可加载、ICD 有效、缺节点时优雅失败"，不能在此完成 Fantasy II-M 的实机枚举。
-- 原始探针输出保留在 `/tmp/capability-survey-*.log`，不进入 Git；本文件只记录精简结论。
+  P0/P1 项。**静态与运行时两部分均已执行**：静态部分在本容器内完成；运行时部分由真实会话运行
+  `scripts/run-capability-survey.sh` 完成（vulkaninfo/clinfo/vainfo/drm_info 权威工具 + 最小探针
+  交叉验证），结果见"运行时结果"节。
+- 剩余运行时补充项（DVFS/功耗、CORE_ID 直接读取、私有 codec 编码接口）见"运行时待办"。
+- 原始探针输出保留在 `baselines/capability-survey-*.log`（被 .gitignore 忽略），不进入 Git；
+  本文件只记录精简结论。
 
 ## 方法与环境边界
 
@@ -133,7 +134,7 @@ Vulkan 应可枚举 Fantasy II-M；需在真实会话用 `scripts/run-capability
   **DISCRETE_GPU**，conformance **1.3.7.0**
 - driverID = DRIVER_ID_IMAGINATION_PROPRIETARY；driverName = **"InnoGPU B-Series Vulkan Driver"**
   （确认 B 系列，与 BVNC B=35 一致）；driverInfo = 23.3@88877759
-- deviceUUID 前段为 ASCII 编码的 BNC（35 ... 1632 23），与编译配置互相印证
+- deviceUUID 前 13 字节为 ASCII 文本 `"35 4- 1632 23"`（含 BVNC 数字 35/1632/23），与编译配置互相印证
 - GPU1 = llvmpipe（CPU 回退，正常存在）
 - 容器诊断结论验证：**ICD 有效，实机开箱即可枚举**
 
@@ -180,5 +181,5 @@ Vulkan 应可枚举 Fantasy II-M；需在真实会话用 `scripts/run-capability
 ## 证据保留
 
 - 静态证据全部来自仓库内 Deepin 202504 解包树与 sysfs，可复现；
-- 原始探针日志在 `/tmp/capability-survey-*.log`，不入 Git；
+- 原始探针日志在 `baselines/capability-survey-*.log`（gitignore），不入 Git；
 - 本文件的结论不修改任何驱动或用户态载荷。

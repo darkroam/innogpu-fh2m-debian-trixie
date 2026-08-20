@@ -51,8 +51,8 @@ Picom patch、配置和安装流程已按 `picom-integration.md` 完成吸纳。
 
 ## 逆向工程与能力挖掘
 
-状态：评估已落档于 [reverse-engineering-assessment.md](reverse-engineering-assessment.md)，
-以下实施项均未开始；每项落地前先补设计、验证与回退。
+状态：评估与能力普查已落档（[reverse-engineering-assessment.md](reverse-engineering-assessment.md)、
+[capability-survey.md](capability-survey.md)）；以下为未实施或剩余项，每项落地前先补设计、验证与回退。
 
 - [x] 能力面普查（静态部分）：RGX 特性表 dump（90 宏）、BVNC 35.V.1632.23、G0M_SOC 变体确认、
   Vulkan 128 唯一扩展/OpenCL 3.0/VA-API codec/IFBC 静态证据，已落档 [capability-survey.md](capability-survey.md)。
