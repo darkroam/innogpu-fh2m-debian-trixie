@@ -38,11 +38,10 @@
 - 候选包（已构建）：`debs/innogpu-fh2m-trixie_3.3.3.42-patched-26.deb`，
   SHA-256 `51ddd8cbb024c5893f1d3d0cbdc6bc8f50490a8f0e8d4a9510a9bc3f0d92e14c`；
   `check-release-package.sh` 与 `check-deb-dkms-build.sh` 均通过。
-- 实机验证门槛（操作者在真实会话执行）：
-  1. 安装 patched-26 并重启，Driver/Firmware OK、桌面硬件 GL 回归；
-  2. `tools/probe-drm-vblank.c` 逐 CRTC 探测：活动 CRTC（本机为 1）仍能连续 wait 且序号递增；
-     未活动 CRTC 立即返回 `EINVAL`（不再 300ms 超时）；
-  3. 桌面显示、Picom/GLX 行为与 p25 一致。
+- 实机验证（2026-08-20 已通过）：安装 patched-26 并重启后 `PASS_INSTALL_STATUS` 与
+  `PASS_DESKTOP_HWGL` 通过；`tools/probe-drm-vblank.c` 逐 CRTC 探测结果：
+  - CRTC 1（活动）：10/10 成功、序号连续 +1、周期 12.2–17.9ms（60Hz 正常）；
+  - CRTC 0/2（未活动）：全部立即返回 `EINVAL`（0.3–0.5ms，原行为为阻塞/300ms 超时）。
 - 回退：直接回退点 `patched-25`；本补丁不改变 ioctl ABI 或内存布局。
 
 ## 参考
