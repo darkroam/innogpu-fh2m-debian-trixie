@@ -119,15 +119,44 @@
 结论：**Vulkan ICD 本身有效且与标准 loader 兼容，失败仅因容器无 DRM render 节点**。真实设备上
 Vulkan 应可枚举 Fantasy II-M；需在真实会话用 `scripts/run-capability-survey.sh` 确认（待办）。
 
-## 运行时待办（需真实会话 /dev/dri）
+## 运行时结果（2026-08-20 真实会话，`baselines/capability-survey-20260820-125930.log`）
 
-- [ ] 在真实会话运行 `scripts/run-capability-survey.sh`，确认 Vulkan 物理设备
-      `Fantasy II-M`（vendor/device、apiVersion、driverVersion、队列族）与 OpenCL 设备
-      （compute units、全局/本地内存、扩展全量、double_fp）
-- [ ] 用 `vulkaninfo`/GL 工具交叉核对（若安装）
-- [ ] 用 VA-API 探针确认视频解码/编码实机可用（`vainfo` 或最小 va 调用）
+### GLX（用户 `glxinfo -B`）
+
+- Renderer：Innosilicon / Fantasy II-M；direct rendering Yes；Accelerated yes
+- **OpenGL 4.3 core**、compat 3.0、GLES 3.2、GLES1 1.1（Mesa 派生栈版本 23.1.3）
+- Video memory：**1996MB**（与 gpu-info 2 GiB 一致，减去保留部分）
+
+### Vulkan（`vulkaninfo --summary`）
+
+- **GPU0 = Fantasy II-M**：apiVersion 1.3.264，vendorID 0x1ec8，deviceID 0x35020023，
+  **DISCRETE_GPU**，conformance **1.3.7.0**
+- driverID = `DRIVER_ID_IMAGINATION_PROPRIETARY`；driverName = **"InnoGPU B-Series Vulkan Driver"**
+  （确认 B 系列，与 BVNC B=35 一致）；driverInfo = `23.3@88877759`
+- deviceUUID 前段为 ASCII 编码的 BNC（`35 ... 1632 23`），与编译配置互相印证
+- GPU1 = llvmpipe（CPU 回退，正常存在）
+- 容器诊断结论验证：**ICD 有效，实机开箱即可枚举**
+
+### OpenCL（`clinfo`）
+
+- 平台：**InnoGPU / Innosilicon / OpenCL 3.0 / EMBEDDED_PROFILE**
+- 设备：**Max compute units 2**（与 G0M_SOC 1 SPU/2 clusters 一致）、**Max clock 1349 MHz**
+- OpenCL C 3.0 全特性：device_enqueue、pipes、subgroups、generic address space、int64、
+  integer dot product 4x8bit（2.0 特性）；**fp16 硬件支持、无 double**（fp64 n/a）
+- 扩展：cl_khr_il_program（SPIR-V）、cl_khr_command_buffer、dma-buf 导入（khr+arm）、subgroup 全套
+- **conformance：v2021-10-04-00 通过**；Driver Version 23.3@88877759（与 Vulkan 同 DDK）
+
+### VA-API（探针，待复查）
+
+- 驱动加载成功：vendor "INNO-silicon Driver v1.0.0"（inno libva backend 1:1:0），libva 1.22
+- 首次 `vaQueryConfigProfiles` 返回 status=18（UNSUPPORTED_PROFILE）：驱动不支持"先查数量"调用
+  模式；探针已修复为固定缓冲直接填充重试，**待重跑确认 profile/entrypoint 列表**
+
+## 运行时待办
+
+- [ ] 重跑 VA-API 段：`scripts/run-capability-survey.sh --vaapi-only`（探针修复后）
 - [ ] DVFS/功耗实测：`/sys/class/drm/card0/device/` 下电源管理节点与 BMC 符号
-- [ ] 运行时读取 CORE_ID/BVNC 核对编译配置（1 SPU / 2 cluster）
+- [ ] 运行时读取 CORE_ID/BVNC 核对编译配置（1 SPU / 2 cluster）；deviceUUID 已间接印证
 
 ## 证据保留
 

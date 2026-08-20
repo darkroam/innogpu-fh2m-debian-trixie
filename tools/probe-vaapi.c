@@ -123,7 +123,20 @@ int main(void) {
 
     int nprof = 0;
     st = profiles(disp, NULL, &nprof);
-    if (st != 0 || nprof <= 0) { printf("no profiles (status=%d)\n", st); term(disp); close(fd); return 0; }
+    if (st != 0 || nprof <= 0) {
+        /* Some drivers do not support the count-first pattern; retry with a
+         * fixed-size buffer so the profile query still works. */
+        printf("count query returned status=%d, retrying with fixed buffer\n", st);
+        nprof = 64;
+        int *try_list = calloc((size_t) nprof, sizeof(int));
+        st = profiles(disp, try_list, &nprof);
+        if (st != 0 || nprof <= 0) {
+            printf("no profiles (status=%d)\n", st);
+            free(try_list);
+            term(disp); close(fd); return 0;
+        }
+        free(try_list);
+    }
     int *plist = calloc((size_t) nprof, sizeof(int));
     st = profiles(disp, plist, &nprof);
     printf("profiles (%d):\n", nprof);

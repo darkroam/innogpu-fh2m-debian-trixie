@@ -6,10 +6,11 @@
 # No modeset, no config change, no driver modification.
 #
 # Usage:
-#   scripts/run-capability-survey.sh [--out DIR]
+#   scripts/run-capability-survey.sh [--out DIR] [--vaapi-only]
 #
-#   --out DIR   write the log to DIR/capability-survey-<ts>.log (default:
-#               baselines/capability-survey-<ts>.log under the repo root)
+#   --out DIR     write the log to DIR/capability-survey-<ts>.log (default:
+#                 baselines/capability-survey-<ts>.log under the repo root)
+#   --vaapi-only  run only the VA-API section (fast retest after probe changes)
 #
 # In a session with /dev/dri access (real desktop or TTY) the survey reports the
 # Fantasy II-M device. Without DRM render nodes (e.g. unprivileged container)
@@ -21,12 +22,15 @@ ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$ROOT"
 
 OUT_DIR="$ROOT/baselines"
+VAAPI_ONLY=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --out)
             OUT_DIR="$2"; shift 2 ;;
+        --vaapi-only)
+            VAAPI_ONLY=1; shift ;;
         *)
-            echo "usage: $0 [--out DIR]" >&2; exit 2 ;;
+            echo "usage: $0 [--out DIR] [--vaapi-only]" >&2; exit 2 ;;
     esac
 done
 mkdir -p "$OUT_DIR"
@@ -53,6 +57,14 @@ for c in /sys/class/drm/card0-*/status; do
 done
 echo "gpu-info: $(cat /sys/class/drm/card0/device/gpu-info 2>/dev/null || echo n/a)" | tee -a "$OUT"
 echo "power: $(cat /sys/class/drm/card0/device/power/runtime_status 2>/dev/null || echo n/a)" | tee -a "$OUT"
+
+if [[ "$VAAPI_ONLY" -eq 1 ]]; then
+    echo "=== VA-API only mode ===" | tee -a "$OUT"
+    "$BUILD_DIR/probe-vaapi" | tee -a "$OUT" || true
+    echo | tee -a "$OUT"
+    echo "raw output saved to: $OUT" | tee -a "$OUT"
+    exit 0
+fi
 
 echo | tee -a "$OUT"
 echo "=== Vulkan enumeration ===" | tee -a "$OUT"
