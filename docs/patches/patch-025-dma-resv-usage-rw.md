@@ -54,6 +54,10 @@
   SHA-256 `955950dd688ea50e51a0890389d1abe0054aba666174137e2ab269845ac8723f`；
   `check-release-package.sh` 与 `check-deb-dkms-build.sh` 均通过（warnings=4421 为 Deepin
   源码既有警告，与补丁无关）。
+- 实机验证（2026-08-20 已通过）：安装 patched-25 并重启后，Driver/Firmware OK、错误计数 0；
+  桌面硬件 GL 通过（`PASS_DESKTOP_HWGL`，Fantasy II-M / GL 4.3 core）；PDP 探针回归
+  （2048 页）：READ `munmap` system 1.9–2.8ms（无回写，patch-023 行为保留），WRITE
+  `verify=pass pages=2048`（写回保留，`munmap` 128–168ms）。
 - 实机验证门槛（由操作者在真实会话执行）：
   1. 安装候选包并重启，确认 DKMS、Driver/Firmware、DRM/fbdev 正常；
   2. 最小 PDP 探针 READ/WRITE CPU_PREP 行为回归（`tools/probe-pdp-invisible-read.c`）；

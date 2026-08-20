@@ -60,8 +60,9 @@ Picom patch、配置和安装流程已按 `picom-integration.md` 完成吸纳。
   确认（vainfo/vulkaninfo/clinfo/drm_info 交叉验证），结果见 [capability-survey.md](capability-survey.md)。
 - [ ] 剩余运行时项：DVFS/功耗实测、CORE_ID/BVNC 直接读取、私有 libinno_codec.so 编码接口验证。
 - [ ] 建立 DDK V119 ↔ 开源 `pvrsrvkm`/Mesa 对照表，产出 `innosrvkm.o_shipped` 语义还原文档。
-- [ ] 落地内核接口修复：`dma_resv_usage_rw` 转换、未活动 CRTC vblank 守卫、foreign DMA-BUF 生命周期，
-  各自独立补丁。
+- [x] 落地内核接口修复（一）：`dma_resv_usage_rw` 转换修复（patch-025 / patched-25）已实机验证
+  通过（Driver/Firmware OK、桌面 HWGL、PDP READ/WRITE 回归）。
+- [ ] 落地内核接口修复（二）：未活动 CRTC vblank 守卫、foreign DMA-BUF 生命周期，各自独立补丁。
 - [ ] invisible READ 批量预取候选调研（调用方批量化，不修改 `innodma.o_shipped` 内部）。
 - [ ] DVFS/功耗实测与调参评估。
 - [ ] 完成 `innogpu.o_shipped`（HAL）与 `innodma.o_shipped`（DMA）符号级分析，评估预编译核心替换路径。
