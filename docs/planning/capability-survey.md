@@ -64,7 +64,9 @@
 
 - ICD manifest：`/etc/vulkan/icd.d/innoconf.json` → `libVK_INNO.so`，api_version **1.3.264**
 - 导出：`vk_icdNegotiateLoaderICDInterfaceVersion`、`vk_icdGetInstanceProcAddr`、`vk_icdGetPhysicalDeviceProcAddr` 齐备
-- 扩展字符串：**182 个**（约 61 KHR + 118 EXT + 3 其他）
+- 扩展字符串：**128 个唯一扩展**（61 EXT + 64 KHR + 3 厂商：`VK_ARM_rasterization_order_attachment_access`、
+  `VK_IMG_conditional_rendering_comparison_info`、`VK_IMG_format_pvrtc`）。注：此为二进制字符串
+  去重后的下界，权威列表以运行时 `vkEnumerateDeviceExtensionProperties` 为准（待实机）
 - 代表性扩展：`VK_KHR_dynamic_rendering`、`VK_KHR_timeline_semaphore`、`VK_KHR_synchronization2`、
   `VK_KHR_external_memory/fence/semaphore_fd`（dma-buf 互操作）、`VK_KHR_push_descriptor`、
   `VK_KHR_shader_float16_int8`、`VK_KHR_sampler_ycbcr_conversion`、`VK_EXT_descriptor_indexing`、
