@@ -54,7 +54,10 @@ Picom patch、配置和安装流程已按 `picom-integration.md` 完成吸纳。
 状态：评估已落档于 [reverse-engineering-assessment.md](reverse-engineering-assessment.md)，
 以下实施项均未开始；每项落地前先补设计、验证与回退。
 
-- [ ] 能力面普查：Vulkan/OpenCL ICD 枚举、RGX 特性表 dump、BVNC/核心型号确认、视频/IFBC 能力确认。
+- [x] 能力面普查（静态部分）：RGX 特性表 dump（90 宏）、BVNC 35.V.1632.23、G0M_SOC 变体确认、
+  Vulkan 182 扩展/OpenCL 3.0/VA-API codec/IFBC 静态证据，已落档 [capability-survey.md](capability-survey.md)。
+- [ ] 能力面普查（运行时部分）：真实会话运行 scripts/run-capability-survey.sh，确认 Fantasy II-M
+  Vulkan/OpenCL 实机枚举、视频编解码、DVFS/功耗与 CORE_ID BVNC 核对（清单见 capability-survey.md）。
 - [ ] 建立 DDK V119 ↔ 开源 `pvrsrvkm`/Mesa 对照表，产出 `innosrvkm.o_shipped` 语义还原文档。
 - [ ] 落地内核接口修复：`dma_resv_usage_rw` 转换、未活动 CRTC vblank 守卫、foreign DMA-BUF 生命周期，
   各自独立补丁。

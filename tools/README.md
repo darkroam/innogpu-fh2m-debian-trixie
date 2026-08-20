@@ -14,6 +14,8 @@
 | `probe-surfaceless-gles2.c` | 最小 C 探针 | 验证 surfaceless EGL/GLES2 初始化和基本绘制，用于区分 Xorg/DDX 与核心 EGL 路径故障 |
 | `probe-x11-egl-gles2.c` | 最小 C 探针 | 连接测试 X server 并验证 X11 EGL/GLES2 context，用于隔离 DDX/窗口系统路径 |
 | `trace-loader.c` | 诊断 shim | 通过 `LD_PRELOAD` 记录 vendor loader 选择、失败 ioctl，以及 PDP GEM 分配位置和 CPU_PREP/CPU_FINI 的 handle/flags；只用于受控诊断，不得进入发布包 |
+| `probe-vulkan-devices.c` | 最小 C 探针 | dlopen Vulkan loader，枚举实例版本/扩展、物理设备和队列族；不创建设备/队列、不渲染，无需 Vulkan 头文件 |
+| `probe-opencl-devices.c` | 最小 C 探针 | dlopen OpenCL ICD loader，枚举 platform/device 及关键能力（版本、扩展、内存、compute units）；不创建 context/queue，无需 OpenCL 头文件 |
 
 ## 使用约束
 

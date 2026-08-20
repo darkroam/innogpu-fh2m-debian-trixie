@@ -2,7 +2,8 @@
 
 ## 状态
 
-- 本文件是 FH2M 驱动"逆向重建 / 能力挖掘 / 逻辑优化"的评估与任务计划，**全部内容均为未实施计划**，
+- 本文件是 FH2M 驱动"逆向重建 / 能力挖掘 / 逻辑优化"的评估与任务计划。除能力普查的静态部分
+  已执行并记录于 [capability-survey.md](capability-survey.md) 外，其余内容均为未实施计划，
   不描述任何当前已验证行为。
 - 评估基于 Deepin 202504 原包解包树（`third_party/innogpu-fh2m-deepin-202504/root`）的静态勘察，
   以及既有运行证据（[webkit-dmabuf-investigation.md](webkit-dmabuf-investigation.md)、

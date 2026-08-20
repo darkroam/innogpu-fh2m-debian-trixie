@@ -82,6 +82,7 @@ xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项
 - `run-deepin-surfaceless-egl.sh`
 - `verify-install-status.sh`
 
+`run-capability-survey.sh` 编译并运行 Vulkan/OpenCL 最小枚举探针，输出摘要与原始日志（/tmp）；只读，不 modeset、不改配置。设备无 DRM render 节点时（如无特权容器）优雅降级并记录失败本身。
 其中 `check-docs.sh` 检查文档链接、隐私标记、稳定入口登记和固定版本护栏；
 `check-release-package.sh` 只解包读取指定 deb，核对版本、关键载荷、禁止文件和设备接入脚本，
 不会安装包。发布包边界的可重复 fixture 见 `tests/package/run-boundary-tests.sh`。
