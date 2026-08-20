@@ -60,10 +60,11 @@
 - 离线验证（已完成）：patched-27 候选包 `debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb`
   （SHA-256 `2586b072901bdc581f16e12d9ab6c8eb2022fb835b6bcd623991af0b42aa2d33`）已通过包边界与
   `6.12.101+deb13-amd64` 离线 DKMS 编译（vermagic 匹配）；不安装、不热切换。
-- 实机验证门槛（操作者在真实会话执行）：
-  1. 安装 patched-27 并重启，Driver/Firmware OK、桌面硬件 GL 回归；
-  2. 桌面 DRI3/PRIME 自导入回归（glxinfo DRI3 存在、桌面正常、Picom GLX 正常）；
-  3. 若后续接入第二 DRM 设备或 V4L2 buffer，再补 foreign import 实机验证。
+- 实机验证（2026-08-20 已通过）：安装 patched-27 并重启后 `PASS_INSTALL_STATUS` 与
+  `PASS_DESKTOP_HWGL` 通过；DRI3/PRIME 自导入路径回归正常（桌面 GL、glamor、AIGLX innogpu、
+  DRI3 均正常），确认 import 快速路径的 ops 检查重构未破坏自导入。
+- 边界：本机单 GPU，foreign import 与跨设备 GTT export 路径无法在本机实机触发；若后续接入
+  第二 DRM 设备或 V4L2 buffer，再补 foreign import 实机验证。
 - 回退：直接回退点 `patched-26`。
 
 ## 参考

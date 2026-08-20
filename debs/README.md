@@ -52,7 +52,7 @@ debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb
 | patched-24 | `patched-24` | `20ceccdcb507f80d2c41198046e037ce8fa6381f217c5861aad0dafdc4c01744` |
 | patched-25 | `patched-25` | `955950dd688ea50e51a0890389d1abe0054aba666174137e2ab269845ac8723f` |
 | patched-26 | `patched-26` | `51ddd8cbb024c5893f1d3d0cbdc6bc8f50490a8f0e8d4a9510a9bc3f0d92e14c` |
-| patched-27 | （候选，待设备验收后打 tag） | `2586b072901bdc581f16e12d9ab6c8eb2022fb835b6bcd623991af0b42aa2d33` |
+| patched-27 | `patched-27` | `2586b072901bdc581f16e12d9ab6c8eb2022fb835b6bcd623991af0b42aa2d33` |
 
 patched-8 是更早的历史恢复包，当前仓库没有能与该 deb 逐字对应的构建提交，因此不创建会造成
 错误追溯的源码 tag；它继续由文件名和 SHA-256 记录。
