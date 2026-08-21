@@ -68,6 +68,15 @@ if [[ -n "$stale_xdisplay_refs" ]]; then
     fail "current documentation references a removed xdisplay implementation"
 fi
 
+# Payload manifest schema must stay valid (read-only; works without vendor/).
+if ! python3 tools/validate-binary-manifest.py >/dev/null 2>&1; then
+    fail "binary-manifest.json schema validation failed"
+fi
+# Migration boundary: drivers/ must never carry build artifacts or black-box objects.
+if git ls-files drivers | grep -E '\.o_shipped$|\.o\.cmd$' >/dev/null; then
+    fail "drivers/ tracks build artifacts or black-box objects (.o_shipped/.o.cmd)"
+fi
+
 [[ -r tools/patch-gpupll-object.py ]] || fail "GPU PLL object patch tool is missing or unreadable"
 grep -Fq 'tools/patch-gpupll-object.py' scripts/build-deepin-coherent.sh ||
     fail "coherent builder does not invoke the GPU PLL object patch tool"
@@ -105,6 +114,12 @@ for expected_setting in \
 done
 grep -Fq 'patches/023-invisible-read-no-writeback.patch' scripts/build-deepin-coherent.sh ||
     fail "coherent builder does not apply the patched-23 driver fix"
+
+# Current-state guards: bumping the driver version requires updating the
+# README current-package marker below (and the architecture require_text).
+require_text README.md '当前驱动包 `4.0.0-i1`'
+require_text README.md '(docs/project/licensing.md)'
+require_text docs/README.md '[许可证与再分发边界](project/licensing.md)'
 
 # The stable p21 evidence remains navigationally referenced while p22 is the
 # currently booted connector-classification candidate.

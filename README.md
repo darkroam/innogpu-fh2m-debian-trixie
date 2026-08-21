@@ -34,7 +34,7 @@
 ## 快速安装
 
 ```sh
-git clone <本仓库> && cd innogpu-fh2m-debian-trixie
+git clone https://github.com/darkroam/innogpu-fh2m-debian-trixie.git && cd innogpu-fh2m-debian-trixie
 sudo scripts/install-prereqs-debian.sh                        # 构建/运行依赖
 SOURCE_DATE_EPOCH=1787342400 bash scripts/build-innogpu-driver.sh  # 构建 4.0.0-i1
 sudo apt install ./build/innogpu-fh2m-trixie_4.0.0-i1.deb     # 安装（同包名升级）

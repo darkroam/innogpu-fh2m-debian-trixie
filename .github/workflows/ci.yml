@@ -1,0 +1,35 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  docs-and-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            python3 ripgrep perl dpkg-dev dkms
+
+      - name: Repository documentation and boundary checks
+        run: bash scripts/check-docs.sh
+
+      - name: fbterm static tests
+        run: bash tests/fbterm/run-static-tests.sh
+
+      - name: Package boundary tests (self-generated fixtures)
+        run: bash tests/package/run-boundary-tests.sh
+
+      - name: Picom installer/session tests
+        run: |
+          bash tests/picom/run-install-tests.sh
+          bash tests/picom/run-session-tests.sh
+
+      - name: xdisplay install-boundary tests
+        run: bash tests/xdisplay/run-install-tests.sh
