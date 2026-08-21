@@ -36,7 +36,7 @@
 - 离线验证（已完成）：完整 p25 补丁集上叠加本补丁，对 `6.12.101+deb13-amd64` 编译成功且
   vermagic 匹配；不安装、不热切换。
 - 候选包（已构建）：`debs/innogpu-fh2m-trixie_3.3.3.42-patched-26.deb`，
-  SHA-256 `51ddd8cbb024c5893f1d3d0cbdc6bc8f50490a8f0e8d4a9510a9bc3f0d92e14c`；
+  SHA-256 `d213877c60ec3aad10cb9b16b79f0c38ab95a7cd3f8aa0a7f4f0e1bd433e27b1`；
   `check-release-package.sh` 与 `check-deb-dkms-build.sh` 均通过。
 - 实机验证（2026-08-20 已通过）：安装 patched-26 并重启后 `PASS_INSTALL_STATUS` 与
   `PASS_DESKTOP_HWGL` 通过；`tools/probe-drm-vblank.c` 逐 CRTC 探测结果：

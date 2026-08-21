@@ -9,7 +9,7 @@
 | 阶段 | 代码补丁 | 构建开关/入口 | 状态 |
 | --- | --- | --- | --- |
 | 000 | [skip-first-gpupll](patch-000-skip-first-gpupll.md) | 始终应用 | patched-19/20/21 启用 |
-| 001 | [kernel-6.12](patch-001-kernel-6.12.md) | 始终应用 | patched-19/20/21/23/24 启用；p24 实机适配 6.12.101+ |
+| 001 | [kernel-6.12](patch-001-kernel-6.12.md) | 始终应用 | patched-19/20/21/23/24/25/26/27 启用；p24+ 实机适配 6.12.101+ |
 | 002 | [dp-fbdev-fallback](patch-002-dp-fbdev-fallback.md) | `APPLY_DP_FBCON_FALLBACK=1` | patched-19/20/21 启用 |
 | 003 | [panel-backlight-fallback](patch-003-panel-backlight-fallback.md) | `APPLY_PANEL_BACKLIGHT_FALLBACK=1` | 历史验证；当前关闭 |
 | 004 | [panel-platform-fallback](patch-004-panel-platform-fallback.md) | `APPLY_PANEL_PLATFORM_FALLBACK=1` | 历史验证；当前关闭 |

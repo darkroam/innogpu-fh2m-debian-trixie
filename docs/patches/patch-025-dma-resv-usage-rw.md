@@ -51,7 +51,7 @@
 - 离线验证（已完成）：`patches/025-dma-resv-usage-rw.patch` 在完整 p24 补丁集上干净应用，
   对 `6.12.101+deb13-amd64` 编译 `innogpu.ko` 成功且 vermagic 匹配；不安装、不热切换。
 - 候选包（已构建）：`debs/innogpu-fh2m-trixie_3.3.3.42-patched-25.deb`，
-  SHA-256 `955950dd688ea50e51a0890389d1abe0054aba666174137e2ab269845ac8723f`；
+  SHA-256 `351f1f6e5a711ea4f4ed99a5ab8fe5ce51e7c13d089db38ae452bd85ace3038f`；
   `check-release-package.sh` 与 `check-deb-dkms-build.sh` 均通过（warnings=4421 为 Deepin
   源码既有警告，与补丁无关）。
 - 实机验证（2026-08-20 已通过）：安装 patched-25 并重启后，Driver/Firmware OK、错误计数 0；

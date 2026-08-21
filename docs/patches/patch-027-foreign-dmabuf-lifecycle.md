@@ -58,7 +58,7 @@
 ## 验证与回退
 
 - 离线验证（已完成）：patched-27 候选包 `debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb`
-  （SHA-256 `2586b072901bdc581f16e12d9ab6c8eb2022fb835b6bcd623991af0b42aa2d33`）已通过包边界与
+  （SHA-256 `f384159751fed249263591ff46758bb32327d0048e0669747050b66db1e33c6a`）已通过包边界与
   `6.12.101+deb13-amd64` 离线 DKMS 编译（vermagic 匹配）；不安装、不热切换。
 - 实机验证（2026-08-20 已通过）：安装 patched-27 并重启后 `PASS_INSTALL_STATUS` 与
   `PASS_DESKTOP_HWGL` 通过；DRI3/PRIME 自导入路径回归正常（桌面 GL、glamor、AIGLX innogpu、

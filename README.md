@@ -10,8 +10,8 @@ Debian Trixie 上 Innosilicon Fantasy II-M（FH2M）驱动、显示输出、硬�
 - 当前设备运行 `3.3.3.42-patched-27`，内核为 `6.12.101+deb13-amd64`。
 - patched-27 已重启验证：DKMS、Driver/Firmware、`/dev/dri/card0`、`renderD128`、`/dev/fb0`、
   boot autoload 和桌面硬件 GL 正常；p25/26/27 的 deb 为可复现构建（见 [debs/README.md](debs/README.md)）。
-- p24 是 p23 行为基线加 `6.12.101+` 的 `pci_resize_resource()` 兼容修复；包、校验值和 tag
-  见 [p24 验收记录](docs/patches/patched-24-kernel-612101.md) 和 [release 目录说明](debs/README.md)。
+- p25、p26、p27 依次修复 dma_resv usage、未活动 CRTC vblank 和 foreign DMA-BUF 生命周期；
+  三个版本均已实机验证，包、校验值和 tag 见 [release 目录说明](debs/README.md)。
 - 当前设备此前已完成 p21 的完整 Xorg/GLX、DRI3、真实 VT、显示和 Picom 验收；p24 本次检查未把
   隔离会话中的 Xorg/dwm 进程读取结果计入新增证据。
 
@@ -19,7 +19,7 @@ Debian Trixie 上 Innosilicon Fantasy II-M（FH2M）驱动、显示输出、硬�
 
 - 后续包只能以 Deepin `20250421190503-debug` 完整原包为技术基线，不能从历史 patched 包拼接用户态文件。
 - `patched-17` 是保守回退点，`patched-8` 是更早历史恢复物；p20 及更早中间版本只保留历史证据，禁止新设备部署。
-- 当前回退链：`patched-24 -> patched-23 -> patched-22 -> patched-21 -> patched-17 -> patched-8`。
+- 当前回退链：`patched-27 -> patched-26 -> patched-25 -> patched-24 -> patched-23 -> patched-22 -> patched-21 -> patched-17 -> patched-8`。
 - xdisplay 引擎由 dotconfig 仓库独立维护；本项目只维护 Innogpu 设备接入契约。
 - `.deb`、Deepin 原包和本机日志不进入 Git；release 包放在 `debs/`，由独立 release 附件分发。
 
