@@ -1,0 +1,20 @@
+phase4_preinstall_baseline=PASS (sandbox-capturable items)
+capture_log=baselines/phase4-baseline-20260821-142632.log
+B1_package=3.3.3.42-patched-27 PASS
+B2_modules=innogpu loaded (95 refs) PASS
+B3_module_file=/lib/modules/6.12.101+deb13-amd64/updates/dkms/innogpu.ko.xz PASS
+B4_dkms=innogpu-kernel/2.2 installed (6.12.101+deb13-amd64) PASS
+B5_modprobe=options innogpu firmware_en=1 PASS
+B6_initramfs=innogpu userspace + modprobe.d entries present PASS
+B7_drm_fbdev=USER_PENDING (real session /dev/dri /dev/fb*)
+B8_xorg_gl=USER_PENDING (check-desktop-hwgl.sh)
+B9_audio=PARTIAL (kernel sees InnosiliconCard; aplay blocked by sandbox) USER_PENDING sink check
+B10_picom=pid 2418 /usr/local/bin/picom running PASS
+B11_display=USER_PENDING (xrandr -q, xdisplay)
+B12_userspace=PASS_DEEPIN_USERSPACE_COHERENT
+recovery_ssh=active PASS
+recovery_tty=getty tty1/tty2 active PASS
+recovery_disk=145G free PASS
+recovery_headers=6.12.101+deb13-amd64 build present PASS
+rollback_sha256=f384159751fed249263591ff46758bb32327d0048e0669747050b66db1e33c6a PASS
+candidate_sha256=68aea6c07842a0def97d18de5385802175290cb9752571b157250eb38fa68735 PASS
