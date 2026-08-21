@@ -7,17 +7,23 @@
 
 ### 基线与载荷
 
-- 后续驱动候选必须从 `debs/` 中的 Deepin 202504 原包整体重建；DKMS 源码可叠加阶段补丁，
-  但 DRI、GBM、GLAPI、GLVND、Xorg DDX、固件和 maintainer scripts 不得从历史 patched 包拼接。
+- 后续驱动候选必须从 `debs/` 中的 Deepin 202504 原包整体重建。**当前新架构（4.0.0-iN）**以
+  `drivers/` 源码树直接构建（`scripts/build-innogpu-driver.sh`，不执行 patch 叠加）；legacy
+  patched 系构建（`build-deepin-coherent.sh`）保留作 p27 oracle 与版本护栏。DRI、GBM、GLAPI、
+  GLVND、Xorg DDX、固件和 maintainer scripts 一律不得从历史 patched 包拼接。
 - `patched-8` 仅是历史回滚物，`patched-17/18/19` 是回退、故障或候选证据，不是后续实现父版本；
   已验证的 `patched-20` 仍属于诊断候选，不能把诊断日志当作长期默认行为。
 - 已发布、安装或形成验收证据的版本号禁止复用。辅助脚本、包清单或 maintainer script 发生变化时，
   即使内核补丁不变也必须提升包版本，并重新建立对应的包边界和运行证据。
 - release wrapper 必须固定经过审阅的 `SOURCE_DATE_EPOCH`；同一源码、输入 deb、版本和开关重复构建
   必须生成逐字一致的包。哈希不一致时先定位构建环境或时间戳来源，禁止选择其中一个直接发布。
-- 阶段补丁必须保持一个补丁一个目的：源码 diff 位于 `patches/`；无法表示为源码 diff 的厂商对象
-  变换使用 `tools/` 下的严格确定性工具；设计、开关、验证和回退写入对应的
-  `docs/patches/patch-*.md`。不得通过复制 `.so`、固件或 `.ko` 绕过构建失败。
+- 补丁/变换边界：历史内核补丁原件在 `patches/`（溯源与回退复现，不再叠加构建）；当前维护的
+  第三方组件补丁与配置在 `components/`（picom、fbterm）；无法表示为源码 diff 的厂商对象变换使用
+  `tools/` 下的严格确定性工具；设计、开关、验证和回退写入对应的 `docs/patches/patch-*.md`。
+  不得通过复制 `.so`、固件或 `.ko` 绕过构建失败。
+- 黑盒载荷边界：`.o_shipped`、用户态库、固件等第三方二进制**不入库**，由 `binary-manifest.json`
+  唯一清单管理，`scripts/extract-vendor-binaries.sh` 从 Deepin 原包幂等重建到被忽略的 `vendor/`；
+  清单中的 `vendor-binary` 是来源分类，不是许可证名称（见 [licensing.md](licensing.md)）。
 
 ### 代码与接口
 
@@ -34,11 +40,12 @@
 ### 证据、隐私与 release
 
 - 外部 `.deb` 只放 `debs/`，由 `.gitignore` 忽略；`third_party/` 解包目录、原始日志、EDID、
-  序列号、凭据、认证文件、主机名和用户名不得提交。`baselines/` 只保留精简、可审查的结果。
+  序列号、凭据、认证文件、主机名和用户名不得提交。`baselines/` 只保留精简、可审查的 PASS/FAIL
+  标记与阶段验收审计证据（脱敏后）；原始诊断日志不提交。
 - 文档示例使用 `~`、环境变量或 `/tmp` 通用路径，不写入本机绝对 home、临时 `serverauth`、真实
   网络标识或硬件隐私数据。提交前必须执行隐私扫描并人工审查新增证据。
-- release 上传是源码提交之外的步骤；构建脚本输出包默认写入 `debs/`，不得因本地构建把二进制
-  产物重新加入 Git。
+- release 上传是源码提交之外的步骤；新架构构建器输出写入被忽略的 `build/`，legacy patched
+  构建输出默认写入 `debs/`；均不得因本地构建把二进制产物重新加入 Git。
 - release 前必须运行 `scripts/check-release-package.sh`。xdisplay 引擎副本、历史 Kylin/实验安装器
   和直接二进制热补丁入口不得出现在 coherent 发布包中。
 

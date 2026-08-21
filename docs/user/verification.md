@@ -19,8 +19,8 @@ ls -l /dev/dri /dev/fb0
 `card0`、`renderD128` 和 `fb0`；版本不匹配时不能用当前模块结果证明新包通过。
 
 历史 p23 重启后已确认 PVR/固件为 OK、内置面板暴露为 DRM `eDP-1`、外接 HDMI 断开且 xdisplay
-开盖单屏状态正常；invisible GEM READ `munmap` 已显著下降，WRITE 读回验证通过。当前 p27 继承该
-行为基线。这不替代完整的
+开盖单屏状态正常；invisible GEM READ `munmap` 已显著下降，WRITE 读回验证通过。当前 4.0.0-i1
+继承该行为基线（经 patched-27）。这不替代完整的
 电池合盖、外屏热插拔、外部电源矩阵和 Clash Verge 应用 A/B。
 
 ## patched-21 分阶段验收

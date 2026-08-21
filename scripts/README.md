@@ -85,8 +85,8 @@ xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项
 - `check-innogpu-progress.sh`
 - `check-patched17-baseline.sh`
 - `check-post-reboot-hwgl.sh`
-- `check-release-package.sh`
 - `check-soft-xorg-dwm.sh`
+- `check-release-package.sh`
 - `test-current-xorg-hwgl-runtime.sh`
 - `test-isolated-deepin-egl-gbm.sh`
 - `test-isolated-deepin-hwgl.sh`

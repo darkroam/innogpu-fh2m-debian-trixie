@@ -17,8 +17,8 @@ patched-18/19 是问题定位和 coherent 构建演进记录，不是安装推�
 
 ## 准备安装包（主入口 4.0.0-i1）
 
-新架构包不随 Git 提供。clone 本仓库后从维护者审阅的 release 记录取得（或按记录核对 SHA-256
-`68aea6c0…` 与可复现 epoch `1787342400`）Deepin 原包并构建：
+新架构包不随 Git 提供。clone 本仓库后，从维护者审阅的 release 附件下载 Deepin 原包到 `debs/`；
+构建器会按 `binary-manifest.json` 校验完整 SHA-256。当前审核 epoch 为 `1787342400`：
 
 ```text
 debs/innogpu-fh2m_20250421190503-debug_amd64.deb
@@ -26,6 +26,7 @@ debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 
 ```sh
 cd "$INNOGPU_ROOT"
+sha256sum debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 bash scripts/extract-vendor-binaries.sh                        # 按 manifest 重建 vendor/ 黑盒载荷
 SOURCE_DATE_EPOCH=1787342400 bash scripts/build-innogpu-driver.sh
 sudo apt install ./build/innogpu-fh2m-trixie_4.0.0-i1.deb

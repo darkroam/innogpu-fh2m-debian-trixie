@@ -6,7 +6,7 @@ FH2M 的 invisible VRAM 通过每页 staging buffer 支持 CPU mmap。page fault
 VMA close 不区分 CPU_PREP 的 READ/WRITE，始终对每页执行 `SYS2GDDR`。只读 DMA-BUF surface 因此
 在 `munmap` 时产生与页数成比例的无意义回写。
 
-独立 `tools/probe-pdp-invisible-read.c` 已在当前 patched-22 上复现：7,646,720 字节、1867 页的 READ
+独立 `tools/probe-pdp-invisible-read.c` 已在当时运行中的 patched-22 上复现：7,646,720 字节、1867 页的 READ
 mapping 在逐页读取后，三轮 `munmap` 分别消耗 71.915、119.357 和 96.716ms system CPU。该复现不
 依赖 WebKit、GBM、EGL 或图形桌面。
 
