@@ -44,6 +44,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "inno_drm_version.h"
 #include <linux/export.h>
 #include "inno_drm_version.h"
+#include <linux/fb.h>
 #include <linux/suspend.h>
 #if (DRM_VERSION >= KERNEL_VERSION(5, 5, 0))
 #include <drm/drm_device.h>
@@ -223,6 +224,7 @@ static struct fb_ops s_inno_fbdev_ops = {
 	.fb_copyarea = cfb_copyarea,
 	.fb_imageblit = cfb_imageblit,
 	.fb_pan_display = drm_fb_helper_pan_display,
+	.fb_mmap = fb_io_mmap,
 	.fb_blank = drm_fb_helper_blank,
 	.fb_setcmap = drm_fb_helper_setcmap,
 	.fb_debug_enter = drm_fb_helper_debug_enter,
