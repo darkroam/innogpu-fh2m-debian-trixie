@@ -160,6 +160,12 @@ def main():
         print("manifest_entries=%d files=%d symlinks=%d" % (len(entries), n_files, n_links))
         print("manifest_source_deb_sha256=PASS")
         print("manifest_written=%s" % args.out)
+        # 自校验输出清单
+        rc = subprocess.run([sys.executable, "tools/validate-binary-manifest.py", args.out]).returncode
+        if rc != 0:
+            print("manifest_self_validation=FAIL")
+            sys.exit(1)
+        print("manifest_self_validation=PASS")
     finally:
         subprocess.run(["rm", "-rf", tmp], check=False)
 

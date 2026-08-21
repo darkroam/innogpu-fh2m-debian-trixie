@@ -77,7 +77,7 @@ while IFS= read -r entry; do
         if [[ -L "$dest" && "$(readlink "$dest")" == "$link_target" ]]; then
             skipped=$((skipped+1)); continue
         fi
-        if [[ "$CHECK_ONLY" -eq 1 ]]; then echo "vendor_check_only=MISSING_OR_MISMATCH $vp"; ok=$((ok+1)); continue; fi
+        if [[ "$CHECK_ONLY" -eq 1 ]]; then echo "vendor_check_only=MISSING_OR_MISMATCH $vp"; fail=$((fail+1)); continue; fi
         mkdir -p "$(dirname "$dest")"
         tmp_link="$TMP_ROOT/link.tmp.$RANDOM"
         ln -s "$link_target" "$tmp_link"
@@ -85,12 +85,12 @@ while IFS= read -r entry; do
         continue
     fi
 
-    # 文件: 存在且哈希一致 -> 跳过
-    if [[ -f "$dest" ]]; then
+    # 文件: 存在、是普通文件(非符号链接)且哈希一致 -> 跳过
+    if [[ -f "$dest" && ! -L "$dest" ]]; then
         cur=$(sha256sum "$dest" | cut -d' ' -f1)
         if [[ "$cur" == "$exp_sha" ]]; then skipped=$((skipped+1)); continue; fi
     fi
-    if [[ "$CHECK_ONLY" -eq 1 ]]; then echo "vendor_check_only=MISSING_OR_MISMATCH $vp"; ok=$((ok+1)); continue; fi
+    if [[ "$CHECK_ONLY" -eq 1 ]]; then echo "vendor_check_only=MISSING_OR_MISMATCH $vp"; fail=$((fail+1)); continue; fi
 
     src_file="$TMP_ROOT/root/$src"
     # 包含性: 解析后必须仍位于解包根目录内
@@ -111,8 +111,8 @@ while IFS= read -r entry; do
 done < <(python3 -c "import json;m=json.load(open('$MANIFEST'));[print(json.dumps(e)) for e in m['entries']]")
 
 if [[ "$CHECK_ONLY" -eq 1 ]]; then
-    echo "vendor_extraction=CHECK_ONLY ok=$ok skipped=$skipped"
-    echo "vendor_check_only_result=PASS"
+    echo "vendor_extraction=CHECK_ONLY skipped=$skipped failures=$fail"
+    if [[ "$fail" -eq 0 ]]; then echo "vendor_check_only_result=PASS"; else echo "vendor_check_only_result=FAIL"; fi
 else
     echo "vendor_extraction=PASS skipped=$skipped rebuilt=$rebuilt"
 fi

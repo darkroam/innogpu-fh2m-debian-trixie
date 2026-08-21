@@ -51,13 +51,13 @@ innodpu_vga.c, innogpu_drm.c, pvr_drm.c。
 
 转换时需把 Kbuild 的 -Wno-error 豁免归入 build-metadata，其余为 6.12 兼容源码提交。
 
-## 转换提交规则（待批准后执行）
+## 转换提交规则（已执行）
 
-- commit message 保留原编号，如 source: patch-025 dma_resv usage semantics；
-- commit body 引用 docs/patches/patch-*.md；
-- 记录：原 patch hash 到转换提交 hash 到行为变化；
-- closed 补丁（003/004/005/008）不产生提交，仅保留历史文档；
-- source_tree_parity_against_p27 门槛在转换后执行（drivers/ + 转换提交 与 p27 生成树对比）。
+- commit message 保留原编号，如 source: patch-025 dma_resv usage semantics；✅ 已按此执行
+- commit body 引用 docs/patches/patch-*.md；✅
+- 记录：原 patch hash 到转换提交 hash 到行为变化；✅（哈希见上表明细）
+- closed 补丁（003/004/005/008）不产生提交，仅保留历史文档；✅
+- source_tree_parity_against_p27 门槛已通过（scripts/check-source-parity.sh，0 差异）。✅
 
 **当前状态**：9 个启用补丁已转源码提交（哈希见上表），000 保持确定性工具；
 parity 通过（scripts/check-source-parity.sh，0 差异）。原始 diff 保留在 patches/（迁移完成前不删除），
