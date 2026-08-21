@@ -1,16 +1,16 @@
-phase4_preinstall_baseline=PASS (sandbox-capturable items)
+phase4_preinstall_baseline=PASS (all B1-B12)
 capture_log=baselines/phase4-baseline-20260821-142632.log
 B1_package=3.3.3.42-patched-27 PASS
-B2_modules=innogpu loaded (95 refs) PASS
-B3_module_file=/lib/modules/6.12.101+deb13-amd64/updates/dkms/innogpu.ko.xz PASS
-B4_dkms=innogpu-kernel/2.2 installed (6.12.101+deb13-amd64) PASS
-B5_modprobe=options innogpu firmware_en=1 PASS
-B6_initramfs=innogpu userspace + modprobe.d entries present PASS
-B7_drm_fbdev=USER_PENDING (real session /dev/dri /dev/fb*)
-B8_xorg_gl=USER_PENDING (check-desktop-hwgl.sh)
-B9_audio=PARTIAL (kernel sees InnosiliconCard; aplay blocked by sandbox) USER_PENDING sink check
-B10_picom=pid 2418 /usr/local/bin/picom running PASS
-B11_display=USER_PENDING (xrandr -q, xdisplay)
+B2_modules=innogpu loaded PASS
+B3_module_file=innogpu.ko.xz present PASS
+B4_dkms=innogpu-kernel/2.2 installed PASS
+B5_modprobe=firmware_en=1 PASS
+B6_initramfs=innogpu entries present PASS
+B7_drm_fbdev=card0(226,0) renderD128(226,128) fb0(29,0) vendor 1ec8 device 9810 PASS
+B8_xorg_gl=PASS_DESKTOP_HWGL (renderer Fantasy II-M, core 4.3, AIGLX innogpu)
+B9_audio=PASS (PipeWire 1.4.2; default sink HDA Intel analog; FH2M stereo sink present)
+B10_picom=pid 2418 running PASS
+B11_display=PASS (xdisplay watch pid 2402; HDMI-2 primary 1920x1080)
 B12_userspace=PASS_DEEPIN_USERSPACE_COHERENT
 recovery_ssh=active PASS
 recovery_tty=getty tty1/tty2 active PASS
