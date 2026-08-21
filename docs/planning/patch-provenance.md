@@ -23,7 +23,7 @@
 
 | # | 类别 | 启用 | patch SHA-256 | 目标文件 | 文档 | 转换计划 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 000 | binary-transform | 是 | （工具）tools/patch-gpupll-object.py | innogpu/innogpu.o_shipped（单点字节） | [patch-000](../patches/patch-000-skip-first-gpupll.md) | 保留独立确定性工具；输入/输出 hash 入 manifest；不做成源码提交 |
+| 000 | binary-transform | 是 | （工具）tools/patch-gpupll-object.py，SHA-256 e5f9ee94...274a | innogpu/innogpu.o_shipped（单点字节） | [patch-000](../patches/patch-000-skip-first-gpupll.md) | 保留独立确定性工具；输入/输出 hash 入 manifest；不做成源码提交 |
 | 001 | source | 是 | be5c8ae9...71ab5 | Kbuild；innogpu/innopmbus/innopower/innosmmu/innovpu 多文件；innosrvkm 11 文件（见下） | [patch-001](../patches/patch-001-kernel-6.12.md) | 拆分为源码提交；Kbuild 的 -Wno-error 改动归 build-metadata |
 | 002 | source | 是 | 1a12de65...7329 | innosrvkm/innodpu_connector.c、innodpu_dp.c | [patch-002](../patches/patch-002-dp-fbdev-fallback.md) | 源码提交 |
 | 003 | closed | 否 | 8cd6b492...c6f7b | innodpu_connector.c、innodpu_panel_backlight.c | [patch-003](../patches/patch-003-panel-backlight-fallback.md) | 仅历史记录，不导入当前行为 |
@@ -57,6 +57,9 @@ innodpu_vga.c, innogpu_drm.c, pvr_drm.c。
 - 记录：原 patch hash 到转换提交 hash 到行为变化；
 - closed 补丁（003/004/005/008）不产生提交，仅保留历史文档；
 - source_tree_parity_against_p27 门槛在转换后执行（drivers/ + 转换提交 与 p27 生成树对比）。
+
+**当前状态**：上表"转换计划"为计划；**转换提交 hash 与行为变化尚未产生，标记 PENDING（UNVERIFIED）**，
+将在监督批准转换后逐行填充。原始 diff 保留在 patches/（迁移完成前不删除），补丁编号即原始 diff 映射键。
 
 ## 与 drivers/ 的对应
 

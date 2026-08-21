@@ -12,7 +12,7 @@
 
 - 本目录是迁移后的**可维护源码树**（Git 跟踪）；当前构建仍由旧流程（`third_party/` 解包 +
   `patches/` 补丁）承担，两者在迁移完成前并存。
-- **排除项**（不进入本目录，由 [binary-manifest.json](../../binary-manifest.json) 在后续阶段管理）：
+- **排除项**（不进入本目录，由 binary-manifest.json 在阶段 2 创建后管理，当前文件尚不存在）：
   - 5 个预编译对象：`innogpu.o_shipped`、`innovpu.o_shipped`、`innosmmu.o_shipped`、
     `innodma.o_shipped`、`innosrvkm.o_shipped`（黑盒，进 `vendor/`）；
   - Deepin 包内混入的构建产物（`.o.cmd` 等，已清理）。
