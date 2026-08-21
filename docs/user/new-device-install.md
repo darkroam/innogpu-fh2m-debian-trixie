@@ -26,9 +26,13 @@ debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 
 ```sh
 cd "$INNOGPU_ROOT"
+bash scripts/extract-vendor-binaries.sh                        # 按 manifest 重建 vendor/ 黑盒载荷
 SOURCE_DATE_EPOCH=1787342400 bash scripts/build-innogpu-driver.sh
 sudo apt install ./build/innogpu-fh2m-trixie_4.0.0-i1.deb
 ```
+
+> 新 clone 上 `vendor/` 为空（不入库）：必须先 `extract-vendor-binaries.sh` 重建黑盒载荷，
+> 构建器的 `--check-only` 门禁才会通过。
 
 同时保留深层回退包（按 release 记录核对 SHA-256 后放入 `debs/`）：
 

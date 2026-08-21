@@ -5,14 +5,18 @@
 
 ## 输入包
 
-后续 coherent 构建以 Deepin 202504 原包为唯一技术基线：
+后续 coherent 构建以 Deepin 202504 原包为唯一技术基线。**当前新架构（4.0.0-i1）**由
+`scripts/build-innogpu-driver.sh` 驱动（drivers/ 源码树 + `binary-manifest.json` 黑盒载荷 + 确定性
+变换，产出到被忽略的 `build/`，可复现 epoch 1787342400）；`scripts/build-deepin-coherent.sh` 为
+legacy patched 系构建器（保留作 p27 oracle 与版本护栏）。两者都以本目录的 Deepin 原包为输入：
 
 ```text
 debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 ```
 
-`scripts/build-deepin-coherent.sh` 和 `scripts/prepare-deepin-userspace-root.sh` 会优先查找该路径，
-并保留仓库根目录的旧路径作为兼容回退。历史 patched 包只用于安装回退或复现记录，不能作为新包输入。
+`scripts/build-deepin-coherent.sh`、`scripts/prepare-deepin-userspace-root.sh` 与新架构构建器
+（经 manifest/提取器）都会优先查找该路径，并保留仓库根目录的旧路径作为兼容回退。历史 patched 包
+只用于安装回退或复现记录，不能作为新包输入。
 
 本机保存的 patched-19/20 deb 生成于 xdisplay 所有权收敛之前，包内仍有旧显示引擎和实验辅助文件。
 它们只能作为历史/当前机器证据，不得上传为当前 release。当前源码禁止复用 19/20 版本号。

@@ -36,10 +36,15 @@
 ```sh
 git clone https://github.com/darkroam/innogpu-fh2m-debian-trixie.git && cd innogpu-fh2m-debian-trixie
 sudo scripts/install-prereqs-debian.sh                        # 构建/运行依赖
+# 取得 Deepin 202504 原包放入 debs/（来源与哈希见 docs/project/dependencies.md）
+bash scripts/extract-vendor-binaries.sh                       # 按 manifest 重建 vendor/ 黑盒载荷
 SOURCE_DATE_EPOCH=1787342400 bash scripts/build-innogpu-driver.sh  # 构建 4.0.0-i1
 sudo apt install ./build/innogpu-fh2m-trixie_4.0.0-i1.deb     # 安装（同包名升级）
 sudo reboot                                                    # 重启后加载新模块
 ```
+
+> 新 clone 上 vendor/ 与 debs/ 均为空（不入库）：必须先取得 Deepin 原包并提取黑盒载荷，构建器
+> 的 `--check-only` 门禁才会通过。
 
 回退到保留基线：`sudo apt install --allow-downgrades ./debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb`
 （详见 [docs/user/recovery.md](docs/user/recovery.md)）。

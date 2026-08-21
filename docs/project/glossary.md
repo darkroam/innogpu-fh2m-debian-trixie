@@ -18,3 +18,6 @@
 | RandR | Xorg 的输出、模式和布局扩展 | 通用布局由 dotconfig 的 xdisplay 维护，本仓库仅提供设备钩子 |
 | TTY / VT | 文本登录终端和虚拟控制台 | 真实 VT 上的 fbterm 用于验证 fbdev，不能用 Xorg 桌面结果替代 |
 | SOURCE_DATE_EPOCH / 可复现构建 | 固定发布时间戳，使同一源码和开关重复构建逐字一致 | 构建器必须在打包前把整树 mtime 归一化到该 epoch（2026-08-20 release 审阅修复）；哈希不一致禁止直接发布 |
+| `binary-manifest.json` | 记录黑盒载荷来源、路径、哈希、大小和类型的唯一清单（192 项） | 载荷不入库；`vendor/` 由提取工具按清单从 Deepin 原包幂等重建 |
+| `vendor-binary` | manifest 中条目的许可证分类值 | 是**来源分类**，不是 SPDX/许可证名称，也不单独授予再分发权（见 [licensing.md](licensing.md)） |
+| `4.0.0-i1` | 当前驱动包版本（新架构：drivers/ 源码树 + manifest 黑盒载荷） | 当前设备运行版；`3.3.3.42-patched-27` 为保留的首选回退基线 |
