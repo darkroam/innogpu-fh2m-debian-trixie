@@ -10,8 +10,9 @@
 
 ## 与迁移的关系
 
-- 本目录是迁移后的**可维护源码树**（Git 跟踪）；当前构建仍由旧流程（`third_party/` 解包 +
-  `patches/` 补丁）承担，两者在迁移完成前并存。
+- 本目录是迁移后的**可维护源码树**（Git 跟踪），已包含 9 个启用补丁的转换提交；
+  当前设备构建仍由旧流程（`third_party/` 解包 + `patches/` 补丁）承担，两者在迁移完成前并存，
+  但 `drivers/` 源码与旧流程的 p27 生成树 parity 已通过。
 - **排除项**（不进入本目录，由 binary-manifest.json 在阶段 2 创建后管理，当前文件尚不存在）：
   - 5 个预编译对象：`innogpu.o_shipped`、`innovpu.o_shipped`、`innosmmu.o_shipped`、
     `innodma.o_shipped`、`innosrvkm.o_shipped`（黑盒，进 `vendor/`）；
@@ -37,5 +38,7 @@ working_tree_clean=PASS
 
 ## 修改规则（迁移完成前）
 
-- 本目录当前保持与 Deepin 源一致的只读基线；补丁转换（阶段 1 后续步骤）经监督批准后以提交形式落库。
-- 不得在本目录内放置临时 `.o_shipped`；黑盒对象一律走 `vendor/` + manifest。
+- 本目录 = Deepin 原始源码 + 9 个启用补丁的转换提交（source: patch-0XX / device-profile: patch-0XX，
+  见 [patch-provenance.md](../docs/planning/patch-provenance.md)）；与 p27 生成源码树 parity 通过
+  （可复现命令：`scripts/check-source-parity.sh`）。
+- 后续修改直接以提交形式落库；黑盒对象（.o_shipped 等）不进入本目录，一律走 vendor/ + manifest。
