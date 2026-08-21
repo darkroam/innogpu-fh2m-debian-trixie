@@ -8,16 +8,19 @@
 在保留全部历史证据与回退能力的前提下，把项目入口从"patched 补丁叠加 + 旧 wrapper"收敛到
 "迁移源码树 + manifest 黑盒载荷 + 新构建器"，并让文档/检查脚本如实反映当前状态。
 
-## 二、永久保留清单（任何步骤都不得删除/移动）
+## 二、永久保留清单
 
-| 项 | 说明 |
+**历史内容一律永久保留，禁止物理删除**；对旧 wrapper 而言，第二步允许**变更工作路径**（移入
+`legacy/`），但不允许删除、丢失历史或移除 p27/17/8 回退入口。逐项说明：
+
+| 项 | 保留要求 |
 | --- | --- |
-| `patches/` 全部 patch 文件与 `docs/patches/` 验收记录 | 溯源与事故证据 |
-| `debs/…patched-27.deb`（SHA `f3841597…`）、`patched-17.deb`、`patched-8.deb` | 回退链 `4.0.0-i1 → p27 → … → p17 → p8` 的物理载体 |
-| p17–p27 全部 git tag（含 p27） | 可复现回退点，永久保留 |
-| `scripts/build-deepin-coherent.sh` 与 `build-patchedNN-*.sh` wrapper | 旧构建器/护栏；check-docs 依赖其版本护栏，不能直接删除 |
-| `scripts/install-patched17-and-check.sh`、`install-patched8-and-check.sh`、`uninstall-patched*.sh` | 历史安装/卸载/恢复入口 |
-| Deepin 202504 原 deb | 新构建器的唯一载荷基线 |
+| `patches/` 全部 patch 文件与 `docs/patches/` 验收记录 | 溯源与事故证据；**不得移动或删除** |
+| `debs/…patched-27.deb`（SHA `f3841597…`）、`patched-17.deb`、`patched-8.deb` | 回退链 `4.0.0-i1 → p27 → … → p17 → p8` 的物理载体；**不得移动或删除**，回退入口永久可用 |
+| p17–p27 全部 git tag（含 p27） | 可复现回退点；**永久保留，不得移动或删除** |
+| `scripts/build-deepin-coherent.sh` | 旧构建器/oracle；check-docs 版本护栏依赖；**继续保留在 `scripts/`，第二步也不移动** |
+| `build-patchedNN-*.sh` wrapper 与历史安装/卸载/恢复入口（`install-patched17-and-check.sh`、`install-patched8-and-check.sh`、`uninstall-patched*.sh`） | **历史内容永久保留**；第二步允许改变工作路径移入 `legacy/`（或保持原路径仅标记 deprecated）；禁止物理删除或丢失任何历史 |
+| Deepin 202504 原 deb | 新构建器的唯一载荷基线；永久保留 |
 
 ## 三、第一步（现在执行，已完成/进行中）：标记 deprecated，只改文档与检查脚本
 
@@ -58,8 +61,10 @@
 
 ## 五、禁止事项（两步都适用）
 
-- 不得移动或删除 `patches/`、历史 deb、历史 tag、旧 wrapper；
-- 不得在第二步条件未满足时把 `build-deepin-coherent.sh` 移出 `scripts/`；
+- **不得物理删除或丢失历史**：`patches/`、历史 deb、历史 tag、旧 wrapper 的历史内容一律保留；
+- 第二步只允许**变更旧 wrapper 的工作路径**（移入 `legacy/`）或保持原路径标记 deprecated；
+  `patches/`、p27/17/8 deb 与全部历史 tag **不得移动或删除**；
+- 不得在第二步条件未满足时把 `build-deepin-coherent.sh` 移出 `scripts/`（check-docs 护栏依赖）；
 - 不得用新架构 deb 覆盖历史版本号（`4.0.0-iN` 与 `3.3.3.42-patched-N` 序列并行保留）；
 - 不得宣称 Phase 5 完成而设备/文档仍停留在旧状态。
 
