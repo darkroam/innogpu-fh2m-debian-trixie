@@ -4,11 +4,56 @@
     {
       "kind": "kernel-black-box",
       "license": "vendor-binary",
-      "role": "INNODMA (precompiled, read-only)",
-      "sha256": "9a761ff07024a08bfd1d28f3e0a5103767fc7fd570fbe8a2ae01cb05eb544ff6",
-      "size": 582160,
-      "source_path": "usr/src/innogpu-kernel-2.2/innodma/innodma.o_shipped",
-      "vendor_path": "kernel/innodma/innodma.o_shipped"
+      "role": "INNOSRVKM (precompiled, read-only)",
+      "sha256": "30c594629d1d0e32674e793f2f4235afd4efd3f1e92ee4e4ed1920b315618c2b",
+      "size": 49942512,
+      "source_path": "usr/src/innogpu-kernel-2.2/innosrvkm/innosrvkm.o_shipped",
+      "vendor_path": "kernel/innosrvkm/innosrvkm.o_shipped"
+    },
+    {
+      "kind": "kernel-black-box",
+      "license": "vendor-binary",
+      "role": "INNOVPU (precompiled, read-only)",
+      "sha256": "bb630d651dd7172f3ec1a35ba34fc356778b1356013a39639b2d84ff305271cc",
+      "size": 3458848,
+      "source_path": "usr/src/innogpu-kernel-2.2/innovpu/innovpu.o_shipped",
+      "vendor_path": "kernel/innovpu/innovpu.o_shipped"
+    },
+    {
+      "kind": "kernel-black-box",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "36b907136dd5b477c3a21a6fff59541daff07863f3d2a7a590c9650d332d8170",
+      "size": 51509,
+      "source_path": "usr/src/innogpu-kernel-2.2/tools/gpu_info/.gpu_info.o.cmd",
+      "vendor_path": "kernel/tools/gpu_info/.gpu_info.o.cmd"
+    },
+    {
+      "kind": "kernel-black-box",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "2dd227c888bf2a651c951e531fd34e4221b6798f104de8d569c4a036a466e53f",
+      "size": 83556,
+      "source_path": "usr/src/innogpu-kernel-2.2/tools/gpu_info/.gpu_info_innoml.o.cmd",
+      "vendor_path": "kernel/tools/gpu_info/.gpu_info_innoml.o.cmd"
+    },
+    {
+      "kind": "kernel-black-box",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "c7846a45ce28e93dbfe4f6f2cc9842e74e8243cd9b41034819b370f415ccbf8b",
+      "size": 46504,
+      "source_path": "usr/src/innogpu-kernel-2.2/tools/gpu_info/.gpu_info_y8.o.cmd",
+      "vendor_path": "kernel/tools/gpu_info/.gpu_info_y8.o.cmd"
+    },
+    {
+      "kind": "kernel-black-box",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "185b6df68ff8852fe8851cead7fb21733507b1c44c5ea4822957424097de9c05",
+      "size": 58847,
+      "source_path": "usr/src/innogpu-kernel-2.2/tools/gpu_info/.kgc_gpu_info.o.cmd",
+      "vendor_path": "kernel/tools/gpu_info/.kgc_gpu_info.o.cmd"
     },
     {
       "kind": "kernel-black-box",
@@ -31,20 +76,11 @@
     {
       "kind": "kernel-black-box",
       "license": "vendor-binary",
-      "role": "INNOSRVKM (precompiled, read-only)",
-      "sha256": "30c594629d1d0e32674e793f2f4235afd4efd3f1e92ee4e4ed1920b315618c2b",
-      "size": 49942512,
-      "source_path": "usr/src/innogpu-kernel-2.2/innosrvkm/innosrvkm.o_shipped",
-      "vendor_path": "kernel/innosrvkm/innosrvkm.o_shipped"
-    },
-    {
-      "kind": "kernel-black-box",
-      "license": "vendor-binary",
-      "role": "INNOVPU (precompiled, read-only)",
-      "sha256": "bb630d651dd7172f3ec1a35ba34fc356778b1356013a39639b2d84ff305271cc",
-      "size": 3458848,
-      "source_path": "usr/src/innogpu-kernel-2.2/innovpu/innovpu.o_shipped",
-      "vendor_path": "kernel/innovpu/innovpu.o_shipped"
+      "role": "INNODMA (precompiled, read-only)",
+      "sha256": "9a761ff07024a08bfd1d28f3e0a5103767fc7fd570fbe8a2ae01cb05eb544ff6",
+      "size": 582160,
+      "source_path": "usr/src/innogpu-kernel-2.2/innodma/innodma.o_shipped",
+      "vendor_path": "kernel/innodma/innodma.o_shipped"
     },
     {
       "kind": "userspace-lib",
@@ -420,6 +456,352 @@
       "vendor_path": "userspace/x86_64-linux-gnu/gbm/innogpu_gbm.so"
     },
     {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libEGL_inno.so.0",
+      "role": "GL/EGL stack",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libEGL_inno.so",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libEGL_inno.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libEGL_inno.so.0.0.0",
+      "role": "GL/EGL stack",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libEGL_inno.so.0",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libEGL_inno.so.0"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "GL/EGL stack",
+      "sha256": "3e7245ef2916908a6e66f4a57ed05a350eaa6b76fae4c8e1a03b2920c7de29be",
+      "size": 363592,
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libEGL_inno.so.0.0.0",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libEGL_inno.so.0.0.0"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libGLESv1_CM_INNO_MESA.so.1",
+      "role": "GL/EGL stack",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libGLESv1_CM_INNO_MESA.so",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libGLESv1_CM_INNO_MESA.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "GL/EGL stack",
+      "sha256": "4d8b57f8b2a4dd13f730aeb18fb03643b6f219a52d06de11a2f09311e0e5ca1e",
+      "size": 1079336,
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libGLESv1_CM_INNO_MESA.so.1",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libGLESv1_CM_INNO_MESA.so.1"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libGLESv2_INNO_MESA.so.1",
+      "role": "GL/EGL stack",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libGLESv2_INNO_MESA.so",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libGLESv2_INNO_MESA.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "GL/EGL stack",
+      "sha256": "ba4ed537804ed4242a7826915ee509c0f6462cfe9b7d5c33d364e864a53c34fc",
+      "size": 2070920,
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libGLESv2_INNO_MESA.so.1",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libGLESv2_INNO_MESA.so.1"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libGLX_inno.so.0",
+      "role": "GL/EGL stack",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libGLX_inno.so",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libGLX_inno.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libGLX_inno.so.0.0.0",
+      "role": "GL/EGL stack",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libGLX_inno.so.0",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libGLX_inno.so.0"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "GL/EGL stack",
+      "sha256": "9601f63aa5c4ee2734cacc15b2cd9ced3a74e0a62a33964cd3dca4a02c658edc",
+      "size": 536908,
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libGLX_inno.so.0.0.0",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libGLX_inno.so.0.0.0"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libGL_INNO_MESA.so.1",
+      "role": "GL/EGL stack",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libGL_INNO_MESA.so",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libGL_INNO_MESA.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "GL/EGL stack",
+      "sha256": "c9213f673b78a9b3ec8ff89cb41f91c886e4319980c7c1c7f5d2bfbf428bcc5d",
+      "size": 3374564,
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libGL_INNO_MESA.so.1",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libGL_INNO_MESA.so.1"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libINNOOCL.so.1",
+      "role": "OpenCL ICD",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libINNOOCL.so",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libINNOOCL.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "OpenCL ICD",
+      "sha256": "4e984e5095856dc26f47a447b4c6bb7fc1d5ef67da42f958f36ad9b2800fc4d1",
+      "size": 711584,
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libINNOOCL.so.1",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libINNOOCL.so.1"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libVK_INNO.so.1",
+      "role": "Vulkan ICD",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libVK_INNO.so",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libVK_INNO.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "Vulkan ICD",
+      "sha256": "ddd1e8c1f70f26f1dcc6c9c41b8df6038610c1e7e1ad9cf2f10b809bb724c361",
+      "size": 1366132,
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libVK_INNO.so.1",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libVK_INNO.so.1"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libgbm.so.1",
+      "role": "userspace component",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libgbm.so",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libgbm.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libgbm.so.1.0.0",
+      "role": "userspace component",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libgbm.so.1",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libgbm.so.1"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "d1bf6328b5433050d878639d4a2ff64c75c40bdd54d48fb0c46fff28e685bbab",
+      "size": 75696,
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libgbm.so.1.0.0",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libgbm.so.1.0.0"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libglapi_inno.so.0",
+      "role": "GL/EGL stack",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libglapi_inno.so",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libglapi_inno.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libglapi_inno.so.0.0.0",
+      "role": "GL/EGL stack",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libglapi_inno.so.0",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libglapi_inno.so.0"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "GL/EGL stack",
+      "sha256": "99f44b65b29593c72ab99fff981f678558ccd90386248617725e17d1c0ecda41",
+      "size": 162760,
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libglapi_inno.so.0.0.0",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libglapi_inno.so.0.0.0"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libinno_dri_support.so.1",
+      "role": "userspace component",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libinno_dri_support.so",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libinno_dri_support.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "fd1be22596c2f459a63f490d69fd17f3c67c1640e9d841c5261969f496ec3d55",
+      "size": 452980,
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libinno_dri_support.so.1",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libinno_dri_support.so.1"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libinno_mesa_wsi.so.1",
+      "role": "userspace component",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libinno_mesa_wsi.so",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libinno_mesa_wsi.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "69fb9ebbda08ca6c15e03810ed8c39091322ba62177bdee5c4a498a9c49acb07",
+      "size": 4434184,
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libinno_mesa_wsi.so.1",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libinno_mesa_wsi.so.1"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libinnogpu_gbm.so.1",
+      "role": "GBM backend",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libinnogpu_gbm.so",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libinnogpu_gbm.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libinnogpu_gbm.so.1.0.0",
+      "role": "GBM backend",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libinnogpu_gbm.so.1",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libinnogpu_gbm.so.1"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "GBM backend",
+      "sha256": "d271c41906b1447b9236cb1ce826eb666451db55e6f8db39137d7d07826755ce",
+      "size": 59280,
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libinnogpu_gbm.so.1.0.0",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libinnogpu_gbm.so.1.0.0"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libsrv_um_inno.so.1",
+      "role": "services UMD",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libsrv_um_inno.so",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libsrv_um_inno.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "services UMD",
+      "sha256": "b1ab4a034ba659f8d1c79b8cdbd50c1213b0e448f95ef7a171eed0dfb9cda7b7",
+      "size": 654020,
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libsrv_um_inno.so.1",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libsrv_um_inno.so.1"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libufwriter_inno.so.1",
+      "role": "UF writer",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libufwriter_inno.so",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libufwriter_inno.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "UF writer",
+      "sha256": "e335004aa4b295488fb7e8415b4a4e1d639a206aedffa1c1d0ca05241234f05c",
+      "size": 56695868,
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libufwriter_inno.so.1",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libufwriter_inno.so.1"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "libusc_inno.so.1",
+      "role": "USC shader compiler",
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libusc_inno.so",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libusc_inno.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "USC shader compiler",
+      "sha256": "33bffbfbdba8109c6490102cb51b7490359b71ffc4d154022152e4de8dd74f44",
+      "size": 2197008,
+      "source_path": "usr/lib/i386-linux-gnu/innogpu-fh2m/libusc_inno.so.1",
+      "vendor_path": "userspace/i386-linux-gnu/innogpu-fh2m/libusc_inno.so.1"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "innogpu_dri.so",
+      "role": "DRI driver",
+      "source_path": "usr/lib/i386-linux-gnu/dri/inno_dri.so",
+      "vendor_path": "userspace/i386-linux-gnu/dri/inno_dri.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "DRI driver",
+      "sha256": "26d418072d772e2b4df43797bcc48fb4b7d2cbea132394e196302c390da9e6ef",
+      "size": 15254852,
+      "source_path": "usr/lib/i386-linux-gnu/dri/innogpu_dri.so",
+      "vendor_path": "userspace/i386-linux-gnu/dri/innogpu_dri.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "swrast_inno_dri.so",
+      "role": "DRI driver",
+      "source_path": "usr/lib/i386-linux-gnu/dri/kms_swrast_inno_dri.so",
+      "vendor_path": "userspace/i386-linux-gnu/dri/kms_swrast_inno_dri.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "DRI driver",
+      "sha256": "46b4822f40e7ea4294b74499844ab676750832bd1ca6df187879d6262cf977b8",
+      "size": 44039096,
+      "source_path": "usr/lib/i386-linux-gnu/dri/swrast_inno_dri.so",
+      "vendor_path": "userspace/i386-linux-gnu/dri/swrast_inno_dri.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "link_target": "../innogpu-fh2m/libinnogpu_gbm.so",
+      "role": "GBM backend",
+      "source_path": "usr/lib/i386-linux-gnu/gbm/innogpu_gbm.so",
+      "vendor_path": "userspace/i386-linux-gnu/gbm/innogpu_gbm.so"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "6504bcd03c4e094420749908638b96eb3199e34894521e738001daf8e5fbaa5f",
+      "size": 14616,
+      "source_path": "usr/lib/kgc/kgc_inno.so",
+      "vendor_path": "userspace/usr/lib/kgc/kgc_inno.so"
+    },
+    {
       "kind": "ddx",
       "license": "vendor-binary",
       "role": "Xorg DDX",
@@ -436,6 +818,42 @@
       "size": 105,
       "source_path": "usr/share/glvnd/egl_vendor.d/00_inno.json",
       "vendor_path": "userspace/share/glvnd/egl_vendor.d/00_inno.json"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "ALSA UCM config",
+      "sha256": "e278e5ae1ba93a53d9cc6c4e6c5e75b88552734c529fd53ba0b9c5c6194ff149",
+      "size": 732,
+      "source_path": "usr/share/drirc.d/01-innogpu_drv.conf",
+      "vendor_path": "userspace/share/drirc.d/01-innogpu_drv.conf"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "ALSA UCM config",
+      "sha256": "89a7f80ded726070712f21fb8df686410185c8533659ea66e4b23f6be8b8eb97",
+      "size": 240,
+      "source_path": "usr/share/X11/xorg.conf.d/10-innogpu.conf",
+      "vendor_path": "userspace/share/X11/xorg.conf.d/10-innogpu.conf"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "ddb8b635c376e8aa54a03a02651b8efc56e9ae7cdfdcc974a30790d200af7cd3",
+      "size": 9050,
+      "source_path": "usr/share/innogpu-kernel-dkms/postinst",
+      "vendor_path": "userspace/share/innogpu-kernel-dkms/postinst"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "25773b866c2bb1392ceb6441c17c0f9a36db36762f9ea4e118b53b03963096d4",
+      "size": 151,
+      "source_path": "usr/share/doc/innogpu-fh2m/changelog.Debian.gz",
+      "vendor_path": "userspace/share/doc/innogpu-fh2m/changelog.Debian.gz"
     },
     {
       "kind": "userspace-lib",
@@ -858,146 +1276,38 @@
     {
       "kind": "userspace-config",
       "license": "vendor-binary",
-      "role": "userspace component",
-      "sha256": "c1d3e7e1b258cee502c1e05d601f15fb66c5b7803cc7735bf07e8e129dbe3718",
-      "size": 370,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard/Dp",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard/Dp"
-    },
-    {
-      "kind": "userspace-config",
-      "license": "vendor-binary",
-      "role": "userspace component",
-      "sha256": "958e57cfe3577691339226c8c4deafa77249da28f62be67863f528472325b649",
-      "size": 380,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard/Hdmi",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard/Hdmi"
+      "role": "ALSA UCM config",
+      "sha256": "95277909dc20b7db5a00ed2c4fdfbde50f212f389c03a438ec8850900a8651c5",
+      "size": 18790,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm2/InnosiliconCard/HiFi.conf",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm2/InnosiliconCard/HiFi.conf"
     },
     {
       "kind": "userspace-config",
       "license": "vendor-binary",
       "role": "ALSA UCM config",
-      "sha256": "3e3fe2d9b5ae2dc86c96bac0d04ff2f190e5b0e69bacf63b9deaf80c9854c053",
-      "size": 238,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard/InnosiliconCard.conf",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard/InnosiliconCard.conf"
-    },
-    {
-      "kind": "userspace-config",
-      "license": "vendor-binary",
-      "role": "userspace component",
-      "sha256": "50a32a75af0db2cdb0b5a670f022daf4435d489226611119dee4db8966111dee",
-      "size": 316,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0/Dp",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0/Dp"
+      "sha256": "9c7a7dfd5fbcba4ab483f283516a511be0d5f546bb7539d9079e071909e5da44",
+      "size": 110,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm2/InnosiliconCard/InnosiliconCard.conf",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm2/InnosiliconCard/InnosiliconCard.conf"
     },
     {
       "kind": "userspace-config",
       "license": "vendor-binary",
       "role": "ALSA UCM config",
-      "sha256": "0b87aebdff4b04cb266e4a8a61d1f9c9fa7406616d8c330004b8a98f87bf7cc7",
-      "size": 159,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0/InnosiliconCard0-DP0.conf",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0/InnosiliconCard0-DP0.conf"
-    },
-    {
-      "kind": "userspace-config",
-      "license": "vendor-binary",
-      "role": "userspace component",
-      "sha256": "50a32a75af0db2cdb0b5a670f022daf4435d489226611119dee4db8966111dee",
-      "size": 316,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0/Dp",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0/Dp"
-    },
-    {
-      "kind": "userspace-config",
-      "license": "vendor-binary",
-      "role": "userspace component",
-      "sha256": "5876fa2e33d6f1b2ed2a402f9824f8b2b4e38beba0fb2b4ed5dfaea5601f3baf",
-      "size": 325,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0/Hdmi0",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0/Hdmi0"
+      "sha256": "95277909dc20b7db5a00ed2c4fdfbde50f212f389c03a438ec8850900a8651c5",
+      "size": 18790,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm2/conf.d/InnosiliconCard/HiFi.conf",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm2/conf.d/InnosiliconCard/HiFi.conf"
     },
     {
       "kind": "userspace-config",
       "license": "vendor-binary",
       "role": "ALSA UCM config",
-      "sha256": "42b23a800dd4a38736a490c08834d31a5599295bd2eb59ecfb536caeedd05990",
-      "size": 226,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0/InnosiliconCard0-DP0-HDMI0.conf",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0/InnosiliconCard0-DP0-HDMI0.conf"
-    },
-    {
-      "kind": "userspace-config",
-      "license": "vendor-binary",
-      "role": "userspace component",
-      "sha256": "50a32a75af0db2cdb0b5a670f022daf4435d489226611119dee4db8966111dee",
-      "size": 316,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-DP1/Dp",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-DP1/Dp"
-    },
-    {
-      "kind": "userspace-config",
-      "license": "vendor-binary",
-      "role": "userspace component",
-      "sha256": "58de4071b034cc5a67c1b0f3a66c7f5c5d8d0bab3e1c1c3ea317cae7af2645b9",
-      "size": 315,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-DP1/Dp1",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-DP1/Dp1"
-    },
-    {
-      "kind": "userspace-config",
-      "license": "vendor-binary",
-      "role": "userspace component",
-      "sha256": "5876fa2e33d6f1b2ed2a402f9824f8b2b4e38beba0fb2b4ed5dfaea5601f3baf",
-      "size": 325,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-DP1/Hdmi0",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-DP1/Hdmi0"
-    },
-    {
-      "kind": "userspace-config",
-      "license": "vendor-binary",
-      "role": "ALSA UCM config",
-      "sha256": "38261b80f0992c4af99385b1c01feea1729d24a61a2b75e6ba543f83485e723d",
-      "size": 287,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-DP1/InnosiliconCard0-DP0-HDMI0-DP1.conf",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-DP1/InnosiliconCard0-DP0-HDMI0-DP1.conf"
-    },
-    {
-      "kind": "userspace-config",
-      "license": "vendor-binary",
-      "role": "userspace component",
-      "sha256": "50a32a75af0db2cdb0b5a670f022daf4435d489226611119dee4db8966111dee",
-      "size": 316,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-HDMI1/Dp",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-HDMI1/Dp"
-    },
-    {
-      "kind": "userspace-config",
-      "license": "vendor-binary",
-      "role": "userspace component",
-      "sha256": "5876fa2e33d6f1b2ed2a402f9824f8b2b4e38beba0fb2b4ed5dfaea5601f3baf",
-      "size": 325,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-HDMI1/Hdmi0",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-HDMI1/Hdmi0"
-    },
-    {
-      "kind": "userspace-config",
-      "license": "vendor-binary",
-      "role": "userspace component",
-      "sha256": "9275aa83d41c3135c5088b687085f7c18af54b3eaa0230c42a945aa54d37c561",
-      "size": 325,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-HDMI1/Hdmi1",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-HDMI1/Hdmi1"
-    },
-    {
-      "kind": "userspace-config",
-      "license": "vendor-binary",
-      "role": "ALSA UCM config",
-      "sha256": "efea1c618bdc51102382987864049ae78b62221b391c2aee417b6fd2553ae345",
-      "size": 293,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-HDMI1/InnosiliconCard0-DP0-HDMI0-HDMI1.conf",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-HDMI1/InnosiliconCard0-DP0-HDMI0-HDMI1.conf"
+      "sha256": "9c7a7dfd5fbcba4ab483f283516a511be0d5f546bb7539d9079e071909e5da44",
+      "size": 110,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm2/conf.d/InnosiliconCard/InnosiliconCard.conf",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm2/conf.d/InnosiliconCard/InnosiliconCard.conf"
     },
     {
       "kind": "userspace-config",
@@ -1030,24 +1340,6 @@
       "kind": "userspace-config",
       "license": "vendor-binary",
       "role": "userspace component",
-      "sha256": "7e61090de87fbc4e9eb25ede585282c92a72ca7638a062f556d6fd5fe2cabf98",
-      "size": 326,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0/Hdmi",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0/Hdmi"
-    },
-    {
-      "kind": "userspace-config",
-      "license": "vendor-binary",
-      "role": "ALSA UCM config",
-      "sha256": "1d938cdc8ffcb7bed7d19b85cfa4fce9d41973d4224c6b995b121596cb5a0503",
-      "size": 165,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0/InnosiliconCard0-HDMI0.conf",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0/InnosiliconCard0-HDMI0.conf"
-    },
-    {
-      "kind": "userspace-config",
-      "license": "vendor-binary",
-      "role": "userspace component",
       "sha256": "50a32a75af0db2cdb0b5a670f022daf4435d489226611119dee4db8966111dee",
       "size": 316,
       "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-DP0/Dp",
@@ -1075,55 +1367,19 @@
       "kind": "userspace-config",
       "license": "vendor-binary",
       "role": "userspace component",
-      "sha256": "4728312317bf8185993e56809153dcc0f2c91d4f1482225f05b5be4cb469e66d",
-      "size": 316,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-DP1/Dp",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-DP1/Dp"
-    },
-    {
-      "kind": "userspace-config",
-      "license": "vendor-binary",
-      "role": "userspace component",
-      "sha256": "7e61090de87fbc4e9eb25ede585282c92a72ca7638a062f556d6fd5fe2cabf98",
+      "sha256": "76c834c19adc48711e27068c1e9960aba25c958ad8284c0ed3fe8bddf22201c9",
       "size": 326,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-DP1/Hdmi",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-DP1/Hdmi"
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI1/Hdmi",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI1/Hdmi"
     },
     {
       "kind": "userspace-config",
       "license": "vendor-binary",
       "role": "ALSA UCM config",
-      "sha256": "a2ac1e95ba9f7bebf425774074d718ed0973b24c00d0a7bfcf61b46976665a1d",
-      "size": 223,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-DP1/InnosiliconCard0-HDMI0-DP1.conf",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-DP1/InnosiliconCard0-HDMI0-DP1.conf"
-    },
-    {
-      "kind": "userspace-config",
-      "license": "vendor-binary",
-      "role": "userspace component",
-      "sha256": "5876fa2e33d6f1b2ed2a402f9824f8b2b4e38beba0fb2b4ed5dfaea5601f3baf",
-      "size": 325,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-HDMI1/Hdmi0",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-HDMI1/Hdmi0"
-    },
-    {
-      "kind": "userspace-config",
-      "license": "vendor-binary",
-      "role": "userspace component",
-      "sha256": "9275aa83d41c3135c5088b687085f7c18af54b3eaa0230c42a945aa54d37c561",
-      "size": 325,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-HDMI1/Hdmi1",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-HDMI1/Hdmi1"
-    },
-    {
-      "kind": "userspace-config",
-      "license": "vendor-binary",
-      "role": "ALSA UCM config",
-      "sha256": "650af9fd47e373b7c67cfa62f2c6377be4e2d42890fe802a390a71114cb04613",
-      "size": 235,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-HDMI1/InnosiliconCard0-HDMI0-HDMI1.conf",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-HDMI1/InnosiliconCard0-HDMI0-HDMI1.conf"
+      "sha256": "1d938cdc8ffcb7bed7d19b85cfa4fce9d41973d4224c6b995b121596cb5a0503",
+      "size": 165,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI1/InnosiliconCard0-HDMI1.conf",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI1/InnosiliconCard0-HDMI1.conf"
     },
     {
       "kind": "userspace-config",
@@ -1165,10 +1421,82 @@
       "kind": "userspace-config",
       "license": "vendor-binary",
       "role": "userspace component",
-      "sha256": "76c834c19adc48711e27068c1e9960aba25c958ad8284c0ed3fe8bddf22201c9",
+      "sha256": "50a32a75af0db2cdb0b5a670f022daf4435d489226611119dee4db8966111dee",
+      "size": 316,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0/Dp",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0/Dp"
+    },
+    {
+      "kind": "userspace-config",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "5876fa2e33d6f1b2ed2a402f9824f8b2b4e38beba0fb2b4ed5dfaea5601f3baf",
+      "size": 325,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0/Hdmi0",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0/Hdmi0"
+    },
+    {
+      "kind": "userspace-config",
+      "license": "vendor-binary",
+      "role": "ALSA UCM config",
+      "sha256": "42b23a800dd4a38736a490c08834d31a5599295bd2eb59ecfb536caeedd05990",
+      "size": 226,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0/InnosiliconCard0-DP0-HDMI0.conf",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0/InnosiliconCard0-DP0-HDMI0.conf"
+    },
+    {
+      "kind": "userspace-config",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "5876fa2e33d6f1b2ed2a402f9824f8b2b4e38beba0fb2b4ed5dfaea5601f3baf",
+      "size": 325,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-HDMI1/Hdmi0",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-HDMI1/Hdmi0"
+    },
+    {
+      "kind": "userspace-config",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "9275aa83d41c3135c5088b687085f7c18af54b3eaa0230c42a945aa54d37c561",
+      "size": 325,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-HDMI1/Hdmi1",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-HDMI1/Hdmi1"
+    },
+    {
+      "kind": "userspace-config",
+      "license": "vendor-binary",
+      "role": "ALSA UCM config",
+      "sha256": "650af9fd47e373b7c67cfa62f2c6377be4e2d42890fe802a390a71114cb04613",
+      "size": 235,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-HDMI1/InnosiliconCard0-HDMI0-HDMI1.conf",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-HDMI1/InnosiliconCard0-HDMI0-HDMI1.conf"
+    },
+    {
+      "kind": "userspace-config",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "50a32a75af0db2cdb0b5a670f022daf4435d489226611119dee4db8966111dee",
+      "size": 316,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0/Dp",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0/Dp"
+    },
+    {
+      "kind": "userspace-config",
+      "license": "vendor-binary",
+      "role": "ALSA UCM config",
+      "sha256": "0b87aebdff4b04cb266e4a8a61d1f9c9fa7406616d8c330004b8a98f87bf7cc7",
+      "size": 159,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0/InnosiliconCard0-DP0.conf",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0/InnosiliconCard0-DP0.conf"
+    },
+    {
+      "kind": "userspace-config",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "7e61090de87fbc4e9eb25ede585282c92a72ca7638a062f556d6fd5fe2cabf98",
       "size": 326,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI1/Hdmi",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI1/Hdmi"
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0/Hdmi",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0/Hdmi"
     },
     {
       "kind": "userspace-config",
@@ -1176,44 +1504,143 @@
       "role": "ALSA UCM config",
       "sha256": "1d938cdc8ffcb7bed7d19b85cfa4fce9d41973d4224c6b995b121596cb5a0503",
       "size": 165,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI1/InnosiliconCard0-HDMI1.conf",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI1/InnosiliconCard0-HDMI1.conf"
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0/InnosiliconCard0-HDMI0.conf",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0/InnosiliconCard0-HDMI0.conf"
+    },
+    {
+      "kind": "userspace-config",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "c1d3e7e1b258cee502c1e05d601f15fb66c5b7803cc7735bf07e8e129dbe3718",
+      "size": 370,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard/Dp",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard/Dp"
+    },
+    {
+      "kind": "userspace-config",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "958e57cfe3577691339226c8c4deafa77249da28f62be67863f528472325b649",
+      "size": 380,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard/Hdmi",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard/Hdmi"
     },
     {
       "kind": "userspace-config",
       "license": "vendor-binary",
       "role": "ALSA UCM config",
-      "sha256": "95277909dc20b7db5a00ed2c4fdfbde50f212f389c03a438ec8850900a8651c5",
-      "size": 18790,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm2/InnosiliconCard/HiFi.conf",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm2/InnosiliconCard/HiFi.conf"
+      "sha256": "3e3fe2d9b5ae2dc86c96bac0d04ff2f190e5b0e69bacf63b9deaf80c9854c053",
+      "size": 238,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard/InnosiliconCard.conf",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard/InnosiliconCard.conf"
+    },
+    {
+      "kind": "userspace-config",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "50a32a75af0db2cdb0b5a670f022daf4435d489226611119dee4db8966111dee",
+      "size": 316,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-DP1/Dp",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-DP1/Dp"
+    },
+    {
+      "kind": "userspace-config",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "58de4071b034cc5a67c1b0f3a66c7f5c5d8d0bab3e1c1c3ea317cae7af2645b9",
+      "size": 315,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-DP1/Dp1",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-DP1/Dp1"
+    },
+    {
+      "kind": "userspace-config",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "5876fa2e33d6f1b2ed2a402f9824f8b2b4e38beba0fb2b4ed5dfaea5601f3baf",
+      "size": 325,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-DP1/Hdmi0",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-DP1/Hdmi0"
     },
     {
       "kind": "userspace-config",
       "license": "vendor-binary",
       "role": "ALSA UCM config",
-      "sha256": "9c7a7dfd5fbcba4ab483f283516a511be0d5f546bb7539d9079e071909e5da44",
-      "size": 110,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm2/InnosiliconCard/InnosiliconCard.conf",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm2/InnosiliconCard/InnosiliconCard.conf"
+      "sha256": "38261b80f0992c4af99385b1c01feea1729d24a61a2b75e6ba543f83485e723d",
+      "size": 287,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-DP1/InnosiliconCard0-DP0-HDMI0-DP1.conf",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-DP1/InnosiliconCard0-DP0-HDMI0-DP1.conf"
+    },
+    {
+      "kind": "userspace-config",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "4728312317bf8185993e56809153dcc0f2c91d4f1482225f05b5be4cb469e66d",
+      "size": 316,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-DP1/Dp",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-DP1/Dp"
+    },
+    {
+      "kind": "userspace-config",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "7e61090de87fbc4e9eb25ede585282c92a72ca7638a062f556d6fd5fe2cabf98",
+      "size": 326,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-DP1/Hdmi",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-DP1/Hdmi"
     },
     {
       "kind": "userspace-config",
       "license": "vendor-binary",
       "role": "ALSA UCM config",
-      "sha256": "95277909dc20b7db5a00ed2c4fdfbde50f212f389c03a438ec8850900a8651c5",
-      "size": 18790,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm2/conf.d/InnosiliconCard/HiFi.conf",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm2/conf.d/InnosiliconCard/HiFi.conf"
+      "sha256": "a2ac1e95ba9f7bebf425774074d718ed0973b24c00d0a7bfcf61b46976665a1d",
+      "size": 223,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-DP1/InnosiliconCard0-HDMI0-DP1.conf",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-HDMI0-DP1/InnosiliconCard0-HDMI0-DP1.conf"
+    },
+    {
+      "kind": "userspace-config",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "50a32a75af0db2cdb0b5a670f022daf4435d489226611119dee4db8966111dee",
+      "size": 316,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-HDMI1/Dp",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-HDMI1/Dp"
+    },
+    {
+      "kind": "userspace-config",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "5876fa2e33d6f1b2ed2a402f9824f8b2b4e38beba0fb2b4ed5dfaea5601f3baf",
+      "size": 325,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-HDMI1/Hdmi0",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-HDMI1/Hdmi0"
+    },
+    {
+      "kind": "userspace-config",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "9275aa83d41c3135c5088b687085f7c18af54b3eaa0230c42a945aa54d37c561",
+      "size": 325,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-HDMI1/Hdmi1",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-HDMI1/Hdmi1"
     },
     {
       "kind": "userspace-config",
       "license": "vendor-binary",
       "role": "ALSA UCM config",
-      "sha256": "9c7a7dfd5fbcba4ab483f283516a511be0d5f546bb7539d9079e071909e5da44",
-      "size": 110,
-      "source_path": "opt/innogpu/usr/share/alsa/ucm2/conf.d/InnosiliconCard/InnosiliconCard.conf",
-      "vendor_path": "opt/innogpu/usr/share/alsa/ucm2/conf.d/InnosiliconCard/InnosiliconCard.conf"
+      "sha256": "efea1c618bdc51102382987864049ae78b62221b391c2aee417b6fd2553ae345",
+      "size": 293,
+      "source_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-HDMI1/InnosiliconCard0-DP0-HDMI0-HDMI1.conf",
+      "vendor_path": "opt/innogpu/usr/share/alsa/ucm/InnosiliconCard0-DP0-HDMI0-HDMI1/InnosiliconCard0-DP0-HDMI0-HDMI1.conf"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "094745716d3a393c042b2863ef26c2b4456e4c53f16610729bdc6f6b81923e03",
+      "size": 215,
+      "source_path": "lib/systemd/system/sw-inno-gl.service",
+      "vendor_path": "userspace/lib/systemd/system/sw-inno-gl.service"
     },
     {
       "kind": "firmware",
@@ -1250,6 +1677,15 @@
       "size": 534316,
       "source_path": "lib/firmware/innogpu/fh2m.sh",
       "vendor_path": "firmware/fh2m.sh"
+    },
+    {
+      "kind": "userspace-lib",
+      "license": "vendor-binary",
+      "role": "userspace component",
+      "sha256": "32b89440364103be0480da80627383de075d2c8105f7a21a0034de52ada47dec",
+      "size": 1262,
+      "source_path": "usr/sbin/sw-inno-gl",
+      "vendor_path": "userspace/usr/sbin/sw-inno-gl"
     }
   ],
   "format_version": 1,

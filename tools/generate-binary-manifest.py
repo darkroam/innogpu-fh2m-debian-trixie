@@ -12,11 +12,21 @@ VENDOR_PREFIXES = [
     ("usr/lib/x86_64-linux-gnu/innogpu-fh2m/", "userspace/x86_64-linux-gnu/innogpu-fh2m/"),
     ("usr/lib/x86_64-linux-gnu/dri/", "userspace/x86_64-linux-gnu/dri/"),
     ("usr/lib/x86_64-linux-gnu/gbm/", "userspace/x86_64-linux-gnu/gbm/"),
+    ("usr/lib/i386-linux-gnu/innogpu-fh2m/", "userspace/i386-linux-gnu/innogpu-fh2m/"),
+    ("usr/lib/i386-linux-gnu/dri/", "userspace/i386-linux-gnu/dri/"),
+    ("usr/lib/i386-linux-gnu/gbm/", "userspace/i386-linux-gnu/gbm/"),
+    ("usr/lib/kgc/", "userspace/usr/lib/kgc/"),
     ("usr/lib/xorg/modules/drivers/", "userspace/xorg/modules/drivers/"),
     ("usr/share/glvnd/", "userspace/share/glvnd/"),
+    ("usr/share/drirc.d/", "userspace/share/drirc.d/"),
+    ("usr/share/X11/", "userspace/share/X11/"),
+    ("usr/share/innogpu-kernel-dkms/", "userspace/share/innogpu-kernel-dkms/"),
+    ("usr/share/doc/innogpu-fh2m/", "userspace/share/doc/innogpu-fh2m/"),
+    ("usr/sbin/sw-inno-gl", "userspace/usr/sbin/sw-inno-gl"),
     ("etc/vulkan/", "userspace/etc/vulkan/"),
     ("etc/OpenCL/", "userspace/etc/OpenCL/"),
     ("opt/innogpu/", "opt/innogpu/"),
+    ("lib/systemd/system/", "userspace/lib/systemd/system/"),
     ("lib/firmware/innogpu/", "firmware/"),
 ]
 
@@ -25,12 +35,22 @@ PAYLOAD_ROOTS = [
     "usr/lib/x86_64-linux-gnu/innogpu-fh2m",
     "usr/lib/x86_64-linux-gnu/dri",
     "usr/lib/x86_64-linux-gnu/gbm",
+    "usr/lib/i386-linux-gnu/innogpu-fh2m",
+    "usr/lib/i386-linux-gnu/dri",
+    "usr/lib/i386-linux-gnu/gbm",
+    "usr/lib/kgc",
     "usr/lib/xorg/modules/drivers",
     "usr/share/glvnd/egl_vendor.d",
+    "usr/share/drirc.d",
+    "usr/share/X11/xorg.conf.d",
+    "usr/share/innogpu-kernel-dkms",
+    "usr/share/doc/innogpu-fh2m",
     "etc/vulkan/icd.d",
     "etc/OpenCL/vendors",
     "opt/innogpu",
+    "lib/systemd/system",
     "lib/firmware/innogpu",
+    "usr/sbin/sw-inno-gl",   # 单文件载荷(sw-inno-gl 服务入口)
 ]
 
 def sha256_file(p):
@@ -115,13 +135,18 @@ def main():
             absp = os.path.join(tmp, root)
             if not os.path.exists(absp):
                 continue
-            for dirpath, dirnames, filenames in os.walk(absp):
-                dirnames.sort(); filenames.sort()
-                for name in filenames:
+            if os.path.isfile(absp):
+                # 单文件载荷根(如 usr/sbin/sw-inno-gl)
+                items = [(os.path.dirname(absp), [os.path.basename(absp)])]
+            else:
+                items = [(d, fs) for d, _, fs in os.walk(absp)]
+            for dirpath, filenames in items:
+                dirnames_sorted = sorted(f for f in filenames)
+                for name in sorted(dirnames_sorted):
                     full = os.path.join(dirpath, name)
                     rel = os.path.relpath(full, tmp)
-                    # 内核根目录只收录黑盒 .o_shipped（源码在 drivers/，产物 .o.cmd 排除）
-                    if rel.startswith("usr/src/innogpu-kernel-2.2/") and ".o_shipped" not in name:
+                    # 内核根目录: 收录 .o_shipped(黑盒) 与 .o.cmd(构建产物, 与 p27 包 parity 需要)
+                    if rel.startswith("usr/src/innogpu-kernel-2.2/") and ".o_shipped" not in name and not name.endswith(".o.cmd"):
                         continue
                     if rel in seen_src:
                         continue

@@ -4,8 +4,8 @@
 
 - 本文件是源码树迁移的设计基线，对应监督指南 `docs/planning/migration-supervision.md`（监督分支
   migration/supervised-source-tree @ bd76e91）。
-- **阶段 0（设计冻结）✅ 阶段 1（源码树导入 + 9 补丁转提交 + parity）✅ 阶段 2（manifest + 幂等提取 +
-  staging 内核编译）✅**；当前进入阶段 3（新构建器并行验证）申请。
+- **阶段 0 ✅ 阶段 1 ✅ 阶段 2 ✅ 阶段 3（新构建器并行验证 + 完整 package boundary）✅**：
+  4.0.0-i1 候选已构建，oracle 对比（vs patched-27）全部 PASS；阶段 4（实机候选）待批准。
 - 当前设备基线：`3.3.3.42-patched-27`（迁移冻结运行基线与回退包）。
 - 未实机验证的内容一律标记 UNVERIFIED；本文件所有行为承诺均需在对应阶段用命令和输出证明。
 - **边界声明**：阶段 2 的 staging 构建只装配 5 个内核黑盒对象并编译 DKMS；用户态库、固件与 ALSA UCM
@@ -164,7 +164,8 @@ binary、package、runtime parity 验证。禁止用单项编译成功替代完�
 
 ## 八、版本、tag 与发布
 
-- 新架构首版：`Debian package 1.0.0-i1`、`Git tag source-v1.0.0-i1`，不覆盖 `patched-27`；
+- 新架构首版：`Debian package 4.0.0-i1`、`Git tag source-v4.0.0-i1`，不覆盖 `patched-27`；
+  （版本排序已实测：`1.0.0-i1` 会排在 patched-27 之前，故用首段 >3 的 4.0.0-iN；`dpkg --compare-versions` 验证通过）
 - tag 注释含：源码提交 hash、binary-manifest hash、Deepin 原包 hash、构建工具版本、parity report
   位置、实机验证状态、p27 回退包位置；
 - **必须先验证 Debian 版本排序**：用 `dpkg --compare-versions` 实际验证
@@ -178,7 +179,7 @@ binary、package、runtime parity 验证。禁止用单项编译成功替代完�
 | 0 设计冻结 | 本文件：目录、manifest schema、提取工具、staging、版本排序、许可证、回退策略 | 设计审查通过；不改设备不删旧文件 | ✅ 完成 |
 | 1 源码树导入 | `drivers/`、源码架构说明、patch provenance 表、导入报告 | source_import / patch_provenance / source_tree_parity_against_p27 / working_tree_clean / runtime_unchanged | ✅ 完成 |
 | 2 黑盒 manifest 与 staging | 正式 manifest、提取工具、vendor 忽略规则、staging 构建 | first_extraction / second_extraction_idempotent / check_only / bad_hash=FAIL_AS_EXPECTED / missing_source=FAIL_AS_EXPECTED / path_traversal=FAIL_AS_EXPECTED / interrupted_extraction_recovery | ✅ 完成（用户态/固件 package boundary 属阶段 3） |
-| 3 新构建器并行验证 | 新构建器（旧构建器为 oracle，并行比较） | 源码/黑盒/用户态/固件/maintainer scripts/包清单/vermagic/关键符号逐项一致 |
+| 3 新构建器并行验证 | 新构建器（旧构建器为 oracle，并行比较） | 源码/黑盒/用户态/固件/maintainer scripts/包清单/vermagic/关键符号逐项一致 | ✅ 完成（compare-oracle-candidates.sh 全 PASS） |
 | 4 实机候选验证 | 安装候选（需监督批准 + p27 回退与 SSH/TTY 通道） | 包版本/DKMS/vermagic/Driver/Firmware/DRM/fbdev/HWGL/DRI3/PDP/vblank/VA-API/fbterm/xdisplay/Picom/音频 + p27 回退演练 |
 | 5 旧流程退役 | `patches/` 与旧 wrapper 移入 `legacy/` 或标记 deprecated | 阶段 1–4 全部 PASS + 新设备 clone 安装验证；p27 tag/deb 永久保留；至少一个发布周期后才评估物理删除 |
 
