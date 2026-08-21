@@ -1,0 +1,16 @@
+phase4_initial_acceptance=A1-A12 ALL PASS
+candidate=4.0.0-i1 (sha256 68aea6c07842a0def97d18de5385802175290cb9752571b157250eb38fa68735)
+reboot_1=USER_EXECUTED (2026-08-21 14:36 boot)
+A1_package=4.0.0-i1 PASS
+A2_dkms=innogpu-kernel/2.2 installed PASS
+A3_module_vermagic=6.12.101+deb13-amd64 SMP preempt mod_unload modversions PASS (loaded 107 refs)
+A4_driver_firmware=OK/OK errors=0 PASS (dmesg: fh2m.sh loaded; edid stubs only)
+A5_drm_fbdev=card0/renderD128/fb0 PASS
+A6_xorg_gl=PASS_DESKTOP_HWGL (Fantasy II-M, core 4.3, AIGLX innogpu)
+A7_userspace=PASS_DEEPIN_USERSPACE_COHERENT
+A8_audio=default sink HDA Intel analog PASS
+A9_picom=running (pid 2427) PASS
+A10_display=xdisplay watch + HDMI-2 primary 1920x1080 PASS
+A11_regression=vblank CRTC1 10/10 (12.7-18.4ms) CRTC0/2 EINVAL; PDP read/write verify=pass PASS
+A12_post_reboot_hwgl=PASS_POST_REBOOT_HWGL
+runtime_probe=PASS
