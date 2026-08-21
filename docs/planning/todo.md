@@ -10,6 +10,8 @@
 - [x] 完成 release 审阅主体：tag、哈希、包边界、可复现构建（含目录 mtime 修复）、回退路径和附件边界，
   见 [release-review-2026-08-20.md](release-review-2026-08-20.md)。
 - [ ] 剩余发布工作：跨硬件实机矩阵（扩展坞/多屏/无盖桌面/其他机型）、电源/合盖矩阵、release 附件上传。
+- [ ] 源码树迁移（阶段 0 设计已落档 [source-tree-migration.md](source-tree-migration.md)）：阶段 1 导入
+  drivers/、补丁转提交、binary-manifest.json + 幂等提取工具、新构建流程、开发测试闭环。
 
 ## 当前活动项
 
