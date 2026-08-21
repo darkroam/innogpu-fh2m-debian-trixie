@@ -516,10 +516,12 @@ static void innodpu_gem_wdma_sync_pvm(innodpu_gem_object *innodpu_obj,
 
 	list_del(&pvm->list);
 #ifdef GEM_USED_VMALLOC
-	innodpu_dma_memcpy_for_smallbar_sg(obj->dev->dev, &src, &dst, &len, 1, SYS2GDDR);
+	if (pvm->cpu_write)
+		innodpu_dma_memcpy_for_smallbar_sg(obj->dev->dev, &src, &dst, &len, 1, SYS2GDDR);
 	fh2m_inno_vfree(pvm->vaddr);
 #else
-	innodpu_dma_memcpy_for_smallbar(obj->dev->dev, &src, &dst, &len, 1, SYS2GDDR);
+	if (pvm->cpu_write)
+		innodpu_dma_memcpy_for_smallbar(obj->dev->dev, &src, &dst, &len, 1, SYS2GDDR);
 	fh2m_inno_kfree(pvm->vaddr);
 #endif
 
@@ -632,6 +634,8 @@ static int innodpu_gem_invisible_vram_vm_fault(struct vm_area_struct *vma, struc
 
 	INIT_LIST_HEAD(&pvm->list);
 	mutex_lock(&innodpu_obj->vm_lock);
+	pvm->cpu_write = !innodpu_obj->cpu_prep ||
+		innodpu_obj->cpu_prep_write;
 	list_add_tail(&pvm->list, &innodpu_obj->vm_head);
 	mutex_unlock(&innodpu_obj->vm_lock);
 
@@ -2574,6 +2578,8 @@ int inno_gem_object_cpu_prep_ioctl(struct drm_device *dev, void *data, struct dr
 	innodpu_gem_object *innodpu_obj = NULL;
 	bool write = ! !(args->flags & PDP_GEM_CPU_PREP_WRITE);
 	bool wait = !(args->flags & PDP_GEM_CPU_PREP_NOWAIT);
+	bool cpu_write = write || !(args->flags & PDP_GEM_CPU_PREP_READ);
+	struct gem_vm_list *pvm = NULL;
 	int err = 0;
 
 	if (args->flags & ~(PDP_GEM_CPU_PREP_READ | PDP_GEM_CPU_PREP_WRITE | PDP_GEM_CPU_PREP_NOWAIT)) {
@@ -2608,8 +2614,15 @@ int inno_gem_object_cpu_prep_ioctl(struct drm_device *dev, void *data, struct dr
 		if (!dma_resv_test_signaled_rcu(innodpu_obj->resv, write))
 			err = -EBUSY;
 	}
-	if (!err)
+	if (!err) {
+		mutex_lock(&innodpu_obj->vm_lock);
+		innodpu_obj->cpu_prep_write = cpu_write;
 		innodpu_obj->cpu_prep = true;
+		if (cpu_write)
+			list_for_each_entry(pvm, &innodpu_obj->vm_head, list)
+				pvm->cpu_write = true;
+		mutex_unlock(&innodpu_obj->vm_lock);
+	}
 
 exit_unref:
 	drm_gem_object_put(gem_obj);
@@ -2646,7 +2659,10 @@ int inno_gem_object_cpu_fini_ioctl(struct drm_device *dev, void *data, struct dr
 		goto exit_unref;
 	}
 
+	mutex_lock(&innodpu_obj->vm_lock);
 	innodpu_obj->cpu_prep = false;
+	innodpu_obj->cpu_prep_write = true;
+	mutex_unlock(&innodpu_obj->vm_lock);
 
 exit_unref:
 	drm_gem_object_put(gem_obj);

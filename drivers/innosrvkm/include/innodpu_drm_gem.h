@@ -90,6 +90,7 @@ struct gem_vm_list {
 	unsigned long dev_paddr;
 	void * vaddr;
 	int size;
+	bool cpu_write;
 };
 
 typedef struct innodpu_gem_object_t {
@@ -128,6 +129,7 @@ typedef struct innodpu_gem_object_t {
 
 	bool is_fbdev_obj;
 	bool cpu_prep;
+	bool cpu_prep_write;
 	bool is_duplicate;
 	int dfd;
 	spinlock_t lock;
