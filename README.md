@@ -1,73 +1,73 @@
 # innogpu-fh2m-debian-trixie
 
-Debian Trixie 上 Innosilicon Fantasy II-M（FH2M）驱动、显示输出、硬件 GL、音频和验收项目。
-本页只保留当前结论、关键历史边界和文档入口；详细过程不在根 README 展开。
+让 Innosilicon **Fantasy II-M（FH2M，风华2号-M）** GPU 在 **Debian Trixie (13)** 上稳定可用、
+能力可知、可维护可演进的开源适配项目：内核驱动、显示输出、硬件 GL、音频与全套验收证据。
 
-## 当前状态
+> 最后更新：2026-08-21 —— 当前驱动包 `4.0.0-i1`（源码级重构版），已在本机完成全套实机验收与回退演练。
 
-最后更新：2026-08-21（Phase 4 完成：设备已推进至新架构 `4.0.0-i1`，源码树迁移阶段 0–4 全 PASS）。
+## 适配的当前系统
 
-- 当前设备运行 `4.0.0-i1`（迁移源码树 `drivers/` + manifest 管理黑盒载荷，见
-  [source-tree-migration.md](docs/planning/source-tree-migration.md)），内核为 `6.12.101+deb13-amd64`。
-- 4.0.0-i1 已重启验证：DKMS、Driver/Firmware、`/dev/dri/card0`、`renderD128`、`/dev/fb0`、
-  boot autoload、桌面硬件 GL 与 A1–A12 实机验收全 PASS，p27 回退演练 PASS（见
-  [phase4-device-validation.md](docs/planning/phase4-device-validation.md)）。
-- `3.3.3.42-patched-27` 转为**保留的回退基线**（SHA `f3841597…`，回退命令 `apt install
-  --allow-downgrades ./debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb`）；p25/26/27 的 deb 为
-  可复现构建（见 [debs/README.md](debs/README.md)）。
-- p25、p26、p27 依次修复 dma_resv usage、未活动 CRTC vblank 和 foreign DMA-BUF 生命周期；
-  三个版本均已实机验证，包、校验值和 tag 见 [release 目录说明](debs/README.md)。
-- 当前设备此前已完成 p21 的完整 Xorg/GLX、DRI3、真实 VT、显示和 Picom 验收；p24 本次检查未把
-  隔离会话中的 Xorg/dwm 进程读取结果计入新增证据。
+| 项 | 值 |
+| --- | --- |
+| 发行版 / 内核 | Debian Trixie (13)，kernel `6.12.101+deb13-amd64` |
+| CPU 平台 | Hygon x86_64 |
+| GPU | Innosilicon Fantasy II-M，PCI `1ec8:9810`，2 GiB VRAM（PowerVR DDK V119 RTM 谱系） |
+| 当前驱动包 | `4.0.0-i1`：自有驱动源码树 `drivers/` + `binary-manifest.json` 管理的黑盒载荷 |
+| 已验证能力 | Vulkan 1.3.264 / OpenCL 3.0 / GL 4.3 core + GLES 3.2 / VA-API H264+HEVC 硬解 / DRM+fbdev / 桌面硬件 GL / HDA 音频 |
 
-## 关键边界
+## 版本演进
 
-- 后续包只能以 Deepin `20250421190503-debug` 完整原包为技术基线，不能从历史 patched 包拼接用户态文件。
-- `patched-17` 是保守回退点，`patched-8` 是更早历史恢复物；p20 及更早中间版本只保留历史证据，禁止新设备部署。
-- 当前回退链：`patched-27 -> patched-26 -> patched-25 -> patched-24 -> patched-23 -> patched-22 -> patched-21 -> patched-17 -> patched-8`。
-- xdisplay 引擎由 dotconfig 仓库独立维护；本项目只维护 Innogpu 设备接入契约。
-- `.deb`、Deepin 原包和本机日志不进入 Git；release 包放在 `debs/`，由独立 release 附件分发。
+1. **fork 起步**：fork 自 [timhant/innogpu-fh2m-debian-trixie](https://github.com/timhant/innogpu-fh2m-debian-trixie)，初始为 kernel 6.12 兼容补丁（v3.3.3.42 基线）。
+2. **适配本设备**：DPU/fbdev/connector/背光/GEM 系列修复（patched-8 → patched-27），本机稳定运行。
+3. **迁移 Deepin**：以 Deepin 202504 完整原包为唯一技术基线，统一用户态/固件/DDX 载荷，消除 ABI 混配。
+4. **完全重构（当前）**：取消 patch 叠加模式 → `drivers/` 自有源码树 + manifest 管理黑盒，新构建器产出 `4.0.0-i1`（可复现构建；迁移阶段 0–4 完成，设备已运行）。
 
-## 文档入口
+## 主要修复的问题
+
+- Debian 6.12 内核接口兼容（PCI resize API、Kbuild）；DP 启动 fbcon fallback
+- fbdev `/dev/fb0` io mmap（ENODEV）；本机 connector/ACPI/eDP 映射
+- invisible READ mapping 逐页回写缺陷；`dma_resv` usage 语义；未活动 CRTC vblank 守卫
+- foreign DMA-BUF 生命周期；deb 构建可复现性（固定 epoch + 目录 mtime 归一化）
+
+补丁与事故详情见 [docs/patches/README.md](docs/patches/README.md)、[docs/incidents/README.md](docs/incidents/README.md)。
+
+## 快速安装
+
+```sh
+git clone <本仓库> && cd innogpu-fh2m-debian-trixie
+sudo scripts/install-prereqs-debian.sh                        # 构建/运行依赖
+SOURCE_DATE_EPOCH=1787342400 bash scripts/build-innogpu-driver.sh  # 构建 4.0.0-i1
+sudo apt install ./build/innogpu-fh2m-trixie_4.0.0-i1.deb     # 安装（同包名升级）
+sudo reboot                                                    # 重启后加载新模块
+```
+
+回退到保留基线：`sudo apt install --allow-downgrades ./debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb`
+（详见 [docs/user/recovery.md](docs/user/recovery.md)）。
+
+## 文档结构
 
 | 目标 | 文档 |
 | --- | --- |
-| 整体目标与工作路线 | [docs/project/goals.md](docs/project/goals.md) |
-| 当前状态、风险和未完成事项 | [docs/project/status.md](docs/project/status.md) |
-| 架构、所有权和组件边界 | [docs/project/architecture.md](docs/project/architecture.md) |
-| 新设备安装 | [docs/user/new-device-install.md](docs/user/new-device-install.md) |
-| 安装后验证 | [docs/user/verification.md](docs/user/verification.md) |
-| 黑屏、TTY、Xorg 或驱动恢复 | [docs/user/recovery.md](docs/user/recovery.md) |
-| 补丁和版本验收 | [docs/patches/README.md](docs/patches/README.md) |
-| 依赖、外部包和目录结构 | [docs/project/dependencies.md](docs/project/dependencies.md) |
-| 失败过程和根因 | [docs/incidents/README.md](docs/incidents/README.md) |
-| 实施历史和待办 | [docs/planning/history.md](docs/planning/history.md)、[todo.md](docs/planning/todo.md) |
-| Release 审阅记录 | [docs/planning/release-review-2026-08-20.md](docs/planning/release-review-2026-08-20.md) |
-| 源码树迁移设计 | [docs/planning/source-tree-migration.md](docs/planning/source-tree-migration.md)（阶段 0–2 完成，3–5 待执行） |
-| 逆向工程与能力挖掘评估 | [docs/planning/reverse-engineering-assessment.md](docs/planning/reverse-engineering-assessment.md) |
-| FH2M 能力普查记录 | [docs/planning/capability-survey.md](docs/planning/capability-survey.md) |
-| 脚本使用和风险 | [scripts/README.md](scripts/README.md) |
+| 推荐阅读顺序 / 完整索引 | [docs/README.md](docs/README.md) |
+| 当前状态、风险、待办 | [docs/project/status.md](docs/project/status.md)、[docs/planning/todo.md](docs/planning/todo.md) |
+| 整体目标与路线 | [docs/project/goals.md](docs/project/goals.md) |
+| 架构与组件边界 | [docs/project/architecture.md](docs/project/architecture.md) |
+| 新设备安装 / 验证 / 恢复 | [docs/user/new-device-install.md](docs/user/new-device-install.md)、[docs/user/verification.md](docs/user/verification.md)、[docs/user/recovery.md](docs/user/recovery.md) |
+| 补丁与验收 / 事故 | [docs/patches/README.md](docs/patches/README.md)、[docs/incidents/README.md](docs/incidents/README.md) |
+| 源码树迁移与 Phase 4/5 | [source-tree-migration.md](docs/planning/source-tree-migration.md)、[phase4](docs/planning/phase4-device-validation.md)、[phase5](docs/planning/phase5-retirement-design.md) |
+| 脚本 / 工具 / 测试入口 | [scripts/README.md](scripts/README.md)、[tools/README.md](tools/README.md)、[tests/README.md](tests/README.md) |
 
-完整文档索引见 [docs/README.md](docs/README.md)。
+## 致谢
 
-## 最小安全原则
+- 上游仓库：[timhant/innogpu-fh2m-debian-trixie](https://github.com/timhant/innogpu-fh2m-debian-trixie)（本仓库 fork 来源）
+- Deepin（V23 驱动载荷、打包结构与社区适配方案）
+- Innosilicon（FH2M 驱动、固件与硬件；Dual MIT/GPL）
+- Imagination Technologies / PowerVR（DDK V119 谱系与参照）
+- [picom](https://github.com/yshui/picom)（上游合成器；本仓库维护 patched 构建）
+- Debian 项目、DRM/KMS、Mesa、X.Org、PipeWire 等开源生态
+- dotconfig（xdisplay 显示引擎，独立仓库维护）
 
-1. 安装或升级前先确认 release 包、SHA-256、回退包和 SSH/真实 TTY 恢复路径。
-2. 先更新文档，再修改代码；修改后运行对应测试并复核当前状态文档。
-3. 安装新驱动后先验证包、DKMS 和节点，再决定是否重启；不要热切换活动显卡模块。
-4. 任何黑屏或 Xorg 失败，按 [故障恢复](docs/user/recovery.md) 回退，不复制历史包中的单个 `.so`、固件或 `.ko`。
+## 许可证
 
-## 仓库结构
-
-```text
-patches/       内核、Picom 和 fbterm 补丁
-scripts/       构建、安装、恢复和验证入口
-tests/ tools/  自动化测试与最小探针
-config/        本项目维护的配置模板
-docs/project/  当前架构、状态、依赖和维护规则
-docs/patches/  补丁与 release 验收记录
-docs/user/     安装、验证、显示和恢复操作
-docs/incidents/失败现场与根因
-docs/planning/ 计划、实施历史和待办
-debs/          被 Git 忽略的本地包目录，仅跟踪说明
-```
+- 本仓库自有内容（补丁、脚本、文档、`drivers/` 中可维护源码改动）：**MIT**，见 [LICENSE](LICENSE)。
+- 导入的 `drivers/` 源码与黑盒载荷（`.o_shipped`）、用户态库、固件：**© Innosilicon，Dual MIT/GPL**，随驱动包分发；来源与哈希见 [binary-manifest.json](binary-manifest.json)、[docs/project/dependencies.md](docs/project/dependencies.md)。

@@ -22,8 +22,21 @@ SOFTWARE.
 
 ---
 
-NOTE: The patches in this repository apply to the Innosilicon innogpu driver
-source code, which is © Innosilicon Technology Ltd. and licensed under
-Dual MIT/GPL. The original driver package must be obtained separately from
-Innosilicon. This repository contains only the patch files and installation
-scripts, not the original driver source code.
+NOTE: This MIT license covers the repository's own work: the compatibility
+patches, build/install/recovery scripts, tools, documentation, and the
+maintainable source-tree modifications under drivers/.
+
+The imported driver code and binary payload are third-party and retain their
+own licensing:
+
+- drivers/ sources and black-box objects (.o_shipped), userspace libraries
+  and firmware: © Innosilicon Technology Ltd., Dual MIT/GPL, sourced from the
+  Deepin 202504 package (see binary-manifest.json for the authoritative
+  payload list, hashes and source package).
+- This repository is a fork of
+  https://github.com/timhant/innogpu-fh2m-debian-trixie (original kernel 6.12
+  compatibility patches); the fork's own changes are MIT.
+
+Distributing this repository does not imply permission to redistribute the
+Innosilicon payload separately from the terms above; obtain the original
+package from Innosilicon/Deepin when required.
