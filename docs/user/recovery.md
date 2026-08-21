@@ -5,12 +5,13 @@
 驱动回退顺序固定为：
 
 ```text
-当前链：patched-27 -> patched-26 -> patched-25 -> patched-24 -> patched-23 -> patched-22
+当前链：4.0.0-i1 -> patched-27 -> patched-26 -> patched-25 -> patched-24 -> patched-23 -> patched-22
 历史链：patched-22 -> patched-21 -> patched-17 -> patched-8
 ```
 
-patched-17 是当前保守回退点，patched-8 只在 patched-17 仍不能启动时使用。执行任何升级前都应把
-这两个 deb 放入 `debs/`，并保留 SSH 或真实 TTY 恢复通道。
+当前设备运行 `4.0.0-i1`；**首选回退 = patched-27**（见下节）。patched-17 是深层保守回退点，
+patched-8 只在 patched-17 仍不能启动时使用。执行任何升级前都应把 `patched-27`、`patched-17`、
+`patched-8` 三个 deb 放入 `debs/`，并保留 SSH 或真实 TTY 恢复通道。
 
 本页可以独立使用。先在可用 SSH 或 TTY 中设置仓库路径；仓库不在默认位置时，先把变量改为实际 clone
 目录。若检查失败，不要继续执行包替换命令：
@@ -23,6 +24,21 @@ test -x "$INNOGPU_ROOT/scripts/verify-install-status.sh" || {
 }
 cd "$INNOGPU_ROOT"
 ```
+
+## 4.0.0-i1 回退到 patched-27（首选回退）
+
+apt 默认拒绝降级，必须使用 `--allow-downgrades`（版本排序保证 `3.3.3.42-patched-27 < 4.0.0-i1`）：
+
+```sh
+cd "$INNOGPU_ROOT"
+sudo apt install --allow-downgrades "$INNOGPU_ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb"
+sudo depmod -a "$(uname -r)"
+sudo update-initramfs -u -k "$(uname -r)"
+sudo reboot
+```
+
+重启后使用 `scripts/verify-install-status.sh --require-reboot 3.3.3.42-patched-27` 验证回退基线。
+必须整体切回 p27 包，禁止只替换一个 vendor `.so`。
 
 ## patched-22 回退到 patched-21
 

@@ -5,11 +5,16 @@
 
 ## 构建与打包
 
+> **当前入口**：新架构构建器 `build-innogpu-driver.sh`（迁移源码树 + manifest 黑盒载荷，产出
+> 4.0.0-iN）。以下 `build-deepin-coherent.sh`、`build-patchedNN-*.sh` 与历史安装/卸载入口为
+> **legacy（保留）**：永久保留作 p27 oracle、版本护栏、回退包与事故证据；**不作为新工作入口**，
+> 不移动不删除（Phase 5 第二步后再评估，见 `docs/planning/phase5-retirement-design.md`）。
+
 | 入口 | 生命周期 | 职责 |
 | --- | --- | --- |
-| `build-deepin-coherent.sh` | 当前公共构建器 | 从完整 Deepin 202504 原包构建 coherent deb，版本、release epoch 和所有功能均由显式参数控制 |
-| `build-patched21-deepin-release-candidate.sh` | 当前固定包装 | 以固定 p21 开关构建所有权收敛后的首个 release candidate；只构建，不安装 |
-| `build-patched22-local-lid.sh` | 当前设备验证包 | 以 patch-009 修正本机内置 eDP connector；脚本只构建，安装和重启由操作者显式执行 |
+| `build-deepin-coherent.sh` | legacy 构建器（保留） | 从完整 Deepin 202504 原包构建 patched-N 系 coherent deb；p27 oracle 与 check-docs 版本护栏依赖，禁止删除；版本、release epoch 和所有功能均由显式参数控制 |
+| `build-patched21-deepin-release-candidate.sh` | legacy 包装（保留） | 以固定 p21 开关构建所有权收敛后的首个 release candidate；只构建，不安装 |
+| `build-patched22-local-lid.sh` | legacy 包装（保留） | 以 patch-009 修正本机内置 eDP connector；脚本只构建，安装和重启由操作者显式执行 |
 | `build-patched23-invisible-read-fix.sh` | 离线修复候选 | 在 p22 补丁集合上增加 invisible READ mapping 释放不回写修复；只构建，不安装、不热切换 |
 | `build-patched24-kernel-612101.sh` | 内核兼容发布包 | 在 p23 补丁集合上增加 `6.12.101+` 的 `pci_resize_resource()` 兼容修复；只构建，不安装、不热切换 |
 | `build-patched25-dma-resv-fix.sh` | 离线正确性候选 | 在 p24 补丁集合上增加 patch-025 dma_resv usage 语义修复；只构建，不安装、不热切换 |
@@ -19,15 +24,14 @@
 | `check-source-parity.sh` | 只读 parity 检查 | 在临时目录重建 p27 生成源码树（third_party + 9 个启用补丁按构建器顺序 + 清理 .orig/.rej），与 `drivers/` 逐文件对比（排除 README/.o_shipped/.o.cmd），输出机器可读 PASS/FAIL；不修改源码树、旧构建器或设备 |
 | `phase4-baseline-capture.sh` | 只读基线采集 | Phase 4 安装前 B1-B12 基线采集（dpkg/lsmod/DKMS/modprobe/initramfs/音频内核可见/Picom/用户态一致性/恢复通道），输出存 `baselines/phase4-baseline-<ts>.log`；真实会话项（/dev/dri、Xorg/GL、音频 sink、显示切换）由用户实机执行 |
 | `extract-vendor-binaries.sh` | 幂等提取工具 | 按 `binary-manifest.json` 从 pinned Deepin deb 提取黑盒载荷到 `vendor/`；校验 deb SHA、目标存在且哈希一致则跳过、缺失/不符安全重建、拒绝路径穿越/未知 kind、临时目录 + 原子 rename；`--check-only` 只读；输出机器可读 PASS/FAIL |
-| `build-innogpu-driver.sh` | staging 构建 | 装配 `build/<unique>/source`（drivers/ + vendor 内核黑盒 + 确定性变换），离线编译 DKMS 模块并校验 vermagic；不安装、不热切换、不修改 drivers/vendor |
 | `generate-binary-manifest.py`（tools/） | 清单生成 | 从 Deepin deb 确定性生成 `binary-manifest.json`（校验 deb SHA、覆盖全部黑盒文件与符号链接、kind/role/license 分类） |
 | `compare-oracle-candidates.sh` | oracle 对比 | 新架构候选包 vs patched-27：对比 control（除 Version/Description/Installed-Size）、文件清单、载荷哈希、DKMS 源码、黑盒对象、maintainer 脚本（版本归一）、版本排序与 module_symbols（调用 compare-module-symbols.sh）；构建产物（.o.cmd/.o/.ko/modules.order/Module.symvers/.mod）统一按 ARTIFACT_RE 排除；输出机器可读 PASS/FAIL |
 | `compare-module-symbols.sh` | 只读符号对比 | 离线构建候选与 patched-27 两包 DKMS 源码（同一内核头），逐 .ko 对比 vermagic/depends/导出符号/导入符号；构建于 `$ROOT/.build/`，不安装不重启；module_symbols=PASS/FAIL/UNCOMPARABLE |
-| `build-innogpu-driver.sh`（阶段 3 全量） | 新架构构建器 | 装配 drivers/ + vendor 黑盒 + 确定性变换，离线编译 DKMS，产出完整 coherent 包（4.0.0-iN）；版本排序 > patched-27 校验；`SOURCE_DATE_EPOCH` 必填（缺失即失败）；`.o.cmd` 守卫保证构建产物不入包；不安装不重启 |
-| `build-patched17-deepin-local-display.sh` | 停用护栏 | 明确拒绝把 patched-17 作为后续构建父版本 |
-| `build-patched18-deepin-local-display.sh` | 停用护栏 | 明确拒绝重建历史混合载荷 patched-18 |
-| `build-patched19-deepin-coherent.sh` | 停用护栏 | 明确拒绝用当前辅助载荷复用 patched-19 版本号 |
-| `build-patched20-deepin-diagnostic.sh` | 停用护栏 | 明确拒绝用当前辅助载荷复用已验收 patched-20 版本号 |
+| `build-innogpu-driver.sh` | **新架构当前构建器** | 装配 drivers/ + vendor 黑盒 + 确定性变换，离线编译 DKMS，产出完整 coherent 包（4.0.0-iN）；版本排序 > patched-27 校验；`SOURCE_DATE_EPOCH` 必填（缺失即失败）；`.o.cmd` 守卫保证构建产物不入包；不安装不重启 |
+| `build-patched17-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝把 patched-17 作为后续构建父版本 |
+| `build-patched18-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝重建历史混合载荷 patched-18 |
+| `build-patched19-deepin-coherent.sh` | legacy 护栏（保留） | 明确拒绝用当前辅助载荷复用 patched-19 版本号 |
+| `build-patched20-deepin-diagnostic.sh` | legacy 护栏（保留） | 明确拒绝用当前辅助载荷复用已验收 patched-20 版本号 |
 | `prepare-deepin-userspace-root.sh` | 当前辅助 | 将 Deepin 原包解包到被忽略的 `third_party/` |
 | `build-patched-picom.sh` | 独立组件 | 构建/安装固定基线的 patched Picom，不进入驱动 deb |
 | `build-patched-fbterm.sh` | 独立组件 | 从 Debian fbterm 1.7-5 构建可配置 redraw 的用户本地版本，不进入驱动 deb |

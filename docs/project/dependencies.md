@@ -17,7 +17,8 @@
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-24.deb` | patched-23 补丁集合加 `6.12.101+` PCI resize API 兼容；已通过 6.12.101 离线 DKMS 编译；SHA-256 见 `docs/patches/patched-24-kernel-612101.md` |
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-25.deb` | patch-025 dma_resv usage 语义修复；已实机验证；当前回退点为 p26；可复现 SHA 见 `debs/README.md` |
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-26.deb` | patch-026 未活动 CRTC vblank 守卫；已实机验证；当前回退点为 p27；可复现 SHA 见 `debs/README.md` |
-| `debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb` | patch-027 foreign DMA-BUF 生命周期修复；当前设备运行包；可复现 SHA 见 `debs/README.md` |
+| `debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb` | patch-027 foreign DMA-BUF 生命周期修复；**保留的回退基线**（Phase 4 后设备已运行 4.0.0-i1）；SHA `f3841597…` |
+| `build/innogpu-fh2m-trixie_4.0.0-i1.deb`（由 `scripts/build-innogpu-driver.sh` 生成） | **新架构当前运行包**：迁移源码树 + manifest 黑盒载荷；可复现 epoch 1787342400，SHA `68aea6c0…`；Phase 4 实机验收全 PASS |
 | `debs/innogpu-fh2m_20250421190503-debug_amd64.deb` | Deepin 202504 DKMS/GL/DDX 来源 |
 
 构建和准备脚本优先查找 `debs/`，并保留仓库根目录旧路径作为兼容回退。

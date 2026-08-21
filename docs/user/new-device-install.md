@@ -6,34 +6,40 @@
 
 | 版本 | 用途 | 新设备策略 |
 | --- | --- | --- |
-| `patched-24` | 当前设备 6.12.101+ DKMS 兼容包 | 仅在目标内核为 6.12.101+ 且已取得 release 附件时使用；跨硬件审阅完成前不作为默认入口 |
-| `patched-23` | 6.12.96 历史运行候选 | p24 的直接回退点；不作为新内核默认入口 |
-| `patched-22` | 当前设备 connector 修复验证包 | 电源/合盖矩阵、跨硬件矩阵和 release 审阅完成前，不作为默认入口 |
-| `patched-21` | 当前设备已完成完整运行验收的稳定基线 | 跨硬件矩阵、回退演练和 release 审阅完成前，不作为默认入口 |
-| `patched-17` | 保守自动安装和 p21 回退包 | 新设备首次安装使用此入口 |
+| `4.0.0-i1` | **新架构当前运行包**（迁移源码树 + manifest 黑盒载荷，Phase 4 实机验收通过） | **新设备默认入口**：从本仓库构建后 apt 安装（见下） |
+| `patched-27` | 保留的回退基线（SHA `f3841597…`） | `4.0.0-i1` 故障时的首选回退（`--allow-downgrades`） |
+| `patched-17` | 保守历史回退包 | 深层回退点（保留，不再作为默认入口） |
 | `patched-8` | 更早历史回滚物 | 仅在 patched-17 无法恢复时使用 |
+| `patched-24`~`patched-21` | 历史运行候选与验收基线 | 仅作回退链与证据，不作为新设备入口 |
 | `patched-20` | 历史诊断与运行证据 | 禁止部署；旧辅助载荷不符合当前边界 |
 
 patched-18/19 是问题定位和 coherent 构建演进记录，不是安装推荐版本。
 
-## 准备保守安装包
+## 准备安装包（主入口 4.0.0-i1）
 
-二进制 deb 不随 Git 提供。clone 本仓库后，先从维护者审阅的 release 记录取得以下两个包，并按记录
-核对版本和 SHA-256 后放入 `debs/`：
-
-```text
-debs/innogpu-fh2m-trixie_3.3.3.42-patched-8.deb
-debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb
-```
-
-`patched-17` 是本次保守安装包，`patched-8` 只是在下一次启动失败时使用的本地回退包。没有该 release
-记录时应停止并向维护者取得包；不得以未知来源 deb 或禁止部署的 patched-20 替代。
-
-Deepin 原包不属于 patched-17 的安装前提。只有构建新的 coherent 候选时才需要另外取得：
+新架构包不随 Git 提供。clone 本仓库后从维护者审阅的 release 记录取得（或按记录核对 SHA-256
+`68aea6c0…` 与可复现 epoch `1787342400`）Deepin 原包并构建：
 
 ```text
 debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 ```
+
+```sh
+cd "$INNOGPU_ROOT"
+SOURCE_DATE_EPOCH=1787342400 bash scripts/build-innogpu-driver.sh
+sudo apt install ./build/innogpu-fh2m-trixie_4.0.0-i1.deb
+```
+
+同时保留深层回退包（按 release 记录核对 SHA-256 后放入 `debs/`）：
+
+```text
+debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb
+debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb
+debs/innogpu-fh2m-trixie_3.3.3.42-patched-8.deb
+```
+
+`patched-27` 是 `4.0.0-i1` 的首选回退包，`patched-17`/`patched-8` 是深层回退包。没有 release
+记录时应停止并向维护者取得包；不得以未知来源 deb 或禁止部署的 patched-20 替代。
 
 这些文件和本地构建出的 deb 均被 `.gitignore` 忽略。`third_party/` 由脚本从 Deepin 原包重建，
 也不进入 Git。
@@ -66,9 +72,20 @@ sudo INNOGPU_X_USER="$USER" INNOGPU_X_HOME="$HOME" \
 
 该命令只安装 Innogpu 模式恢复钩子和 X11 会话接入，不会覆盖 dotconfig 的显示引擎。
 
-## 保守入口：patched-17
+## 主入口：4.0.0-i1
 
-先确认 patched-8 回退包已经放入 `debs/`，再执行：
+安装前准备：确认 `patched-27` 回退包在 `debs/`，并保留 SSH 或真实 TTY 恢复通道；按
+[`phase4-device-validation.md`](../planning/phase4-device-validation.md) 先做 B1-B12 基线采集。
+
+```sh
+cd "$INNOGPU_ROOT"
+sudo apt install ./build/innogpu-fh2m-trixie_4.0.0-i1.deb
+# 安装后暂停，重启后再做 A1-A12 验收；任一失败按 recovery.md 回退 patched-27
+```
+
+## 深层回退入口：patched-17（legacy，保留）
+
+仅在 `4.0.0-i1 → patched-27` 仍无法恢复时使用。先确认 patched-8 回退包已经放入 `debs/`，再执行：
 
 ```sh
 cd "$INNOGPU_ROOT"
@@ -101,7 +118,8 @@ Deepin 202504 原包调用 `build-deepin-coherent.sh`。不得以 patched-8、17
 scripts/check-release-package.sh debs/<new-package>.deb
 ```
 
-在 p22/p21 完成跨硬件矩阵、回退演练和 release 审阅前，新设备只使用 patched-17 保守入口。
+在跨硬件矩阵与 release 审阅完成前，新设备默认入口为 4.0.0-i1（Phase 4 已在本机完成全套实机验收）；
+patched-17 仅作为深层回退保留。
 
 patched-21 已完成当前设备的构建、包边界、部署、重启和运行验收。精确输入、补丁矩阵、清洁载荷边界
 和跨硬件发布前门槛见 [`patched-21-release-candidate.md`](../patches/patched-21-release-candidate.md)。

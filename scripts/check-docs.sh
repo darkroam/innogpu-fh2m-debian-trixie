@@ -135,6 +135,9 @@ if rg -q 'baselines/latest-' docs/project/status.md; then
     fail "current status must not cite unversioned historical baseline files as p21 evidence"
 fi
 
+# Legacy retention guards (Phase 5 step 1): old patched wrappers stay in
+# scripts/ as permanent version guards / rollback evidence; must NOT be
+# removed even after the new architecture becomes the default builder.
 for historical_wrapper in \
     scripts/build-patched17-deepin-local-display.sh \
     scripts/build-patched18-deepin-local-display.sh \
