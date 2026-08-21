@@ -1,0 +1,110 @@
+post_reboot_hwgl_check=START
+timestamp=2026-08-21T14:43:38+08:00
+boot_time=2026-08-21 14:36:45
+
+
+===== Package And Driver =====
+package=innogpu-fh2m-trixie
+version=4.0.0-i1
+status=ii 
+Driver Status:   OK
+
+Device ID: 0:128
+Firmware Status: OK
+Server Errors:   0
+HWR Event Count: 0
+CRR Event Count: 0
+SLR Event Count: 0
+WGP Error Count: 0
+TRP Error Count: 0
+FWF Event Count: 0
+APM Event Count: 0
+GPU Utilisation: -
+
+===== Current Persistent Xorg/GL Config =====
+current_xorg_config=MODESETTING_SOFT
+current_vendor_gl=ENABLED
+historic_latest_desktop_hwgl_result=PASS_DESKTOP_HWGL
+historic_latest_current_xorg_hwgl_runtime_result=PASS_CURRENT_XORG_HWGL_RUNTIME
+
+===== Nodes =====
+crw-rw---- 1 root video 29, 0  8月21日 14:36 /dev/fb0
+
+/dev/dri:
+总计 0
+drwxr-xr-x  2 root root         80  8月21日 14:36 by-path
+crw-rw----+ 1 root video  226,   0  8月21日 14:36 card0
+crw-rw-rw-+ 1 root render 226, 128  8月21日 14:36 renderD128
+
+/dev/dri/by-path:
+总计 0
+lrwxrwxrwx 1 root root  8  8月21日 14:36 pci-0000:02:00.0-card -> ../card0
+lrwxrwxrwx 1 root root 13  8月21日 14:36 pci-0000:02:00.0-render -> ../renderD128
+
+===== Xorg And dwm =====
+   2209 tty1     startx          /bin/sh /usr/bin/startx
+   2273 tty1     xinit           xinit ~/.config/x11/xinitrc -- /etc/X11/xinit/xserverrc :0 vt1 -keeptty -auth /tmp/serverauth.REDACTED
+   2274 tty1     Xorg            /usr/lib/xorg/Xorg -nolisten tcp :0 vt1 -keeptty -auth /tmp/serverauth.REDACTED
+   2435 tty1     dwm             dwm
+   2642 tty1     dwmblocks       dwmblocks
+XAUTHORITY=~/.Xauthority
+x_display_query=OK
+desktop_xorg_active=1
+
+===== Current Desktop GL =====
+    Device: Fantasy II-M (0xffffffff)
+    Accelerated: yes
+OpenGL vendor string: innosilicon
+OpenGL renderer string: Fantasy II-M
+OpenGL version string: 3.0 build 23.3@88877759
+
+===== Current Xorg Acceleration Extensions =====
+    DRI2  (opcode: 155, base event: 119)
+    DRI3  (opcode: 149)
+    GLX  (opcode: 152, base event: 95, base error: 158)
+    Present  (opcode: 148)
+    RANDR  (opcode: 140, base event: 89, base error: 147)
+dri3_result=AVAILABLE
+
+===== Deepin Surfaceless EGL Hardware Probe =====
+surfaceless_hw_result=SKIPPED_AFTER_DESKTOP_HWGL_PASS
+
+===== Deepin GBM EGL Hardware Probe =====
+gbm_hw_result=SKIPPED_AFTER_DESKTOP_HWGL_PASS
+
+===== Known Remaining Gates =====
+desktop_xorg_gl=NOT_CURRENTLY_ENABLED
+ddx_xorg=PASS_VENDOR_DDX_RUNTIME_ACCELERATION
+deepin_hwgl_trial_gate=HISTORIC_RESULT_PASS_DESKTOP_HWGL_BUT_CURRENT_CONFIG_IS_MODESETTING_SOFT_ENABLED
+remaining_gate=REAPPLY_DEEPIN_HWGL_TRIAL_THEN_VALIDATE_WITHOUT_REBOOT
+gbm_egl=PASS_WITH_MINIMAL_GBM_GLES2_PROBE_AND_DESKTOP_HWGL
+latest_ddx_result=PASS_VENDOR_DDX_RUNTIME_ACCELERATION
+latest_desktop_hwgl_result=PASS_DESKTOP_HWGL
+latest_current_xorg_hwgl_runtime_result=PASS_CURRENT_XORG_HWGL_RUNTIME
+latest_post_reboot_hwgl_result=PASS_POST_REBOOT_HWGL
+
+===== Recovery Points =====
+missing patched17 baseline file
+
+===== Existing Post-Reboot Desktop Evidence =====
+latest_desktop_result=~/src/innogpu-fh2m-debian-trixie/baselines/latest-desktop-hwgl-result.txt
+latest_desktop_report=~/src/innogpu-fh2m-debian-trixie/baselines/desktop-hwgl-20260821-143946.txt
+existing_post_boot_pass=1
+x_display_query=OK
+desktop_xorg_active=1
+direct rendering: Yes
+Extended renderer info (GLX_MESA_query_renderer):
+    Accelerated: yes
+OpenGL vendor string: innosilicon
+OpenGL renderer string: Fantasy II-M
+    DRI3  (opcode: 149)
+    GLX  (opcode: 152, base event: 95, base error: 158)
+    Present  (opcode: 148)
+Provider 0: id: 0x44 cap: 0xf, Source Output, Sink Output, Source Offload, Sink Offload crtcs: 3 outputs: 3 associated providers: 0 name:modesetting
+270:[    31.827] (II) Initializing extension Present
+271:[    31.827] (II) Initializing extension DRI3
+279:[    31.832] (II) AIGLX: Loaded and initialized innogpu
+280:[    31.832] (II) GLX: Initialized DRI2 GL provider for screen 0
+
+===== Desktop Hardware GL Validation =====
+SKIPPED_LIVE_DESKTOP_CHECK_EXISTING_POST_BOOT_PASS

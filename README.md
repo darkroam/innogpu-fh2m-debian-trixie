@@ -5,11 +5,16 @@ Debian Trixie 上 Innosilicon Fantasy II-M（FH2M）驱动、显示输出、硬�
 
 ## 当前状态
 
-最后更新：2026-08-20（release 审阅：patched-27 为当前运行版本，构建可复现性已修复）。
+最后更新：2026-08-21（Phase 4 完成：设备已推进至新架构 `4.0.0-i1`，源码树迁移阶段 0–4 全 PASS）。
 
-- 当前设备运行 `3.3.3.42-patched-27`，内核为 `6.12.101+deb13-amd64`。
-- patched-27 已重启验证：DKMS、Driver/Firmware、`/dev/dri/card0`、`renderD128`、`/dev/fb0`、
-  boot autoload 和桌面硬件 GL 正常；p25/26/27 的 deb 为可复现构建（见 [debs/README.md](debs/README.md)）。
+- 当前设备运行 `4.0.0-i1`（迁移源码树 `drivers/` + manifest 管理黑盒载荷，见
+  [source-tree-migration.md](docs/planning/source-tree-migration.md)），内核为 `6.12.101+deb13-amd64`。
+- 4.0.0-i1 已重启验证：DKMS、Driver/Firmware、`/dev/dri/card0`、`renderD128`、`/dev/fb0`、
+  boot autoload、桌面硬件 GL 与 A1–A12 实机验收全 PASS，p27 回退演练 PASS（见
+  [phase4-device-validation.md](docs/planning/phase4-device-validation.md)）。
+- `3.3.3.42-patched-27` 转为**保留的回退基线**（SHA `f3841597…`，回退命令 `apt install
+  --allow-downgrades ./debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb`）；p25/26/27 的 deb 为
+  可复现构建（见 [debs/README.md](debs/README.md)）。
 - p25、p26、p27 依次修复 dma_resv usage、未活动 CRTC vblank 和 foreign DMA-BUF 生命周期；
   三个版本均已实机验证，包、校验值和 tag 见 [release 目录说明](debs/README.md)。
 - 当前设备此前已完成 p21 的完整 Xorg/GLX、DRI3、真实 VT、显示和 Picom 验收；p24 本次检查未把

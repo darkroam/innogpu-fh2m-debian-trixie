@@ -1,0 +1,41 @@
+===== Phase 4 preinstall baseline: 2026-08-21T14:26:32+08:00 =====
+== B1 package version ==
+innogpu-fh2m-trixie 3.3.3.42-patched-27
+== B2 loaded modules ==
+innogpu              6987776  95
+== B3 module files ==
+总计 1944
+-rw-r--r-- 1 nobody nogroup 1988508  8月20日 15:56 innogpu.ko.xz
+== B4 dkms status ==
+innogpu-kernel/2.2, 6.12.101+deb13-amd64, x86_64: installed
+== B5 modprobe config ==
+options innogpu firmware_en=1
+== B6 initramfs innogpu entries ==
+etc/ld.so.conf.d/0-innogpu-hwgl.conf
+etc/ld.so.conf.d/0-innogpu-hwgl.conf.disabled
+etc/ld.so.conf.d/0-innogpu-i386.conf.disabled
+etc/ld.so.conf.d/0-innogpu-legacy.conf.disabled
+etc/ld.so.conf.d/0-innogpu.conf
+etc/modprobe.d/innogpu.conf
+== B9 audio cards (kernel-visible) ==
+ 0 [InnosiliconCard]: InnosiliconCard - InnosiliconCard
+                      InnosiliconCard0-HDMI0-HDMI1
+ 1 [Intel          ]: HDA-Intel - HDA Intel
+                      HDA Intel at 0xfc300000 irq 76
+ 2 [Headset        ]: USB-Audio - Thunderbolt Dock Audio Headset
+                      HP-Thunderbolt-Dock-Audio-Headset
+aplay: device_list:279: no soundcards found...
+== B10 picom ==
+2418 /usr/local/bin/picom --config ~/.config/x11/picom.conf --log-level=warn --log-file ~/.cache/picom.log
+== B12 userspace coherence ==
+
+===== Result =====
+RESULT: PASS_DEEPIN_USERSPACE_COHERENT
+== recovery channel re-check ==
+ssh: active
+getty: 2
+disk free: 145G
+kernel headers: /lib/modules/6.12.101+deb13-amd64/build
+rollback pkg: f384159751fed249263591ff46758bb32327d0048e0669747050b66db1e33c6a
+candidate pkg: 68aea6c07842a0def97d18de5385802175290cb9752571b157250eb38fa68735
+===== baseline saved: baselines/phase4-baseline-20260821-142632.log =====

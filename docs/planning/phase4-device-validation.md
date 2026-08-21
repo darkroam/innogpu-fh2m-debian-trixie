@@ -3,8 +3,10 @@
 **状态**：**Phase 4 已于 2026-08-21 实机完成**——按本清单执行：B1–B12 基线 PASS、安装 4.0.0-i1
 （SHA `68aea6c0…`）+ 重启、A1–A12 初次验收全 PASS、回退 p27（SHA `f3841597…`）+ 重启、
 p27 恢复全 PASS、重装 4.0.0-i1 + 重启（reboot 3），设备最终运行态 = `4.0.0-i1`。
-留痕：`baselines/latest-phase4-preinstall.txt`、`latest-phase4-postinstall.txt`、
-`latest-phase4-rollback.txt`、`latest-phase4-final.txt`。本文档的恢复命令（§三）与验证清单仍为
+留痕（Git 跟踪）：`baselines/latest-phase4-preinstall.txt`、`latest-phase4-postinstall.txt`、
+`latest-phase4-rollback.txt`、`latest-phase4-final.txt`，以及完整审计日志
+`baselines/phase4-baseline-20260821-142632.log`、`baselines/post-reboot-hwgl-20260821-144338.txt`
+（已脱敏家目录与 Xauthority 临时令牌后入库）。本文档的恢复命令（§三）与验证清单仍为
 后续维护与 Phase 5 的参考。
 
 ## 一、候选与回退包（已核实）
