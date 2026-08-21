@@ -56,7 +56,8 @@ sudo reboot                                                    # 重启后加载
 | 推荐阅读顺序 / 完整索引 | [docs/README.md](docs/README.md) |
 | 当前状态、风险、待办 | [docs/project/status.md](docs/project/status.md)、[docs/planning/todo.md](docs/planning/todo.md) |
 | 整体目标与路线 | [docs/project/goals.md](docs/project/goals.md) |
-| 架构与组件边界 | [docs/project/architecture.md](docs/project/architecture.md) |
+| 架构与组件边界 | [architecture.md](docs/project/architecture.md)、[code-analysis.md](docs/project/code-analysis.md) |
+| 技术栈/参考模型 / 测试策略 | [frameworks-and-references.md](docs/project/frameworks-and-references.md)、[test-strategy.md](docs/project/test-strategy.md) |
 | 新设备安装 / 验证 / 恢复 | [docs/user/new-device-install.md](docs/user/new-device-install.md)、[docs/user/verification.md](docs/user/verification.md)、[docs/user/recovery.md](docs/user/recovery.md) |
 | 补丁与验收 / 事故 | [docs/patches/README.md](docs/patches/README.md)、[docs/incidents/README.md](docs/incidents/README.md) |
 | 源码树迁移与 Phase 4/5 | [source-tree-migration.md](docs/planning/source-tree-migration.md)、[phase4](docs/planning/phase4-device-validation.md)、[phase5](docs/planning/phase5-retirement-design.md) |

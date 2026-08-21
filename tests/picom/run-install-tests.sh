@@ -7,17 +7,19 @@ project_root=$(CDPATH= cd -- "$test_dir/../.." && pwd)
 installer=${PICOM_INSTALLER_UNDER_TEST:-$project_root/scripts/install-picom-user.sh}
 runtime=$(mktemp -d "${TMPDIR:-/tmp}/innogpu-picom-install.XXXXXX")
 tests=0
+skipped=0
+SUITE=picom_install
 
 trap 'rm -rf "$runtime"' EXIT HUP INT TERM
 
 fail() {
-    printf 'FAIL: %s\n' "$1" >&2
+    printf '%s_t%02d=FAIL reason=%s\n' "$SUITE" "$tests" "$1" >&2
     exit 1
 }
 
 pass() {
     tests=$((tests + 1))
-    printf 'ok %02d - %s\n' "$tests" "$1"
+    printf '%s_t%02d=PASS # %s\n' "$SUITE" "$tests" "$1"
 }
 
 run_installer() {
@@ -60,4 +62,4 @@ cmp -s "$runtime/existing-xprofile" "$existing_home/.config/x11/xprofile" ||
     fail 'T03 existing compositor entry was modified'
 pass 'existing config is backed up and existing startup remains authoritative'
 
-printf 'PASS: %d Picom installer tests\n' "$tests"
+printf 'tests_total=%d tests_passed=%d tests_failed=%d tests_skipped=%d\n' "$tests" "$tests" 0 "$skipped"

@@ -1,0 +1,27 @@
+{
+ "format_version": 1,
+ "source_package": "innogpu-fh2m",
+ "source_version": "20250421190503-debug",
+ "source_deb_sha256": "b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2",
+ "architecture": "amd64",
+ "entries": [
+  {
+   "source_path": "usr/src/innogpu-kernel-2.2/innogpu/innogpu.o_shipped",
+   "vendor_path": "kernel/innogpu/innogpu.o_shipped",
+   "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "size": 100,
+   "kind": "kernel-black-box",
+   "role": "x",
+   "license": "vendor-binary"
+  },
+  {
+   "source_path": "usr/src/innogpu-kernel-2.2/innogpu/innogpu.o_shipped",
+   "vendor_path": "/etc/passwd",
+   "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "size": 100,
+   "kind": "kernel-black-box",
+   "role": "x",
+   "license": "vendor-binary"
+  }
+ ]
+}

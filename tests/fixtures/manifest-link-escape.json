@@ -1,0 +1,17 @@
+{
+ "format_version": 1,
+ "source_package": "innogpu-fh2m",
+ "source_version": "20250421190503-debug",
+ "source_deb_sha256": "b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2",
+ "architecture": "amd64",
+ "entries": [
+  {
+   "source_path": "a",
+   "vendor_path": "kernel/link",
+   "link_target": "../../../etc/passwd",
+   "kind": "firmware",
+   "role": "x",
+   "license": "vendor-binary"
+  }
+ ]
+}

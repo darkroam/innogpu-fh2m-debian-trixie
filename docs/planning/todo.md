@@ -41,6 +41,12 @@
   `innodma.o_shipped`，超出本项目可维护源码范围，不制作 READ 预取候选；patched-24 仅处理
   Debian 6.12.101+ DKMS API 兼容。
 - [ ] 将可复现的热点、perf 数据和应用级 workaround 整理为上游/厂商修复报告。
+- [ ] 代码深度分析与测试体系重构（~/5.md，2026-08-21 进行中）：
+  - [x] 产出 code-analysis.md、frameworks-and-references.md、test-strategy.md；新增 unit 测试
+    （manifest 恶意输入 8、版本排序 6、提取器隔离 7）与 fixtures/；全部 tests/ 统一机器格式
+    （`<suite>_tNN=PASS/FAIL/SKIP` + 汇总行）。
+  - [ ] runtime 能力基线脚本化（tests/runtime/，需真机授权）：Vulkan/OpenCL 最小执行、编码能力、多屏矩阵。
+  - [ ] 构建失败用例补齐（headers 缺失、helper 缺失、SOURCE_DATE_EPOCH 缺失）为 fixture。
 
 patched-21 已在 [`../patches/patched-21-release-candidate.md`](../patches/patched-21-release-candidate.md)
 固定输入、补丁集、辅助载荷和验证门槛。本机当前批次已完成：

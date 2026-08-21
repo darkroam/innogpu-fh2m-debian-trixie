@@ -8,17 +8,19 @@ installer=${XDISPLAY_INSTALLER_UNDER_TEST:-$project_root/scripts/install-xdispla
 source_dir=${XDISPLAY_SOURCE_DIR_UNDER_TEST:-$project_root/scripts}
 runtime=$(mktemp -d "${TMPDIR:-/tmp}/innogpu-xdisplay-install.XXXXXX")
 tests=0
+skipped=0
+SUITE=xdisplay_install
 
 trap 'rm -rf "$runtime"' EXIT HUP INT TERM
 
 fail() {
-    printf 'FAIL: %s\n' "$1" >&2
+    printf '%s_t%02d=FAIL reason=%s\n' "$SUITE" "$tests" "$1" >&2
     exit 1
 }
 
 pass() {
     tests=$((tests + 1))
-    printf 'ok %02d - %s\n' "$tests" "$1"
+    printf '%s_t%02d=PASS # %s\n' "$SUITE" "$tests" "$1"
 }
 
 install_fake_engine() {
@@ -93,4 +95,4 @@ grep -q 'BEGIN INNOGPU DISPLAY SESSION' \
     fail 'T05 session block was not appended through xprofile symlink'
 pass 'xprofile symlink target is updated without replacing the symlink'
 
-printf 'PASS: %d display installer tests\n' "$tests"
+printf 'tests_total=%d tests_passed=%d tests_failed=%d tests_skipped=%d\n' "$tests" "$tests" 0 "$skipped"

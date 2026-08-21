@@ -6,16 +6,18 @@ ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 CHECK="$ROOT/scripts/check-release-package.sh"
 runtime=$(mktemp -d "${TMPDIR:-/tmp}/innogpu-package-tests.XXXXXX")
 tests=0
+skipped=0
+SUITE=package_boundary
 trap 'rm -rf "$runtime"' EXIT HUP INT TERM
 
 fail() {
-    printf 'FAIL: %s\n' "$1" >&2
+    printf '%s_t%02d=FAIL reason=%s\n' "$SUITE" "$tests" "$1" >&2
     exit 1
 }
 
 pass() {
     tests=$((tests + 1))
-    printf 'ok %02d - %s\n' "$tests" "$1"
+    printf '%s_t%02d=PASS # %s\n' "$SUITE" "$tests" "$1"
 }
 
 make_package() {
@@ -110,4 +112,4 @@ if "$CHECK" "$missing_size" >/dev/null 2>&1; then
 fi
 pass 'Installed-Size is required'
 
-printf 'PASS: %d package boundary tests\n' "$tests"
+printf 'tests_total=%d tests_passed=%d tests_failed=%d tests_skipped=%d\n' "$tests" "$tests" 0 "$skipped"

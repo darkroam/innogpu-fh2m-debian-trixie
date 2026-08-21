@@ -9,18 +9,20 @@ runtime=$(mktemp -d "${TMPDIR:-/tmp}/innogpu-picom-session.XXXXXX")
 fake_bin=$runtime/bin
 calls=$runtime/calls.log
 tests=0
+skipped=0
+SUITE=picom_session
 
 trap 'rm -rf "$runtime"' EXIT HUP INT TERM
 mkdir -p "$fake_bin" "$runtime/home/.config/x11" "$runtime/cache"
 
 fail() {
-    printf 'FAIL: %s\n' "$1" >&2
+    printf '%s_t%02d=FAIL reason=%s\n' "$SUITE" "$tests" "$1" >&2
     exit 1
 }
 
 pass() {
     tests=$((tests + 1))
-    printf 'ok %02d - %s\n' "$tests" "$1"
+    printf '%s_t%02d=PASS # %s\n' "$SUITE" "$tests" "$1"
 }
 
 cat > "$fake_bin/pgrep" <<'SCRIPT'
@@ -76,4 +78,4 @@ run_session
 [ ! -s "$calls" ] || fail 'T03 duplicate Picom was started'
 pass 'running Picom prevents a duplicate compositor'
 
-printf 'PASS: %d Picom session tests\n' "$tests"
+printf 'tests_total=%d tests_passed=%d tests_failed=%d tests_skipped=%d\n' "$tests" "$tests" 0 "$skipped"

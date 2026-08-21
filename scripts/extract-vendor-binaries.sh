@@ -15,7 +15,9 @@ cd "$ROOT"
 CHECK_ONLY=0
 if [[ "${1:-}" == "--check-only" ]]; then CHECK_ONLY=1; fi
 
-MANIFEST="$ROOT/binary-manifest.json"
+# 路径可覆盖（默认指向仓库根），便于隔离测试与不同工作区；向后兼容。
+MANIFEST="${MANIFEST_PATH:-$ROOT/binary-manifest.json}"
+VENDOR_ROOT="${VENDOR_ROOT:-$ROOT/vendor}"
 DEB="${INNOGPU_DEEPIN_DEB:-$ROOT/debs/innogpu-fh2m_20250421190503-debug_amd64.deb}"
 [[ -f "$MANIFEST" ]] || { echo "vendor_extraction=PASS_MANIFEST_MISSING"; echo "vendor_manifest_missing=$MANIFEST"; exit 1; }
 [[ -f "$DEB" ]] || { echo "vendor_extraction=FAIL_MISSING_SOURCE_DEB"; echo "vendor_source_deb_missing=$DEB"; exit 1; }
@@ -30,9 +32,9 @@ fi
 echo "vendor_source_deb_sha256=PASS"
 
 # manifest schema 与路径安全校验（先于任何写入）
-if ! python3 tools/validate-binary-manifest.py >/dev/null; then
+if ! python3 tools/validate-binary-manifest.py "$MANIFEST" >/dev/null; then
     echo "vendor_manifest_schema=FAIL"
-    python3 tools/validate-binary-manifest.py | head -5
+    python3 tools/validate-binary-manifest.py "$MANIFEST" | head -5
     exit 1
 fi
 echo "vendor_manifest_schema=PASS"
@@ -72,7 +74,7 @@ while IFS= read -r entry; do
     check_path "$src" || { echo "vendor_source_path_unsafe=FAIL $src"; fail=$((fail+1)); continue; }
     check_path "$vp" || { fail=$((fail+1)); continue; }
 
-    dest="$ROOT/vendor/$vp"
+    dest="$VENDOR_ROOT/$vp"
     if [[ "$is_link" == "True" ]]; then
         if [[ -L "$dest" && "$(readlink "$dest")" == "$link_target" ]]; then
             skipped=$((skipped+1)); continue
