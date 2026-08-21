@@ -4,7 +4,8 @@
 
 - **来源**：Deepin 原包 `innogpu-fh2m_20250421190503-debug_amd64.deb` 内的
   `usr/src/innogpu-kernel-2.2/`（DKMS 源码树）。
-- **导入**：2026-08-21，迁移阶段 1（受限范围：仅导入源码树，未做补丁转换）。
+- **导入**：2026-08-21，迁移阶段 1。源码树导入已完成，9 个启用补丁已转为转换提交
+  （source/device-profile: patch-0XX，见 [patch-provenance.md](../docs/planning/patch-provenance.md)）。
 - **导入提交**：见 git 历史（本目录首个提交）。
 - **许可证**：文件头部声明为 Dual MIT/GPLv2（Imagination Technologies + Innosilicon 双版权）。
 

@@ -65,5 +65,5 @@ parity 通过（scripts/check-source-parity.sh，0 差异）。原始 diff 保�
 
 ## 与 drivers/ 的对应
 
-已导入 drivers/ 为 Deepin 原始源码（未打补丁）。上述 source/device-profile 类补丁的改动
-将在转换阶段以提交形式落到 drivers/ 对应文件（目标文件已列于本表）。
+drivers/ 以 Deepin 原始源码为基线导入，9 个启用补丁的改动已以转换提交形式落到对应文件
+（目标文件与提交哈希见上表明细）。
