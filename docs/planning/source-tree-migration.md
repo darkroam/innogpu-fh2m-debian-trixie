@@ -6,7 +6,9 @@
   migration/supervised-source-tree @ bd76e91）。
 - **阶段 0 ✅ 阶段 1 ✅ 阶段 2 ✅ 阶段 3（新构建器并行验证 + 完整 package boundary）✅**：
   4.0.0-i1 候选已构建，oracle 对比（vs patched-27）全部 PASS（含 module_symbols 离线逐项对比）；
-  阶段 4（实机候选）待监督批准。
+  2026-08-21 监督评审确认阶段 3 通过（builder/oracle_comparison/module_symbols/package_boundary/
+  reproducible_build 全 PASS）；阶段 4（实机候选）待监督对安装单独批准，准备包见
+  [phase4-device-validation.md](phase4-device-validation.md)。
 - 阶段 3 评审整改（2026-08-21 监督意见）：
   - `module_symbols` 不再 SKIP——`scripts/compare-module-symbols.sh` 离线构建候选与 p27 两包
     DKMS 源码，逐模块对比 vermagic/depends/导出符号/导入符号（见 §七）；
