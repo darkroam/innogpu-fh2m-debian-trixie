@@ -18,8 +18,8 @@
 - Phase 3 新构建器并行验证通过监督评审（module_symbols 离线逐项对比、.o.cmd 构建产物边界裁定、
   SOURCE_DATE_EPOCH 必填 + 双构建可复现）；Phase 4 实机候选验证完成：B1-B12 基线、A1-A12 初次
   验收全 PASS、p27 回退演练 PASS、重装 4.0.0-i1 并重启，设备最终运行态 = `4.0.0-i1`。
-- 迁移分支整体 fast-forward 合并 main（de2e956）并推送 origin；Phase 5（旧流程退役）按监督安排
-  分两步设计评审，见 [phase5-retirement-design.md](phase5-retirement-design.md)。
+- 迁移分支整体 fast-forward 合并 main 并推送 origin（当前 main/origin 均为 74b1f04）；Phase 5
+  （旧流程退役）按监督安排分两步设计评审，见 [phase5-retirement-design.md](phase5-retirement-design.md)。
 - 当前设备运行 `4.0.0-i1`；`patched-27` 转为保留的回退基线；p27/17/8 deb、tag 与 patches/ 永久保留。
 
 ## 2026-08-14 patched-21 候选定义与 release 护栏
