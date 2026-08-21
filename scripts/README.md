@@ -59,7 +59,7 @@
 | 入口 | 状态改变范围 | 说明 |
 | --- | --- | --- |
 | `install-picom-prereqs-debian.sh` | 安装软件包 | 安装固定 Picom 基线的 Debian 构建依赖 |
-| `install-picom-user.sh` | 修改目标用户配置 | 安装项目 Picom 配置和单一 xprofile 会话入口 |
+| `install-picom-user.sh` | 修改目标用户配置 | 安装项目 Picom 配置（模板 `config/picom.conf`）和单一 xprofile 会话入口 |
 | `picom-session.sh` | 启动用户进程 | 优先启动 patched Picom，缺失时回退 xcompmgr，并避免重复实例 |
 
 ## 显示接入

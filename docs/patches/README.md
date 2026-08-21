@@ -4,7 +4,19 @@
 预编译对象，使用 `tools/patch-gpupll-object.py` 执行严格字节契约。本目录记录各阶段的目的、应用
 条件、验证证据和回退边界。构建入口只允许以 Deepin 202504 完整原包为载荷基线。
 
-## 内核和驱动补丁
+**分类说明（`patches/` 目录内两类内容）**：
+
+- `patches/*.patch`（13 个，含 000 工具）——**历史内核/驱动补丁**：源码树迁移后已转为 `drivers/`
+  内的源码提交，不再通过 patch 叠加构建（新架构用 `scripts/build-innogpu-driver.sh`）；本表保留为
+  provenance、事故证据与 patched-8…27 回退包的复现依据。
+- `patches/picom/`、`patches/fbterm/`——**当前维护的第三方组件补丁**：由
+  `scripts/build-patched-picom.sh`、`scripts/build-patched-fbterm.sh` 在构建对应组件时应用，
+  与驱动包构建无关。
+
+`config/` 存放本项目维护的配置模板（如 `config/picom.conf`，由 `scripts/install-picom-user.sh`
+作为默认配置源安装）。
+
+## 历史内核和驱动补丁
 
 | 阶段 | 代码补丁 | 构建开关/入口 | 状态 |
 | --- | --- | --- | --- |
@@ -31,8 +43,20 @@ patched-24 不增加新的设备行为补丁；它沿用 patched-23 的补丁集
 | 阶段 | 代码补丁 | 状态 |
 | --- | --- | --- |
 | Picom-001 | [explicit-uniform-location](picom/patch-picom-001-explicit-uniform-location.md) | 实机通过 |
+| fbterm-001 | [configurable-redraw-scrolling](../incidents/fbterm-ypan-rendering.md) | 真实 VT 验证通过 |
 
 ## 构建顺序
+
+**当前新架构（4.0.0-i1）**：
+
+```text
+Deepin 202504 原 deb
+  -> scripts/build-innogpu-driver.sh（drivers/ 源码树 + manifest 黑盒 + 确定性变换）
+  -> 离线 DKMS 编译 + 完整包组装（不执行 patch -pN）
+  -> scripts/check-release-package.sh
+```
+
+**历史 patched 包（legacy，保留）**：
 
 ```text
 Deepin 202504 原 deb
