@@ -48,6 +48,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern unsigned int s_dpu_match;
 
 static const struct drm_display_mode s_noedid_modes[] = {
+	/*
+	 * FH2M notebook internal AUO panel: EDID can be readable while the final
+	 * probed DRM mode list is empty during fbdev setup. This reduced-blanking
+	 * mode has been verified on the device and gives fbcon a safe pre-X mode.
+	 */
+	{DRM_MODE("1920x1200", DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED, 154000, 1920, 1968,
+			  2000, 2080, 0, 1200, 1203, 1209, 1235, 0,
+			  DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC),},
 	{DRM_MODE("1920x1080", DRM_MODE_TYPE_DRIVER, 148500, 1920, 2008,
 			  2052, 2200, 0, 1080, 1084, 1089, 1125, 0,
 			  DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC),

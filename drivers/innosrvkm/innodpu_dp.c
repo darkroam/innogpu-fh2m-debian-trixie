@@ -2130,6 +2130,14 @@ static int inno_dp_connector_helper_get_modes(struct drm_connector *connector)
 	if (!dp_get_edid(&inno_dp->chip) || (inno_dp->chip.hal_edid_mode == EDID_STR_PUSH))
 		inno_dp_get_edid(connector, inno_dp->chip.hal_edid_mode);
 
+	/*
+	 * Keep a known-good mode available even when EDID exists. On FH2M the
+	 * internal AUO panel can expose EDID but still leave the DRM connector
+	 * mode list empty during fbdev setup, which prevents fbcon/tty1 from appearing.
+	 */
+	if (connector->status == connector_status_connected)
+		inno_dp->chip.modes += innodpu_add_modes_without_edid(connector, NULL);
+
 #if (DRM_VERSION <= KERNEL_VERSION(4, 16, 0))
 	drm_edid_to_eld(connector, dp_get_edid(&inno_dp->chip));
 #endif
