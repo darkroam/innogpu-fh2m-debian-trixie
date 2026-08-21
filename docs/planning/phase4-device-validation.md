@@ -58,8 +58,11 @@ sudo rm -f /etc/modprobe.d/innogpu.conf.disabled            # 不误删配置
 ### 3.3 initramfs 阶段无法进入系统
 
 ```bash
-# 从 GRUB recovery 模式或 live USB 进入后 chroot：
-mount /dev/nvme0n1p2 /mnt
+# 从 GRUB recovery 模式或 live USB 进入后 chroot。
+# 第一步必须先确认根分区：不能硬编码设备路径，故障环境的分区布局可能不同。
+lsblk -f            # 找到 FSTYPE=xfs/ext4 且挂载点为 / 的分区，记下其设备（如 /dev/nvme0n1p2）
+ROOT_DEV=/dev/nvme0n1p2   # ← 以 lsblk -f 实际输出为准，禁止直接照抄
+mount "$ROOT_DEV" /mnt
 mount --bind /dev /mnt/dev && mount --bind /proc /mnt/proc && mount --bind /sys /mnt/sys
 chroot /mnt /bin/bash
 # 删除候选 DKMS 模块并恢复 p27
