@@ -15,7 +15,7 @@ fi
 X_HOME="${INNOGPU_X_HOME:-$(getent passwd "$X_USER" 2>/dev/null | cut -d: -f6)}"
 X_HOME="${X_HOME:-$HOME}"
 X_GROUP="$(id -gn "$X_USER" 2>/dev/null || printf '%s\n' "$X_USER")"
-source_config="$ROOT/config/picom.conf"
+source_config="$ROOT/components/picom/picom.conf"
 source_session="$ROOT/scripts/picom-session.sh"
 
 [[ -r "$source_config" ]] || { echo "ERROR: missing $source_config" >&2; exit 1; }

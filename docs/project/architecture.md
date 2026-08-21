@@ -30,11 +30,10 @@ PCI 0000:06:00.6 [1d94:14c9]
 | 路径 | 职责 |
 | --- | --- |
 | `drivers/` | Deepin 202504 DKMS 源码树及已转换为提交的 9 个启用修复 |
-| `patches/` | 历史补丁原件、转换 provenance 和补丁说明；当前源码不再通过 patch 叠加构建 |
-| `patches/picom/` | 针对 Innogpu GL 扩展声明缺失的 Picom 源码补丁 |
-| `patches/fbterm/` | 针对当前 fbdev YPan 语义差异的 fbterm 用户态兼容补丁 |
+| `patches/` | 历史内核补丁原件、转换 provenance 和补丁说明；当前源码不再通过 patch 叠加构建 |
+| `components/picom/` | 当前维护的 Picom 源码补丁与项目配置模板（`001-probe-explicit-uniform-location.patch`、`picom.conf`） |
+| `components/fbterm/` | 当前维护的 fbterm 用户态兼容补丁（`001-configurable-redraw-scrolling.patch`） |
 | `debs/` | 本地 release/构建输入输出目录，`.deb` 被 Git 忽略，仅跟踪说明文件 |
-| `config/` | 项目维护的用户态配置模板，不包含完整个人 dotfiles |
 | `scripts/` | 构建、安装、回退、诊断、显示接入、音频固化和验证入口 |
 | `tools/` | EGL、GBM、X11、loader 的最小探针，以及确定性的厂商对象变换工具 |
 | `tests/` | 本项目脚本、fbterm/Picom 和显示接入边界测试；xdisplay 引擎测试留在 dotconfig |

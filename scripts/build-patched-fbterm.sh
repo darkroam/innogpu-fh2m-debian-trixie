@@ -7,7 +7,7 @@ ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 SOURCE_DIR="${FBTERM_SOURCE:-$HOME/src/fbterm-1.7}"
 BUILD_DIR="${FBTERM_BUILD_DIR:-$ROOT/.build/fbterm-1.7}"
 PREFIX="${FBTERM_PREFIX:-$HOME/.local}"
-PATCH_FILE="$ROOT/patches/fbterm/001-configurable-redraw-scrolling.patch"
+PATCH_FILE="$ROOT/components/fbterm/001-configurable-redraw-scrolling.patch"
 install_binary=0
 
 usage() {

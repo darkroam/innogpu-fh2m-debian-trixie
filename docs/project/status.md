@@ -21,7 +21,7 @@
 | Xorg/GLX | 当前桌面和隔离 Xorg 的硬件加速验收通过 | [Phase 4 验收](../planning/phase4-device-validation.md) |
 | 真实 VT | 普通用户 fbterm 可绘制和退出；禁用 YPan 后长输出、清屏及跨会话显示正常 | [`fbterm YPan 记录`](../incidents/fbterm-ypan-rendering.md) |
 | 显示管理 | dotconfig 维护 xdisplay 2.0.0；本项目只维护设备钩子和会话接入 | [`display-management.md`](display-management.md) |
-| Picom | patched v13 正在使用 Innogpu GLX，配置独立于驱动包 | `patches/picom/`、`docs/project/compositor-management.md` |
+| Picom | patched v13 正在使用 Innogpu GLX，配置独立于驱动包 | `components/picom/`、`docs/project/compositor-management.md` |
 | 音频 | HDA 内置喇叭、PipeWire 默认 sink 和启动服务均正常 | `docs/project/audio-management.md` |
 
 ## 已解决问题

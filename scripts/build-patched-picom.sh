@@ -5,7 +5,7 @@ set -euo pipefail
 
 ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 BASE_COMMIT=6d676824c457a933c52e3e92c5a1856466f90545
-PATCH_FILE="$ROOT/patches/picom/001-probe-explicit-uniform-location.patch"
+PATCH_FILE="$ROOT/components/picom/001-probe-explicit-uniform-location.patch"
 SOURCE_DIR="${PICOM_SOURCE:-$HOME/src/picom}"
 BUILD_DIR="${PICOM_BUILD_DIR:-}"
 PREFIX="${PICOM_PREFIX:-/usr/local}"

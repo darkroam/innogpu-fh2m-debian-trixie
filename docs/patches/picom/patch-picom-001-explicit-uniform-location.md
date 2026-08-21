@@ -7,7 +7,7 @@ Innogpu GLSL 编译器支持 explicit uniform location，但驱动扩展字符�
 
 ## 实现
 
-- 代码：`patches/picom/001-probe-explicit-uniform-location.patch`。
+- 代码：`components/picom/001-probe-explicit-uniform-location.patch`。
 - 所属项目：Picom 用户态，不进入 Innogpu DKMS deb。
 - 行为：扩展缺失时编译最小 shader；编译失败仍拒绝 GLX，成功才继续。
 

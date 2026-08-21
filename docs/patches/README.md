@@ -9,12 +9,11 @@
 - `patches/*.patch`（13 个，含 000 工具）——**历史内核/驱动补丁**：源码树迁移后已转为 `drivers/`
   内的源码提交，不再通过 patch 叠加构建（新架构用 `scripts/build-innogpu-driver.sh`）；本表保留为
   provenance、事故证据与 patched-8…27 回退包的复现依据。
-- `patches/picom/`、`patches/fbterm/`——**当前维护的第三方组件补丁**：由
+- `components/picom/`、`components/fbterm/`——**当前维护的第三方组件补丁与配置**（2026-08-21 由
+  `patches/picom/`、`patches/fbterm/`、`config/` 迁入，历史内容保留）：补丁由
   `scripts/build-patched-picom.sh`、`scripts/build-patched-fbterm.sh` 在构建对应组件时应用，
-  与驱动包构建无关。
-
-`config/` 存放本项目维护的配置模板（如 `config/picom.conf`，由 `scripts/install-picom-user.sh`
-作为默认配置源安装）。
+  与驱动包构建无关；`components/picom/picom.conf` 是项目维护的配置模板，由
+  `scripts/install-picom-user.sh` 作为默认配置源安装。
 
 ## 历史内核和驱动补丁
 

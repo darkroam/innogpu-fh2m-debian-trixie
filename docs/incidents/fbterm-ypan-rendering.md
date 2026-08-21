@@ -24,7 +24,7 @@ Innogpu fbdev 对 ioctl 返回成功，但该路径在持续滚动和重新进�
 
 ## 修复
 
-`patches/fbterm/001-configurable-redraw-scrolling.patch` 为 Debian fbterm 1.7-5 增加：
+`components/fbterm/001-configurable-redraw-scrolling.patch` 为 Debian fbterm 1.7-5 增加：
 
 - `--scrolling=auto|redraw` 和同名配置项；默认 `auto` 保持上游行为；
 - `redraw` 模式跳过 YPan/YWrap 探测，并在进入时把遗留 `yoffset` 归零；

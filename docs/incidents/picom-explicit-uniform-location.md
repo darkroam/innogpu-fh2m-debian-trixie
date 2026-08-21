@@ -7,7 +7,7 @@ Innogpu GLSL 编译器可以编译 explicit uniform location，但运行时扩�
 
 ## 处理
 
-`patches/picom/001-probe-explicit-uniform-location.patch` 在扩展缺失时编译最小 shader；编译成功
+`components/picom/001-probe-explicit-uniform-location.patch` 在扩展缺失时编译最小 shader；编译成功
 才继续，失败仍拒绝 GLX。能力判断放在 Picom 用户态，不通过修改预编译 Innogpu `.so`、增加 GPU
 型号白名单或伪造扩展字符串解决。
 

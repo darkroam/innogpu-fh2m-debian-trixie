@@ -10,12 +10,14 @@
 
 ## 二、永久保留清单
 
-**历史内容一律永久保留，禁止物理删除**；对旧 wrapper 而言，第二步允许**变更工作路径**（移入
-`legacy/`），但不允许删除、丢失历史或移除 p27/17/8 回退入口。逐项说明：
+**历史内容一律永久保留，禁止物理删除**；对旧 wrapper 与第三方组件补丁而言，允许**变更工作路径**
+（wrapper 移入 `legacy/`；组件补丁迁入 `components/`），但不允许删除、丢失历史或移除 p27/17/8
+回退入口。逐项说明：
 
 | 项 | 保留要求 |
 | --- | --- |
-| `patches/` 全部 patch 文件与 `docs/patches/` 验收记录 | 溯源与事故证据；**不得移动或删除** |
+| `patches/*.patch`（历史内核/驱动补丁）与 `docs/patches/` 验收记录 | 溯源与事故证据；**不得移动或删除** |
+| `components/picom/`、`components/fbterm/`（2026-08-21 由 `patches/picom/`、`patches/fbterm/`、`config/` 迁入，含补丁与 `picom.conf` 配置模板） | 当前维护的第三方组件补丁/配置，**历史内容永久保留**；路径变更已完成（原路径已清空） |
 | `debs/…patched-27.deb`（SHA `f3841597…`）、`patched-17.deb`、`patched-8.deb` | 回退链 `4.0.0-i1 → p27 → … → p17 → p8` 的物理载体；**不得移动或删除**，回退入口永久可用 |
 | p17–p27 全部 git tag（含 p27） | 可复现回退点；**永久保留，不得移动或删除** |
 | `scripts/build-deepin-coherent.sh` | 旧构建器/oracle；check-docs 版本护栏依赖；**继续保留在 `scripts/`，第二步也不移动** |

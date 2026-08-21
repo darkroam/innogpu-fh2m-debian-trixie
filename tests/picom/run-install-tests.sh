@@ -29,7 +29,7 @@ run_installer() {
 empty_home=$runtime/empty-home
 mkdir -p "$empty_home"
 run_installer "$empty_home"
-cmp -s "$project_root/config/picom.conf" \
+cmp -s "$project_root/components/picom/picom.conf" \
     "$empty_home/.config/x11/picom.conf" || fail 'T01 config mismatch'
 cmp -s "$project_root/scripts/picom-session.sh" \
     "$empty_home/.config/x11/innogpu-compositor-session.sh" ||
