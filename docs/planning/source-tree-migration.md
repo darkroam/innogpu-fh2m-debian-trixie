@@ -1,192 +1,198 @@
-# 源码树迁移设计（driver source tree migration）
+# 源码树迁移设计（Phase 0 设计冻结）
 
 ## 状态
 
-**本文件是迁移设计方案，全部内容均为计划，未实施。** 当前设备运行基线仍为
-`3.3.3.42-patched-27`（最后一个 patch 模式版本）；迁移期间不改变设备上的运行驱动。
+- 本文件对应监督指南 `docs/planning/migration-supervision.md`（监督分支 migration/supervised-source-tree @ bd76e91） 的**阶段 0：设计冻结**，
+  仅完善设计，不实施、不改设备、不删旧文件。
+- 监督基线：分支 `migration/supervised-source-tree`（commit `bd76e91`），本文档不修改该分支。
+- 当前设备基线：`3.3.3.42-patched-27`（迁移冻结运行基线与回退包）。
+- 未实机验证的内容一律标记 `UNVERIFIED`；本文件所有行为承诺均需在对应阶段用命令和输出证明。
 
-## 一、目标与范围
+## 一、迁移目标（对齐监督指南"二、迁移目标"）
 
-把"在 Deepin 202504 原包上打补丁"的模型，改为"**仓库内维护驱动源码树 + 清单管理黑盒二进制**"：
+```text
+Git 跟踪：        可维护 C/H 驱动源码（drivers/）
+Git 忽略：        vendor 黑盒对象、用户态库、固件、构建产物（vendor/ build/）
+manifest：        外部载荷来源、路径、角色、大小和 SHA-256（binary-manifest.json）
+staging：         源码与黑盒载荷的隔离构建树（build/<unique>/source）
+release：         独立版本、源码提交、manifest hash 和 parity report
+```
 
-1. 内核驱动**可维护源码**（约 7M：innosrvkm PVR 包装 + DPU 显示）完整纳入 git，直接提交迭代，
-   不再使用 patch 文件；
-2. 黑盒二进制（5 个 `.o_shipped` + 18 个用户态 `.so` + 4 个固件，约 127M）**不进入 git**，
-   由 `binary-manifest.json` 清单管理，用幂等提取工具从 pinned Deepin deb 就位；
-3. 版本号脱离 Deepin 上游（不再 `-patched-N`），tag = 源码提交 + 清单哈希；
-4. 新增四类配套：代码架构分析文档、开发测试闭环、二进制提取工具、用户态组件说明。
+"取消 patch" 只表示源码改动最终直接存在于源码树中；**不表示立即删除历史 patch，不表示黑盒
+驱动核心已经源码化**。在阶段 1–5 全部 PASS 前，`patches/`、旧 wrapper、p27 deb 与 p27 tag
+永久保留。
 
 ## 二、目标目录结构
 
 ```text
-innogpu-fh2m-debian-trixie/
-├── drivers/                        # ★ 内核驱动源码树（git 跟踪，约 7M 源码）
-│   ├── innosrvkm/                  #   PVR services 包装（pvr_*.c）+ DPU 显示（innodpu_*/pdp0_*/g3_*）
-│   ├── innogpu/ innovpu/ innosmmu/ innodma/ innopmbus/ innopower/
-│   ├── include/ Makefile Kbuild dkms.conf modules_config.sh
-│   └── （不含任何 .o_shipped —— 由 vendor/ 提供）
-├── vendor/                         # ★ 黑盒二进制就位区（gitignored，由提取工具填充）
-│   ├── innosrvkm/innosrvkm.o_shipped
-│   ├── innogpu/innogpu.o_shipped
-│   ├── innovpu/innovpu.o_shipped
-│   ├── innosmmu/innosmmu.o_shipped
-│   ├── innodma/innodma.o_shipped
-│   └── userspace/                  #   用户态 .so 解包区
-├── binary-manifest.json            # ★ 二进制清单（唯一权威：来源 deb 路径 + SHA-256 + 角色）
-├── scripts/
-│   ├── extract-vendor-binaries.sh  # ★ 幂等提取工具（新）
-│   ├── build-innogpu-driver.sh     #   从 drivers/ + vendor/ 构建（替代 patch 应用步骤）
-│   ├── run-dev-tests.sh            # ★ 开发测试闭环门槛（新）
-│   └── check-*.sh / verify-*.sh    #   既有检查与验收入口（保留）
-├── tests/
-│   ├── package/                    #   既有包边界 fixture
-│   ├── kernel/                     # ★ 内核离线编译 + 探针回归测试（新组织）
-│   └── README.md
-├── docs/
-│   ├── project/driver-architecture.md    # ★ 代码架构分析（新）
-│   ├── user/userspace-components.md      # ★ 用户态组件说明（新）
-│   └── planning/source-tree-migration.md #   本文件
-├── debs/                           #   仅 pinned Deepin 原包（唯一二进制来源）
-└── patches/                        #   → 退役；内容已转为 drivers/ 上的提交
+drivers/                         Git 跟踪的可维护 DKMS 源码树
+  innogpu/ innovpu/ innodma/ innosmmu/ innopmbus/ innopower/ innosrvkm/
+  Makefile Kbuild dkms.conf modules_config.sh ...
+vendor/                          Git 忽略的黑盒就位区（由提取工具填充）
+  kernel/innogpu/innogpu.o_shipped
+  kernel/innodma/innodma.o_shipped
+  kernel/innosrvkm/innosrvkm.o_shipped
+  kernel/innovpu/innovpu.o_shipped
+  kernel/innosmmu/innosmmu.o_shipped
+  userspace/...（18 个 .so + DDX/GBM/DRI）
+  firmware/...（fh2m.fw/fh2m.sh/fh2c.fw/fh2c.sh）
+build/                           Git 忽略的临时 staging 与构建产物
+binary-manifest.json             黑盒来源、路径、哈希、大小、类型、角色和许可证的唯一清单
+scripts/
+  extract-vendor-binaries.sh     幂等提取工具
+  build-innogpu-driver.sh        新构建器（不执行 patch -pN）
+  run-dev-tests.sh               开发测试闭环
+tests/kernel/                    内核离线编译与探针回归测试
+docs/project/driver-architecture.md
+docs/user/userspace-components.md
+legacy/                          迁移完成后保存旧 patch/wrapper 的位置（阶段 5 才创建）
+patches/                         迁移完成前保留，不得提前删除
 ```
 
-## 三、迁移阶段
+## 三、14 个 patch 的 provenance 与分类
 
-### 阶段 0（当前）：设计定稿
-- 本文件 + 以下四项专项设计；冻结 `patched-27` 为最后 patch 版本。
+分类四类（监督指南"三、patch 分类规则"）：`source`（源码提交）、`binary-transform`
+（确定性二进制变换）、`device-profile`（本机特例）、`closed`（关闭的历史试验）。
+启用状态以 patched-27 的开关集合为准。patch hash 为当前 `patches/` 文件 SHA-256；stage-000
+无 patch 文件，是工具 `tools/patch-gpupll-object.py`。
 
-### 阶段 1：源码树导入与补丁转提交（试点）
-1. 将 Deepin DKMS 源码导入 `drivers/`（仅源码文件；`.o_shipped` 剔除）；
-2. 把现有 13 个补丁按内容转成对 `drivers/` 的 13 个提交（commit message 保留
-   `patch-0XX` 溯源，body 引用对应 `docs/patches/` 文档）；
-3. 编写 `binary-manifest.json` 与 `extract-vendor-binaries.sh`，`vendor/` 就位；
-4. 改构建脚本为"仓库树 + vendor/"，去掉 patch 应用；**功能回归必须与 p27 行为一致**
-   （探针/桌面/验收全过，见"五、验证门槛"）。
+| # | 类别 | 启用 | patch SHA-256 | 目标 | 转换计划 |
+| --- | --- | --- | --- | --- | --- |
+| 000 | binary-transform | 始终 | （工具）`tools/patch-gpupll-object.py` | `innogpu.o_shipped` 单点字节变换 | 保留为独立确定性工具，输入/输出 hash 入清单；不做成源码提交 |
+| 001 | source | 始终 | `be5c8ae9...71ab5` | 多文件 6.12 兼容 + Kbuild `-Wno-error` | 拆分为源码提交；Kbuild 改动归 build-metadata |
+| 002 | source | 是 | `1a12de65...7329` | DP fbcon fallback | 源码提交 |
+| 003 | closed | 否 | `8cd6b492...c6f7b` | 背光试验 | 仅历史记录，不导入当前行为 |
+| 004 | closed | 否 | `330c3a06...4513` | 平台试验 | 仅历史记录 |
+| 005 | closed | 否 | `9fee230c...ec15` | 背光试验 | 仅历史记录 |
+| 006 | device-profile | 是 | `63a6569c...40b5` | 本机 connector/ACPI 映射 | 进入 device profile / 设备适配层，保留明确边界 |
+| 007 | source | 是 | `1adb7a37...7733` | fbdev io mmap | 源码提交 |
+| 008 | closed | 否 | `4cfd545a...6394` | PVR 诊断 | 仅历史记录 |
+| 009 | device-profile | 是 | `e6b955fd...b26c` | 本机内置 eDP/connector | 进入 device profile |
+| 023 | source | 是 | `ea35a852...01f63` | invisible GEM 不回写 | 源码提交 |
+| 025 | source | 是 | `05de1bdd...a027` | dma_resv usage | 源码提交 |
+| 026 | source | 是 | `864bc3d6...216b` | vblank 守卫 | 源码提交 |
+| 027 | source | 是 | `ab2d1b41...7ca5` | foreign DMA-BUF 生命周期 | 源码提交 |
 
-### 阶段 2：版本独立与 CI
-- 版本号改为独立迭代（`1.0.0-iN`），tag = 源码提交 + 清单哈希；
-- `run-dev-tests.sh` 作为每个提交的门槛（静态 + 离线编译 + fixture）。
+转换提交规则：commit message 保留原编号（如 `source: patch-025 dma_resv usage semantics`），
+body 引用 `docs/patches/patch-*.md`；记录原 patch hash、目标文件、转换后提交 hash 与行为变化。
 
-### 阶段 3：持续迭代
-- 在 `drivers/` 内做真正的重构（invisible READ 预取、DPU 模块化等）；
-- 用 `driver-architecture.md` 指导每次改动归属与边界。
+## 四、binary-manifest.json 正式 schema（监督指南 + 5.md 要求）
 
----
-
-## 四、四项专项设计
-
-### 4.1 代码架构分析文档（`docs/project/driver-architecture.md`）
-
-用途：指导未来代码更新迭代的"地图"。内容大纲：
-
-1. **总体分层**：ioctl/DRM → GEM/PRIME → DPU 显示 ↔ services 包装 → 固件；用户态 →
-   services/GL/VK/OCL/codec；
-2. **模块边界表**：每个目录/文件的职责、源码 vs 二进制、维护入口（引用
-   [ddk-v119-mapping.md](ddk-v119-mapping.md) 的组件映射）；
-3. **关键子系统**：
-   - DPU 显示：CRTC/plane/connector 与 vblank/热插拔/背光（全部源码）；
-   - GEM/PRIME：visible/invisible VRAM、GTT、DMA-BUF 导入导出、fence（patch-023/025/027 落点）；
-   - services 包装：`pvr_*.c` 与预编译核心的调用边界（哪些可改、哪些只读）；
-   - 二进制接口契约：PDP ioctl 号、CPU_PREP/CPU_FINI 语义、`innodma` 的 SYS2GDDR/GDDR2SYS；
-4. **数据流图**：一次 glClear → 用户态 → GBM → DRM → GEM → DPU/GPU 的完整路径；
-5. **修改规则**：新功能应落在哪个模块、不得触碰哪些二进制接口、需要什么探针验证。
-
-### 4.2 开发测试闭环（`scripts/run-dev-tests.sh` + `tests/kernel/`）
-
-目标：每个提交可自动验证，形成"改代码 → 测试 → 合入"闭环。
-
-| 层级 | 工具 | 触发 |
-| --- | --- | --- |
-| 静态 | `check-docs.sh`、`bash -n`、`git diff --check`、探针编译 | 每次提交 |
-| 离线内核 | 对 `drivers/` + `vendor/` 做 `check-deb-dkms-build` 式编译（vermagic 匹配） | 每次提交 |
-| fixture | `tests/package/run-boundary-tests.sh` | 每次提交 |
-| 实机（设备） | `verify-install-status`、`check-desktop-hwgl`、PDP/vblank/VA-API 探针、能力普查 | 每个候选包 |
-
-`run-dev-tests.sh` 统一执行前三层（无需设备），输出 PASS/FAIL 摘要；
-实机层为操作者执行的清单（`tests/kernel/README.md` 记录各探针的判据与期望值）。
-
-### 4.3 二进制清单与幂等提取工具
-
-#### `binary-manifest.json` 格式（草案）
+正式 JSON，无注释、无省略号；覆盖全部 `.o_shipped`、用户态 `.so`、DDX/GBM/DRI 与固件：
 
 ```json
 {
   "format_version": 1,
-  "source_deb": "debs/innogpu-fh2m_20250421190503-debug_amd64.deb",
-  "source_deb_sha256": "<deb 的 SHA-256>",
-  "binaries": [
+  "source_package": "innogpu-fh2m",
+  "source_version": "20250421190503-debug",
+  "source_deb_sha256": "<Deepin deb SHA-256>",
+  "architecture": "amd64",
+  "entries": [
     {
-      "path": "innosrvkm/innosrvkm.o_shipped",
-      "in_deb": "usr/src/innogpu-kernel-2.2/innosrvkm/innosrvkm.o_shipped",
+      "source_path": "usr/src/innogpu-kernel-2.2/innogpu/innogpu.o_shipped",
+      "vendor_path": "kernel/innogpu/innogpu.o_shipped",
       "sha256": "<文件 SHA-256>",
-      "role": "services core (预编译，只读)"
-    },
-    {
-      "path": "innogpu/innogpu.o_shipped",
-      "in_deb": "usr/src/innogpu-kernel-2.2/innogpu/innogpu.o_shipped",
-      "sha256": "...",
-      "role": "FH2M HAL (预编译，只读)"
-    },
-    {
-      "path": "userspace/innogpu-fh2m/libVK_INNO.so",
-      "in_deb": "usr/lib/x86_64-linux-gnu/innogpu-fh2m/libVK_INNO.so",
-      "sha256": "...",
-      "role": "Vulkan ICD (预编译，只读)"
+      "size": 0,
+      "kind": "kernel-black-box",
+      "role": "FH2M HAL",
+      "license": "vendor-binary"
     }
-    // ... innovpu/innosmmu/innodma .o_shipped、其余 17 个 .so、4 个固件
   ]
 }
 ```
 
-#### `scripts/extract-vendor-binaries.sh`（幂等）
+`kind` 取值集合：`kernel-black-box`、`userspace-lib`、`ddx`、`firmware`。
+校验拒绝：路径穿越、重复目标、未知 kind、源包哈希错误、原子替换失败。
 
-- 输入：`binary-manifest.json`（默认）+ 可选 `--check-only`；
-- 行为（对每个清单条目）：
-  1. 目标 `vendor/<path>` 已存在且 SHA-256 匹配 → **跳过**（幂等，无操作）；
-  2. 缺失或哈希不匹配 → 从 `debs/` 的 pinned deb 解出并校验哈希后写入；
-  3. 源 deb 缺失/哈希不符 → 报错并说明获取方式；
-- `--check-only`：只报告每个条目"就位/缺失/哈希不符"，不做任何写入；
-- 设计目标：**克隆后执行一次即就位；之后构建/测试只做 `--check-only` 快速核验**，
-  与用户"存放以后不用反复操作，最多检查是否修改"的要求一致。
+## 五、幂等提取工具规范（`scripts/extract-vendor-binaries.sh`）
 
-### 4.4 用户态组件说明（`docs/user/userspace-components.md`）
+- 默认从 `debs/` 找 Deepin 原包，支持 `INNOGPU_DEEPIN_DEB` 环境变量；
+- 先校验原 deb SHA-256 与清单一致；
+- 用 `dpkg-deb --extract` 或等价结构化方式解出，不用脆弱字符串截取；
+- 目标存在且哈希正确 → 跳过（幂等）；缺失/不匹配 → 安全重建；
+- 检测路径穿越、重复目标、未知 kind、哈希错误；
+- `--check-only` 只读不写，输出每项就位/缺失/不符状态；
+- 临时目录 + 原子 rename，中途失败不留伪完整文件；
+- 输出机器可读 PASS/FAIL 摘要；二次执行必须证明幂等。
 
-用途：说明"用户态是什么、干什么用、为什么是二进制、能/不能对它做什么"。
+## 六、staging 构建树与新构建器（`scripts/build-innogpu-driver.sh`）
 
-| 组件（18 个 .so 分组） | 角色 | 来源与边界 |
+构建流程（不执行 `patch -pN`）：
+
+```text
+验证 Deepin 原包
+  -> 验证 binary-manifest.json
+  -> extract-vendor-binaries.sh --check-only
+  -> 创建 build/<unique>/source
+  -> 导入 drivers/ 源码
+  -> 放置已校验 vendor 黑盒对象
+  -> 执行确定性 binary transform（patch-000 等价工具）
+  -> 编译 DKMS
+  -> 包装同源用户态/固件/maintainer scripts
+  -> package boundary audit
+  -> 输出 parity report
+```
+
+禁止：以历史 patched deb 为输入；自动下载未固定哈希的外部文件；修改 Git 工作区源码；
+从个人 home 目录读取黑盒载荷；编译失败时复制旧 .ko 绕过。`drivers/` 中不放临时 `.o_shipped`，
+不依赖人工软链接。
+
+## 七、parity 验证门槛（监督指南"五、强制 parity 报告"）
+
+每个阶段必须输出机器可读报告，至少包含：
+
+```text
+source_tree_parity=PASS
+patch_provenance=PASS
+binary_manifest=PASS
+vendor_extraction_idempotent=PASS
+deterministic_transform=PASS
+dkms_build=PASS
+module_vermagic=PASS
+package_boundary=PASS
+userspace_firmware_coherence=PASS
+runtime_probe=PASS
+rollback=PASS
+```
+
+区分三类树：Deepin 原始源码树、Deepin 原包 + p27 有效源码修改后的生成树、迁移后的
+`drivers/` 源码树。源码 parity 只比较源码生成树；黑盒/用户态/固件/maintainer scripts 分别由
+binary、package、runtime parity 验证。禁止用单项编译成功替代完整 parity。
+
+## 八、版本、tag 与发布
+
+- 新架构首版：`Debian package 1.0.0-i1`、`Git tag source-v1.0.0-i1`，不覆盖 `patched-27`；
+- tag 注释含：源码提交 hash、binary-manifest hash、Deepin 原包 hash、构建工具版本、parity report
+  位置、实机验证状态、p27 回退包位置；
+- **必须先验证 Debian 版本排序**：用 `dpkg --compare-versions` 实际验证
+  `1.0.0-i1` 与 `3.3.3.42-patched-27` 的升级/降级/回退关系，不能只在文档中假定；
+- 旧 tag 不得移动；新架构用新 tag；p27 tag 与 release 永久保留。
+
+## 九、分阶段计划（对齐监督指南"四、分阶段门槛"）
+
+| 阶段 | 交付 | 门槛（全部 PASS 才进下一阶段） |
 | --- | --- | --- |
-| `libsrv_um_inno.so`/`libusc_inno.so`/`libufwriter_inno.so` | services UMD / USC 着色器编译器 / UF writer（Imagination DDK 用户态） | Deepin 原包；预编译；只读 |
-| `libVK_INNO.so`（Vulkan 1.3.264）/`libINNOOCL.so`（OpenCL 3.0） | Vulkan / OpenCL ICD | 同上；能力面见 capability-survey.md |
-| `libGL_INNO_MESA.so`/`libGLESv2_INNO_MESA.so`/`libGLX_inno.so`/`libglapi_inno.so`/`libinno_mesa_wsi.so` | Mesa 派生 GL/EGL/GLX 栈 | 同源 ABI 整体部署，禁止单文件替换 |
-| `libinnogpu_gbm.so`/`libinno_dri_support.so`/`inno_dri.so`/`innogpu_drv.so` | GBM / DRI / Xorg DDX | 同源；DDX 在 `/usr/lib/xorg` |
-| `libinno_codec.so`/`innogpu_drv_video.so` | 视频编解码（VA-API 解码 + 私有 codec） | 预编译；编码接口私有，未实机验证 |
-| `libifbc.so`/`libifbc_ext.so` | 帧缓冲压缩（IFBC） | 预编译 |
-| 固件 `fh2m.fw/fh2m.sh/fh2c.fw/fh2c.sh` | META 微码 + USC shader 固件 | 必须整体保留（事故记录） |
+| 0 设计冻结 | 本文件：目录、manifest schema、提取工具、staging、版本排序、许可证、回退策略 | 设计审查通过；不改设备不删旧文件 |
+| 1 源码树导入 | `drivers/`、源码架构说明、patch provenance 表、导入报告 | source_import / patch_provenance / source_tree_parity_against_p27 / working_tree_clean / runtime_unchanged |
+| 2 黑盒 manifest 与 staging | 正式 manifest、提取工具、vendor 忽略规则、staging 构建 | first_extraction / second_extraction_idempotent / check_only / bad_hash=FAIL_AS_EXPECTED / missing_source=FAIL_AS_EXPECTED / path_traversal=FAIL_AS_EXPECTED / interrupted_extraction_recovery |
+| 3 新构建器并行验证 | 新构建器（旧构建器为 oracle，并行比较） | 源码/黑盒/用户态/固件/maintainer scripts/包清单/vermagic/关键符号逐项一致 |
+| 4 实机候选验证 | 安装候选（需监督批准 + p27 回退与 SSH/TTY 通道） | 包版本/DKMS/vermagic/Driver/Firmware/DRM/fbdev/HWGL/DRI3/PDP/vblank/VA-API/fbterm/xdisplay/Picom/音频 + p27 回退演练 |
+| 5 旧流程退役 | `patches/` 与旧 wrapper 移入 `legacy/` 或标记 deprecated | 阶段 1–4 全部 PASS + 新设备 clone 安装验证；p27 tag/deb 永久保留；至少一个发布周期后才评估物理删除 |
 
-规则：**用户态是"原子载荷"，随 Deepin 基线整体升级，不拆不混**；本项目对它的"修改"只能是
-能力面验证（探针）、调用画像（trace-loader）和文档记录，不能改 .so 内部。
+## 十、暂停条件（监督指南"八、暂停条件"）
 
-## 五、验证门槛（阶段 1 完成判据）
+manifest 哈希与来源包不一致、新旧源码树无法解释地不同、新构建器修改 Git 工作区、编译失败却
+复制旧 .ko 绕过、包版本排序未验证、用户态/固件来源混用、实机验证缺回退通道、文档把计划写成
+实机已验证、p27 回退路径未保留、需要强制移动既有 tag —— 任一出现立即停止并报告。
 
-1. `drivers/` 导入完整、13 个补丁转提交后与 p27 源码逐字一致（diff 为空）；
-2. `extract-vendor-binaries.sh` 首次执行就位 5+18+4 项、二次执行全跳过、`--check-only` 全 PASS；
-3. 新构建流程离线 DKMS 编译通过、vermagic 匹配；
-4. 功能回归与 p27 一致：`verify-install-status`、`check-desktop-hwgl`、PDP READ/WRITE 探针、
-   vblank 探针、VA-API 探针、能力普查摘要；
-5. `run-dev-tests.sh` 全绿；`check-docs.sh` 通过。
+## 十一、agent 协作与交付格式（监督指南"七"）
 
-## 六、回退与风险
-
-- 迁移期间设备保持 p27；阶段 1 产物先离线验证，通过后才允许安装；
-- 回退 = 装回 p27 deb（debs/ 保留）或签出迁移前的 main 提交；
-- 风险与对策：
-  - 源码树与 Deepin 上游脱节 → manifest 保留来源引用，升级基线=重新导入 diff；
-  - git 膨胀 → 二进制不进 git（127M 全部走 manifest + vendor/）；
-  - 补丁溯源丢失 → 每个转提交保留 `patch-0XX` 标记与文档链接；
-  - 许可证 → 保留文件头 Dual MIT/GPLv2 声明。
+开工声明：当前分支、基准提交、允许修改的文件、不允许修改的文件和系统状态、测试与回退方式。
+收工交付：修改文件清单、设计决策与未解决问题、测试命令及 PASS/FAIL 摘要、parity report、
+是否需要重启、是否允许合并 main。涉及设备安装/模块切换/重启/tag 移动/删除旧流程时必须暂停
+等待监督确认。无法验证的内容标记 `UNVERIFIED`。
 
 ## 参考
 
-- [ddk-v119-mapping.md](ddk-v119-mapping.md)：组件谱系与二进制边界。
-- [release-review-2026-08-20.md](release-review-2026-08-20.md)：可复现构建纪律。
-- 现有 `scripts/check-deb-dkms-build.sh` 的离线编译逻辑作为新构建的基础。
+- `docs/planning/migration-supervision.md`（监督分支 migration/supervised-source-tree @ bd76e91）：监督指南（阶段门槛与暂停条件优先）。
+- [ddk-v119-mapping.md](ddk-v119-mapping.md)、[release-review-2026-08-20.md](release-review-2026-08-20.md)。

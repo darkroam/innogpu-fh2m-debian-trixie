@@ -45,18 +45,16 @@
 
 ### 进行中
 
-5. **源码树迁移（重构架构、取消 patch、直接纳入代码）**——三阶段执行，每阶段工作如下：
+5. **源码树迁移（重构架构、取消 patch、直接纳入代码）**——由监督指南 `docs/planning/migration-supervision.md`（监督分支 migration/supervised-source-tree @ bd76e91） 管辖，分阶段 0–5：
 
 | 阶段 | 工作内容 | 完成判据 |
 | --- | --- | --- |
-| 阶段 1 · 源码树导入 | 导入 `drivers/` 源码树；13 个补丁转为源码树上的直接提交；编写
-  `binary-manifest.json` + `extract-vendor-binaries.sh`（幂等）；新构建流程（仓库树 +
-  vendor/ 二进制），去掉 patch 应用 | `drivers/` 与 p27 源码逐字一致；提取工具就位且幂等；
-  离线编译通过；功能回归 = p27 行为 |
-| 阶段 2 · 版本独立与 CI | 独立版本号（`1.0.0-iN`），tag = 源码提交 + 清单哈希；
-  `run-dev-tests.sh` 开发测试闭环门槛 | 每个提交跑静态 + 离线编译 + fixture 全绿；tag 可复现 |
-| 阶段 3 · 持续迭代 | 在 `drivers/` 内做真正重构（invisible READ 预取、DPU 模块化）；
-  以 `driver-architecture.md` 指导改动归属 | 重构项逐个设计 → 验证 → 合并，回归不破 |
+| 0 设计冻结 | 目录结构、manifest schema、提取工具、staging、版本排序、回退策略 | 设计审查通过（当前处于此阶段） |
+| 1 源码树导入 | 导入 `drivers/`；14 个 patch 转 provenance + 源码提交 | source_import / patch_provenance / source_tree_parity_against_p27 |
+| 2 黑盒 manifest 与 staging | 正式 `binary-manifest.json`、幂等提取工具、staging 构建 | first/second_extraction_idempotent / check_only / bad_hash=FAIL_AS_EXPECTED |
+| 3 新构建器并行验证 | 新构建器与旧构建器并行对比 | 源码/黑盒/用户态/固件/包清单/vermagic 逐项一致 |
+| 4 实机候选验证 | 安装候选（需监督批准 + p27 回退通道） | 全套实机验收 + p27 回退演练 |
+| 5 旧流程退役 | `patches/` 与旧 wrapper 移入 `legacy/` | 阶段 1–4 全 PASS + 新设备安装验证 |
 
 详细设计见 [source-tree-migration.md](../planning/source-tree-migration.md)。
 
