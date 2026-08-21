@@ -6,7 +6,7 @@ boot_time=2026-08-21 14:36:45
 ===== Package And Driver =====
 package=innogpu-fh2m-trixie
 version=4.0.0-i1
-status=ii 
+status=ii
 Driver Status:   OK
 
 Device ID: 0:128
