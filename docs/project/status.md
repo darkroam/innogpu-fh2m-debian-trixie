@@ -15,7 +15,7 @@
 | 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |
 | 运行验收状态 | p21 完整图形验收通过；p22 已完成 connector 分类和开盖桌面烟测，电源/合盖/拔屏矩阵待完成 | [`patch-009` 验收](../patches/patch-009-local-internal-edp-connector.md) |
 | 源码/用户态基线 | Deepin 202504 完整原包，不混用历史 patched 包 | `scripts/build-deepin-coherent.sh` |
-| 源码树迁移 | 阶段 0–4 完成（新构建器 4.0.0-i1 并行验证 + 实机候选验证与回退演练全 PASS）；设备已运行 4.0.0-i1；阶段 5 旧流程退役待执行 | [source-tree-migration](../planning/source-tree-migration.md)、[phase4 验证](../planning/phase4-device-validation.md) |
+| 源码树迁移 | 阶段 0–4 完成（新构建器 4.0.0-i1 并行验证 + 实机候选验证与回退演练全 PASS）；设备已运行 4.0.0-i1；阶段 5 第一步（标记 deprecated + 文档同步）完成，第二步待条件满足 + 监督批准 | [phase5-retirement-design](../planning/phase5-retirement-design.md) |
 | 固件与 PVR | p24 `fh2m.fw`、`fh2m.sh` 已加载，Driver/Firmware 为 OK，错误计数为 0 | [`patched-24` 验收](../patches/patched-24-kernel-612101.md) |
 | DRM/fbdev | p24 `card0`、`renderD128`、`fb0` 可用；fbterm 使用 redraw 模式通过真实 VT 持续滚动验证 | [`patched-24` 验收](../patches/patched-24-kernel-612101.md) |
 | Xorg/GLX | 当前桌面和隔离 `:9/vt8` 的 Xorg、`xdpyinfo`、`glxinfo` 全部通过；硬件加速启用 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |

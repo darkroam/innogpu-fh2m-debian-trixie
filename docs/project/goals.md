@@ -29,7 +29,7 @@
 | DDK 谱系对照表 | 达成（组件 / UAPI / 特性 / 用户态映射） | [ddk-v119-mapping.md](../planning/ddk-v119-mapping.md) |
 | 内核正确性修复 | 3/3 达成（dma_resv usage / vblank 守卫 / foreign DMA-BUF） | patch-025/026/027 |
 | 构建可复现 | 达成（目录 mtime 归一化修复，三包逐字一致） | [release 审阅](../planning/release-review-2026-08-20.md) |
-| 源码树迁移 | **阶段 0–4 完成**（设计冻结 ✅、drivers/ 导入 + 9 补丁转提交 + parity ✅、manifest + 幂等提取 + staging 内核编译 ✅、新构建器 4.0.0-i1 并行验证 ✅、实机候选验证 + p27 回退演练 ✅——设备已运行 4.0.0-i1）；阶段 5 旧流程退役待执行 | [source-tree-migration.md](../planning/source-tree-migration.md)、[phase4-device-validation.md](../planning/phase4-device-validation.md) |
+| 源码树迁移 | **阶段 0–4 完成**（设计冻结 ✅、drivers/ 导入 + 9 补丁转提交 + parity ✅、manifest + 幂等提取 + staging 内核编译 ✅、新构建器 4.0.0-i1 并行验证 ✅、实机候选验证 + p27 回退演练 ✅——设备已运行 4.0.0-i1）；阶段 5 第一步（标记 deprecated + 文档同步）完成，第二步（移入 legacy/）待条件满足 + 监督批准 | [source-tree-migration.md](../planning/source-tree-migration.md)、[phase5-retirement-design.md](../planning/phase5-retirement-design.md) |
 | 性能优化（预取等） | 未开始 | [评估候选 4](../planning/reverse-engineering-assessment.md) |
 | 能力深挖（codec 编码 / DVFS / CORE_ID） | 未开始 | [todo.md](../planning/todo.md) |
 | 发布与跨硬件 | 部分（审阅完成；跨硬件/电源矩阵待做） | [suspended.md](../planning/suspended.md) |
