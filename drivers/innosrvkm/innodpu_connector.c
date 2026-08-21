@@ -44,6 +44,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "innodpu_common.h"
 #include "innodpu_dp_common.h"
 #include "innogpu_drm.h"
+#include <linux/acpi.h>
 
 extern unsigned int s_dpu_match;
 
@@ -1374,6 +1375,106 @@ static int g0_soc_connector_map_get(int sk_select, int sk_support, int dpu_match
 	return ret;
 }
 
+#if (DRM_VERSION >= KERNEL_VERSION(4, 13, 0))
+
+#define ACPI_CONFIG
+#define TARGET_PATH "\\_SB_.PCI0.MX12.PEG0"
+static const guid_t dpu_uuid =
+	GUID_INIT(0xdaffd814, 0x6eba, 0x4d8c,
+		  0x8a, 0x91, 0xbc, 0x9b, 0xbf, 0x4a, 0xa3, 0x01);
+
+static int innogpu_acpi_dpu_match(struct drm_device *drm_dev)
+{
+	struct acpi_buffer buf = {ACPI_ALLOCATE_BUFFER, NULL};
+	union acpi_object *pkg;
+	acpi_handle handle;
+	acpi_status status;
+	int dpu_match = 0;
+	int i, j, last_package;
+
+#ifdef ACPI_CONFIG
+	handle = ACPI_HANDLE(drm_dev->dev);
+	if (!handle) {
+		conn_info(drm_dev->dev, "Failed to get ACPI handle\n");
+		return -ENODEV;
+	}
+#else
+	status = acpi_get_handle(NULL, TARGET_PATH, &handle);
+	if (ACPI_FAILURE(status)) {
+		conn_info(drm_dev->dev, "Failed to get ACPI handle for %s\n", TARGET_PATH);
+		return -ENODEV;
+	}
+#endif
+
+	status = acpi_evaluate_object(handle, "_DSD", NULL, &buf);
+	if (ACPI_FAILURE(status)) {
+		conn_info(drm_dev->dev, "Failed to evaluate _DSD method\n");
+		return -EIO;
+	}
+
+	pkg = (union acpi_object *)buf.pointer;
+	if (pkg->type != ACPI_TYPE_PACKAGE) {
+		conn_info(drm_dev->dev, "Invalid _DSD format\n");
+		goto cleanup;
+	}
+
+	for (i = 0; i < pkg->package.count; i += 2) {
+		const union acpi_object *guid;
+		union acpi_object *properties;
+
+		guid = &pkg->package.elements[i];
+		properties = &pkg->package.elements[i + 1];
+
+		if (guid->type != ACPI_TYPE_BUFFER ||
+		    properties->type != ACPI_TYPE_PACKAGE)
+			break;
+
+		if (guid_equal((guid_t *)guid->buffer.pointer, &dpu_uuid)) {
+			last_package = properties->package.count - 1;
+
+			for (j = 0; j < properties->package.count; j++) {
+				union acpi_object *entry = &properties->package.elements[j];
+				union acpi_object *key;
+				union acpi_object *value;
+
+				key = &entry->package.elements[0];
+				value = &entry->package.elements[1];
+
+				if (j != last_package) {
+					if (key->type == ACPI_TYPE_STRING &&
+					    !fh2m_inno_strcmp("DPU_ID", key->string.pointer) &&
+					    value->type == ACPI_TYPE_BUFFER &&
+					    !fh2m_inno_strcmp("1ec8", value->buffer.pointer))
+						continue;
+					else
+						goto cleanup;
+				}
+
+				if (j == last_package &&
+				    key->type == ACPI_TYPE_STRING &&
+				    !fh2m_inno_strcmp("DPU_MATCH", key->string.pointer) &&
+				    value->type == ACPI_TYPE_INTEGER) {
+					dpu_match = (u32)value->integer.value;
+					conn_info(drm_dev->dev, "acpi dpu match success: %u\n", dpu_match);
+					break;
+				}
+
+				conn_info(drm_dev->dev, "acpi dpu match fail\n");
+			}
+		}
+	}
+
+cleanup:
+	kfree(buf.pointer);
+	return dpu_match;
+}
+#else
+static int innogpu_acpi_dpu_match(struct drm_device *drm_dev)
+{
+	return -EINVAL;
+}
+#endif
+
 static int g0m_soc_connector_map_get(int dpu_match)
 {
 	int ret = 0;
@@ -1521,53 +1622,59 @@ static void innodpu_get_interface_max_resolution(int custom, chip_type_e plat,
 												 struct disp_interface_info *interface, unsigned int interface_en)
 {
 	if (interface_en & BIT(0)) {
-			if (s_connector_map[custom][plat][CONNECTOR_M_HDMI0].max_width == 4096) {
-				interface->max_hdisp = 3840;
-				interface->max_vdisp = 2160;
-				interface->max_refresh = 60;
-			} else if (s_connector_map[custom][plat][CONNECTOR_M_HDMI0].max_width == 2048) {
-				interface->max_hdisp = 1920;
-				interface->max_vdisp = 1200;
-				interface->max_refresh = 120;
-			} else if (s_connector_map[custom][plat][CONNECTOR_M_HDMI0].max_width == 2560) {
-				interface->max_hdisp = 2560;
-				interface->max_vdisp = 1440;
-				interface->max_refresh = 100;
-			}
+		if (s_connector_map[custom][plat][CONNECTOR_M_HDMI0].max_width == 4096 ||
+			s_connector_map[custom][plat][CONNECTOR_M_HDMI0].max_width == 3840) {
+			interface->max_hdisp = 3840;
+			interface->max_vdisp = 2160;
+			interface->max_refresh = 60;
+		} else if (s_connector_map[custom][plat][CONNECTOR_M_HDMI0].max_width == 2048) {
+			interface->max_hdisp = 1920;
+			interface->max_vdisp = 1200;
+			interface->max_refresh = 120;
+		} else if (s_connector_map[custom][plat][CONNECTOR_M_HDMI0].max_width == 2560) {
+			interface->max_hdisp = 2560;
+			interface->max_vdisp = 1440;
+			interface->max_refresh = 100;
+		}
 	} else if (interface_en & BIT(1)) {
-			if (s_connector_map[custom][plat][CONNECTOR_M_HDMI1].max_width == 4096) {
-				interface->max_hdisp = 3840;
-				interface->max_vdisp = 2160;
-				interface->max_refresh = 60;
-			} else if (s_connector_map[custom][plat][CONNECTOR_M_HDMI1].max_width == 2048) {
-				interface->max_hdisp = 1920;
-				interface->max_vdisp = 1200;
-				interface->max_refresh = 120;
-			} else if (s_connector_map[custom][plat][CONNECTOR_M_HDMI1].max_width == 2560) {
-				interface->max_hdisp = 2560;
-				interface->max_vdisp = 1440;
-				interface->max_refresh = 100;
-			}
+		if (s_connector_map[custom][plat][CONNECTOR_M_HDMI1].max_width == 4096 ||
+			s_connector_map[custom][plat][CONNECTOR_M_HDMI1].max_width == 3840) {
+			interface->max_hdisp = 3840;
+			interface->max_vdisp = 2160;
+			interface->max_refresh = 60;
+		} else if (s_connector_map[custom][plat][CONNECTOR_M_HDMI1].max_width == 2048) {
+			interface->max_hdisp = 1920;
+			interface->max_vdisp = 1200;
+			interface->max_refresh = 120;
+		} else if (s_connector_map[custom][plat][CONNECTOR_M_HDMI1].max_width == 2560) {
+			interface->max_hdisp = 2560;
+			interface->max_vdisp = 1440;
+			interface->max_refresh = 100;
+		}
 	} else if (interface_en & BIT(2)) {
-			if (s_connector_map[custom][plat][CONNECTOR_M_DP0].max_width == 4096) {
-				interface->max_hdisp = 3840;
-				interface->max_vdisp = 2160;
-				interface->max_refresh = 60;
-			} else if (s_connector_map[custom][plat][CONNECTOR_M_DP0].max_width == 2048) {
-				interface->max_hdisp = 1920;
-				interface->max_vdisp = 1200;
-				interface->max_refresh = 120;
-			} else if (s_connector_map[custom][plat][CONNECTOR_M_DP0].max_width == 2560) {
-				interface->max_hdisp = 2560;
-				interface->max_vdisp = 1440;
-				interface->max_refresh = 100;
-			}
+		if (s_connector_map[custom][plat][CONNECTOR_M_DP0].max_width == 4096) {
+			interface->max_hdisp = 3840;
+			interface->max_vdisp = 2160;
+			interface->max_refresh = 60;
+		} else if (s_connector_map[custom][plat][CONNECTOR_M_DP0].max_width == 2048) {
+			interface->max_hdisp = 1920;
+			interface->max_vdisp = 1200;
+			interface->max_refresh = 120;
+		} else if (s_connector_map[custom][plat][CONNECTOR_M_DP0].max_width == 2560) {
+			interface->max_hdisp = 2560;
+			interface->max_vdisp = 1440;
+			interface->max_refresh = 100;
+		} else if (s_connector_map[custom][plat][CONNECTOR_M_DP0].max_width == 2880) {
+			interface->max_hdisp = 2880;
+			interface->max_vdisp = 1800;
+			interface->max_refresh = 60;
+		}
 	} else if (interface_en & BIT(3)) {
-			if (s_connector_map[custom][plat][CONNECTOR_M_VGA].max_width != 0) {
-				interface->max_hdisp = 1920;
-				interface->max_vdisp = 1200;
-				interface->max_refresh = 60;
-			}
+		if (s_connector_map[custom][plat][CONNECTOR_M_VGA].max_width != 0) {
+			interface->max_hdisp = 1920;
+			interface->max_vdisp = 1200;
+			interface->max_refresh = 60;
+		}
 	}
 }
 
@@ -1600,13 +1707,13 @@ static void innodpu_fill_interface_info(struct drm_device *drm_dev,
 
 	/* TODO: others plat */
 	if (plat == CHIP_G0M_SOC) {
-		if (0 == s_connector_map[custom][CHIP_G0M_SOC][0].possible_crtc)
+		if (0 == s_connector_map[custom][CHIP_G0M_SOC][CONNECTOR_M_HDMI0].possible_crtc)
 			interface_en &= ~BIT(0);
-		if (0 == s_connector_map[custom][CHIP_G0M_SOC][1].possible_crtc)
+		if (0 == s_connector_map[custom][CHIP_G0M_SOC][CONNECTOR_M_HDMI1].possible_crtc)
 			interface_en &= ~BIT(1);
-		if (0 == s_connector_map[custom][CHIP_G0M_SOC][4].possible_crtc)
+		if (0 == s_connector_map[custom][CHIP_G0M_SOC][CONNECTOR_M_DP0].possible_crtc)
 			interface_en &= ~BIT(2);
-		if (0 == s_connector_map[custom][CHIP_G0M_SOC][6].possible_crtc)
+		if (0 == s_connector_map[custom][CHIP_G0M_SOC][CONNECTOR_M_VGA].possible_crtc)
 			interface_en &= ~BIT(3);
 	}
 
@@ -1661,7 +1768,9 @@ int innodpu_custom_init(struct drm_device *drm_dev,
 	plat = fh2m_hal_get_chiptype(drm_dev->dev);
 	sk_select = fh2m_hal_select_4k(drm_dev->dev);
 	sk_support = fh2m_hal_is_support_4k(drm_dev->dev);
-	dpu_match = fh2m_hal_get_dpu_match(drm_dev->dev);
+	dpu_match = innogpu_acpi_dpu_match(drm_dev);
+	if (dpu_match <= 0)
+		dpu_match = fh2m_hal_get_dpu_match(drm_dev->dev);
 
 	innodpu_logo_extime_blacklist(drm_dev);
 
