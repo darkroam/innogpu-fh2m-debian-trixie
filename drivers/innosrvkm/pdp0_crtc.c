@@ -1131,6 +1131,18 @@ int pdp0_crtc_enable_vblank(struct drm_crtc *crtc)
 			active_timer_start(pdp0_drm);
 		}
 	} else {
+		/* The hardware cannot deliver vblank for a CRTC that is not
+		 * active or has no valid mode. Refuse instead of returning
+		 * success so userspace WAIT_VBLANK fails immediately rather
+		 * than blocking forever on an inactive CRTC. */
+		if (!crtc->state || !crtc->state->active || !crtc->state->mode.clock) {
+			fh2m_innodpu_err(crtc->dev->dev,
+					 "crtc %s: vblank not available (active=%d clock=%d)\n",
+					 crtc->name,
+					 crtc->state ? crtc->state->active : 0,
+					 crtc->state ? crtc->state->mode.clock : 0);
+			return -EINVAL;
+		}
 		atomic_set(pdp0_drm->hwdev->vblank_enable, 1);
 	}
 
