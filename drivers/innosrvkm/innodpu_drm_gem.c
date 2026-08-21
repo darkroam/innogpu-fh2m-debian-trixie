@@ -2605,13 +2605,13 @@ int inno_gem_object_cpu_prep_ioctl(struct drm_device *dev, void *data, struct dr
 	if (wait) {
 		long lerr;
 
-		lerr = dma_resv_wait_timeout_rcu(innodpu_obj->resv, write, true, 30 * HZ);
+		lerr = dma_resv_wait_timeout_rcu(innodpu_obj->resv, innodpu_dma_resv_usage_rw(write), true, 30 * HZ);
 		if (!lerr)
 			err = -EBUSY;
 		else if (lerr < 0)
 			err = lerr;
 	} else {
-		if (!dma_resv_test_signaled_rcu(innodpu_obj->resv, write))
+		if (!dma_resv_test_signaled_rcu(innodpu_obj->resv, innodpu_dma_resv_usage_rw(write)))
 			err = -EBUSY;
 	}
 	if (!err) {

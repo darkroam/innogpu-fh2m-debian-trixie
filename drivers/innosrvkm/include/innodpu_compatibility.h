@@ -125,6 +125,11 @@ typedef int vm_fault_t;
 #define dma_resv_get_excl_rcu  reservation_object_get_excl_rcu
 #define dma_resv_get_fences_rcu reservation_object_get_fences_rcu
 #endif
+#if (DRM_VERSION >= KERNEL_VERSION(5, 19, 0))
+#define innodpu_dma_resv_usage_rw(write) dma_resv_usage_rw(write)
+#else
+#define innodpu_dma_resv_usage_rw(write) (write)
+#endif
 
 #if (DRM_VERSION < KERNEL_VERSION(4, 20, 0))
 #define vmf_insert_pfn vm_insert_pfn
