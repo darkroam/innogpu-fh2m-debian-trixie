@@ -49,9 +49,10 @@
 
 | 阶段 | 工作内容 | 完成判据 |
 | --- | --- | --- |
-| 0 设计冻结 | 目录结构、manifest schema、提取工具、staging、版本排序、回退策略 | 设计审查通过（当前处于此阶段） |
-| 1 源码树导入 | 导入 `drivers/`；14 个 patch 转 provenance + 源码提交 | source_import / patch_provenance / source_tree_parity_against_p27 |
-| 2 黑盒 manifest 与 staging | 正式 `binary-manifest.json`、幂等提取工具、staging 构建 | first/second_extraction_idempotent / check_only / bad_hash=FAIL_AS_EXPECTED |
+| 0 设计冻结 | 目录结构、manifest schema、提取工具、staging、版本排序、回退策略 | ✅ 完成（2026-08-21 监督批准） |
+| 1 源码树导入 | 导入 `drivers/`；14 个 patch 转 provenance + 源码提交 | ✅ 完成（9 个转换提交 + parity 脚本 PASS） |
+| 2 黑盒 manifest 与 staging | 正式 `binary-manifest.json`、幂等提取工具、staging 构建 | ✅ 完成（G1-G7 全 PASS，staging 内核编译 PASS）；
+  用户态/固件 package boundary 属阶段 3 待验证 |
 | 3 新构建器并行验证 | 新构建器与旧构建器并行对比 | 源码/黑盒/用户态/固件/包清单/vermagic 逐项一致 |
 | 4 实机候选验证 | 安装候选（需监督批准 + p27 回退通道） | 全套实机验收 + p27 回退演练 |
 | 5 旧流程退役 | `patches/` 与旧 wrapper 移入 `legacy/` | 阶段 1–4 全 PASS + 新设备安装验证 |

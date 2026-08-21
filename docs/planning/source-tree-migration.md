@@ -2,11 +2,14 @@
 
 ## 状态
 
-- 本文件对应监督指南 `docs/planning/migration-supervision.md`（监督分支 migration/supervised-source-tree @ bd76e91） 的**阶段 0：设计冻结**，
-  仅完善设计，不实施、不改设备、不删旧文件。
-- 监督基线：分支 `migration/supervised-source-tree`（commit `bd76e91`），本文档不修改该分支。
+- 本文件是源码树迁移的设计基线，对应监督指南 `docs/planning/migration-supervision.md`（监督分支
+  migration/supervised-source-tree @ bd76e91）。
+- **阶段 0（设计冻结）✅ 阶段 1（源码树导入 + 9 补丁转提交 + parity）✅ 阶段 2（manifest + 幂等提取 +
+  staging 内核编译）✅**；当前进入阶段 3（新构建器并行验证）申请。
 - 当前设备基线：`3.3.3.42-patched-27`（迁移冻结运行基线与回退包）。
-- 未实机验证的内容一律标记 `UNVERIFIED`；本文件所有行为承诺均需在对应阶段用命令和输出证明。
+- 未实机验证的内容一律标记 UNVERIFIED；本文件所有行为承诺均需在对应阶段用命令和输出证明。
+- **边界声明**：阶段 2 的 staging 构建只装配 5 个内核黑盒对象并编译 DKMS；用户态库、固件与 ALSA UCM
+  载荷的**包边界验证属于阶段 3**，当前 staging 结果不代表完整驱动包验证。
 
 ## 一、迁移目标（对齐监督指南"二、迁移目标"）
 

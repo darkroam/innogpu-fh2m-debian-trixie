@@ -10,10 +10,10 @@
 - [x] 完成 release 审阅主体：tag、哈希、包边界、可复现构建（含目录 mtime 修复）、回退路径和附件边界，
   见 [release-review-2026-08-20.md](release-review-2026-08-20.md)。
 - [ ] 剩余发布工作：跨硬件实机矩阵（扩展坞/多屏/无盖桌面/其他机型）、电源/合盖矩阵、release 附件上传。
-- [ ] 源码树迁移（监督指南 `docs/planning/migration-supervision.md`（监督分支 migration/supervised-source-tree @ bd76e91） 管辖，当前阶段 0 设计
-  冻结，[source-tree-migration.md](source-tree-migration.md)）：阶段 1 导入 drivers/ + 14 patch
-  provenance 转提交；阶段 2 manifest + 幂等提取 + staging；阶段 3 新构建器并行；阶段 4 实机候选；
-  阶段 5 旧流程退役。
+- [x] 源码树迁移阶段 0-2（监督指南 `docs/planning/migration-supervision.md`（监督分支 migration/supervised-source-tree @ bd76e91）管辖）：
+  阶段 0 设计冻结 ✅；阶段 1 drivers/ 导入 + 9 patch 转提交 + parity ✅；阶段 2 binary-manifest.json +
+  幂等提取 + staging 内核编译 ✅（G1-G7 全 PASS）。
+- [ ] 源码树迁移阶段 3-5：新构建器并行验证（含用户态/固件 package boundary）、实机候选、旧流程退役。
 
 ## 当前活动项
 

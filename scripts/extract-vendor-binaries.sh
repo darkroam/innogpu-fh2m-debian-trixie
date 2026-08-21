@@ -29,6 +29,14 @@ if [[ "$ACTUAL_DEB_SHA" != "$EXPECTED_DEB_SHA" ]]; then
 fi
 echo "vendor_source_deb_sha256=PASS"
 
+# manifest schema 与路径安全校验（先于任何写入）
+if ! python3 tools/validate-binary-manifest.py >/dev/null; then
+    echo "vendor_manifest_schema=FAIL"
+    python3 tools/validate-binary-manifest.py | head -5
+    exit 1
+fi
+echo "vendor_manifest_schema=PASS"
+
 # 合法 kind 集合
 ALLOWED_KINDS="kernel-black-box userspace-lib ddx userspace-config firmware"
 
@@ -60,7 +68,8 @@ while IFS= read -r entry; do
 
     # kind 校验
     [[ " $ALLOWED_KINDS " == *" "$kind" "* ]] || { echo "vendor_unknown_kind=FAIL $kind ($vp)"; fail=$((fail+1)); continue; }
-    # 路径安全
+    # 路径安全: source_path 与 vendor_path 均须为载荷根内相对路径
+    check_path "$src" || { echo "vendor_source_path_unsafe=FAIL $src"; fail=$((fail+1)); continue; }
     check_path "$vp" || { fail=$((fail+1)); continue; }
 
     dest="$ROOT/vendor/$vp"
@@ -84,6 +93,10 @@ while IFS= read -r entry; do
     if [[ "$CHECK_ONLY" -eq 1 ]]; then echo "vendor_check_only=MISSING_OR_MISMATCH $vp"; ok=$((ok+1)); continue; fi
 
     src_file="$TMP_ROOT/root/$src"
+    # 包含性: 解析后必须仍位于解包根目录内
+    src_real="$(realpath -m "$src_file")"
+    root_real="$(realpath -m "$TMP_ROOT/root")"
+    [[ "$src_real" == "$root_real"/* ]] || { echo "vendor_source_escape=FAIL $src -> $src_real"; fail=$((fail+1)); continue; }
     [[ -f "$src_file" ]] || { echo "vendor_source_missing=FAIL $src"; fail=$((fail+1)); continue; }
     got=$(sha256sum "$src_file" | cut -d' ' -f1)
     got_size=$(stat -c %s "$src_file")
