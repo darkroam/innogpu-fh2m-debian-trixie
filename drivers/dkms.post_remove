@@ -1,0 +1,9 @@
+#!/bin/bash
+
+MODULE_DIR=/lib/modules/$1/
+
+for innogpu in $(find ${MODULE_DIR} -name innogpu.bak)
+do
+        echo "restore $innogpu..."
+        mv $innogpu ${innogpu%.bak}.ko
+done

@@ -1,0 +1,61 @@
+INNOGPU_PRO_PATH := $(src)
+
+#当前机器架构为loongarch时，添加-ffunction-sections -fdata-sections 将.rela_text,.rela_data拆分成一个个具体的函数、变量段
+ifeq ($(CONFIG_LOONGARCH),y)
+	subdir-ccflags-y := -Wall -Werror -fno-stack-protector -ffunction-sections -fdata-sections
+else ifeq ($(CONFIG_ARM64),y)
+	subdir-ccflags-y := -Wall -Werror -fno-stack-protector -ffixed-x18
+else
+	subdir-ccflags-y := -Wall -Werror -fno-stack-protector
+endif
+
+generate_dbginfo ?= 0
+
+ifeq ($(GENERATE_DBGINFO),1)
+	generate_dbginfo = 1
+endif
+
+ifeq ($(BUILD),debug)
+	generate_dbginfo = 1
+endif
+
+ifeq ($(generate_dbginfo),1)
+	subdir-ccflags-y += -g
+endif
+
+include $(INNOGPU_PRO_PATH)/innogpu/Makefile
+include $(INNOGPU_PRO_PATH)/innosmmu/Makefile
+include $(INNOGPU_PRO_PATH)/innodma/Makefile
+include $(INNOGPU_PRO_PATH)/innosrvkm/Makefile
+include $(INNOGPU_PRO_PATH)/innopmbus/Makefile
+include $(INNOGPU_PRO_PATH)/innopower/Makefile
+include $(INNOGPU_PRO_PATH)/innovpu/Makefile
+include $(INNOGPU_PRO_PATH)/tools/Makefile
+
+
+subdir-ccflags-y += \
+	$(INNOGPU_INCLUDE) \
+	$(INNOSMMU_INCLUDE) \
+	$(INNODMA_INCLUDE) \
+	$(INNODPU_INCLUDE) \
+	$(INNOSRVKM_INCLUDE) \
+	$(INNOPMBUS_INCLUDE) \
+	$(INNOPOWER_INCLUDE) \
+	$(INNOVPU_INCLUDE) \
+	$(INNOGPU_INFO_INCLUDE) \
+
+ccflags-y += \
+	-include config_kernel.h \
+	-include kernel_autocfg.h
+
+innogpu-y := $(INNOGPU)
+innogpu-y += $(INNOSMMU)
+innogpu-y += $(INNODMA)
+innogpu-y += $(INNOSRVKM)
+innogpu-y += $(INNOPMBUS)
+innogpu-y += $(INNOPOWER)
+innogpu-y += $(INNOVPU)
+innogpu-y += $(INNOGPU_INFO)
+
+obj-m += innogpu.o
+

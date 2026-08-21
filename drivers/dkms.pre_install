@@ -1,0 +1,9 @@
+#!/bin/bash
+
+MODULE_DIR=/lib/modules/$1/
+
+for innogpu in $(find ${MODULE_DIR} -name innogpu.ko)
+do
+        echo "backup ${innogpu} to ${innogpu%.ko}.bak..."
+        mv $innogpu ${innogpu%.ko}.bak
+done
