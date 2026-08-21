@@ -20,6 +20,9 @@ third_party/innogpu-fh2m-deepin-202504/
 
 # Local runtime diagnostics can contain host paths, display cookies, and large logs.
 /baselines/capability-survey-*.log
+# Migrated black-box payload and staging build area (managed by binary-manifest.json + extractor).
+/vendor/
+/build/
 # Driver-generated shader cache (appears when GL/Vulkan workloads run).
 /.shaders/
 /desktop-hwgl-*.txt

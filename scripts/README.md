@@ -17,6 +17,9 @@
 | `build-patched27-foreign-dmabuf.sh` | 离线正确性候选 | 在 p26 补丁集合上增加 patch-027 foreign DMA-BUF 生命周期修复；只构建，不安装、不热切换 |
 | `check-deb-dkms-build.sh` | 离线编译检查 | 将指定候选 deb 解包到 `/tmp`，针对指定内核 headers 编译 `innogpu.ko` 并校验 vermagic；不注册或安装 DKMS |
 | `check-source-parity.sh` | 只读 parity 检查 | 在临时目录重建 p27 生成源码树（third_party + 9 个启用补丁按构建器顺序 + 清理 .orig/.rej），与 `drivers/` 逐文件对比（排除 README/.o_shipped/.o.cmd），输出机器可读 PASS/FAIL；不修改源码树、旧构建器或设备 |
+| `extract-vendor-binaries.sh` | 幂等提取工具 | 按 `binary-manifest.json` 从 pinned Deepin deb 提取黑盒载荷到 `vendor/`；校验 deb SHA、目标存在且哈希一致则跳过、缺失/不符安全重建、拒绝路径穿越/未知 kind、临时目录 + 原子 rename；`--check-only` 只读；输出机器可读 PASS/FAIL |
+| `build-innogpu-driver.sh` | staging 构建 | 装配 `build/<unique>/source`（drivers/ + vendor 内核黑盒 + 确定性变换），离线编译 DKMS 模块并校验 vermagic；不安装、不热切换、不修改 drivers/vendor |
+| `generate-binary-manifest.py`（tools/） | 清单生成 | 从 Deepin deb 确定性生成 `binary-manifest.json`（校验 deb SHA、覆盖全部黑盒文件与符号链接、kind/role/license 分类） |
 | `build-patched17-deepin-local-display.sh` | 停用护栏 | 明确拒绝把 patched-17 作为后续构建父版本 |
 | `build-patched18-deepin-local-display.sh` | 停用护栏 | 明确拒绝重建历史混合载荷 patched-18 |
 | `build-patched19-deepin-coherent.sh` | 停用护栏 | 明确拒绝用当前辅助载荷复用 patched-19 版本号 |
