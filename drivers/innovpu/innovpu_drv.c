@@ -1148,9 +1148,9 @@ INTERRUPT_REMAIN_IN_QUEUE:
 						if (output_buffer_vb) {
 							//due to buffer released causing kernel crash
 							//if(output_buffer_vb->map_addr == 0 && output_buffer_vb->vb.domain != INNO_VPU_GEM_DOMAIN_VRAM) {
-							//	output_buffer_vb->map_addr = (uint64_t)fh2m_inno_ioremap_nocache(output_buffer_vb->vb.phys_addr, output_buffer_vb->vb.size);
+							//	output_buffer_vb->map_addr = (uint64_t)fh2m_inno_ioremap(output_buffer_vb->vb.phys_addr, output_buffer_vb->vb.size);
 							//	if(output_buffer_vb->map_addr == 0) {
-							//		vpu_error(vpu_drv_ctx->drv_context.vpudev, "fh2m_inno_ioremap_nocache failed phys_addr:0x%llx size:%d\n", output_buffer_vb->vb.phys_addr, output_buffer_vb->vb.size);
+							//		vpu_error(vpu_drv_ctx->drv_context.vpudev, "fh2m_inno_ioremap failed phys_addr:0x%llx size:%d\n", output_buffer_vb->vb.phys_addr, output_buffer_vb->vb.size);
 							//	}
 							//}
 							fh2m_inno_memcpy(&(p_cmd_message->cmd_internal_t.async_cmd.output_vb), output_buffer_vb, sizeof(vpu_buf_obj_t));
@@ -1186,9 +1186,9 @@ INTERRUPT_REMAIN_IN_QUEUE:
 					result_buffer_vb = vpu_get_vb_from_fd(filp, async_cmd.result_fd);
 					if (result_buffer_vb) {
 						if(result_buffer_vb->map_addr == 0 && result_buffer_vb->vb.domain != INNO_VPU_GEM_DOMAIN_VRAM) { //reduce ioremap and iounmap
-							result_buffer_vb->map_addr = (uint64_t)fh2m_inno_ioremap_nocache(result_buffer_vb->vb.phys_addr, result_buffer_vb->vb.size);
+							result_buffer_vb->map_addr = (uint64_t)fh2m_inno_ioremap(result_buffer_vb->vb.phys_addr, result_buffer_vb->vb.size);
 							if(result_buffer_vb->map_addr == 0) {
-								vpu_error(vpu_drv_ctx->drv_context.vpudev, "fh2m_inno_ioremap_nocache failed phys_addr:0x%llx size:%d\n", result_buffer_vb->vb.phys_addr, result_buffer_vb->vb.size);
+								vpu_error(vpu_drv_ctx->drv_context.vpudev, "fh2m_inno_ioremap failed phys_addr:0x%llx size:%d\n", result_buffer_vb->vb.phys_addr, result_buffer_vb->vb.size);
 							}
 						}
 						fh2m_inno_memcpy(&(p_cmd_message->cmd_internal_t.async_cmd.result_vb), result_buffer_vb, sizeof(vpu_buf_obj_t));
@@ -1211,9 +1211,9 @@ INTERRUPT_REMAIN_IN_QUEUE:
 					time_buffer_vb = vpu_get_vb_from_fd(filp, async_cmd.time_cost_fd);
 					if (time_buffer_vb) {
 						if(time_buffer_vb->map_addr == 0) { //reduce ioremap and iounmap
-							time_buffer_vb->map_addr = (uint64_t)fh2m_inno_ioremap_nocache(time_buffer_vb->vb.phys_addr, time_buffer_vb->vb.size);
+							time_buffer_vb->map_addr = (uint64_t)fh2m_inno_ioremap(time_buffer_vb->vb.phys_addr, time_buffer_vb->vb.size);
 							if(time_buffer_vb->map_addr == 0) {
-								vpu_error(vpu_drv_ctx->drv_context.vpudev, "fh2m_inno_ioremap_nocache failed phys_addr:0x%llx size:%d\n", time_buffer_vb->vb.phys_addr, time_buffer_vb->vb.size);
+								vpu_error(vpu_drv_ctx->drv_context.vpudev, "fh2m_inno_ioremap failed phys_addr:0x%llx size:%d\n", time_buffer_vb->vb.phys_addr, time_buffer_vb->vb.size);
 							}
 						}
 						fh2m_inno_memcpy(&(p_cmd_message->cmd_internal_t.async_cmd.time_cost_vb), time_buffer_vb, sizeof(vpu_buf_obj_t));
@@ -2580,7 +2580,7 @@ static int innovpu_probe(struct platform_device *pdev)
 	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "vpu-regs");
 	if (res) {/* if platform driver is implemented */
 		vpu_drv_ctx->drv_context.vpu_register.phys_addr = res->start;
-		vpu_drv_ctx->drv_context.vpu_register.virt_addr = (u64)ioremap_nocache(res->start, res->end - res->start);
+		vpu_drv_ctx->drv_context.vpu_register.virt_addr = (u64)ioremap(res->start, res->end - res->start);
 		vpu_drv_ctx->drv_context.vpu_register.size = (res->end - res->start + 1);
 		vpu_info(&(pdev->dev), "vpu-regs paddr=0x%llx, vaddr=0x%llx\n",
 			vpu_drv_ctx->drv_context.vpu_register.phys_addr ,  vpu_drv_ctx->drv_context.vpu_register.virt_addr);

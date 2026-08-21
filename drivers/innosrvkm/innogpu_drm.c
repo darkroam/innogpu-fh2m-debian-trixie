@@ -1,3 +1,4 @@
+#include <linux/version.h>
 /*************************************************************************/ /*!
 @File			innogpu_drm.c
 @Title
@@ -456,6 +457,9 @@ static int innogpu_drm_mmap(struct file *filp,
 
 const struct file_operations s_innogpu_drm_fops = {\
 	.owner = THIS_MODULE,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 12, 0)
+	.fop_flags = FOP_UNSIGNED_OFFSET,
+#endif
 	.open = drm_open,
 	.release = drm_release,
 	/*.unlocked_ioctl = drm_ioctl,*/

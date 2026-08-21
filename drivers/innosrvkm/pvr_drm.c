@@ -387,6 +387,7 @@ static void pvr_drm_release(struct drm_device *ddev, struct drm_file *dfile)
 	module_put(THIS_MODULE);
 }
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 12, 0))
 static void pvr_drm_lastclose(struct drm_device * ddev)
 {
 #if defined(SUPPORT_DMA_TRANSFER)
@@ -394,6 +395,7 @@ static void pvr_drm_lastclose(struct drm_device * ddev)
 	PVRSRVReleaseDMAChan(priv->dev_node);
 #endif
 }
+#endif
 #if 0
 int
 drm_pvr_srvkm_init(struct drm_device *dev, void *arg, struct drm_file *psDRMFile)
@@ -490,7 +492,9 @@ const struct drm_driver pvr_drm_generic_driver = {
 #endif
 	.open			= pvr_drm_open,
 	.postclose		= pvr_drm_release,
-	.lastclose		= pvr_drm_lastclose,
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 12, 0))
+	.lastclose = pvr_drm_lastclose,
+#endif
 
 	.prime_handle_to_fd	= drm_gem_prime_handle_to_fd,
 

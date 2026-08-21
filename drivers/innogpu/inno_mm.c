@@ -1124,7 +1124,7 @@ INNO_EXT_SYM(fh2m_inno_ioremap);
 void *fh2m_inno_ioremap_nocache(uint64_t addr, uint64_t size)
 {
 #ifdef INNOGPU_IOREMAP_NOCACHE_PRESENT
-	return ioremap_nocache(addr, size);
+	return ioremap(addr, size);
 #else
 	return ioremap(addr, size);
 #endif
@@ -1154,7 +1154,7 @@ void *fh2m_inno_ioremap_wc_portable(uint64_t addr, uint64_t size)
 #elif defined(CONFIG_LOONGARCH) || defined(CONFIG_MIPS)
 	/*fix:loongarch not support wc!!!*/
 #ifdef INNOGPU_IOREMAP_NOCACHE_PRESENT
-	return ioremap_nocache(addr, size);
+	return ioremap(addr, size);
 #else
 	return ioremap(addr, size);
 #endif

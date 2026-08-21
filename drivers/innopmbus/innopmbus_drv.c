@@ -467,7 +467,7 @@ static int inno_pmbus_probe(struct platform_device *pdev)
 	i2c_dev->dev = dev;
 	adap = &i2c_dev->adap;
 #ifdef INNOGPU_IOREMAP_NOCACHE_PRESENT
-	i2c_dev->base = ioremap_nocache(res->start, resource_size(res));
+	i2c_dev->base = ioremap(res->start, resource_size(res));
 #else
 	i2c_dev->base = ioremap(res->start, resource_size(res));
 #endif

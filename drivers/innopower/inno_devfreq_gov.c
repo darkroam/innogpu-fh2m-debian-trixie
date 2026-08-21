@@ -1,5 +1,15 @@
 #ifdef CONFIG_PM_DEVFREQ
 #include <linux/errno.h>
+
+#include <linux/version.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 9, 0)
+#include <linux/thermal.h>
+#define COMPAT_GET_TEMP(tz, temp) thermal_zone_get_temp(tz, temp)
+#define COMPAT_TZ_VALID(tz) (tz != NULL)
+#else
+#define COMPAT_GET_TEMP(tz, temp) (tz->ops->get_temp(tz, temp))
+#define COMPAT_TZ_VALID(tz) (tz && tz->ops && tz->ops->get_temp)
+#endif
 #include <linux/module.h>
 #include <linux/devfreq.h>
 #include <linux/math64.h>
@@ -205,12 +215,12 @@ static unsigned long devfreq_update_algo_pid(struct devfreq *dev)
 	long tolerance_win_min = 0, tolerance_win_max = 0;
 	int i = 0, cur_temp = 0, cur_tmp_error = 0;
 
-	if (!tz || !tz->ops || !tz->ops->get_temp) {
+	if (!COMPAT_TZ_VALID(tz)) {
 		innogov_notice("thermal_dev is null\n");
 		return 0;
 	}
 
-	tz->ops->get_temp(tz, &cur_temp);
+	COMPAT_GET_TEMP(tz, &cur_temp);
 	pidc->time++;
 	if (pidc->time < pidc->timeout) {
 		target_freq = pidc->real_target_freq;
@@ -322,18 +332,18 @@ static unsigned long devfreq_update_algo_mix(struct devfreq *dev)
 	int board_temp = 0;
 	long target_freq = 0;
 
-	if (!tz || !tz->ops || !tz->ops->get_temp) {
+	if (!COMPAT_TZ_VALID(tz)) {
 		innogov_notice("chip thermal_dev is null\n");
 		return 0;
 	}
 
-	if (!btz || !btz->ops || !btz->ops->get_temp) {
+	if (!COMPAT_TZ_VALID(btz)) {
 		innogov_notice("board thermal_dev is null\n");
 		return 0;
 	}
 
-	tz->ops->get_temp(tz, &chip_temp);
-	btz->ops->get_temp(btz, &board_temp);
+	COMPAT_GET_TEMP(tz, &chip_temp);
+	COMPAT_GET_TEMP(btz, &board_temp);
 
 	if (innogov_data->keep_dropfreq_stat == KEEP_DROPFREQ_STAT) {
 		target_freq = fh2m_hal_get_gpu_drop_freq(pinnothermal->ppci_bdev) * GPU_FREQ_M2HZ_UNIT;			/*400M*/

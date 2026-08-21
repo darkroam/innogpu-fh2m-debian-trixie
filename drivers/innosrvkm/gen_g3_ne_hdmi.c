@@ -322,7 +322,7 @@ int gen_g3_ne_hdmi_i2c_init(struct hdmi_chip_t *chip)
 	bit_adap->owner = THIS_MODULE;
 	snprintf(bit_adap->name, sizeof(bit_adap->name), "%s-biti2c", chip->name);
 	bit_adap->algo_data = bit_data;
-	bit_adap->class = I2C_CLASS_HWMON | I2C_CLASS_SPD;
+	bit_adap->class = I2C_CLASS_HWMON | I2C_CLASS_HWMON;
 	bit_adap->dev.parent = chip->dev;
 	bit_adap->dev.of_node = fh2m_inno_get_dev_ofnode(chip->dev);
 	bit_adap->nr = -1;

@@ -56,7 +56,7 @@ INNO_EXT_SYM(fh2m_inno_uuid_copy);
 
 bool fh2m_inno_uuid_is_null(const unsigned char *uuid)
 {
-	const static unsigned char inno_uuid_null[INNO_UUID_SIZE] = { 0 };
+	static const unsigned char inno_uuid_null[INNO_UUID_SIZE] = { 0 };
 	return fh2m_inno_uuid_equal(uuid, inno_uuid_null);
 }
 INNO_EXT_SYM(fh2m_inno_uuid_is_null);

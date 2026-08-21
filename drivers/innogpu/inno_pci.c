@@ -77,7 +77,7 @@
 
 #define DELAY_2_SECONDS	2000000
 
-int INNO_IRQ_MODE_LEGACY = PCI_IRQ_LEGACY;
+int INNO_IRQ_MODE_LEGACY = PCI_IRQ_INTX;
 int INNO_IRQ_MODE_MSI = PCI_IRQ_MSI;
 
 int fh2m_inno_pci_enable_device(inno_pci_dev *dev)
@@ -405,7 +405,11 @@ static void inno_pci_release_resource(struct pci_dev *dev, int resno)
 static int inno_pci_resize_resource(struct pci_dev *dev, int resno, int size)
 {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 12, 101))
+	return pci_resize_resource(dev, resno, size, 0);
+#else
 	return pci_resize_resource(dev, resno, size);
+#endif
 #else
 	return 1;
 #endif

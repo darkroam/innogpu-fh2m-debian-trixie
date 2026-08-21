@@ -1,3 +1,4 @@
+#include <linux/version.h>
 /*************************************************************************/ /*!
 @File			innodpu_drm_modeset.c
 @Title
@@ -260,7 +261,10 @@ static void __attribute__((unused)) innodpu_output_poll_changed(struct drm_devic
 
 static const struct drm_mode_config_funcs inno_mode_config_funcs = {
 	.fb_create = innodpu_fb_create,
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 12, 0))
 	.output_poll_changed = innodpu_output_poll_changed,
+#endif
 #if defined(PDP_USE_ATOMIC)
 	.atomic_check = innodpu_atomic_check,
 	.atomic_commit = innodpu_drm_atomic_helper_commit,

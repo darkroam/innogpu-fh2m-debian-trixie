@@ -70,8 +70,10 @@ struct innothermal *fh2m_inno_thermal_register(inno_dev *posdev)
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0))
 	pinnothmal->thermal_dev =  thermal_zone_device_register("innothermal", 0, 0, pinnothmal, &inno_thermal_zone_ops, NULL, 0, 0);
-#else
+#elif (LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0))
 	pinnothmal->thermal_dev =  thermal_zone_device_register_with_trips("innothermal", NULL, 0, 0, pinnothmal, &inno_thermal_zone_ops, NULL, 0, 0);
+#else
+	pinnothmal->thermal_dev =  thermal_zone_device_register_with_trips("innothermal", NULL, 0, pinnothmal, &inno_thermal_zone_ops, NULL, 0, 0);
 #endif
 	if (fh2m_inno_is_err_or_null(pinnothmal->thermal_dev)) {
 			hal_pwr_err("thermal_dev is invalid %px done\n", pinnothmal->thermal_dev);
@@ -79,8 +81,10 @@ struct innothermal *fh2m_inno_thermal_register(inno_dev *posdev)
 	}
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0))
 	pinnothmal->thermal_bdev =  thermal_zone_device_register("innothermalb", 0, 0, pinnothmal, &inno_thermal_bzone_ops, NULL, 0, 0);
-#else
+#elif (LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0))
 	pinnothmal->thermal_bdev =  thermal_zone_device_register_with_trips("innothermalb", NULL, 0, 0, pinnothmal, &inno_thermal_bzone_ops, NULL, 0, 0);
+#else
+	pinnothmal->thermal_bdev =  thermal_zone_device_register_with_trips("innothermalb", NULL, 0, pinnothmal, &inno_thermal_bzone_ops, NULL, 0, 0);
 #endif
 	if (fh2m_inno_is_err_or_null(pinnothmal->thermal_bdev)) {
 			kfree(pinnothmal->thermal_dev);
@@ -275,7 +279,7 @@ INNO_EXT_SYM(fh2m_inno_governor_param_deinit);
 
 static int inno_thermal_get_temp(struct thermal_zone_device *thermal, int *temp)
 {
-	struct innothermal *innothmal = thermal->devdata;
+	struct innothermal *innothmal = thermal_zone_device_priv(thermal);
 	static int pre_temp = 0;
 	int real_temp = 0;
 
@@ -283,15 +287,10 @@ static int inno_thermal_get_temp(struct thermal_zone_device *thermal, int *temp)
 		return -EINVAL;
 
 	real_temp = fh2m_hal_get_chip_temperature(fh2m_inno_dev_get_parent(innothmal->posdev));
-	if (thermal->emul_temperature) {
-		*temp = thermal->emul_temperature;
-	} else {
-		*temp = real_temp;
-	}
+	*temp = real_temp;
 
 	if (pre_temp != *temp) {
-		hal_pwr_info("real_temp = %d *temp = %d emul_temp = %d\n",
-				real_temp, *temp, thermal->emul_temperature);
+		hal_pwr_info("real_temp = %d\n", real_temp);
 	}
 	pre_temp = *temp;
 
@@ -300,7 +299,7 @@ static int inno_thermal_get_temp(struct thermal_zone_device *thermal, int *temp)
 
 static int inno_thermal_get_btemp(struct thermal_zone_device *thermal, int *temp)
 {
-	struct innothermal *innothmal = thermal->devdata;
+	struct innothermal *innothmal = thermal_zone_device_priv(thermal);
 	int real_temp = 0;
 
 	if (!innothmal)

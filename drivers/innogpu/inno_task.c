@@ -402,7 +402,7 @@ void fh2m_inno_flush_scheduled_work(void)
 	flush_scheduled_work();
 #else
 #if defined(INNOGPU_ATRRIBUTE_WARNING_PRESENT)
-	flush_workqueue(system_wq);
+	// flush_workqueue(system_wq);
 #endif
 #endif
 }

@@ -110,7 +110,7 @@ static struct platform_device_id inno_smmu_platform_device_id_table[] = {
 
 struct platform_driver inno_smmu_driver = {
 	.probe      = (int (*)(struct platform_device *))inno_smmu_device_probe,
-	.remove     = (int (*)(struct platform_device *))inno_smmu_device_remove,
+	.remove     = (void (*)(struct platform_device *))inno_smmu_device_remove,
 	.driver = {
 		.name = INNO_SMMU_DEVICE_NAME,
 	},

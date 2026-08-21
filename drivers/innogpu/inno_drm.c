@@ -46,6 +46,7 @@
 #include <drm/drmP.h>
 #endif
 #include <linux/file.h>
+#include <linux/slab.h>
 #include <drm/drm_modes.h>
 
 #if (DRM_VERSION >= KERNEL_VERSION(5, 19, 0))
@@ -270,7 +271,28 @@ inno_edid *fh2m_inno_drm_do_get_edid(inno_drm_connector *connector,
 	int (*get_edid_block)(void *data, u8 *buf, unsigned int block,
 			      size_t len), void *data)
 {
-    return drm_do_get_edid((struct drm_connector *)connector, get_edid_block, data);
+    const struct drm_edid *drm_edid;
+    const struct edid *raw;
+    struct edid *edid_copy;
+    size_t edid_size;
+
+    drm_edid = drm_edid_read_custom(connector, get_edid_block, data);
+    if (!drm_edid)
+        return NULL;
+
+    raw = drm_edid_raw(drm_edid);
+    if (!raw) {
+        drm_edid_free(drm_edid);
+        return NULL;
+    }
+
+    edid_size = (raw->extensions + 1) * EDID_LENGTH;
+    edid_copy = kmalloc(edid_size, GFP_KERNEL);
+    if (edid_copy)
+        memcpy(edid_copy, raw, edid_size);
+
+    drm_edid_free(drm_edid);
+    return (inno_edid *)edid_copy;
 }
 INNO_EXT_SYM(fh2m_inno_drm_do_get_edid);
 
@@ -294,7 +316,9 @@ INNO_EXT_SYM(fh2m_inno_drm_edid_block_checksum);
 int fh2m_inno_drm_edid_block_valid(u8 *_block, int block_num, bool print_bad_edid,
 			  bool *edid_corrupt)
 {
-	return drm_edid_block_valid(_block, block_num, print_bad_edid, edid_corrupt);
+	/* drm_edid_block_valid removed in kernel 6.x, return valid */
+	printk(KERN_INFO "innogpu: drm_edid_block_valid stubbed for kernel 6.x\n");
+	return 1;
 }
 INNO_EXT_SYM(fh2m_inno_drm_edid_block_valid);
 

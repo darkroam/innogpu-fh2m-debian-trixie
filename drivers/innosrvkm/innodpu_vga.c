@@ -1,3 +1,4 @@
+#include "../innogpu/compat_kernel6.h"
 /*************************************************************************/ /*!
 @File			innodpu_vga.c
 @Title

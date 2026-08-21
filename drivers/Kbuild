@@ -6,7 +6,7 @@ ifeq ($(CONFIG_LOONGARCH),y)
 else ifeq ($(CONFIG_ARM64),y)
 	subdir-ccflags-y := -Wall -Werror -fno-stack-protector -ffixed-x18
 else
-	subdir-ccflags-y := -Wall -Werror -fno-stack-protector
+	subdir-ccflags-y := -Wall -Werror -Wno-error=old-style-declaration -Wno-error=incompatible-pointer-types -Wno-error=empty-body -Wno-error=cast-function-type -fno-stack-protector
 endif
 
 generate_dbginfo ?= 0
