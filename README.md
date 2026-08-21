@@ -27,6 +27,7 @@ Debian Trixie 上 Innosilicon Fantasy II-M（FH2M）驱动、显示输出、硬�
 
 | 目标 | 文档 |
 | --- | --- |
+| 整体目标与工作路线 | [docs/project/goals.md](docs/project/goals.md) |
 | 当前状态、风险和未完成事项 | [docs/project/status.md](docs/project/status.md) |
 | 架构、所有权和组件边界 | [docs/project/architecture.md](docs/project/architecture.md) |
 | 新设备安装 | [docs/user/new-device-install.md](docs/user/new-device-install.md) |

@@ -72,6 +72,9 @@ Picom patch、配置和安装流程已按 `picom-integration.md` 完成吸纳。
   通过（CRTC 1 vblank 正常、CRTC 0/2 立即 EINVAL）。
 - [x] 落地内核接口修复（三）：foreign DMA-BUF 生命周期（patch-027 / patched-27）已实机验证
   通过（DRI3/PRIME 自导入回归正常；foreign 路径待第二设备）。
-- [ ] invisible READ 批量预取候选调研（调用方批量化，不修改 `innodma.o_shipped` 内部）。
-- [ ] DVFS/功耗实测与调参评估。
-- [ ] 完成 `innogpu.o_shipped`（HAL）与 `innodma.o_shipped`（DMA）符号级分析，评估预编译核心替换路径。
+- [ ] invisible READ 批量预取候选调研（调用方批量化，不修改 `innodma.o_shipped` 内部；先补设计）。
+- [ ] DVFS/功耗实测与调参评估（候选 7）。
+- [ ] `inno_apphint.c` 用户态调优评估（候选 5）。
+- [ ] 上游 DDK bugfix/性能 patch 移植（候选 6，依赖开源 DDK 可得性）。
+- [ ] 用户态调用画像：扩展 `trace-loader.c` 到 GL/VK/OCL 路径（候选 8）。
+- [ ] 完成 `innogpu.o_shipped`（HAL）与 `innodma.o_shipped`（DMA）符号级分析，评估预编译核心替换路径（远期定向 RE）。
