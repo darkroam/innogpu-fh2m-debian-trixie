@@ -61,7 +61,7 @@ sudo reboot                                                    # 重启后加载
 
 - 上游仓库：[timhant/innogpu-fh2m-debian-trixie](https://github.com/timhant/innogpu-fh2m-debian-trixie)（本仓库 fork 来源）
 - Deepin（V23 驱动载荷、打包结构与社区适配方案）
-- Innosilicon（FH2M 驱动、固件与硬件；Dual MIT/GPL）
+- Innosilicon（FH2M 硬件、驱动来源与固件；第三方许可按来源包和文件声明）
 - Imagination Technologies / PowerVR（DDK V119 谱系与参照）
 - [picom](https://github.com/yshui/picom)（上游合成器；本仓库维护 patched 构建）
 - Debian 项目、DRM/KMS、Mesa、X.Org、PipeWire 等开源生态
@@ -69,5 +69,6 @@ sudo reboot                                                    # 重启后加载
 
 ## 许可证
 
-- 本仓库自有内容（补丁、脚本、文档、`drivers/` 中可维护源码改动）：**MIT**，见 [LICENSE](LICENSE)。
-- 导入的 `drivers/` 源码与黑盒载荷（`.o_shipped`）、用户态库、固件：**© Innosilicon，Dual MIT/GPL**，随驱动包分发；来源与哈希见 [binary-manifest.json](binary-manifest.json)、[docs/project/dependencies.md](docs/project/dependencies.md)。
+- MIT 仅覆盖本仓库明确自有的脚本、工具、文档、配置和辅助工作，见 [LICENSE](LICENSE)。
+- `drivers/` 中导入的源码按各文件头部和上游许可证处理；黑盒对象、用户态库、DDX、固件和其他载荷是第三方内容。清单中的 `vendor-binary` 是来源分类，不是许可证名称，也不单独授予再分发权。
+- 逐类边界、来源和待核实项见 [许可证与再分发边界](docs/project/licensing.md)。

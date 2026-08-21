@@ -23,7 +23,7 @@
 
 | 子目标 | 状态 | 证据 / 入口 |
 | --- | --- | --- |
-| 稳定运行基线 | 达成（patched-27 实机运行） | [status.md](status.md)、[release 审阅](../planning/release-review-2026-08-20.md) |
+| 稳定运行基线 | 达成（4.0.0-i1 实机运行；patched-27 为已验证回退基线） | [status.md](status.md)、[Phase 4 验收](../planning/phase4-device-validation.md) |
 | 能力面普查 | 达成（Vulkan 1.3.264 / OpenCL 3.0 / GL 4.3 / VA-API H264+HEVC 硬解等） | [capability-survey.md](../planning/capability-survey.md) |
 | 逆向可行性评估 | 达成（四层可行性 + 谱系判定） | [reverse-engineering-assessment.md](../planning/reverse-engineering-assessment.md) |
 | DDK 谱系对照表 | 达成（组件 / UAPI / 特性 / 用户态映射） | [ddk-v119-mapping.md](../planning/ddk-v119-mapping.md) |

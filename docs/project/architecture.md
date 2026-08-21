@@ -9,13 +9,8 @@
 ## 总体链路
 
 ```text
-保守安装：patched-17 deb
-  -> scripts/install-patched17-and-check.sh
-       -> DKMS: innogpu.ko + firmware
-       -> modesetting + Mesa llvmpipe
-
-coherent 候选 deb（下一版本必须 >20）
-  -> scripts/check-release-package.sh -> dpkg
+当前安装：4.0.0-i1 deb
+  -> scripts/build-innogpu-driver.sh -> dpkg
        -> DKMS + 同源 Deepin 202504 DDX/GL/固件
        -> /dev/dri/card*、renderD*、/dev/fb0
        -> X11 会话中的 dotconfig `xdisplay watch`
@@ -34,7 +29,8 @@ PCI 0000:06:00.6 [1d94:14c9]
 
 | 路径 | 职责 |
 | --- | --- |
-| `patches/` | Deepin DKMS 源码针对 Debian 6.12 和本设备的内核补丁 |
+| `drivers/` | Deepin 202504 DKMS 源码树及已转换为提交的 9 个启用修复 |
+| `patches/` | 历史补丁原件、转换 provenance 和补丁说明；当前源码不再通过 patch 叠加构建 |
 | `patches/picom/` | 针对 Innogpu GL 扩展声明缺失的 Picom 源码补丁 |
 | `patches/fbterm/` | 针对当前 fbdev YPan 语义差异的 fbterm 用户态兼容补丁 |
 | `debs/` | 本地 release/构建输入输出目录，`.deb` 被 Git 忽略，仅跟踪说明文件 |
@@ -56,7 +52,7 @@ PCI 0000:06:00.6 [1d94:14c9]
 `innogpu-fh2m-trixie 4.0.0-i1` 是当前设备已安装并重启、适配 Debian 6.12.101+ 并完成驱动、
 DKMS、DRM/fbdev 与 A1–A12 实机验收的版本（迁移源码树 + manifest 黑盒载荷，见
 [source-tree-migration.md](../planning/source-tree-migration.md)）；`patched-27` 转为保留的回退基线；
-`patched-21` 是当前设备已完成完整 PVR、Xorg/GLX 和真实 VT fbterm 验收的稳定图形基线，也是 p22 的直接回退点；`patched-17` 是新设备保守回退包。p25/p26/p27 分别增加 dma_resv usage 语义、未活动 CRTC vblank 守卫和 foreign DMA-BUF 生命周期修复，均已通过本机实机验收（见 [patch-025](../patches/patch-025-dma-resv-usage-rw.md)、[patch-026](../patches/patch-026-inactive-crtc-vblank-guard.md)、[patch-027](../patches/patch-027-foreign-dmabuf-lifecycle.md)）。p20 deb 是所有权收敛前的历史运行证据，包内辅助
+`patched-21` 是历史完整图形验收基线，`patched-17` 是深层回退包；它们不再是新设备默认入口。p25/p26/p27 分别增加 dma_resv usage 语义、未活动 CRTC vblank 守卫和 foreign DMA-BUF 生命周期修复，均已通过本机实机验收（见 [patch-025](../patches/patch-025-dma-resv-usage-rw.md)、[patch-026](../patches/patch-026-inactive-crtc-vblank-guard.md)、[patch-027](../patches/patch-027-foreign-dmabuf-lifecycle.md)）。p20 deb 是所有权收敛前的历史运行证据，包内辅助
 脚本不能代表当前源码，禁止重新部署或发布；运行时验收与 release 载荷合规是两个独立结论。后续包统一
 以 Deepin 202504 原包为唯一技术基线，在其 DKMS 源码上叠加 Debian 6.12 兼容、G0M PLL、DRM/fbdev
 和本地 connector/invisible GEM 修复，并保留同一原包中的完整用户态 ABI 集合。patched-21 使用

@@ -15,6 +15,7 @@
 8. [用户验证](user/verification.md)：安装或重启后的最小验收流程。
 
 按需查阅：[依赖与外部文件](project/dependencies.md)、[显示接入使用](user/display-guide.md)、
+[许可证与再分发边界](project/licensing.md)、
 [实施历史](planning/history.md)、[逆向工程与能力挖掘评估](planning/reverse-engineering-assessment.md)、
 [FH2M 能力普查记录](planning/capability-survey.md)、[release 审阅记录](planning/release-review-2026-08-20.md)、
 [DDK V119 对照表](planning/ddk-v119-mapping.md)、[源码树迁移](planning/source-tree-migration.md)、

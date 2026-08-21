@@ -2,15 +2,15 @@
 
 ## 驱动、DKMS 与节点
 
-当前设备已部署并重启至 patched-24（内核 `6.12.101+deb13-amd64`），已完成驱动、DKMS、DRM/fbdev 和自动加载验证；patched-21 保留为完整图形验收基线，
-p20 仅为历史运行基线。本文仍是后续
+当前设备已部署并重启至 `4.0.0-i1`（内核 `6.12.101+deb13-amd64`），已完成 Phase 4 驱动、DKMS、DRM/fbdev、桌面和回退验证；patched-21、p24 等内容仅是历史验收证据。
+本文仍是后续
 重新部署、内核或用户态升级、以及新硬件组合的操作流程：安装但尚未重启时，不得将 `/proc` 或 Xorg
 结果写为新包证据。
 
-重启后的目标包检查命令为：
+重启后的目标包检查命令为（旧 patched 包验证时替换期望版本）：
 
 ```sh
-scripts/verify-install-status.sh --require-reboot 3.3.3.42-patched-24
+scripts/verify-install-status.sh --require-reboot 4.0.0-i1
 cat /proc/driver/innogpu/gpu00/status
 ls -l /dev/dri /dev/fb0
 ```
