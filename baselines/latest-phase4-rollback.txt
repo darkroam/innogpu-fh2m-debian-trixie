@@ -1,0 +1,14 @@
+phase4_rollback_drill=COMPLETE
+rollback_to_p27=PASS (downgrade 4.0.0-i1 -> 3.3.3.42-patched-27 via apt --allow-downgrades)
+reboot_2=USER_EXECUTED (2026-08-21 14:52 boot)
+p27_recovery=PASS
+  package=3.3.3.42-patched-27 PASS
+  dkms=innogpu-kernel/2.2 installed PASS
+  module=loaded (96 refs) vermagic match PASS
+  drm_fbdev=card0/renderD128/fb0 PASS
+  xorg_gl=PASS_DESKTOP_HWGL PASS
+  audio=default sink HDA Intel analog PASS
+  picom=running PASS
+  display=xdisplay watch + HDMI-2 primary PASS
+  userspace=PASS_DEEPIN_USERSPACE_COHERENT PASS
+device_current=3.3.3.42-patched-27 (frozen baseline)
