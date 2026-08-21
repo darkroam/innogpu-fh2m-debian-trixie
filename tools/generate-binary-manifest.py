@@ -145,8 +145,12 @@ def main():
                 for name in sorted(dirnames_sorted):
                     full = os.path.join(dirpath, name)
                     rel = os.path.relpath(full, tmp)
-                    # 内核根目录: 收录 .o_shipped(黑盒) 与 .o.cmd(构建产物, 与 p27 包 parity 需要)
-                    if rel.startswith("usr/src/innogpu-kernel-2.2/") and ".o_shipped" not in name and not name.endswith(".o.cmd"):
+                    # 内核根目录: 仅收录 .o_shipped 黑盒对象。
+                    # .o.cmd 是内核构建生成的临时元数据(构建产物), Phase 1/2 明确排除;
+                    # 监督评审确认其不得归入 kernel-black-box, 亦不入 manifest/发布包。
+                    # p27 包因旧流程从 Deepin 载荷继承了 tools/gpu_info 下 4 个 .o.cmd,
+                    # oracle 对比将其按构建产物排除, 不要求新包携带。
+                    if rel.startswith("usr/src/innogpu-kernel-2.2/") and ".o_shipped" not in name:
                         continue
                     if rel in seen_src:
                         continue

@@ -10,7 +10,11 @@ ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$ROOT"
 
 VERSION="${VERSION:-4.0.0-i1}"
-SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(date +%s)}"
+# 可复现构建: 固定审核 epoch 必须显式提供, 禁止回退到当前时间(同源码不同时间产出不同 deb)。
+# 审核 epoch 记录于 docs/planning/source-tree-migration.md(4.0.0-i1 = 1787342400)。
+SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-}"
+[[ "$SOURCE_DATE_EPOCH" =~ ^[0-9]+$ ]] || {
+    echo "builder_repro=FAIL SOURCE_DATE_EPOCH must be the fixed audit epoch (see docs)"; exit 1; }
 export SOURCE_DATE_EPOCH
 KERNEL="${KERNELDIR_VER:-$(uname -r)}"
 KERNELDIR="${KERNELDIR:-/lib/modules/$KERNEL/build}"
@@ -86,7 +90,12 @@ while IFS= read -r vp; do
     fi
 done < <(python3 -c "import json;m=json.load(open('binary-manifest.json'));[print(e['vendor_path']) for e in m['entries']]")
 python3 tools/patch-gpupll-object.py "$P/usr/src/innogpu-kernel-2.2/innogpu/innogpu.o_shipped" >/dev/null
+# 包边界守卫: .o.cmd 是内核构建产物, 不入发布包(监督评审边界裁定)。
+if find "$P" -name '*.o.cmd' | grep -q .; then
+    echo "builder_package_boundary=FAIL .o.cmd build artifacts must not enter the package"; exit 1
+fi
 echo "builder_payload_assemble=PASS"
+echo "builder_package_boundary=PASS (no .o.cmd build artifacts)"
 
 printf '%s
 ' '/usr/lib/x86_64-linux-gnu/innogpu-fh2m' > "$P/etc/ld.so.conf.d/0-innogpu-hwgl.conf"

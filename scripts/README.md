@@ -20,8 +20,9 @@
 | `extract-vendor-binaries.sh` | 幂等提取工具 | 按 `binary-manifest.json` 从 pinned Deepin deb 提取黑盒载荷到 `vendor/`；校验 deb SHA、目标存在且哈希一致则跳过、缺失/不符安全重建、拒绝路径穿越/未知 kind、临时目录 + 原子 rename；`--check-only` 只读；输出机器可读 PASS/FAIL |
 | `build-innogpu-driver.sh` | staging 构建 | 装配 `build/<unique>/source`（drivers/ + vendor 内核黑盒 + 确定性变换），离线编译 DKMS 模块并校验 vermagic；不安装、不热切换、不修改 drivers/vendor |
 | `generate-binary-manifest.py`（tools/） | 清单生成 | 从 Deepin deb 确定性生成 `binary-manifest.json`（校验 deb SHA、覆盖全部黑盒文件与符号链接、kind/role/license 分类） |
-| `compare-oracle-candidates.sh` | oracle 对比 | 新架构候选包 vs patched-27：对比 control（除 Version/Description/Installed-Size）、文件清单、载荷哈希、DKMS 源码、黑盒对象、maintainer 脚本（版本归一）与版本排序；输出机器可读 PASS/FAIL |
-| `build-innogpu-driver.sh`（阶段 3 全量） | 新架构构建器 | 装配 drivers/ + vendor 黑盒 + 确定性变换，离线编译 DKMS，产出完整 coherent 包（4.0.0-iN）；版本排序 > patched-27 校验、边界检查；不安装不重启 |
+| `compare-oracle-candidates.sh` | oracle 对比 | 新架构候选包 vs patched-27：对比 control（除 Version/Description/Installed-Size）、文件清单、载荷哈希、DKMS 源码、黑盒对象、maintainer 脚本（版本归一）、版本排序与 module_symbols（调用 compare-module-symbols.sh）；构建产物（.o.cmd/.o/.ko/modules.order/Module.symvers/.mod）统一按 ARTIFACT_RE 排除；输出机器可读 PASS/FAIL |
+| `compare-module-symbols.sh` | 只读符号对比 | 离线构建候选与 patched-27 两包 DKMS 源码（同一内核头），逐 .ko 对比 vermagic/depends/导出符号/导入符号；构建于 `$ROOT/.build/`，不安装不重启；module_symbols=PASS/FAIL/UNCOMPARABLE |
+| `build-innogpu-driver.sh`（阶段 3 全量） | 新架构构建器 | 装配 drivers/ + vendor 黑盒 + 确定性变换，离线编译 DKMS，产出完整 coherent 包（4.0.0-iN）；版本排序 > patched-27 校验；`SOURCE_DATE_EPOCH` 必填（缺失即失败）；`.o.cmd` 守卫保证构建产物不入包；不安装不重启 |
 | `build-patched17-deepin-local-display.sh` | 停用护栏 | 明确拒绝把 patched-17 作为后续构建父版本 |
 | `build-patched18-deepin-local-display.sh` | 停用护栏 | 明确拒绝重建历史混合载荷 patched-18 |
 | `build-patched19-deepin-coherent.sh` | 停用护栏 | 明确拒绝用当前辅助载荷复用 patched-19 版本号 |

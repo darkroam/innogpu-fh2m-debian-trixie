@@ -9,7 +9,8 @@ ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$ROOT"
 
 CAND="${1:-$ROOT/build/innogpu-fh2m-trixie_4.0.0-i1.deb}"
-REF="$ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb"
+REF="${2:-$ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb}"
+KERNEL="${3:-${KERNELDIR_VER:-$(uname -r)}}"
 [[ -f "$CAND" ]] || { echo "oracle_candidate=FAIL missing $CAND"; exit 1; }
 [[ -f "$REF" ]] || { echo "oracle_reference=FAIL missing $REF"; exit 1; }
 
@@ -32,11 +33,13 @@ rc="$(dpkg-deb -f "$REF" | grep -vE '^(Version|Description|Installed-Size):|^ ' 
 cc="$(dpkg-deb -f "$CAND" | grep -vE '^(Version|Description|Installed-Size):|^ ' | sha256sum || true)"
 [[ "$rc" == "$cc" ]] && report control_fields PASS || report control_fields FAIL
 
-rf="$(cd "$W/ref" && find . -path ./DEBIAN -prune -o -type f -print | grep -vE 'modules.order|Module.symvers|.mod|.o$|.ko$' | sort | sha256sum || true)"
-cf="$(cd "$W/cand" && find . -path ./DEBIAN -prune -o -type f -print | grep -vE 'modules.order|Module.symvers|.mod|.o$|.ko$' | sort | sha256sum || true)"
+# .o.cmd 为内核构建产物(构建元数据), 不属发布边界; 新旧包统一按构建产物排除。
+ARTIFACT_RE='modules.order|Module.symvers|\.mod$|\.o$|\.ko$|\.o\.cmd$'
+rf="$(cd "$W/ref" && find . -path ./DEBIAN -prune -o -type f -print | grep -vE "$ARTIFACT_RE" | sort | sha256sum || true)"
+cf="$(cd "$W/cand" && find . -path ./DEBIAN -prune -o -type f -print | grep -vE "$ARTIFACT_RE" | sort | sha256sum || true)"
 [[ "$rf" == "$cf" ]] && report file_list PASS || report file_list FAIL
 
-pd="$(diff -rq "$W/ref" "$W/cand" 2>/dev/null | grep -vE 'DEBIAN|usr/src/innogpu-kernel|modules.order|Module.symvers|.mod|.o$|.ko$' | head -20 || true)"
+pd="$(diff -rq "$W/ref" "$W/cand" 2>/dev/null | grep -vE "DEBIAN|usr/src/innogpu-kernel|$ARTIFACT_RE" | head -20 || true)"
 [[ -z "$pd" ]] && report payload_hashes PASS || { report payload_hashes FAIL; echo "$pd"; }
 
 sd="$(diff -rq "$W/ref/usr/src/innogpu-kernel-2.2" "$W/cand/usr/src/innogpu-kernel-2.2" 2>/dev/null | grep -vE 'o_shipped|.o.cmd' | head -20 || true)"
@@ -63,6 +66,17 @@ else
     report version_ordering FAIL
 fi
 
-echo "module_symbols=SKIP (DKMS install-time compile; vermagic verified by staging build)"
+echo "build_artifacts=EXCLUDED (.o.cmd is build metadata, outside release boundary; p27 inherits 4 from Deepin payload, new package ships none)"
+if [[ -f scripts/compare-module-symbols.sh ]]; then
+    ms_line="$(bash scripts/compare-module-symbols.sh "$CAND" "$REF" "$KERNEL" 2>&1 | grep '^module_symbols=' | tail -1 || echo 'module_symbols=UNCOMPARABLE')"
+    echo "$ms_line"
+    case "$ms_line" in
+        module_symbols=PASS*) ;;
+        *) fail=$((fail+1)) ;;
+    esac
+else
+    echo "module_symbols=UNCOMPARABLE (scripts/compare-module-symbols.sh missing)"
+    fail=$((fail+1))
+fi
 echo "oracle_overall=$([ $fail -eq 0 ] && echo PASS || echo FAIL)"
 [ "$fail" -eq 0 ]

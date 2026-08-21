@@ -22,42 +22,6 @@
     {
       "kind": "kernel-black-box",
       "license": "vendor-binary",
-      "role": "userspace component",
-      "sha256": "36b907136dd5b477c3a21a6fff59541daff07863f3d2a7a590c9650d332d8170",
-      "size": 51509,
-      "source_path": "usr/src/innogpu-kernel-2.2/tools/gpu_info/.gpu_info.o.cmd",
-      "vendor_path": "kernel/tools/gpu_info/.gpu_info.o.cmd"
-    },
-    {
-      "kind": "kernel-black-box",
-      "license": "vendor-binary",
-      "role": "userspace component",
-      "sha256": "2dd227c888bf2a651c951e531fd34e4221b6798f104de8d569c4a036a466e53f",
-      "size": 83556,
-      "source_path": "usr/src/innogpu-kernel-2.2/tools/gpu_info/.gpu_info_innoml.o.cmd",
-      "vendor_path": "kernel/tools/gpu_info/.gpu_info_innoml.o.cmd"
-    },
-    {
-      "kind": "kernel-black-box",
-      "license": "vendor-binary",
-      "role": "userspace component",
-      "sha256": "c7846a45ce28e93dbfe4f6f2cc9842e74e8243cd9b41034819b370f415ccbf8b",
-      "size": 46504,
-      "source_path": "usr/src/innogpu-kernel-2.2/tools/gpu_info/.gpu_info_y8.o.cmd",
-      "vendor_path": "kernel/tools/gpu_info/.gpu_info_y8.o.cmd"
-    },
-    {
-      "kind": "kernel-black-box",
-      "license": "vendor-binary",
-      "role": "userspace component",
-      "sha256": "185b6df68ff8852fe8851cead7fb21733507b1c44c5ea4822957424097de9c05",
-      "size": 58847,
-      "source_path": "usr/src/innogpu-kernel-2.2/tools/gpu_info/.kgc_gpu_info.o.cmd",
-      "vendor_path": "kernel/tools/gpu_info/.kgc_gpu_info.o.cmd"
-    },
-    {
-      "kind": "kernel-black-box",
-      "license": "vendor-binary",
       "role": "INNOGPU (precompiled, read-only)",
       "sha256": "8c214493aa1589eebc336cb595b846138b37d75be9d13e3f39951694a77f396f",
       "size": 6680336,

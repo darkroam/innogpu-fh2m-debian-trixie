@@ -5,7 +5,16 @@
 - 本文件是源码树迁移的设计基线，对应监督指南 `docs/planning/migration-supervision.md`（监督分支
   migration/supervised-source-tree @ bd76e91）。
 - **阶段 0 ✅ 阶段 1 ✅ 阶段 2 ✅ 阶段 3（新构建器并行验证 + 完整 package boundary）✅**：
-  4.0.0-i1 候选已构建，oracle 对比（vs patched-27）全部 PASS；阶段 4（实机候选）待批准。
+  4.0.0-i1 候选已构建，oracle 对比（vs patched-27）全部 PASS（含 module_symbols 离线逐项对比）；
+  阶段 4（实机候选）待监督批准。
+- 阶段 3 评审整改（2026-08-21 监督意见）：
+  - `module_symbols` 不再 SKIP——`scripts/compare-module-symbols.sh` 离线构建候选与 p27 两包
+    DKMS 源码，逐模块对比 vermagic/depends/导出符号/导入符号（见 §七）；
+  - `.o.cmd` 定为**构建产物**，从 manifest 与发布包排除（196→192 项），oracle 对比按构建产物
+    排除（见 §四 边界裁定）；
+  - `SOURCE_DATE_EPOCH` 改为**必填**（缺失即失败，禁止回退当前时间），固定审核 epoch
+    `1787342400`，发布前双构建比对 SHA-256（见 §八）；
+  - 回退命令改为 `apt install --allow-downgrades`（apt 默认拒绝降级），见 §八。
 - 当前设备基线：`3.3.3.42-patched-27`（迁移冻结运行基线与回退包）。
 - 未实机验证的内容一律标记 UNVERIFIED；本文件所有行为承诺均需在对应阶段用命令和输出证明。
 - **边界声明**：阶段 2 的 staging 构建只装配 5 个内核黑盒对象并编译 DKMS；用户态库、固件与 ALSA UCM
@@ -107,6 +116,12 @@ body 引用 `docs/patches/patch-*.md`；记录原 patch hash、目标文件、�
 `kind` 取值集合：`kernel-black-box`、`userspace-lib`、`ddx`、`firmware`。
 校验拒绝：路径穿越、重复目标、未知 kind、源包哈希错误、原子替换失败。
 
+**构建产物边界裁定（2026-08-21 监督评审）**：`.o.cmd` 是内核构建生成的临时元数据（构建产物），
+不属于黑盒载荷，也非可维护源码，**不进入 manifest 与发布包**（manifest 192 项，不含任何
+`.o.cmd`）。p27 包因旧流程从 Deepin 载荷继承了 `usr/src/innogpu-kernel-2.2/tools/gpu_info/` 下
+4 个 `.o.cmd`；oracle 对比将其与 `.o/.ko/modules.order/Module.symvers/.mod` 统一按构建产物排除
+（`compare-oracle-candidates.sh` 的 `ARTIFACT_RE`），新包以构建器守卫保证零 `.o.cmd`。
+
 ## 五、幂等提取工具规范（`scripts/extract-vendor-binaries.sh`）
 
 - 默认从 `debs/` 找 Deepin 原包，支持 `INNOGPU_DEEPIN_DEB` 环境变量；
@@ -137,8 +152,12 @@ body 引用 `docs/patches/patch-*.md`；记录原 patch hash、目标文件、�
 ```
 
 禁止：以历史 patched deb 为输入；自动下载未固定哈希的外部文件；修改 Git 工作区源码；
-从个人 home 目录读取黑盒载荷；编译失败时复制旧 .ko 绕过。`drivers/` 中不放临时 `.o_shipped`，
-不依赖人工软链接。
+从个人 home 目录读取黑盒载荷；编译失败时复制旧 .ko 绕过；以当前时间作为 SOURCE_DATE_EPOCH
+默认值。`drivers/` 中不放临时 `.o_shipped`，不依赖人工软链接。
+
+可复现构建：`SOURCE_DATE_EPOCH` **必须显式提供**（固定审核 epoch，缺失即失败）；包装配后
+统一 `touch -h -d "@$SOURCE_DATE_EPOCH"` 归一化 mtime；发布前同 epoch 双构建并比对 deb
+SHA-256。包装配末尾有 `.o.cmd` 守卫（`builder_package_boundary=PASS`），任何构建产物混入即失败。
 
 ## 七、parity 验证门槛（监督指南"五、强制 parity 报告"）
 
@@ -162,6 +181,13 @@ rollback=PASS
 `drivers/` 源码树。源码 parity 只比较源码生成树；黑盒/用户态/固件/maintainer scripts 分别由
 binary、package、runtime parity 验证。禁止用单项编译成功替代完整 parity。
 
+**module_vermagic 与关键符号（阶段 3 门槛）**：vermagic 单独不足以证明模块 ABI 一致。
+`scripts/compare-module-symbols.sh` 对候选与 p27 两包的 DKMS 源码在同一内核头下离线编译，
+对每个产出的 `.ko` 逐项比较：vermagic、`modinfo depends`、完整定义符号表
+（`nm --defined-only`，内核模块无 `.dynsym`，必须用常规 `.symtab`）、导入符号表
+（`nm --undefined-only`）、`.ksymtab_strings` 导出符号（存在时）与 `__versions`
+modversions CRC（存在时）。任何模块缺失/构建失败标记 `UNCOMPARABLE` 并说明原因，不作为 PASS。
+
 ## 八、版本、tag 与发布
 
 - 新架构首版：`Debian package 4.0.0-i1`、`Git tag source-v4.0.0-i1`，不覆盖 `patched-27`；
@@ -172,6 +198,18 @@ binary、package、runtime parity 验证。禁止用单项编译成功替代完�
   `1.0.0-i1` 与 `3.3.3.42-patched-27` 的升级/降级/回退关系，不能只在文档中假定；
 - 旧 tag 不得移动；新架构用新 tag；p27 tag 与 release 永久保留。
 
+**回退（降级）命令**：apt 默认拒绝降级，回退必须显式授权：
+
+```bash
+sudo apt install --allow-downgrades ./debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb
+```
+
+版本排序保证 `3.3.3.42-patched-27 < 4.0.0-i1`，`--allow-downgrades` 是降级所需的最小授权。
+发布/评审前用 `apt-get -s --allow-downgrades install ./<deb>` 模拟验证（不安装）。
+
+**可复现构建（发布前置条件）**：`SOURCE_DATE_EPOCH` 必填，4.0.0-i1 固定审核 epoch =
+`1787342400`；同 epoch 连续两次构建的 deb SHA-256 必须完全一致（双构建比对），否则发布失败。
+
 ## 九、分阶段计划（对齐监督指南"四、分阶段门槛"）
 
 | 阶段 | 交付 | 门槛（全部 PASS 才进下一阶段） | 进度 |
@@ -179,7 +217,7 @@ binary、package、runtime parity 验证。禁止用单项编译成功替代完�
 | 0 设计冻结 | 本文件：目录、manifest schema、提取工具、staging、版本排序、许可证、回退策略 | 设计审查通过；不改设备不删旧文件 | ✅ 完成 |
 | 1 源码树导入 | `drivers/`、源码架构说明、patch provenance 表、导入报告 | source_import / patch_provenance / source_tree_parity_against_p27 / working_tree_clean / runtime_unchanged | ✅ 完成 |
 | 2 黑盒 manifest 与 staging | 正式 manifest、提取工具、vendor 忽略规则、staging 构建 | first_extraction / second_extraction_idempotent / check_only / bad_hash=FAIL_AS_EXPECTED / missing_source=FAIL_AS_EXPECTED / path_traversal=FAIL_AS_EXPECTED / interrupted_extraction_recovery | ✅ 完成（用户态/固件 package boundary 属阶段 3） |
-| 3 新构建器并行验证 | 新构建器（旧构建器为 oracle，并行比较） | 源码/黑盒/用户态/固件/maintainer scripts/包清单/vermagic/关键符号逐项一致 | ✅ 完成（compare-oracle-candidates.sh 全 PASS） |
+| 3 新构建器并行验证 | 新构建器（旧构建器为 oracle，并行比较） | 源码/黑盒/用户态/固件/maintainer scripts/包清单/vermagic/关键符号逐项一致（符号对比见 §七）；`.o.cmd` 构建产物排除；SOURCE_DATE_EPOCH 必填 + 双构建 SHA-256 一致 | ✅ 完成（compare-oracle-candidates.sh 全 PASS，含 module_symbols） |
 | 4 实机候选验证 | 安装候选（需监督批准 + p27 回退与 SSH/TTY 通道） | 包版本/DKMS/vermagic/Driver/Firmware/DRM/fbdev/HWGL/DRI3/PDP/vblank/VA-API/fbterm/xdisplay/Picom/音频 + p27 回退演练 |
 | 5 旧流程退役 | `patches/` 与旧 wrapper 移入 `legacy/` 或标记 deprecated | 阶段 1–4 全部 PASS + 新设备 clone 安装验证；p27 tag/deb 永久保留；至少一个发布周期后才评估物理删除 |
 
