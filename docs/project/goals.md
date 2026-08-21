@@ -29,7 +29,7 @@
 | DDK 谱系对照表 | 达成（组件 / UAPI / 特性 / 用户态映射） | [ddk-v119-mapping.md](../planning/ddk-v119-mapping.md) |
 | 内核正确性修复 | 3/3 达成（dma_resv usage / vblank 守卫 / foreign DMA-BUF） | patch-025/026/027 |
 | 构建可复现 | 达成（目录 mtime 归一化修复，三包逐字一致） | [release 审阅](../planning/release-review-2026-08-20.md) |
-| 源码树迁移 | **阶段 0–3 完成**（设计冻结 ✅、drivers/ 导入 + 9 补丁转提交 + parity ✅、manifest + 幂等提取 + staging 内核编译 ✅、新构建器 4.0.0-i1 并行验证 ✅ 含 module_symbols/.o.cmd 边界/可复现构建）；阶段 4 实机候选待监督批准安装，阶段 5 待执行 | [source-tree-migration.md](../planning/source-tree-migration.md)、[phase4-device-validation.md](../planning/phase4-device-validation.md) |
+| 源码树迁移 | **阶段 0–4 完成**（设计冻结 ✅、drivers/ 导入 + 9 补丁转提交 + parity ✅、manifest + 幂等提取 + staging 内核编译 ✅、新构建器 4.0.0-i1 并行验证 ✅、实机候选验证 + p27 回退演练 ✅——设备已运行 4.0.0-i1）；阶段 5 旧流程退役待执行 | [source-tree-migration.md](../planning/source-tree-migration.md)、[phase4-device-validation.md](../planning/phase4-device-validation.md) |
 | 性能优化（预取等） | 未开始 | [评估候选 4](../planning/reverse-engineering-assessment.md) |
 | 能力深挖（codec 编码 / DVFS / CORE_ID） | 未开始 | [todo.md](../planning/todo.md) |
 | 发布与跨硬件 | 部分（审阅完成；跨硬件/电源矩阵待做） | [suspended.md](../planning/suspended.md) |
@@ -42,6 +42,7 @@
 2. **能力普查 + 逆向评估**（2026-08-20）：能力面实测、可行性分层、DDK 谱系对照表；
 3. **内核正确性三连修复**（patched-25/26/27）：fence 语义、vblank 守卫、DMA-BUF 生命周期；
 4. **release 审阅**（2026-08-20）：构建可复现性修复、当前状态文档同步。
+5. **源码树迁移阶段 0–4**（2026-08-21）：新构建器 4.0.0-i1 并行验证 + 实机候选验证与 p27 回退演练；设备推进至 4.0.0-i1。
 
 ### 进行中
 
@@ -54,7 +55,7 @@
 | 2 黑盒 manifest 与 staging | 正式 `binary-manifest.json`、幂等提取工具、staging 构建 | ✅ 完成（G1-G7 全 PASS，staging 内核编译 PASS）；
   用户态/固件 package boundary 属阶段 3 待验证 |
 | 3 新构建器并行验证 | 新构建器与旧构建器并行对比 | 源码/黑盒/用户态/固件/包清单/vermagic/关键符号逐项一致；.o.cmd 构建产物排除；SOURCE_DATE_EPOCH 必填 + 双构建 SHA-256 一致 | ✅ 完成（2026-08-21 监督评审通过） |
-| 4 实机候选验证 | 安装候选（需监督对安装单独批准 + p27 回退通道；准备包已就绪） | 全套实机验收 + p27 回退演练 |
+| 4 实机候选验证 | 安装候选（需监督对安装单独批准 + p27 回退通道；准备包已就绪） | 全套实机验收 + p27 回退演练 | ✅ 完成（2026-08-21：A1–A12 全 PASS、回退演练 PASS、设备推进至 4.0.0-i1） |
 | 5 旧流程退役 | `patches/` 与旧 wrapper 移入 `legacy/` | 阶段 1–4 全 PASS + 新设备安装验证 |
 
 详细设计见 [source-tree-migration.md](../planning/source-tree-migration.md)。

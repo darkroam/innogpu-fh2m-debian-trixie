@@ -10,13 +10,12 @@
 - [x] 完成 release 审阅主体：tag、哈希、包边界、可复现构建（含目录 mtime 修复）、回退路径和附件边界，
   见 [release-review-2026-08-20.md](release-review-2026-08-20.md)。
 - [ ] 剩余发布工作：跨硬件实机矩阵（扩展坞/多屏/无盖桌面/其他机型）、电源/合盖矩阵、release 附件上传。
-- [x] 源码树迁移阶段 0-3（监督指南 `docs/planning/migration-supervision.md`（监督分支 migration/supervised-source-tree @ bd76e91）管辖）：
+- [x] 源码树迁移阶段 0-4（监督指南 `docs/planning/migration-supervision.md`（监督分支 migration/supervised-source-tree @ bd76e91）管辖）：
   阶段 0 设计冻结 ✅；阶段 1 drivers/ 导入 + 9 patch 转提交 + parity ✅；阶段 2 binary-manifest.json +
   幂等提取 + staging 内核编译 ✅（G1-G7 全 PASS）；阶段 3 新构建器 4.0.0-i1 并行验证 ✅
-  （oracle 全 PASS 含 module_symbols、.o.cmd 边界裁定、可复现构建，2026-08-21 监督评审通过）。
-- [ ] 源码树迁移阶段 4：实机候选验证——**安装 4.0.0-i1 需监督单独批准**；准备包（回退包 SHA、恢复通道、
-  恢复命令、安装前后清单）见 [phase4-device-validation.md](phase4-device-validation.md)。
-- [ ] 源码树迁移阶段 5：旧流程退役（patches/ 与旧 wrapper 移入 legacy/）。
+  （oracle 全 PASS 含 module_symbols、.o.cmd 边界裁定、可复现构建，2026-08-21 监督评审通过）；
+  阶段 4 实机候选验证 ✅（2026-08-21：A1–A12 全 PASS、p27 回退演练 PASS、设备推进至 4.0.0-i1）。
+- [ ] 源码树迁移阶段 5：旧流程退役（patches/ 与旧 wrapper 移入 legacy/，需监督批准）。
 
 ## 当前活动项
 

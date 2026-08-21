@@ -4,11 +4,10 @@
 
 - 本文件是源码树迁移的设计基线，对应监督指南 `docs/planning/migration-supervision.md`（监督分支
   migration/supervised-source-tree @ bd76e91）。
-- **阶段 0 ✅ 阶段 1 ✅ 阶段 2 ✅ 阶段 3（新构建器并行验证 + 完整 package boundary）✅**：
-  4.0.0-i1 候选已构建，oracle 对比（vs patched-27）全部 PASS（含 module_symbols 离线逐项对比）；
-  2026-08-21 监督评审确认阶段 3 通过（builder/oracle_comparison/module_symbols/package_boundary/
-  reproducible_build 全 PASS）；阶段 4（实机候选）待监督对安装单独批准，准备包见
-  [phase4-device-validation.md](phase4-device-validation.md)。
+- **阶段 0 ✅ 阶段 1 ✅ 阶段 2 ✅ 阶段 3 ✅ 阶段 4 ✅**：
+  阶段 3（2026-08-21 监督评审通过）：4.0.0-i1 候选 oracle 对比全 PASS（含 module_symbols 离线
+  逐项对比、.o.cmd 边界裁定、可复现构建）；阶段 4（2026-08-21 实机完成）：A1–A12 验收全 PASS、
+  p27 回退演练 PASS，设备已推进至 4.0.0-i1 作为最终运行态；阶段 5（旧流程退役）待执行。
 - 阶段 3 评审整改（2026-08-21 监督意见）：
   - `module_symbols` 不再 SKIP——`scripts/compare-module-symbols.sh` 离线构建候选与 p27 两包
     DKMS 源码，逐模块对比 vermagic/depends/导出符号/导入符号（见 §七）；
@@ -17,7 +16,8 @@
   - `SOURCE_DATE_EPOCH` 改为**必填**（缺失即失败，禁止回退当前时间），固定审核 epoch
     `1787342400`，发布前双构建比对 SHA-256（见 §八）；
   - 回退命令改为 `apt install --allow-downgrades`（apt 默认拒绝降级），见 §八。
-- 当前设备基线：`3.3.3.42-patched-27`（迁移冻结运行基线与回退包）。
+- 当前设备运行：`4.0.0-i1`（迁移源码树 + manifest 黑盒载荷）；`3.3.3.42-patched-27` 为保留的
+  冻结回退基线与回退包（SHA `f3841597…`）。
 - **合并决策（2026-08-21 监督）**：迁移分支整体合并到 main 安排在 **Phase 4 实机验证与回退演练
   完成之后**，避免在最终设备验证前固化尚未实机验证的新架构；在此之前不合并 main。
 - 未实机验证的内容一律标记 UNVERIFIED；本文件所有行为承诺均需在对应阶段用命令和输出证明。

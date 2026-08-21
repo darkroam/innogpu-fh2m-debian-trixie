@@ -1,0 +1,14 @@
+phase_4=COMPLETE (2026-08-21)
+device_current=4.0.0-i1 (final runtime state, reinstall + reboot 3 executed)
+preinstall_baseline=PASS
+candidate_install=PASS
+reboot_1=USER_EXECUTED
+runtime_probe=PASS (A1-A12)
+rollback_to_p27=PASS
+reboot_2=USER_EXECUTED
+p27_recovery=PASS
+final_reinstall=4.0.0-i1 PASS
+reboot_3=USER_EXECUTED
+final_verify=A1/A2/A3/A6 PASS (package 4.0.0-i1, dkms installed, vermagic match, PASS_DESKTOP_HWGL)
+candidate_sha256=68aea6c07842a0def97d18de5385802175290cb9752571b157250eb38fa68735
+rollback_sha256=f384159751fed249263591ff46758bb32327d0048e0669747050b66db1e33c6a (retained)
