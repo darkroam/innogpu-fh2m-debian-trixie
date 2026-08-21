@@ -173,11 +173,11 @@ binary、package、runtime parity 验证。禁止用单项编译成功替代完�
 
 ## 九、分阶段计划（对齐监督指南"四、分阶段门槛"）
 
-| 阶段 | 交付 | 门槛（全部 PASS 才进下一阶段） |
-| --- | --- | --- |
-| 0 设计冻结 | 本文件：目录、manifest schema、提取工具、staging、版本排序、许可证、回退策略 | 设计审查通过；不改设备不删旧文件 |
-| 1 源码树导入 | `drivers/`、源码架构说明、patch provenance 表、导入报告 | source_import / patch_provenance / source_tree_parity_against_p27 / working_tree_clean / runtime_unchanged |
-| 2 黑盒 manifest 与 staging | 正式 manifest、提取工具、vendor 忽略规则、staging 构建 | first_extraction / second_extraction_idempotent / check_only / bad_hash=FAIL_AS_EXPECTED / missing_source=FAIL_AS_EXPECTED / path_traversal=FAIL_AS_EXPECTED / interrupted_extraction_recovery |
+| 阶段 | 交付 | 门槛（全部 PASS 才进下一阶段） | 进度 |
+| --- | --- | --- | --- |
+| 0 设计冻结 | 本文件：目录、manifest schema、提取工具、staging、版本排序、许可证、回退策略 | 设计审查通过；不改设备不删旧文件 | ✅ 完成 |
+| 1 源码树导入 | `drivers/`、源码架构说明、patch provenance 表、导入报告 | source_import / patch_provenance / source_tree_parity_against_p27 / working_tree_clean / runtime_unchanged | ✅ 完成 |
+| 2 黑盒 manifest 与 staging | 正式 manifest、提取工具、vendor 忽略规则、staging 构建 | first_extraction / second_extraction_idempotent / check_only / bad_hash=FAIL_AS_EXPECTED / missing_source=FAIL_AS_EXPECTED / path_traversal=FAIL_AS_EXPECTED / interrupted_extraction_recovery | ✅ 完成（用户态/固件 package boundary 属阶段 3） |
 | 3 新构建器并行验证 | 新构建器（旧构建器为 oracle，并行比较） | 源码/黑盒/用户态/固件/maintainer scripts/包清单/vermagic/关键符号逐项一致 |
 | 4 实机候选验证 | 安装候选（需监督批准 + p27 回退与 SSH/TTY 通道） | 包版本/DKMS/vermagic/Driver/Firmware/DRM/fbdev/HWGL/DRI3/PDP/vblank/VA-API/fbterm/xdisplay/Picom/音频 + p27 回退演练 |
 | 5 旧流程退役 | `patches/` 与旧 wrapper 移入 `legacy/` 或标记 deprecated | 阶段 1–4 全部 PASS + 新设备 clone 安装验证；p27 tag/deb 永久保留；至少一个发布周期后才评估物理删除 |

@@ -38,7 +38,7 @@ Debian Trixie 上 Innosilicon Fantasy II-M（FH2M）驱动、显示输出、硬�
 | 失败过程和根因 | [docs/incidents/README.md](docs/incidents/README.md) |
 | 实施历史和待办 | [docs/planning/history.md](docs/planning/history.md)、[todo.md](docs/planning/todo.md) |
 | Release 审阅记录 | [docs/planning/release-review-2026-08-20.md](docs/planning/release-review-2026-08-20.md) |
-| 源码树迁移设计 | [docs/planning/source-tree-migration.md](docs/planning/source-tree-migration.md)（计划中） |
+| 源码树迁移设计 | [docs/planning/source-tree-migration.md](docs/planning/source-tree-migration.md)（阶段 0–2 完成，3–5 待执行） |
 | 逆向工程与能力挖掘评估 | [docs/planning/reverse-engineering-assessment.md](docs/planning/reverse-engineering-assessment.md) |
 | FH2M 能力普查记录 | [docs/planning/capability-survey.md](docs/planning/capability-survey.md) |
 | 脚本使用和风险 | [scripts/README.md](scripts/README.md) |
