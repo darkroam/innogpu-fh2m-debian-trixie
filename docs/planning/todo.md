@@ -52,8 +52,16 @@
     强制 --allow-authorized-tests；新增 16 项 fixture 测试（run-results-parser-tests.sh）。
   - [x] 真机证据合并：fbterm_real_vt/egl_x11_probe/gl_execution PASS（check-desktop-hwgl 证据），
     其余人工项 UNVERIFIED；汇总 18 PASS/9 SKIP/8 UNVERIFIED（overall=UNVERIFIED，不伪造）。
-  - [ ] 剩余真实能力待补证据：Vulkan/OpenCL 最小执行、VA-API 解码、DMA-BUF 回归探针、
-    modeset/热插拔/合盖、Picom GLX backend、音频听感确认。
+- [ ] Vulkan/OpenCL 最小执行能力验证（~/5.md，2026-08-24 进行中）：
+  - [x] 探针新增 execution 模式：probe-vulkan-devices.c exec（instance→GPU 设备→queue→空 cmd buffer+fence
+    提交→限时等待→释放）与 probe-opencl-devices.c exec（GPU 设备→context/queue→add kernel→读回→
+    逐元素校验→释放）；loader 路径 env 注入；机器可读输出 + 退出码分级；枚举路径保持。
+  - [x] 测试 tests/unit/run-exec-probes-tests.sh（12 项，CI 无 /dev/dri）：编译/缺 loader rc=2/
+    无设备 rc=3（不伪造 PASS）/枚举回归/超时无残留/机器格式。
+  - [ ] 真机授权后执行探针并合并证据（runtime_vulkan_execution/opencl_execution 从 UNVERIFIED
+    升级需真正执行 + 读回校验）。
+  - [ ] 剩余真实能力待补证据：VA-API 解码、DMA-BUF 回归探针、modeset/热插拔/合盖、
+    Picom GLX backend、音频听感确认。
 - [ ] 代码深度分析与测试体系重构（~/5.md，2026-08-21 进行中）：
   - [x] 产出 code-analysis.md、frameworks-and-references.md、test-strategy.md；新增 unit 测试
     （manifest 恶意输入 8、版本排序 6、提取器隔离 7）与 fixtures/；全部 tests/ 统一机器格式

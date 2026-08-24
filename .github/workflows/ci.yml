@@ -20,12 +20,13 @@ jobs:
       - name: Repository documentation and boundary checks
         run: bash scripts/check-docs.sh
 
-      - name: Unit tests (manifest, version ordering, extractor, results parser)
+      - name: Unit tests (manifest, version ordering, extractor, results parser, exec probes)
         run: |
           bash tests/unit/run-manifest-tests.sh
           bash tests/unit/run-version-tests.sh
           bash tests/unit/run-extractor-tests.sh
           bash tests/unit/run-results-parser-tests.sh
+          bash tests/unit/run-exec-probes-tests.sh
 
       - name: fbterm static tests
         run: bash tests/fbterm/run-static-tests.sh

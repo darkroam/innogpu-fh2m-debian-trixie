@@ -133,6 +133,15 @@ xdisplay_install×5、package_boundary×7、manifest×8、version×6、extractor
   gl_execution=PASS（check-desktop-hwgl PASS_DESKTOP_HWGL、Fantasy II-M/DRI2/DRI3/Present/AIGLX）；
   其余人工项按实际证据 UNVERIFIED（枚举/部分完成）；汇总 18 PASS/9 SKIP/8 UNVERIFIED，
   overall=UNVERIFIED（不伪造完整 PASS）。
+- Vulkan/OpenCL 最小执行（2026-08-24，~/5.md）：探针新增 `exec` 模式（dlopen、无头文件），
+  execution 判定标准 = 真正创建资源 + 执行最小操作 + 校验结果：
+  - Vulkan：instance→GPU device（拒绝 CPU-only）→queue→空 cmd buffer+fence 提交→限时等待→释放；
+  - OpenCL：GPU device→context/queue→buffer→add kernel 编译运行→阻塞读回→逐元素校验→释放；
+  - 退出码分级（2 loader/3 无 GPU/4-7 各阶段失败），机器可读输出；loader 路径 env 注入；
+  - 枚举成功 ≠ execution PASS；无设备时探针返回可解释失败（rc=2/3）；
+  - 真机 execution 证据仍待授权采集（当前 runtime_vulkan_execution/opencl_execution=SKIP/UNVERIFIED）。
+  - 测试：tests/unit/run-exec-probes-tests.sh（12 项，CI 无 /dev/dri 可跑）覆盖编译/缺 loader/
+    无设备/枚举回归/超时清理/机器格式。
 
 ## 九、风险与未覆盖
 

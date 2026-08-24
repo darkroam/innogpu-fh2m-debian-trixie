@@ -66,8 +66,28 @@ bash tests/runtime/run-capability-baseline.sh \
 | egl_gbm_probe / egl_x11_probe | 否 | 否 | 是 | egl_x11 需 | 否 | 否 | 编译产物在 mktemp；不污染桌面 |
 | gl_enumeration | 是 | 否 | 否（X 查询） | 是 | 否 | 否 | 无；沙箱显示 llvmpipe 时标 UNVERIFIED |
 | gl_execution | 否 | 否 | 是 | 是 | 否 | 否 | 运行 check-desktop-hwgl.sh（只读） |
-| vulkan_enumeration / vulkan_execution | 是/否 | 否 | 执行需 | 否 | 否 | 否 | 执行仅创建实例/设备，无渲染副作用 |
-| opencl_enumeration / opencl_execution | 是/否 | 否 | 执行需 | 否 | 否 | 否 | 最小 kernel 仅读写 buffer |
+| vulkan_enumeration / vulkan_execution | 是/否 | 否 | 执行需 | 否 | 否 | 否 | 执行：`tools/probe-vulkan-devices.c exec [timeout_ms]`——创建 instance/device/queue，空 cmd buffer+fence 提交并限时等待（默认 5s，可参数覆盖）；无渲染副作用 |
+| opencl_enumeration / opencl_execution | 是/否 | 否 | 执行需 | 否 | 否 | 否 | 执行：`tools/probe-opencl-devices.c exec [elements]`——context/queue + add kernel + 阻塞读回 + 逐元素校验；仅读写 buffer |
+
+## Vulkan/OpenCL 最小执行（2026-08-24，~/5.md）
+
+探针执行模式（dlopen、无 Vulkan/OpenCL 头文件）：
+
+```sh
+gcc -O2 -o /tmp/pvk tools/probe-vulkan-devices.c -ldl && /tmp/pvk exec [timeout_ms]
+gcc -O2 -o /tmp/pocl tools/probe-opencl-devices.c -ldl && /tmp/pocl exec [elements]
+```
+
+- **Vulkan**：创建 instance → 选 GPU 物理设备（优先 Innosilicon 0x1ec8，拒绝仅 CPU/software）→
+  device/queue → 空 command buffer + fence 提交 → 限时等待（默认 5s）→ 逆序释放。
+  退出码：0=PASS 2=loader 3=无 GPU/初始化 4=device/queue 5=submit/wait。
+- **OpenCL**：选 GPU device（拒绝 CPU 平台）→ context/queue → 输入/输出 buffer → add kernel
+  编译运行 → 阻塞读回 → 逐元素校验 → 逆序释放。
+  退出码：0=PASS 2=loader 3=无 GPU 4=context/queue/buffer 5=build 6=run 7=verify。
+- loader 路径可用 `PROBE_VULKAN_LOADER`/`PROBE_OPENCL_LOADER` 覆盖（测试注入缺失场景）。
+- 权限/设备：需真实 /dev/dri 与授权；**枚举成功不等于 execution PASS**；无设备时探针输出可解释失败
+  （rc=2/3），不伪造硬件 PASS。超时保护：Vulkan fence 限时 + 测试外部 `timeout`；探针不创建
+  临时文件、不留后台进程（`tests/unit/run-exec-probes-tests.sh` 12 项覆盖）。
 | vaapi_enumeration / vaapi_decode / vaapi_encode | 是/否 | 否 | 是 | 否 | 否 | 否 | 仅枚举/最小解码；编码不验证 → UNVERIFIED |
 | dmabuf_fix_present / dmabuf_regression | 是/否 | 否 | 回归需 | 否 | 否 | 否 | 探针可能占用 GPU；需授权 + 超时 |
 | display_topology / display_modeset | 是/否 | 否 | 是 | 拓扑需 | 否 | modeset 需 | modeset/热插拔/合盖需授权 |

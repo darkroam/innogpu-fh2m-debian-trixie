@@ -24,6 +24,7 @@
 | Picom | patched v13 正在使用 Innogpu GLX，配置独立于驱动包 | `components/picom/`、`docs/project/compositor-management.md` |
 | 音频 | HDA 内置喇叭、PipeWire 默认 sink 和启动服务均正常 | `docs/project/audio-management.md` |
 | 能力验证工具 | `tests/runtime/run-capability-baseline.sh`（12 能力域、枚举/执行分离、PASS/FAIL/SKIP/UNVERIFIED；`--allow-authorized-tests`/`--results-file`）；沙箱只读 35 项实测（15 PASS/19 SKIP/1 UNVERIFIED），人工授权项待运行 | [tests/runtime/README](../../tests/runtime/README.md)、[test-strategy](test-strategy.md) |
+| Vulkan/OpenCL 执行 | 探针已实现 exec 模式（Vulkan：instance/device/queue+fence 提交；OpenCL：context/queue+add kernel+读回逐元素校验），离线失败路径测试 12 项通过；**真机执行证据待授权（UNVERIFIED，未宣称 execution PASS）** | [probe-vulkan-devices.c](../../tools/probe-vulkan-devices.c)、[probe-opencl-devices.c](../../tools/probe-opencl-devices.c)、[test-strategy](test-strategy.md) |
 
 ## 已解决问题
 

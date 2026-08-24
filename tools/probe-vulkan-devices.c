@@ -75,8 +75,13 @@ static void dump_api(uint32_t v, char *buf, size_t n) {
     snprintf(buf, n, "%u.%u.%u", (v >> 22) & 0x7f, (v >> 12) & 0x3ff, v & 0xfff);
 }
 
-int main(void) {
-    void *lib = dlopen("libvulkan.so.1", RTLD_NOW | RTLD_GLOBAL);
+static const char *loader_name(void) {
+    const char *e = getenv("PROBE_VULKAN_LOADER");
+    return e && *e ? e : "libvulkan.so.1";
+}
+
+static int enumeration_main(void) {
+    void *lib = dlopen(loader_name(), RTLD_NOW | RTLD_GLOBAL);
     if (!lib) { fprintf(stderr, "FATAL: libvulkan.so.1 not loadable: %s\n", dlerror()); return 2; }
     pfn_vkGetInstanceProcAddr gpa = (pfn_vkGetInstanceProcAddr) dlsym(lib, "vkGetInstanceProcAddr");
     if (!gpa) { fprintf(stderr, "FATAL: no vkGetInstanceProcAddr in loader\n"); return 2; }
@@ -150,4 +155,201 @@ int main(void) {
     if (fnDestroy) fnDestroy(inst, NULL);
     dlclose(lib);
     return 0;
+}
+
+/* =====================================================================
+ * Execution mode: minimal verifiable queue/sync operation.
+ * Usage: probe-vulkan-devices exec [timeout_ms]
+ * Creates instance -> selects a GPU physical device (rejects CPU-only) ->
+ * logical device + queue -> submits an empty command buffer with a fence
+ * -> waits (bounded) -> destroys everything. Machine-readable output;
+ * exit: 0=PASS 2=loader 3=no-suitable-device/init 4=device/queue 5=submit/wait.
+ * ===================================================================== */
+
+typedef uintptr_t VkDevice, VkQueue, VkCommandPool, VkCommandBuffer, VkFence;
+
+#define VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO 2
+#define VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO        3
+#define VK_STRUCTURE_TYPE_SUBMIT_INFO               4
+#define VK_STRUCTURE_TYPE_FENCE_CREATE_INFO         8
+#define VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO 20
+#define VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO 21
+#define VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO 22
+#define VK_QUEUE_GRAPHICS_BIT 0x00000001u
+#define VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT 0x00000001u
+#define VK_COMMAND_BUFFER_LEVEL_PRIMARY 0u
+#define VK_SUCCESS 0
+#define VK_TIMEOUT 2
+
+typedef struct VkDeviceQueueCreateInfo {
+    uint32_t sType; const void *pNext; VkFlags flags;
+    uint32_t queueFamilyIndex; uint32_t queueCount; const float *pQueuePriorities;
+} VkDeviceQueueCreateInfo;
+typedef struct VkDeviceCreateInfo {
+    uint32_t sType; const void *pNext; VkFlags flags;
+    uint32_t queueCreateInfoCount; const VkDeviceQueueCreateInfo *pQueueCreateInfos;
+    uint32_t enabledLayerCount; const char *const *ppEnabledLayerNames;
+    uint32_t enabledExtensionCount; const char *const *ppEnabledExtensionNames;
+    const void *pEnabledFeatures;
+} VkDeviceCreateInfo;
+typedef struct VkFenceCreateInfo { uint32_t sType; const void *pNext; VkFlags flags; } VkFenceCreateInfo;
+typedef struct VkCommandPoolCreateInfo {
+    uint32_t sType; const void *pNext; VkFlags flags; uint32_t queueFamilyIndex;
+} VkCommandPoolCreateInfo;
+typedef struct VkCommandBufferAllocateInfo {
+    uint32_t sType; const void *pNext;
+    VkCommandPool commandPool; uint32_t level; uint32_t commandBufferCount;
+} VkCommandBufferAllocateInfo;
+typedef struct VkCommandBufferBeginInfo {
+    uint32_t sType; const void *pNext; VkFlags flags; const void *pInheritanceInfo;
+} VkCommandBufferBeginInfo;
+typedef struct VkSubmitInfo {
+    uint32_t sType; const void *pNext;
+    uint32_t waitSemaphoreCount; const void *pWaitSemaphores; const uint32_t *pWaitDstStageMask;
+    uint32_t commandBufferCount; VkCommandBuffer *pCommandBuffers;
+    uint32_t signalSemaphoreCount; const void *pSignalSemaphores;
+} VkSubmitInfo;
+
+typedef PFN_vkVoidFunction (*pfn_vkGetDeviceProcAddr)(VkDevice, const char *);
+typedef int (*vkCreateDevice_t)(VkPhysicalDevice, const VkDeviceCreateInfo *, const void *, VkDevice *);
+typedef void (*vkGetDeviceQueue_t)(VkDevice, uint32_t, uint32_t, VkQueue *);
+typedef void (*vkDestroyDevice_t)(VkDevice, const void *);
+typedef int (*vkCreateCommandPool_t)(VkDevice, const VkCommandPoolCreateInfo *, const void *, VkCommandPool *);
+typedef int (*vkAllocateCommandBuffers_t)(VkDevice, const VkCommandBufferAllocateInfo *, VkCommandBuffer *);
+typedef int (*vkBeginCommandBuffer_t)(VkCommandBuffer, const VkCommandBufferBeginInfo *);
+typedef int (*vkEndCommandBuffer_t)(VkCommandBuffer);
+typedef void (*vkFreeCommandBuffers_t)(VkDevice, VkCommandPool, uint32_t, const VkCommandBuffer *);
+typedef void (*vkDestroyCommandPool_t)(VkDevice, VkCommandPool, const void *);
+typedef int (*vkCreateFence_t)(VkDevice, const VkFenceCreateInfo *, const void *, VkFence *);
+typedef int (*vkWaitForFences_t)(VkDevice, uint32_t, const VkFence *, int, uint64_t);
+typedef void (*vkDestroyFence_t)(VkDevice, VkFence, const void *);
+typedef int (*vkQueueSubmit_t)(VkQueue, uint32_t, const VkSubmitInfo *, VkFence);
+typedef int (*vkDeviceWaitIdle_t)(VkDevice);
+
+static int exec_main(int argc, char **argv) {
+    uint64_t timeout_ns = 5000000000ull; /* 5s default */
+    if (argc > 2) { long ms = atol(argv[2]); if (ms > 0) timeout_ns = (uint64_t) ms * 1000000ull; }
+
+    void *lib = dlopen(loader_name(), RTLD_NOW | RTLD_GLOBAL);
+    if (!lib) { fprintf(stderr, "vulkan_exec_loader=fail reason=%s\n", dlerror()); return 2; }
+    pfn_vkGetInstanceProcAddr gpa = (pfn_vkGetInstanceProcAddr) dlsym(lib, "vkGetInstanceProcAddr");
+    if (!gpa) { fprintf(stderr, "vulkan_exec_loader=fail reason=no vkGetInstanceProcAddr\n"); dlclose(lib); return 2; }
+    printf("vulkan_exec_loader=ok\n");
+
+    VkInstance inst = 0; VkDevice dev = 0; VkQueue queue = 0;
+    VkCommandPool pool = 0; VkCommandBuffer cmd = 0; VkFence fence = 0;
+    int rc = 3;
+
+    uint32_t apiCandidates[] = { VK_API_VERSION_1_3, VK_API_VERSION_1_2, VK_API_VERSION_1_1, VK_API_VERSION_1_0 };
+    int created = 0;
+    for (unsigned c = 0; c < sizeof apiCandidates / sizeof *apiCandidates && !created; c++) {
+        VkApplicationInfo app = { .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO, .apiVersion = apiCandidates[c] };
+        VkInstanceCreateInfo ci = { .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, .pApplicationInfo = &app };
+        vkCreateInstance_t fnCreate = (vkCreateInstance_t) gpa((VkInstance) 0, "vkCreateInstance");
+        if (fnCreate && fnCreate(&ci, NULL, &inst) == 0) created = 1;
+    }
+    if (!created) { fprintf(stderr, "vulkan_exec_instance=fail reason=no ICD or instance creation failed\n"); goto cleanup; }
+    printf("vulkan_exec_instance=ok\n");
+
+    vkEnumeratePhysicalDevices_t fnPhys = (vkEnumeratePhysicalDevices_t) gpa(inst, "vkEnumeratePhysicalDevices");
+    vkGetPhysicalDeviceProperties_t fnProps = (vkGetPhysicalDeviceProperties_t) gpa(inst, "vkGetPhysicalDeviceProperties");
+    vkGetPhysicalDeviceQueueFamilyProperties_t fnQf = (vkGetPhysicalDeviceQueueFamilyProperties_t) gpa(inst, "vkGetPhysicalDeviceQueueFamilyProperties");
+    if (!fnPhys || !fnProps || !fnQf) { fprintf(stderr, "vulkan_exec_device=fail reason=missing device entry points\n"); goto cleanup; }
+    uint32_t ndev = 0;
+    if (fnPhys(inst, &ndev, NULL) != 0) ndev = 0;
+    VkPhysicalDevice *devs = calloc(ndev ? ndev : 1, sizeof *devs);
+    VkPhysicalDevice chosen = 0; int chosen_idx = -1; int saw_gpu = 0;
+    if (ndev && fnPhys(inst, &ndev, devs) == 0) {
+        for (uint32_t d = 0; d < ndev; d++) {
+            VkPhysicalDeviceProperties p; memset(&p, 0, sizeof p);
+            fnProps(devs[d], &p);
+            if (p.deviceType != 4) saw_gpu = 1;
+            if (p.vendorID == 0x1ec8) { chosen = devs[d]; chosen_idx = (int) d; break; }
+            if (chosen_idx < 0 && p.deviceType != 4) { chosen = devs[d]; chosen_idx = (int) d; }
+        }
+    }
+    free(devs);
+    if (chosen_idx < 0) {
+        const char *why = ndev ? (saw_gpu ? "" : " (CPU/software only)") : " (no physical devices)";
+        fprintf(stderr, "vulkan_exec_device=fail reason=no GPU device%s\n", why);
+        goto cleanup;
+    }
+    VkPhysicalDeviceProperties cp; memset(&cp, 0, sizeof cp); fnProps(chosen, &cp);
+    printf("vulkan_exec_device=%s vendor=0x%04x device=0x%04x\n", cp.deviceName, cp.vendorID, cp.deviceID);
+
+    uint32_t nq = 0; fnQf(chosen, &nq, NULL);
+    VkQueueFamilyProperties *qf = calloc(nq ? nq : 1, sizeof *qf);
+    if (nq) fnQf(chosen, &nq, qf);
+    int qfam = -1;
+    for (uint32_t i = 0; i < nq; i++) if (qf[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) { qfam = (int) i; break; }
+    free(qf);
+    if (qfam < 0) { fprintf(stderr, "vulkan_exec_queue=fail reason=no graphics queue family\n"); rc = 4; goto cleanup; }
+
+    /* 先取 vkGetDeviceProcAddr 并判空，避免空函数指针调用 */
+    pfn_vkGetDeviceProcAddr gdpa = (pfn_vkGetDeviceProcAddr) gpa(inst, "vkGetDeviceProcAddr");
+    if (!gdpa) { fprintf(stderr, "vulkan_exec_device=fail reason=no vkGetDeviceProcAddr\n"); rc = 4; goto cleanup; }
+    vkCreateDevice_t fnCreateDev = (vkCreateDevice_t) gdpa((VkDevice) 0, "vkCreateDevice");
+    vkGetDeviceQueue_t fnGetQueue = (vkGetDeviceQueue_t) gdpa((VkDevice) 0, "vkGetDeviceQueue");
+    vkDestroyDevice_t fnDestroyDev = (vkDestroyDevice_t) gdpa((VkDevice) 0, "vkDestroyDevice");
+    if (!fnCreateDev || !fnGetQueue || !fnDestroyDev) { fprintf(stderr, "vulkan_exec_device=fail reason=device entry points unavailable\n"); rc = 4; goto cleanup; }
+    float prio = 1.0f;
+    VkDeviceQueueCreateInfo dq = { .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+                                   .queueFamilyIndex = (uint32_t) qfam, .queueCount = 1, .pQueuePriorities = &prio };
+    VkDeviceCreateInfo dc = { .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO, .queueCreateInfoCount = 1, .pQueueCreateInfos = &dq };
+    if (fnCreateDev(chosen, &dc, NULL, &dev) != 0 || !dev) {
+        fprintf(stderr, "vulkan_exec_device=fail reason=vkCreateDevice failed\n"); rc = 4; goto cleanup;
+    }
+
+    /* 设备级函数指针（在 dev 创建后获取）*/
+    vkCreateCommandPool_t fnCpool = (vkCreateCommandPool_t) gdpa(dev, "vkCreateCommandPool");
+    vkAllocateCommandBuffers_t fnAlloc = (vkAllocateCommandBuffers_t) gdpa(dev, "vkAllocateCommandBuffers");
+    vkBeginCommandBuffer_t fnBegin = (vkBeginCommandBuffer_t) gdpa(dev, "vkBeginCommandBuffer");
+    vkEndCommandBuffer_t fnEnd = (vkEndCommandBuffer_t) gdpa(dev, "vkEndCommandBuffer");
+    vkFreeCommandBuffers_t fnFree = (vkFreeCommandBuffers_t) gdpa(dev, "vkFreeCommandBuffers");
+    vkDestroyCommandPool_t fnDestroyPool = (vkDestroyCommandPool_t) gdpa(dev, "vkDestroyCommandPool");
+    vkCreateFence_t fnFence = (vkCreateFence_t) gdpa(dev, "vkCreateFence");
+    vkWaitForFences_t fnWait = (vkWaitForFences_t) gdpa(dev, "vkWaitForFences");
+    vkDestroyFence_t fnDestroyFence = (vkDestroyFence_t) gdpa(dev, "vkDestroyFence");
+    vkQueueSubmit_t fnSubmit = (vkQueueSubmit_t) gdpa(dev, "vkQueueSubmit");
+    if (!fnCpool || !fnAlloc || !fnBegin || !fnEnd || !fnFree || !fnDestroyPool ||
+        !fnFence || !fnWait || !fnDestroyFence || !fnSubmit) {
+        fprintf(stderr, "vulkan_exec_submit=fail reason=command/fence entry points unavailable\n"); rc = 5; goto cleanup;
+    }
+    fnGetQueue(dev, (uint32_t) qfam, 0, &queue);
+    if (!queue) { fprintf(stderr, "vulkan_exec_queue=fail reason=vkGetDeviceQueue failed\n"); rc = 4; goto cleanup; }
+    printf("vulkan_exec_queue=ok family=%d\n", qfam);
+
+    VkCommandPoolCreateInfo pci = { .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO, .queueFamilyIndex = (uint32_t) qfam };
+    if (fnCpool(dev, &pci, NULL, &pool) != 0 || !pool) { fprintf(stderr, "vulkan_exec_submit=fail reason=command pool creation\n"); rc = 5; goto cleanup; }
+    VkCommandBufferAllocateInfo abi = { .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+                                        .commandPool = pool, .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY, .commandBufferCount = 1 };
+    if (fnAlloc(dev, &abi, &cmd) != 0 || !cmd) { fprintf(stderr, "vulkan_exec_submit=fail reason=command buffer allocation\n"); rc = 5; goto cleanup; }
+    VkCommandBufferBeginInfo bbi = { .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+                                     .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT };
+    if (fnBegin(cmd, &bbi) != 0 || fnEnd(cmd) != 0) { fprintf(stderr, "vulkan_exec_submit=fail reason=begin/end command buffer\n"); rc = 5; goto cleanup; }
+    VkFenceCreateInfo fci = { .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, .flags = 0 };
+    if (fnFence(dev, &fci, NULL, &fence) != 0 || !fence) { fprintf(stderr, "vulkan_exec_submit=fail reason=fence creation\n"); rc = 5; goto cleanup; }
+    VkSubmitInfo si = { .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO, .commandBufferCount = 1, .pCommandBuffers = &cmd };
+    int sr = fnSubmit(queue, 1, &si, fence);
+    if (sr != 0) { fprintf(stderr, "vulkan_exec_submit=fail reason=vkQueueSubmit rc=%d\n", sr); rc = 5; goto cleanup; }
+    int wr = fnWait(dev, 1, &fence, 1, timeout_ns);
+    if (wr == VK_TIMEOUT) { fprintf(stderr, "vulkan_exec_wait=fail reason=timeout after %llu ns\n", (unsigned long long) timeout_ns); rc = 5; goto cleanup; }
+    if (wr != 0) { fprintf(stderr, "vulkan_exec_wait=fail reason=vkWaitForFences rc=%d\n", wr); rc = 5; goto cleanup; }
+    printf("vulkan_exec_submit=ok\nvulkan_exec_wait=ok\nvulkan_exec_pass=1\n");
+    rc = 0;
+
+cleanup:
+    /* 逆序释放：fence -> command buffer -> pool -> device -> instance -> loader */
+    if (dev && fence && fnDestroyFence) fnDestroyFence(dev, fence, NULL);
+    if (dev && pool && cmd && fnFree) fnFree(dev, pool, 1, &cmd);
+    if (dev && pool && fnDestroyPool) fnDestroyPool(dev, pool, NULL);
+    if (dev && fnDestroyDev) fnDestroyDev(dev, NULL);
+    if (inst) { vkDestroyInstance_t fnDestroyInst = (vkDestroyInstance_t) gpa(inst, "vkDestroyInstance"); if (fnDestroyInst) fnDestroyInst(inst, NULL); }
+    dlclose(lib);
+    return rc;
+}
+
+int main(int argc, char **argv) {
+    if (argc > 1 && strcmp(argv[1], "exec") == 0) return exec_main(argc, argv);
+    return enumeration_main();
 }
