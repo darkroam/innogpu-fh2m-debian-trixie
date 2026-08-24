@@ -139,7 +139,9 @@ xdisplay_install×5、package_boundary×7、manifest×8、version×6、extractor
   - OpenCL：GPU device→context/queue→buffer→add kernel 编译运行→阻塞读回→逐元素校验→释放；
   - 退出码分级（2 loader/3 无 GPU/4-7 各阶段失败），机器可读输出；loader 路径 env 注入；
   - 枚举成功 ≠ execution PASS；无设备时探针返回可解释失败（rc=2/3）；
-  - 真机 execution 证据仍待授权采集（当前 runtime_vulkan_execution/opencl_execution=SKIP/UNVERIFIED）。
+  - 真机 execution 证据（2026-08-24 用户实测已 PASS）：vulkan exec 5000（queue+fence submit+wait）
+    与 opencl exec 1024（add kernel+读回逐元素校验）均在 Fantasy II-M 上执行并验证；
+    runtime_vulkan_execution/opencl_execution=PASS（evidence: baselines/runtime-results-20260824.txt）。
   - 测试：tests/unit/run-exec-probes-tests.sh（12 项，CI 无 /dev/dri 可跑）覆盖编译/缺 loader/
     无设备/枚举回归/超时清理/机器格式。
 

@@ -285,12 +285,11 @@ static int exec_main(int argc, char **argv) {
     free(qf);
     if (qfam < 0) { fprintf(stderr, "vulkan_exec_queue=fail reason=no graphics queue family\n"); rc = 4; goto cleanup; }
 
-    /* 先取 vkGetDeviceProcAddr 并判空，避免空函数指针调用 */
-    pfn_vkGetDeviceProcAddr gdpa = (pfn_vkGetDeviceProcAddr) gpa(inst, "vkGetDeviceProcAddr");
-    if (!gdpa) { fprintf(stderr, "vulkan_exec_device=fail reason=no vkGetDeviceProcAddr\n"); rc = 4; goto cleanup; }
-    vkCreateDevice_t fnCreateDev = (vkCreateDevice_t) gdpa((VkDevice) 0, "vkCreateDevice");
-    vkGetDeviceQueue_t fnGetQueue = (vkGetDeviceQueue_t) gdpa((VkDevice) 0, "vkGetDeviceQueue");
-    vkDestroyDevice_t fnDestroyDev = (vkDestroyDevice_t) gdpa((VkDevice) 0, "vkDestroyDevice");
+    /* vkCreateDevice/vkGetDeviceQueue/vkDestroyDevice 是 instance 级分派入口，经 gpa(inst,..) 获取；
+     * vkGetDeviceProcAddr 需要真实 device 句柄，仅在 dev 创建后用于设备级函数。 */
+    vkCreateDevice_t fnCreateDev = (vkCreateDevice_t) gpa(inst, "vkCreateDevice");
+    vkGetDeviceQueue_t fnGetQueue = (vkGetDeviceQueue_t) gpa(inst, "vkGetDeviceQueue");
+    vkDestroyDevice_t fnDestroyDev = (vkDestroyDevice_t) gpa(inst, "vkDestroyDevice");
     if (!fnCreateDev || !fnGetQueue || !fnDestroyDev) { fprintf(stderr, "vulkan_exec_device=fail reason=device entry points unavailable\n"); rc = 4; goto cleanup; }
     float prio = 1.0f;
     VkDeviceQueueCreateInfo dq = { .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
@@ -300,17 +299,18 @@ static int exec_main(int argc, char **argv) {
         fprintf(stderr, "vulkan_exec_device=fail reason=vkCreateDevice failed\n"); rc = 4; goto cleanup;
     }
 
-    /* 设备级函数指针（在 dev 创建后获取）*/
-    vkCreateCommandPool_t fnCpool = (vkCreateCommandPool_t) gdpa(dev, "vkCreateCommandPool");
-    vkAllocateCommandBuffers_t fnAlloc = (vkAllocateCommandBuffers_t) gdpa(dev, "vkAllocateCommandBuffers");
-    vkBeginCommandBuffer_t fnBegin = (vkBeginCommandBuffer_t) gdpa(dev, "vkBeginCommandBuffer");
-    vkEndCommandBuffer_t fnEnd = (vkEndCommandBuffer_t) gdpa(dev, "vkEndCommandBuffer");
-    vkFreeCommandBuffers_t fnFree = (vkFreeCommandBuffers_t) gdpa(dev, "vkFreeCommandBuffers");
-    vkDestroyCommandPool_t fnDestroyPool = (vkDestroyCommandPool_t) gdpa(dev, "vkDestroyCommandPool");
-    vkCreateFence_t fnFence = (vkCreateFence_t) gdpa(dev, "vkCreateFence");
-    vkWaitForFences_t fnWait = (vkWaitForFences_t) gdpa(dev, "vkWaitForFences");
-    vkDestroyFence_t fnDestroyFence = (vkDestroyFence_t) gdpa(dev, "vkDestroyFence");
-    vkQueueSubmit_t fnSubmit = (vkQueueSubmit_t) gdpa(dev, "vkQueueSubmit");
+    /* 设备级函数指针：vkGetDeviceProcAddr 需真实 device 句柄，在 dev 创建后获取并判空 */
+    pfn_vkGetDeviceProcAddr gdpa = (pfn_vkGetDeviceProcAddr) gpa(inst, "vkGetDeviceProcAddr");
+    vkCreateCommandPool_t fnCpool = gdpa ? (vkCreateCommandPool_t) gdpa(dev, "vkCreateCommandPool") : NULL;
+    vkAllocateCommandBuffers_t fnAlloc = gdpa ? (vkAllocateCommandBuffers_t) gdpa(dev, "vkAllocateCommandBuffers") : NULL;
+    vkBeginCommandBuffer_t fnBegin = gdpa ? (vkBeginCommandBuffer_t) gdpa(dev, "vkBeginCommandBuffer") : NULL;
+    vkEndCommandBuffer_t fnEnd = gdpa ? (vkEndCommandBuffer_t) gdpa(dev, "vkEndCommandBuffer") : NULL;
+    vkFreeCommandBuffers_t fnFree = gdpa ? (vkFreeCommandBuffers_t) gdpa(dev, "vkFreeCommandBuffers") : NULL;
+    vkDestroyCommandPool_t fnDestroyPool = gdpa ? (vkDestroyCommandPool_t) gdpa(dev, "vkDestroyCommandPool") : NULL;
+    vkCreateFence_t fnFence = gdpa ? (vkCreateFence_t) gdpa(dev, "vkCreateFence") : NULL;
+    vkWaitForFences_t fnWait = gdpa ? (vkWaitForFences_t) gdpa(dev, "vkWaitForFences") : NULL;
+    vkDestroyFence_t fnDestroyFence = gdpa ? (vkDestroyFence_t) gdpa(dev, "vkDestroyFence") : NULL;
+    vkQueueSubmit_t fnSubmit = gdpa ? (vkQueueSubmit_t) gdpa(dev, "vkQueueSubmit") : NULL;
     if (!fnCpool || !fnAlloc || !fnBegin || !fnEnd || !fnFree || !fnDestroyPool ||
         !fnFence || !fnWait || !fnDestroyFence || !fnSubmit) {
         fprintf(stderr, "vulkan_exec_submit=fail reason=command/fence entry points unavailable\n"); rc = 5; goto cleanup;

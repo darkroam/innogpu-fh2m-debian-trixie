@@ -1,0 +1,12 @@
+# Real-device execution evidence (4.0.0-i1, 2026-08-24)
+# Merged via tests/runtime/run-capability-baseline.sh --allow-authorized-tests --results-file <this>
+runtime_fbterm_real_vt=PASS reason=draw-clear-long-output-exit-reenter
+runtime_display_modeset=UNVERIFIED reason=connected-output-only-no-mode-switch-test
+runtime_audio_playback=UNVERIFIED reason=command-completed-audible-output-not-confirmed
+runtime_picom_glx=UNVERIFIED reason=process-running-backend-not-confirmed
+runtime_vulkan_execution=PASS reason=real-device-queue-fence-submit-exec-5000-Fantasy-II-M-0x35020023
+runtime_opencl_execution=PASS reason=real-device-add-kernel-verify-exec-1024-Fantasy-II-M-0x1ec8
+runtime_vaapi_decode=UNVERIFIED reason=profile-enumeration-only
+runtime_dmabuf_regression=UNVERIFIED reason=probe-not-run
+runtime_egl_x11_probe=PASS reason=temporary-xorg-hwgl-runtime-Fantasy-II-M-DRI2-DRI3-Present-AIGLX
+runtime_gl_execution=PASS reason=PASS_DESKTOP_HWGL-Fantasy-II-M-accelerated-check-desktop-hwgl

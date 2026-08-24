@@ -58,8 +58,10 @@
     逐元素校验→释放）；loader 路径 env 注入；机器可读输出 + 退出码分级；枚举路径保持。
   - [x] 测试 tests/unit/run-exec-probes-tests.sh（12 项，CI 无 /dev/dri）：编译/缺 loader rc=2/
     无设备 rc=3（不伪造 PASS）/枚举回归/超时无残留/机器格式。
-  - [ ] 真机授权后执行探针并合并证据（runtime_vulkan_execution/opencl_execution 从 UNVERIFIED
-    升级需真正执行 + 读回校验）。
+  - [x] 真机执行验证（2026-08-24 用户实测）：vulkan exec 5000（queue+fence submit+wait，
+    Fantasy II-M 0x35020023）与 opencl exec 1024（add kernel+读回逐元素校验，Fantasy II-M
+    0x1ec8）均 PASS；经 --results-file 合并，runtime_vulkan_execution/runtime_opencl_execution
+    升级为 PASS；汇总 20 PASS/9 SKIP/6 UNVERIFIED（overall=UNVERIFIED，未覆盖项不冒充）。
   - [ ] 剩余真实能力待补证据：VA-API 解码、DMA-BUF 回归探针、modeset/热插拔/合盖、
     Picom GLX backend、音频听感确认。
 - [ ] 代码深度分析与测试体系重构（~/5.md，2026-08-21 进行中）：

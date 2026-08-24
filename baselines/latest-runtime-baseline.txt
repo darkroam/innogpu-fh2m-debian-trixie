@@ -1,5 +1,5 @@
-# runtime-capability-baseline (4.0.0-i1) 20260824-143714 mode=allow-authorized
-# kernel=6.12.101+deb13-amd64 package=4.0.0-i1 pci_bdf=0000:02:00.0(1) commit=8ebbc5e9b70636f71ebdc755bd0066f037995b46 root=no dri=no fb=no tty=no x=yes
+# runtime-capability-baseline (4.0.0-i1) 20260824-144020 mode=allow-authorized
+# kernel=6.12.101+deb13-amd64 package=4.0.0-i1 pci_bdf=0000:02:00.0(1) commit=117451921536dece9b2dc4bfbbd769903d38ba39 root=no dri=no fb=no tty=no x=yes
 # tool_lspci=present
 # tool_drm_info=present
 # tool_glxinfo=present
@@ -24,7 +24,7 @@
 #   picom_glx:        验证 Picom GLX backend（docs/project/compositor-management.md）
 #   dmabuf_regression: tools/probe-pdp-invisible-read + tools/probe-drm-vblank
 # 执行后将结果逐行写入文件，用 --results-file 合并：runtime_<name>=PASS|FAIL|SKIP|UNVERIFIED [reason=..]
-# evidence_merged=1 source=runtime-results-merged.txt (manual real-device results; env metadata above reflects collection environment only)
+# evidence_merged=1 source=runtime-results-20260824.txt (manual real-device results; env metadata above reflects collection environment only)
 runtime_pci_enumeration=PASS
 runtime_pci_driver_binding=PASS
 runtime_package_version=PASS
@@ -45,9 +45,9 @@ runtime_egl_x11_probe=PASS reason=temporary-xorg-hwgl-runtime-Fantasy-II-M-DRI2-
 runtime_gl_enumeration=UNVERIFIED reason=software renderer in this session: llvmpipe (LLVM 8.0.1, 256 bits) (no /dev/dri); real device must show Fantasy II-M
 runtime_gl_execution=PASS reason=PASS_DESKTOP_HWGL-Fantasy-II-M-accelerated-check-desktop-hwgl
 runtime_vulkan_enumeration=SKIP reason=ICD init failed without /dev/dri; run vulkaninfo on device session
-runtime_vulkan_execution=UNVERIFIED reason=enumeration-only
+runtime_vulkan_execution=PASS reason=real-device-queue-fence-submit-exec-5000-Fantasy-II-M-0x35020023
 runtime_opencl_enumeration=SKIP reason=0 platforms without /dev/dri; run clinfo on device session
-runtime_opencl_execution=UNVERIFIED reason=enumeration-only
+runtime_opencl_execution=PASS reason=real-device-add-kernel-verify-exec-1024-Fantasy-II-M-0x1ec8
 runtime_vaapi_enumeration=SKIP reason=vainfo init failed without /dev/dri; run on device session
 runtime_vaapi_encode=SKIP reason=cannot verify encode without vaapi init
 runtime_vaapi_decode=UNVERIFIED reason=profile-enumeration-only
@@ -60,5 +60,5 @@ runtime_picom_glx=UNVERIFIED reason=process-running-backend-not-confirmed
 runtime_audio_cards_enumeration=PASS
 runtime_audio_default_sink=PASS
 runtime_audio_playback=UNVERIFIED reason=command-completed-audible-output-not-confirmed
-runtime_total=35 runtime_passed=18 runtime_failed=0 runtime_skipped=9 runtime_unverified=8
+runtime_total=35 runtime_passed=20 runtime_failed=0 runtime_skipped=9 runtime_unverified=6
 runtime_overall=UNVERIFIED
