@@ -111,7 +111,21 @@ xdisplay_install×5、package_boundary×7、manifest×8、version×6、extractor
 3. `tests/package`（fixture，CI 可跑）
 4. `tests/unit`（manifest 恶意输入/版本排序/提取器隔离，CI 可跑）
 5. integration（本机）：parity/oracle/离线 DKMS（需内核头）
-6. runtime（真机授权后）：`tests/runtime/run-capability-baseline.sh`
+6. runtime：`tests/runtime/run-capability-baseline.sh`（2026-08-24 已实现；只读默认，设备项
+   沙箱输出 SKIP/UNVERIFIED；`--allow-authorized-tests` 仅解锁人工命令清单，`--results-file`
+   合并人工执行结果；有副作用操作（VT/modeset/播放/GPU 执行）永不自动运行）
+
+## 十、runtime 实际覆盖（2026-08-24 沙箱实测）
+
+- 35 项：静态/探测类 15 PASS（PCI/包版本/DKMS/vermagic/模块/参数/proc 状态/固件/错误计数/
+  dma_resv 源码存在性等），设备类 19 SKIP（无 /dev/dri 或人工执行项），1 UNVERIFIED（沙箱 GL
+  为 llvmpipe）。
+- 命名约定：`dmabuf_source_fix_present` 明确为**源码存在性**检查，不是 DMA-BUF 运行能力；
+  真实 DMA-BUF 回归单独为 SKIP/UNVERIFIED（人工执行项）。
+- 工具缺失（vulkaninfo/clinfo/vainfo/glxinfo/drm_info/xrandr/wpctl）→ SKIP reason=tool_missing；
+  工具存在但无 DRI 节点初始化失败 → SKIP；枚举失败不笼统隐藏。
+- 未覆盖（人工执行+监督授权后，经 --results-file 合并）：真实 VT fbterm、EGL/GBM 实际绘制、
+  Vulkan/OpenCL 最小执行、VA-API 硬解、DMA-BUF 回归探针、modeset/热插拔/合盖、Picom GLX、音频播放。
 
 ## 九、风险与未覆盖
 

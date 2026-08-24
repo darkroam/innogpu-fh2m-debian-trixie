@@ -1,0 +1,53 @@
+# runtime-capability-baseline (4.0.0-i1) 20260824-103853 mode=readonly
+# kernel=6.12.101+deb13-amd64 package=4.0.0-i1 pci_bdf=0000:02:00.0(1) commit=c414a20e4ba0903f5eccae39eee2a399ac71728a root=no dri=no fb=no tty=no x=yes
+# tool_lspci=present
+# tool_drm_info=present
+# tool_glxinfo=present
+# tool_vulkaninfo=present
+# tool_clinfo=present
+# tool_vainfo=present
+# tool_aplay=present
+# tool_wpctl=present
+# tool_gcc=present
+# tool_xrandr=present
+# gl_direct=direct rendering: Yes
+# display_xrandr=HDMI-2 connected primary 1920x1080+0+0 (normal left inverted right x axis y axis) 597mm x 336mm;
+# audio_cards= 0 [InnosiliconCard]: InnosiliconCard - InnosiliconCard;                      InnosiliconCard0-HDMI0-HDMI1; 1 [Intel          ]: HDA-Intel - HDA Intel;         
+# audio_sinks= │  *   44. HDA Intel 模拟立体声           [vol: 0.55]; │      59. Fantasy II-M 立体声              [vol: 0.10]; │      45. HDA Intel 模拟立体
+runtime_pci_enumeration=PASS
+runtime_pci_driver_binding=PASS
+runtime_package_version=PASS
+runtime_dkms_status=PASS
+runtime_module_vermagic=PASS
+runtime_module_loaded=PASS
+runtime_module_param_firmware_en=PASS
+runtime_proc_driver_status=PASS
+runtime_proc_firmware_status=PASS
+runtime_proc_error_counts=PASS
+runtime_journal_kernel_errors=PASS
+runtime_drm_nodes=SKIP reason=no /dev/dri; run on real device session
+runtime_fbdev_node=SKIP reason=no /dev/fb0 in this session
+runtime_drm_topology_enumeration=SKIP reason=no /dev/dri; run 'drm_info' on real device session
+runtime_fbterm_real_vt=SKIP reason=manual-execution-required (real VT + authorization): run fbterm on VT, verify draw/clear/long-output/re-enter
+runtime_egl_gbm_probe=SKIP reason=no /dev/dri or gcc/probe missing; compile and run tools/probe-egl-gbm.c on device session
+runtime_egl_x11_probe=SKIP reason=manual-execution-required: scripts/test-current-xorg-hwgl-runtime.sh on device session
+runtime_gl_enumeration=UNVERIFIED reason=software renderer in this session: llvmpipe (LLVM 8.0.1, 256 bits) (no /dev/dri); real device must show Fantasy II-M
+runtime_gl_execution=SKIP reason=manual-execution-required: scripts/check-desktop-hwgl.sh on device session
+runtime_vulkan_enumeration=SKIP reason=ICD init failed without /dev/dri; run vulkaninfo on device session
+runtime_vulkan_execution=SKIP reason=manual-execution-required: create instance/device + minimal render on device session
+runtime_opencl_enumeration=SKIP reason=0 platforms without /dev/dri; run clinfo on device session
+runtime_opencl_execution=SKIP reason=manual-execution-required: context/queue + minimal kernel on device session
+runtime_vaapi_enumeration=SKIP reason=vainfo init failed without /dev/dri; run on device session
+runtime_vaapi_encode=SKIP reason=cannot verify encode without vaapi init
+runtime_vaapi_decode=SKIP reason=manual-execution-required: minimal H264/HEVC decode on device session
+runtime_dmabuf_source_fix_present=PASS
+runtime_dmabuf_regression=SKIP reason=manual-execution-required: probe-pdp-invisible-read + probe-drm-vblank on device session (authorized)
+runtime_display_topology=PASS
+runtime_display_modeset=SKIP reason=manual-execution-required (supervision authorization): resolution switch / hotplug / lid on device session
+runtime_picom_running=SKIP reason=picom not running in this session
+runtime_picom_glx=SKIP reason=manual-execution-required: verify GLX backend (compositor-management.md)
+runtime_audio_cards_enumeration=PASS
+runtime_audio_default_sink=PASS
+runtime_audio_playback=SKIP reason=manual-execution-required: aplay test tone on device session
+runtime_total=35 runtime_passed=15 runtime_failed=0 runtime_skipped=19 runtime_unverified=1
+runtime_overall=UNVERIFIED

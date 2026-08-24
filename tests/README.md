@@ -69,7 +69,9 @@ bash tests/unit/run-extractor-tests.sh
 | static | check-docs、fbterm 静态 | rg、perl | 否 | 否 | 否 | CI/沙箱 |
 | static | picom 安装/会话、xdisplay 安装 | bash、fake HOME | 否 | 否 | 否 | CI/沙箱 |
 | integration | parity/oracle/离线 DKMS（scripts/） | 内核头 | 否 | 否 | 否 | 本机 |
-| runtime | 能力基线（scripts/phase4-baseline-capture + A1-A12 清单） | 真机 | 部分 | 是 | 否 | 真机（授权） |
+| runtime | 能力基线（tests/runtime/run-capability-baseline.sh，12 能力域，只读默认） | 真机/沙箱；设备项需 /dev/dri | 部分 | 是 | 否 | 沙箱只读（SKIP/UNVERIFIED）；真机授权（--allow-authorized-tests + --results-file） |
+
+runtime 详细要求（每项权限/设备/X11/TTY/副作用/恢复）见 [tests/runtime/README.md](runtime/README.md)。
 
 结果格式统一（全部测试已实现，2026-08-21）：每条用例 `<suite>_tNN=PASS` /
 `<suite>_tNN=FAIL reason=...` / `<suite>_tNN=SKIP reason=...`，汇总行
