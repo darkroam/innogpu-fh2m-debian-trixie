@@ -1,5 +1,5 @@
-# runtime-capability-baseline (4.0.0-i1) 20260824-122711 mode=allow-authorized
-# kernel=6.12.101+deb13-amd64 package=4.0.0-i1 pci_bdf=0000:02:00.0(1) commit=d623294cf29e07e1ae3527af659aec8ee9284288 root=no dri=no fb=no tty=no x=yes
+# runtime-capability-baseline (4.0.0-i1) 20260824-143714 mode=allow-authorized
+# kernel=6.12.101+deb13-amd64 package=4.0.0-i1 pci_bdf=0000:02:00.0(1) commit=8ebbc5e9b70636f71ebdc755bd0066f037995b46 root=no dri=no fb=no tty=no x=yes
 # tool_lspci=present
 # tool_drm_info=present
 # tool_glxinfo=present
@@ -18,8 +18,8 @@
 #   fbterm_real_vt:  真实 VT 下运行 fbterm，验证绘制/清屏/长输出/重入
 #   display_modeset: xrandr --output <out> --mode <mode>（分辨率切换/热插拔/合盖，需监督授权）
 #   audio_playback:  aplay -D default <test.wav>
-#   vulkan_execution: tools/probe-vulkan-devices.c 编译并创建 instance/device + 最小渲染
-#   opencl_execution: tools/probe-opencl-devices.c 编译并执行最小 kernel/buffer 读写
+#   vulkan_execution: gcc -O2 -o /tmp/pvk tools/probe-vulkan-devices.c -ldl && /tmp/pvk exec [timeout_ms]  # 创建 instance/device/queue，空 cmd buffer+fence 提交并等待
+#   opencl_execution: gcc -O2 -o /tmp/pocl tools/probe-opencl-devices.c -ldl && /tmp/pocl exec [elements]  # context/queue + add kernel + 读回逐元素校验
 #   vaapi_decode:     最小 H264/HEVC 解码
 #   picom_glx:        验证 Picom GLX backend（docs/project/compositor-management.md）
 #   dmabuf_regression: tools/probe-pdp-invisible-read + tools/probe-drm-vblank
