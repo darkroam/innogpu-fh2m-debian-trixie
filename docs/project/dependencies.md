@@ -13,24 +13,25 @@
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-20.deb` | 历史诊断候选；含收敛前辅助载荷，只保留证据，不用于新设备 |
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-21.deb` | 当前设备已完成运行验收的候选；跨硬件发布审阅前不作为新设备默认入口 |
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-22.deb` | `patch-009` 直接回退包；connector/桌面烟测已通过，完整电源与合盖矩阵待完成 |
-| `debs/innogpu-fh2m-trixie_3.3.3.42-patched-23.deb` | `patch-023` 当前运行包；invisible READ 回写、基础图形验证和 Clash 启动态 A/B 已完成；SHA-256 见 `docs/patches/patch-023-invisible-read-no-writeback.md` |
+| `debs/innogpu-fh2m-trixie_3.3.3.42-patched-23.deb` | `patch-023` 历史运行包；invisible READ 回写、基础图形验证和 Clash 启动态 A/B 已完成；SHA-256 见 `docs/patches/patch-023-invisible-read-no-writeback.md` |
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-24.deb` | patched-23 补丁集合加 `6.12.101+` PCI resize API 兼容；已通过 6.12.101 离线 DKMS 编译；SHA-256 见 `docs/patches/patched-24-kernel-612101.md` |
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-25.deb` | patch-025 dma_resv usage 语义修复；已实机验证；当前回退点为 p26；可复现 SHA 见 `debs/README.md` |
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-26.deb` | patch-026 未活动 CRTC vblank 守卫；已实机验证；当前回退点为 p27；可复现 SHA 见 `debs/README.md` |
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb` | patch-027 foreign DMA-BUF 生命周期修复；**保留的回退基线**（Phase 4 后设备已运行 4.0.0-i1）；SHA `f3841597…` |
 | `build/innogpu-fh2m-trixie_4.0.0-i1.deb`（由 `scripts/build-innogpu-driver.sh` 生成） | **新架构当前运行包**：迁移源码树 + manifest 黑盒载荷；可复现 epoch 1787342400，SHA `68aea6c0…`；Phase 4 实机验收全 PASS |
-| `debs/innogpu-fh2m_20250421190503-debug_amd64.deb` | Deepin 202504 DKMS/GL/DDX 来源 |
+| `debs/innogpu-fh2m_20250421190503-debug_amd64.deb` | Deepin 202504 DKMS/GL/DDX 来源；SHA-256 `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2` |
 
 构建和准备脚本优先查找 `debs/`，并保留仓库根目录旧路径作为兼容回退。
 `scripts/prepare-deepin-userspace-root.sh` 将 Deepin deb 解包到被 git 忽略的
 `third_party/innogpu-fh2m-deepin-202504/root/`。
 
-Deepin 202504 原包是后续版本唯一的技术基线。构建必须保留其中同源的 DRI、GBM、GLAPI、GLVND
-和 DDX 载荷，只允许在其 DKMS 源码上叠加仓库补丁；历史 patched 包不得再作为 `BASE_DEB`。
+Deepin 202504 原包是后续版本唯一的来源基线。当前构建直接使用 `drivers/` 中已转换的源码提交，
+并按 manifest 从原包提取同源 DRI、GBM、GLAPI、GLVND、DDX、固件和黑盒对象；构建时不再叠加
+`patches/`。历史 patched 包不得作为源码或载荷输入。
 
-历史 p19/p20 deb 的驱动/用户态结论仍可作为证据，但其辅助文件清单不符合当前所有权边界。当前源码
-只能生成版本号大于 20 的新候选，并必须运行 `scripts/check-release-package.sh`；版本号、包清单和
-运行证据必须一起更新，不能用相同版本号覆盖旧 deb。
+历史 p19/p20 deb 的驱动/用户态结论仍可作为证据，但其辅助文件清单不符合当前所有权边界。当前
+新构建器只接受按 Debian 版本排序高于 `3.3.3.42-patched-27` 的版本，并必须运行
+`scripts/check-release-package.sh`；版本号、包清单和运行证据必须一起更新，不能覆盖旧 deb。
 
 ## Debian 包
 
@@ -43,8 +44,12 @@ Deepin 202504 原包是后续版本唯一的技术基线。构建必须保留其
 - Innogpu 显示接入要求目标用户已经从 dotconfig 安装 xdisplay；本项目设备钩子使用 `xrandr`，
   会话接入使用 POSIX shell。
 
-新增脚本依赖时必须先更新本文和前置依赖安装脚本。可选命令缺失不能破坏驱动安装、TTY 或 Xorg
-基本启动。
+runtime 能力基线另有可选诊断依赖：`pciutils`（`lspci`）、`drm-info`（`drm_info`）、
+`vulkan-tools`（`vulkaninfo`）、`clinfo`、`vainfo` 所属发行版包及 `wpctl`。这些工具缺失时对应能力项
+必须输出 `SKIP reason=tool_missing:<tool>`，但不影响基础驱动构建、安装、TTY 或 Xorg 启动。
+
+新增必需依赖时必须同时更新本文和前置依赖安装脚本；可选诊断依赖只需在本文和测试入口登记。
+可选命令缺失不能破坏驱动安装、TTY 或 Xorg 基本启动。
 
 xdisplay、`displayselect` 及其 `flock`、`timeout`、`dmenu`、`arandr`、`bc` 等依赖由 dotconfig
 声明和安装，本仓库不复制其依赖清单。Innogpu 接入变化时只需验证兼容环境变量、恢复钩子和会话入口。

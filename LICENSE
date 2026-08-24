@@ -27,7 +27,12 @@ documentation, scripts, tools, configuration, and other original auxiliary
 work. It does not relicense imported source or vendor payloads.
 
 The imported driver source retains the license stated in each source file or
-its upstream distribution. The binary payloads (including .o_shipped objects,
+its upstream distribution. The imported tree includes files marked "Strictly
+Confidential" and files under other license combinations; redistribution of
+the complete source tree is therefore blocked pending rights verification.
+See docs/project/source-license-audit.md for the current evidence and status.
+
+The binary payloads (including .o_shipped objects,
 userspace libraries, DDX files, firmware, and vendor configuration) are
 third-party materials sourced from the Deepin 202504 package. Their detailed
 license and redistribution terms have not been independently established for

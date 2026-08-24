@@ -21,7 +21,7 @@
 | --- | --- | --- | --- | --- |
 | fork 来源 `timhant/innogpu-fh2m-debian-trixie` | 直接 fork 来源 | GitHub（最早提交 8be37ed） | README 致谢；仓库无 fork 元数据 | CONFIRMED(名称)/UNVERIFIED(URL 细节) |
 | Deepin 202504 原包 | **源码基线 + 用户态载荷来源 + 打包参考（三者同时）** | deb SHA `b5a70e78…f6f5b2` | drivers/ 导入、manifest 192 项、coherent 打包规则 | CONFIRMED |
-| Innosilicon/FH2M 厂商载荷 | 黑盒对象/固件/用户态 | 随 Deepin 包 | `.o_shipped` 不可读源码；Makefile 头声明 Dual MIT/GPLv2；逐项许可 UNVERIFIED | CONFIRMED(存在)/UNVERIFIED(许可) |
+| Innosilicon/FH2M 厂商内容 | 导入源码、黑盒对象、固件和用户态 | 随 Deepin 包 | 源码头包含 Dual MIT/GPL 引用、BSD/LGPL 和 `Strictly Confidential`；黑盒不可读；逐项许可 UNVERIFIED | CONFIRMED(存在与头部)/UNVERIFIED(再分发权) |
 | PowerVR DDK V119 RTM | 谱系/参考 | BVNC 35.V.1632.23、G0M_SOC、META MTP219 | ddk-v119-mapping.md；与主线 drm/imagination + Mesa pvr 对照 | OBSERVED(特征)/INFERRED(谱系) |
 | Linux DRM/Mesa/PVR 主线 | **行为/语义对照**（非直接依赖） | 内核 6.12.101 | ddk-v119-mapping、patch 兼容层（drm_edid_block_valid stub 等） | INFERRED(用途)/CONFIRMED(存在) |
 | Picom（yshui/picom） | 外部组件 + 本项目 patched 构建 | commit `6d676824c457a933c52e3e92c5a1856466f90545` 固定 | build-patched-picom.sh、GLX 扩展缺失 patch | CONFIRMED |
@@ -49,8 +49,9 @@
 
 ## 四、约束汇总
 
-- 许可证：本仓库自有 MIT；drivers/ 导入源码以文件头为准（Makefile 头 Dual MIT/GPLv2）；黑盒/
-  用户态/固件逐项许可 UNVERIFIED（licensing.md）。
+- 许可证：本仓库有权授权的原创辅助工作使用根 MIT；`drivers/` 不是统一许可证，confidential 文件
+  再分发权、缺失许可证文本及黑盒/用户态/固件逐项许可均未核实，发布状态 BLOCKED
+  （`source-license-audit.md`）。
 - 黑盒边界：不修改 .o_shipped/用户态/固件；仅字节契约（gpupll 变换）与符号级可观察。
 - 版本限制：4.0.0-i1 为当前；patched-27 仅回退/oracle；版本号禁止复用。
 - 不可复现部分：设备实测、黑盒内部、逐项许可结论。
@@ -58,5 +59,5 @@
 ## 证据索引
 
 `docs/planning/ddk-v119-mapping.md`、`capability-survey.md`、`reverse-engineering-assessment.md`、
-`docs/project/licensing.md`、`binary-manifest.json`、`drivers/dkms.conf`、
+`docs/project/licensing.md`、`docs/project/source-license-audit.md`、`binary-manifest.json`、`drivers/dkms.conf`、
 `scripts/build-innogpu-driver.sh`。

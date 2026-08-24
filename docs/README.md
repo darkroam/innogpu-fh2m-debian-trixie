@@ -18,7 +18,7 @@
 11. [用户验证](user/verification.md)：安装或重启后的最小验收流程。
 
 按需查阅：[依赖与外部文件](project/dependencies.md)、[显示接入使用](user/display-guide.md)、
-[许可证与再分发边界](project/licensing.md)、
+[许可证与再分发边界](project/licensing.md)、[驱动源码许可证审计](project/source-license-audit.md)、
 [实施历史](planning/history.md)、[逆向工程与能力挖掘评估](planning/reverse-engineering-assessment.md)、
 [FH2M 能力普查记录](planning/capability-survey.md)、[release 审阅记录](planning/release-review-2026-08-20.md)、
 [DDK V119 对照表](planning/ddk-v119-mapping.md)、[源码树迁移](planning/source-tree-migration.md)、
@@ -38,6 +38,9 @@
 | `planning/` | 历史、活动 TODO、挂起项和迁移计划 | 后续工作状态 |
 | `user/` | 安装、验证、显示使用、Picom 和恢复 | 面向操作者的步骤 |
 | `archive/` | 不再变化但仍需追溯的旧记录 | 历史只读材料 |
+
+根目录下 `docs/new-device-install.md` 与 `docs/cleanup-20260708.md` 是为旧链接保留的 compatibility
+stub；权威内容分别位于 `docs/user/` 和 `docs/archive/`，不得在 stub 中复制或维护第二份正文。
 
 同一事实只保留一个权威来源，其他文档使用链接。设计或计划必须明确标记“未实施”，不能与
 当前已验证行为混写。文档优先、代码边界、测试和隐私规则见

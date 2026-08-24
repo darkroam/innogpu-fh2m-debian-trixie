@@ -108,9 +108,11 @@ Deepin deb(校验 SHA) → generate-binary-manifest(校验+生成) → validate-
 - manifest 192 项：source_path/vendor_path/sha256/size/kind/role/license；5 类 kind
   （kernel-black-box/ddx/firmware/userspace-lib/userspace-config），license 全部 `vendor-binary`。
 - `vendor-binary` = **来源分类，非许可证**（CONFIRMED：licensing.md 明文；不修改黑盒内容）。
-- 已知许可证事实：`drivers/Makefile` 头声明 `Dual MIT/GPLv2`（Innosilicon，CONFIRMED 文件头）；
-  各导入源码以文件头为准（UNVERIFIED 逐文件）；用户态库/固件/DDX 逐项许可**未逐项核实**
-  （UNVERIFIED，licensing.md 记录）；本仓库自有内容 MIT（CONFIRMED LICENSE）。
+- 已知许可证事实：源码树不是统一许可证。机械扫描发现 408 个文件引用来源分发中的
+  `GPL-COPYING`/`MIT-COPYING`、3 个文件标为 `Strictly Confidential`、2 个文件声明
+  BSD-3-Clause/LGPL-2.1-only；其余文件仍需逐项分类。缺失许可证文本、confidential 文件再分发权和
+  用户态库/固件/DDX 逐项许可均为 UNVERIFIED，源码发布状态为 BLOCKED（见
+  `source-license-audit.md`）；本仓库有权授权的原创辅助工作使用根 MIT。
 - 黑盒对象不可读源码（`.o_shipped`），仅字节契约（gpupll 变换）与符号级可观察（OBSERVED）。
 
 ## 风险与优化候选
@@ -119,9 +121,10 @@ Deepin deb(校验 SHA) → generate-binary-manifest(校验+生成) → validate-
    linux-headers 预装；可增加"headers 缺失即清晰报错"的 fixture 测试。
 2. 设备节点/TTY/X 相关验证只能实机（P2）：测试体系需把 runtime 与 offline 分层隔离（见
    test-strategy.md）。
-3. 黑盒符号级分析未完成（远期候选 9）：依赖可观察符号，不修改黑盒。
-4. 能力深挖（DVFS/codec 编码/CORE_ID）为未实施项（见 todo.md），非本阶段范围。
-5. 参考模型版本漂移风险：上游 Picom commit 固定 `6d676824`（CONFIRMED）；Deepin 包 SHA 固定；
+3. 源码与载荷再分发许可未完成逐项核实（P0 发布阻断）：见 `source-license-audit.md`。
+4. 黑盒符号级分析未完成（远期候选 9）：依赖可观察符号，不修改黑盒。
+5. 能力深挖（DVFS/codec 编码/CORE_ID）为未实施项（见 todo.md），非本阶段范围。
+6. 参考模型版本漂移风险：上游 Picom commit 固定 `6d676824`（CONFIRMED）；Deepin 包 SHA 固定；
    DRM/Mesa 主线仅作行为对照（INFERRED 用途，见 frameworks-and-references.md）。
 
 ## 证据索引

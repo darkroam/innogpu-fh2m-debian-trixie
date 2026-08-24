@@ -7,14 +7,16 @@
 - **导入**：2026-08-21，迁移阶段 1。源码树导入已完成，9 个启用补丁已转为转换提交
   （source/device-profile: patch-0XX，见 [patch-provenance.md](../docs/planning/patch-provenance.md)）。
 - **导入提交**：见 git 历史（本目录首个提交）。
-- **许可证**：文件头部声明为 Dual MIT/GPLv2（Imagination Technologies + Innosilicon 双版权）。
+- **许可证**：按逐文件头部处理，不能概括为统一的 Dual MIT/GPLv2。机械扫描已发现 Dual
+  MIT/GPL 引用、BSD-3-Clause/LGPL-2.1-only 双许可及 `Strictly Confidential` 等不同声明；
+  再分发状态和阻断项见 [source-license-audit.md](../docs/project/source-license-audit.md)。
 
 ## 与迁移的关系
 
-- 本目录是迁移后的**可维护源码树**（Git 跟踪），已包含 9 个启用补丁的转换提交；
-  当前设备构建仍由旧流程（`third_party/` 解包 + `patches/` 补丁）承担，两者在迁移完成前并存，
-  但 `drivers/` 源码与旧流程的 p27 生成树 parity 已通过。
-- **排除项**（不进入本目录，由 binary-manifest.json 在阶段 2 创建后管理，当前文件尚不存在）：
+- 本目录是迁移后的**可维护源码树**（Git 跟踪），已包含 9 个启用补丁的转换提交；当前
+  `4.0.0-i1` 由 `scripts/build-innogpu-driver.sh` 直接使用本目录构建。旧 patch 叠加流程仅作为
+  p27 历史 oracle/回退证据保留；`drivers/` 与 p27 生成树 parity 已通过。
+- **排除项**（不进入本目录，由 `binary-manifest.json` 的 192 项清单管理）：
   - 5 个预编译对象：`innogpu.o_shipped`、`innovpu.o_shipped`、`innosmmu.o_shipped`、
     `innodma.o_shipped`、`innosrvkm.o_shipped`（黑盒，进 `vendor/`）；
   - Deepin 包内混入的构建产物（`.o.cmd` 等，已清理）。
@@ -37,7 +39,7 @@ working_tree_clean=PASS
 - `tools/`：厂商辅助工具源码
 - 顶层 `Makefile`/`Kbuild`/`dkms.conf` 等：构建配置
 
-## 修改规则（迁移完成前）
+## 修改规则
 
 - 本目录 = Deepin 原始源码 + 9 个启用补丁的转换提交（source: patch-0XX / device-profile: patch-0XX，
   见 [patch-provenance.md](../docs/planning/patch-provenance.md)）；与 p27 生成源码树 parity 通过

@@ -52,11 +52,11 @@ PCI 0000:06:00.6 [1d94:14c9]
 DKMS、DRM/fbdev 与 A1–A12 实机验收的版本（迁移源码树 + manifest 黑盒载荷，见
 [source-tree-migration.md](../planning/source-tree-migration.md)）；`patched-27` 转为保留的回退基线；
 `patched-21` 是历史完整图形验收基线，`patched-17` 是深层回退包；它们不再是新设备默认入口。p25/p26/p27 分别增加 dma_resv usage 语义、未活动 CRTC vblank 守卫和 foreign DMA-BUF 生命周期修复，均已通过本机实机验收（见 [patch-025](../patches/patch-025-dma-resv-usage-rw.md)、[patch-026](../patches/patch-026-inactive-crtc-vblank-guard.md)、[patch-027](../patches/patch-027-foreign-dmabuf-lifecycle.md)）。p20 deb 是所有权收敛前的历史运行证据，包内辅助
-脚本不能代表当前源码，禁止重新部署或发布；运行时验收与 release 载荷合规是两个独立结论。后续包统一
-以 Deepin 202504 原包为唯一技术基线，在其 DKMS 源码上叠加 Debian 6.12 兼容、G0M PLL、DRM/fbdev
-和本地 connector/invisible GEM 修复，并保留同一原包中的完整用户态 ABI 集合。patched-21 使用
-`patch-006`；patched-22 另加 `patch-009`，patched-23 再加 `patch-023`，patched-24 增加
-`patch-001` 的 6.12.101+ API 兼容。connector 修复仅针对本机
+脚本不能代表当前源码，禁止重新部署或发布；运行时验收与 release 载荷合规是两个独立结论。当前及
+后续 `4.0.0-iN` 包直接维护 `drivers/` 源码，并从固定 Deepin 202504 原包按 manifest 提取完整同源
+用户态 ABI、固件和黑盒对象；历史补丁不再于构建时叠加。patched-21 使用 `patch-006`；patched-22
+另加 `patch-009`，patched-23 再加 `patch-023`，patched-24 增加 `patch-001` 的 6.12.101+ API
+兼容，这些版本关系仅用于历史 provenance。connector 修复仅针对本机
 DPU match 141 的内置 DP0/eDP 语义，invisible GEM 修复只跳过 READ staging 页的回写。
 `patched-8` 只保留为更早的历史回滚物。
 
@@ -65,14 +65,20 @@ Deepin 202504 deb 同时提供硬件 GL/DDX 用户态。内核模块成功、DRM
 
 ### 驱动包构建基线
 
-后续候选包必须直接解包 `innogpu-fh2m_20250421190503-debug_amd64.deb`，以其中的 DKMS 源码、
-固件、预编译对象、DRI、GBM、GLAPI、GLVND、Xorg DDX 和相互链接关系作为同一个不可拆分的基线，
-然后只在 Deepin DKMS 源码上按版本应用仓库补丁，并用本项目已审查的 Debian maintainer scripts
-替换上游安装脚本。禁止从任一历史 patched 包复制用户态文件或控制脚本后再局部替换源码。
+当前 `4.0.0-i1` 构建由 `scripts/build-innogpu-driver.sh` 统一编排：直接复制 Git 跟踪的
+`drivers/` 源码树，从 `vendor/` 取得 `binary-manifest.json` 校验过的黑盒对象、固件和用户态载荷，
+再使用本项目已审查的 Debian maintainer scripts 生成包。`vendor/` 由
+`scripts/extract-vendor-binaries.sh` 从固定 SHA-256 的 Deepin 202504 原包幂等重建，不进入 Git。
+
+Deepin 原包仍是导入源码、用户态 ABI 和黑盒载荷的唯一技术来源，但当前构建不再在每次构建时向
+DKMS 源码应用 `patches/`。9 个启用补丁已转换为 `drivers/` 中的源码提交；旧
+`build-deepin-coherent.sh` 和 patched wrapper 仅作为 p27 oracle、历史复现和回退证据保留。
+禁止从任一历史 patched 包复制用户态文件、对象或控制脚本后再局部替换源码。
 
 因此：
 
-- Deepin 202504 原包是后续版本唯一的源码、用户态 ABI 和打包载荷基线；
+- `drivers/` 是当前可修改源码权威，`binary-manifest.json` 是第三方载荷路径与哈希权威；
+- Deepin 202504 原包是二者的来源基线，DRI、GBM、GLAPI、GLVND 和 DDX 禁止跨版本混配；
 - `patched-8` 只是历史回滚点，`patched-17` 是一次不延续 patched-8 实现谱系的重建，两者都不是
   后续版本的实现父版本；
 - `patched-18` 的 fbdev 补丁本身已通过 mmap 验证，但其旧构建流程错误地复用了 patched-8 的包载荷
@@ -82,15 +88,14 @@ Deepin 202504 deb 同时提供硬件 GL/DDX 用户态。内核模块成功、DRM
 - `patched-20` 在完整 Deepin 202504 载荷上保留 `fb_io_mmap` 并加入 PVR 初始化诊断，已通过运行时
   PVR、隔离 Xorg/GLX 和真实 VT `fbterm` 验收；但其 deb 还包含收敛前的旧显示/实验辅助文件，
   只能作为当前机器证据，不能发布或用当前源码以相同版本号重建；
-- DRI、GBM、GLAPI、GLVND 和 DDX 必须来自同一 Deepin 发布，禁止跨版本混配或只替换其中一个文件。
+- 历史 patched 包和 patch wrapper 不得作为新版本实现父版本。
 
-当前 `build-deepin-coherent.sh` 只接受显式指定且大于 20 的新版本号，以及经过审阅的
-`SOURCE_DATE_EPOCH`。固定 wrapper 必须声明两者，使相同源码和输入重复构建得到逐字一致的 deb。
-构建完成后必须通过 `check-release-package.sh`，确认关键 ABI/固件存在、设备接入脚本与源码一致，
-并拒绝 xdisplay 引擎副本、Kylin/实验用户态安装器和直接二进制热补丁命令。
+当前构建必须显式提供经过审阅的 `SOURCE_DATE_EPOCH`，并通过 manifest `--check-only`、
+`check-release-package.sh`、oracle/符号对比和可复现双构建门禁。旧 `build-deepin-coherent.sh` 仍保留
+历史版本号拒绝与 epoch 护栏，但不是新候选的构建入口。
 
-patched-21 是该规则的首个实际输出：离线包边界、重复构建和当前设备运行验收均已通过，但尚未完成
-跨硬件发布。它的固定补丁矩阵和证据见
+patched-21 是 coherent 历史规则的首个实际输出：离线包边界、重复构建和当前设备运行验收均已通过，
+但尚未完成跨硬件发布。它的固定补丁矩阵和证据见
 [`../patches/patched-21-release-candidate.md`](../patches/patched-21-release-candidate.md)。
 
 ## 显示管理

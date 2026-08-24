@@ -120,9 +120,158 @@ grep -Fq 'patches/023-invisible-read-no-writeback.patch' scripts/build-deepin-co
 require_text README.md '当前驱动包 `4.0.0-i1`'
 require_text README.md '(docs/project/licensing.md)'
 require_text docs/README.md '[许可证与再分发边界](project/licensing.md)'
+require_text docs/README.md '[驱动源码许可证审计](project/source-license-audit.md)'
 
-# The stable p21 evidence remains navigationally referenced while p22 is the
-# currently booted connector-classification candidate.
+# Current README and status must describe the same documentation snapshot.
+readme_date="$(sed -n 's/^> 最后更新：\([0-9-]*\).*/\1/p' README.md | head -1)"
+status_date="$(sed -n 's/^最后更新：\([0-9-]*\).*/\1/p' docs/project/status.md | head -1)"
+[[ -n "$readme_date" && "$readme_date" == "$status_date" ]] ||
+    fail "README.md and docs/project/status.md have different or missing update dates"
+
+# Runtime documentation derives its counts from the committed authority rather
+# than maintaining an independent total.
+runtime_summary="$(grep '^runtime_total=' baselines/latest-runtime-baseline.txt | tail -1 || true)"
+runtime_passed="$(sed -n 's/.*runtime_passed=\([0-9][0-9]*\).*/\1/p' <<<"$runtime_summary")"
+runtime_skipped="$(sed -n 's/.*runtime_skipped=\([0-9][0-9]*\).*/\1/p' <<<"$runtime_summary")"
+runtime_unverified="$(sed -n 's/.*runtime_unverified=\([0-9][0-9]*\).*/\1/p' <<<"$runtime_summary")"
+if [[ -z "$runtime_passed" || -z "$runtime_skipped" || -z "$runtime_unverified" ]]; then
+    fail "latest runtime baseline has no parseable summary"
+else
+    runtime_text="$runtime_passed PASS / $runtime_skipped SKIP / $runtime_unverified UNVERIFIED"
+    require_text docs/project/status.md "$runtime_text"
+    require_text docs/project/test-strategy.md "$runtime_text"
+    require_text docs/planning/todo.md "$runtime_text"
+fi
+require_text baselines/latest-runtime-baseline.txt 'runtime_vulkan_execution=PASS'
+require_text baselines/latest-runtime-baseline.txt 'runtime_opencl_execution=PASS'
+
+# The source deb identity is owned by the manifest and must be repeated exactly
+# in the user-facing acquisition documents.
+source_deb_sha="$(python3 - <<'PY'
+import json
+with open('binary-manifest.json', encoding='utf-8') as stream:
+    print(json.load(stream)['source_deb_sha256'])
+PY
+)"
+require_text docs/project/dependencies.md "$source_deb_sha"
+require_text docs/user/new-device-install.md "$source_deb_sha"
+
+# Imported source is not under one uniform license. Keep every currently known
+# confidential exception visible and block release claims until it is resolved.
+expected_confidential="$(printf '%s\n' \
+    drivers/innosrvkm/include/pdp_drm.h \
+    drivers/innosrvkm/include/pvrsrv_firmware_boot.h \
+    drivers/innosrvkm/include/rgxlayer_impl.h | sort)"
+actual_confidential="$(rg -l 'Strictly Confidential' drivers --glob '!README.md' | sort || true)"
+[[ "$actual_confidential" == "$expected_confidential" ]] ||
+    fail "Strictly Confidential source set changed; update the license audit before proceeding"
+driver_file_count="$(git ls-files drivers | wc -l | tr -d ' ')"
+dual_reference_count="$(rg -l 'GPL-COPYING' drivers | wc -l | tr -d ' ')"
+require_text docs/project/source-license-audit.md "$driver_file_count 个 Git 跟踪文件"
+require_text docs/project/source-license-audit.md "$dual_reference_count 个文件同时引用"
+require_text docs/project/source-license-audit.md '发布状态：BLOCKED'
+while IFS= read -r confidential_file; do
+    [[ -n "$confidential_file" ]] || continue
+    require_text docs/project/source-license-audit.md "$confidential_file"
+done <<<"$expected_confidential"
+for bsd_lgpl_file in \
+    drivers/innopmbus/innopmbus_drv.c \
+    drivers/innopmbus/innopmbus_drv.h; do
+    require_text docs/project/source-license-audit.md "$bsd_lgpl_file"
+done
+expected_bsd_lgpl="$(printf '%s\n' \
+    drivers/innopmbus/innopmbus_drv.c \
+    drivers/innopmbus/innopmbus_drv.h | sort)"
+actual_bsd_lgpl="$(rg -l 'BSD 3 clause and LGPL2\.1' drivers | sort || true)"
+[[ "$actual_bsd_lgpl" == "$expected_bsd_lgpl" ]] ||
+    fail "BSD/LGPL source set changed; update the license audit before proceeding"
+
+stale_current_state="$({
+    rg -n '18 PASS.?/? ?9 SKIP.?/? ?8 UNVERIFIED|18/9/8|人工授权项待运行' \
+        README.md drivers/README.md docs/project docs/user docs/planning/source-tree-migration.md \
+        docs/planning/phase5-retirement-design.md tests/runtime/README.md 2>/dev/null || true
+    rg -n 'VA-API H264\+HEVC 硬解已实机|VA-API H264\+HEVC 硬解等|当前运行包.*patched-23' \
+        README.md drivers/README.md docs/project docs/user docs/planning/source-tree-migration.md \
+        docs/planning/phase5-retirement-design.md tests/runtime/README.md 2>/dev/null || true
+    rg -n '当前设备构建仍由旧流程|binary-manifest\.json.*当前文件尚不存在' \
+        README.md drivers/README.md docs/project docs/user 2>/dev/null || true
+} )"
+if [[ -n "$stale_current_state" ]]; then
+    printf '%s\n' "$stale_current_state" >&2
+    fail "current documentation contains a stale architecture, capability, or runtime assertion"
+fi
+
+# Validate the column count of ordinary Markdown pipe tables. Pipes inside
+# backtick code spans and escaped pipes do not split cells.
+if ! python3 - <<'PY'
+from pathlib import Path
+import re
+import sys
+
+roots = [Path('README.md'), Path('drivers/README.md'), Path('docs'), Path('scripts'),
+         Path('baselines'), Path('tests')]
+files = []
+for root in roots:
+    files.extend(root.rglob('*.md') if root.is_dir() else [root])
+
+def cells(line):
+    stripped = line.strip()
+    if not stripped.startswith('|'):
+        return None
+    values, current = [], []
+    escaped = False
+    ticks = 0
+    for char in stripped[1:]:
+        if escaped:
+            current.append(char)
+            escaped = False
+        elif char == '\\':
+            current.append(char)
+            escaped = True
+        elif char == '`':
+            ticks ^= 1
+            current.append(char)
+        elif char == '|' and not ticks:
+            values.append(''.join(current).strip())
+            current = []
+        else:
+            current.append(char)
+    if current or not stripped.endswith('|'):
+        values.append(''.join(current).strip())
+    return values
+
+def separator(row):
+    return row and all(re.fullmatch(r':?-{3,}:?', value) for value in row)
+
+errors = []
+for path in sorted(set(files)):
+    lines = path.read_text(encoding='utf-8').splitlines()
+    index = 0
+    while index + 1 < len(lines):
+        header, divider = cells(lines[index]), cells(lines[index + 1])
+        if header and separator(divider):
+            expected = len(header)
+            if len(divider) != expected:
+                errors.append(f'{path}:{index + 2}: table divider has {len(divider)} cells, expected {expected}')
+            row_index = index + 2
+            while row_index < len(lines) and cells(lines[row_index]) is not None:
+                actual = len(cells(lines[row_index]))
+                if actual != expected:
+                    errors.append(f'{path}:{row_index + 1}: table row has {actual} cells, expected {expected}')
+                row_index += 1
+            index = row_index
+        else:
+            index += 1
+
+if errors:
+    print('\n'.join(errors), file=sys.stderr)
+    raise SystemExit(1)
+PY
+then
+    fail "Markdown table structure validation failed"
+fi
+
+# Stable p21 evidence remains navigationally referenced as historical evidence.
 require_text docs/patches/patched-21-release-candidate.md 'RUNTIME_VALIDATION: PASS_ON_CURRENT_DEVICE'
 require_text docs/project/status.md "\`3.3.3.42-patched-21\` 已安装、重启"
 require_text docs/patches/README.md 'p21 已在当前设备运行验收'
@@ -146,7 +295,7 @@ if grep -Fq '3.3.3.42-patched-20` 是当前已安装' docs/project/architecture.
     fail "project architecture still describes historical patched-20 as the current installation"
 fi
 
-if rg -q 'baselines/latest-' docs/project/status.md; then
+if rg -q 'baselines/latest-(desktop|ddx|current-xorg|post-reboot-hwgl)' docs/project/status.md; then
     fail "current status must not cite unversioned historical baseline files as p21 evidence"
 fi
 
@@ -175,6 +324,7 @@ done < <(find tools -maxdepth 1 -type f ! -name 'README.md' | sort)
 
 for path in \
     docs/project/architecture.md \
+    docs/project/source-license-audit.md \
     docs/project/status.md \
     docs/project/compositor-management.md \
     docs/project/display-management.md \

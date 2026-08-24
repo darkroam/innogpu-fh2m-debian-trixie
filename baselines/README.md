@@ -7,6 +7,9 @@ Keep:
 - `final-summary.md`
 - `latest-*-result.txt`
 - `latest-*/result.txt`
+- `latest-phase4-*.txt` 和经脱敏的 Phase 4 正式审计日志
+- `latest-runtime-baseline.txt`（当前 runtime 权威摘要）
+- `runtime-results-YYYYMMDD.txt`（人工真机结果输入；只保留脱敏、机器可读条目）
 
 Do not track in Git:
 
@@ -14,7 +17,7 @@ Do not track in Git:
 - Full `glxinfo` / `xdpyinfo` dumps.
 - Host-specific debug captures with local paths.
 
-The committed files record the final pass/fail state needed to understand the repository baseline without carrying large, machine-specific logs.
+The committed files record the final pass/fail state needed to understand the repository baseline without carrying large, machine-specific logs. `latest-runtime-baseline.txt` is the authority for the current 35-item capability summary; its `tested_commit` identifies the code under test, not the later commit that archives the evidence.
 
 Runtime scripts may leave ignored raw files in this directory for local diagnosis. Their presence in the working tree does not make them repository evidence; only `git ls-files baselines/` defines the committed baseline set.
 

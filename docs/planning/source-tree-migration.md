@@ -7,7 +7,8 @@
 - **阶段 0 ✅ 阶段 1 ✅ 阶段 2 ✅ 阶段 3 ✅ 阶段 4 ✅**：
   阶段 3（2026-08-21 监督评审通过）：4.0.0-i1 候选 oracle 对比全 PASS（含 module_symbols 离线
   逐项对比、.o.cmd 边界裁定、可复现构建）；阶段 4（2026-08-21 实机完成）：A1–A12 验收全 PASS、
-  p27 回退演练 PASS，设备已推进至 4.0.0-i1 作为最终运行态；阶段 5（旧流程退役）待执行。
+  p27 回退演练 PASS，设备已推进至 4.0.0-i1 作为最终运行态；阶段 5 Step 1 已完成，Step 2 待条件
+  满足并单独批准。
 - 阶段 3 评审整改（2026-08-21 监督意见）：
   - `module_symbols` 不再 SKIP——`scripts/compare-module-symbols.sh` 离线构建候选与 p27 两包
     DKMS 源码，逐模块对比 vermagic/depends/导出符号/导入符号（见 §七）；
@@ -61,8 +62,8 @@ scripts/
 tests/kernel/                    内核离线编译与探针回归测试
 docs/project/driver-architecture.md
 docs/user/userspace-components.md
-legacy/                          迁移完成后保存旧 patch/wrapper 的位置（阶段 5 才创建）
-patches/                         迁移完成前保留，不得提前删除
+legacy/                          阶段 5 Step 2 获批后可保存旧 wrapper；当前尚未创建
+patches/                         历史 provenance 永久保留，不得移动或删除
 ```
 
 ## 三、14 个 patch 的 provenance 与分类
@@ -222,8 +223,8 @@ sudo apt install --allow-downgrades ./debs/innogpu-fh2m-trixie_3.3.3.42-patched-
 | 1 源码树导入 | `drivers/`、源码架构说明、patch provenance 表、导入报告 | source_import / patch_provenance / source_tree_parity_against_p27 / working_tree_clean / runtime_unchanged | ✅ 完成 |
 | 2 黑盒 manifest 与 staging | 正式 manifest、提取工具、vendor 忽略规则、staging 构建 | first_extraction / second_extraction_idempotent / check_only / bad_hash=FAIL_AS_EXPECTED / missing_source=FAIL_AS_EXPECTED / path_traversal=FAIL_AS_EXPECTED / interrupted_extraction_recovery | ✅ 完成（用户态/固件 package boundary 属阶段 3） |
 | 3 新构建器并行验证 | 新构建器（旧构建器为 oracle，并行比较） | 源码/黑盒/用户态/固件/maintainer scripts/包清单/vermagic/关键符号逐项一致（符号对比见 §七）；`.o.cmd` 构建产物排除；SOURCE_DATE_EPOCH 必填 + 双构建 SHA-256 一致 | ✅ 完成（compare-oracle-candidates.sh 全 PASS，含 module_symbols） |
-| 4 实机候选验证 | 安装候选（需监督批准 + p27 回退与 SSH/TTY 通道） | 包版本/DKMS/vermagic/Driver/Firmware/DRM/fbdev/HWGL/DRI3/PDP/vblank/VA-API/fbterm/xdisplay/Picom/音频 + p27 回退演练 |
-| 5 旧流程退役 | `patches/` 与旧 wrapper 移入 `legacy/` 或标记 deprecated | 阶段 1–4 全部 PASS + 新设备 clone 安装验证；p27 tag/deb 永久保留；至少一个发布周期后才评估物理删除 |
+| 4 实机候选验证 | 安装候选（需监督批准 + p27 回退与 SSH/TTY 通道） | 包版本/DKMS/vermagic/Driver/Firmware/DRM/fbdev/HWGL/DRI3/PDP/vblank/VA-API 枚举/fbterm/xdisplay/Picom/音频 + p27 回退演练 | ✅ 完成 |
+| 5 旧流程退役 | Step 1 标记 deprecated；Step 2 仅评估旧 wrapper 是否移入 `legacy/` | 阶段 1–4 PASS + 一个发布周期 + 新设备 clone 安装和恢复验证；`patches/`、历史 deb/tag 不得移动或删除 | Step 1 ✅；Step 2 待条件与批准 |
 
 ## 十、暂停条件（监督指南"八、暂停条件"）
 

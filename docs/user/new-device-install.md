@@ -17,11 +17,13 @@ patched-18/19 是问题定位和 coherent 构建演进记录，不是安装推�
 
 ## 准备安装包（主入口 4.0.0-i1）
 
-新架构包不随 Git 提供。clone 本仓库后，从维护者审阅的 release 附件下载 Deepin 原包到 `debs/`；
-构建器会按 `binary-manifest.json` 校验完整 SHA-256。当前审核 epoch 为 `1787342400`：
+新架构包不随 Git 提供。clone 本仓库后，从有权提供该内容的来源取得 Deepin 原包并放入 `debs/`；
+本项目当前不提供该第三方原包或载荷的公开下载。构建器会按 `binary-manifest.json` 校验完整
+SHA-256。当前审核 epoch 为 `1787342400`：
 
 ```text
 debs/innogpu-fh2m_20250421190503-debug_amd64.deb
+SHA-256: b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2
 ```
 
 ```sh
@@ -110,14 +112,15 @@ sudo INNOGPU_X_USER="$USER" INNOGPU_X_HOME="$HOME" \
 
 ## 历史候选：patched-20
 
-patched-20 仅保留运行证据，不提供重新部署或回退到该版本的路径；它不是新设备安装选项。当前设备
-发生 p21 运行故障时，按 [`recovery.md`](recovery.md) 回退到 patched-17，再在必要时回退到 patched-8。
+patched-20 仅保留运行证据，不提供重新部署或回退到该版本的路径；它不是新设备安装选项。当前
+`4.0.0-i1` 故障时先按 [`recovery.md`](recovery.md) 回退 patched-27，只有深层恢复才使用
+patched-17/patched-8。
 该 deb 生成于 xdisplay 所有权收敛前，包内仍有旧引擎/实验辅助文件，且 `patch-008` 会高频写日志。
 当前 `build-patched20-deepin-diagnostic.sh` 仅作为拒绝版本复用的兼容护栏，不再生成包。
 
-下一候选必须先在 `docs/planning/` 定义新版本号（大于 20）、补丁集合、风险和回退，再从完整
-Deepin 202504 原包调用 `build-deepin-coherent.sh`。不得以 patched-8、17、18、19 或 20 的 deb
-作为载荷基线，也不得从不同版本挑选 DRI、GBM、GLAPI、DDX 或固件文件拼装。新包还必须通过：
+下一候选必须先在 `docs/planning/` 定义按 Debian 排序高于 patched-27 的新版本号、源码改动、风险和
+回退，再调用 `build-innogpu-driver.sh` 从 `drivers/` 与 manifest 载荷构建。不得以任何 patched deb
+作为源码或载荷基线，也不得从不同版本挑选 DRI、GBM、GLAPI、DDX 或固件拼装。新包还必须通过：
 
 ```sh
 scripts/check-release-package.sh debs/<new-package>.deb

@@ -42,7 +42,7 @@
 | --- | --- | --- |
 | `install-prereqs-debian.sh` | 修改软件包 | 安装 Debian 构建和运行依赖 |
 | `install.sh` | 修改驱动、需重启 | 只调度 patched-8/17；不把 patched-20 诊断候选设为默认 |
-| `install-patched17-and-check.sh` | 修改驱动、需重启 | 当前新设备保守入口和 patched-21/22 深层回退入口 |
+| `install-patched17-and-check.sh` | 修改驱动、需重启 | legacy 深层回退入口；新设备默认入口是 4.0.0-i1 |
 | `install-patched8-and-check.sh` | 修改驱动、需重启 | 更早的历史恢复入口 |
 | `uninstall-innogpu.sh` | 卸载驱动、需重启 | 通用卸载器；版本包装见 `uninstall-patched*.sh` |
 | `uninstall-patched17.sh` | 卸载驱动、需重启 | 仅允许卸载版本精确匹配 patched-17 的兼容包装 |
@@ -98,7 +98,8 @@ xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项
 - `verify-install-status.sh`
 
 `run-capability-survey.sh` 编译并运行 Vulkan/OpenCL/VA-API 最小枚举探针并抓取 sysfs 环境快照，输出保存到 `baselines/capability-survey-<ts>.log`（可用 `--out DIR` 改位置）；只读，不 modeset、不改配置。设备无 DRM render 节点时（如无特权容器）优雅降级并记录失败本身。
-其中 `check-docs.sh` 检查文档链接、隐私标记、稳定入口登记和固定版本护栏；
+其中 `check-docs.sh` 检查文档链接、隐私标记、稳定入口登记、当前版本、runtime 统计、manifest 原包
+SHA、许可证例外、过期状态断言和 Markdown 表格结构；法律授权与文档语义仍需人工审查。
 `check-release-package.sh` 只解包读取指定 deb，核对版本、关键载荷、禁止文件和设备接入脚本，
 不会安装包。发布包边界的可重复 fixture 见 `tests/package/run-boundary-tests.sh`。
 `verify-install-status.sh --require-reboot VERSION` 用于运行验收：除常规状态外，它要求包元数据早于当前

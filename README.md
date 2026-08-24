@@ -1,9 +1,11 @@
 # innogpu-fh2m-debian-trixie
 
 让 Innosilicon **Fantasy II-M（FH2M，风华2号-M）** GPU 在 **Debian Trixie (13)** 上稳定可用、
-能力可知、可维护可演进的开源适配项目：内核驱动、显示输出、硬件 GL、音频与全套验收证据。
+能力可知、可维护可演进的适配与验证项目：内核驱动、显示输出、硬件 GL、音频与全套验收证据。
+本项目自有工作采用 MIT 许可证；导入源码和厂商载荷按各自声明处理，当前再分发边界见许可证章节。
 
-> 最后更新：2026-08-21 —— 当前驱动包 `4.0.0-i1`（源码级重构版），已在本机完成全套实机验收与回退演练。
+> 最后更新：2026-08-24 —— 当前驱动包 `4.0.0-i1`（源码级重构版），已完成 Phase 4 实机验收、
+> 回退演练及 Vulkan/OpenCL 最小执行验证。
 
 ## 适配的当前系统
 
@@ -12,8 +14,8 @@
 | 发行版 / 内核 | Debian Trixie (13)，kernel `6.12.101+deb13-amd64` |
 | CPU 平台 | Hygon x86_64 |
 | GPU | Innosilicon Fantasy II-M，PCI `1ec8:9810`，2 GiB VRAM（PowerVR DDK V119 RTM 谱系） |
-| 当前驱动包 | `4.0.0-i1`：自有驱动源码树 `drivers/` + `binary-manifest.json` 管理的黑盒载荷 |
-| 已验证能力 | Vulkan 1.3.264 / OpenCL 3.0 / GL 4.3 core + GLES 3.2 / VA-API H264+HEVC 硬解 / DRM+fbdev / 桌面硬件 GL / HDA 音频 |
+| 当前驱动包 | `4.0.0-i1`：Git 管理的导入驱动源码树 `drivers/` + `binary-manifest.json` 管理的黑盒载荷 |
+| 已验证能力 | Vulkan 1.3.264 枚举及队列提交 / OpenCL 3.0 枚举及 kernel 读回 / GL 4.3 core + GLES 3.2 / VA-API H264+HEVC profile 枚举 / DRM+fbdev / 桌面硬件 GL / HDA 与 PipeWire 枚举 |
 
 ## 版本演进
 
@@ -36,7 +38,7 @@
 ```sh
 git clone https://github.com/darkroam/innogpu-fh2m-debian-trixie.git && cd innogpu-fh2m-debian-trixie
 sudo scripts/install-prereqs-debian.sh                        # 构建/运行依赖
-# 取得 Deepin 202504 原包放入 debs/（来源与哈希见 docs/project/dependencies.md）
+# 取得 Deepin 202504 原包放入 debs/（完整 SHA-256 见 docs/project/dependencies.md）
 bash scripts/extract-vendor-binaries.sh                       # 按 manifest 重建 vendor/ 黑盒载荷
 SOURCE_DATE_EPOCH=1787342400 bash scripts/build-innogpu-driver.sh  # 构建 4.0.0-i1
 sudo apt install ./build/innogpu-fh2m-trixie_4.0.0-i1.deb     # 安装（同包名升级）
@@ -76,5 +78,9 @@ sudo reboot                                                    # 重启后加载
 ## 许可证
 
 - MIT 仅覆盖本仓库明确自有的脚本、工具、文档、配置和辅助工作，见 [LICENSE](LICENSE)。
-- `drivers/` 中导入的源码按各文件头部和上游许可证处理；黑盒对象、用户态库、DDX、固件和其他载荷是第三方内容。清单中的 `vendor-binary` 是来源分类，不是许可证名称，也不单独授予再分发权。
-- 逐类边界、来源和待核实项见 [许可证与再分发边界](docs/project/licensing.md)。
+- `drivers/` 中导入的源码按各文件头部和上游许可证处理；其中存在标为 `Strictly Confidential`
+  以及 BSD/LGPL 的文件，不能把整个源码树概括为 MIT/GPL 或已确认可再分发。
+- 黑盒对象、用户态库、DDX、固件和其他载荷是第三方内容。清单中的 `vendor-binary` 是来源分类，
+  不是许可证名称，也不单独授予再分发权。
+- 逐类边界、来源、发布阻断项和待核实清单见 [许可证与再分发边界](docs/project/licensing.md)及
+  [源码许可证审计](docs/project/source-license-audit.md)。

@@ -1,6 +1,6 @@
 # 当前状态与问题清单
 
-最后更新：2026-08-21
+最后更新：2026-08-24
 
 本文件是项目当前运行状态的唯一摘要。历史过程、补丁细节和故障推导分别见
 [阶段补丁](../patches/README.md) 与 [事故和经验](../incidents/README.md)。
@@ -21,9 +21,9 @@
 | Xorg/GLX | 当前桌面和隔离 Xorg 的硬件加速验收通过 | [Phase 4 验收](../planning/phase4-device-validation.md) |
 | 真实 VT | 普通用户 fbterm 可绘制和退出；禁用 YPan 后长输出、清屏及跨会话显示正常 | [`fbterm YPan 记录`](../incidents/fbterm-ypan-rendering.md) |
 | 显示管理 | dotconfig 维护 xdisplay 2.0.0；本项目只维护设备钩子和会话接入 | [`display-management.md`](display-management.md) |
-| Picom | patched v13 正在使用 Innogpu GLX，配置独立于驱动包 | `components/picom/`、`docs/project/compositor-management.md` |
-| 音频 | HDA 内置喇叭、PipeWire 默认 sink 和启动服务均正常 | `docs/project/audio-management.md` |
-| 能力验证工具 | `tests/runtime/run-capability-baseline.sh`（12 能力域、枚举/执行分离、PASS/FAIL/SKIP/UNVERIFIED；`--allow-authorized-tests`/`--results-file`）；沙箱只读 35 项实测（15 PASS/19 SKIP/1 UNVERIFIED），人工授权项待运行 | [tests/runtime/README](../../tests/runtime/README.md)、[test-strategy](test-strategy.md) |
+| Picom | patched v13 进程和 GLX 配置正在使用；最新 runtime 尚未独立确认实际 backend，保持 UNVERIFIED | [compositor-management.md](compositor-management.md)、[runtime 摘要](../../baselines/latest-runtime-baseline.txt) |
+| 音频 | HDA/HDMI 声卡与 PipeWire 默认 sink 枚举正常，`aplay` 命令完成；最新受控听感确认仍为 UNVERIFIED | [audio-management.md](audio-management.md)、[runtime 摘要](../../baselines/latest-runtime-baseline.txt) |
+| 能力验证工具 | `tests/runtime/run-capability-baseline.sh`（12 能力域、35 项、枚举/执行分离）；沙箱基线 15 PASS / 19 SKIP / 1 UNVERIFIED，合并 2026-08-24 真机证据后的权威摘要为 20 PASS / 9 SKIP / 6 UNVERIFIED | [runtime 摘要](../../baselines/latest-runtime-baseline.txt)、[tests/runtime/README](../../tests/runtime/README.md)、[test-strategy](test-strategy.md) |
 | Vulkan/OpenCL 执行 | 探针 exec 模式 + 真机验证通过（2026-08-24）：Vulkan queue+fence submit+wait、OpenCL add kernel+读回逐元素校验均在 Fantasy II-M 上执行成功；`runtime_vulkan_execution`/`runtime_opencl_execution`=PASS（证据 `baselines/runtime-results-20260824.txt`）；离线失败路径测试 12 项 | [probe-vulkan-devices.c](../../tools/probe-vulkan-devices.c)、[probe-opencl-devices.c](../../tools/probe-opencl-devices.c)、[test-strategy](test-strategy.md) |
 
 ## 已解决问题
@@ -71,6 +71,8 @@
     验收门槛与回退边界见 [`webkit-dmabuf-investigation.md`](../planning/webkit-dmabuf-investigation.md)。
 11. p23 的 READ page fault 成本已完成 1/4/8/16 MiB 缩放测量，约按 `0.06–0.07ms/page` 增长；
     主要 DMA descriptor/wait 热点位于预编译 `innodma.o_shipped`，当前项目不制作 READ 预取候选。
+12. `drivers/` 中存在 `Strictly Confidential`、BSD/LGPL 和引用缺失许可证文本的文件；第三方载荷
+    也未完成逐项权利核实。关闭 [源码许可证审计](source-license-audit.md) 前，发布状态为 BLOCKED。
 
 ## 证据保留规则
 
@@ -81,5 +83,6 @@
 ## 发布判断
 
 patched-20、patched-21 和 patched-22 均为历史候选或验收证据，不是当前安装入口。p20 不得推广，
-p21/p22 的电源、合盖、拔屏和跨硬件限制仍按历史记录保留。当前发布和安装判断以 `4.0.0-i1`、
-Phase 4 实机验收、`patched-27` 回退基线及 Phase 5 状态为准；`patched-17`/`patched-8` 仅作深层回退。
+p21/p22 的电源、合盖、拔屏和跨硬件限制仍按历史记录保留。当前本地安装判断以 `4.0.0-i1`、
+Phase 4 实机验收、`patched-27` 回退基线及 Phase 5 状态为准；公开发布则被许可证审计阻断。
+`patched-17`/`patched-8` 仅作深层回退。

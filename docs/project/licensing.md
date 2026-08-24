@@ -12,6 +12,12 @@
 `drivers/` 是从 Deepin 202504 驱动包导入并经过本项目转换提交维护的源码树。每个文件的许可证以文件头部和
 来源包随附声明为准；不能因为目录位于本仓库就将整个目录概括为 MIT，也不能仅凭厂商名称推断统一许可证。
 
+截至 2026-08-24 的机械扫描已确认源码树并非单一许可证：至少 3 个文件标为
+`Strictly Confidential`，2 个文件声明 BSD-3-Clause/LGPL-2.1-only，另有大量文件引用来源分发中
+应随附的 `GPL-COPYING` 和 `MIT-COPYING`，但这两个文本当前不在仓库中。逐项证据、扫描边界和
+发布判定见 [源码许可证审计](source-license-audit.md)。在 confidential 文件的合法来源与再分发授权、
+缺失许可证文本及未分类文件完成核实前，源码发布状态为 **BLOCKED**。
+
 ## 二进制载荷
 
 `binary-manifest.json` 中的 `license: vendor-binary` 表示该条目是来源包中的第三方二进制或配置载荷，便于提取和
@@ -26,3 +32,5 @@
 - 新增或替换载荷时，更新 manifest 的来源、哈希、大小和许可证审计状态。
 - 不能用 `vendor-binary` 代替真实许可证结论；已核实的条目可补充 SPDX 或来源声明。
 - 代码审查应区分本项目原创内容、上游衍生源码和不可修改的黑盒载荷。
+- 发布前必须复核 `source-license-audit.md`；新增 `Strictly Confidential` 文件、许可证文本引用缺失
+  或未登记的许可证类别均应使文档门禁失败。

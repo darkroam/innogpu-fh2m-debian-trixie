@@ -24,6 +24,9 @@
 - 黑盒载荷边界：`.o_shipped`、用户态库、固件等第三方二进制**不入库**，由 `binary-manifest.json`
   唯一清单管理，`scripts/extract-vendor-binaries.sh` 从 Deepin 原包幂等重建到被忽略的 `vendor/`；
   清单中的 `vendor-binary` 是来源分类，不是许可证名称（见 [licensing.md](licensing.md)）。
+- 许可证发布门禁：`drivers/` 含 `Strictly Confidential` 与多种许可证声明；在
+  [source-license-audit.md](source-license-audit.md) 的 BLOCKED 状态关闭前，不得发布新的源码归档、
+  第三方载荷或声称整个导入源码树开源。新增或改变来源内容必须同步逐文件审计。
 
 ### 代码与接口
 
@@ -46,8 +49,8 @@
   网络标识或硬件隐私数据。提交前必须执行隐私扫描并人工审查新增证据。
 - release 上传是源码提交之外的步骤；新架构构建器输出写入被忽略的 `build/`，legacy patched
   构建输出默认写入 `debs/`；均不得因本地构建把二进制产物重新加入 Git。
-- release 前必须运行 `scripts/check-release-package.sh`。xdisplay 引擎副本、历史 Kylin/实验安装器
-  和直接二进制热补丁入口不得出现在 coherent 发布包中。
+- release 前必须先关闭许可证审计阻断，再运行 `scripts/check-release-package.sh`。xdisplay 引擎副本、
+  历史 Kylin/实验安装器和直接二进制热补丁入口不得出现在 coherent 发布包中。
 
 ### 文档与验证
 
