@@ -66,8 +66,24 @@
     Fantasy II-M 0x35020023）与 opencl exec 1024（add kernel+读回逐元素校验，Fantasy II-M
     0x1ec8）均 PASS；经 --results-file 合并，runtime_vulkan_execution/runtime_opencl_execution
     升级为 PASS；汇总 20 PASS/9 SKIP/6 UNVERIFIED（overall=UNVERIFIED，未覆盖项不冒充）。
-- [ ] runtime 剩余真实能力证据：VA-API 解码、DMA-BUF 回归探针、modeset/热插拔/合盖、
-  Picom GLX backend、音频听感确认；当前权威汇总 20 PASS / 9 SKIP / 6 UNVERIFIED。
+- [ ] VA-API H.264/HEVC 实际解码验证（~/6.md，2026-08-24 进行中）：
+  - [x] 实现 tools/run-vaapi-decode-test.sh（--codec h264|hevc|all；lavfi testsrc2 恰好 30 帧 320x240→
+    libx264/libx265→软件参考 NV12 framemd5→强制 VAAPI 硬解（hwaccel vaapi + hwaccel_output_format
+    vaapi + hwdownload,format=nv12，无软件回退）→真实 framemd5 格式校验（尾换行/#dimensions
+    320x240/30 条合法帧记录/NV12 115200/32 位 hex hash）→逐帧 hash 对比；动态定位 1ec8:9810 render
+    node + --device 覆盖 + sysfs 身份验证；退出码 0-5（参数/超时校验在设备检测前）；Driver/Firmware
+    状态门禁（不可读/非 OK/8 类错误计数增长 → FAIL，独立 gate）；按 --codec 校验编码器/解码器/vainfo
+    VLD profile；fixture 钩子须显式 INNOGPU_VAAPI_FIXTURE_MODE=1，fixture 模式不产任何权威命名空间
+    PASS——fixture overall PASS 仅表示控制流通过）。
+  - [x] 测试 tests/unit/run-vaapi-decode-tests.sh（52 项，fake fixture，CI 无 /dev/dri：参数/工具缺失/设备/
+    身份/输入/参考/硬解/超时/帧数/hash/真实格式负例/聚合/硬解参数断言/状态门禁严格解析（pre 缺失/非
+    OK/缺字段/非数字/OKAY 冒充/多余 token/重复字段/前导零 08->09 增长/post 失效/逐项增长）/mktemp 失败/
+    TERM 信号清理/无残留（限定 TMPDIR）/不污染 baseline；fixture 模式独立命名空间 fixture_*，绝不输出
+    vaapi_decode_* 权威行）。
+  - [ ] 真机执行（--codec all，需监督授权后用户运行）并合并证据；仅当 H.264 与 HEVC 均完成真实
+    硬解+输出校验后 runtime_vaapi_decode 升级 PASS；当前保持 UNVERIFIED。
+- [ ] runtime 剩余真实能力证据：DMA-BUF 回归探针、modeset/热插拔/合盖、Picom GLX backend、
+  音频听感确认；当前权威汇总 20 PASS / 9 SKIP / 6 UNVERIFIED。
 - [ ] 代码深度分析与测试体系重构（2026-08-21 开始）：
   - [x] 产出 code-analysis.md、frameworks-and-references.md、test-strategy.md；新增 unit 测试
     （manifest 恶意输入 8、版本排序 6、提取器隔离 7）与 fixtures/；全部 tests/ 统一机器格式

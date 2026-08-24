@@ -399,7 +399,7 @@ if [[ "$MODE" == "allow-authorized" ]]; then
     printf '#   audio_playback:  aplay -D default <test.wav>\n'
     printf '#   vulkan_execution: gcc -O2 -o /tmp/pvk tools/probe-vulkan-devices.c -ldl && /tmp/pvk exec [timeout_ms]  # 创建 instance/device/queue，空 cmd buffer+fence 提交并等待\n'
     printf '#   opencl_execution: gcc -O2 -o /tmp/pocl tools/probe-opencl-devices.c -ldl && /tmp/pocl exec [elements]  # context/queue + add kernel + 读回逐元素校验\n'
-    printf '#   vaapi_decode:     最小 H264/HEVC 解码\n'
+    printf '#   vaapi_decode:     bash tools/run-vaapi-decode-test.sh --codec all [--device /dev/dri/renderDNN] [--timeout 30]  # H264+HEVC 强制 VAAPI 解码 + 软件参考 framemd5 对比\n'
     printf '#   picom_glx:        验证 Picom GLX backend（docs/project/compositor-management.md）\n'
     printf '#   dmabuf_regression: tools/probe-pdp-invisible-read + tools/probe-drm-vblank\n'
     printf '# 执行后将结果逐行写入文件，用 --results-file 合并：runtime_<name>=PASS|FAIL|SKIP|UNVERIFIED [reason=..]\n'

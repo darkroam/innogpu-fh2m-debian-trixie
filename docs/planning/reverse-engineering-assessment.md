@@ -93,7 +93,7 @@
 | P0 | OpenCL 能力普查 | 已完成 | 实机确认 OpenCL 3.0、2 CU、1349 MHz、fp16、conformance 通过（clinfo） |
 | P0 | RGX 特性表 dump | 已完成 | 90 个特性宏含数值，直接来自 `rgxconfig_km_35.V.1632.23.h` |
 | P1 | BVNC/核心型号确认 | 已完成 | BVNC 35.V.1632.23 + G0M_SOC 变体；deviceUUID 运行时印证 |
-| P1 | 视频编解码能力确认 | 已完成 | VA-API 硬解（H264/HEVC）实机确认；编码符号在私有 codec 库，实机未验证 |
+| P1 | 视频编解码能力确认 | 部分达成 | VA-API profile/entrypoint 已实机枚举（H264/HEVC 解码 profile 存在，编码 entrypoint 缺失）；**实际码流硬解尚未实机验证**（工具与离线测试已就绪，真机执行见 [test-strategy.md](../project/test-strategy.md)）；编码符号在私有 codec 库，实机未验证 |
 | P1 | IFBC 验证 | 静态确认 | `libifbc.so` 函数存在；扫描路径是否启用未实机验证 |
 | P1 | DVFS/功耗实测 | 待执行 | `pvr_dvfs_device.c` 为源码；`BMC_GPU_FREQ/POWER/VOLTAGE` 符号可读 |
 | P2 | 未完成矩阵 | 待执行 | `hwinfo_g0m.bin` 影响、电源/合盖/拔屏/多屏矩阵、跨硬件验证（见 [status.md](../project/status.md)） |

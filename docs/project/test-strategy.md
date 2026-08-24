@@ -22,14 +22,14 @@
 `compare-oracle-candidates.sh` + `compare-module-symbols.sh`（integration oracle）、
 `check-deb-dkms-build.sh`（integration 离线编译，需本机内核头）。
 
-**盘点结论**：unit、fixture、static、integration 和 runtime 五层均已有入口；CI/沙箱套件当前 68 项
+**盘点结论**：unit、fixture、static、integration 和 runtime 五层均已有入口；CI/沙箱套件当前 120 项
 全部通过。主要缺口是完整 DKMS integration 依赖本机 headers，以及 6 个 runtime 能力仍缺真机证据。
 
 ## 二、分层定义与映射
 
 | 层 | 定义 | 现有 | 缺口 |
 | --- | --- | --- | --- |
-| unit | manifest/版本排序/路径/哈希/配置解析的纯函数用例 | tests/unit/ 5 个入口，49 项 | 构建器 headers/helper 失败 fixture 待补 |
+| unit | manifest/版本排序/路径/哈希/配置解析/执行探针/VA-API 解码控制流的纯函数用例 | tests/unit/ 6 个入口，101 项 | 构建器 headers/helper 失败 fixture 待补 |
 | fixture | 恶意路径/缺失/坏哈希/损坏链接/重复项 | tests/fixtures/ + 脚本隔离构造 | 覆盖随新输入边界持续扩展 |
 | static | shell 语法/脚本登记/文档链接/隐私/构建器输入 | check-docs.sh、fbterm 静态 | 语义与法律授权仍需人工审查 |
 | integration | staging/DKMS 离线/包边界/可复现/oracle | 包边界、oracle、parity、离线编译 | 可复现双构建入 CI 需内核头（本机可跑） |
@@ -83,9 +83,9 @@
 - 有副作用测试必须显式参数确认；临时文件必须 `mktemp` + `trap` 清理。
 - 离线/沙箱结果与真机结果**分开保存**（`baselines/` 紧凑标记 + 版本化审计日志）。
 
-当前 CI/沙箱套件共 68 项：fbterm_static×1、picom_install×3、picom_session×3、
+当前 CI/沙箱套件共 120 项：fbterm_static×1、picom_install×3、picom_session×3、
 xdisplay_install×5、package_boundary×7、manifest×8、version×6、extractor×7、results_parser×16、
-exec_probes×12。
+exec_probes×12、vaapi_decode×52。
 
 ## 六、覆盖清单（5.md 要求逐项落实）
 
@@ -147,12 +147,29 @@ exec_probes×12。
     runtime_vulkan_execution/opencl_execution=PASS（evidence: baselines/runtime-results-20260824.txt）。
   - 测试：tests/unit/run-exec-probes-tests.sh（12 项，CI 无 /dev/dri 可跑）覆盖编译/缺 loader/
     无设备/枚举回归/超时清理/机器格式。
+- VA-API H.264/HEVC 实际解码（2026-08-24，~/6.md）：`tools/run-vaapi-decode-test.sh --codec h264|hevc|all`
+  判定链 = 输入生成（lavfi testsrc2 恰好 30 帧 320x240→libx264/libx265）→ 软件参考（NV12 framemd5）→
+  **强制 VAAPI 硬解**（hwaccel vaapi + hwaccel_output_format vaapi + hwdownload,format=nv12，初始化失败即
+  FAIL，无软件回退）→ **真实 FFmpeg framemd5 格式校验**（尾换行、`#dimensions 320x240`、恰好 30 条合法帧
+  记录 stream,dts,pts,duration,size,hash、NV12 帧大小 115200、32 位 hex hash）→ 逐帧 hash 对比；
+  render node 动态定位 1ec8:9810 并验证 sysfs 身份（`--device` 覆盖）；退出码 0-5；Driver/Firmware 状态
+  门禁：**两份完整快照**（解码前/后）严格整行解析——Driver/Firmware 行必须 `^...OK[[:space:]]*$`（拒绝
+  OKAY 等前缀冒充）、8 类计数字段整行 `^字段名:[[:space:]]+[0-9]+[[:space:]]*$`（拒绝多余 token）且各恰好
+  出现一次（拒绝重复行）、值在 awk 中输出规范十进制（剥离前导零，避免 Bash 八进制解析 08/09 误判）——
+  并按字段逐项比较增长（pre 快照无效在解码前即 FAIL，独立 gate 不计入 codec 计数）；HUP/INT/
+  TERM 幂等清理后退出 129/130/143，mktemp 失败 rc=2；按 `--codec` 校验 libx264/libx265 编码器、h264/hevc
+  解码器与 vainfo VLD profile；fixture 钩子须显式 `INNOGPU_VAAPI_FIXTURE_MODE=1`，fixture 模式使用**独立
+  命名空间 fixture_***（fixture_vaapi_decode_h264=...、fixture_tests_total=...、fixture_vaapi_decode_overall=...），
+  绝不输出任何 `vaapi_decode_*` 权威行，reason 仍附 -mode=fixture；`runtime_vaapi_decode` 仅当 H.264 与
+  HEVC 均完成真实硬解+输出校验后升级 PASS，当前仍 UNVERIFIED；枚举 profile/entrypoint 或 ffmpeg 退出 0
+  不等于实际解码成功；测试：tests/unit/run-vaapi-decode-tests.sh（52 项，fake fixture，CI 无 /dev/dri）。
 
 ## 十、风险与未覆盖
 
 - 完整 DKMS 构建需本机内核头 → CI 无法跑 integration 编译（标记 SKIP 而非 PASS）。
-- VA-API 实际码流解码、DMA-BUF 回归、modeset/热插拔/合盖、Picom GLX backend、音频听感及
-  多硬件矩阵仍为 UNVERIFIED；枚举或命令退出成功不能替代对应行为证据。
+- VA-API 实际码流解码（脚本与离线测试已实现，真机证据待授权后采集）、DMA-BUF 回归、
+  modeset/热插拔/合盖、Picom GLX backend、音频听感及多硬件矩阵仍为 UNVERIFIED；枚举或命令
+  退出成功不能替代对应行为证据。
 - runtime 脚本已落地；新增有副作用的真机项仍需监督授权，并通过结果文件合并审计证据。
 
 ## 证据索引

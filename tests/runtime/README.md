@@ -70,7 +70,7 @@ bash tests/runtime/run-capability-baseline.sh \
 | gl_execution | 否 | 否 | 是 | 是 | 否 | 否 | 运行 check-desktop-hwgl.sh（只读） |
 | vulkan_enumeration / vulkan_execution | 是/否 | 否 | 执行需 | 否 | 否 | 否 | 执行：`tools/probe-vulkan-devices.c exec [timeout_ms]`——创建 instance/device/queue，空 cmd buffer+fence 提交并限时等待（默认 5s，可参数覆盖）；无渲染副作用 |
 | opencl_enumeration / opencl_execution | 是/否 | 否 | 执行需 | 否 | 否 | 否 | 执行：`tools/probe-opencl-devices.c exec [elements]`——context/queue + add kernel + 阻塞读回 + 逐元素校验；仅读写 buffer |
-| vaapi_enumeration / vaapi_decode / vaapi_encode | 是/否 | 否 | 是 | 否 | 否 | 否 | 枚举已实现；实际最小解码待实现，编码未验证 → UNVERIFIED |
+| vaapi_enumeration / vaapi_decode / vaapi_encode | 是/否 | 否 | 是 | 否 | 否 | 否 | 解码：`bash tools/run-vaapi-decode-test.sh --codec all`（强制 VAAPI 硬解 + 真实 framemd5 格式校验 + 软件参考 hash 对比 + Driver/Firmware 双快照状态门禁，退出码 0-5）；fixture 钩子输出独立命名空间 fixture_*（绝不产生 vaapi_decode_* 权威行）；真机证据待授权，当前 UNVERIFIED；编码无实现 → UNVERIFIED/不支持 |
 | dmabuf_fix_present / dmabuf_regression | 是/否 | 否 | 回归需 | 否 | 否 | 否 | 探针可能占用 GPU；需授权 + 超时 |
 | display_topology / display_modeset | 是/否 | 否 | 是 | 拓扑需 | 否 | modeset 需 | modeset/热插拔/合盖需授权 |
 | picom_running / picom_glx | 是/否 | 否 | 否 | glx 需 | 否 | 否 | 只读状态；glx backend 需授权 |

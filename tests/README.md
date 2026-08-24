@@ -53,6 +53,7 @@ bash tests/unit/run-version-tests.sh
 bash tests/unit/run-extractor-tests.sh
 bash tests/unit/run-results-parser-tests.sh
 bash tests/unit/run-exec-probes-tests.sh
+bash tests/unit/run-vaapi-decode-tests.sh
 ```
 
 - manifest 测试用 `tools/validate-binary-manifest.py` 对真实清单与 `tests/fixtures/` 下的恶意
@@ -66,6 +67,17 @@ bash tests/unit/run-exec-probes-tests.sh
   未授权使用 rc=2。
 - Vulkan/OpenCL 执行探针测试（12 项，CI 无 /dev/dri 可跑）：两探针编译、缺失 loader（env 注入）rc=2、
   无设备 rc=3（可解释、不伪造硬件 PASS）、枚举模式仍可用、超时后无残留进程/临时文件、机器可读输出。
+- VA-API 解码脚本控制流测试（52 项，CI 无 /dev/dri）：fake ffmpeg/vainfo/sysfs 注入（真实 framemd5
+  格式 fixture，覆盖 #dimensions/帧数/尺寸/hash/尾换行/坏行/坏 hash/坏尺寸/无尺寸元数据/空输出双零帧/
+  空文件）覆盖参数错误（含 --timeout 非数字、缺参值 rc=2）、fixture 钩子缺 INNOGPU_VAAPI_FIXTURE_MODE=1
+  rc=2、ffmpeg/vainfo/编码器缺失（按 --codec 分列 libx264/libx265/h264/hevc）、vainfo VLD profile 缺失、
+  设备缺失/非字符/PCI 身份不匹配、输入生成/软件参考/硬解失败、超时、帧数/hash 不一致、两 codec 聚合、
+  硬解参数断言（-hwaccel_output_format vaapi + hwdownload,format=nv12）、状态门禁严格解析（pre 缺失/pre
+  Driver 非 OK/pre Firmware 非 OK/缺计数字段/非数字计数/**OKAY 冒充 OK/bad 0 多余 token/重复字段/前导零
+  08->09 增长**/post 失效/8 字段逐项增长）、mktemp 失败 rc=2、TERM 信号清理退出 143 无残留（残留检查
+  限定本测试 TMPDIR，不扫描全局 /tmp）、无残留与不污染 baseline；fixture 模式成功输出独立命名空间
+  fixture_*（overall=PASS 仅表示控制流通过，rc=0 一致）且逐行 -mode=fixture，**绝不输出任何
+  vaapi_decode_* 权威行**。
 
 ## 测试矩阵（分层，2026-08-21）
 

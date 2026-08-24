@@ -3,7 +3,8 @@
 ## 2026-08-20 能力普查、三连正确性修复与 release 审阅
 
 - 完成 FH2M 能力普查（静态 + 实机）：Vulkan 1.3.264 / OpenCL 3.0 / GLX 4.3 / VA-API H264+HEVC
-  硬解等确认，落档 [capability-survey.md](capability-survey.md) 与
+  解码 profile 枚举等确认（实际码流硬解当时未验证，2026-08-24 补实现工具待真机取证），落档
+  [capability-survey.md](capability-survey.md) 与
   [reverse-engineering-assessment.md](reverse-engineering-assessment.md)。
 - patched-25（patch-025 dma_resv usage 语义）、patched-26（patch-026 未活动 CRTC vblank 守卫）、
   patched-27（patch-027 foreign DMA-BUF 生命周期）各自独立分支开发，经离线编译、实机验证后

@@ -48,6 +48,12 @@ runtime 能力基线另有可选诊断依赖：`pciutils`（`lspci`）、`drm-in
 `vulkan-tools`（`vulkaninfo`）、`clinfo`、`vainfo` 所属发行版包及 `wpctl`。这些工具缺失时对应能力项
 必须输出 `SKIP reason=tool_missing:<tool>`，但不影响基础驱动构建、安装、TTY 或 Xorg 启动。
 
+VA-API 实际解码验证（`tools/run-vaapi-decode-test.sh`）的 runtime 可选依赖：`ffmpeg`（需编译支持
+`--enable-vaapi`、`libx264`、`libx265`）、`vainfo`（Debian Trixie 包名 `vainfo`，源包 `libva-utils`）。
+缺失分级：`ffmpeg`/`vainfo` 缺失 → `vaapi_decode_tool=fail`（退出码 2）；缺少 `libx264`/`libx265`
+编码器或 h264/hevc 解码器 → 退出码 2；这些仅为真机解码验证的诊断依赖，不进入驱动 deb，也不影响
+基础安装。
+
 新增必需依赖时必须同时更新本文和前置依赖安装脚本；可选诊断依赖只需在本文和测试入口登记。
 可选命令缺失不能破坏驱动安装、TTY 或 Xorg 基本启动。
 
