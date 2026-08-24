@@ -1,5 +1,6 @@
-# Real-device execution evidence (4.0.0-i1, 2026-08-24)
+# Real-device execution evidence (4.0.0-i1, 2026-08-24) - 10 result entries
 # Merged via tests/runtime/run-capability-baseline.sh --allow-authorized-tests --results-file <this>
+# 2 new entries (vulkan_execution/opencl_execution PASS) + 8 prior manual/unverified entries
 runtime_fbterm_real_vt=PASS reason=draw-clear-long-output-exit-reenter
 runtime_display_modeset=UNVERIFIED reason=connected-output-only-no-mode-switch-test
 runtime_audio_playback=UNVERIFIED reason=command-completed-audible-output-not-confirmed
