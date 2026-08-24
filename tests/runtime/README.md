@@ -38,9 +38,11 @@ bash tests/runtime/run-capability-baseline.sh \
 `baselines/runtime-baseline-<ts>.txt`（gitignored）并清理临时目录——异常退出也只会留下脱敏产物；
 精简摘要 `baselines/latest-runtime-baseline.txt`（跟踪，仅 runtime_ 行与 # 元数据）。
 
-**采集环境与人工证据分离**：摘要头部 `# kernel=... dri=... root=...` 只反映**本次采集环境**（沙箱/真机）；
-经 `--results-file` 合并的人工真机证据在摘要中输出 `# evidence_merged=1 source=<file>` 行标注来源，
-审计时不得把沙箱环境元数据与人工证据误认为同一次运行产生的完整结果。
+**采集环境与人工证据分离**：摘要头部 `# kernel=... dri=... root=... tested_commit=<hash>` 只反映**本次采集环境**
+与**生成基线时被验证的代码提交**（`tested_commit` 记录生成时刻的仓库 HEAD；随后为封存审计结果而提交的
+文档变更不会使其失效——它表示生成时验证的代码状态，不是永远等于最终 HEAD）；经 `--results-file`
+合并的人工真机证据在摘要中输出 `# evidence_merged=1 source=<file>` 行标注来源，审计时不得把沙箱
+环境元数据与人工证据误认为同一次运行产生的完整结果。
 
 ## 环境判定
 

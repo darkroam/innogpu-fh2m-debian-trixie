@@ -116,7 +116,7 @@ PCI_LINE="$(lspci -nnD 2>/dev/null | grep '1ec8:9810' | head -1 || true)"
 SCRIPT_COMMIT="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
 
 printf '# runtime-capability-baseline (4.0.0-i1) %s mode=%s\n' "$TS" "$MODE"
-printf '# kernel=%s package=%s pci_bdf=%s(%s) commit=%s root=%s dri=%s fb=%s tty=%s x=%s\n' \
+printf '# kernel=%s package=%s pci_bdf=%s(%s) tested_commit=%s root=%s dri=%s fb=%s tty=%s x=%s\n' \
   "$KERNEL" "$PKG" "${BDF:-none}" "${BDF_N:-0}" "$SCRIPT_COMMIT" "$IS_ROOT" "$HAS_DRI" "$HAS_FB" "$HAS_TTY" "$HAS_X"
 for t in lspci drm_info glxinfo vulkaninfo clinfo vainfo aplay wpctl gcc xrandr; do
     if command -v "$t" >/dev/null 2>&1; then

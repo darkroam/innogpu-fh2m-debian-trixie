@@ -1,5 +1,5 @@
-# runtime-capability-baseline (4.0.0-i1) 20260824-144311 mode=allow-authorized
-# kernel=6.12.101+deb13-amd64 package=4.0.0-i1 pci_bdf=0000:02:00.0(1) commit=579297f7e609e17f0655c478ae6122d8939b933f root=no dri=no fb=no tty=no x=yes
+# runtime-capability-baseline (4.0.0-i1) 20260824-144506 mode=allow-authorized
+# kernel=6.12.101+deb13-amd64 package=4.0.0-i1 pci_bdf=0000:02:00.0(1) tested_commit=d3ef46513293c41a4392eaddff9457c6986bac73 root=no dri=no fb=no tty=no x=yes
 # tool_lspci=present
 # tool_drm_info=present
 # tool_glxinfo=present
