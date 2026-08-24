@@ -6,8 +6,9 @@
   P0/P1 项。**静态分析与运行时枚举已执行**：静态部分在本容器内完成；运行时部分由真实会话运行
   `scripts/run-capability-survey.sh` 完成（vulkaninfo/clinfo/vainfo/drm_info 权威工具 + 最小探针
   交叉验证），结果见"运行时结果"节。
-- Vulkan/OpenCL 最小执行已由独立探针验证；VA-API 当前只确认 profile/entrypoint 枚举，实际码流
-  解码仍未验证。其余 DVFS/功耗、CORE_ID 和私有 codec 编码接口见"运行时待办"。
+- Vulkan/OpenCL 最小执行已由独立探针验证；VA-API 已确认 profile/entrypoint 枚举，且 H.264 Main 与
+  HEVC Main 实际码流解码验证 PASS（30 帧 320x240 NV12 framemd5 输出校验）；H.264 High/Constrained
+  Baseline、HEVC Main10 仅枚举未执行。其余 DVFS/功耗、CORE_ID 和私有 codec 编码接口见"运行时待办"。
 - 原始探针输出保留在 `baselines/capability-survey-*.log`（被 .gitignore 忽略），不进入 Git；
   本文件只记录精简结论。
 
@@ -153,8 +154,12 @@ Vulkan 应可枚举 Fantasy II-M；需在真实会话用 `scripts/run-capability
 
 - 驱动：/usr/lib/x86_64-linux-gnu/dri/innogpu_drv_video.so，INNO-silicon Driver v1.0.0，libva 1.22
 - **解码能力枚举**：H264Main / H264High / H264ConstrainedBaseline / HEVCMain / HEVCMain10 全部
-  暴露 VAEntrypointVLD；另附 VAEntrypointStats（统计）。这证明 API 能力声明，不等于实际码流
-  硬件解码已经成功。
+  暴露 VAEntrypointVLD；另附 VAEntrypointStats（统计）。枚举覆盖上述 profile，不等于全部已实际执行。
+- **实际解码执行（2026-08-24 真机 PASS）**：`tools/run-vaapi-decode-test.sh --codec all` 强制 VA-API
+  硬解 H.264 Main 与 HEVC Main（lavfi testsrc2 恰好 30 帧 320x240 → libx264/libx265 编码 → NV12
+  framemd5），两 profile 的逐帧 hash 与软件参考一致、Driver/Firmware 状态门禁通过
+  （evidence: baselines/runtime-results-20260824.txt）；H.264 High/Constrained Baseline、HEVC Main10
+  与编码仍未实际执行。
 - **后处理**：VAProfileNone 提供 VideoProc + Stats
 - **编码**：无任何 EncSlice 或 EncPicture entrypoint——**VA-API 只暴露解码**；编码符号
   （InnoVaEncodeAvc、Wave627/677 Encoder）存在于私有 libinno_codec.so，实机可用性未验证
@@ -179,7 +184,8 @@ Vulkan 应可枚举 Fantasy II-M；需在真实会话用 `scripts/run-capability
       power=runtime active）
 - [ ] 运行时读取 CORE_ID/BVNC 直接核对编译配置（deviceUUID 已间接印证 35/1632/23）
 - [ ] 私有 libinno_codec.so 编码接口的实机验证（非 VA-API 路径，需独立探针）
-- [ ] 使用固定 H264/HEVC 样本完成 VA-API 实际解码、输出校验和超时/错误路径验证
+- [x] 使用固定 H264/HEVC 样本完成 VA-API 实际解码、输出校验和超时/错误路径验证（2026-08-24 真机
+      PASS：H264 Main + HEVC Main，30 帧 320x240 NV12 framemd5 一致；工具单测 52 项覆盖超时/错误路径）
 
 ## 证据保留
 

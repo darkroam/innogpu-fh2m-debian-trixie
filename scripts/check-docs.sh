@@ -144,6 +144,7 @@ else
 fi
 require_text baselines/latest-runtime-baseline.txt 'runtime_vulkan_execution=PASS'
 require_text baselines/latest-runtime-baseline.txt 'runtime_opencl_execution=PASS'
+require_text baselines/latest-runtime-baseline.txt 'runtime_vaapi_decode=PASS'
 
 # The source deb identity is owned by the manifest and must be repeated exactly
 # in the user-facing acquisition documents.

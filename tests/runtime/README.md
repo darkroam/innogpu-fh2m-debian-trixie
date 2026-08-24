@@ -25,7 +25,8 @@ bash tests/runtime/run-capability-baseline.sh \
 - 无尾换行的最后一行正常处理；
 - 必须与 `--allow-authorized-tests` 同时使用，否则 rc=2；文件缺失 rc=2。
 
-解析行为由 `tests/unit/run-results-parser-tests.sh`（16 项 fixture）覆盖。
+解析行为由 `tests/unit/run-results-parser-tests.sh`（19 项 fixture）覆盖；`#` 注释行（证据文件内的
+说明与原始工具输出注释）显式跳过，不告警、不泄漏为结果项。
 
 输出：每条 `runtime_<name>=PASS|FAIL reason=...|SKIP reason=...|UNVERIFIED reason=...`；
 汇总 `runtime_total=... runtime_passed=... runtime_failed=... runtime_skipped=... runtime_unverified=...`
@@ -70,7 +71,7 @@ bash tests/runtime/run-capability-baseline.sh \
 | gl_execution | 否 | 否 | 是 | 是 | 否 | 否 | 运行 check-desktop-hwgl.sh（只读） |
 | vulkan_enumeration / vulkan_execution | 是/否 | 否 | 执行需 | 否 | 否 | 否 | 执行：`tools/probe-vulkan-devices.c exec [timeout_ms]`——创建 instance/device/queue，空 cmd buffer+fence 提交并限时等待（默认 5s，可参数覆盖）；无渲染副作用 |
 | opencl_enumeration / opencl_execution | 是/否 | 否 | 执行需 | 否 | 否 | 否 | 执行：`tools/probe-opencl-devices.c exec [elements]`——context/queue + add kernel + 阻塞读回 + 逐元素校验；仅读写 buffer |
-| vaapi_enumeration / vaapi_decode / vaapi_encode | 是/否 | 否 | 是 | 否 | 否 | 否 | 解码：`bash tools/run-vaapi-decode-test.sh --codec all`（强制 VAAPI 硬解 + 真实 framemd5 格式校验 + 软件参考 hash 对比 + Driver/Firmware 双快照状态门禁，退出码 0-5）；fixture 钩子输出独立命名空间 fixture_*（绝不产生 vaapi_decode_* 权威行）；真机证据待授权，当前 UNVERIFIED；编码无实现 → UNVERIFIED/不支持 |
+| vaapi_enumeration / vaapi_decode / vaapi_encode | 是/否 | 否 | 是 | 否 | 否 | 否 | 解码：`bash tools/run-vaapi-decode-test.sh --codec all`（强制 VAAPI 硬解 + 真实 framemd5 格式校验 + 软件参考 hash 对比 + Driver/Firmware 双快照状态门禁，退出码 0-5）；**真机已执行并合并**：H.264 Main + HEVC Main 各 30 帧 320x240 NV12 framemd5 一致 → runtime_vaapi_decode=PASS（证据 baselines/runtime-results-20260824.txt）；fixture 钩子输出独立命名空间 fixture_*（绝不产生 vaapi_decode_* 权威行）；编码无实现 → UNVERIFIED/不支持 |
 | dmabuf_fix_present / dmabuf_regression | 是/否 | 否 | 回归需 | 否 | 否 | 否 | 探针可能占用 GPU；需授权 + 超时 |
 | display_topology / display_modeset | 是/否 | 否 | 是 | 拓扑需 | 否 | modeset 需 | modeset/热插拔/合盖需授权 |
 | picom_running / picom_glx | 是/否 | 否 | 否 | glx 需 | 否 | 否 | 只读状态；glx backend 需授权 |

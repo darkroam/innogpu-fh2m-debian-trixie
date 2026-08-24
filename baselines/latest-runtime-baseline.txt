@@ -1,5 +1,5 @@
-# runtime-capability-baseline (4.0.0-i1) 20260824-144506 mode=allow-authorized
-# kernel=6.12.101+deb13-amd64 package=4.0.0-i1 pci_bdf=0000:02:00.0(1) tested_commit=d3ef46513293c41a4392eaddff9457c6986bac73 root=no dri=no fb=no tty=no x=yes
+# runtime-capability-baseline (4.0.0-i1) 20260824-174534 mode=allow-authorized
+# kernel=6.12.101+deb13-amd64 package=4.0.0-i1 pci_bdf=0000:02:00.0(1) tested_commit=c7b3a40ef4fe683afcb5c44fa883085da14c5401 root=no dri=no fb=no tty=no x=yes
 # tool_lspci=present
 # tool_drm_info=present
 # tool_glxinfo=present
@@ -20,7 +20,7 @@
 #   audio_playback:  aplay -D default <test.wav>
 #   vulkan_execution: gcc -O2 -o /tmp/pvk tools/probe-vulkan-devices.c -ldl && /tmp/pvk exec [timeout_ms]  # 创建 instance/device/queue，空 cmd buffer+fence 提交并等待
 #   opencl_execution: gcc -O2 -o /tmp/pocl tools/probe-opencl-devices.c -ldl && /tmp/pocl exec [elements]  # context/queue + add kernel + 读回逐元素校验
-#   vaapi_decode:     最小 H264/HEVC 解码
+#   vaapi_decode:     bash tools/run-vaapi-decode-test.sh --codec all [--device /dev/dri/renderDNN] [--timeout 30]  # H264+HEVC 强制 VAAPI 解码 + 软件参考 framemd5 对比
 #   picom_glx:        验证 Picom GLX backend（docs/project/compositor-management.md）
 #   dmabuf_regression: tools/probe-pdp-invisible-read + tools/probe-drm-vblank
 # 执行后将结果逐行写入文件，用 --results-file 合并：runtime_<name>=PASS|FAIL|SKIP|UNVERIFIED [reason=..]
@@ -50,7 +50,7 @@ runtime_opencl_enumeration=SKIP reason=0 platforms without /dev/dri; run clinfo 
 runtime_opencl_execution=PASS reason=real-device-add-kernel-verify-exec-1024-Fantasy-II-M-0x1ec8
 runtime_vaapi_enumeration=SKIP reason=vainfo init failed without /dev/dri; run on device session
 runtime_vaapi_encode=SKIP reason=cannot verify encode without vaapi init
-runtime_vaapi_decode=UNVERIFIED reason=profile-enumeration-only
+runtime_vaapi_decode=PASS reason=real-device-H264Main+HEVCMain-30frames-320x240-NV12-framemd5-hashes-match-driver-firmware-OK-device=1ec8:9810
 runtime_dmabuf_source_fix_present=PASS
 runtime_dmabuf_regression=UNVERIFIED reason=probe-not-run
 runtime_display_topology=PASS
@@ -60,5 +60,5 @@ runtime_picom_glx=UNVERIFIED reason=process-running-backend-not-confirmed
 runtime_audio_cards_enumeration=PASS
 runtime_audio_default_sink=PASS
 runtime_audio_playback=UNVERIFIED reason=command-completed-audible-output-not-confirmed
-runtime_total=35 runtime_passed=20 runtime_failed=0 runtime_skipped=9 runtime_unverified=6
+runtime_total=35 runtime_passed=21 runtime_failed=0 runtime_skipped=9 runtime_unverified=5
 runtime_overall=UNVERIFIED

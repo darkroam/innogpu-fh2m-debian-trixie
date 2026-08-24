@@ -54,7 +54,8 @@
 - [x] tests/runtime/ 结果合并修正（~/4.md 第二轮，2026-08-24 完成）：
   - [x] 修复 --results-file：接受全部已定义项（egl_x11_probe/gl_execution 等）、严格解析
     （未知名/状态告警忽略、重复取最后、粘连拒绝、PASS/FAIL 必须带证据）、缺失文件 rc=2、
-    强制 --allow-authorized-tests；新增 16 项 fixture 测试（run-results-parser-tests.sh）。
+    强制 --allow-authorized-tests；新增 16 项 fixture 测试（run-results-parser-tests.sh；2026-08-24
+    证据封存轮追加 `#` 注释跳过 3 项，当前合计 19 项）。
   - [x] 真机证据合并：fbterm_real_vt/egl_x11_probe/gl_execution PASS；解析器测试隔离正式摘要。
 - [x] Vulkan/OpenCL 最小执行能力验证（~/5.md，2026-08-24 完成）：
   - [x] 探针新增 execution 模式：probe-vulkan-devices.c exec（instance→GPU 设备→queue→空 cmd buffer+fence
@@ -65,8 +66,8 @@
   - [x] 真机执行验证（2026-08-24 用户实测）：vulkan exec 5000（queue+fence submit+wait，
     Fantasy II-M 0x35020023）与 opencl exec 1024（add kernel+读回逐元素校验，Fantasy II-M
     0x1ec8）均 PASS；经 --results-file 合并，runtime_vulkan_execution/runtime_opencl_execution
-    升级为 PASS；汇总 20 PASS/9 SKIP/6 UNVERIFIED（overall=UNVERIFIED，未覆盖项不冒充）。
-- [ ] VA-API H.264/HEVC 实际解码验证（~/6.md，2026-08-24 进行中）：
+    升级为 PASS；汇总 21 PASS/9 SKIP/5 UNVERIFIED（overall=UNVERIFIED，未覆盖项不冒充）。
+- [x] VA-API H.264/HEVC 实际解码验证（~/6.md，2026-08-24 完成）：
   - [x] 实现 tools/run-vaapi-decode-test.sh（--codec h264|hevc|all；lavfi testsrc2 恰好 30 帧 320x240→
     libx264/libx265→软件参考 NV12 framemd5→强制 VAAPI 硬解（hwaccel vaapi + hwaccel_output_format
     vaapi + hwdownload,format=nv12，无软件回退）→真实 framemd5 格式校验（尾换行/#dimensions
@@ -75,21 +76,24 @@
     状态门禁（不可读/非 OK/8 类错误计数增长 → FAIL，独立 gate）；按 --codec 校验编码器/解码器/vainfo
     VLD profile；fixture 钩子须显式 INNOGPU_VAAPI_FIXTURE_MODE=1，fixture 模式不产任何权威命名空间
     PASS——fixture overall PASS 仅表示控制流通过）。
+  - [x] 真机执行并合并证据（2026-08-24 监督者于 c7b3a40 上沙箱外运行 `--codec all`）：H.264 Main 与
+    HEVC Main 均强制 VA-API 硬解，各 30 帧 320x240 NV12 framemd5 hash 与软件参考一致，Driver/Firmware
+    状态门禁通过 → runtime_vaapi_decode 升级 PASS（证据 baselines/runtime-results-20260824.txt）；能力边界
+    仅 Main/Main 8-bit 4:2:0，H.264 High/Constrained Baseline、HEVC Main10、编码未验证。
   - [x] 测试 tests/unit/run-vaapi-decode-tests.sh（52 项，fake fixture，CI 无 /dev/dri：参数/工具缺失/设备/
     身份/输入/参考/硬解/超时/帧数/hash/真实格式负例/聚合/硬解参数断言/状态门禁严格解析（pre 缺失/非
     OK/缺字段/非数字/OKAY 冒充/多余 token/重复字段/前导零 08->09 增长/post 失效/逐项增长）/mktemp 失败/
     TERM 信号清理/无残留（限定 TMPDIR）/不污染 baseline；fixture 模式独立命名空间 fixture_*，绝不输出
     vaapi_decode_* 权威行）。
-  - [ ] 真机执行（--codec all，需监督授权后用户运行）并合并证据；仅当 H.264 与 HEVC 均完成真实
-    硬解+输出校验后 runtime_vaapi_decode 升级 PASS；当前保持 UNVERIFIED。
 - [ ] runtime 剩余真实能力证据：DMA-BUF 回归探针、modeset/热插拔/合盖、Picom GLX backend、
-  音频听感确认；当前权威汇总 20 PASS / 9 SKIP / 6 UNVERIFIED。
+  音频听感确认；当前权威汇总 21 PASS / 9 SKIP / 5 UNVERIFIED。
 - [ ] 代码深度分析与测试体系重构（2026-08-21 开始）：
   - [x] 产出 code-analysis.md、frameworks-and-references.md、test-strategy.md；新增 unit 测试
     （manifest 恶意输入 8、版本排序 6、提取器隔离 7）与 fixtures/；全部 tests/ 统一机器格式
     （`<suite>_tNN=PASS/FAIL/SKIP` + 汇总行）。
   - [x] runtime 能力基线和 Vulkan/OpenCL 最小执行脚本化；真机执行证据已合并。
-  - [ ] VA-API 实际解码、编码能力和多屏矩阵继续按独立能力项补证据。
+  - [ ] VA-API 未测 profile（H.264 High/Constrained Baseline、HEVC Main10）、编码能力和多屏矩阵继续
+    按独立能力项补证据。
   - [ ] 构建失败用例补齐（headers 缺失、helper 缺失、SOURCE_DATE_EPOCH 缺失）为 fixture。
 
 patched-21 已在 [`../patches/patched-21-release-candidate.md`](../patches/patched-21-release-candidate.md)
@@ -119,8 +123,9 @@ Picom patch、配置和安装流程已按 `picom-integration.md` 完成吸纳。
 - [x] 能力面普查（静态部分）：RGX 特性表 dump（90 宏）、BVNC 35.V.1632.23、G0M_SOC 变体确认、
   Vulkan 128 唯一扩展/OpenCL 3.0/VA-API codec/IFBC 静态证据，已落档 [capability-survey.md](capability-survey.md)。
 - [x] 能力面普查（运行时枚举与图形执行）：Vulkan 1.3.264 / OpenCL 3.0 / GLX 4.3 已确认，
-  Vulkan/OpenCL 最小执行 PASS；VA-API H264/HEVC profile/entrypoint 已枚举，实际码流解码仍待验证，
-  结果见 [capability-survey.md](capability-survey.md)和 [test-strategy.md](../project/test-strategy.md)。
+  Vulkan/OpenCL 最小执行 PASS；VA-API H264/HEVC profile/entrypoint 已枚举且 H.264 Main/HEVC Main 实际
+  解码验证 PASS（30 帧 320x240 NV12 framemd5 输出校验），结果见
+  [capability-survey.md](capability-survey.md)和 [test-strategy.md](../project/test-strategy.md)。
 - [ ] 剩余运行时项：DVFS/功耗实测、CORE_ID/BVNC 直接读取、私有 libinno_codec.so 编码接口验证。
 - [x] 建立 DDK V119 ↔ 开源参照对照表：[ddk-v119-mapping.md](ddk-v119-mapping.md)。
   （注：2019 开源 DDK 与 Fuchsia KM 当前不可得，对照基于主线 drm/imagination + Mesa pvr；

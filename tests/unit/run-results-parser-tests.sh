@@ -30,6 +30,7 @@ printf 'runtime_audio_playback=PASS reason=xruntime_display_topology=PASS\n' > "
 printf 'runtime_audio_playback=PASS reason=heard-tone' > "$runtime/no-newline.txt"   # 无尾换行
 printf 'runtime_audio_playback=PASS\n' > "$runtime/no-reason.txt"
 printf 'runtime_audio_playback=PASS reason=x\nruntime_audio_playback=UNVERIFIED reason=y\n' > "$runtime/dup-last.txt"
+printf '# 说明注释：真实设备原始输出示例\n# vaapi_decode_node=ok /dev/dri/renderD128\nruntime_audio_playback=PASS reason=heard-tone\n' > "$runtime/comments.txt"
 
 check() { # <label> <out-file> <grep-pat> <negate?>
     t=$((t+1))
@@ -73,6 +74,11 @@ check no_reason_stays "$O" 'runtime_audio_playback=SKIP'
 run_capture "$runtime/dup-last.txt" "$O"
 check dup_last_warn "$O" 'duplicate results entry, using last'
 check dup_last_value "$O" 'runtime_audio_playback=UNVERIFIED reason=y'
+
+run_capture "$runtime/comments.txt" "$O"
+check comments_skip "$O" 'runtime_audio_playback=PASS reason=heard-tone'
+check comments_no_warn "$O" 'ignored malformed' negate
+check comments_no_vaapi_leak "$O" 'vaapi_decode_node=' negate
 
 RUNTIME_PARSE_ONLY=1 RUNTIME_BASELINE_DIR="$runtime" bash "$SCRIPT" --allow-authorized-tests --results-file "$runtime/missing-file.txt" >/dev/null 2>&1
 rc=$?

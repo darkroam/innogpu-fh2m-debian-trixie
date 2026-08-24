@@ -1,13 +1,23 @@
 # Real-device execution evidence (4.0.0-i1, 2026-08-24) - 10 result entries
 # Merged via tests/runtime/run-capability-baseline.sh --allow-authorized-tests --results-file <this>
-# 2 new entries (vulkan_execution/opencl_execution PASS) + 8 prior manual/unverified entries
+# Contains real-device execution PASS for Vulkan/OpenCL/VA-API (H.264 Main+HEVC Main forced decode),
+# fbterm and EGL-X11/GL (6 PASS) plus 4 UNVERIFIED capabilities in this evidence file; the merged
+# 35-item summary has 21 PASS / 9 SKIP / 5 UNVERIFIED; tested_commit=c7b3a40ef4fe683afcb5c44fa883085da14c5401
 runtime_fbterm_real_vt=PASS reason=draw-clear-long-output-exit-reenter
 runtime_display_modeset=UNVERIFIED reason=connected-output-only-no-mode-switch-test
 runtime_audio_playback=UNVERIFIED reason=command-completed-audible-output-not-confirmed
 runtime_picom_glx=UNVERIFIED reason=process-running-backend-not-confirmed
 runtime_vulkan_execution=PASS reason=real-device-queue-fence-submit-exec-5000-Fantasy-II-M-0x35020023
 runtime_opencl_execution=PASS reason=real-device-add-kernel-verify-exec-1024-Fantasy-II-M-0x1ec8
-runtime_vaapi_decode=UNVERIFIED reason=profile-enumeration-only
+runtime_vaapi_decode=PASS reason=real-device-H264Main+HEVCMain-30frames-320x240-NV12-framemd5-hashes-match-driver-firmware-OK-device=1ec8:9810
+# Real-device session output of tools/run-vaapi-decode-test.sh --codec all (verbatim, informational; parser ignores # lines):
+# vaapi_decode_node=ok /dev/dri/renderD128 (1ec8:9810)
+# vaapi_decode_vainfo=ok
+# vaapi_decode_h264=PASS reason=frames=30-format=nv12-size=115200-hashes-match-device=1ec8:9810
+# vaapi_decode_hevc=PASS reason=frames=30-format=nv12-size=115200-hashes-match-device=1ec8:9810
+# vaapi_decode_status=ok
+# tests_total=2 tests_passed=2 tests_failed=0 tests_skipped=0
+# vaapi_decode_overall=PASS reason=all-requested-codecs-passed
 runtime_dmabuf_regression=UNVERIFIED reason=probe-not-run
 runtime_egl_x11_probe=PASS reason=temporary-xorg-hwgl-runtime-Fantasy-II-M-DRI2-DRI3-Present-AIGLX
 runtime_gl_execution=PASS reason=PASS_DESKTOP_HWGL-Fantasy-II-M-accelerated-check-desktop-hwgl

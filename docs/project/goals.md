@@ -24,7 +24,7 @@
 | 子目标 | 状态 | 证据 / 入口 |
 | --- | --- | --- |
 | 稳定运行基线 | 达成（4.0.0-i1 实机运行；patched-27 为已验证回退基线） | [status.md](status.md)、[Phase 4 验收](../planning/phase4-device-validation.md) |
-| 能力面普查 | 部分达成（Vulkan/OpenCL 最小执行与 GL 已验证；VA-API profile 已枚举，实际解码待验证） | [test-strategy.md](test-strategy.md)、[capability-survey.md](../planning/capability-survey.md) |
+| 能力面普查 | 部分达成（Vulkan/OpenCL 最小执行与 GL 已验证；VA-API H.264+HEVC Main 实际解码已验证，其余 profile/编码待验） | [test-strategy.md](test-strategy.md)、[capability-survey.md](../planning/capability-survey.md) |
 | 逆向可行性评估 | 达成（四层可行性 + 谱系判定） | [reverse-engineering-assessment.md](../planning/reverse-engineering-assessment.md) |
 | DDK 谱系对照表 | 达成（组件 / UAPI / 特性 / 用户态映射） | [ddk-v119-mapping.md](../planning/ddk-v119-mapping.md) |
 | 内核正确性修复 | 3/3 达成（dma_resv usage / vblank 守卫 / foreign DMA-BUF） | patch-025/026/027 |
@@ -45,8 +45,8 @@
 5. **源码树迁移阶段 0–4**（2026-08-21）：9 个启用补丁转源码提交，完成 manifest、新构建器、
    oracle 对比、4.0.0-i1 实机验收与 p27 回退演练；
 6. **Phase 5 第一步**（2026-08-21）：旧构建器和 wrapper 标记 deprecated，当前入口切换为新构建器；
-7. **runtime 测试第一阶段**（2026-08-24）：35 项能力基线落地，Vulkan queue 提交和 OpenCL kernel
-   读回在真机 PASS，当前汇总 20 PASS / 9 SKIP / 6 UNVERIFIED。
+7. **runtime 测试第一阶段**（2026-08-24）：35 项能力基线落地，Vulkan queue 提交、OpenCL kernel
+   读回与 VA-API H.264/HEVC Main 实际解码在真机 PASS，当前汇总 21 PASS / 9 SKIP / 5 UNVERIFIED。
 
 ### 迁移阶段状态
 
@@ -67,7 +67,7 @@
 ### 待办
 
 1. **许可证发布阻断**：确认 confidential 源码再分发权、补齐许可证文本并完成逐文件清单；
-2. **runtime 剩余能力**：VA-API 实际解码、DMA-BUF 回归、modeset/热插拔/合盖、Picom backend、
+2. **runtime 剩余能力**：DMA-BUF 回归、modeset/热插拔/合盖、Picom backend、
    音频听感和跨硬件矩阵；
 3. **性能优化**：invisible READ 批量预取（候选 4，需先设计）；apphint 调优（候选 5）；
    上游 bugfix 移植（候选 6，依赖开源 DDK 可得性）；用户态调用画像（候选 8）；

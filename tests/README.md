@@ -62,9 +62,9 @@ bash tests/unit/run-vaapi-decode-tests.sh
 - 提取器测试用临时 fixture deb 与隔离 vendor 树（提取器支持 `MANIFEST_PATH`/`VENDOR_ROOT` 覆盖），
   覆盖：vendor 缺失时 `--check-only` 必须失败、完整提取、幂等重跑、提取后 `--check-only` 通过、
   哈希篡改 `--check-only` 失败、中断/残留文件重建、源 deb SHA 不匹配失败。
-- 结果解析测试（16 项）覆盖 runtime 脚本 `--results-file` 严格解析：合法合并、未知名/未知状态
+- 结果解析测试（19 项）覆盖 runtime 脚本 `--results-file` 严格解析：合法合并、未知名/未知状态
   告警忽略、重复名采用最后一条、粘连行拒绝、无尾换行处理、PASS/FAIL 缺证据拒绝、文件缺失 rc=2、
-  未授权使用 rc=2。
+  未授权使用 rc=2、`#` 注释行显式跳过（不告警、不泄漏为结果项）。
 - Vulkan/OpenCL 执行探针测试（12 项，CI 无 /dev/dri 可跑）：两探针编译、缺失 loader（env 注入）rc=2、
   无设备 rc=3（可解释、不伪造硬件 PASS）、枚举模式仍可用、超时后无残留进程/临时文件、机器可读输出。
 - VA-API 解码脚本控制流测试（52 项，CI 无 /dev/dri）：fake ffmpeg/vainfo/sysfs 注入（真实 framemd5

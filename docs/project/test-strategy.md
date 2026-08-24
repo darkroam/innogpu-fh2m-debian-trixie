@@ -14,26 +14,27 @@
 | xdisplay 安装边界 | tests/xdisplay/run-install-tests.sh | 5 项（拒绝私有副本/钩子/幂等/watcher/xprofile） | 无（fake HOME） | 否 |
 | 包边界 | tests/package/run-boundary-tests.sh | 7 项 fixture（新版本通过/私有载荷拒绝/p20 复用拒绝/helper 一致/固件完整/非 amd64/Installed-Size） | dpkg-deb | 否 |
 | manifest/版本/提取器 | tests/unit/run-{manifest,version,extractor}-tests.sh | 21 项 schema、路径、哈希、恢复与版本排序 | shell/python/dpkg | 否 |
-| runtime 结果解析 | tests/unit/run-results-parser-tests.sh | 16 项严格解析、授权、重复/粘连/缺失输入 | 无设备，隔离 baseline | 否 |
+| runtime 结果解析 | tests/unit/run-results-parser-tests.sh | 19 项严格解析、授权、重复/粘连/缺失输入、`#` 注释跳过 | 无设备，隔离 baseline | 否 |
 | Vulkan/OpenCL 探针失败路径 | tests/unit/run-exec-probes-tests.sh | 12 项编译、loader/设备失败、格式与清理 | gcc，无设备可跑 | 否 |
+| VA-API 解码控制流 | tests/unit/run-vaapi-decode-tests.sh | 52 项参数/工具/设备/身份/输入/参考/硬解/超时/真实 framemd5 格式负例/聚合/硬解参数断言/状态门禁严格解析/mktemp/TERM 清理/无残留；fixture 模式独立命名空间 fixture_*，不产出权威 PASS | 无设备（fake ffmpeg/vainfo/sysfs/status），隔离 baseline | 否 |
 | runtime 能力基线 | tests/runtime/run-capability-baseline.sh | 12 能力域、35 项；默认只读，人工结果显式合并 | 沙箱/真机授权 | 授权项可能有副作用 |
 
 另：`scripts/check-docs.sh`（静态，链接/登记/隐私/版本/边界）、`check-source-parity.sh`（只读 parity）、
 `compare-oracle-candidates.sh` + `compare-module-symbols.sh`（integration oracle）、
 `check-deb-dkms-build.sh`（integration 离线编译，需本机内核头）。
 
-**盘点结论**：unit、fixture、static、integration 和 runtime 五层均已有入口；CI/沙箱套件当前 120 项
-全部通过。主要缺口是完整 DKMS integration 依赖本机 headers，以及 6 个 runtime 能力仍缺真机证据。
+**盘点结论**：unit、fixture、static、integration 和 runtime 五层均已有入口；CI/沙箱套件当前 123 项
+全部通过。主要缺口是完整 DKMS integration 依赖本机 headers，以及 5 个 runtime 能力仍缺真机证据。
 
 ## 二、分层定义与映射
 
 | 层 | 定义 | 现有 | 缺口 |
 | --- | --- | --- | --- |
-| unit | manifest/版本排序/路径/哈希/配置解析/执行探针/VA-API 解码控制流的纯函数用例 | tests/unit/ 6 个入口，101 项 | 构建器 headers/helper 失败 fixture 待补 |
+| unit | manifest/版本排序/路径/哈希/配置解析/执行探针/VA-API 解码控制流的纯函数用例 | tests/unit/ 6 个入口，104 项 | 构建器 headers/helper 失败 fixture 待补 |
 | fixture | 恶意路径/缺失/坏哈希/损坏链接/重复项 | tests/fixtures/ + 脚本隔离构造 | 覆盖随新输入边界持续扩展 |
 | static | shell 语法/脚本登记/文档链接/隐私/构建器输入 | check-docs.sh、fbterm 静态 | 语义与法律授权仍需人工审查 |
 | integration | staging/DKMS 离线/包边界/可复现/oracle | 包边界、oracle、parity、离线编译 | 可复现双构建入 CI 需内核头（本机可跑） |
-| runtime | 真机 DRM/fbdev/Xorg/GL/音频/Picom/显示/回退 | 35 项能力基线 + Phase 4 A1-A12 | 6 项仍为 UNVERIFIED |
+| runtime | 真机 DRM/fbdev/Xorg/GL/音频/Picom/显示/回退 | 35 项能力基线 + Phase 4 A1-A12 | 5 项仍为 UNVERIFIED |
 
 ## 三、显卡标准能力域（12 项，枚举 vs 实际执行必须分开）
 
@@ -46,7 +47,7 @@
 | 5 | OpenGL/GLX/GLES | `glxinfo`/check-desktop-hwgl | 最小 GL 程序（非 llvmpipe） | OBSERVED PASS（4.3 core/ES 3.2） |
 | 6 | Vulkan | tools/probe-vulkan-devices | instance/device/queue + command submit/fence wait | 枚举及最小执行 PASS；实际渲染未覆盖 |
 | 7 | OpenCL/计算 | tools/probe-opencl-devices | 最小 kernel/buffer 读写与逐元素校验 | 枚举及最小执行 PASS |
-| 8 | 视频 | tools/probe-vaapi / vainfo | 固定 H264/HEVC 样本解码与输出校验 | profile 枚举 PASS；实际解码 UNVERIFIED；无 VA encode entrypoint |
+| 8 | 视频 | tools/probe-vaapi / vainfo / tools/run-vaapi-decode-test.sh | 固定 H264/HEVC 样本解码与输出校验 | profile 枚举 PASS；H.264 Main+HEVC Main 实际解码 PASS；无 VA encode entrypoint |
 | 9 | DMA-BUF/同步 | 静态审计（patch-023/025/027） | DRI3/PRIME、自导入、fence、失败路径 | Phase 4 自导入 PASS；专项 runtime 回归 UNVERIFIED |
 | 10 | 显示输出 | xrandr/DRM 拓扑交叉核对 | 内置屏/外接/插拔/合盖恢复 | 当前 HDMI 拓扑 PASS；切换/热插拔/合盖 UNVERIFIED |
 | 11 | 桌面合成/应用 | Picom 进程/配置枚举 | backend 确认、透明/圆角/拖拽/WebKit DMA-BUF | 进程/配置 PASS；实际 GLX backend UNVERIFIED |
@@ -65,7 +66,7 @@
 | EGL/GBM/DRI | eglinfo、GBM/DRI 探针 | vendor、extensions、device、DMA-BUF | buffer 分配/导入 | EGL/X11 PASS / GBM 专项 UNVERIFIED |
 | Vulkan | vulkaninfo、exec 探针 | device、API、queue、submit、fence wait | command submit/fence wait | PASS（实际渲染未覆盖） |
 | OpenCL | clinfo、exec 探针 | platform、device、kernel、读回校验 | 最小 kernel/buffer | PASS |
-| VA-API | vainfo、待实现 decode 探针 | vendor、profile、entrypoint | 固定样本解码与输出校验 | 枚举 PASS / 解码 UNVERIFIED / 无 encode entrypoint |
+| VA-API | vainfo、tools/run-vaapi-decode-test.sh | vendor、profile、entrypoint、30 帧 NV12 framemd5 hash | 固定 H.264/HEVC Main 样本强制硬解 + 输出校验 | 解码 PASS（H264 Main+HEVC Main 30 帧 320x240 NV12 校验）/ 无 encode entrypoint |
 | 音频 | aplay、wpctl | ALSA card、PCM、PipeWire sink | 实际播放并确认听感 | 枚举 PASS / 听感 UNVERIFIED |
 
 ## 五、结果格式与退出码约定（统一，全部测试已实现）
@@ -83,8 +84,8 @@
 - 有副作用测试必须显式参数确认；临时文件必须 `mktemp` + `trap` 清理。
 - 离线/沙箱结果与真机结果**分开保存**（`baselines/` 紧凑标记 + 版本化审计日志）。
 
-当前 CI/沙箱套件共 120 项：fbterm_static×1、picom_install×3、picom_session×3、
-xdisplay_install×5、package_boundary×7、manifest×8、version×6、extractor×7、results_parser×16、
+当前 CI/沙箱套件共 123 项：fbterm_static×1、picom_install×3、picom_session×3、
+xdisplay_install×5、package_boundary×7、manifest×8、version×6、extractor×7、results_parser×19、
 exec_probes×12、vaapi_decode×52。
 
 ## 六、覆盖清单（5.md 要求逐项落实）
@@ -133,9 +134,10 @@ exec_probes×12、vaapi_decode×52。
 - 真机证据通过 `--results-file` 合并；环境探测元数据和人工结果来源分别记录，不能视为同一次会话。
 - `--results-file` 严格解析（2026-08-24）：接受全部已定义项（含 egl_x11_probe/gl_execution）、
   未知名/状态告警忽略、重复名取最后、粘连行拒绝、PASS/FAIL 必须带证据 reason、缺失文件 rc=2、
-  强制 `--allow-authorized-tests`；16 项 fixture 测试（tests/unit/run-results-parser-tests.sh）。
-- 真机证据合并（2026-08-24）：fbterm、EGL/X11、桌面 GL、Vulkan execution 和 OpenCL execution
-  为 PASS；权威汇总 20 PASS / 9 SKIP / 6 UNVERIFIED，overall=UNVERIFIED。
+  强制 `--allow-authorized-tests`；19 项 fixture 测试（tests/unit/run-results-parser-tests.sh，含 `#`
+  注释行跳过与不泄漏断言）。
+- 真机证据合并（2026-08-24）：fbterm、EGL/X11、桌面 GL、Vulkan execution、OpenCL execution 和
+  VA-API 实际解码为 PASS；权威汇总 21 PASS / 9 SKIP / 5 UNVERIFIED，overall=UNVERIFIED。
 - Vulkan/OpenCL 最小执行（2026-08-24，~/5.md）：探针新增 `exec` 模式（dlopen、无头文件），
   execution 判定标准 = 真正创建资源 + 执行最小操作 + 校验结果：
   - Vulkan：instance→GPU device（拒绝 CPU-only）→queue→空 cmd buffer+fence 提交→限时等待→释放；
@@ -161,15 +163,20 @@ exec_probes×12、vaapi_decode×52。
   解码器与 vainfo VLD profile；fixture 钩子须显式 `INNOGPU_VAAPI_FIXTURE_MODE=1`，fixture 模式使用**独立
   命名空间 fixture_***（fixture_vaapi_decode_h264=...、fixture_tests_total=...、fixture_vaapi_decode_overall=...），
   绝不输出任何 `vaapi_decode_*` 权威行，reason 仍附 -mode=fixture；`runtime_vaapi_decode` 仅当 H.264 与
-  HEVC 均完成真实硬解+输出校验后升级 PASS，当前仍 UNVERIFIED；枚举 profile/entrypoint 或 ffmpeg 退出 0
-  不等于实际解码成功；测试：tests/unit/run-vaapi-decode-tests.sh（52 项，fake fixture，CI 无 /dev/dri）。
+  HEVC 均完成真实硬解+输出校验后升级 PASS——2026-08-24 真机执行（监督者于 c7b3a40 上沙箱外运行
+  `bash tools/run-vaapi-decode-test.sh --codec all`）：H264 Main 与 HEVC Main 均强制 VA-API 硬解、各 30 帧
+  320x240 NV12 framemd5 hash 与软件参考一致、Driver/Firmware 状态门禁通过 → 升级 PASS
+  （evidence: baselines/runtime-results-20260824.txt）；**能力边界**：仅 Main/Main 8-bit 4:2:0，H.264 High/
+  Constrained Baseline、HEVC Main10、编码、播放/长时/并发/4K/性能功耗均未验证；枚举
+  profile/entrypoint 或 ffmpeg 退出 0 不等于实际解码成功；测试：tests/unit/run-vaapi-decode-tests.sh
+  （52 项，fake fixture，CI 无 /dev/dri）。
 
 ## 十、风险与未覆盖
 
 - 完整 DKMS 构建需本机内核头 → CI 无法跑 integration 编译（标记 SKIP 而非 PASS）。
-- VA-API 实际码流解码（脚本与离线测试已实现，真机证据待授权后采集）、DMA-BUF 回归、
-  modeset/热插拔/合盖、Picom GLX backend、音频听感及多硬件矩阵仍为 UNVERIFIED；枚举或命令
-  退出成功不能替代对应行为证据。
+- VA-API 实际解码仅覆盖 H.264 Main/HEVC Main（30 帧 320x240 NV12 输出校验）；H.264 High/
+  Constrained Baseline、HEVC Main10、VA-API 编码、DMA-BUF 回归、modeset/热插拔/合盖、Picom GLX
+  backend、音频听感及多硬件矩阵仍为 UNVERIFIED；枚举或命令退出成功不能替代对应行为证据。
 - runtime 脚本已落地；新增有副作用的真机项仍需监督授权，并通过结果文件合并审计证据。
 
 ## 证据索引

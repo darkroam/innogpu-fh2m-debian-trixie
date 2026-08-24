@@ -416,6 +416,8 @@ if [[ -n "$RESULTS_FILE" ]]; then
     declare -A SEEN_RESULTS=()
     while IFS= read -r line || [[ -n "$line" ]]; do
         [[ -z "$line" ]] && continue
+        # 显式跳过 # 注释行（证据文件内的说明与原始工具输出注释，不作为结果项、不告警）
+        [[ "$line" == \#* ]] && continue
         [[ "$line" == runtime_* ]] || { echo "ignored malformed results line (not runtime_*): $line" >&2; continue; }
         name="${line%%=*}"
         rest="${line#*=}"
