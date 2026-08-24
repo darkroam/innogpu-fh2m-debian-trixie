@@ -10,12 +10,22 @@
 ```sh
 bash tests/runtime/run-capability-baseline.sh                      # 只读默认
 bash tests/runtime/run-capability-baseline.sh --allow-authorized-tests   # 仅解锁人工命令清单（不自动执行）
-bash tests/runtime/run-capability-baseline.sh --results-file results.txt  # 合并你人工执行的结果
+bash tests/runtime/run-capability-baseline.sh \
+  --allow-authorized-tests --results-file results.txt   # 合并人工结果（必须两者同时提供，否则 rc=2）
 ```
 
-`--results-file` 每行一条：`runtime_<name>=PASS|FAIL|SKIP|UNVERIFIED [reason=...]`，仅接受已知授权项
-（fbterm_real_vt/display_modeset/audio_playback/picom_glx/vulkan_execution/opencl_execution/
-vaapi_decode/dmabuf_regression），覆盖默认 SKIP 条目；未知条目忽略并告警。
+`--results-file` 每行一条：`runtime_<name>=PASS|FAIL|SKIP|UNVERIFIED [reason=...]`，**接受脚本定义的
+全部测试项**（含 egl_x11_probe、gl_execution 等），覆盖默认 SKIP 条目。严格解析规则（2026-08-24）：
+
+- 未知名（不在脚本定义集）→ 告警并忽略；
+- 未知状态 → 告警并忽略；
+- 文件内重复名 → 告警并采用最后一条；
+- 粘连行/多余字段（reason 内再出现状态令牌或 runtime_）→ 告警并忽略；
+- **PASS/FAIL 必须带非空 reason（人工命令/证据），否则不合并**；
+- 无尾换行的最后一行正常处理；
+- 必须与 `--allow-authorized-tests` 同时使用，否则 rc=2；文件缺失 rc=2。
+
+解析行为由 `tests/unit/run-results-parser-tests.sh`（16 项 fixture）覆盖。
 
 输出：每条 `runtime_<name>=PASS|FAIL reason=...|SKIP reason=...|UNVERIFIED reason=...`；
 汇总 `runtime_total=... runtime_passed=... runtime_failed=... runtime_skipped=... runtime_unverified=...`
@@ -27,6 +37,10 @@ vaapi_decode/dmabuf_regression），覆盖默认 SKIP 条目；未知条目忽�
 （`/home/…`→`~`、`serverauth.*`→AUTHTOKEN.REDACTED、`XAUTHORITY=`→REDACTED）后生成完整日志
 `baselines/runtime-baseline-<ts>.txt`（gitignored）并清理临时目录——异常退出也只会留下脱敏产物；
 精简摘要 `baselines/latest-runtime-baseline.txt`（跟踪，仅 runtime_ 行与 # 元数据）。
+
+**采集环境与人工证据分离**：摘要头部 `# kernel=... dri=... root=...` 只反映**本次采集环境**（沙箱/真机）；
+经 `--results-file` 合并的人工真机证据在摘要中输出 `# evidence_merged=1 source=<file>` 行标注来源，
+审计时不得把沙箱环境元数据与人工证据误认为同一次运行产生的完整结果。
 
 ## 环境判定
 

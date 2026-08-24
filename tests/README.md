@@ -51,6 +51,7 @@ patched-20 版本号、过期设备接入脚本、不完整 shader、错误架�
 tests/unit/run-manifest-tests.sh
 bash tests/unit/run-version-tests.sh
 bash tests/unit/run-extractor-tests.sh
+bash tests/unit/run-results-parser-tests.sh
 ```
 
 - manifest 测试用 `tools/validate-binary-manifest.py` 对真实清单与 `tests/fixtures/` 下的恶意
@@ -59,6 +60,9 @@ bash tests/unit/run-extractor-tests.sh
 - 提取器测试用临时 fixture deb 与隔离 vendor 树（提取器支持 `MANIFEST_PATH`/`VENDOR_ROOT` 覆盖），
   覆盖：vendor 缺失时 `--check-only` 必须失败、完整提取、幂等重跑、提取后 `--check-only` 通过、
   哈希篡改 `--check-only` 失败、中断/残留文件重建、源 deb SHA 不匹配失败。
+- 结果解析测试（16 项）覆盖 runtime 脚本 `--results-file` 严格解析：合法合并、未知名/未知状态
+  告警忽略、重复名采用最后一条、粘连行拒绝、无尾换行处理、PASS/FAIL 缺证据拒绝、文件缺失 rc=2、
+  未授权使用 rc=2。
 
 ## 测试矩阵（分层，2026-08-21）
 

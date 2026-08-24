@@ -126,6 +126,13 @@ xdisplay_install×5、package_boundary×7、manifest×8、version×6、extractor
   工具存在但无 DRI 节点初始化失败 → SKIP；枚举失败不笼统隐藏。
 - 未覆盖（人工执行+监督授权后，经 --results-file 合并）：真实 VT fbterm、EGL/GBM 实际绘制、
   Vulkan/OpenCL 最小执行、VA-API 硬解、DMA-BUF 回归探针、modeset/热插拔/合盖、Picom GLX、音频播放。
+- `--results-file` 严格解析（2026-08-24）：接受全部已定义项（含 egl_x11_probe/gl_execution）、
+  未知名/状态告警忽略、重复名取最后、粘连行拒绝、PASS/FAIL 必须带证据 reason、缺失文件 rc=2、
+  强制 `--allow-authorized-tests`；16 项 fixture 测试（tests/unit/run-results-parser-tests.sh）。
+- 真机证据合并（2026-08-24 用户实测）：fbterm_real_vt=PASS、egl_x11_probe=PASS、
+  gl_execution=PASS（check-desktop-hwgl PASS_DESKTOP_HWGL、Fantasy II-M/DRI2/DRI3/Present/AIGLX）；
+  其余人工项按实际证据 UNVERIFIED（枚举/部分完成）；汇总 18 PASS/9 SKIP/8 UNVERIFIED，
+  overall=UNVERIFIED（不伪造完整 PASS）。
 
 ## 九、风险与未覆盖
 

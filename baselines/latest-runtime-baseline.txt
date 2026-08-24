@@ -1,5 +1,5 @@
-# runtime-capability-baseline (4.0.0-i1) 20260824-103853 mode=readonly
-# kernel=6.12.101+deb13-amd64 package=4.0.0-i1 pci_bdf=0000:02:00.0(1) commit=c414a20e4ba0903f5eccae39eee2a399ac71728a root=no dri=no fb=no tty=no x=yes
+# runtime-capability-baseline (4.0.0-i1) 20260824-122711 mode=allow-authorized
+# kernel=6.12.101+deb13-amd64 package=4.0.0-i1 pci_bdf=0000:02:00.0(1) commit=d623294cf29e07e1ae3527af659aec8ee9284288 root=no dri=no fb=no tty=no x=yes
 # tool_lspci=present
 # tool_drm_info=present
 # tool_glxinfo=present
@@ -14,6 +14,17 @@
 # display_xrandr=HDMI-2 connected primary 1920x1080+0+0 (normal left inverted right x axis y axis) 597mm x 336mm;
 # audio_cards= 0 [InnosiliconCard]: InnosiliconCard - InnosiliconCard;                      InnosiliconCard0-HDMI0-HDMI1; 1 [Intel          ]: HDA-Intel - HDA Intel;         
 # audio_sinks= │  *   44. HDA Intel 模拟立体声           [vol: 0.55]; │      59. Fantasy II-M 立体声              [vol: 0.10]; │      45. HDA Intel 模拟立体
+# authorized-manual-commands (supervision authorization required; never auto-run)
+#   fbterm_real_vt:  真实 VT 下运行 fbterm，验证绘制/清屏/长输出/重入
+#   display_modeset: xrandr --output <out> --mode <mode>（分辨率切换/热插拔/合盖，需监督授权）
+#   audio_playback:  aplay -D default <test.wav>
+#   vulkan_execution: tools/probe-vulkan-devices.c 编译并创建 instance/device + 最小渲染
+#   opencl_execution: tools/probe-opencl-devices.c 编译并执行最小 kernel/buffer 读写
+#   vaapi_decode:     最小 H264/HEVC 解码
+#   picom_glx:        验证 Picom GLX backend（docs/project/compositor-management.md）
+#   dmabuf_regression: tools/probe-pdp-invisible-read + tools/probe-drm-vblank
+# 执行后将结果逐行写入文件，用 --results-file 合并：runtime_<name>=PASS|FAIL|SKIP|UNVERIFIED [reason=..]
+# evidence_merged=1 source=runtime-results-merged.txt (manual real-device results; env metadata above reflects collection environment only)
 runtime_pci_enumeration=PASS
 runtime_pci_driver_binding=PASS
 runtime_package_version=PASS
@@ -28,26 +39,26 @@ runtime_journal_kernel_errors=PASS
 runtime_drm_nodes=SKIP reason=no /dev/dri; run on real device session
 runtime_fbdev_node=SKIP reason=no /dev/fb0 in this session
 runtime_drm_topology_enumeration=SKIP reason=no /dev/dri; run 'drm_info' on real device session
-runtime_fbterm_real_vt=SKIP reason=manual-execution-required (real VT + authorization): run fbterm on VT, verify draw/clear/long-output/re-enter
+runtime_fbterm_real_vt=PASS reason=draw-clear-long-output-exit-reenter
 runtime_egl_gbm_probe=SKIP reason=no /dev/dri or gcc/probe missing; compile and run tools/probe-egl-gbm.c on device session
-runtime_egl_x11_probe=SKIP reason=manual-execution-required: scripts/test-current-xorg-hwgl-runtime.sh on device session
+runtime_egl_x11_probe=PASS reason=temporary-xorg-hwgl-runtime-Fantasy-II-M-DRI2-DRI3-Present-AIGLX
 runtime_gl_enumeration=UNVERIFIED reason=software renderer in this session: llvmpipe (LLVM 8.0.1, 256 bits) (no /dev/dri); real device must show Fantasy II-M
-runtime_gl_execution=SKIP reason=manual-execution-required: scripts/check-desktop-hwgl.sh on device session
+runtime_gl_execution=PASS reason=PASS_DESKTOP_HWGL-Fantasy-II-M-accelerated-check-desktop-hwgl
 runtime_vulkan_enumeration=SKIP reason=ICD init failed without /dev/dri; run vulkaninfo on device session
-runtime_vulkan_execution=SKIP reason=manual-execution-required: create instance/device + minimal render on device session
+runtime_vulkan_execution=UNVERIFIED reason=enumeration-only
 runtime_opencl_enumeration=SKIP reason=0 platforms without /dev/dri; run clinfo on device session
-runtime_opencl_execution=SKIP reason=manual-execution-required: context/queue + minimal kernel on device session
+runtime_opencl_execution=UNVERIFIED reason=enumeration-only
 runtime_vaapi_enumeration=SKIP reason=vainfo init failed without /dev/dri; run on device session
 runtime_vaapi_encode=SKIP reason=cannot verify encode without vaapi init
-runtime_vaapi_decode=SKIP reason=manual-execution-required: minimal H264/HEVC decode on device session
+runtime_vaapi_decode=UNVERIFIED reason=profile-enumeration-only
 runtime_dmabuf_source_fix_present=PASS
-runtime_dmabuf_regression=SKIP reason=manual-execution-required: probe-pdp-invisible-read + probe-drm-vblank on device session (authorized)
+runtime_dmabuf_regression=UNVERIFIED reason=probe-not-run
 runtime_display_topology=PASS
-runtime_display_modeset=SKIP reason=manual-execution-required (supervision authorization): resolution switch / hotplug / lid on device session
+runtime_display_modeset=UNVERIFIED reason=connected-output-only-no-mode-switch-test
 runtime_picom_running=SKIP reason=picom not running in this session
-runtime_picom_glx=SKIP reason=manual-execution-required: verify GLX backend (compositor-management.md)
+runtime_picom_glx=UNVERIFIED reason=process-running-backend-not-confirmed
 runtime_audio_cards_enumeration=PASS
 runtime_audio_default_sink=PASS
-runtime_audio_playback=SKIP reason=manual-execution-required: aplay test tone on device session
-runtime_total=35 runtime_passed=15 runtime_failed=0 runtime_skipped=19 runtime_unverified=1
+runtime_audio_playback=UNVERIFIED reason=command-completed-audible-output-not-confirmed
+runtime_total=35 runtime_passed=18 runtime_failed=0 runtime_skipped=9 runtime_unverified=8
 runtime_overall=UNVERIFIED

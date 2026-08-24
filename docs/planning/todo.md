@@ -41,12 +41,19 @@
   `innodma.o_shipped`，超出本项目可维护源码范围，不制作 READ 预取候选；patched-24 仅处理
   Debian 6.12.101+ DKMS API 兼容。
 - [ ] 将可复现的热点、perf 数据和应用级 workaround 整理为上游/厂商修复报告。
-- [ ] tests/runtime/ 真机能力基线（~/4.md，2026-08-24 进行中）：
+- [x] tests/runtime/ 真机能力基线第一轮（~/4.md，2026-08-24 完成）：
   - [x] 实现 run-capability-baseline.sh（12 能力域、枚举/执行分离、PASS/FAIL/SKIP/UNVERIFIED、脱敏摘要）；
     沙箱实测 35 项：15 PASS / 19 SKIP / 1 UNVERIFIED（无 /dev/dri 时设备项不伪造 PASS）。
   - [x] tests/runtime/README.md（每项权限/设备/X11/TTY/副作用/恢复）；
-  - [x] 沙箱验证只读部分 + 真机授权部分（VT/X11/modeset/播放）标注；
-  - [ ] 真机授权后：--allow-authorized-tests 打印人工命令清单，执行后经 --results-file 合并（真实 VT fbterm、显示/modeset、音频播放、Vulkan/OCL 执行）。
+  - [x] 沙箱验证只读部分 + 真机授权部分（VT/X11/modeset/播放）标注。
+- [ ] tests/runtime/ 后续修正（~/4.md 第二轮，2026-08-24 进行中）：
+  - [x] 修复 --results-file：接受全部已定义项（egl_x11_probe/gl_execution 等）、严格解析
+    （未知名/状态告警忽略、重复取最后、粘连拒绝、PASS/FAIL 必须带证据）、缺失文件 rc=2、
+    强制 --allow-authorized-tests；新增 16 项 fixture 测试（run-results-parser-tests.sh）。
+  - [x] 真机证据合并：fbterm_real_vt/egl_x11_probe/gl_execution PASS（check-desktop-hwgl 证据），
+    其余人工项 UNVERIFIED；汇总 18 PASS/9 SKIP/8 UNVERIFIED（overall=UNVERIFIED，不伪造）。
+  - [ ] 剩余真实能力待补证据：Vulkan/OpenCL 最小执行、VA-API 解码、DMA-BUF 回归探针、
+    modeset/热插拔/合盖、Picom GLX backend、音频听感确认。
 - [ ] 代码深度分析与测试体系重构（~/5.md，2026-08-21 进行中）：
   - [x] 产出 code-analysis.md、frameworks-and-references.md、test-strategy.md；新增 unit 测试
     （manifest 恶意输入 8、版本排序 6、提取器隔离 7）与 fixtures/；全部 tests/ 统一机器格式

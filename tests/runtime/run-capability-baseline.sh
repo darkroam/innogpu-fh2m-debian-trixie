@@ -62,10 +62,11 @@ fi
 RUNTIME_TMP="${TMPDIR:-/tmp}"
 RUNTIME_DIR="$(mktemp -d "$RUNTIME_TMP/runtime-baseline.XXXXXX")"
 TS="$(date +%Y%m%d-%H%M%S)"
-FULL_LOG="$ROOT/baselines/runtime-baseline-$TS.txt"
-LATEST="$ROOT/baselines/latest-runtime-baseline.txt"
+BASELINE_DIR="${RUNTIME_BASELINE_DIR:-$ROOT/baselines}"
+FULL_LOG="$BASELINE_DIR/runtime-baseline-$TS.txt"
+LATEST="$BASELINE_DIR/latest-runtime-baseline.txt"
 RAW_LOG="$RUNTIME_DIR/raw.log"
-mkdir -p "$ROOT/baselines"
+mkdir -p "$BASELINE_DIR"
 
 # 隐私脱敏：用变量 H 构造 /home 前缀，替换令牌避开 serverauth. 字面序列，
 # 避免在脚本文本中留下可被 check-docs 隐私扫描匹配的串。
@@ -125,6 +126,18 @@ for t in lspci drm_info glxinfo vulkaninfo clinfo vainfo aplay wpctl gcc xrandr;
     fi
 done
 
+# 全部已定义测试项（RUNTIME_PARSE_ONLY 模式种子；新增测试须同步加入）
+KNOWN_NAMES=(
+  pci_enumeration pci_driver_binding package_version dkms_status module_vermagic
+  module_loaded module_param_firmware_en proc_driver_status proc_firmware_status proc_error_counts
+  journal_kernel_errors drm_nodes fbdev_node drm_topology_enumeration fbterm_real_vt
+  egl_gbm_probe egl_x11_probe gl_enumeration gl_execution vulkan_enumeration vulkan_execution
+  opencl_enumeration opencl_execution vaapi_enumeration vaapi_encode vaapi_decode
+  dmabuf_source_fix_present dmabuf_regression display_topology display_modeset
+  picom_running picom_glx audio_cards_enumeration audio_default_sink audio_playback
+)
+
+run_probes() {
 # =====================================================================
 # 1. PCI / 内核 / DKMS / 固件
 # =====================================================================
@@ -367,6 +380,14 @@ else
     record audio_default_sink SKIP "tool_missing:wpctl"
 fi
 record audio_playback SKIP "manual-execution-required: aplay test tone on device session"
+}  # run_probes 结束
+
+# RUNTIME_PARSE_ONLY=1：跳过全部设备探测，仅用 KNOWN_NAMES 种子执行 --results-file 解析（测试用，快）
+if [[ "${RUNTIME_PARSE_ONLY:-0}" == "1" ]]; then
+    for n in "${KNOWN_NAMES[@]}"; do record "$n" SKIP "parse-only-mode"; done
+else
+    run_probes
+fi
 
 # =====================================================================
 # 人工授权命令清单（--allow-authorized-tests 时打印；永不自动执行）
@@ -385,29 +406,61 @@ if [[ "$MODE" == "allow-authorized" ]]; then
 fi
 
 # =====================================================================
-# --results-file 合并（覆盖默认 SKIP）
+# --results-file 合并（严格解析；覆盖默认 SKIP）
 # =====================================================================
 if [[ -n "$RESULTS_FILE" ]]; then
     if [[ ! -f "$RESULTS_FILE" ]]; then
         echo "error: results file missing: $RESULTS_FILE" >&2
         exit 2
-    else
-        while IFS= read -r line; do
-            [[ "$line" == runtime_*=* ]] || continue
-            name="${line%%=*}"
-            rest="${line#*=}"
-            res="${rest%% *}"
-            reason="$(printf '%s' "$rest" | sed -n 's/^[A-Z]* *reason=//p')"
-            case "$name" in
-                runtime_fbterm_real_vt|runtime_display_modeset|runtime_audio_playback|runtime_picom_glx|runtime_vulkan_execution|runtime_opencl_execution|runtime_vaapi_decode|runtime_dmabuf_regression) ;;
-                *) echo "ignored unknown results entry: $line" >&2; continue ;;
-            esac
-            case "$res" in
-                PASS|FAIL|SKIP|UNVERIFIED) record "${name#runtime_}" "$res" "$reason" ;;
-                *) echo "bad result line: $line" >&2 ;;
-            esac
-        done < "$RESULTS_FILE"
     fi
+    declare -A SEEN_RESULTS=()
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        [[ -z "$line" ]] && continue
+        [[ "$line" == runtime_* ]] || { echo "ignored malformed results line (not runtime_*): $line" >&2; continue; }
+        name="${line%%=*}"
+        rest="${line#*=}"
+        # 仅接受脚本自身已定义的测试项（RES 集合键为去 runtime_ 前缀名）；未知名告警忽略
+        key="${name#runtime_}"
+        if [[ -z "${RES[$key]+x}" ]]; then
+            echo "ignored unknown results entry: $line" >&2
+            continue
+        fi
+        # 状态必须是首个 token
+        status="${rest%% *}"
+        case "$status" in
+            PASS|FAIL|SKIP|UNVERIFIED) ;;
+            *) echo "ignored bad status in results line: $line" >&2; continue ;;
+        esac
+        # 剩余部分必须为空或 reason= 开头（多余字段/粘连行拒绝）
+        if [[ "$rest" == "$status" ]]; then
+            remainder=""
+        else
+            remainder="${rest#* }"
+        fi
+        if [[ -n "$remainder" && "$remainder" != reason=* ]]; then
+            echo "ignored glued/extra-field results line: $line" >&2
+            continue
+        fi
+        reason="${remainder#reason=}"
+        # 粘连检测：reason 内不得再出现状态令牌或第二个 runtime_
+        if [[ "$reason" == *=PASS* || "$reason" == *=FAIL* || "$reason" == *=SKIP* || "$reason" == *=UNVERIFIED* || "$reason" == *runtime_* ]]; then
+            echo "ignored glued results line (embedded status/name): $line" >&2
+            continue
+        fi
+        # 证据要求：PASS/FAIL 必须带非空 reason（人工命令/证据），否则不合并
+        if [[ -z "$reason" && ( "$status" == PASS || "$status" == FAIL ) ]]; then
+            echo "ignored results line without evidence reason: $line" >&2
+            continue
+        fi
+        # 文件内重复：告警并采用最后一条
+        if [[ -n "${SEEN_RESULTS[$name]+x}" ]]; then
+            echo "duplicate results entry, using last: $name" >&2
+        fi
+        SEEN_RESULTS["$name"]=1
+        record "$key" "$status" "$reason"
+    done < "$RESULTS_FILE"
+    # 证据来源元数据：采集环境与人工真机证据分开标注，避免审计误解
+    printf '# evidence_merged=1 source=%s (manual real-device results; env metadata above reflects collection environment only)\n' "$(basename "$RESULTS_FILE" | redact)"
 fi
 
 # =====================================================================
