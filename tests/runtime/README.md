@@ -45,6 +45,10 @@ bash tests/runtime/run-capability-baseline.sh \
 合并的人工真机证据在摘要中输出 `# evidence_merged=1 source=<file>` 行标注来源，审计时不得把沙箱
 环境元数据与人工证据误认为同一次运行产生的完整结果。
 
+**基线生成时机**：`baselines/latest-runtime-baseline.txt` 只允许从**干净提交**重新生成（`tested_commit` 必须
+对应被验证的已提交代码状态，见上）；工具代码尚未提交时不得用脏工作树重新生成并宣称某个 commit。
+DMA-BUF 回归人工命令指向聚合入口的基线更新，待工具代码提交后从干净提交再生成并单独封存。
+
 ## 环境判定
 
 | 变量 | 判定 |
@@ -72,7 +76,7 @@ bash tests/runtime/run-capability-baseline.sh \
 | vulkan_enumeration / vulkan_execution | 是/否 | 否 | 执行需 | 否 | 否 | 否 | 执行：`tools/probe-vulkan-devices.c exec [timeout_ms]`——创建 instance/device/queue，空 cmd buffer+fence 提交并限时等待（默认 5s，可参数覆盖）；无渲染副作用 |
 | opencl_enumeration / opencl_execution | 是/否 | 否 | 执行需 | 否 | 否 | 否 | 执行：`tools/probe-opencl-devices.c exec [elements]`——context/queue + add kernel + 阻塞读回 + 逐元素校验；仅读写 buffer |
 | vaapi_enumeration / vaapi_decode / vaapi_encode | 是/否 | 否 | 是 | 否 | 否 | 否 | 解码：`bash tools/run-vaapi-decode-test.sh --codec all`（强制 VAAPI 硬解 + 真实 framemd5 格式校验 + 软件参考 hash 对比 + Driver/Firmware 双快照状态门禁，退出码 0-5）；**真机已执行并合并**：H.264 Main + HEVC Main 各 30 帧 320x240 NV12 framemd5 一致 → runtime_vaapi_decode=PASS（证据 baselines/runtime-results-20260824.txt）；fixture 钩子输出独立命名空间 fixture_*（绝不产生 vaapi_decode_* 权威行）；编码无实现 → UNVERIFIED/不支持 |
-| dmabuf_fix_present / dmabuf_regression | 是/否 | 否 | 回归需 | 否 | 否 | 否 | 探针可能占用 GPU；需授权 + 超时 |
+| dmabuf_fix_present / dmabuf_regression | 是/否 | 否 | 回归需 | 否 | 否 | 否 | 回归：`bash tools/run-dmabuf-regression-test.sh [--render-device NODE] [--card-device NODE]`（PRIME 同设备 self-import + invisible GEM READ/WRITE + vblank guard + 状态门禁；退出码 0-5；能力边界：仅同设备 self-import，foreign/cross-device 保持 UNVERIFIED）；工具已实现、真机证据待授权；探针可能占用 GPU，需授权 + 超时 |
 | display_topology / display_modeset | 是/否 | 否 | 是 | 拓扑需 | 否 | modeset 需 | modeset/热插拔/合盖需授权 |
 | picom_running / picom_glx | 是/否 | 否 | 否 | glx 需 | 否 | 否 | 只读状态；glx backend 需授权 |
 | audio_cards_enumeration / audio_default_sink / audio_playback | 是/否 | 否 | 否 | 否 | 播放需 | 否 | 播放需授权（aplay 测试音） |

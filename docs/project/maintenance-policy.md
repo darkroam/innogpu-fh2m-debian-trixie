@@ -95,6 +95,53 @@
 - 外部 deb、日志、缓存、EDID、序列号、凭据和临时测试运行目录不得提交。
 - 修改安装脚本时必须检查构建包清单、卸载清单和新设备流程是否同步。
 
+## 系统服务与 systemd unit 目录规范
+
+新增或修改任何随项目部署的 systemd unit（服务、定时器、路径单元）必须遵守以下统一规则，供
+未来服务复用（现有实例见 [audio-management.md](audio-management.md) 的持久化文件清单）：
+
+### 目录选择
+
+- **系统包单元（vendor/包管理）**：随 Debian 包或仓库源码构建交付、由包管理器管理生命周期、升级时
+  由 maintainer script 处理的单元放 `/usr/lib/systemd/system/`（vendor 只读路径），并在包内声明
+  `systemd` 依赖。不得放 `/etc/systemd/system/`，那里是管理员本地覆盖区。
+- **包管理用户单元（vendor 用户级）**：随包交付、供非 root 用户会话使用的单元放
+  `/usr/lib/systemd/user/`（vendor 只读路径），由包管理器管理；用户级 enable 由各用户执行
+  `systemctl --user enable`。
+- **管理员单元（本机/安装脚本管理）**：由本项目安装脚本直接落地、覆盖 vendor 行为或仅本机生效的
+  单元放 `/etc/systemd/system/`（root 可写、优先级高于 vendor 单元）。安装脚本必须显式声明它管理
+  该路径，卸载时删除同一路径下的文件。
+- **用户单元（非 root 会话）**：仅当前用户会话生效、由本机安装/用户脚本落地的单元放
+  `~/.config/systemd/user/`。
+- **系统预置用户单元**：需要 root 预置（对所有用户可用）的用户级单元放 `/etc/systemd/user/`；
+  它与 `loginctl enable-linger` 没有必然关系——linger 只控制**是否在用户未登录时保持用户服务运行**，
+  不决定单元放在哪个目录。需要未登录常驻时单独执行 `loginctl enable-linger <user>` 并记录。
+- **可执行辅助**：root 级 unit 引用的脚本放 `/usr/lib/<项目>/` 或 `/usr/libexec/<项目>/`（包管理）或
+  `/usr/local/lib/<项目>/`（本机安装）；用户级 unit 放 `~/.local/lib/<项目>/`。不放在
+  `/usr/local/bin` 与 unit 内 `ExecStart` 混合处，避免权限和 PATH 歧义；脚本所有权与 unit 一致。
+
+### enable/start 与 daemon-reload
+
+- 每次写入/删除/修改 unit 文件后必须执行 `systemctl daemon-reload`（用户单元：
+  `systemctl --user daemon-reload`），否则旧定义仍生效。
+- **enable 与 start 必须分开执行**：默认服务安装时先 `systemctl enable <unit>` 再
+  `systemctl start <unit>`（用户单元用 `systemctl --user ...`），并分别记录结果；可选服务只在用户
+  明确选择后 enable。禁止用 `systemctl enable --now` 合并两步（无法区分 enable 失败与 start 失败），
+  也禁止用 `systemctl restart` 掩盖首次启动失败。
+- 启用前必须检查单元语法：`systemd-analyze verify <unit>`；用户单元写作
+  `systemd-analyze --user verify <unit>`（`--user` 位置在 verify 之前，避免解析为单元名）。
+
+### 卸载、回退与所有权
+
+- 卸载脚本必须删除安装脚本创建的全部 unit 文件、辅助脚本和符号链接，并执行 daemon-reload；
+  `disable` 后 `stop`，不残留 enable 状态。
+- 回退：升级或改动失败时提供明确的旧单元恢复步骤（备份原文件或保留历史版本），并在文档记录回退
+  验证命令；不得用禁用全部服务替代针对性回退。
+- 所有权与权限：root 管理的单元与文件 `root:root`（`644`/`755`），用户单元归当前用户（`644`/`700`
+  视敏感度）；unit 不得以 `User=` 或 `Environment=` 泄露凭据，敏感值必须由 `EnvironmentFile=` 引用
+  受限文件或 systemd credentials。
+- 任何脚本在修改系统服务状态前必须检查是否以适当身份运行（root/用户），并在文档中写明所需权限。
+
 ## 提交前检查
 
 至少执行：

@@ -85,7 +85,17 @@
     OK/缺字段/非数字/OKAY 冒充/多余 token/重复字段/前导零 08->09 增长/post 失效/逐项增长）/mktemp 失败/
     TERM 信号清理/无残留（限定 TMPDIR）/不污染 baseline；fixture 模式独立命名空间 fixture_*，绝不输出
     vaapi_decode_* 权威行）。
-- [ ] runtime 剩余真实能力证据：DMA-BUF 回归探针、modeset/热插拔/合盖、Picom GLX backend、
+- [x] DMA-BUF 回归工具与测试（~/7.md，2026-08-24 实现完成，真机证据待授权）：
+  - [x] tools/run-dmabuf-regression-test.sh 聚合入口：动态 1ec8:9810 render/card 同源发现、PRIME
+    同设备 self-import（probe-dmabuf-self-import.c 新）、invisible GEM READ/WRITE+verify（性能门槛
+    max≤40ms，依据 p22 71.9-119.4ms vs 修复后 1.7-2.6ms）、topology 动态 CRTC 索引 + active vblank
+    （≥10 样本）+ inactive EINVAL 守卫、Driver/Firmware 双快照严格门禁、超时/信号/幂等清理；
+    fixture 独立命名空间 fixture_dmabuf_*，零权威 PASS；退出码 0/1/2/3/5。
+  - [x] tests/unit/run-dmabuf-regression-tests.sh（137 项，CI 无 /dev/dri）。
+  - [ ] 真机执行（需监督授权）并合并证据；仅当 self-import/READ/WRITE/active vblank/状态门禁全
+    PASS 且 inactive guard 按拓扑通过或被明确限定时 runtime_dmabuf_regression 升级 PASS；
+    foreign import/跨设备 GTT/V4L2/第二 GPU/长期压力/并发保持 UNVERIFIED。
+- [ ] runtime 剩余真实能力证据：modeset/热插拔/合盖、Picom GLX backend、
   音频听感确认；当前权威汇总 21 PASS / 9 SKIP / 5 UNVERIFIED。
 - [ ] 代码深度分析与测试体系重构（2026-08-21 开始）：
   - [x] 产出 code-analysis.md、frameworks-and-references.md、test-strategy.md；新增 unit 测试

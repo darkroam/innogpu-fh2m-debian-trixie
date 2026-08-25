@@ -26,6 +26,7 @@
 | 能力验证工具 | `tests/runtime/run-capability-baseline.sh`（12 能力域、35 项、枚举/执行分离）；沙箱基线 15 PASS / 19 SKIP / 1 UNVERIFIED，合并 2026-08-24 真机证据后的权威摘要为 21 PASS / 9 SKIP / 5 UNVERIFIED | [runtime 摘要](../../baselines/latest-runtime-baseline.txt)、[tests/runtime/README](../../tests/runtime/README.md)、[test-strategy](test-strategy.md) |
 | Vulkan/OpenCL 执行 | 探针 exec 模式 + 真机验证通过（2026-08-24）：Vulkan queue+fence submit+wait、OpenCL add kernel+读回逐元素校验均在 Fantasy II-M 上执行成功；`runtime_vulkan_execution`/`runtime_opencl_execution`=PASS（证据 `baselines/runtime-results-20260824.txt`）；离线失败路径测试 12 项 | [probe-vulkan-devices.c](../../tools/probe-vulkan-devices.c)、[probe-opencl-devices.c](../../tools/probe-opencl-devices.c)、[test-strategy](test-strategy.md) |
 | VA-API 实际解码 | `tools/run-vaapi-decode-test.sh --codec all` 真机执行（2026-08-24）：H.264 Main 与 HEVC Main 强制 VA-API 硬解，各 30 帧 320x240 NV12 framemd5 与软件参考逐帧 hash 一致，Driver/Firmware 状态门禁通过；`runtime_vaapi_decode`=PASS（证据 `baselines/runtime-results-20260824.txt`）；能力边界仅 Main/Main 8-bit 4:2:0 | [run-vaapi-decode-test.sh](../../tools/run-vaapi-decode-test.sh)、[test-strategy](test-strategy.md) |
+| DMA-BUF 回归工具 | `tools/run-dmabuf-regression-test.sh` 已实现（2026-08-24）：PRIME 同设备 self-import + invisible GEM READ/WRITE + vblank 守卫 + 状态门禁聚合，配套 137 项 fixture 测试；**能力仍 UNVERIFIED**（真机证据待监督授权采集；self-import 仅同设备，foreign/cross-device 不可验证） | [run-dmabuf-regression-test.sh](../../tools/run-dmabuf-regression-test.sh)、[test-strategy](test-strategy.md)、[webkit 调查](../planning/webkit-dmabuf-investigation.md) |
 
 ## 已解决问题
 

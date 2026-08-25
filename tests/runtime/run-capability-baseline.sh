@@ -328,7 +328,7 @@ record vaapi_decode SKIP "manual-execution-required: minimal H264/HEVC decode on
 # =====================================================================
 STATIC_FIX=$(grep -rl 'dma_resv_usage_rw' "$ROOT/drivers" 2>/dev/null | wc -l)
 if [[ "$STATIC_FIX" -ge 1 ]]; then record dmabuf_source_fix_present PASS; else record dmabuf_source_fix_present FAIL "dma_resv_usage_rw not in drivers/"; fi
-record dmabuf_regression SKIP "manual-execution-required: probe-pdp-invisible-read + probe-drm-vblank on device session (authorized)"
+record dmabuf_regression SKIP "manual-execution-required: bash tools/run-dmabuf-regression-test.sh on device session (authorized)"
 
 # =====================================================================
 # 10. 显示器真实输出（拓扑只读；modeset 人工）
@@ -401,7 +401,7 @@ if [[ "$MODE" == "allow-authorized" ]]; then
     printf '#   opencl_execution: gcc -O2 -o /tmp/pocl tools/probe-opencl-devices.c -ldl && /tmp/pocl exec [elements]  # context/queue + add kernel + 读回逐元素校验\n'
     printf '#   vaapi_decode:     bash tools/run-vaapi-decode-test.sh --codec all [--device /dev/dri/renderDNN] [--timeout 30]  # H264+HEVC 强制 VAAPI 解码 + 软件参考 framemd5 对比\n'
     printf '#   picom_glx:        验证 Picom GLX backend（docs/project/compositor-management.md）\n'
-    printf '#   dmabuf_regression: tools/probe-pdp-invisible-read + tools/probe-drm-vblank\n'
+    printf '#   dmabuf_regression: bash tools/run-dmabuf-regression-test.sh [--render-device NODE] [--card-device NODE]  # PRIME self-import + invisible GEM READ/WRITE + vblank guard + 状态门禁\n'
     printf '# 执行后将结果逐行写入文件，用 --results-file 合并：runtime_<name>=PASS|FAIL|SKIP|UNVERIFIED [reason=..]\n'
 fi
 

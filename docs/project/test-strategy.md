@@ -17,20 +17,21 @@
 | runtime 结果解析 | tests/unit/run-results-parser-tests.sh | 19 项严格解析、授权、重复/粘连/缺失输入、`#` 注释跳过 | 无设备，隔离 baseline | 否 |
 | Vulkan/OpenCL 探针失败路径 | tests/unit/run-exec-probes-tests.sh | 12 项编译、loader/设备失败、格式与清理 | gcc，无设备可跑 | 否 |
 | VA-API 解码控制流 | tests/unit/run-vaapi-decode-tests.sh | 52 项参数/工具/设备/身份/输入/参考/硬解/超时/真实 framemd5 格式负例/聚合/硬解参数断言/状态门禁严格解析/mktemp/TERM 清理/无残留；fixture 模式独立命名空间 fixture_*，不产出权威 PASS | 无设备（fake ffmpeg/vainfo/sysfs/status），隔离 baseline | 否 |
+| DMA-BUF 回归聚合 | tests/unit/run-dmabuf-regression-tests.sh | 137 项参数/设备发现与身份/self-import（含 create_size 与 CLOEXEC 严格断言）/READ 逐轮唯一性解析/性能门槛/WRITE verify/topology 多 CRTC/vblank（active 逐样本校验：顺序 + delta/kernel_delta 数值自洽 + uint32 回绕 + summary 指标与样本重算交叉验证 + 每 CRTC 独立证据；inactive 全 CRTC 守卫：success=0 时指标全零）/状态门禁（增减均拒）/内核日志门禁（来源 innogpu/pvr/drm/gpu/dma_buf/dma_resv/fence + 严重词扩充，GPU hang/dma_buf timeout 阻断 PASS）/mktemp/超时/TERM 清理/汇总 + 真实 C 探针契约测试（含生产构建 fixture 钩子编译剔除门禁与正常路径 fd_leak=unknown）；fixture 模式独立命名空间 fixture_dmabuf_*，零权威 dmabuf_* 行 | 无设备（fake sysfs/dev/探针 + 真实探针 FIFO 路径），隔离 baseline | 否 |
 | runtime 能力基线 | tests/runtime/run-capability-baseline.sh | 12 能力域、35 项；默认只读，人工结果显式合并 | 沙箱/真机授权 | 授权项可能有副作用 |
 
 另：`scripts/check-docs.sh`（静态，链接/登记/隐私/版本/边界）、`check-source-parity.sh`（只读 parity）、
 `compare-oracle-candidates.sh` + `compare-module-symbols.sh`（integration oracle）、
 `check-deb-dkms-build.sh`（integration 离线编译，需本机内核头）。
 
-**盘点结论**：unit、fixture、static、integration 和 runtime 五层均已有入口；CI/沙箱套件当前 123 项
+**盘点结论**：unit、fixture、static、integration 和 runtime 五层均已有入口；CI/沙箱套件当前 260 项
 全部通过。主要缺口是完整 DKMS integration 依赖本机 headers，以及 5 个 runtime 能力仍缺真机证据。
 
 ## 二、分层定义与映射
 
 | 层 | 定义 | 现有 | 缺口 |
 | --- | --- | --- | --- |
-| unit | manifest/版本排序/路径/哈希/配置解析/执行探针/VA-API 解码控制流的纯函数用例 | tests/unit/ 6 个入口，104 项 | 构建器 headers/helper 失败 fixture 待补 |
+| unit | manifest/版本排序/路径/哈希/配置解析/执行探针/VA-API 解码/DMA-BUF 回归控制流的纯函数用例 | tests/unit/ 7 个入口，241 项 | 构建器 headers/helper 失败 fixture 待补 |
 | fixture | 恶意路径/缺失/坏哈希/损坏链接/重复项 | tests/fixtures/ + 脚本隔离构造 | 覆盖随新输入边界持续扩展 |
 | static | shell 语法/脚本登记/文档链接/隐私/构建器输入 | check-docs.sh、fbterm 静态 | 语义与法律授权仍需人工审查 |
 | integration | staging/DKMS 离线/包边界/可复现/oracle | 包边界、oracle、parity、离线编译 | 可复现双构建入 CI 需内核头（本机可跑） |
@@ -84,9 +85,9 @@
 - 有副作用测试必须显式参数确认；临时文件必须 `mktemp` + `trap` 清理。
 - 离线/沙箱结果与真机结果**分开保存**（`baselines/` 紧凑标记 + 版本化审计日志）。
 
-当前 CI/沙箱套件共 123 项：fbterm_static×1、picom_install×3、picom_session×3、
+当前 CI/沙箱套件共 260 项：fbterm_static×1、picom_install×3、picom_session×3、
 xdisplay_install×5、package_boundary×7、manifest×8、version×6、extractor×7、results_parser×19、
-exec_probes×12、vaapi_decode×52。
+exec_probes×12、vaapi_decode×52、dmabuf_regression×137。
 
 ## 六、覆盖清单（5.md 要求逐项落实）
 
@@ -170,13 +171,29 @@ exec_probes×12、vaapi_decode×52。
   Constrained Baseline、HEVC Main10、编码、播放/长时/并发/4K/性能功耗均未验证；枚举
   profile/entrypoint 或 ffmpeg 退出 0 不等于实际解码成功；测试：tests/unit/run-vaapi-decode-tests.sh
   （52 项，fake fixture，CI 无 /dev/dri）。
+- DMA-BUF 回归（2026-08-24，~/7.md）：`tools/run-dmabuf-regression-test.sh` 聚合入口，编译并运行
+  四探针，判定链 = 设备发现/身份（动态 1ec8:9810 render+card 同源 BDF）→ PRIME 同设备 self-import
+  （CREATE_DUMB→HANDLE_TO_FD→FD_TO_HANDLE→逆序释放，CLOEXEC 验证，多轮无 fd 泄漏）→ invisible GEM
+  READ（严格输出解析 + READ munmap 性能门槛：max(system_ms) ≤ 默认 40ms，区分 p22 71.9-119.4ms 与
+  修复后 1.7-2.6ms，可覆盖但记录）→ WRITE+readback（每轮 verify=pass）→ topology 动态取 active/inactive
+  CRTC 资源索引（非 XRandR 猜索引）→ active vblank（≥10 相对 wait、全成功、序号推进、无 fast
+  return/nonadvancing）→ inactive vblank 守卫（快速 EINVAL=22 通过，timeout/错误 errno/过慢 FAIL，无
+  inactive 时诚实 SKIP）→ Driver/Firmware 双快照严格门禁（8 字段逐项比较）；退出码 0=PASS 1=子项/状态
+  FAIL 2=参数/工具/编译或整体 SKIP 3=设备/能力缺失或整体 UNVERIFIED 5=超时/清理；fixture 模式独立命名
+  空间 fixture_dmabuf_*/fixture_tests_*，零权威 dmabuf_* 行；`runtime_dmabuf_regression` 仅当真机
+  self-import/READ/WRITE/active vblank/状态门禁全 PASS 且 inactive guard 按拓扑通过或被明确限定时升级
+  PASS，当前仍 UNVERIFIED；**能力边界**：self-import 仅同设备，foreign import/跨设备 GTT export/V4L2/
+  第二 GPU/长期压力/并发仍 UNVERIFIED；探针：probe-dmabuf-self-import.c（新）、probe-pdp-invisible-read.c、
+  probe-drm-topology.c、probe-drm-vblank.c（失败行加 errno）；测试：tests/unit/run-dmabuf-regression-tests.sh
+  （137 项，fake fixture，CI 无 /dev/dri）。
 
 ## 十、风险与未覆盖
 
 - 完整 DKMS 构建需本机内核头 → CI 无法跑 integration 编译（标记 SKIP 而非 PASS）。
 - VA-API 实际解码仅覆盖 H.264 Main/HEVC Main（30 帧 320x240 NV12 输出校验）；H.264 High/
-  Constrained Baseline、HEVC Main10、VA-API 编码、DMA-BUF 回归、modeset/热插拔/合盖、Picom GLX
-  backend、音频听感及多硬件矩阵仍为 UNVERIFIED；枚举或命令退出成功不能替代对应行为证据。
+  Constrained Baseline、HEVC Main10、VA-API 编码、DMA-BUF 回归（工具已实现，真机证据待授权采集；
+  同设备 self-import 之外路径不可验证）、modeset/热插拔/合盖、Picom GLX backend、音频听感及多硬件
+  矩阵仍为 UNVERIFIED；枚举或命令退出成功不能替代对应行为证据。
 - runtime 脚本已落地；新增有副作用的真机项仍需监督授权，并通过结果文件合并审计证据。
 
 ## 证据索引

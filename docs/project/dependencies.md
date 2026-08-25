@@ -48,6 +48,14 @@ runtime 能力基线另有可选诊断依赖：`pciutils`（`lspci`）、`drm-in
 `vulkan-tools`（`vulkaninfo`）、`clinfo`、`vainfo` 所属发行版包及 `wpctl`。这些工具缺失时对应能力项
 必须输出 `SKIP reason=tool_missing:<tool>`，但不影响基础驱动构建、安装、TTY 或 Xorg 启动。
 
+DMA-BUF 回归验证（`tools/run-dmabuf-regression-test.sh`）的 runtime 可选依赖：`gcc` + DRM 头文件
+（`/usr/include/drm/drm.h`，Debian Trixie 上属 `linux-libc-dev`）编译四个 C 探针
+（`probe-dmabuf-self-import.c`、`probe-pdp-invisible-read.c`、`probe-drm-topology.c`、
+`probe-drm-vblank.c`）、`timeout`（coreutils）、`grep`（包名 `grep`）、`awk`（Debian 上包名
+`mawk`/`gawk`）。缺失分级：
+`gcc` 或头文件缺失 → `dmabuf_tool=fail`（退出码 2）；仅影响真机回归验证的诊断能力，不进入驱动
+deb，也不影响基础安装。
+
 VA-API 实际解码验证（`tools/run-vaapi-decode-test.sh`）的 runtime 可选依赖：`ffmpeg`（需编译支持
 `--enable-vaapi`、`libx264`、`libx265`）、`vainfo`（Debian Trixie 包名 `vainfo`，源包 `libva-utils`）。
 缺失分级：`ffmpeg`/`vainfo` 缺失 → `vaapi_decode_tool=fail`（退出码 2）；缺少 `libx264`/`libx265`

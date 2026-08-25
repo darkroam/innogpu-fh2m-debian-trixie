@@ -152,8 +152,10 @@ int main(int argc, char **argv)
 		wait_ms = elapsed_ms(&start, &end);
 		if (ret) {
 			failures++;
-			printf("%u - %.3f - - - %s:%s\n", i + 1, wait_ms,
-			       wait_timed_out ? "timeout" : "error", strerror(saved_errno));
+			/* errno=%d 供机器解析（inactive CRTC 守卫期望 error + errno=22/EINVAL） */
+			printf("%u - %.3f - - - %s:%s errno=%d\n", i + 1, wait_ms,
+			       wait_timed_out ? "timeout" : "error", strerror(saved_errno),
+			       saved_errno);
 			continue;
 		}
 

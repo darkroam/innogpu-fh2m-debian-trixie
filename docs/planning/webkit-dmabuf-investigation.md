@@ -277,6 +277,21 @@ GEM，执行 READ CPU_PREP、逐页读取、CPU_FINI 和 `munmap`。它不加载
 - 预取/批量候选必须提供随机页、顺序页、重复映射、内存峰值和 WRITE 回归数据；完成前不得安装
   或重启。
 
+## DMA-BUF 回归入口（2026-08-24，~/7.md）
+
+- `tools/run-dmabuf-regression-test.sh` 聚合：设备动态发现（1ec8:9810 render/card 同源 BDF）→
+  PRIME 同设备 self-import（新探针 `tools/probe-dmabuf-self-import.c`，CREATE_DUMB→HANDLE_TO_FD→
+  FD_TO_HANDLE→逆序释放，CLOEXEC 验证，多轮 fd 无泄漏）→ invisible GEM READ/WRITE+verify（READ
+  munmap 性能门槛默认 max≤40ms system CPU，依据本文 p22 基线 71.9-119.4ms 与修复后 1.7-2.6ms）→
+  topology 动态取 active/inactive CRTC 资源索引（不按 XRandR 输出名猜索引）→ active vblank 相对 wait
+  ≥10 样本全成功无 fast return/nonadvancing → inactive CRTC 守卫（快速 EINVAL=22，timeout/错误 errno/
+  过慢 FAIL，无 inactive 诚实 SKIP）→ Driver/Firmware 双快照严格门禁。
+- **能力边界（不冒充）**：self-import 只证明同设备 PRIME 快路径；foreign import（其他 exporter）、
+  跨设备 GTT export、V4L2/第二 GPU、长期压力与并发流仍 UNVERIFIED；vblank 是独立同步子项，不是
+  DMA-BUF export/import 证据；invisible GEM READ/WRITE 是 PDP 私有语义，不是 DMA-BUF 生命周期测试。
+- fixture 测试 137 项（tests/unit/run-dmabuf-regression-tests.sh），CI 无 /dev/dri 可跑；真机证据待
+  监督授权后采集，`runtime_dmabuf_regression` 当前保持 UNVERIFIED。
+
 ## 风险与回退
 
 - 静态审计和只读 ioctl 探针无需重启，失败时直接停止测试进程。
