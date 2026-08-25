@@ -161,7 +161,11 @@ if [[ -n "${FAKE_TOP_CRTC_LIST:-}" ]]; then
     IFS=, read -ra TOP_ENTRIES <<<"$FAKE_TOP_CRTC_LIST"
     for entry in "${TOP_ENTRIES[@]}"; do
         i="${entry%%=*}"; st="${entry##*=}"
-        echo "  index=$i id=$((10+i)) active=$st fb=1 position=0,0 size=1920x1080 mode=1920x1080 refresh=60"
+        if [[ "$st" == "yes" && "${FAKE_TOP_UNNAMED_MODE:-0}" == "1" ]]; then
+            echo "  index=$i id=$((10+i)) active=$st fb=1 position=0,0 size=1920x1080 mode=<unnamed> refresh=60"   # 真实形态：mode_valid=yes 但 mode 名称为空
+        else
+            echo "  index=$i id=$((10+i)) active=$st fb=1 position=0,0 size=1920x1080 mode=1920x1080 refresh=60"
+        fi
     done
     echo "Connectors:"
     echo "  type=10 type_id=0 id=5 status=connected mm=597x336 modes=1 encoder=3 crtc_id=11 crtc_index=1"
@@ -176,7 +180,13 @@ echo "CRTCs:"
 if [[ "${FAKE_TOP_BAD:-0}" == "1" ]]; then
     echo "  index=1 id=11 active=maybe fb=1"
 else
-    if [[ -n "${FAKE_TOP_ACTIVE:-}" ]]; then for i in ${FAKE_TOP_ACTIVE//,/ }; do echo "  index=$i id=$((10+i)) active=yes fb=1 position=0,0 size=1920x1080 mode=1920x1080 refresh=60"; done; fi
+    if [[ -n "${FAKE_TOP_ACTIVE:-}" ]]; then for i in ${FAKE_TOP_ACTIVE//,/ }; do
+        if [[ "${FAKE_TOP_UNNAMED_MODE:-0}" == "1" ]]; then
+            echo "  index=$i id=$((10+i)) active=yes fb=1 position=0,0 size=1920x1080 mode=<unnamed> refresh=60"   # 真实形态：active 但 mode 名称为空
+        else
+            echo "  index=$i id=$((10+i)) active=yes fb=1 position=0,0 size=1920x1080 mode=1920x1080 refresh=60"
+        fi
+    done; fi
     if [[ -n "${FAKE_TOP_INACTIVE:-}" ]]; then for i in ${FAKE_TOP_INACTIVE//,/ }; do echo "  index=$i id=$((10+i)) active=no fb=0 position=0,0 size=0x0 mode=- refresh=0"; done; fi
 fi
 echo "Connectors:"
@@ -433,6 +443,27 @@ run_rc top_dup_index 1 "$GOOD FAKE_TOP_CRTC_LIST=0=no,1=yes,1=yes FAKE_TOP_HDR_C
 run_rc top_missing_index 1 "$GOOD FAKE_TOP_CRTC_LIST=0=no,2=yes FAKE_TOP_HDR_CRTCS=3" --size 7646720
 run_rc top_out_of_range_index 1 "$GOOD FAKE_TOP_CRTC_LIST=0=no,1=yes,9=yes FAKE_TOP_HDR_CRTCS=3" --size 7646720
 run_rc top_dup_header 1 "$GOOD FAKE_TOP_CRTC_LIST=0=no,1=yes,2=yes FAKE_TOP_HDR_CRTCS=3 FAKE_TOP_DUP_HEADER=1" --size 7646720
+# 真实形态：active CRTC mode_valid=yes 但 mode 名称为空（mode=<unnamed>）-> 解析通过且 active 仍执行 vblank
+O="$runtime/top-unnamed.out"
+env $GOOD FAKE_TOP_ACTIVE=1 FAKE_TOP_INACTIVE=0,2 FAKE_VBL_INACTIVE_CRTCS=0,2 FAKE_TOP_UNNAMED_MODE=1 TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 > "$O" 2>&1; rc=$?
+if [ "$rc" -eq 0 ] && grep -q 'fixture_dmabuf_vblank_active=PASS reason=active_crtcs_tested=1-all-ok' "$O"; then pass top_unnamed_mode_active_runs_vblank; else fail top_unnamed_mode_active_runs_vblank "rc=$rc out=$(grep -E 'vblank_active|overall' "$O" | head -2)"; fi
+# 探针输出契约单元级：直接编译生产 C 探针（fixture 宏构建），验证三态选择——
+# inactive -> mode=-；active 具名 -> 保留原 mode 名称；active 无名 -> <unnamed>
+TOPO_BIN="$runtime/topo-real"
+TOPO_OUT="$runtime/topo-c-contract.out"
+if gcc -std=c11 -Wall -Wextra -Werror -O2 -DINNOGPU_DMABUF_FIXTURE_HOOKS -o "$TOPO_BIN" "$ROOT/tools/probe-drm-topology.c" 2>"$runtime/cc-topo.log"; then
+    INNOGPU_DMABUF_TOPOLOGY_FIXTURE=1 "$TOPO_BIN" /dev/dri/card0 > "$TOPO_OUT" 2>&1
+    if grep -q 'index=0 id=10 active=no.*mode=- refresh=0' "$TOPO_OUT" \
+       && grep -q 'index=1 id=11 active=yes.*mode=1920x1080 refresh=60' "$TOPO_OUT" \
+       && grep -q 'index=2 id=12 active=yes.*mode=<unnamed> refresh=60' "$TOPO_OUT" \
+       && ! grep -qE 'mode= refresh=' "$TOPO_OUT"; then
+        pass top_unnamed_mode_output_contract
+    else
+        fail top_unnamed_mode_output_contract "out=$(grep '^  index=' "$TOPO_OUT" | head -3)"
+    fi
+else
+    fail top_unnamed_mode_output_contract "gcc: $(head -2 "$runtime/cc-topo.log")"
+fi
 
 # ================= 9. active vblank =================
 run_rc vbl_active_timeout 1 "$GOOD FAKE_VBL_OK=5" --size 7646720

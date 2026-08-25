@@ -91,7 +91,7 @@
     max≤40ms，依据 p22 71.9-119.4ms vs 修复后 1.7-2.6ms）、topology 动态 CRTC 索引 + active vblank
     （≥10 样本）+ inactive EINVAL 守卫、Driver/Firmware 双快照严格门禁、超时/信号/幂等清理；
     fixture 独立命名空间 fixture_dmabuf_*，零权威 PASS；退出码 0/1/2/3/5。
-  - [x] tests/unit/run-dmabuf-regression-tests.sh（137 项，CI 无 /dev/dri）。
+  - [x] tests/unit/run-dmabuf-regression-tests.sh（139 项，CI 无 /dev/dri）。
   - [ ] 真机执行（需监督授权）并合并证据；仅当 self-import/READ/WRITE/active vblank/状态门禁全
     PASS 且 inactive guard 按拓扑通过或被明确限定时 runtime_dmabuf_regression 升级 PASS；
     foreign import/跨设备 GTT/V4L2/第二 GPU/长期压力/并发保持 UNVERIFIED。

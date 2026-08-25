@@ -36,6 +36,62 @@ static const char *connection_name(uint32_t connection)
 	}
 }
 
+/* CRTC 行输出契约（真实 ioctl 路径与 fixture 契约测试共用）：
+ * 三态 mode 名选择——inactive -> "-"；active 且 mode 名称非空 -> 原值；
+ * active 且 mode 名称为空 -> 稳定占位 "<unnamed>"（空名称绝不产生空字段）。 */
+static void print_crtc_line(uint32_t index, const struct drm_mode_crtc *crtc)
+{
+	const char *mode_name =
+		!crtc->mode_valid ? "-"
+		: crtc->mode.name[0] != '\0' ? crtc->mode.name
+		: "<unnamed>";
+
+	printf("  index=%u id=%u active=%s fb=%u position=%u,%u "
+	       "size=%ux%u mode=%s refresh=%u\n",
+	       index, crtc->crtc_id, crtc->mode_valid ? "yes" : "no", crtc->fb_id,
+	       crtc->x, crtc->y, crtc->mode.hdisplay, crtc->mode.vdisplay,
+	       mode_name,
+	       crtc->mode_valid ? crtc->mode.vrefresh : 0);
+}
+
+#ifdef INNOGPU_DMABUF_FIXTURE_HOOKS
+/* 契约测试（仅测试构建，-DINNOGPU_DMABUF_FIXTURE_HOOKS）：当设置
+ * INNOGPU_DMABUF_TOPOLOGY_FIXTURE=1 时跳过真实 ioctl，用伪造 CRTC 数据直接
+ * 驱动 print_crtc_line 的三态选择（inactive/-、active 具名、active 无名），
+ * 验证生产实现本身。生产构建不定义该宏，环境变量无任何效果。 */
+static int fixture_crtc_contract(void)
+{
+	struct drm_mode_crtc crtcs[3] = {0};
+	uint32_t ids[3] = {10, 11, 12};
+
+	/* inactive：mode_valid=0 -> mode=- */
+	crtcs[0].crtc_id = ids[0];
+	crtcs[0].mode_valid = 0;
+	/* active 且具名 -> 保留原 mode 名称 */
+	crtcs[1].crtc_id = ids[1];
+	crtcs[1].mode_valid = 1;
+	crtcs[1].fb_id = 1;
+	crtcs[1].mode.hdisplay = 1920;
+	crtcs[1].mode.vdisplay = 1080;
+	snprintf(crtcs[1].mode.name, DRM_DISPLAY_MODE_LEN, "1920x1080");
+	crtcs[1].mode.vrefresh = 60;
+	/* active 且 mode 名称为空 -> <unnamed> */
+	crtcs[2].crtc_id = ids[2];
+	crtcs[2].mode_valid = 1;
+	crtcs[2].fb_id = 1;
+	crtcs[2].mode.hdisplay = 1920;
+	crtcs[2].mode.vdisplay = 1080;
+	crtcs[2].mode.name[0] = '\0';
+	crtcs[2].mode.vrefresh = 60;
+
+	printf("device=fixture crtcs=3 connectors=0 encoders=0\n");
+	printf("CRTCs:\n");
+	for (uint32_t i = 0; i < 3; i++)
+		print_crtc_line(i, &crtcs[i]);
+	return 0;
+}
+#endif
+
 int main(int argc, char **argv)
 {
 	const char *device = argc > 1 ? argv[1] : "/dev/dri/card0";
@@ -52,6 +108,11 @@ int main(int argc, char **argv)
 		fprintf(stderr, "usage: %s [card-device]\n", argv[0]);
 		return 2;
 	}
+
+#ifdef INNOGPU_DMABUF_FIXTURE_HOOKS
+	if (getenv("INNOGPU_DMABUF_TOPOLOGY_FIXTURE"))
+		return fixture_crtc_contract();
+#endif
 
 	fd = open(device, O_RDWR | O_CLOEXEC);
 	if (fd < 0) {
@@ -105,12 +166,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		printf("  index=%u id=%u active=%s fb=%u position=%u,%u "
-		       "size=%ux%u mode=%s refresh=%u\n",
-		       i, crtc.crtc_id, crtc.mode_valid ? "yes" : "no", crtc.fb_id,
-		       crtc.x, crtc.y, crtc.mode.hdisplay, crtc.mode.vdisplay,
-		       crtc.mode_valid ? crtc.mode.name : "-",
-		       crtc.mode_valid ? crtc.mode.vrefresh : 0);
+		print_crtc_line(i, &crtc);
 	}
 
 	printf("Connectors:\n");

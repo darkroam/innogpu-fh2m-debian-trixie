@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | `patch-gpupll-object.py` | 构建期对象变换 | 对 Deepin 202504 的 `innogpu.o_shipped` 执行严格单点字节替换；只接受唯一旧序列或已变换状态，其他载荷立即失败 |
 | `probe-egl-gbm.c` | 最小 C 探针 | 在指定用户态库环境中创建 GBM device 和 EGL/GLES2 context，报告 backend、renderer 与基本绘制错误，不修改系统配置 |
-| `probe-drm-topology.c` | 只读 KMS 探针 | 报告 DRM connector 物理尺寸、encoder、底层 CRTC ID/索引和 active mode，用于核对 WebKit 的 monitor 匹配结果；不 modeset |
+| `probe-drm-topology.c` | 只读 KMS 探针 | 报告 DRM connector 物理尺寸、encoder、底层 CRTC ID/索引和 active mode，用于核对 WebKit 的 monitor 匹配结果；不 modeset。输出契约：active 但内核未提供 mode 名称时 `mode=` 输出稳定占位 `<unnamed>`（如 `mode=<unnamed> refresh=60`），inactive 输出 `mode=-`；空名称绝不产生空字段 |
 | `probe-drm-vblank.c` | 只读 DRM ioctl 探针 | 对指定 CRTC 重复执行带硬超时的相对 vblank wait，记录阻塞时间、序号和内核时间戳；失败行附 `errno=%d` 供 inactive-CRTC 守卫机器解析（预期 EINVAL=22）；不创建 framebuffer、不 modeset |
 | `probe-dmabuf-self-import.c` | DRM PRIME 同设备探针 | 创建 GEM（dumb-buffer 路径）→ `DRM_IOCTL_PRIME_HANDLE_TO_FD` 导出 DMA-BUF → 同一 innogpu 设备 `PRIME_FD_TO_HANDLE` 导入（自导入可返回同 handle，恰好关闭一次）→ 每轮逆序释放 fd/导入 handle/原 handle；导出请求 `DRM_CLOEXEC` 并**严格断言返回 fd 带 FD_CLOEXEC**（缺失即 FAIL，不自补救）；多轮后 `/proc/self/fd` 计数无泄漏。退出码 0=通过 1=ioctl/校验失败 2=参数 3=设备/能力缺失（stdout 输出 `capability=no-dumb-buffer`/`no-prime-export`/`no-prime-import`）。只验证同设备 self-import，不涉及 foreign import/跨设备 GTT |
 | `probe-pdp-invisible-read.c` | 最小 PDP GEM 探针 | 创建单个 invisible GEM；READ 模式测量逐页读取和 munmap，WRITE 模式逐页写入、解除映射并以 READ mapping 验证回写；支持可选 page stride 测量稀疏访问；不提交 GPU 工作、不 modeset |
