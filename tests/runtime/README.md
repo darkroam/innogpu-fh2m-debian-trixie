@@ -47,7 +47,9 @@ bash tests/runtime/run-capability-baseline.sh \
 
 **基线生成时机**：`baselines/latest-runtime-baseline.txt` 只允许从**干净提交**重新生成（`tested_commit` 必须
 对应被验证的已提交代码状态，见上）；工具代码尚未提交时不得用脏工作树重新生成并宣称某个 commit。
-DMA-BUF 回归人工命令指向聚合入口的基线更新，待工具代码提交后从干净提交再生成并单独封存。
+DMA-BUF 聚合入口（`run-dmabuf-regression-test.sh`）随 2026-08-25 提交，基线已从该干净提交重新生成并
+封存（`tested_commit=210b274`）；人工命令指向聚合入口，`runtime_dmabuf_regression` 保持 UNVERIFIED
+（真机证据待授权采集）。
 
 ## 环境判定
 

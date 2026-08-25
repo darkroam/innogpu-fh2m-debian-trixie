@@ -145,7 +145,7 @@ fi
 require_text baselines/latest-runtime-baseline.txt 'runtime_vulkan_execution=PASS'
 require_text baselines/latest-runtime-baseline.txt 'runtime_opencl_execution=PASS'
 require_text baselines/latest-runtime-baseline.txt 'runtime_vaapi_decode=PASS'
-require_text baselines/latest-runtime-baseline.txt 'tools/probe-pdp-invisible-read + tools/probe-drm-vblank'   # DMA-BUF 回归人工命令（当前 HEAD 已提交状态；聚合入口待工具代码提交后从干净提交再生成基线）
+require_text baselines/latest-runtime-baseline.txt 'bash tools/run-dmabuf-regression-test.sh'   # DMA-BUF 回归人工命令指向聚合入口（工具代码已提交后从干净提交重新生成的基线）
 
 # The source deb identity is owned by the manifest and must be repeated exactly
 # in the user-facing acquisition documents.

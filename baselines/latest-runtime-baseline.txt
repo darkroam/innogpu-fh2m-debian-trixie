@@ -1,5 +1,5 @@
-# runtime-capability-baseline (4.0.0-i1) 20260824-174534 mode=allow-authorized
-# kernel=6.12.101+deb13-amd64 package=4.0.0-i1 pci_bdf=0000:02:00.0(1) tested_commit=c7b3a40ef4fe683afcb5c44fa883085da14c5401 root=no dri=no fb=no tty=no x=yes
+# runtime-capability-baseline (4.0.0-i1) 20260825-163801 mode=allow-authorized
+# kernel=6.12.101+deb13-amd64 package=4.0.0-i1 pci_bdf=0000:02:00.0(1) tested_commit=210b2740a9e49de3910cb11feab02baeaa239b01 root=no dri=no fb=no tty=no x=yes
 # tool_lspci=present
 # tool_drm_info=present
 # tool_glxinfo=present
@@ -22,7 +22,7 @@
 #   opencl_execution: gcc -O2 -o /tmp/pocl tools/probe-opencl-devices.c -ldl && /tmp/pocl exec [elements]  # context/queue + add kernel + 读回逐元素校验
 #   vaapi_decode:     bash tools/run-vaapi-decode-test.sh --codec all [--device /dev/dri/renderDNN] [--timeout 30]  # H264+HEVC 强制 VAAPI 解码 + 软件参考 framemd5 对比
 #   picom_glx:        验证 Picom GLX backend（docs/project/compositor-management.md）
-#   dmabuf_regression: tools/probe-pdp-invisible-read + tools/probe-drm-vblank
+#   dmabuf_regression: bash tools/run-dmabuf-regression-test.sh [--render-device NODE] [--card-device NODE]  # PRIME self-import + invisible GEM READ/WRITE + vblank guard + 状态门禁
 # 执行后将结果逐行写入文件，用 --results-file 合并：runtime_<name>=PASS|FAIL|SKIP|UNVERIFIED [reason=..]
 # evidence_merged=1 source=runtime-results-20260824.txt (manual real-device results; env metadata above reflects collection environment only)
 runtime_pci_enumeration=PASS
