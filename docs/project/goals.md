@@ -67,8 +67,8 @@
 ### 待办
 
 1. **许可证发布阻断**：确认 confidential 源码再分发权、补齐许可证文本并完成逐文件清单；
-2. **runtime 剩余能力**：DMA-BUF 回归、modeset/热插拔/合盖、Picom backend、
-   音频听感和跨硬件矩阵；
+2. **runtime 剩余能力**：modeset/热插拔/合盖、Picom backend、音频听感和跨硬件矩阵；
+   （DMA-BUF 回归已于 2026-08-26 真机 PASS，不再列入待办）
 3. **性能优化**：invisible READ 批量预取（候选 4，需先设计）；apphint 调优（候选 5）；
    上游 bugfix 移植（候选 6，依赖开源 DDK 可得性）；用户态调用画像（候选 8）；
 4. **能力深挖**：DVFS/功耗实测与调参（候选 7）、CORE_ID/BVNC 直接读取、私有 codec 编码接口验证、

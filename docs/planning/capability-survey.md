@@ -8,7 +8,12 @@
   交叉验证），结果见"运行时结果"节。
 - Vulkan/OpenCL 最小执行已由独立探针验证；VA-API 已确认 profile/entrypoint 枚举，且 H.264 Main 与
   HEVC Main 实际码流解码验证 PASS（30 帧 320x240 NV12 framemd5 输出校验）；H.264 High/Constrained
-  Baseline、HEVC Main10 仅枚举未执行。其余 DVFS/功耗、CORE_ID 和私有 codec 编码接口见"运行时待办"。
+  Baseline、HEVC Main10 仅枚举未执行。
+- **DMA-BUF 回归**（2026-08-26 root 权限真机执行）：`tools/run-dmabuf-regression-test.sh` 同设备
+  PRIME self-import、invisible GEM READ/WRITE、vblank 守卫与状态/日志门禁全部 PASS，`runtime_dmabuf_regression`
+  升级为 PASS（证据 `baselines/runtime-results-20260824.txt`）；边界：仅同设备 self-import，
+  foreign/cross-device/GBM/V4L2/长期压力/并发未验证。
+- 其余 DVFS/功耗、CORE_ID 和私有 codec 编码接口见"运行时待办"。
 - 原始探针输出保留在 `baselines/capability-survey-*.log`（被 .gitignore 忽略），不进入 Git；
   本文件只记录精简结论。
 
