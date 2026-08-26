@@ -1,5 +1,5 @@
-# runtime-capability-baseline (4.0.0-i1) 20260826-094847 mode=allow-authorized
-# kernel=6.12.101+deb13-amd64 package=4.0.0-i1 pci_bdf=0000:02:00.0(1) tested_commit=86fe2cdd32beb538ed30081782fa88abb0d418b2 root=no dri=no fb=no tty=no x=yes
+# runtime-capability-baseline (4.0.0-i1) 20260826-101028 mode=allow-authorized
+# kernel=6.12.101+deb13-amd64 package=4.0.0-i1 pci_bdf=0000:02:00.0(1) tested_commit=e1e7502b457a52d5b442e60b3ceeac2acb3aaaf4 root=no dri=no fb=no tty=no x=yes
 # tool_lspci=present
 # tool_drm_info=present
 # tool_glxinfo=present
@@ -52,7 +52,7 @@ runtime_vaapi_enumeration=SKIP reason=vainfo init failed without /dev/dri; run o
 runtime_vaapi_encode=SKIP reason=cannot verify encode without vaapi init
 runtime_vaapi_decode=PASS reason=real-device-H264Main+HEVCMain-30frames-320x240-NV12-framemd5-hashes-match-driver-firmware-OK-device=1ec8:9810
 runtime_dmabuf_source_fix_present=PASS
-runtime_dmabuf_regression=UNVERIFIED reason=probe-not-run
+runtime_dmabuf_regression=PASS reason=same-device-self-import-rounds=3-fd_cloexec=yes-fd_leak=no-invisible-read-max_munmap_ms=3.838-write-verify=3-vblank-active-ok-vblank-inactive-einval-fast-status-ok-kernel_log=clean-device=1ec8:9810
 runtime_display_topology=PASS
 runtime_display_modeset=UNVERIFIED reason=connected-output-only-no-mode-switch-test
 runtime_picom_running=SKIP reason=picom not running in this session
@@ -60,5 +60,5 @@ runtime_picom_glx=UNVERIFIED reason=process-running-backend-not-confirmed
 runtime_audio_cards_enumeration=PASS
 runtime_audio_default_sink=PASS
 runtime_audio_playback=UNVERIFIED reason=command-completed-audible-output-not-confirmed
-runtime_total=35 runtime_passed=21 runtime_failed=0 runtime_skipped=9 runtime_unverified=5
+runtime_total=35 runtime_passed=22 runtime_failed=0 runtime_skipped=9 runtime_unverified=4
 runtime_overall=UNVERIFIED

@@ -46,7 +46,7 @@
    oracle 对比、4.0.0-i1 实机验收与 p27 回退演练；
 6. **Phase 5 第一步**（2026-08-21）：旧构建器和 wrapper 标记 deprecated，当前入口切换为新构建器；
 7. **runtime 测试第一阶段**（2026-08-24）：35 项能力基线落地，Vulkan queue 提交、OpenCL kernel
-   读回与 VA-API H.264/HEVC Main 实际解码在真机 PASS，当前汇总 21 PASS / 9 SKIP / 5 UNVERIFIED。
+   读回、VA-API H.264/HEVC Main 实际解码与 DMA-BUF 同设备回归在真机 PASS，当前汇总 22 PASS / 9 SKIP / 4 UNVERIFIED。
 
 ### 迁移阶段状态
 

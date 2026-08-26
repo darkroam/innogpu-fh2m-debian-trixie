@@ -44,12 +44,12 @@
 | 1 | PCI/内核驱动 | `lspci`、dkms status、modinfo vermagic | dmesg PVR/固件/错误计数 | OBSERVED PASS（Phase 4） |
 | 2 | DRM/KMS | `ls /dev/dri`、drm_info、sysfs | modeset/热插拔/分辨率切换 | 节点/拓扑 PASS；modeset 矩阵 UNVERIFIED |
 | 3 | fbdev/控制台 | `ls /dev/fb0`、fb ioctl | 真实 VT fbterm 绘制/清屏/重入 | OBSERVED PASS（历史 VT） |
-| 4 | EGL/GBM/DRI | tools/probe-egl-gbm、probe-x11-egl-gles2 | buffer 分配/DMA-BUF 导入导出 | EGL/X11 PASS；GBM/DMA-BUF 专项 UNVERIFIED |
+| 4 | EGL/GBM/DRI | tools/probe-egl-gbm、probe-x11-egl-gles2 | buffer 分配/DMA-BUF 导入导出 | EGL/X11 PASS；GBM 专项 UNVERIFIED；DMA-BUF 同设备导入 PASS（跨设备/GBM 导入 UNVERIFIED） |
 | 5 | OpenGL/GLX/GLES | `glxinfo`/check-desktop-hwgl | 最小 GL 程序（非 llvmpipe） | OBSERVED PASS（4.3 core/ES 3.2） |
 | 6 | Vulkan | tools/probe-vulkan-devices | instance/device/queue + command submit/fence wait | 枚举及最小执行 PASS；实际渲染未覆盖 |
 | 7 | OpenCL/计算 | tools/probe-opencl-devices | 最小 kernel/buffer 读写与逐元素校验 | 枚举及最小执行 PASS |
 | 8 | 视频 | tools/probe-vaapi / vainfo / tools/run-vaapi-decode-test.sh | 固定 H264/HEVC 样本解码与输出校验 | profile 枚举 PASS；H.264 Main+HEVC Main 实际解码 PASS；无 VA encode entrypoint |
-| 9 | DMA-BUF/同步 | 静态审计（patch-023/025/027） | DRI3/PRIME、自导入、fence、失败路径 | Phase 4 自导入 PASS；专项 runtime 回归 UNVERIFIED |
+| 9 | DMA-BUF/同步 | 静态审计（patch-023/025/027）+ run-dmabuf-regression-test.sh | DRI3/PRIME、自导入、fence、失败路径 | Phase 4 自导入 PASS；专项 runtime 回归 PASS（2026-08-26 真机，同设备）；foreign/跨设备/V4L2 仍 UNVERIFIED |
 | 10 | 显示输出 | xrandr/DRM 拓扑交叉核对 | 内置屏/外接/插拔/合盖恢复 | 当前 HDMI 拓扑 PASS；切换/热插拔/合盖 UNVERIFIED |
 | 11 | 桌面合成/应用 | Picom 进程/配置枚举 | backend 确认、透明/圆角/拖拽/WebKit DMA-BUF | 进程/配置 PASS；实际 GLX backend UNVERIFIED |
 | 12 | 音频/显示音频 | aplay -l、wpctl status | 实际播放 HDA + FH2M HDMI 并确认听感 | 枚举/默认 sink PASS；受控听感 UNVERIFIED |
@@ -129,7 +129,8 @@ exec_probes×12、vaapi_decode×52、dmabuf_regression×147。
   dma_resv 源码存在性等），设备类 19 SKIP（无 /dev/dri 或人工执行项），1 UNVERIFIED（沙箱 GL
   为 llvmpipe）。
 - 命名约定：`dmabuf_source_fix_present` 明确为**源码存在性**检查，不是 DMA-BUF 运行能力；
-  真实 DMA-BUF 回归单独为 SKIP/UNVERIFIED（人工执行项）。
+  真实 DMA-BUF 回归已由 2026-08-26 真机运行升级为 PASS（同设备，证据封存）；跨设备/GBM/V4L2/
+  长期压力/并发路径仍 UNVERIFIED。
 - 工具缺失（vulkaninfo/clinfo/vainfo/glxinfo/drm_info/xrandr/wpctl）→ SKIP reason=tool_missing；
   工具存在但无 DRI 节点初始化失败 → SKIP；枚举失败不笼统隐藏。
 - 真机证据通过 `--results-file` 合并；环境探测元数据和人工结果来源分别记录，不能视为同一次会话。
@@ -138,7 +139,7 @@ exec_probes×12、vaapi_decode×52、dmabuf_regression×147。
   强制 `--allow-authorized-tests`；19 项 fixture 测试（tests/unit/run-results-parser-tests.sh，含 `#`
   注释行跳过与不泄漏断言）。
 - 真机证据合并（2026-08-24）：fbterm、EGL/X11、桌面 GL、Vulkan execution、OpenCL execution 和
-  VA-API 实际解码为 PASS；权威汇总 21 PASS / 9 SKIP / 5 UNVERIFIED，overall=UNVERIFIED。
+  VA-API 实际解码为 PASS，DMA-BUF 回归 2026-08-26 真机 PASS；权威汇总 22 PASS / 9 SKIP / 4 UNVERIFIED，overall=UNVERIFIED。
 - Vulkan/OpenCL 最小执行（2026-08-24，~/5.md）：探针新增 `exec` 模式（dlopen、无头文件），
   execution 判定标准 = 真正创建资源 + 执行最小操作 + 校验结果：
   - Vulkan：instance→GPU device（拒绝 CPU-only）→queue→空 cmd buffer+fence 提交→限时等待→释放；
@@ -181,10 +182,11 @@ exec_probes×12、vaapi_decode×52、dmabuf_regression×147。
   return/nonadvancing）→ inactive vblank 守卫（快速 EINVAL=22 通过，timeout/错误 errno/过慢 FAIL，无
   inactive 时诚实 SKIP）→ Driver/Firmware 双快照严格门禁（8 字段逐项比较）；退出码 0=PASS 1=子项/状态
   FAIL 2=参数/工具/编译或整体 SKIP 3=设备/能力缺失或整体 UNVERIFIED 5=超时/清理；fixture 模式独立命名
-  空间 fixture_dmabuf_*/fixture_tests_*，零权威 dmabuf_* 行；`runtime_dmabuf_regression` 仅当真机
-  self-import/READ/WRITE/active vblank/状态门禁全 PASS 且 inactive guard 按拓扑通过或被明确限定时升级
-  PASS，当前仍 UNVERIFIED；**能力边界**：self-import 仅同设备，foreign import/跨设备 GTT export/V4L2/
-  第二 GPU/长期压力/并发仍 UNVERIFIED；探针：probe-dmabuf-self-import.c（新）、probe-pdp-invisible-read.c、
+  空间 fixture_dmabuf_*/fixture_tests_*，零权威 dmabuf_* 行；`runtime_dmabuf_regression` 已由 2026-08-26
+  真机运行升级为 **PASS**（同设备 self-import/READ/WRITE/active vblank/状态门禁全 PASS，inactive guard 按
+  拓扑通过，kernel_log=clean；证据见 `baselines/runtime-results-20260824.txt`）；**能力边界不变**：self-import
+  仅同设备，foreign import/跨设备 GTT export/GBM/V4L2/第二 GPU/长期压力/并发仍 UNVERIFIED；探针：
+  probe-dmabuf-self-import.c（新）、probe-pdp-invisible-read.c、
   probe-drm-topology.c、probe-drm-vblank.c（失败行加 errno）；测试：tests/unit/run-dmabuf-regression-tests.sh
   （147 项，fake fixture，CI 无 /dev/dri）。
 
@@ -192,8 +194,8 @@ exec_probes×12、vaapi_decode×52、dmabuf_regression×147。
 
 - 完整 DKMS 构建需本机内核头 → CI 无法跑 integration 编译（标记 SKIP 而非 PASS）。
 - VA-API 实际解码仅覆盖 H.264 Main/HEVC Main（30 帧 320x240 NV12 输出校验）；H.264 High/
-  Constrained Baseline、HEVC Main10、VA-API 编码、DMA-BUF 回归（工具已实现，真机证据待授权采集；
-  同设备 self-import 之外路径不可验证）、modeset/热插拔/合盖、Picom GLX backend、音频听感及多硬件
+  Constrained Baseline、HEVC Main10、VA-API 编码、DMA-BUF 回归（同设备 self-import 真机 PASS，但
+  foreign/cross-device/GBM/V4L2/长期压力/并发路径不可验证）、modeset/热插拔/合盖、Picom GLX backend、音频听感及多硬件
   矩阵仍为 UNVERIFIED；枚举或命令退出成功不能替代对应行为证据。
 - runtime 脚本已落地；新增有副作用的真机项仍需监督授权，并通过结果文件合并审计证据。
 

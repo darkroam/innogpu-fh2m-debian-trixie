@@ -66,7 +66,7 @@
   - [x] 真机执行验证（2026-08-24 用户实测）：vulkan exec 5000（queue+fence submit+wait，
     Fantasy II-M 0x35020023）与 opencl exec 1024（add kernel+读回逐元素校验，Fantasy II-M
     0x1ec8）均 PASS；经 --results-file 合并，runtime_vulkan_execution/runtime_opencl_execution
-    升级为 PASS；汇总 21 PASS/9 SKIP/5 UNVERIFIED（overall=UNVERIFIED，未覆盖项不冒充）。
+    升级为 PASS；汇总 22 PASS/9 SKIP/4 UNVERIFIED（overall=UNVERIFIED，未覆盖项不冒充）。
 - [x] VA-API H.264/HEVC 实际解码验证（~/6.md，2026-08-24 完成）：
   - [x] 实现 tools/run-vaapi-decode-test.sh（--codec h264|hevc|all；lavfi testsrc2 恰好 30 帧 320x240→
     libx264/libx265→软件参考 NV12 framemd5→强制 VAAPI 硬解（hwaccel vaapi + hwaccel_output_format
@@ -85,18 +85,18 @@
     OK/缺字段/非数字/OKAY 冒充/多余 token/重复字段/前导零 08->09 增长/post 失效/逐项增长）/mktemp 失败/
     TERM 信号清理/无残留（限定 TMPDIR）/不污染 baseline；fixture 模式独立命名空间 fixture_*，绝不输出
     vaapi_decode_* 权威行）。
-- [x] DMA-BUF 回归工具与测试（~/7.md，2026-08-24 实现完成，真机证据待授权）：
+- [x] DMA-BUF 回归工具与测试（~/7.md，2026-08-24 实现完成，2026-08-26 真机 PASS 证据已封存）：
   - [x] tools/run-dmabuf-regression-test.sh 聚合入口：动态 1ec8:9810 render/card 同源发现、PRIME
     同设备 self-import（probe-dmabuf-self-import.c 新）、invisible GEM READ/WRITE+verify（性能门槛
     max≤40ms，依据 p22 71.9-119.4ms vs 修复后 1.7-2.6ms）、topology 动态 CRTC 索引 + active vblank
     （≥10 样本）+ inactive EINVAL 守卫、Driver/Firmware 双快照严格门禁、超时/信号/幂等清理；
     fixture 独立命名空间 fixture_dmabuf_*，零权威 PASS；退出码 0/1/2/3/5。
   - [x] tests/unit/run-dmabuf-regression-tests.sh（147 项，CI 无 /dev/dri）。
-  - [ ] 真机执行（需监督授权）并合并证据；仅当 self-import/READ/WRITE/active vblank/状态门禁全
-    PASS 且 inactive guard 按拓扑通过或被明确限定时 runtime_dmabuf_regression 升级 PASS；
-    foreign import/跨设备 GTT/V4L2/第二 GPU/长期压力/并发保持 UNVERIFIED。
+  - [x] 真机执行（2026-08-26 root 权限，监督授权）并合并证据：self-import/READ/WRITE/active
+    vblank/状态门禁全 PASS、inactive guard 按拓扑通过、kernel_log=clean → runtime_dmabuf_regression
+    升级 PASS；foreign import/跨设备 GTT/GBM/V4L2/第二 GPU/长期压力/并发保持 UNVERIFIED。
 - [ ] runtime 剩余真实能力证据：modeset/热插拔/合盖、Picom GLX backend、
-  音频听感确认；当前权威汇总 21 PASS / 9 SKIP / 5 UNVERIFIED。
+  音频听感确认；当前权威汇总 22 PASS / 9 SKIP / 4 UNVERIFIED。
 - [ ] 代码深度分析与测试体系重构（2026-08-21 开始）：
   - [x] 产出 code-analysis.md、frameworks-and-references.md、test-strategy.md；新增 unit 测试
     （manifest 恶意输入 8、版本排序 6、提取器隔离 7）与 fixtures/；全部 tests/ 统一机器格式

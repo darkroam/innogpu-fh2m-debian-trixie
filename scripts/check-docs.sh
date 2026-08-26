@@ -146,6 +146,7 @@ require_text baselines/latest-runtime-baseline.txt 'runtime_vulkan_execution=PAS
 require_text baselines/latest-runtime-baseline.txt 'runtime_opencl_execution=PASS'
 require_text baselines/latest-runtime-baseline.txt 'runtime_vaapi_decode=PASS'
 require_text baselines/latest-runtime-baseline.txt 'bash tools/run-dmabuf-regression-test.sh'   # DMA-BUF 回归人工命令指向聚合入口（工具代码已提交后从干净提交重新生成的基线）
+require_text baselines/latest-runtime-baseline.txt 'runtime_dmabuf_regression=PASS'   # DMA-BUF 真机 PASS 证据已封存（2026-08-26）
 
 # The source deb identity is owned by the manifest and must be repeated exactly
 # in the user-facing acquisition documents.
