@@ -78,12 +78,12 @@ bash tests/unit/run-vaapi-decode-tests.sh
   限定本测试 TMPDIR，不扫描全局 /tmp）、无残留与不污染 baseline；fixture 模式成功输出独立命名空间
   fixture_*（overall=PASS 仅表示控制流通过，rc=0 一致）且逐行 -mode=fixture，**绝不输出任何
   vaapi_decode_* 权威行**。
-- DMA-BUF 回归聚合控制流测试（139 项，CI 无 /dev/dri）：fake sysfs/dev/探针注入 + 真实 C 探针契约测试（编译/参数/设备/能力路径 fd 无泄漏）覆盖参数校验（rc=2 设备检测前）、
+- DMA-BUF 回归聚合控制流测试（147 项，CI 无 /dev/dri）：fake sysfs/dev/探针注入 + 真实 C 探针契约测试（编译/参数/设备/能力路径 fd 无泄漏）覆盖参数校验（rc=2 设备检测前）、
   fixture 门禁与独立命名空间（零权威 dmabuf_* 行）、编译/cc 缺失、设备发现与身份（缺失/PCI 不匹配/
   card-render 不同源/多目标/非字符设备）、self-import 控制流与能力缺失、READ 输出严格解析（缺行/重复/
   NaN/负数/坏数字/轮数不符/性能越界与覆盖门槛）、WRITE verify 缺失/页数不符、topology（无 active/多 active/
   坏格式/真实形态：active mode 名称为空时 mode=<unnamed> 占位且仍执行 vblank）、active vblank（timeout/fast return/nonadvancing/样本数/乱序/列标题漂移/重复 header/首样本 delta 非零/delta 与序号差不符/kernel_delta 矛盾/内核时间倒退（含最小精度 16.400→16.399）/sequence uint32 越界/summary 指标与样本重算不符/真实 32 位回绕合法）、inactive vblank 守卫（EINVAL 快速通过/
-  timeout/错误 errno/过慢/重复 header 或列标题/坏浮点/字段乱序/success=0 时非零 summary/无 inactive 诚实 SKIP）、内核日志门禁（error/GPU hang/dma_buf timeout 均阻断，严重词表驱动覆盖 failure/failures/warn/WARNING/WARN_ON/lockup/wedged 及单复数进行时，debug/installed/hangcheck benign 保持 clean、截断/重排/插入不连续 UNVERIFIED、pre 缺失整体 UNVERIFIED）、状态门禁全部负例与错误计数增长、mktemp/外部超时/TERM
+  timeout/错误 errno/过慢/重复 header 或列标题/坏浮点/字段乱序/success=0 时非零 summary/无 inactive 诚实 SKIP）、内核日志门禁（error/GPU hang/dma_buf timeout 均阻断，严重词表驱动覆盖 failure/failures/warn/WARNING/WARN_ON/lockup/wedged 及单复数进行时，debug/installed/hangcheck benign 保持 clean；日志独立状态机：新严重行 FAIL/rc1、post 不可用或截断/重排/插入/无重叠 UNVERIFIED/rc3（一致性失败优先，正 overlap+一致性失败+严重词仍须 UNVERIFIED）、正常环形轮转与完整追加 clean/PASS（多条追加/多条轮转/多新增含严重行均覆盖）、轮转后新增错误 FAIL/rc1、pre 缺失整体 UNVERIFIED）、状态门禁全部负例与错误计数增长、mktemp/外部超时/TERM
   清理无残留（限定 TMPDIR）、不污染 baseline、汇总恒等式与退出码。
 
 ## 测试矩阵（分层，2026-08-21）

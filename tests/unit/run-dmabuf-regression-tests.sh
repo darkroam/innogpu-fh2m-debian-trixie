@@ -69,6 +69,30 @@ printf 'GPU hangcheck initialized\n' > "$runtime/klog-benign-hangcheck"
 printf 'drm: line-a\ndrm: line-b\n' > "$runtime/klog-two"
 printf 'drm: line-b\ndrm: line-a\n' > "$runtime/klog-two-reordered"
 printf 'drm: line-a\ndrm: line-insert\ndrm: line-b\n' > "$runtime/klog-two-inserted"
+# 环形轮转 fixture：before=[a,b,c]，after=[b,c,d]（b,c 是 before 后缀与 after 前缀的重叠）
+printf 'drm: line-a\ndrm: line-b\ndrm: line-c\n' > "$runtime/klog-rot-before"
+printf 'drm: line-b\ndrm: line-c\ndrm: line-d\n' > "$runtime/klog-rot-after"
+# 轮转且重叠后有新增错误行：after=[b,c,error-line]
+printf 'drm: line-b\ndrm: line-c\ndrm: innogpu error line\n' > "$runtime/klog-rot-error"
+# 无重叠：before=[a]，after=[b]（后缀完全不匹配）
+printf 'drm: line-a\n' > "$runtime/klog-nooverlap-before"
+printf 'drm: line-b\n' > "$runtime/klog-nooverlap-after"
+# 完整追加：before=[a]，after=[a,b]
+printf 'drm: line-a\n' > "$runtime/klog-append-before"
+printf 'drm: line-a\ndrm: line-b\n' > "$runtime/klog-append-after"
+# 多条追加：before=[a]，after=[a,b,c]（多条新增行，差集须按 after 顺序 b,c）
+printf 'drm: line-a\n' > "$runtime/klog-multi-append-before"
+printf 'drm: line-a\ndrm: line-b\ndrm: line-c\n' > "$runtime/klog-multi-append-after"
+# 多条轮转：before=[a,b,c]，after=[b,c,d,e]（多条新增行 d,e，差集顺序须为 d,e）
+printf 'drm: line-a\ndrm: line-b\ndrm: line-c\n' > "$runtime/klog-multi-rot-before"
+printf 'drm: line-b\ndrm: line-c\ndrm: line-d\ndrm: line-e\n' > "$runtime/klog-multi-rot-after"
+# 多个新增中含严重行：before=[a,b,c]，after=[b,c,d,error]（差集 [d,error] 含严重词）
+printf 'drm: line-a\ndrm: line-b\ndrm: line-c\n' > "$runtime/klog-multi-err-before"
+printf 'drm: line-b\ndrm: line-c\ndrm: line-d\ndrm: innogpu error line\n' > "$runtime/klog-multi-err-after"
+# 正 overlap + 一致性失败 + 严重词：before=[a,b]，after=[b,a,error]（重叠 [b]，剩余 [a,error] 与差集 [error] 不符；
+# 一致性失败优先 -> 必须 UNVERIFIED 而非被严重词升级为 fail）
+printf 'drm: line-a\ndrm: line-b\n' > "$runtime/klog-ov-fail-before"
+printf 'drm: line-b\ndrm: line-a\ndrm: innogpu error line\n' > "$runtime/klog-ov-fail-after"
 
 mkdir -p "$runtime/bin" "$runtime/scratch"
 
@@ -581,7 +605,7 @@ run_rc status_pre_unreadable 1 "$GOOD INNOGPU_DMABUF_STATUS_FILE=/nonexistent/st
 O="$runtime/klog.out"
 ln -sf "$runtime/klog-clean" "$runtime/klog-link"
 env $GOOD INNOGPU_DMABUF_KERNEL_LOG=$runtime/klog-link FAKE_SWAP_KLOG_LINK=$runtime/klog-link FAKE_SWAP_KLOG_TARGET=$runtime/klog-error TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 > "$O" 2>&1; rc=$?
-if [ "$rc" -eq 1 ] && grep -q 'fixture_dmabuf_kernel_log=fail reason=new_kernel_error_lines:1' "$O" && grep -q 'fixture_dmabuf_regression_overall=FAIL reason=kernel_error_lines' "$O"; then pass klog_error_fails_overall; else fail klog_error_fails_overall "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
+if [ "$rc" -eq 1 ] && grep -q 'fixture_dmabuf_kernel_log=fail reason=new_kernel_error_lines:1' "$O" && grep -q 'fixture_dmabuf_regression_overall=FAIL reason=new_kernel_error_lines:1' "$O"; then pass klog_error_fails_overall; else fail klog_error_fails_overall "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
 # GPU hang（严重词扩充反例）-> 必须 FAIL
 O="$runtime/klog-gpuhang.out"
 ln -sf "$runtime/klog-clean" "$runtime/klog-link-gh"
@@ -626,33 +650,74 @@ for entry in \
     fi
 done
 if [ "$klog_table_fail" -eq 0 ]; then pass klog_severity_table; else fail klog_severity_table "misses=$klog_table_fail"; fi
-# post 内核日志源不可用（窗口不连续）-> UNVERIFIED + 整体 FAIL
+# post 内核日志源不可用（无法确认窗口无新增错误）-> UNVERIFIED/rc3（不是 FAIL）
 O="$runtime/klog-post-unavail.out"
 ln -sf "$runtime/klog-clean" "$runtime/klog-link-pu"
 env $GOOD INNOGPU_DMABUF_KERNEL_LOG=$runtime/klog-link-pu FAKE_SWAP_KLOG_LINK=$runtime/klog-link-pu FAKE_SWAP_KLOG_TARGET=/nonexistent/klog \
     TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 > "$O" 2>&1; rc=$?
-if [ "$rc" -eq 1 ] && grep -q 'fixture_dmabuf_kernel_log=UNVERIFIED reason=post_kernel_log_unavailable' "$O" && grep -q 'fixture_dmabuf_regression_overall=FAIL reason=kernel_error_lines' "$O"; then pass klog_post_unavailable_fails; else fail klog_post_unavailable_fails "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
-# 截断：before 有行、after 缺失 -> 窗口不连续 -> UNVERIFIED + overall FAIL
+if [ "$rc" -eq 3 ] && grep -q 'fixture_dmabuf_kernel_log=UNVERIFIED reason=post_kernel_log_unavailable' "$O" && grep -q 'fixture_dmabuf_regression_overall=UNVERIFIED reason=post_kernel_log_unavailable' "$O"; then pass klog_post_unavailable_unverified; else fail klog_post_unavailable_unverified "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
+# 截断：before 有行、after 缺失 -> 窗口不连续 -> UNVERIFIED/rc3（不是 FAIL）
 O="$runtime/klog-trunc.out"
 ln -sf "$runtime/klog-two" "$runtime/klog-link-t"
 env $GOOD INNOGPU_DMABUF_KERNEL_LOG=$runtime/klog-link-t FAKE_SWAP_KLOG_LINK=$runtime/klog-link-t FAKE_SWAP_KLOG_TARGET=$runtime/klog-clean \
     TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 > "$O" 2>&1; rc=$?
-if [ "$rc" -eq 1 ] && grep -q 'fixture_dmabuf_kernel_log=UNVERIFIED reason=kernel_log_discontinuous' "$O"; then pass klog_truncated_unverified; else fail klog_truncated_unverified "rc=$rc out=$(grep fixture_dmabuf_kernel_log "$O")"; fi
+if [ "$rc" -eq 3 ] && grep -q 'fixture_dmabuf_kernel_log=UNVERIFIED reason=kernel_log_discontinuous' "$O" && grep -q 'fixture_dmabuf_regression_overall=UNVERIFIED reason=kernel_log_discontinuous' "$O"; then pass klog_truncated_unverified; else fail klog_truncated_unverified "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
 # 重排：after 与 before 行相同但顺序不同 -> 不连续 -> UNVERIFIED
 O="$runtime/klog-reorder.out"
 ln -sf "$runtime/klog-two" "$runtime/klog-link-r"
 env $GOOD INNOGPU_DMABUF_KERNEL_LOG=$runtime/klog-link-r FAKE_SWAP_KLOG_LINK=$runtime/klog-link-r FAKE_SWAP_KLOG_TARGET=$runtime/klog-two-reordered \
     TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 > "$O" 2>&1; rc=$?
-if [ "$rc" -eq 1 ] && grep -q 'fixture_dmabuf_kernel_log=UNVERIFIED reason=kernel_log_discontinuous' "$O"; then pass klog_reordered_unverified; else fail klog_reordered_unverified "rc=$rc out=$(grep fixture_dmabuf_kernel_log "$O")"; fi
+if [ "$rc" -eq 3 ] && grep -q 'fixture_dmabuf_kernel_log=UNVERIFIED reason=kernel_log_discontinuous' "$O" && grep -q 'fixture_dmabuf_regression_overall=UNVERIFIED reason=kernel_log_discontinuous' "$O"; then pass klog_reordered_unverified; else fail klog_reordered_unverified "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
 # 中间插入：after 在 before 行之间插入新行 -> 前缀被破坏 -> 不连续
 O="$runtime/klog-insert.out"
 ln -sf "$runtime/klog-two" "$runtime/klog-link-i"
 env $GOOD INNOGPU_DMABUF_KERNEL_LOG=$runtime/klog-link-i FAKE_SWAP_KLOG_LINK=$runtime/klog-link-i FAKE_SWAP_KLOG_TARGET=$runtime/klog-two-inserted \
     TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 > "$O" 2>&1; rc=$?
-if [ "$rc" -eq 1 ] && grep -q 'fixture_dmabuf_kernel_log=UNVERIFIED reason=kernel_log_discontinuous' "$O"; then pass klog_middle_insertion_unverified; else fail klog_middle_insertion_unverified "rc=$rc out=$(grep fixture_dmabuf_kernel_log "$O")"; fi
+if [ "$rc" -eq 3 ] && grep -q 'fixture_dmabuf_kernel_log=UNVERIFIED reason=kernel_log_discontinuous' "$O" && grep -q 'fixture_dmabuf_regression_overall=UNVERIFIED reason=kernel_log_discontinuous' "$O"; then pass klog_middle_insertion_unverified; else fail klog_middle_insertion_unverified "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
 O="$runtime/klog-skip.out"
 env $GOOD INNOGPU_DMABUF_KERNEL_LOG= TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 > "$O" 2>&1; rc=$?
 if [ "$rc" -eq 3 ] && grep -q 'fixture_dmabuf_kernel_log=SKIP reason=dmesg_unavailable' "$O" && grep -q 'fixture_dmabuf_regression_overall=UNVERIFIED reason=kernel_log_unavailable' "$O"; then pass klog_unavailable_skip; else fail klog_unavailable_skip "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
+# 正常环形轮转（after=suffix(before)+new，无新增错误）-> clean + overall PASS/rc0
+O="$runtime/klog-rot.out"
+ln -sf "$runtime/klog-rot-before" "$runtime/klog-link-rot"
+env $GOOD INNOGPU_DMABUF_KERNEL_LOG=$runtime/klog-link-rot FAKE_SWAP_KLOG_LINK=$runtime/klog-link-rot FAKE_SWAP_KLOG_TARGET=$runtime/klog-rot-after TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 > "$O" 2>&1; rc=$?
+if [ "$rc" -eq 0 ] && grep -q 'fixture_dmabuf_kernel_log=clean' "$O" && grep -q 'fixture_dmabuf_regression_overall=PASS' "$O"; then pass klog_rotation_clean; else fail klog_rotation_clean "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
+# 轮转后重叠区之外出现新增错误行 -> fail + overall FAIL/new_kernel_error_lines/rc1
+O="$runtime/klog-rot-err.out"
+ln -sf "$runtime/klog-rot-before" "$runtime/klog-link-roterr"
+env $GOOD INNOGPU_DMABUF_KERNEL_LOG=$runtime/klog-link-roterr FAKE_SWAP_KLOG_LINK=$runtime/klog-link-roterr FAKE_SWAP_KLOG_TARGET=$runtime/klog-rot-error TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 > "$O" 2>&1; rc=$?
+if [ "$rc" -eq 1 ] && grep -q 'fixture_dmabuf_kernel_log=fail reason=new_kernel_error_lines:1' "$O" && grep -q 'fixture_dmabuf_regression_overall=FAIL reason=new_kernel_error_lines:1' "$O"; then pass klog_rotation_error_fails; else fail klog_rotation_error_fails "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
+# 无可靠重叠（before=[a], after=[b]）-> UNVERIFIED/kernel_log_discontinuous/rc3
+O="$runtime/klog-nooverlap.out"
+ln -sf "$runtime/klog-nooverlap-before" "$runtime/klog-link-no"
+env $GOOD INNOGPU_DMABUF_KERNEL_LOG=$runtime/klog-link-no FAKE_SWAP_KLOG_LINK=$runtime/klog-link-no FAKE_SWAP_KLOG_TARGET=$runtime/klog-nooverlap-after TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 > "$O" 2>&1; rc=$?
+if [ "$rc" -eq 3 ] && grep -q 'fixture_dmabuf_kernel_log=UNVERIFIED reason=kernel_log_discontinuous' "$O" && grep -q 'fixture_dmabuf_regression_overall=UNVERIFIED reason=kernel_log_discontinuous' "$O"; then pass klog_no_overlap_unverified; else fail klog_no_overlap_unverified "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
+# 完整追加（after=before+new，完整前缀重叠）-> clean + overall PASS/rc0
+O="$runtime/klog-append.out"
+ln -sf "$runtime/klog-append-before" "$runtime/klog-link-app"
+env $GOOD INNOGPU_DMABUF_KERNEL_LOG=$runtime/klog-link-app FAKE_SWAP_KLOG_LINK=$runtime/klog-link-app FAKE_SWAP_KLOG_TARGET=$runtime/klog-append-after TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 > "$O" 2>&1; rc=$?
+if [ "$rc" -eq 0 ] && grep -q 'fixture_dmabuf_kernel_log=clean' "$O" && grep -q 'fixture_dmabuf_regression_overall=PASS' "$O"; then pass klog_append_clean; else fail klog_append_clean "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
+# 多条追加（before=[a] -> after=[a,b,c]）：差集按 after 顺序 b,c -> clean + PASS/rc0
+O="$runtime/klog-multi-append.out"
+ln -sf "$runtime/klog-multi-append-before" "$runtime/klog-link-ma"
+env $GOOD INNOGPU_DMABUF_KERNEL_LOG=$runtime/klog-link-ma FAKE_SWAP_KLOG_LINK=$runtime/klog-link-ma FAKE_SWAP_KLOG_TARGET=$runtime/klog-multi-append-after TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 > "$O" 2>&1; rc=$?
+if [ "$rc" -eq 0 ] && grep -q 'fixture_dmabuf_kernel_log=clean' "$O" && grep -q 'fixture_dmabuf_regression_overall=PASS' "$O"; then pass klog_multi_append_clean; else fail klog_multi_append_clean "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
+# 多条轮转（before=[a,b,c] -> after=[b,c,d,e]）：多条新增 d,e，差集顺序须为 d,e -> clean/rc0
+O="$runtime/klog-multi-rot.out"
+ln -sf "$runtime/klog-multi-rot-before" "$runtime/klog-link-mr"
+env $GOOD INNOGPU_DMABUF_KERNEL_LOG=$runtime/klog-link-mr FAKE_SWAP_KLOG_LINK=$runtime/klog-link-mr FAKE_SWAP_KLOG_TARGET=$runtime/klog-multi-rot-after TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 > "$O" 2>&1; rc=$?
+if [ "$rc" -eq 0 ] && grep -q 'fixture_dmabuf_kernel_log=clean' "$O" && grep -q 'fixture_dmabuf_regression_overall=PASS' "$O"; then pass klog_multi_rotation_clean; else fail klog_multi_rotation_clean "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
+# 多个新增中含严重行（after=[b,c,d,error]）：差集 [d,error] -> fail + FAIL/new_kernel_error_lines/rc1
+O="$runtime/klog-multi-err.out"
+ln -sf "$runtime/klog-multi-err-before" "$runtime/klog-link-me"
+env $GOOD INNOGPU_DMABUF_KERNEL_LOG=$runtime/klog-link-me FAKE_SWAP_KLOG_LINK=$runtime/klog-link-me FAKE_SWAP_KLOG_TARGET=$runtime/klog-multi-err-after TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 > "$O" 2>&1; rc=$?
+if [ "$rc" -eq 1 ] && grep -q 'fixture_dmabuf_kernel_log=fail reason=new_kernel_error_lines:1' "$O" && grep -q 'fixture_dmabuf_regression_overall=FAIL reason=new_kernel_error_lines:1' "$O"; then pass klog_multi_new_error_fails; else fail klog_multi_new_error_fails "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
+# 正 overlap + 一致性失败 + 严重词（before=[a,b] -> after=[b,a,error]）：重叠 [b] 剩余 [a,error] ≠ 差集 [error]
+# -> 一致性失败优先，保持 UNVERIFIED/rc3（不得被严重词升级为 fail）
+O="$runtime/klog-ov-fail.out"
+ln -sf "$runtime/klog-ov-fail-before" "$runtime/klog-link-of"
+env $GOOD INNOGPU_DMABUF_KERNEL_LOG=$runtime/klog-link-of FAKE_SWAP_KLOG_LINK=$runtime/klog-link-of FAKE_SWAP_KLOG_TARGET=$runtime/klog-ov-fail-after TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 > "$O" 2>&1; rc=$?
+if [ "$rc" -eq 3 ] && grep -q 'fixture_dmabuf_kernel_log=UNVERIFIED reason=kernel_log_discontinuous' "$O" && grep -q 'fixture_dmabuf_regression_overall=UNVERIFIED reason=kernel_log_discontinuous' "$O" && ! grep -q 'fixture_dmabuf_kernel_log=fail' "$O"; then pass klog_overlap_fail_keeps_unverified; else fail klog_overlap_fail_keeps_unverified "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
 
 # ================= 12b. mktemp/超时/信号/清理 =================
 run_rc mktemp_failure 2 "$GOOD TMPDIR=/nonexistent/tmpdir" --size 7646720

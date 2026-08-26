@@ -289,7 +289,7 @@ GEM，执行 READ CPU_PREP、逐页读取、CPU_FINI 和 `munmap`。它不加载
 - **能力边界（不冒充）**：self-import 只证明同设备 PRIME 快路径；foreign import（其他 exporter）、
   跨设备 GTT export、V4L2/第二 GPU、长期压力与并发流仍 UNVERIFIED；vblank 是独立同步子项，不是
   DMA-BUF export/import 证据；invisible GEM READ/WRITE 是 PDP 私有语义，不是 DMA-BUF 生命周期测试。
-- fixture 测试 139 项（tests/unit/run-dmabuf-regression-tests.sh），CI 无 /dev/dri 可跑；真机证据待
+- fixture 测试 147 项（tests/unit/run-dmabuf-regression-tests.sh），CI 无 /dev/dri 可跑；真机证据待
   监督授权后采集，`runtime_dmabuf_regression` 当前保持 UNVERIFIED。
 
 ## 风险与回退

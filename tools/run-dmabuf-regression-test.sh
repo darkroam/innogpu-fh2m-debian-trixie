@@ -261,30 +261,41 @@ kernel_log() { # 输出匹配来源的行；来源不可用返回 1
     fi
     return 1
 }
-klog_new_lines() { # <before> <after> -> after 中超出 before 的行（多集，保留重复）
+klog_new_lines() { # <before> <after> -> after 中超出 before 的行（多集，保留重复，按 after 原始顺序）
     local b="$1" a="$2"
-    # after 作为第一文件（NR==FNR 递增），before 递减：after 独有/超额的行才输出
-    awk 'NR==FNR { c[$0]++; next } { c[$0]-- } END { for (l in c) if (c[l] > 0) for (i = 0; i < c[l]; i++) print l }' \
+    # after 作为第一文件（NR==FNR 递增），before 递减；END 按 after 出现顺序输出超额行，
+    # 避免关联数组无序（否则有序 after_rest 比较会误判合法轮转为不连续）。
+    awk 'NR==FNR { ac[$0]++; order[++n] = $0; next } { bc[$0]++ }
+         END { for (i = 1; i <= n; i++) if (ac[order[i]] > bc[order[i]]) { print order[i]; ac[order[i]]-- } }' \
         <(printf '%s\n' "$a") <(printf '%s\n' "$b")
 }
-klog_continuous() { # <before> <after> -> 0=after 以 before 为完整前缀（append-only dmesg 快照语义）
+klog_overlap_len() { # <before> <after> -> echo 重叠行数（after 开头须匹配 before 的非空后缀，环形轮转语义）；0=无重叠
     local b="$1" a="$2"
-    [[ -n "$b" ]] || return 0   # before 为空 -> 无旧行可验证，视为连续
-    [[ -n "$a" ]] || return 1   # before 非空但 after 空 -> 日志被重置 -> 不连续
+    [[ -n "$b" ]] && [[ -n "$a" ]] || { echo 0; return; }   # 任一侧为空 -> 无可靠重叠
     awk '
         NR==FNR { b[++nb] = $0; next }
         { a[++na] = $0 }
         END {
-            if (na < nb) exit 1                        # after 比 before 短 -> 截断
-            for (i = 1; i <= nb; i++)                  # before 必须是 after 的完整前缀
-                if (a[i] != b[i]) exit 1               # 中间插入/重排 -> 来源被重写 -> 不连续
-            exit 0
+            # 找最大 k：after 前 k 行 == before 后 k 行（环形缓冲轮转：after = suffix(before) + new）
+            maxk = (nb < na ? nb : na)
+            k = 0
+            for (cand = maxk; cand >= 1; cand--) {
+                ok = 1
+                for (i = 1; i <= cand; i++)
+                    if (a[i] != b[nb - cand + i]) { ok = 0; break }
+                if (ok) { k = cand; break }
+            }
+            print k
         }
     ' <(printf '%s\n' "$b") <(printf '%s\n' "$a")
 }
 KLOG_OK=1
-KLOG_FAIL=0
 KLOG_UNAVAILABLE=0
+# 内核日志独立状态机：KLOG_STATE=clean|fail|unverified|skip；KLOG_REASON 承载具体原因。
+# 三种情形严格区分，整体映射：新严重行 -> FAIL/rc1；post 不可用/无法证明连续 -> UNVERIFIED/rc3；
+# 正常环形轮转（after=suffix(before)+new）只检查重叠后的新增行。
+KLOG_STATE=clean
+KLOG_REASON=""
 KLOG_BEFORE="$(kernel_log)" || { KLOG_OK=0; KLOG_UNAVAILABLE=1; }
 
 # ---- 工作区与清理 ----
@@ -788,26 +799,44 @@ fi
 
 if [[ "$KLOG_OK" -eq 1 ]]; then
     KLOG_AFTER="$(kernel_log)" || {
-        echo "${NS}dmabuf_kernel_log=UNVERIFIED reason=post_kernel_log_unavailable"
-        KLOG_FAIL=1
+        # post 源不可用：无法确认窗口无新增错误 -> UNVERIFIED/rc3（不是 FAIL）
+        KLOG_STATE=unverified
+        KLOG_REASON="post_kernel_log_unavailable"
     }
-    if [[ "$KLOG_FAIL" -eq 0 ]]; then
-        # 有序连续关系校验：after 必须以 before 为完整前缀（append-only dmesg 快照）
-        if ! klog_continuous "$KLOG_BEFORE" "$KLOG_AFTER"; then
-            echo "${NS}dmabuf_kernel_log=UNVERIFIED reason=kernel_log_discontinuous"
-            KLOG_FAIL=1
+    if [[ "$KLOG_STATE" == "clean" ]]; then
+        # 环形缓冲轮转语义：after 必须以 before 的非空后缀为前缀（after=suffix(before)+new）；
+        # 无可靠重叠（before/after 为空或后缀不匹配）-> 无法证明连续 -> UNVERIFIED/rc3。
+        ov="$(klog_overlap_len "$KLOG_BEFORE" "$KLOG_AFTER")"
+        if [[ -z "$KLOG_BEFORE" ]]; then
+            ov=0   # before 为空 -> 无旧行可核对，全部视为新增（连续）
+        elif [[ "$ov" -le 0 ]]; then
+            KLOG_STATE=unverified
+            KLOG_REASON="kernel_log_discontinuous"
+        fi
+    fi
+    if [[ "$KLOG_STATE" == "clean" ]]; then
+        # 可靠重叠存在：只检查重叠之后的 after 新增行（多集差集：轮转消失的旧行不抵消新增错误）
+        new_lines="$(klog_new_lines "$KLOG_BEFORE" "$KLOG_AFTER")"
+        # 合法轮转判定：after 必须是 suffix(before) + new_lines（重叠后的剩余行 == 多集差集）。
+        # 重排（after 全为 before 行但顺序变）或截断会让剩余行 ≠ 差集 -> 无法证明连续。
+        after_rest="$(printf '%s\n' "$KLOG_AFTER" | awk -v o="$ov" 'NR > o { print }')"
+        if [[ "$after_rest" != "$new_lines" ]]; then
+            # 一致性失败：不可信窗口，不得据其做严重词分类 -> 保持 UNVERIFIED（优先级最高）
+            KLOG_STATE=unverified
+            KLOG_REASON="kernel_log_discontinuous"
         else
-            # 连续窗口新增行判断（多集差集：旧行轮转消失不抵消新增错误）
-            new_lines="$(klog_new_lines "$KLOG_BEFORE" "$KLOG_AFTER")"
             new_errors="$(printf '%s\n' "$new_lines" | grep -icE "$KLOG_ERR_RE" || true)"
             if [[ "$new_errors" -gt 0 ]]; then
-                echo "${NS}dmabuf_kernel_log=fail reason=new_kernel_error_lines:$new_errors"
-                KLOG_FAIL=1
-            else
-                echo "${NS}dmabuf_kernel_log=clean"
+                KLOG_STATE=fail
+                KLOG_REASON="new_kernel_error_lines:$new_errors"
             fi
         fi
     fi
+    case "$KLOG_STATE" in
+        fail) echo "${NS}dmabuf_kernel_log=fail reason=$(tag "$KLOG_REASON")" ;;
+        unverified) echo "${NS}dmabuf_kernel_log=UNVERIFIED reason=$(tag "$KLOG_REASON")" ;;
+        *) echo "${NS}dmabuf_kernel_log=clean" ;;
+    esac
 else
     echo "${NS}dmabuf_kernel_log=SKIP reason=dmesg_unavailable"
 fi
@@ -827,9 +856,14 @@ if [[ "$failed" -gt 0 ]]; then
 elif [[ "$status_ok" -ne 1 ]]; then
     echo "${NS}dmabuf_regression_overall=FAIL reason=$(tag "$status_reason")"
     exit 1
-elif [[ "$KLOG_FAIL" -eq 1 ]]; then
-    echo "${NS}dmabuf_regression_overall=FAIL reason=$(tag kernel_error_lines)"
+elif [[ "$KLOG_STATE" == "fail" ]]; then
+    # 新严重日志行：明确 FAIL，reason 必须是真实错误原因（不是 kernel_error_lines 笼统标签）
+    echo "${NS}dmabuf_regression_overall=FAIL reason=$(tag "$KLOG_REASON")"
     exit 1
+elif [[ "$KLOG_STATE" == "unverified" ]]; then
+    # post 不可用 / 无法证明连续：无法确认窗口无新增错误 -> UNVERIFIED/rc3（不是 FAIL）
+    echo "${NS}dmabuf_regression_overall=UNVERIFIED reason=$(tag "$KLOG_REASON")"
+    exit 3
 elif [[ "$KLOG_UNAVAILABLE" -eq 1 ]]; then
     # 内核日志不可用（pre 快照缺失）-> 无法确认窗口无错误 -> 整体至少 UNVERIFIED
     echo "${NS}dmabuf_regression_overall=UNVERIFIED reason=$(tag kernel_log_unavailable)"
