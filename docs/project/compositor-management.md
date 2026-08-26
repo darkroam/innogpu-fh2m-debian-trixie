@@ -69,7 +69,8 @@ Picom 存在但 GLX 初始化失败时不自动掩盖错误，应先检查日志
   `Fantasy II-M`，`Accelerated: 1`。
 - diagnostics 会额外试探 EGL，并报告缺少 `GL_EXT_EGL_image_storage`；当前配置不使用 EGL，
   该错误不影响 GLX 结论。
-- 当前 Picom 进程和日志持续证明 shader 探测兼容分支生效。
+- 2026-08-13 的 Picom 进程和日志证明当时 shader 探测兼容分支生效；该历史运行观察尚未按当前
+  runtime 证据合并流程独立确认 backend，因此 `runtime_picom_glx` 仍为 UNVERIFIED。
 - 当前设备尚未安装 `xcompmgr`，所以运行中的 Picom 不受影响，但立即回退前需先执行
   `sudo apt install xcompmgr`；新设备 Picom 依赖脚本会自动安装它。
 - patch 固定到提交 `6d676824`，升级 Picom 时必须重新审查，不能跳过基线检查强行应用。

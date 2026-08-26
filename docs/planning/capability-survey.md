@@ -11,7 +11,7 @@
   Baseline、HEVC Main10 仅枚举未执行。
 - **DMA-BUF 回归**（2026-08-26 root 权限真机执行）：`tools/run-dmabuf-regression-test.sh` 同设备
   PRIME self-import、invisible GEM READ/WRITE、vblank 守卫与状态/日志门禁全部 PASS，`runtime_dmabuf_regression`
-  升级为 PASS（证据 `baselines/runtime-results-20260824.txt`）；边界：仅同设备 self-import，
+  升级为 PASS（证据 `baselines/runtime-results-20260824.txt`）；边界：仅同设备 PRIME self-import，
   foreign/cross-device/GBM/V4L2/长期压力/并发未验证。
 - 其余 DVFS/功耗、CORE_ID 和私有 codec 编码接口见"运行时待办"。
 - 原始探针输出保留在 `baselines/capability-survey-*.log`（被 .gitignore 忽略），不进入 Git；
@@ -74,7 +74,7 @@
 - 导出：`vk_icdNegotiateLoaderICDInterfaceVersion`、`vk_icdGetInstanceProcAddr`、`vk_icdGetPhysicalDeviceProcAddr` 齐备
 - 扩展字符串：**128 个唯一扩展**（61 EXT + 64 KHR + 3 厂商：`VK_ARM_rasterization_order_attachment_access`、
   `VK_IMG_conditional_rendering_comparison_info`、`VK_IMG_format_pvrtc`）。注：此为二进制字符串
-  去重后的下界，权威列表以运行时 `vkEnumerateDeviceExtensionProperties` 为准（待实机）
+  去重后的下界；运行时枚举已完成，权威结果见下文“运行时结果”节
 - 代表性扩展：`VK_KHR_dynamic_rendering`、`VK_KHR_timeline_semaphore`、`VK_KHR_synchronization2`、
   `VK_KHR_external_memory/fence/semaphore_fd`（dma-buf 互操作）、`VK_KHR_push_descriptor`、
   `VK_KHR_shader_float16_int8`、`VK_KHR_sampler_ycbcr_conversion`、`VK_EXT_descriptor_indexing`、
@@ -96,7 +96,8 @@
 - `innogpu_drv_video.so` 是 **VA-API 驱动**（`inno_libva_decode/encode/caps/format.cc`）
 - 解码：`InnoVaDecodeAVC`（H.264）、H.265 SPS 解析符号存在
 - 编码：`InnoVaEncodeAvc`（H.264）；codec 库内还有 `WaveDecoder`、`Wave627Encoder`、`Wave677Encoder`
-- 结论：FH2M 带硬件视频解码/编码用户态（至少 H.264 编解、H.265 解），能力面尚未被本项目验证
+- 结论：FH2M 带硬件视频解码/编码用户态（至少 H.264 编解、H.265 解）；H.264 Main 与 HEVC Main
+  实际解码已验证，其他枚举 profile 与私有编码接口仍未验证
 
 ### 其他用户态
 
@@ -124,8 +125,8 @@
 4. **失败点唯一**：ICD 的 `vkCreateInstance` 在无 `/dev/dri` 时返回
    `VK_ERROR_INITIALIZATION_FAILED`，loader 据此丢弃该 ICD 并报 `Found no drivers`。
 
-结论：**Vulkan ICD 本身有效且与标准 loader 兼容，失败仅因容器无 DRM render 节点**。真实设备上
-Vulkan 应可枚举 Fantasy II-M；需在真实会话用 `scripts/run-capability-survey.sh` 确认（待办）。
+结论：**Vulkan ICD 本身有效且与标准 loader 兼容，容器失败仅因无 DRM render 节点**。后续真实会话
+已用 `scripts/run-capability-survey.sh` 确认 Fantasy II-M 枚举，结果见下节。
 
 ## 运行时结果（2026-08-20 真实会话，多份 baselines/capability-survey-*.log，最新 135901）
 

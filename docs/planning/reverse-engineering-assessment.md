@@ -48,7 +48,8 @@
    [shader 固件事故记录](../incidents/patched-18-shader-firmware.md)）。
 4. 用户态 ICD：`/etc/vulkan/icd.d/innoconf.json` 指向 `libVK_INNO.so`（Vulkan 1.3.264）；
    `/etc/OpenCL/vendors/INNO.icd` 指向 `libINNOOCL.so`。两套 ICD 随包提供，说明硬件能力面包含
-   Vulkan 与 OpenCL compute，本项目尚未系统触达。
+   Vulkan 与 OpenCL compute；本项目已完成运行时枚举及最小执行验证，结果见
+   [capability-survey.md](capability-survey.md)。
 
 ## 可行性分层评估
 

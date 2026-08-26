@@ -1,5 +1,15 @@
 # 实施历史
 
+## 2026-08-26 DMA-BUF 真机回归与 runtime 证据封存
+
+- 以 root 权限在 `1ec8:9810` 真机执行 `tools/run-dmabuf-regression-test.sh`：同设备 PRIME
+  self-import、invisible GEM READ/WRITE、活动 CRTC vblank、未活动 CRTC EINVAL 守卫、Driver/Firmware
+  双快照与内核日志门禁全部通过；完整参数和机器输出已脱敏封存在
+  `baselines/runtime-results-20260824.txt`。
+- 证据合并后 `runtime_dmabuf_regression=PASS`，权威摘要更新为 22 PASS / 9 SKIP / 4 UNVERIFIED，
+  overall 保持 UNVERIFIED。边界仍仅为同设备 PRIME self-import；foreign/cross-device/GBM/V4L2、
+  长期压力与并发未验证。
+
 ## 2026-08-24 VA-API 真机解码验证与 runtime 证据封存
 
 - 实现 `tools/run-vaapi-decode-test.sh`（强制 VA-API 硬解 + 真实 framemd5 格式校验 + 软件参考

@@ -15,11 +15,11 @@
 | `build-deepin-coherent.sh` | legacy 构建器（保留） | 从完整 Deepin 202504 原包构建 patched-N 系 coherent deb；p27 oracle 与 check-docs 版本护栏依赖，禁止删除；版本、release epoch 和所有功能均由显式参数控制 |
 | `build-patched21-deepin-release-candidate.sh` | legacy 包装（保留） | 以固定 p21 开关构建所有权收敛后的首个 release candidate；只构建，不安装 |
 | `build-patched22-local-lid.sh` | legacy 包装（保留） | 以 patch-009 修正本机内置 eDP connector；脚本只构建，安装和重启由操作者显式执行 |
-| `build-patched23-invisible-read-fix.sh` | 离线修复候选 | 在 p22 补丁集合上增加 invisible READ mapping 释放不回写修复；只构建，不安装、不热切换 |
-| `build-patched24-kernel-612101.sh` | 内核兼容发布包 | 在 p23 补丁集合上增加 `6.12.101+` 的 `pci_resize_resource()` 兼容修复；只构建，不安装、不热切换 |
-| `build-patched25-dma-resv-fix.sh` | 离线正确性候选 | 在 p24 补丁集合上增加 patch-025 dma_resv usage 语义修复；只构建，不安装、不热切换 |
-| `build-patched26-vblank-guard.sh` | 离线正确性候选 | 在 p25 补丁集合上增加 patch-026 未活动 CRTC vblank 守卫；只构建，不安装、不热切换 |
-| `build-patched27-foreign-dmabuf.sh` | 离线正确性候选 | 在 p26 补丁集合上增加 patch-027 foreign DMA-BUF 生命周期修复；只构建，不安装、不热切换 |
+| `build-patched23-invisible-read-fix.sh` | legacy 包装（保留） | 在 p22 补丁集合上增加 invisible READ mapping 释放不回写修复；历史上只构建不安装，当前仅作 p23 复现/证据入口 |
+| `build-patched24-kernel-612101.sh` | legacy 包装（保留） | 在 p23 补丁集合上增加 `6.12.101+` 的 `pci_resize_resource()` 兼容修复；当前仅作 p24 复现/证据入口 |
+| `build-patched25-dma-resv-fix.sh` | legacy 包装（保留） | 在 p24 补丁集合上增加 patch-025 dma_resv usage 语义修复；当前仅作 p25 复现/证据入口 |
+| `build-patched26-vblank-guard.sh` | legacy 包装（保留） | 在 p25 补丁集合上增加 patch-026 未活动 CRTC vblank 守卫；当前仅作 p26 复现/证据入口 |
+| `build-patched27-foreign-dmabuf.sh` | legacy 包装（保留） | 在 p26 补丁集合上增加 patch-027 foreign DMA-BUF 生命周期修复；当前仅作 p27 oracle/复现入口 |
 | `check-deb-dkms-build.sh` | 离线编译检查 | 将指定候选 deb 解包到 `/tmp`，针对指定内核 headers 编译 `innogpu.ko` 并校验 vermagic；不注册或安装 DKMS |
 | `check-source-parity.sh` | 只读 parity 检查 | 在临时目录重建 p27 生成源码树（third_party + 9 个启用补丁按构建器顺序 + 清理 .orig/.rej），与 `drivers/` 逐文件对比（排除 README/.o_shipped/.o.cmd），输出机器可读 PASS/FAIL；不修改源码树、旧构建器或设备 |
 | `phase4-baseline-capture.sh` | 只读基线采集 | Phase 4 安装前 B1-B12 基线采集（dpkg/lsmod/DKMS/modprobe/initramfs/音频内核可见/Picom/用户态一致性/恢复通道），输出存 `baselines/phase4-baseline-<ts>.log`；真实会话项（/dev/dri、Xorg/GL、音频 sink、显示切换）由用户实机执行 |
@@ -40,19 +40,19 @@
 
 | 入口 | 风险 | 说明 |
 | --- | --- | --- |
-| `install-prereqs-debian.sh` | 修改软件包 | 安装 Debian 构建和运行依赖 |
+| `install-prereqs-debian.sh` | 修改软件包 | 安装 Debian 基础构建和运行依赖；当前未显式安装新构建器直接使用的 `python3`，最小系统须按 `docs/project/dependencies.md` 补充核对 |
 | `install.sh` | 修改驱动、需重启 | 只调度 patched-8/17；不把 patched-20 诊断候选设为默认 |
 | `install-patched17-and-check.sh` | 修改驱动、需重启 | legacy 深层回退入口；新设备默认入口是 4.0.0-i1 |
 | `install-patched8-and-check.sh` | 修改驱动、需重启 | 更早的历史恢复入口 |
-| `uninstall-innogpu.sh` | 卸载驱动、需重启 | 通用卸载器；版本包装见 `uninstall-patched*.sh` |
+| `uninstall-innogpu.sh` | 卸载驱动、需重启 | 通用卸载器；版本包装见 `uninstall-patched*.sh`。其内置恢复提示仍固定指向 patched-17，且不会清理源码 fallback 创建的 `/usr/local/sbin` helper；当前版本应以 `docs/user/recovery.md` 的 p27 首选链为准 |
 | `uninstall-patched17.sh` | 卸载驱动、需重启 | 仅允许卸载版本精确匹配 patched-17 的兼容包装 |
 | `uninstall-patched8.sh` | 卸载驱动、需重启 | 仅允许卸载版本精确匹配 patched-8 的兼容包装 |
 | `disable-incompatible-userspace.sh` | 修改 `/usr` 和 Xorg 配置 | 恢复软件渲染/兼容用户态边界 |
 | `restore-tty1-login.sh` | 修改系统服务 | 优先恢复可见 TTY 登录 |
 | `prepare-soft-xorg-dwm.sh` | 修改 Xorg/会话 | 准备软件 Xorg；若 dotconfig xdisplay 已存在则接入，否则保留软件路径并警告 |
 | `repair-dri-nodes.sh` | 修改 `/dev` 节点 | 根据 sysfs 设备号临时恢复缺失的 DRM/fbdev 节点 |
-| `install-dri-node-repair-service.sh` | 安装系统服务 | 固化 DRM/fbdev 节点权限恢复 |
-| `install-hygon-hda-audio.sh` | 安装系统/用户服务 | 固化本机 HDA 和 PipeWire 恢复 |
+| `install-dri-node-repair-service.sh` | 安装系统服务 | 固化 DRM/fbdev 节点权限恢复；包内 `/usr/sbin` helper 路径可用，源码树 fallback 当前存在 `/usr/local/sbin` 与 unit `ExecStart=/usr/sbin` 不一致，修复前不得把 fallback 描述为已验证 |
+| `install-hygon-hda-audio.sh` | 安装系统/用户服务 | 固化本机 HDA 和 PipeWire 恢复；创建系统/用户 unit、helper、modules-load 与 ALSA 配置并可能改写 profile/PipeWire 旧配置；仅部分文件有条件性备份，当前无 systemd-analyze 门禁、对称自动卸载器或 fixture，人工回退边界见 `docs/project/audio-management.md` |
 
 ## Picom 接入
 
@@ -98,8 +98,11 @@ xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项
 - `verify-install-status.sh`
 
 `run-capability-survey.sh` 编译并运行 Vulkan/OpenCL/VA-API 最小枚举探针并抓取 sysfs 环境快照，输出保存到 `baselines/capability-survey-<ts>.log`（可用 `--out DIR` 改位置）；只读，不 modeset、不改配置。设备无 DRM render 节点时（如无特权容器）优雅降级并记录失败本身。
-其中 `check-docs.sh` 检查文档链接、隐私标记、稳定入口登记、当前版本、runtime 统计、manifest 原包
-SHA、许可证例外、过期状态断言和 Markdown 表格结构；法律授权与文档语义仍需人工审查。
+其中 `check-docs.sh` 检查 `README.md`、`docs/`、`scripts/`、`baselines/`、`tests/` 下的 Markdown
+链接，以及部分目录的隐私标记、稳定入口登记、当前版本、runtime 统计、manifest 原包 SHA、许可证
+例外、过期状态断言和 Markdown 表格结构。它的链接/隐私循环不覆盖所有受 Git 跟踪 Markdown 和
+内联代码路径；全仓审计仍需另行扫描 `drivers/`、`debs/`、`tools/`、`components/` 等目录，法律授权与
+文档语义也必须人工审查。
 `check-release-package.sh` 只解包读取指定 deb，核对版本、关键载荷、禁止文件和设备接入脚本，
 不会安装包。发布包边界的可重复 fixture 见 `tests/package/run-boundary-tests.sh`。
 `verify-install-status.sh --require-reboot VERSION` 用于运行验收：除常规状态外，它要求包元数据早于当前
@@ -126,6 +129,12 @@ SHA、许可证例外、过期状态断言和 Markdown 表格结构；法律授�
 
 coherent 驱动 deb 只携带运行和恢复所需的 Innogpu 辅助脚本。历史 Kylin 用户态安装器、实验 HWGL
 安装器和直接二进制热补丁不得暴露为系统命令。仓库保留它们不等于 release 支持它们。
+
+当前 `4.0.0-i1` 把 12 个项目 helper 实体安装到 `/usr/share/innogpu-fh2m-trixie/`，并为其中 10 个
+提供 `/usr/bin/innogpu-*` 与 `/usr/sbin/innogpu-*` 双链接。manifest 还原样导入 vendor 的
+`/lib/systemd/system/sw-inno-gl.service` 与 `/usr/sbin/sw-inno-gl`；maintainer scripts 不会启用或
+启动该单元。`check-release-package.sh` 当前只强制 3 个显示接入 helper 与若干关键载荷，尚未验证
+vendor unit/helper 和全部命令链接，不能把 `PASS_RELEASE_PACKAGE_BOUNDARIES` 扩写为这些路径均已受门禁。
 
 ## 修改规则
 

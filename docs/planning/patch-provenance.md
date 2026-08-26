@@ -7,7 +7,8 @@
 - 阶段 1 已完成：导入源码树 + provenance 表 + **9 个启用补丁转源码提交**（000 保持工具形态）；
   source_tree_parity_against_p27=PASS（可复现命令：scripts/check-source-parity.sh）。
 - 分类四类：source（源码提交）、binary-transform（确定性二进制变换）、device-profile（本机特例）、closed（关闭的历史试验）。
-- 监督指南见 docs/planning/migration-supervision.md（监督分支 migration/supervised-source-tree @ bd76e91）。
+- 监督指南仅见监督分支 `migration/supervised-source-tree` @ `bd76e91` 中的
+  `docs/planning/migration-supervision.md`，不在 `main`。
 
 ## 汇总
 

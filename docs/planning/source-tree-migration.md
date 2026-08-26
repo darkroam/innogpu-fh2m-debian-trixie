@@ -2,8 +2,8 @@
 
 ## 状态
 
-- 本文件是源码树迁移的设计基线，对应监督指南 `docs/planning/migration-supervision.md`（监督分支
-  migration/supervised-source-tree @ bd76e91）。
+- 本文件是 `main` 中的源码树迁移设计基线；更高优先级监督指南仅存在于监督分支
+  `migration/supervised-source-tree` @ `bd76e91` 的 `docs/planning/migration-supervision.md`。
 - **阶段 0 ✅ 阶段 1 ✅ 阶段 2 ✅ 阶段 3 ✅ 阶段 4 ✅**：
   阶段 3（2026-08-21 监督评审通过）：4.0.0-i1 候选 oracle 对比全 PASS（含 module_symbols 离线
   逐项对比、.o.cmd 边界裁定、可复现构建）；阶段 4（2026-08-21 实机完成）：A1–A12 验收全 PASS、
@@ -39,7 +39,10 @@ release：         独立版本、源码提交、manifest hash 和 parity report
 驱动核心已经源码化**。在阶段 1–5 全部 PASS 前，`patches/`、旧 wrapper、p27 deb 与 p27 tag
 永久保留。
 
-## 二、目标目录结构
+## 二、冻结设计与实际落地映射
+
+下列结构是 Phase 0 冻结时的目标草案。阶段 1-4 的最终实现保留了核心目录边界，但没有机械创建
+每个草案入口；当前文件/目录事实以右侧映射为准，不能把草案名称当作可执行命令：
 
 ```text
 drivers/                         Git 跟踪的可维护 DKMS 源码树
@@ -58,13 +61,17 @@ binary-manifest.json             黑盒来源、路径、哈希、大小、类�
 scripts/
   extract-vendor-binaries.sh     幂等提取工具
   build-innogpu-driver.sh        新构建器（不执行 patch -pN）
-  run-dev-tests.sh               开发测试闭环
-tests/kernel/                    内核离线编译与探针回归测试
-docs/project/driver-architecture.md
-docs/user/userspace-components.md
+  run-dev-tests.sh               草案名称，未创建；实际测试入口登记在 tests/README.md
+tests/kernel/                    草案目录，未创建；离线/fixture/runtime 分布在 tests/ 现有子目录
+docs/project/driver-architecture.md  草案名称；实际权威文档为 docs/project/architecture.md
+docs/user/userspace-components.md    草案名称；实际依赖与安装文档见 dependencies.md/new-device-install.md
 legacy/                          阶段 5 Step 2 获批后可保存旧 wrapper；当前尚未创建
 patches/                         历史 provenance 永久保留，不得移动或删除
 ```
+
+实际测试入口不是单一 `run-dev-tests.sh`：CI 顺序由 `.github/workflows/ci.yml` 定义，可重复套件及
+计数由 `tests/README.md` 和 `docs/project/test-strategy.md` 登记；完整 DKMS integration 由
+`scripts/check-deb-dkms-build.sh`、`scripts/compare-module-symbols.sh` 等独立入口承担。
 
 ## 三、14 个 patch 的 provenance 与分类
 
@@ -93,7 +100,7 @@ patches/                         历史 provenance 永久保留，不得移动�
 转换提交规则：commit message 保留原编号（如 `source: patch-025 dma_resv usage semantics`），
 body 引用 `docs/patches/patch-*.md`；记录原 patch hash、目标文件、转换后提交 hash 与行为变化。
 
-## 四、binary-manifest.json 正式 schema（监督指南 + 5.md 要求）
+## 四、binary-manifest.json 正式 schema（监督指南与迁移要求）
 
 正式 JSON，无注释、无省略号；覆盖全部 `.o_shipped`、用户态 `.so`、DDX/GBM/DRI 与固件：
 
@@ -118,7 +125,7 @@ body 引用 `docs/patches/patch-*.md`；记录原 patch hash、目标文件、�
 }
 ```
 
-`kind` 取值集合：`kernel-black-box`、`userspace-lib`、`ddx`、`firmware`。
+`kind` 取值集合：`kernel-black-box`、`userspace-lib`、`userspace-config`、`ddx`、`firmware`。
 校验拒绝：路径穿越、重复目标、未知 kind、源包哈希错误、原子替换失败。
 
 **构建产物边界裁定（2026-08-21 监督评审）**：`.o.cmd` 是内核构建生成的临时元数据（构建产物），
@@ -195,7 +202,9 @@ modversions CRC（存在时）。任何模块缺失/构建失败标记 `UNCOMPAR
 
 ## 八、版本、tag 与发布
 
-- 新架构首版：`Debian package 4.0.0-i1`、`Git tag source-v4.0.0-i1`，不覆盖 `patched-27`；
+- 新架构首版包为 `Debian package 4.0.0-i1`，不覆盖 `patched-27`。Phase 0 曾规划
+  `source-v4.0.0-i1` tag，但当前仓库实际尚未创建该 tag；在许可证发布阻断关闭并完成 release
+  追溯审查前，不得把规划名称写成现有 tag；
   （版本排序已实测：`1.0.0-i1` 会排在 patched-27 之前，故用首段 >3 的 4.0.0-iN；`dpkg --compare-versions` 验证通过）
 - tag 注释含：源码提交 hash、binary-manifest hash、Deepin 原包 hash、构建工具版本、parity report
   位置、实机验证状态、p27 回退包位置；
@@ -241,5 +250,6 @@ manifest 哈希与来源包不一致、新旧源码树无法解释地不同、�
 
 ## 参考
 
-- `docs/planning/migration-supervision.md`（监督分支 migration/supervised-source-tree @ bd76e91）：监督指南（阶段门槛与暂停条件优先）。
+- 监督分支 `migration/supervised-source-tree` @ `bd76e91` 中的
+  `docs/planning/migration-supervision.md`：监督指南（阶段门槛与暂停条件优先；不在 `main`）。
 - [ddk-v119-mapping.md](ddk-v119-mapping.md)、[release-review-2026-08-20.md](release-review-2026-08-20.md)。

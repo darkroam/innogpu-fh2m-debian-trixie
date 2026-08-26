@@ -1,7 +1,7 @@
 # Runtime 真机能力基线（4.0.0-i1）
 
 `tests/runtime/run-capability-baseline.sh` 是 FH2M 真机能力的机器可读基线测试（详见
-`~/4.md`）。**只读默认**；真实 TTY/显示器/modeset/播放/Vulkan-OpenCL-VAAPI-DMA-BUF 执行等有副作用
+[测试策略](../../docs/project/test-strategy.md)）。**只读默认**；真实 TTY/显示器/modeset/播放/Vulkan-OpenCL-VAAPI-DMA-BUF 执行等有副作用
 操作**永不自动运行**：脚本只输出人工命令清单，由你在真实设备会话执行后，把结果写入文件并用
 `--results-file` 合并回摘要（或单独记录）。
 
@@ -35,7 +35,7 @@ bash tests/runtime/run-capability-baseline.sh \
 退出码：0=PASS，1=FAIL，2=SKIP（无 FAIL/UNVERIFIED），3=UNVERIFIED（无 FAIL）。
 
 证据与隐私：所有输出先写入临时 RAW_LOG（`mktemp` 于 `\${TMPDIR:-/tmp}`），`EXIT` trap 统一脱敏
-（`/home/…`→`~`、`serverauth.*`→AUTHTOKEN.REDACTED、`XAUTHORITY=`→REDACTED）后生成完整日志
+（绝对 home 路径→`~`、临时 Xauthority 文件名→`AUTHTOKEN.REDACTED`、`XAUTHORITY=`→`REDACTED`）后生成完整日志
 `baselines/runtime-baseline-<ts>.txt`（gitignored）并清理临时目录——异常退出也只会留下脱敏产物；
 精简摘要 `baselines/latest-runtime-baseline.txt`（跟踪，仅 runtime_ 行与 # 元数据）。
 
@@ -80,7 +80,7 @@ DMA-BUF 聚合入口（`run-dmabuf-regression-test.sh`）随 2026-08-25 提交�
 | vulkan_enumeration / vulkan_execution | 是/否 | 否 | 执行需 | 否 | 否 | 否 | 执行：`tools/probe-vulkan-devices.c exec [timeout_ms]`——创建 instance/device/queue，空 cmd buffer+fence 提交并限时等待（默认 5s，可参数覆盖）；无渲染副作用 |
 | opencl_enumeration / opencl_execution | 是/否 | 否 | 执行需 | 否 | 否 | 否 | 执行：`tools/probe-opencl-devices.c exec [elements]`——context/queue + add kernel + 阻塞读回 + 逐元素校验；仅读写 buffer |
 | vaapi_enumeration / vaapi_decode / vaapi_encode | 是/否 | 否 | 是 | 否 | 否 | 否 | 解码：`bash tools/run-vaapi-decode-test.sh --codec all`（强制 VAAPI 硬解 + 真实 framemd5 格式校验 + 软件参考 hash 对比 + Driver/Firmware 双快照状态门禁，退出码 0-5）；**真机已执行并合并**：H.264 Main + HEVC Main 各 30 帧 320x240 NV12 framemd5 一致 → runtime_vaapi_decode=PASS（证据 baselines/runtime-results-20260824.txt）；fixture 钩子输出独立命名空间 fixture_*（绝不产生 vaapi_decode_* 权威行）；编码无实现 → UNVERIFIED/不支持 |
-| dmabuf_fix_present / dmabuf_regression | 是/否 | 否 | 回归需 | 否 | 否 | 否 | 回归：`bash tools/run-dmabuf-regression-test.sh [--render-device NODE] [--card-device NODE]`（PRIME 同设备 self-import + invisible GEM READ/WRITE + vblank guard + 状态门禁；退出码 0-5；能力边界：仅同设备 self-import，foreign/cross-device/GBM/V4L2/长期压力/并发保持 UNVERIFIED）；**真机已执行并合并**：2026-08-26 root 权限运行 → runtime_dmabuf_regression=PASS（证据 baselines/runtime-results-20260824.txt，退出码 0-5）；探针可能占用 GPU，需授权 + 超时 |
+| dmabuf_fix_present / dmabuf_regression | 是/否 | 回归通常需 | 回归需 | 否 | 否 | 否 | 回归：`bash tools/run-dmabuf-regression-test.sh [--render-device NODE] [--card-device NODE]`（同设备 PRIME self-import + invisible GEM READ/WRITE + vblank guard + 状态门禁；退出码 0-5；能力边界：仅同设备 PRIME self-import，foreign/cross-device/GBM/V4L2/长期压力/并发保持 UNVERIFIED）；**真机已执行并合并**：2026-08-26 root 权限运行 → runtime_dmabuf_regression=PASS（证据 baselines/runtime-results-20260824.txt）；普通用户无法读取 dmesg 时日志门禁不能得到 clean，整体只能 UNVERIFIED；探针可能占用 GPU，需授权 + 超时 |
 | display_topology / display_modeset | 是/否 | 否 | 是 | 拓扑需 | 否 | modeset 需 | modeset/热插拔/合盖需授权 |
 | picom_running / picom_glx | 是/否 | 否 | 否 | glx 需 | 否 | 否 | 只读状态；glx backend 需授权 |
 | audio_cards_enumeration / audio_default_sink / audio_playback | 是/否 | 否 | 否 | 否 | 播放需 | 否 | 播放需授权（aplay 测试音） |
@@ -105,7 +105,7 @@ gcc -O2 -o /tmp/pocl tools/probe-opencl-devices.c -ldl && /tmp/pocl exec [elemen
   失败（rc=2/3），不伪造硬件 PASS。超时保护为 Vulkan fence 限时加测试外部 `timeout`；探针不创建
   临时文件、不留后台进程（`tests/unit/run-exec-probes-tests.sh` 12 项覆盖）。
 
-## 分级规则（~/4.md）
+## 分级规则
 
 - 枚举成功 ≠ 实际执行成功：`_enumeration` 与 `_execution` 分开记录；
 - 沙箱/SSH/无 /dev/dri 时设备项只能 SKIP/UNVERIFIED，**不得伪造 PASS**；

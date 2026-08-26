@@ -54,6 +54,7 @@ bash tests/unit/run-extractor-tests.sh
 bash tests/unit/run-results-parser-tests.sh
 bash tests/unit/run-exec-probes-tests.sh
 bash tests/unit/run-vaapi-decode-tests.sh
+bash tests/unit/run-dmabuf-regression-tests.sh
 ```
 
 - manifest 测试用 `tools/validate-binary-manifest.py` 对真实清单与 `tests/fixtures/` 下的恶意

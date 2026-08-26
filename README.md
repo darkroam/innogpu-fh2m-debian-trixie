@@ -4,8 +4,8 @@
 能力可知、可维护可演进的适配与验证项目：内核驱动、显示输出、硬件 GL、音频与全套验收证据。
 本项目自有工作采用 MIT 许可证；导入源码和厂商载荷按各自声明处理，当前再分发边界见许可证章节。
 
-> 最后更新：2026-08-24 —— 当前驱动包 `4.0.0-i1`（源码级重构版），已完成 Phase 4 实机验收、
-> 回退演练及 Vulkan/OpenCL 最小执行验证。
+> 最后更新：2026-08-26 —— 当前驱动包 `4.0.0-i1`（源码级重构版），已完成 Phase 4 实机验收、
+> 回退演练、Vulkan/OpenCL 最小执行、VA-API 实际解码及 DMA-BUF 同设备 PRIME self-import 回归验证。
 
 ## 适配的当前系统
 
@@ -15,7 +15,7 @@
 | CPU 平台 | Hygon x86_64 |
 | GPU | Innosilicon Fantasy II-M，PCI `1ec8:9810`，2 GiB VRAM（PowerVR DDK V119 RTM 谱系） |
 | 当前驱动包 | `4.0.0-i1`：Git 管理的导入驱动源码树 `drivers/` + `binary-manifest.json` 管理的黑盒载荷 |
-| 已验证能力 | Vulkan 1.3.264 枚举及队列提交 / OpenCL 3.0 枚举及 kernel 读回 / GL 4.3 core + GLES 3.2 / VA-API H.264 Main + HEVC Main 实际硬解（30 帧 320x240 NV12 输出校验）/ DRM+fbdev / 桌面硬件 GL / HDA 与 PipeWire 枚举 |
+| 已验证能力 | Vulkan 1.3.264 枚举及队列提交 / OpenCL 3.0 枚举及 kernel 读回 / GL 4.3 core + GLES 3.2 / VA-API H.264 Main + HEVC Main 实际硬解（30 帧 320x240 NV12 输出校验）/ DMA-BUF 同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 / DRM+fbdev / 桌面硬件 GL / HDA 与 PipeWire 枚举 |
 
 ## 版本演进
 
@@ -37,7 +37,8 @@
 
 ```sh
 git clone https://github.com/darkroam/innogpu-fh2m-debian-trixie.git && cd innogpu-fh2m-debian-trixie
-sudo scripts/install-prereqs-debian.sh                        # 构建/运行依赖
+sudo scripts/install-prereqs-debian.sh                        # 基础构建/运行依赖
+# 最小化系统还须确认 python3、dpkg-deb 等新构建器直接命令（见 dependencies.md）
 # 取得 Deepin 202504 原包放入 debs/（完整 SHA-256 见 docs/project/dependencies.md）
 bash scripts/extract-vendor-binaries.sh                       # 按 manifest 重建 vendor/ 黑盒载荷
 SOURCE_DATE_EPOCH=1787342400 bash scripts/build-innogpu-driver.sh  # 构建 4.0.0-i1

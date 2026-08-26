@@ -21,7 +21,9 @@ WEBKIT_DISABLE_DMABUF_RENDERER=1
 ## 已知事实
 
 - 调查实验快照运行 `3.3.3.42-patched-23`；其直接回退点是 `patched-22`，完整图形验收回退点是 `patched-21`。
-- FH2M 的 Xorg/GLX、direct rendering、DRI3、Present 和 Picom GLX 已分别通过现有验收。
+- 在本调查的历史实验快照中，FH2M 的 Xorg/GLX、direct rendering、DRI3、Present 和 Picom GLX
+  曾分别通过对应验收；该句不升级当前 `runtime_picom_glx`，后者因未按现行证据流程确认 backend
+  仍为 UNVERIFIED。
 - Clash Verge 在同一应用和配置下禁用 WebKit DMA-BUF renderer 后，窗口卡顿消失且 CPU 明显下降。
 - WebKitGTK 2.52.5 的 `WEBKIT_DISABLE_DMABUF_RENDERER` 位于 GTK UIProcess 的
   `AcceleratedBackingStore` DMA-BUF 路径；该路径还使用 GBM/EGL image、fence 和 DRM vblank。
@@ -277,10 +279,10 @@ GEM，执行 READ CPU_PREP、逐页读取、CPU_FINI 和 `munmap`。它不加载
 - 预取/批量候选必须提供随机页、顺序页、重复映射、内存峰值和 WRITE 回归数据；完成前不得安装
   或重启。
 
-## DMA-BUF 回归入口（2026-08-24，~/7.md）
+## DMA-BUF 回归入口（2026-08-24 实现，2026-08-26 真机验证）
 
 - `tools/run-dmabuf-regression-test.sh` 聚合：设备动态发现（1ec8:9810 render/card 同源 BDF）→
-  PRIME 同设备 self-import（新探针 `tools/probe-dmabuf-self-import.c`，CREATE_DUMB→HANDLE_TO_FD→
+  同设备 PRIME self-import（新探针 `tools/probe-dmabuf-self-import.c`，CREATE_DUMB→HANDLE_TO_FD→
   FD_TO_HANDLE→逆序释放，CLOEXEC 验证，多轮 fd 无泄漏）→ invisible GEM READ/WRITE+verify（READ
   munmap 性能门槛默认 max≤40ms system CPU，依据本文 p22 基线 71.9-119.4ms 与修复后 1.7-2.6ms）→
   topology 动态取 active/inactive CRTC 资源索引（不按 XRandR 输出名猜索引）→ active vblank 相对 wait
@@ -291,7 +293,7 @@ GEM，执行 READ CPU_PREP、逐页读取、CPU_FINI 和 `munmap`。它不加载
   DMA-BUF export/import 证据；invisible GEM READ/WRITE 是 PDP 私有语义，不是 DMA-BUF 生命周期测试。
 - fixture 测试 147 项（tests/unit/run-dmabuf-regression-tests.sh），CI 无 /dev/dri 可跑；真机证据已由
   2026-08-26 root 权限运行采集并封存（`baselines/runtime-results-20260824.txt`），`runtime_dmabuf_regression`
-  已升级为 PASS（同设备；foreign/跨设备/GBM/V4L2/长期压力/并发仍 UNVERIFIED）。
+  已升级为 PASS（仅同设备 PRIME self-import；foreign/跨设备/GBM/V4L2/长期压力/并发仍 UNVERIFIED）。
 
 ## 风险与回退
 

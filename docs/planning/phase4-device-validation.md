@@ -26,7 +26,7 @@ p27 恢复全 PASS、重装 4.0.0-i1 + 重启（reboot 3），设备最终运行
 | --- | --- | --- |
 | SSH | `ssh.service` active | `systemctl is-active ssh` |
 | 真实 TTY | `getty@tty1`、`getty@tty2` active | `systemctl list-units | grep getty` |
-| 本地会话 | `ok` @ seat0 / tty1 | `who` |
+| 本地会话 | `<target-user>` @ seat0 / tty1（用户名已脱敏） | `who` |
 | 磁盘 | `/` 17% 已用（145G 可用） | `df -h /` |
 | 内核头 | `/lib/modules/6.12.101+deb13-amd64/build` 存在 | `ls -d /lib/modules/*/build` |
 

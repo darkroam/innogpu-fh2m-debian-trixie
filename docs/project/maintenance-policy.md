@@ -104,7 +104,8 @@
 
 - **系统包单元（vendor/包管理）**：随 Debian 包或仓库源码构建交付、由包管理器管理生命周期、升级时
   由 maintainer script 处理的单元放 `/usr/lib/systemd/system/`（vendor 只读路径），并在包内声明
-  `systemd` 依赖。不得放 `/etc/systemd/system/`，那里是管理员本地覆盖区。
+  `systemd` 依赖。Debian usrmerge 系统上的 `/lib/systemd/system/` 是兼容路径；导入包保留该布局时
+  必须确认它与 `/usr/lib/systemd/system/` 等价。vendor 单元不得放 `/etc/systemd/system/`，那里是管理员本地覆盖区。
 - **包管理用户单元（vendor 用户级）**：随包交付、供非 root 用户会话使用的单元放
   `/usr/lib/systemd/user/`（vendor 只读路径），由包管理器管理；用户级 enable 由各用户执行
   `systemctl --user enable`。
@@ -116,18 +117,19 @@
 - **系统预置用户单元**：需要 root 预置（对所有用户可用）的用户级单元放 `/etc/systemd/user/`；
   它与 `loginctl enable-linger` 没有必然关系——linger 只控制**是否在用户未登录时保持用户服务运行**，
   不决定单元放在哪个目录。需要未登录常驻时单独执行 `loginctl enable-linger <user>` 并记录。
-- **可执行辅助**：root 级 unit 引用的脚本放 `/usr/lib/<项目>/` 或 `/usr/libexec/<项目>/`（包管理）或
-  `/usr/local/lib/<项目>/`（本机安装）；用户级 unit 放 `~/.local/lib/<项目>/`。不放在
-  `/usr/local/bin` 与 unit 内 `ExecStart` 混合处，避免权限和 PATH 歧义；脚本所有权与 unit 一致。
+- **可执行辅助**：仅供 root unit 调用的脚本放 `/usr/lib/<项目>/` 或 `/usr/libexec/<项目>/`（包管理）或
+  `/usr/local/lib/<项目>/`（本机安装）；仅供用户 unit 调用的脚本放 `~/.local/lib/<项目>/`。需要管理员
+  直接调用的稳定命令可放 `/usr/sbin/`（包管理）或 `/usr/local/sbin/`（本机安装），但 unit 的
+  `ExecStart` 必须指向实际安装路径，不能依赖 PATH 或在两个前缀间漂移；脚本所有权与 unit 一致。
 
 ### enable/start 与 daemon-reload
 
 - 每次写入/删除/修改 unit 文件后必须执行 `systemctl daemon-reload`（用户单元：
   `systemctl --user daemon-reload`），否则旧定义仍生效。
-- **enable 与 start 必须分开执行**：默认服务安装时先 `systemctl enable <unit>` 再
-  `systemctl start <unit>`（用户单元用 `systemctl --user ...`），并分别记录结果；可选服务只在用户
-  明确选择后 enable。禁止用 `systemctl enable --now` 合并两步（无法区分 enable 失败与 start 失败），
-  也禁止用 `systemctl restart` 掩盖首次启动失败。
+- **enable 与激活必须分开执行**：默认服务安装时先 `systemctl enable <unit>`，再单独执行并记录
+  `systemctl start <unit>`（用户单元用 `systemctl --user ...`）；幂等重跑若明确需要重新应用状态，可在
+  单独激活步骤使用 `restart`，但失败必须传播且不得冒充首次启动成功。可选服务只在用户明确选择后
+  enable。禁止用 `systemctl enable --now` 合并两步。
 - 启用前必须检查单元语法：`systemd-analyze verify <unit>`；用户单元写作
   `systemd-analyze --user verify <unit>`（`--user` 位置在 verify 之前，避免解析为单元名）。
 
@@ -141,6 +143,39 @@
   视敏感度）；unit 不得以 `User=` 或 `Environment=` 泄露凭据，敏感值必须由 `EnvironmentFile=` 引用
   受限文件或 systemd credentials。
 - 任何脚本在修改系统服务状态前必须检查是否以适当身份运行（root/用户），并在文档中写明所需权限。
+
+### 现有实例与已知例外
+
+- `install-hygon-hda-audio.sh` 是本机安装器，系统 unit 位于 `/etc/systemd/system/`，用户 unit 位于
+  `~/.config/systemd/user/`，符合 local/admin 所有权；其用户 helper 历史上安装到
+  `~/.local/bin/hygon-hda-audio-user-apply`。该路径是现有兼容接口，新服务不得照抄；若迁移到
+  `~/.local/lib/<项目>/`，必须同步 unit、卸载清单和回退步骤。当前实现没有对所有被覆盖路径做备份，
+  未运行 `systemd-analyze verify`，且用户服务管理失败被忽略；它只满足目录所有权部分，不是完整合规示例。
+- `install-dri-node-repair-service.sh` 的包内 helper 路径 `/usr/sbin/innogpu-repair-dri-nodes` 与 unit
+  一致；但从源码树直接安装的 fallback 当前写入 `/usr/local/sbin/`，unit 仍固定 `/usr/sbin/`，且启动
+  失败会被忽略、卸载器未清理 helper 链接。该 fallback 不能视为已验证安装路径；修复脚本前只记录为
+  已知实现缺口，不通过文档命令绕过。
+- 当前 deb 从 vendor manifest 导入 `/lib/systemd/system/sw-inno-gl.service` 与 `/usr/sbin/sw-inno-gl`，
+  但 control 未声明 `systemd` 依赖，maintainer scripts 也不 enable/start 该单元。它是既有包载荷，
+  不是本节规范的合规示例；后续版本必须先决定其保留和生命周期策略，并补包边界测试。
+
+## 实现与文档同步矩阵
+
+实现是行为事实源，文档负责解释所有权、风险和操作流程。修改下列实现时，至少同步检查对应权威文档；
+不能只改最接近代码的一份 README，也不能用 planning/history 覆盖当前态：
+
+| 实现变化 | 必须复核的当前权威 | 其他同步项 |
+| --- | --- | --- |
+| `build-innogpu-driver.sh`、提取器、manifest 或包载荷路径 | `architecture.md`、`dependencies.md`、`docs/user/new-device-install.md` | `scripts/README.md`、迁移设计、包边界测试、恢复文档 |
+| 安装/卸载脚本、systemd unit、helper 或持久化配置 | 对应 `project/*-management.md` 与本维护策略 | `scripts/README.md`、用户安装/恢复、卸载清单、fixture 测试 |
+| `tools/` 探针参数、输出、退出码或能力边界 | `tools/README.md`、`test-strategy.md` | `tests/README.md`、runtime README、能力调查；真实状态变化还需证据/摘要流程 |
+| 测试入口、用例数或 CI 顺序 | `tests/README.md`、`test-strategy.md`、`.github/workflows/ci.yml` | status/todo 中的当前统计；历史计数不回写 |
+| patch、`drivers/` 转换提交或外部载荷分类 | `docs/patches/README.md`、对应 patch 文档、`patch-provenance.md` | architecture、manifest、许可证审计；不得擅自关闭 BLOCKED |
+| runtime 真机结论 | `baselines/latest-runtime-baseline.txt`（按授权流程生成）和 `status.md` | test-strategy/goals/todo/能力文档；证据文件只追加经审查结果 |
+
+`docs/planning/history.md`、`docs/incidents/`、`docs/archive/` 和历史 baseline 只保存时点事实。发现其中
+与当前态不同，应链接当前权威或增加新时点记录，不能重写旧结论。`scripts/check-docs.sh` 是必要护栏，
+但当前链接/隐私扫描范围不是全部 tracked Markdown；发布前仍需从 `git ls-files '*.md'` 做全仓复核。
 
 ## 提交前检查
 

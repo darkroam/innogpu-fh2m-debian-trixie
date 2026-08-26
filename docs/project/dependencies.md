@@ -21,9 +21,10 @@
 | `build/innogpu-fh2m-trixie_4.0.0-i1.deb`（由 `scripts/build-innogpu-driver.sh` 生成） | **新架构当前运行包**：迁移源码树 + manifest 黑盒载荷；可复现 epoch 1787342400，SHA `68aea6c0…`；Phase 4 实机验收全 PASS |
 | `debs/innogpu-fh2m_20250421190503-debug_amd64.deb` | Deepin 202504 DKMS/GL/DDX 来源；SHA-256 `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2` |
 
-构建和准备脚本优先查找 `debs/`，并保留仓库根目录旧路径作为兼容回退。
-`scripts/prepare-deepin-userspace-root.sh` 将 Deepin deb 解包到被 git 忽略的
-`third_party/innogpu-fh2m-deepin-202504/root/`。
+新架构提取器默认只读取 `debs/innogpu-fh2m_20250421190503-debug_amd64.deb`，其他位置必须通过
+`INNOGPU_DEEPIN_DEB` 显式指定。只有 legacy `build-deepin-coherent.sh` 与
+`prepare-deepin-userspace-root.sh` 仍保留仓库根旧路径的兼容查找；后者将 Deepin deb 解包到被 Git
+忽略的 `third_party/innogpu-fh2m-deepin-202504/root/`。不得依赖该 legacy 回退构建新架构包。
 
 Deepin 202504 原包是后续版本唯一的来源基线。当前构建直接使用 `drivers/` 中已转换的源码提交，
 并按 manifest 从原包提取同源 DRI、GBM、GLAPI、GLVND、DDX、固件和黑盒对象；构建时不再叠加
@@ -43,6 +44,17 @@ Deepin 202504 原包是后续版本唯一的来源基线。当前构建直接使
 - 音频修复使用的 `alsa-utils`、PipeWire、WirePlumber 和 `wpctl` 所属包；
 - Innogpu 显示接入要求目标用户已经从 dotconfig 安装 xdisplay；本项目设备钩子使用 `xrandr`，
   会话接入使用 POSIX shell。
+
+当前新构建器还直接调用 `python3`、`dpkg`/`dpkg-deb`、`sha256sum`、`realpath`、`make` 和
+`/usr/sbin/modinfo`。其中 `install-prereqs-debian.sh` 当前没有显式安装 `python3`；最小化 Debian
+环境必须在构建前另行确认这些命令可用。该事实是现有前置依赖脚本的覆盖缺口，不得把脚本运行成功
+等同于完整工具链已安装。
+
+当前 `4.0.0-i1` deb 的实际 control 字段为：`Depends: dkms, build-essential, libdrm2, libepoxy0,
+libpixman-1-0, libwayland-server0, libxcb-randr0`，`Recommends: linux-headers-amd64, libegl1,
+libgles2, libgl1, libglx0, libgles1, libglvnd0`。包内虽然从 vendor 载荷导入
+`/lib/systemd/system/sw-inno-gl.service`，但 control 当前没有显式 `systemd` 依赖，maintainer scripts
+也不 enable/start 该单元；这是一项待单独修正和补 release fixture 的实现缺口，而不是服务已激活的证据。
 
 runtime 能力基线另有可选诊断依赖：`pciutils`（`lspci`）、`drm-info`（`drm_info`）、
 `vulkan-tools`（`vulkaninfo`）、`clinfo`、`vainfo` 所属发行版包及 `wpctl`。这些工具缺失时对应能力项
@@ -103,4 +115,4 @@ INNOGPU_X_USER=${INNOGPU_X_USER:-$USER}
 INNOGPU_X_HOME=${INNOGPU_X_HOME:-$HOME}
 ```
 
-仓库脚本和文档不得写死 `/home/ok`。
+仓库脚本和文档不得写死真实用户的绝对 home 路径。

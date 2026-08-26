@@ -35,7 +35,7 @@ PCI 0000:06:00.6 [1d94:14c9]
 | `components/fbterm/` | 当前维护的 fbterm 用户态兼容补丁（`001-configurable-redraw-scrolling.patch`） |
 | `debs/` | 本地 release/构建输入输出目录，`.deb` 被 Git 忽略，仅跟踪说明文件 |
 | `scripts/` | 构建、安装、回退、诊断、显示接入、音频固化和验证入口 |
-| `tools/` | EGL、GBM、X11、loader 的最小探针，以及确定性的厂商对象变换工具 |
+| `tools/` | DRM/KMS、DMA-BUF、EGL/GBM、X11、Vulkan/OpenCL/VA-API 的最小探针与聚合入口，以及确定性的厂商对象变换工具 |
 | `tests/` | 本项目脚本、fbterm/Picom 和显示接入边界测试；xdisplay 引擎测试留在 dotconfig |
 | `docs/project/` | 架构、现状、依赖和维护边界 |
 | `docs/patches/` | 每个代码补丁的独立设计、验证和回退说明 |
@@ -43,7 +43,7 @@ PCI 0000:06:00.6 [1d94:14c9]
 | `docs/planning/` | 活动计划、历史、挂起项和迁移记录 |
 | `docs/user/` | 新设备安装、日常验证、显示使用和故障恢复 |
 | `docs/archive/` | 不再变化但仍有追溯价值的历史记录 |
-| `baselines/` | 精简后的 pass/fail 历史证据，不作为当前运行状态来源 |
+| `baselines/` | 精简证据；`latest-runtime-baseline.txt` 是当前 35 项 runtime 汇总权威，其余文件按各自版本身份作为历史证据 |
 | `third_party/` | 从外部 Deepin deb 生成的解包目录，不进入 git |
 
 ## 驱动与图形用户态
@@ -93,6 +93,15 @@ DKMS 源码应用 `patches/`。9 个启用补丁已转换为 `drivers/` 中的�
 当前构建必须显式提供经过审阅的 `SOURCE_DATE_EPOCH`，并通过 manifest `--check-only`、
 `check-release-package.sh`、oracle/符号对比和可复现双构建门禁。旧 `build-deepin-coherent.sh` 仍保留
 历史版本号拒绝与 epoch 护栏，但不是新候选的构建入口。
+
+`4.0.0-i1` 的包内路径分为三层：manifest 导入的 vendor 载荷按映射安装（其中
+`sw-inno-gl.service` 保留为 `/lib/systemd/system/sw-inno-gl.service`，`sw-inno-gl` 安装到
+`/usr/sbin/`）；项目维护的 12 个 helper 实体安装到 `/usr/share/innogpu-fh2m-trixie/`；其中 10 个
+稳定命令同时从 `/usr/bin/innogpu-*` 与 `/usr/sbin/innogpu-*` 链接到实体。包的 `postinst` 只写入
+`/etc/modprobe.d/innogpu.conf`、执行 DKMS build/install、校验 coherent DRI、运行
+`ldconfig`/`depmod`/`update-initramfs`，不会 enable 或 start `sw-inno-gl.service`。因此“文件随包存在”
+不能写成“服务已启用”。当前 release gate 也尚未覆盖该 vendor unit/helper 组合及全部 10 个命令链接，
+该缺口记录在 `code-analysis.md` 与 `../planning/todo.md`。
 
 patched-21 是 coherent 历史规则的首个实际输出：离线包边界、重复构建和当前设备运行验收均已通过，
 但尚未完成跨硬件发布。它的固定补丁矩阵和证据见
@@ -154,7 +163,9 @@ Picom 属于独立用户态组件，不进入显卡驱动 deb。项目固定上�
 - 活动 `/etc/X11`、logind、udev 状态必须先记录和审查，不能从本机直接整份复制进仓库。
 - 用户完整 `xprofile` 包含输入法、Picom、代理等无关设置，不能整体吸纳；只提取显示启动契约。
 - 外部 `.deb`、原始日志、EDID、序列号、用户名和绝对 home 路径不得提交。
-- `baselines/latest-*` 是历史证据；改变当前机器前仍需本地运行时验证。
+- `baselines/latest-runtime-baseline.txt` 是当前 runtime 汇总权威，但其 `tested_commit` 与证据边界必须
+  保留；其他 `latest-*` 只有在文件名或内容带版本身份时才能证明对应版本。改变当前机器前仍需本地
+  运行时验证，任何摘要都不能替代授权后的设备检查。
 
 ## 修改顺序
 

@@ -19,7 +19,7 @@
 | `patches/*.patch`（历史内核/驱动补丁）与 `docs/patches/` 验收记录 | 溯源与事故证据；**不得移动或删除** |
 | `components/picom/`、`components/fbterm/`（2026-08-21 由 `patches/picom/`、`patches/fbterm/`、`config/` 迁入，含补丁与 `picom.conf` 配置模板） | 当前维护的第三方组件补丁/配置，**历史内容永久保留**；路径变更已完成（原路径已清空） |
 | `debs/…patched-27.deb`（SHA `f3841597…`）、`patched-17.deb`、`patched-8.deb` | 回退链 `4.0.0-i1 → p27 → … → p17 → p8` 的物理载体；**不得移动或删除**，回退入口永久可用 |
-| p17–p27 全部 git tag（含 p27） | 可复现回退点；**永久保留，不得移动或删除** |
+| 现有 git tag：`patched-17`、`patched-21` 至 `patched-27` | 可追溯回退点；**永久保留，不得移动或删除**。p18/19/20 按发布规则未创建 tag，不得把版本区间误写成全部存在 |
 | `scripts/build-deepin-coherent.sh` | 旧构建器/oracle；check-docs 版本护栏依赖；**继续保留在 `scripts/`，第二步也不移动** |
 | `build-patchedNN-*.sh` wrapper 与历史安装/卸载/恢复入口（`install-patched17-and-check.sh`、`install-patched8-and-check.sh`、`uninstall-patched*.sh`） | **历史内容永久保留**；第二步允许改变工作路径移入 `legacy/`（或保持原路径仅标记 deprecated）；禁止物理删除或丢失任何历史 |
 | Deepin 202504 原 deb | 新构建器的唯一载荷基线；永久保留 |
@@ -72,5 +72,5 @@
 
 ## 参考
 
-- 监督指南 `migration-supervision.md` §四 阶段 5 门槛（监督分支 @ bd76e91，只读）。
+- 监督分支 @ `bd76e91` 中的 `migration-supervision.md` §四阶段 5 门槛（只读；该文件不在 `main`）。
 - [source-tree-migration.md](source-tree-migration.md)、[phase4-device-validation.md](phase4-device-validation.md)。

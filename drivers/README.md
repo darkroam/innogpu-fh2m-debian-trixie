@@ -20,8 +20,8 @@
   - 5 个预编译对象：`innogpu.o_shipped`、`innovpu.o_shipped`、`innosmmu.o_shipped`、
     `innodma.o_shipped`、`innosrvkm.o_shipped`（黑盒，进 `vendor/`）；
   - Deepin 包内混入的构建产物（`.o.cmd` 等，已清理）。
-- **上游内容保留**：`innosrvkm/config_kernel.mk` 含厂商构建路径
-  `/home/platform_headers/...`，属上游源码内容，保留以维持源码 parity，不代表本机路径。
+- **上游内容保留**：`innosrvkm/config_kernel.mk` 含厂商绝对构建路径（文档记为
+  `$UPSTREAM_BUILD_HOME/platform_headers/...`），属上游源码内容，保留以维持源码 parity，不代表本机路径。
 
 ## parity 状态
 

@@ -14,12 +14,13 @@ legacy patched 系构建器（保留作 p27 oracle 与版本护栏）。两者�
 debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 ```
 
-`scripts/build-deepin-coherent.sh`、`scripts/prepare-deepin-userspace-root.sh` 与新架构构建器
-（经 manifest/提取器）都会优先查找该路径，并保留仓库根目录的旧路径作为兼容回退。历史 patched 包
-只用于安装回退或复现记录，不能作为新包输入。
+新架构构建器经 manifest/提取器默认只读取上述 `debs/` 路径；其他位置必须显式设置
+`INNOGPU_DEEPIN_DEB`。`scripts/build-deepin-coherent.sh` 与
+`scripts/prepare-deepin-userspace-root.sh` 仍保留仓库根旧路径兼容查找，但它只服务 legacy 流程。
+历史 patched 包只用于安装回退或复现记录，不能作为新包输入。
 
 本机保存的 patched-19/20 deb 生成于 xdisplay 所有权收敛之前，包内仍有旧显示引擎和实验辅助文件。
-它们只能作为历史/当前机器证据，不得上传为当前 release。当前源码禁止复用 19/20 版本号。
+它们只能作为历史机器证据，不得上传为当前 release。当前源码禁止复用 19/20 版本号。
 
 当前本地 p21 输出已通过包边界和两次逐字一致构建，并已在当前设备完成部署、重启和运行验收；实际身份
 记录在 [`patched-21-release-candidate.md`](../docs/patches/patched-21-release-candidate.md)。这不等于它

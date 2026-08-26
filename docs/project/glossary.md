@@ -11,6 +11,7 @@
 | coherent | 同一 Deepin 发布的 DKMS、DRI、GBM、GLAPI、GLVND、DDX、固件和安装脚本整体部署 | 禁止从历史 patched 包挑选单个 `.so` 或固件拼装 |
 | DKMS | Dynamic Kernel Module Support，按当前内核编译并安装内核模块的机制 | 包安装成功不等于内存中的旧模块已被替换，仍须重启验证 |
 | DRM / fbdev | 内核的图形设备接口；fbdev 提供 `/dev/fb0` framebuffer | `card0`、`renderD128` 与 `fb0` 是独立验收项 |
+| DMA-BUF / PRIME self-import | DRM PRIME 可把 GEM 对象导出为 DMA-BUF fd，并可再导入为 GEM handle；self-import 指同一设备重新导入自己导出的同一对象 | 当前 PASS 仅覆盖同设备 PRIME self-import，不代表 foreign、跨设备、GBM 或 V4L2 导入已验证 |
 | DDX | Xorg 的设备驱动模块 | 本项目的 `innogpu_drv.so` 必须与同源用户态一起部署 |
 | DRI / GBM / GLAPI / GLVND | Mesa/X11 图形用户态的直接渲染、buffer 管理、GL API 和 vendor 分发组件 | 它们与 DDX、firmware 构成不可拆分的 ABI 载荷 |
 | PVR | PowerVR 服务层，负责本设备的固件和图形 services 初始化 | PVR ACTIVE 与 Driver/Firmware OK 是内核运行验收的一部分 |

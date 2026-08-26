@@ -10,6 +10,15 @@
   LICENSE 注释更新为迁移后现状，过期表述清理；与 4.0.0-i1 现状对齐。
 - [ ] 为每次新候选包建立独立的 `docs/patches/` 说明和 `docs/incidents/` 验收记录。
 - [ ] 将长期维护所需的脚本参数逐步收敛为可审查的配置，保持 `scripts/<name>` 兼容入口不变。
+- [ ] 闭合运维脚本实现缺口：统一 DRI repair helper 与 unit 路径并传播启动失败；移除
+  `check-soft-xorg-dwm.sh`/`try-hotload-patched17.sh` 的固定用户名；让 VA-API timeout 同时识别
+  rc=124/137；为音频安装补写入冲突/备份保护、`systemd-analyze verify`、对称卸载与 fixture，并明确
+  用户服务管理失败策略；扩展 check-docs 到全部 tracked Markdown 和内联路径。
+- [ ] 为最小化 Debian 环境补齐新构建器前置依赖门禁（至少显式核对/安装 `python3` 及当前直接调用的
+  dpkg/coreutils/kmod 工具），避免把 `install-prereqs-debian.sh` 成功误认为完整构建工具链可用。
+- [ ] 明确包内 vendor `sw-inno-gl.service`/`sw-inno-gl` 的保留与生命周期策略；若保留，补齐 control
+  依赖、enable/start/卸载边界，并让 release gate fixture 校验 unit、helper 及 10 个 `/usr/bin`+
+  `/usr/sbin` 稳定命令链接；若移除，更新 manifest 与包载荷审计后再构建新版本。
 - [x] 完成 2026-08-20 技术 release 审阅：确认 `debs/` 包、版本、哈希和验证证据一致；该结论不
   覆盖 2026-08-24 发现的许可证发布阻断。
 - [x] 实际演练 patched-17 回退：安装、重启、验证，再恢复 patched-23；两次重启后的 TTY、Xorg/dwm、
@@ -17,7 +26,10 @@
 - [x] 完成 release 审阅主体：tag、哈希、包边界、可复现构建（含目录 mtime 修复）、回退路径和附件边界，
   见 [release-review-2026-08-20.md](release-review-2026-08-20.md)。
 - [ ] 剩余发布工作：跨硬件实机矩阵（扩展坞/多屏/无盖桌面/其他机型）、电源/合盖矩阵、release 附件上传。
-- [x] 源码树迁移阶段 0-4（监督指南 `docs/planning/migration-supervision.md`（监督分支 migration/supervised-source-tree @ bd76e91）管辖）：
+- [ ] `source-v4.0.0-i1` 目前只是 Phase 0 规划名，仓库尚无该 tag；许可证发布阻断关闭并完成 release
+  追溯审查后，才能决定是否创建对应 annotated tag，禁止提前把规划名写成现有发布标识。
+- [x] 源码树迁移阶段 0-4（由监督分支 `migration/supervised-source-tree` @ `bd76e91` 中的
+  `docs/planning/migration-supervision.md` 管辖；该指南不在 `main`）：
   阶段 0 设计冻结 ✅；阶段 1 drivers/ 导入 + 9 patch 转提交 + parity ✅；阶段 2 binary-manifest.json +
   幂等提取 + staging 内核编译 ✅（G1-G7 全 PASS）；阶段 3 新构建器 4.0.0-i1 并行验证 ✅
   （oracle 全 PASS 含 module_symbols、.o.cmd 边界裁定、可复现构建，2026-08-21 监督评审通过）；
@@ -46,18 +58,18 @@
   `innodma.o_shipped`，超出本项目可维护源码范围，不制作 READ 预取候选；patched-24 仅处理
   Debian 6.12.101+ DKMS API 兼容。
 - [ ] 将可复现的热点、perf 数据和应用级 workaround 整理为上游/厂商修复报告。
-- [x] tests/runtime/ 真机能力基线第一轮（~/4.md，2026-08-24 完成）：
+- [x] tests/runtime/ 真机能力基线第一轮（监督任务 4，2026-08-24 完成）：
   - [x] 实现 run-capability-baseline.sh（12 能力域、枚举/执行分离、PASS/FAIL/SKIP/UNVERIFIED、脱敏摘要）；
     沙箱实测 35 项：15 PASS / 19 SKIP / 1 UNVERIFIED（无 /dev/dri 时设备项不伪造 PASS）。
   - [x] tests/runtime/README.md（每项权限/设备/X11/TTY/副作用/恢复）；
   - [x] 沙箱验证只读部分 + 真机授权部分（VT/X11/modeset/播放）标注。
-- [x] tests/runtime/ 结果合并修正（~/4.md 第二轮，2026-08-24 完成）：
+- [x] tests/runtime/ 结果合并修正（监督任务 4 第二轮，2026-08-24 完成）：
   - [x] 修复 --results-file：接受全部已定义项（egl_x11_probe/gl_execution 等）、严格解析
     （未知名/状态告警忽略、重复取最后、粘连拒绝、PASS/FAIL 必须带证据）、缺失文件 rc=2、
     强制 --allow-authorized-tests；新增 16 项 fixture 测试（run-results-parser-tests.sh；2026-08-24
     证据封存轮追加 `#` 注释跳过 3 项，当前合计 19 项）。
   - [x] 真机证据合并：fbterm_real_vt/egl_x11_probe/gl_execution PASS；解析器测试隔离正式摘要。
-- [x] Vulkan/OpenCL 最小执行能力验证（~/5.md，2026-08-24 完成）：
+- [x] Vulkan/OpenCL 最小执行能力验证（监督任务 5，2026-08-24 完成）：
   - [x] 探针新增 execution 模式：probe-vulkan-devices.c exec（instance→GPU 设备→queue→空 cmd buffer+fence
     提交→限时等待→释放）与 probe-opencl-devices.c exec（GPU 设备→context/queue→add kernel→读回→
     逐元素校验→释放）；loader 路径 env 注入；机器可读输出 + 退出码分级；枚举路径保持。
@@ -67,7 +79,7 @@
     Fantasy II-M 0x35020023）与 opencl exec 1024（add kernel+读回逐元素校验，Fantasy II-M
     0x1ec8）均 PASS；经 --results-file 合并，runtime_vulkan_execution/runtime_opencl_execution
     升级为 PASS；汇总 22 PASS/9 SKIP/4 UNVERIFIED（overall=UNVERIFIED，未覆盖项不冒充）。
-- [x] VA-API H.264/HEVC 实际解码验证（~/6.md，2026-08-24 完成）：
+- [x] VA-API H.264/HEVC 实际解码验证（监督任务 6，2026-08-24 完成）：
   - [x] 实现 tools/run-vaapi-decode-test.sh（--codec h264|hevc|all；lavfi testsrc2 恰好 30 帧 320x240→
     libx264/libx265→软件参考 NV12 framemd5→强制 VAAPI 硬解（hwaccel vaapi + hwaccel_output_format
     vaapi + hwdownload,format=nv12，无软件回退）→真实 framemd5 格式校验（尾换行/#dimensions
@@ -85,9 +97,9 @@
     OK/缺字段/非数字/OKAY 冒充/多余 token/重复字段/前导零 08->09 增长/post 失效/逐项增长）/mktemp 失败/
     TERM 信号清理/无残留（限定 TMPDIR）/不污染 baseline；fixture 模式独立命名空间 fixture_*，绝不输出
     vaapi_decode_* 权威行）。
-- [x] DMA-BUF 回归工具与测试（~/7.md，2026-08-24 实现完成，2026-08-26 真机 PASS 证据已封存）：
-  - [x] tools/run-dmabuf-regression-test.sh 聚合入口：动态 1ec8:9810 render/card 同源发现、PRIME
-    同设备 self-import（probe-dmabuf-self-import.c 新）、invisible GEM READ/WRITE+verify（性能门槛
+- [x] DMA-BUF 回归工具与测试（监督任务 7，2026-08-24 实现完成，2026-08-26 真机 PASS 证据已封存）：
+  - [x] tools/run-dmabuf-regression-test.sh 聚合入口：动态 1ec8:9810 render/card 同源发现、同设备
+    PRIME self-import（probe-dmabuf-self-import.c 新）、invisible GEM READ/WRITE+verify（性能门槛
     max≤40ms，依据 p22 71.9-119.4ms vs 修复后 1.7-2.6ms）、topology 动态 CRTC 索引 + active vblank
     （≥10 样本）+ inactive EINVAL 守卫、Driver/Firmware 双快照严格门禁、超时/信号/幂等清理；
     fixture 独立命名空间 fixture_dmabuf_*，零权威 PASS；退出码 0/1/2/3/5。

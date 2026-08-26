@@ -23,6 +23,15 @@ ls -l /dev/dri /dev/fb0
 继承该行为基线（经 patched-27）。这不替代完整的
 电池合盖、外屏热插拔、外部电源矩阵和 Clash Verge 应用 A/B。
 
+## 当前能力证据
+
+35 项 runtime 能力的当前权威摘要为
+[`baselines/latest-runtime-baseline.txt`](../../baselines/latest-runtime-baseline.txt)：22 PASS / 9 SKIP /
+4 UNVERIFIED，overall 为 UNVERIFIED。VA-API H.264 Main + HEVC Main 实际解码与 DMA-BUF 同设备
+PRIME self-import 回归的真机证据已合并；后者不证明 foreign、跨设备、GBM 或 V4L2 导入。
+日常验证先读取摘要；需重新采集或运行有副作用探针时，按
+[`tests/runtime/README.md`](../../tests/runtime/README.md) 的授权、root、超时和证据合并规则执行。
+
 ## patched-21 分阶段验收
 
 patched-21 的完整候选定义见

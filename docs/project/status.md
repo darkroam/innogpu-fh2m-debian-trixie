@@ -1,6 +1,6 @@
 # 当前状态与问题清单
 
-最后更新：2026-08-24
+最后更新：2026-08-26
 
 本文件是项目当前运行状态的唯一摘要。历史过程、补丁细节和故障推导分别见
 [阶段补丁](../patches/README.md) 与 [事故和经验](../incidents/README.md)。
@@ -26,7 +26,7 @@
 | 能力验证工具 | `tests/runtime/run-capability-baseline.sh`（12 能力域、35 项、枚举/执行分离）；沙箱基线 15 PASS / 19 SKIP / 1 UNVERIFIED，合并真机证据后的权威摘要为 22 PASS / 9 SKIP / 4 UNVERIFIED | [runtime 摘要](../../baselines/latest-runtime-baseline.txt)、[tests/runtime/README](../../tests/runtime/README.md)、[test-strategy](test-strategy.md) |
 | Vulkan/OpenCL 执行 | 探针 exec 模式 + 真机验证通过（2026-08-24）：Vulkan queue+fence submit+wait、OpenCL add kernel+读回逐元素校验均在 Fantasy II-M 上执行成功；`runtime_vulkan_execution`/`runtime_opencl_execution`=PASS（证据 `baselines/runtime-results-20260824.txt`）；离线失败路径测试 12 项 | [probe-vulkan-devices.c](../../tools/probe-vulkan-devices.c)、[probe-opencl-devices.c](../../tools/probe-opencl-devices.c)、[test-strategy](test-strategy.md) |
 | VA-API 实际解码 | `tools/run-vaapi-decode-test.sh --codec all` 真机执行（2026-08-24）：H.264 Main 与 HEVC Main 强制 VA-API 硬解，各 30 帧 320x240 NV12 framemd5 与软件参考逐帧 hash 一致，Driver/Firmware 状态门禁通过；`runtime_vaapi_decode`=PASS（证据 `baselines/runtime-results-20260824.txt`）；能力边界仅 Main/Main 8-bit 4:2:0 | [run-vaapi-decode-test.sh](../../tools/run-vaapi-decode-test.sh)、[test-strategy](test-strategy.md) |
-| DMA-BUF 回归工具 | `tools/run-dmabuf-regression-test.sh` 已实现（2026-08-24）：PRIME 同设备 self-import + invisible GEM READ/WRITE + vblank 守卫 + 状态门禁聚合，配套 147 项 fixture 测试；**真机 PASS（2026-08-26 root 权限运行，证据已封存）**：同设备 self-import/READ/WRITE/vblank/状态门禁/内核日志全部通过；能力边界不变：仅同设备 self-import，foreign/cross-device、GBM、V4L2、长期压力与并发仍 UNVERIFIED | [run-dmabuf-regression-test.sh](../../tools/run-dmabuf-regression-test.sh)、[test-strategy](test-strategy.md)、[webkit 调查](../planning/webkit-dmabuf-investigation.md) |
+| DMA-BUF 回归工具 | `tools/run-dmabuf-regression-test.sh` 已实现（2026-08-24）：同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 + 状态门禁聚合，配套 147 项 fixture 测试；**真机 PASS（2026-08-26 root 权限运行，证据已封存）**：self-import/READ/WRITE/vblank/状态门禁/内核日志全部通过；能力边界不变：仅同设备 PRIME self-import，foreign/cross-device、GBM、V4L2、长期压力与并发仍 UNVERIFIED | [run-dmabuf-regression-test.sh](../../tools/run-dmabuf-regression-test.sh)、[test-strategy](test-strategy.md)、[webkit 调查](../planning/webkit-dmabuf-investigation.md) |
 
 ## 已解决问题
 
@@ -75,6 +75,11 @@
     主要 DMA descriptor/wait 热点位于预编译 `innodma.o_shipped`，当前项目不制作 READ 预取候选。
 12. `drivers/` 中存在 `Strictly Confidential`、BSD/LGPL 和引用缺失许可证文本的文件；第三方载荷
     也未完成逐项权利核实。关闭 [源码许可证审计](source-license-audit.md) 前，发布状态为 BLOCKED。
+13. 运维实现仍有已登记缺口：DRI repair 源码 fallback 与 unit 路径不一致且失败/卸载不闭合；两个
+    历史/诊断脚本固定目标用户名；VA-API runner 未把 timeout rc=137 归入超时；音频安装没有对称
+    卸载器；check-docs 的链接/隐私范围不是全部 tracked Markdown；包内 vendor `sw-inno-gl.service`
+    没有显式 systemd 依赖或生命周期管理，release gate 也未覆盖其 helper/全部命令链接。详见
+    [代码分析](code-analysis.md) 与 [TODO](../planning/todo.md)，本轮仅修正文档，未改变行为。
 
 ## 证据保留规则
 

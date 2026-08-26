@@ -57,6 +57,10 @@ cd "$INNOGPU_ROOT"
 sudo scripts/install-prereqs-debian.sh
 ```
 
+该入口安装当前列出的基础构建/运行包，但尚未显式安装新构建器直接调用的 `python3`。最小化 Debian
+环境继续构建前，按 [`dependencies.md`](../project/dependencies.md) 核对 `python3`、`dpkg-deb`、
+`sha256sum`、`realpath`、`make` 与 `modinfo`；不能只凭前置脚本退出 0 判断完整工具链已经就绪。
+
 ## 显示引擎前置条件
 
 xdisplay 的唯一源码权威是 dotconfig。本仓库不携带 `xdisplay`、`displayselect`、共享库或引擎测试。
@@ -123,7 +127,7 @@ patched-17/patched-8。
 作为源码或载荷基线，也不得从不同版本挑选 DRI、GBM、GLAPI、DDX 或固件拼装。新包还必须通过：
 
 ```sh
-scripts/check-release-package.sh debs/<new-package>.deb
+scripts/check-release-package.sh build/<new-package>.deb
 ```
 
 在跨硬件矩阵与 release 审阅完成前，新设备默认入口为 4.0.0-i1（Phase 4 已在本机完成全套实机验收）；
