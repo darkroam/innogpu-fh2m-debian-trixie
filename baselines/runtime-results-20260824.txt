@@ -1,8 +1,10 @@
-# Real-device execution evidence (4.0.0-i1, 2026-08-24) - 10 result entries
+# Real-device execution evidence (4.0.0-i1) - 10 result entries
 # Merged via tests/runtime/run-capability-baseline.sh --allow-authorized-tests --results-file <this>
-# Contains real-device execution PASS for Vulkan/OpenCL/VA-API (H.264 Main+HEVC Main forced decode),
-# fbterm and EGL-X11/GL (6 PASS) plus 4 UNVERIFIED capabilities in this evidence file; the merged
-# 35-item summary has 21 PASS / 9 SKIP / 5 UNVERIFIED; tested_commit=c7b3a40ef4fe683afcb5c44fa883085da14c5401
+# DMA-BUF regression upgraded to PASS on 2026-08-26 (root-permission real-device run); executed_head=9bbc0ae1f7ee150658e4578b6afd067c6fb414a1,
+# tool code=86fe2cdd32beb538ed30081782fa88abb0d418b2; full args: --size 7646720 --iterations 3 --vblank-samples 10
+# --timeout 30 --read-munmap-limit-ms 40. Capability boundary unchanged: same-device PRIME self-import only;
+# foreign/cross-device DMA-BUF, GBM, V4L2, long-run stress and concurrency remain NOT covered.
+# This file has 7 PASS + 3 UNVERIFIED result entries; merged 35-item summary: 22 PASS / 9 SKIP / 4 UNVERIFIED.
 runtime_fbterm_real_vt=PASS reason=draw-clear-long-output-exit-reenter
 runtime_display_modeset=UNVERIFIED reason=connected-output-only-no-mode-switch-test
 runtime_audio_playback=UNVERIFIED reason=command-completed-audible-output-not-confirmed
@@ -18,6 +20,18 @@ runtime_vaapi_decode=PASS reason=real-device-H264Main+HEVCMain-30frames-320x240-
 # vaapi_decode_status=ok
 # tests_total=2 tests_passed=2 tests_failed=0 tests_skipped=0
 # vaapi_decode_overall=PASS reason=all-requested-codecs-passed
-runtime_dmabuf_regression=UNVERIFIED reason=probe-not-run
+runtime_dmabuf_regression=PASS reason=same-device-self-import-rounds=3-fd_cloexec=yes-fd_leak=no-invisible-read-max_munmap_ms=3.838-write-verify=3-vblank-active-ok-vblank-inactive-einval-fast-status-ok-kernel_log=clean-device=1ec8:9810
+# Real-device session output of (root-permission) bash tools/run-dmabuf-regression-test.sh --size 7646720 --iterations 3
+# --vblank-samples 10 --timeout 30 --read-munmap-limit-ms 40 (verbatim, informational; parser ignores # lines):
+# dmabuf_device=ok render=/dev/dri/renderD128 card=/dev/dri/card0 bdf=0000:02:00.0 (1ec8:9810)
+# dmabuf_self_import=PASS reason=rounds=3-fd_cloexec=yes-fd_leak=no-fds=4->4-device=1ec8:9810
+# dmabuf_invisible_read=PASS reason=iterations=3-size=7646720-max_read_munmap_ms=3.838-limit_ms=40
+# dmabuf_write_readback=PASS reason=iterations=3-size=7646720-verify=3-pages=1867
+# dmabuf_vblank_active=PASS reason=active_crtcs_tested=1-all-ok-samples=10-per_crtc=crtc1=ok:16.742
+# dmabuf_vblank_inactive_guard=PASS reason=inactive_crtcs_tested=2-all-einval-fast
+# dmabuf_status=ok
+# dmabuf_kernel_log=clean
+# tests_total=5 tests_passed=5 tests_failed=0 tests_skipped=0 tests_unverified=0
+# dmabuf_regression_overall=PASS reason=self_import+read+write+vblank-ok-status-ok-device=1ec8:9810
 runtime_egl_x11_probe=PASS reason=temporary-xorg-hwgl-runtime-Fantasy-II-M-DRI2-DRI3-Present-AIGLX
 runtime_gl_execution=PASS reason=PASS_DESKTOP_HWGL-Fantasy-II-M-accelerated-check-desktop-hwgl
