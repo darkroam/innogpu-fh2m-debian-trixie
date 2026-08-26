@@ -49,6 +49,7 @@ patched-20 版本号、过期设备接入脚本、不完整 shader、错误架�
 
 ```sh
 tests/unit/run-manifest-tests.sh
+bash tests/unit/run-license-audit-tests.sh
 bash tests/unit/run-version-tests.sh
 bash tests/unit/run-extractor-tests.sh
 bash tests/unit/run-results-parser-tests.sh
@@ -58,7 +59,12 @@ bash tests/unit/run-dmabuf-regression-tests.sh
 ```
 
 - manifest 测试用 `tools/validate-binary-manifest.py` 对真实清单与 `tests/fixtures/` 下的恶意
-  fixture（绝对路径、`../` 穿越、未知 kind、重复目标、缺 sha256、链接逃逸、缺失文件）断言通过/拒绝；
+  fixture（绝对路径、`../` 穿越、未知 kind、重复目标、缺 sha256、缺 license、链接逃逸、缺失文件）
+  断言通过/拒绝；
+- 许可证审计测试（11 项）覆盖当前逐文件 inventory 一致性、发布门禁保持 BLOCKED、确定性重建、
+  陈旧 inventory、许可证文本缺失、confidential 集合漂移、残缺 Dual MIT/GPL 头、manifest license
+  缺失、无证据 SPDX 值、项目 README 声明文字隔离和 `MODULE_LICENSE` 元数据集合漂移；不修改
+  `drivers/` 或发布状态。
 - 版本测试断言 `4.0.0-i1 > patched-27`、`1.0.0-i1 < patched-27` 等排序契约；
 - 提取器测试用临时 fixture deb 与隔离 vendor 树（提取器支持 `MANIFEST_PATH`/`VENDOR_ROOT` 覆盖），
   覆盖：vendor 缺失时 `--check-only` 必须失败、完整提取、幂等重跑、提取后 `--check-only` 通过、
@@ -91,7 +97,7 @@ bash tests/unit/run-dmabuf-regression-tests.sh
 
 | 层 | 测试 | 前置 | root | 设备 | 重启 | 可运行环境 |
 | --- | --- | --- | --- | --- | --- | --- |
-| unit | manifest 校验/版本排序/提取器隔离 | python3、dpkg、dpkg-deb | 否 | 否 | 否 | CI/沙箱 |
+| unit | manifest/许可证审计/版本排序/提取器隔离 | python3、git、dpkg、dpkg-deb | 否 | 否 | 否 | CI/沙箱 |
 | fixture | package 边界、fixtures/ | dpkg-deb | 否 | 否 | 否 | CI/沙箱 |
 | static | check-docs、fbterm 静态 | rg、perl | 否 | 否 | 否 | CI/沙箱 |
 | static | picom 安装/会话、xdisplay 安装 | bash、fake HOME | 否 | 否 | 否 | CI/沙箱 |

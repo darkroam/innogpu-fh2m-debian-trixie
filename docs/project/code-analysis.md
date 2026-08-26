@@ -114,11 +114,11 @@ Deepin deb(校验 SHA) → generate-binary-manifest(校验+生成) → validate-
 - manifest 192 项：source_path/vendor_path/sha256/size/kind/role/license；5 类 kind
   （kernel-black-box/ddx/firmware/userspace-lib/userspace-config），license 全部 `vendor-binary`。
 - `vendor-binary` = **来源分类，非许可证**（CONFIRMED：licensing.md 明文；不修改黑盒内容）。
-- 已知许可证事实：源码树不是统一许可证。机械扫描发现 408 个文件引用来源分发中的
-  `GPL-COPYING`/`MIT-COPYING`、3 个文件标为 `Strictly Confidential`、2 个文件声明
-  BSD-3-Clause/LGPL-2.1-only；其余文件仍需逐项分类。缺失许可证文本、confidential 文件再分发权和
-  用户态库/固件/DDX 逐项许可均为 UNVERIFIED，源码发布状态为 BLOCKED（见
-  `source-license-audit.md`）；本仓库有权授权的原创辅助工作使用根 MIT。
+- 已知许可证事实：源码树不是统一许可证。逐文件 inventory 将 483 个导入实现/构建文件分类为
+  408 个 `MIT OR GPL-2.0-only`、3 个 `Strictly Confidential`、2 个
+  `BSD-3-Clause OR LGPL-2.1-only` 和 70 个 `NOASSERTION`；标准条款副本已补齐，但 confidential、
+  未分类源码及用户态库/固件/DDX 的权利链仍为 UNVERIFIED，发布状态为 BLOCKED（见
+  `source-license-audit.md`）。根 MIT 只覆盖本仓库有权授权的原创辅助工作和 `drivers/README.md`。
 - 黑盒对象不可读源码（`.o_shipped`），仅字节契约（gpupll 变换）与符号级可观察（OBSERVED）。
 
 ## 风险与优化候选

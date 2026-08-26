@@ -79,9 +79,10 @@ sudo reboot                                                    # 重启后加载
 ## 许可证
 
 - MIT 仅覆盖本仓库明确自有的脚本、工具、文档、配置和辅助工作，见 [LICENSE](LICENSE)。
-- `drivers/` 中导入的源码按各文件头部和上游许可证处理；其中存在标为 `Strictly Confidential`
-  以及 BSD/LGPL 的文件，不能把整个源码树概括为 MIT/GPL 或已确认可再分发。
+- `drivers/` 按逐文件清单处理：408 个文件映射为 `MIT OR GPL-2.0-only`，2 个文件映射为
+  `BSD-3-Clause OR LGPL-2.1-only`；3 个 confidential 和 70 个 `NOASSERTION` 文件不继承根 MIT。
+  `OR` 只表示对应双许可文件的选择，不能把整个源码树统一改成 MIT 或 GPL。
 - 黑盒对象、用户态库、DDX、固件和其他载荷是第三方内容。清单中的 `vendor-binary` 是来源分类，
   不是许可证名称，也不单独授予再分发权。
-- 逐类边界、来源、发布阻断项和待核实清单见 [许可证与再分发边界](docs/project/licensing.md)及
-  [源码许可证审计](docs/project/source-license-audit.md)。
+- 逐路径清单、自动审计、GPL 组合边界和发布阻断项见
+  [许可证与再分发边界](docs/project/licensing.md)及[源码许可证审计](docs/project/source-license-audit.md)。

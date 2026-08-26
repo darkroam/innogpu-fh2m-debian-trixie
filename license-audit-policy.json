@@ -1,0 +1,121 @@
+{
+  "format_version": 1,
+  "release_status": "BLOCKED",
+  "source_root": "drivers",
+  "source_origin": "Deepin innogpu-fh2m 20250421190503-debug source payload",
+  "project_owned_paths": [
+    "drivers/README.md"
+  ],
+  "classifications": {
+    "strict_confidential": [
+      "drivers/innosrvkm/include/pdp_drm.h",
+      "drivers/innosrvkm/include/pvrsrv_firmware_boot.h",
+      "drivers/innosrvkm/include/rgxlayer_impl.h"
+    ],
+    "bsd_lgpl_dual": [
+      "drivers/innopmbus/innopmbus_drv.c",
+      "drivers/innopmbus/innopmbus_drv.h"
+    ]
+  },
+  "dual_mit_gpl": {
+    "declaration": "Dual MIT/GPLv2",
+    "required_references": [
+      "GPL-COPYING",
+      "MIT-COPYING"
+    ],
+    "normalized_spdx": "MIT OR GPL-2.0-only"
+  },
+  "required_license_texts": [
+    {
+      "path": "LICENSES/MIT.txt",
+      "sha256": "508a77d2e7b51d98adeed32648ad124b7b30241a8e70b2e72c99f92d8e5874d1",
+      "spdx": "MIT"
+    },
+    {
+      "path": "LICENSES/GPL-2.0-only.txt",
+      "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6",
+      "spdx": "GPL-2.0-only"
+    },
+    {
+      "path": "LICENSES/BSD-3-Clause.txt",
+      "sha256": "0f96fa28429311f866562ee2338dc5d4ff59e5504ea58599b05733344efcb377",
+      "spdx": "BSD-3-Clause"
+    },
+    {
+      "path": "LICENSES/LGPL-2.1-only.txt",
+      "sha256": "20e50fe7aae3e56378ebf0417d9de904f55a0e61e4df315333e632a4d3555d95",
+      "spdx": "LGPL-2.1-only"
+    }
+  ],
+  "modified_paths": {
+    "drivers/Kbuild": ["patch-001"],
+    "drivers/innogpu/compat_kernel6.h": ["patch-001"],
+    "drivers/innogpu/hal_power.c": ["patch-001"],
+    "drivers/innogpu/inno_drm.c": ["patch-001"],
+    "drivers/innogpu/inno_mm.c": ["patch-001"],
+    "drivers/innogpu/inno_pci.c": ["patch-001"],
+    "drivers/innogpu/inno_task.c": ["patch-001"],
+    "drivers/innogpu/inno_uuid.c": ["patch-001"],
+    "drivers/innopmbus/innopmbus_drv.c": ["patch-001"],
+    "drivers/innopower/inno_devfreq_gov.c": ["patch-001"],
+    "drivers/innosmmu/innosmmu_drv.c": ["patch-001"],
+    "drivers/innosrvkm/gen_g3_ne_hdmi.c": ["patch-001"],
+    "drivers/innosrvkm/include/innodpu_compatibility.h": ["patch-025"],
+    "drivers/innosrvkm/include/innodpu_drm_gem.h": ["patch-023"],
+    "drivers/innosrvkm/include/pvr_fence_trace.h": ["patch-001"],
+    "drivers/innosrvkm/include/rogue_trace_events.h": ["patch-001"],
+    "drivers/innosrvkm/innodpu_connector.c": ["patch-002", "patch-006", "patch-009"],
+    "drivers/innosrvkm/innodpu_dp.c": ["patch-001", "patch-002"],
+    "drivers/innosrvkm/innodpu_drm_fb.c": ["patch-007"],
+    "drivers/innosrvkm/innodpu_drm_gem.c": ["patch-023", "patch-025", "patch-027"],
+    "drivers/innosrvkm/innodpu_drm_modeset.c": ["patch-001"],
+    "drivers/innosrvkm/innodpu_hdmi.c": ["patch-001"],
+    "drivers/innosrvkm/innodpu_panel_backlight.c": ["patch-001"],
+    "drivers/innosrvkm/innodpu_vga.c": ["patch-001"],
+    "drivers/innosrvkm/innogpu_drm.c": ["patch-001"],
+    "drivers/innosrvkm/pdp0_crtc.c": ["patch-026"],
+    "drivers/innosrvkm/pvr_drm.c": ["patch-001"],
+    "drivers/innovpu/innovpu_drv.c": ["patch-001"]
+  },
+  "module_license_metadata": {
+    "drivers/innodma/innodma_drv.c": "Dual MIT/GPL",
+    "drivers/innogpu/innogpu_pci_drv.c": "Dual MIT/GPL",
+    "drivers/innopmbus/innopmbus_drv.c": "Dual BSD/GPL",
+    "drivers/innopower/innopower.c": "Dual MIT/GPL",
+    "drivers/innosmmu/innosmmu_drv.c": "Dual MIT/GPL",
+    "drivers/innosrvkm/include/pvrmodule.h": "Dual MIT/GPL",
+    "drivers/innosrvkm/innogpu_drm.c": "Dual MIT/GPL",
+    "drivers/innovpu/innovpu_drv.c": "Dual BSD/GPL",
+    "drivers/tools/gpu_info/gpu_info.c": "Dual MIT/GPL",
+    "drivers/tools/kernel_api_support_test/kernel_api_support_test.c": "GPL"
+  },
+  "known_declaration_conflicts": [
+    "drivers/innopmbus/innopmbus_drv.c",
+    "drivers/innovpu/innovpu_drv.c"
+  ],
+  "manifest": {
+    "path": "binary-manifest.json",
+    "unresolved_marker": "vendor-binary",
+    "resolved_licenses": {}
+  },
+  "expected_summary": {
+    "tracked_paths": 484,
+    "project_documents": 1,
+    "implementation_paths": 483,
+    "dual_mit_gpl": 408,
+    "strict_confidential": 3,
+    "bsd_lgpl_dual": 2,
+    "standard_spdx": 0,
+    "unclassified": 70,
+    "module_license_files": 10,
+    "declaration_conflicts": 2,
+    "manifest_entries": 192,
+    "manifest_unresolved": 192
+  },
+  "release_blockers": [
+    "strict-confidential-redistribution-rights",
+    "unclassified-source-license-review",
+    "imported-source-provenance-and-rights-review",
+    "vendor-payload-license-and-redistribution-rights"
+  ]
+}

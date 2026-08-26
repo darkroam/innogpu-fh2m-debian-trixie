@@ -2,10 +2,15 @@
 
 ## 文档与维护
 
-- [ ] **发布阻断：驱动源码与载荷许可证审计**。确认 3 个 `Strictly Confidential` 文件的再分发权，
-  补齐源码头引用的许可证文本，完成 484 个源码文件与 192 项 manifest 载荷的逐项清单；关闭前不得
-  宣称整个导入源码树开源或发布对应源码/载荷附件。见
+- [x] 许可证审计工程侧（2026-08-26）：标准条款副本 `LICENSES/`（MIT/GPL-2.0-only/BSD-3-Clause/
+  LGPL-2.1-only）、484 路径逐文件清单 `docs/project/source-license-inventory.tsv`、许可证策略
+  `license-audit-policy.json`、审计器 `tools/audit-licenses.py`（确定性 hash/声明/清单核对，
+  `license_audit_overall=PASS`）与 11 项反例测试；`check-docs.sh` 强制审计器通过。见
   [source-license-audit.md](../project/source-license-audit.md)。
+- [ ] **发布阻断：权利链人工审查**。仍须确认 3 个 `Strictly Confidential` 文件、70 个
+  `NOASSERTION` 实现/构建文件及 192 项 manifest 载荷的来源、适用许可和再分发权，并复核 410 个
+  已有声明文件的授权链，澄清 PMBus/VPU 两处文件头与 `MODULE_LICENSE` 元数据冲突。关闭前不得
+  宣称整个导入源码树开源或发布对应源码/载荷附件（`license_release_gate=BLOCKED`）。
 - [x] 入口文档重构（2026-08-21）：README 按 7 项要求精简（适配/演进/bug 清单/安装/文档结构/致谢/许可），
   LICENSE 注释更新为迁移后现状，过期表述清理；与 4.0.0-i1 现状对齐。
 - [ ] 为每次新候选包建立独立的 `docs/patches/` 说明和 `docs/incidents/` 验收记录。

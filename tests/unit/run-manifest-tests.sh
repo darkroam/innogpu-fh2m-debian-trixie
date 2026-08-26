@@ -33,6 +33,7 @@ expect_reject "manifest_reject_traversal"   tests/fixtures/manifest-traversal.js
 expect_reject "manifest_reject_bad_kind"    tests/fixtures/manifest-bad-kind.json    "unknown kind"
 expect_reject "manifest_reject_dup_target"  tests/fixtures/manifest-dup-target.json  "duplicate vendor_path"
 expect_reject "manifest_reject_missing_sha" tests/fixtures/manifest-missing-sha.json "file entry without sha256"
+expect_reject "manifest_reject_missing_license" tests/fixtures/manifest-missing-license.json "entry without license"
 expect_reject "manifest_reject_link_escape" tests/fixtures/manifest-link-escape.json "symlink link_target escape"
 
 if python3 "$VALIDATOR" /nonexistent-manifest.json >/dev/null 2>&1; then

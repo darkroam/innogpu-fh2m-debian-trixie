@@ -73,8 +73,12 @@
     验收门槛与回退边界见 [`webkit-dmabuf-investigation.md`](../planning/webkit-dmabuf-investigation.md)。
 11. p23 的 READ page fault 成本已完成 1/4/8/16 MiB 缩放测量，约按 `0.06–0.07ms/page` 增长；
     主要 DMA descriptor/wait 热点位于预编译 `innodma.o_shipped`，当前项目不制作 READ 预取候选。
-12. `drivers/` 中存在 `Strictly Confidential`、BSD/LGPL 和引用缺失许可证文本的文件；第三方载荷
-    也未完成逐项权利核实。关闭 [源码许可证审计](source-license-audit.md) 前，发布状态为 BLOCKED。
+12. 许可证机械审计工程侧已完成（2026-08-26）：标准条款副本 `LICENSES/`、484 路径逐文件清单
+    `docs/project/source-license-inventory.tsv`、策略 `license-audit-policy.json` 与审计器
+    `tools/audit-licenses.py`（`license_audit_overall=PASS`）；分类为 408 个 `MIT OR GPL-2.0-only`、
+    2 个 `BSD-3-Clause OR LGPL-2.1-only`、3 个 confidential、70 个 `NOASSERTION`。但 3 + 70 个源码
+    路径及 192 项第三方载荷的权利链仍未关闭，PMBus/VPU 两处声明冲突待澄清。发布状态保持 BLOCKED，见
+    [源码许可证审计](source-license-audit.md)。
 13. 运维实现仍有已登记缺口：DRI repair 源码 fallback 与 unit 路径不一致且失败/卸载不闭合；两个
     历史/诊断脚本固定目标用户名；VA-API runner 未把 timeout rc=137 归入超时；音频安装没有对称
     卸载器；check-docs 的链接/隐私范围不是全部 tracked Markdown；包内 vendor `sw-inno-gl.service`

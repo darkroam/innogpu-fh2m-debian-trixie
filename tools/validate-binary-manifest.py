@@ -8,6 +8,8 @@ Rules:
 - link_target (symlinks only): non-empty, relative, no '..' components,
   not absolute
 - kind in allowed set
+- license: non-empty string (semantic rights evidence is checked separately by
+  tools/audit-licenses.py; vendor-binary remains an unresolved provenance marker)
 - file entries: sha256 (64 hex) + size present
 - symlink entries: link_target present
 - top-level: format_version, source_package, source_version,
@@ -43,13 +45,15 @@ def main():
     for i, e in enumerate(entries or []):
         tag = "entry[%d]" % i
         sp = e.get("source_path", ""); vp = e.get("vendor_path", "")
-        kind = e.get("kind", ""); lt = e.get("link_target")
+        kind = e.get("kind", ""); lt = e.get("link_target"); license_value = e.get("license")
         if not rel_safe(sp): problems.append("%s source_path unsafe/empty: %r" % (tag, sp))
         if not rel_safe(vp): problems.append("%s vendor_path unsafe/empty: %r" % (tag, vp))
         if sp in srcs: problems.append("%s duplicate source_path: %s" % (tag, sp))
         if vp in vps: problems.append("%s duplicate vendor_path: %s" % (tag, vp))
         srcs.add(sp); vps.add(vp)
         if kind not in ALLOWED_KINDS: problems.append("%s unknown kind: %s" % (tag, kind))
+        if not isinstance(license_value, str) or not license_value.strip():
+            problems.append("%s license missing/empty" % tag)
         is_link = "link_target" in e
         if is_link:
             if not lt: problems.append("%s link_target empty" % tag)

@@ -30,7 +30,7 @@ while IFS= read -r -d '' file; do
             }
         ' "$file"
     )
-done < <(find README.md docs scripts baselines tests -type f -name '*.md' -print0)
+done < <(find README.md LICENSES drivers docs scripts baselines tests tools -type f -name '*.md' -print0)
 
 personal_refs="$(
     rg -n --pcre2 \
@@ -71,6 +71,9 @@ fi
 # Payload manifest schema must stay valid (read-only; works without vendor/).
 if ! python3 tools/validate-binary-manifest.py >/dev/null 2>&1; then
     fail "binary-manifest.json schema validation failed"
+fi
+if ! python3 tools/audit-licenses.py >/dev/null 2>&1; then
+    fail "source/payload license inventory or policy is stale"
 fi
 # Migration boundary: drivers/ must never carry build artifacts or black-box objects.
 if git ls-files drivers | grep -E '\.o_shipped$|\.o\.cmd$' >/dev/null; then
@@ -159,35 +162,14 @@ PY
 require_text docs/project/dependencies.md "$source_deb_sha"
 require_text docs/user/new-device-install.md "$source_deb_sha"
 
-# Imported source is not under one uniform license. Keep every currently known
-# confidential exception visible and block release claims until it is resolved.
-expected_confidential="$(printf '%s\n' \
-    drivers/innosrvkm/include/pdp_drm.h \
-    drivers/innosrvkm/include/pvrsrv_firmware_boot.h \
-    drivers/innosrvkm/include/rgxlayer_impl.h | sort)"
-actual_confidential="$(rg -l 'Strictly Confidential' drivers --glob '!README.md' | sort || true)"
-[[ "$actual_confidential" == "$expected_confidential" ]] ||
-    fail "Strictly Confidential source set changed; update the license audit before proceeding"
-driver_file_count="$(git ls-files drivers | wc -l | tr -d ' ')"
-dual_reference_count="$(rg -l 'GPL-COPYING' drivers | wc -l | tr -d ' ')"
-require_text docs/project/source-license-audit.md "$driver_file_count 个 Git 跟踪文件"
-require_text docs/project/source-license-audit.md "$dual_reference_count 个文件同时引用"
+# Imported source is not under one uniform license. The deterministic auditor
+# owns per-path classification and manifest semantics; documentation repeats
+# only the release decision and scope boundary.
 require_text docs/project/source-license-audit.md '发布状态：BLOCKED'
-while IFS= read -r confidential_file; do
-    [[ -n "$confidential_file" ]] || continue
-    require_text docs/project/source-license-audit.md "$confidential_file"
-done <<<"$expected_confidential"
-for bsd_lgpl_file in \
-    drivers/innopmbus/innopmbus_drv.c \
-    drivers/innopmbus/innopmbus_drv.h; do
-    require_text docs/project/source-license-audit.md "$bsd_lgpl_file"
-done
-expected_bsd_lgpl="$(printf '%s\n' \
-    drivers/innopmbus/innopmbus_drv.c \
-    drivers/innopmbus/innopmbus_drv.h | sort)"
-actual_bsd_lgpl="$(rg -l 'BSD 3 clause and LGPL2\.1' drivers | sort || true)"
-[[ "$actual_bsd_lgpl" == "$expected_bsd_lgpl" ]] ||
-    fail "BSD/LGPL source set changed; update the license audit before proceeding"
+require_text docs/project/source-license-audit.md 'MIT OR GPL-2.0-only'
+require_text docs/project/source-license-audit.md 'BSD-3-Clause OR LGPL-2.1-only'
+require_text docs/project/source-license-audit.md '70 个'
+require_text docs/project/licensing.md 'license_release_gate=BLOCKED'
 
 stale_current_state="$({
     rg -n '18 PASS.?/? ?9 SKIP.?/? ?8 UNVERIFIED|18/9/8|人工授权项待运行' \

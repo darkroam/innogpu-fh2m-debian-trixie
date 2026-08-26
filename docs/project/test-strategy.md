@@ -13,7 +13,8 @@
 | Picom 会话 | tests/picom/run-session-tests.sh | 3 项（优先/回退/单实例） | 无（fake 命令） | 否 |
 | xdisplay 安装边界 | tests/xdisplay/run-install-tests.sh | 5 项（拒绝私有副本/钩子/幂等/watcher/xprofile） | 无（fake HOME） | 否 |
 | 包边界 | tests/package/run-boundary-tests.sh | 7 项 fixture（新版本通过/私有载荷拒绝/p20 复用拒绝/helper 一致/固件完整/非 amd64/Installed-Size） | dpkg-deb | 否 |
-| manifest/版本/提取器 | tests/unit/run-{manifest,version,extractor}-tests.sh | 21 项 schema、路径、哈希、恢复与版本排序 | shell/python/dpkg | 否 |
+| manifest/版本/提取器 | tests/unit/run-{manifest,version,extractor}-tests.sh | 22 项 schema、license、路径、哈希、恢复与版本排序 | shell/python/dpkg | 否 |
+| 许可证审计 | tests/unit/run-license-audit-tests.sh | 11 项 inventory 一致性/发布 BLOCKED 门禁/确定性/陈旧清单/条款缺失/confidential 漂移/残缺 dual 头/manifest license 缺失与无证据解析/项目文档隔离/模块元数据漂移 | python/git，临时 fixture repo | 否 |
 | runtime 结果解析 | tests/unit/run-results-parser-tests.sh | 19 项严格解析、授权、重复/粘连/缺失输入、`#` 注释跳过 | 无设备，隔离 baseline | 否 |
 | Vulkan/OpenCL 探针失败路径 | tests/unit/run-exec-probes-tests.sh | 12 项编译、loader/设备失败、格式与清理 | gcc，无设备可跑 | 否 |
 | VA-API 解码控制流 | tests/unit/run-vaapi-decode-tests.sh | 52 项参数/工具/设备/身份/输入/参考/硬解/超时/真实 framemd5 格式负例/聚合/硬解参数断言/状态门禁严格解析/mktemp/TERM 清理/无残留；fixture 模式独立命名空间 fixture_*，不产出权威 PASS | 无设备（fake ffmpeg/vainfo/sysfs/status），隔离 baseline | 否 |
@@ -24,14 +25,14 @@
 `compare-oracle-candidates.sh` + `compare-module-symbols.sh`（integration oracle）、
 `check-deb-dkms-build.sh`（integration 离线编译，需本机内核头）。
 
-**盘点结论**：unit、fixture、static、integration 和 runtime 五层均已有入口；CI/沙箱套件当前 270 项
+**盘点结论**：unit、fixture、static、integration 和 runtime 五层均已有入口；CI/沙箱套件当前 282 项
 全部通过。主要缺口是完整 DKMS integration 依赖本机 headers，以及 4 个 runtime 能力仍缺真机证据。
 
 ## 二、分层定义与映射
 
 | 层 | 定义 | 现有 | 缺口 |
 | --- | --- | --- | --- |
-| unit | manifest/版本排序/路径/哈希/配置解析/执行探针/VA-API 解码/DMA-BUF 回归控制流的纯函数用例 | tests/unit/ 7 个入口，251 项 | 构建器 headers/helper 失败 fixture 待补 |
+| unit | manifest/许可证审计/版本排序/路径/哈希/配置解析/执行探针/VA-API 解码/DMA-BUF 回归控制流的纯函数用例 | tests/unit/ 8 个入口，263 项 | 构建器 headers/helper 失败 fixture 待补；法律授权仍需人工审查 |
 | fixture | 恶意路径/缺失/坏哈希/损坏链接/重复项 | tests/fixtures/ + 脚本隔离构造 | 覆盖随新输入边界持续扩展 |
 | static | shell 语法/脚本登记/文档链接/隐私/构建器输入 | check-docs.sh、fbterm 静态 | 语义与法律授权仍需人工审查 |
 | integration | staging/DKMS 离线/包边界/可复现/oracle | 包边界、oracle、parity、离线编译 | 可复现双构建入 CI 需内核头（本机可跑） |
@@ -85,9 +86,9 @@
 - 有副作用测试必须显式参数确认；临时文件必须 `mktemp` + `trap` 清理。
 - 离线/沙箱结果与真机结果**分开保存**（`baselines/` 紧凑标记 + 版本化审计日志）。
 
-当前 CI/沙箱套件共 270 项：fbterm_static×1、picom_install×3、picom_session×3、
-xdisplay_install×5、package_boundary×7、manifest×8、version×6、extractor×7、results_parser×19、
-exec_probes×12、vaapi_decode×52、dmabuf_regression×147。
+当前 CI/沙箱套件共 282 项：fbterm_static×1、picom_install×3、picom_session×3、
+xdisplay_install×5、package_boundary×7、manifest×9、version×6、extractor×7、results_parser×19、
+exec_probes×12、vaapi_decode×52、dmabuf_regression×147、license_audit×11。
 
 ## 六、覆盖清单（本策略要求逐项落实）
 
@@ -103,9 +104,10 @@ exec_probes×12、vaapi_decode×52、dmabuf_regression×147。
 → 大部分由构建器门禁 + oracle 脚本覆盖（CONFIRMED）；**补"helper 缺失"与"headers 缺失"的
 失败用例**（fixture，不实际构建）。
 
-**文档测试至少覆盖**：链接存在、脚本登记完整、README 当前版本准确、runtime 权威统计一致、
-无个人路径/token/serverauth、历史版本不冒充当前、Markdown 表格结构、许可证异常和 Phase 5 边界。
-→ `check-docs.sh` 覆盖可机械验证的部分；法律授权和文字语义仍需人工审查。
+**文档/许可证测试至少覆盖**：链接存在、脚本登记完整、README 当前版本准确、runtime 权威统计一致、
+无个人路径/token/serverauth、历史版本不冒充当前、Markdown 表格结构、许可证逐路径分类/manifest
+证据语义和 Phase 5 边界。→ `check-docs.sh` 调用 `audit-licenses.py` 覆盖可机械验证部分；11 项
+许可证 fixture 覆盖漂移负例；法律授权和文字语义仍需人工审查。
 
 ## 七、每测试声明模板（tests/README.md 矩阵登记）
 

@@ -7,9 +7,11 @@
 - **导入**：2026-08-21，迁移阶段 1。源码树导入已完成，9 个启用补丁已转为转换提交
   （source/device-profile: patch-0XX，见 [patch-provenance.md](../docs/planning/patch-provenance.md)）。
 - **导入提交**：见 git 历史（本目录首个提交）。
-- **许可证**：按逐文件头部处理，不能概括为统一的 Dual MIT/GPLv2。机械扫描已发现 Dual
-  MIT/GPL 引用、BSD-3-Clause/LGPL-2.1-only 双许可及 `Strictly Confidential` 等不同声明；
-  再分发状态和阻断项见 [source-license-audit.md](../docs/project/source-license-audit.md)。
+- **许可证**：按[逐文件 inventory](../docs/project/source-license-inventory.tsv) 处理，不能概括为统一
+  许可证。当前机械分类为 408 个 `MIT OR GPL-2.0-only`、2 个
+  `BSD-3-Clause OR LGPL-2.1-only`、3 个 `Strictly Confidential` 和 70 个 `NOASSERTION` 实现/构建
+  文件；`OR` 是对应文件的双许可选择，不覆盖其他路径。再分发状态仍为 BLOCKED，见
+  [source-license-audit.md](../docs/project/source-license-audit.md)。
 
 ## 与迁移的关系
 
