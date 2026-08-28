@@ -2,15 +2,39 @@
 
 ## 文档与维护
 
-- [x] 许可证审计工程侧（2026-08-26）：标准条款副本 `LICENSES/`（MIT/GPL-2.0-only/BSD-3-Clause/
-  LGPL-2.1-only）、484 路径逐文件清单 `docs/project/source-license-inventory.tsv`、许可证策略
-  `license-audit-policy.json`、审计器 `tools/audit-licenses.py`（确定性 hash/声明/清单核对，
-  `license_audit_overall=PASS`）与 11 项反例测试；`check-docs.sh` 强制审计器通过。见
-  [source-license-audit.md](../project/source-license-audit.md)。
-- [ ] **发布阻断：权利链人工审查**。仍须确认 3 个 `Strictly Confidential` 文件、70 个
-  `NOASSERTION` 实现/构建文件及 192 项 manifest 载荷的来源、适用许可和再分发权，并复核 410 个
-  已有声明文件的授权链，澄清 PMBus/VPU 两处文件头与 `MODULE_LICENSE` 元数据冲突。关闭前不得
-  宣称整个导入源码树开源或发布对应源码/载荷附件（`license_release_gate=BLOCKED`）。
+- [x] 许可证体系最终整理（三层模型，2026-08-28 监督复审前）：原创层 GPL-3.0-or-later（根
+  [LICENSE](../../LICENSE) + `LICENSES/GPL-3.0-or-later.txt`）、上游 MIT 继承层
+  （`Copyright (c) 2026 Tim Hant`，`LICENSES/MIT.txt` + `THIRD_PARTY_NOTICES.md` 保留全文）、
+  drivers/ 逐文件声明、本地载荷排除；`project-tools` 允许清单（CLEARED）与 `driver-source`
+  允许清单（BLOCKED，非完整驱动）替代旧的六制品门禁；删除 E0-E4 登记表、逐路径来源清单、
+  发布计划与询证草稿等只验证人工字符串的机制；审计器简化为机械门禁（只读 `.git`），
+  run-license-audit-tests.sh 按新模型重写。权威文档 [licensing.md](../project/licensing.md)。
+- [x] 复审修复（2026-08-28 第一轮，P1/P2）：`project-tools` 由「全部非 drivers 路径」改为**按权利边界
+  生成**——排除 `patches/`（驱动派生补丁，含未分类驱动源码片段）与 `debs/`（整目录）；非 drivers
+  逐路径分类 + NOTICE 门禁；`project-tools` 明确为**候选制品**（机械 CLEARED ≠ 许可证发布闭环），
+  GitHub 主分支仍分发阻断路径；run-license-audit-tests.sh 45 项全过。
+- [x] 复审修复（2026-08-28 第二轮，P1/P2）：**components/ 真实许可材料封存**——picom 固定 commit
+  `6d676824c457a933c52e3e92c5a1856466f90545`（目标文件 `gl_common.c` 声明 **MPL-2.0** 与
+  **Copyright (c) Yuxuan Shui**，正文封存于 `LICENSES/MPL-2.0.txt`，SHA 固定；`picom.conf` 为
+  原创层 GPL-3.0-or-later）、fbterm Debian 1.7-5（**Copyright (C) 2008
+  dragchan <zgchan317@gmail.com>**，GPL-2.0-only，依据 Debian `fbterm_1.7-5_copyright`）——NOTICE
+  §3 按路径组登记版权/许可，缺失即审计失败；**失败关闭分类**——`non_drivers_licenses` 改为
+  「已批准原创前缀 + 显式路径映射（上游 MIT / LICENSES/ 标准文本组 / components/ 第三方派生组）」
+  ，未知路径（如 external/foo.c）与未映射 LICENSES/ 文本一律拒绝 `non_drivers_unclassified`，
+  **无全局默认 GPL**；**路径绑定 NOTICE 门禁**——`notice_gate.entries` 按路径组绑定标记，新增
+  第三方路径缺条目即 `notice_gate_entry_missing`（已有 picom 字符串不能为无关路径放行）；patches/
+  §4 改述为**混合/未决许可，整体排除**（不给未分类片段推定 GPL-2.0-only）；run-license-audit-tests.sh
+  48 项全过（新增 unknown-path、third-party-no-entry、licenses-unmapped 反例）。
+- [ ] **发布阻断：权利链人工审查**。3 个 `Strictly Confidential` 文件与 70 个无许可文件已从公开
+  制品排除（不从 Git 历史删除）；driver-source 制品因排除后无法独立构建且 408+2 个已有声明文件
+  的授权链未闭合保持 BLOCKED（不假 PASS）；192 项 manifest 载荷权利链**仅在计划公开二进制制品时**
+  需要，当前不作为发布目标。关闭 `license_release_gate=BLOCKED` 前不得发布完整源码树或载荷附件。
+- [ ] **开放决策（需监督/权利方）**：GitHub 主分支是否作为发布目标？当前 main 直接分发 3 个
+  confidential 与 70 个无许可路径，`project-tools` 归档仅候选制品，不构成仓库级发布闭环；
+  若否，公开发布流程须先把阻断路径从公开分支移除（不执行历史重写），若是，须先解决权利链。
+  见 [licensing.md](../project/licensing.md) §4.1。
+- [x] 许可证工程侧历史（2026-08-26/27）：标准条款副本、484 路径逐文件清单、确定性审计器与
+  归档构建器、`license_audit_overall=PASS`；已由三层模型整理取代（见上一条）。
 - [x] 入口文档重构（2026-08-21）：README 按 7 项要求精简（适配/演进/bug 清单/安装/文档结构/致谢/许可），
   LICENSE 注释更新为迁移后现状，过期表述清理；与 4.0.0-i1 现状对齐。
 - [ ] 为每次新候选包建立独立的 `docs/patches/` 说明和 `docs/incidents/` 验收记录。

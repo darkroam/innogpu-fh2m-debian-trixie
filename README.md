@@ -2,9 +2,10 @@
 
 让 Innosilicon **Fantasy II-M（FH2M，风华2号-M）** GPU 在 **Debian Trixie (13)** 上稳定可用、
 能力可知、可维护可演进的适配与验证项目：内核驱动、显示输出、硬件 GL、音频与全套验收证据。
-本项目自有工作采用 MIT 许可证；导入源码和厂商载荷按各自声明处理，当前再分发边界见许可证章节。
+本项目自有工作采用 GPL-3.0-or-later；fork 上游 MIT 内容与导入源码/厂商载荷按各自声明处理，
+当前再分发边界见[许可证与再分发边界](docs/project/licensing.md)（唯一权威文档）。
 
-> 最后更新：2026-08-26 —— 当前驱动包 `4.0.0-i1`（源码级重构版），已完成 Phase 4 实机验收、
+> 最后更新：2026-08-27 —— 当前驱动包 `4.0.0-i1`（源码级重构版），已完成 Phase 4 实机验收、
 > 回退演练、Vulkan/OpenCL 最小执行、VA-API 实际解码及 DMA-BUF 同设备 PRIME self-import 回归验证。
 
 ## 适配的当前系统
@@ -78,11 +79,23 @@ sudo reboot                                                    # 重启后加载
 
 ## 许可证
 
-- MIT 仅覆盖本仓库明确自有的脚本、工具、文档、配置和辅助工作，见 [LICENSE](LICENSE)。
-- `drivers/` 按逐文件清单处理：408 个文件映射为 `MIT OR GPL-2.0-only`，2 个文件映射为
-  `BSD-3-Clause OR LGPL-2.1-only`；3 个 confidential 和 70 个 `NOASSERTION` 文件不继承根 MIT。
-  `OR` 只表示对应双许可文件的选择，不能把整个源码树统一改成 MIT 或 GPL。
-- 黑盒对象、用户态库、DDX、固件和其他载荷是第三方内容。清单中的 `vendor-binary` 是来源分类，
-  不是许可证名称，也不单独授予再分发权。
-- 逐路径清单、自动审计、GPL 组合边界和发布阻断项见
-  [许可证与再分发边界](docs/project/licensing.md)及[源码许可证审计](docs/project/source-license-audit.md)。
+- **原创层**（本项目后续原创的脚本、工具、测试、文档、配置和辅助工作）采用
+  [GPL-3.0-or-later](LICENSE)；此前按 MIT 发布的版本及副本继续保有原 MIT 授权，换证不撤销
+  既有授权。
+- **上游继承层**：fork 自 [timhant/innogpu-fh2m-debian-trixie](https://github.com/timhant/innogpu-fh2m-debian-trixie)，
+  Tim Hant 原始代码及其实质性派生内容继续保留 `Copyright (c) 2026 Tim Hant` 的 MIT 授权，全文
+  见 [LICENSES/MIT.txt](LICENSES/MIT.txt) 与 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+- **`drivers/`** 按逐文件声明处理：408 个文件映射为 `MIT OR GPL-2.0-only`，2 个文件映射为
+  `BSD-3-Clause OR LGPL-2.1-only`；3 个 confidential 和 70 个无许可文件**排除出公开制品**，
+  不继承根许可证。`OR` 只表示对应双许可文件的选择。
+- 黑盒对象、用户态库、DDX、固件和其他载荷是本地取得的第三方内容，**不随公开制品发布**；
+  `vendor-binary` 是来源分类，不是许可证名称。
+- 许可边界（三层模型、阻断路径、制品范围）的唯一权威文档：
+  [许可证与再分发边界](docs/project/licensing.md)；机械审计见
+  [源码许可证审计](docs/project/source-license-audit.md)；第三方声明见
+  [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+- 发布制品：`project-tools`（**候选制品**，机械门禁 `CLEARED`，发布待监督批准：按权利边界生成
+  的允许清单，排除 patches/、debs/、drivers/、vendor/、build/、third_party/，非 drivers 逐路径
+  分类 + NOTICE 门禁）与 `driver-source`（drivers/ 中仅明确许可文件，**非完整驱动**，`BLOCKED`）；
+  **GitHub 主分支仍公开分发阻断路径，仓库级发布未闭环**；二进制 deb 与 vendor 载荷不作为
+  当前发布目标。本地 `debs/` 与 `vendor/` 不参与发布。

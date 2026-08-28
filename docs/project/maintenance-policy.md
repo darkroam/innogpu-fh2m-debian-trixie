@@ -51,8 +51,8 @@
   网络标识或硬件隐私数据。提交前必须执行隐私扫描并人工审查新增证据。
 - release 上传是源码提交之外的步骤；新架构构建器输出写入被忽略的 `build/`，legacy patched
   构建输出默认写入 `debs/`；均不得因本地构建把二进制产物重新加入 Git。
-- release 前必须先通过 `python3 tools/audit-licenses.py --require-releasable`，再运行
-  `scripts/check-release-package.sh`。xdisplay 引擎副本、
+- release 前必须先通过 `python3 tools/audit-licenses.py --artifact project-tools --require-releasable`
+  （或对应制品），再运行 `scripts/check-release-package.sh`。xdisplay 引擎副本、
   历史 Kylin/实验安装器和直接二进制热补丁入口不得出现在 coherent 发布包中。
 
 ### 文档与验证

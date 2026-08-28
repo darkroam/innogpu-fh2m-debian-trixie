@@ -49,10 +49,11 @@
 
 ## 四、约束汇总
 
-- 许可证：本仓库有权授权的原创辅助工作使用根 MIT；`drivers/` 不是统一许可证，confidential 文件
-  再分发权、70 个 `NOASSERTION` 路径及黑盒/用户态/固件逐项许可均未核实；标准条款副本已补齐但
-  不解决授权链，发布状态 BLOCKED
-  （`source-license-audit.md`）。
+- 许可证：本项目原创层使用根 [LICENSE](../../LICENSE)（GPL-3.0-or-later），fork 上游 MIT 继承层
+  保留 `Copyright (c) 2026 Tim Hant`；`drivers/` 不是统一许可证，confidential 文件再分发权、
+  70 个 `NOASSERTION` 路径及黑盒/用户态/固件逐项许可均未核实，confidential 与无许可路径
+  **排除出公开制品**；标准条款副本已补齐但不解决授权链，发布状态 BLOCKED
+  （[`source-license-audit.md`](../project/source-license-audit.md)）。
 - 黑盒边界：不修改 .o_shipped/用户态/固件；仅字节契约（gpupll 变换）与符号级可观察。
 - 版本限制：4.0.0-i1 为当前；patched-27 仅回退/oracle；版本号禁止复用。
 - 不可复现部分：设备实测、黑盒内部、逐项许可结论。

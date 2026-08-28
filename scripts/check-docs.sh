@@ -124,6 +124,15 @@ require_text README.md '当前驱动包 `4.0.0-i1`'
 require_text README.md '(docs/project/licensing.md)'
 require_text docs/README.md '[许可证与再分发边界](project/licensing.md)'
 require_text docs/README.md '[驱动源码许可证审计](project/source-license-audit.md)'
+require_text docs/README.md '[project-tools 允许清单](project/project-tools-allowlist.txt)'
+require_text docs/README.md '[driver-source 允许清单](project/driver-source-allowlist.txt)'
+require_text README.md 'THIRD_PARTY_NOTICES.md'
+require_text docs/project/licensing.md 'license_release_gate=BLOCKED'
+require_text README.md 'docs/project/licensing.md'
+require_text LICENSE 'license_scope=original-layer-only'
+require_text THIRD_PARTY_NOTICES.md 'Copyright (c) 2026 Tim Hant'
+require_text THIRD_PARTY_NOTICES.md 'MIT License'
+require_text LICENSES/MIT.txt 'Copyright (c) 2026 Tim Hant'
 
 # Current README and status must describe the same documentation snapshot.
 readme_date="$(sed -n 's/^> 最后更新：\([0-9-]*\).*/\1/p' README.md | head -1)"
@@ -322,6 +331,12 @@ for path in \
     docs/user/new-device-install.md \
     docs/user/picom-install.md \
     docs/user/verification.md \
+    THIRD_PARTY_NOTICES.md \
+    docs/project/licensing.md \
+    docs/project/project-tools-allowlist.txt \
+    docs/project/driver-source-allowlist.txt \
+    LICENSES/GPL-3.0-or-later.txt \
+    docs/user/local-extractor.md \
     docs/user/recovery.md; do
     [[ -f "$path" ]] || fail "required document is missing: $path"
 done

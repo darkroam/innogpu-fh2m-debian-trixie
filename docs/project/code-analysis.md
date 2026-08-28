@@ -118,7 +118,8 @@ Deepin deb(校验 SHA) → generate-binary-manifest(校验+生成) → validate-
   408 个 `MIT OR GPL-2.0-only`、3 个 `Strictly Confidential`、2 个
   `BSD-3-Clause OR LGPL-2.1-only` 和 70 个 `NOASSERTION`；标准条款副本已补齐，但 confidential、
   未分类源码及用户态库/固件/DDX 的权利链仍为 UNVERIFIED，发布状态为 BLOCKED（见
-  `source-license-audit.md`）。根 MIT 只覆盖本仓库有权授权的原创辅助工作和 `drivers/README.md`。
+  `source-license-audit.md`）。根 [LICENSE](../../LICENSE)（GPL-3.0-or-later）只覆盖本项目有权
+  授权的原创层；`drivers/` 不适用根许可证，confidential 与无许可路径排除出公开制品。
 - 黑盒对象不可读源码（`.o_shipped`），仅字节契约（gpupll 变换）与符号级可观察（OBSERVED）。
 
 ## 风险与优化候选

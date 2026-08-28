@@ -1,6 +1,25 @@
 {
-  "format_version": 1,
+  "format_version": 2,
   "release_status": "BLOCKED",
+  "layers": {
+    "original": {
+      "license": "GPL-3.0-or-later",
+      "scope": "本项目原创层：darkroam fork 后续原创的框架、脚本、工具、测试、文档、配置和辅助代码，以及 drivers/README.md；不含从上游保留或派生的实质性内容，也不含 drivers/ 厂商代码。此前按 MIT 发布的版本继续保有原 MIT 授权。"
+    },
+    "upstream_mit": {
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 Tim Hant",
+      "scope": "fork 自 https://github.com/timhant/innogpu-fh2m-debian-trixie；Tim Hant 原始代码及其仍存在的实质性派生内容保留 MIT 授权，不得删除其版权与许可文本。"
+    },
+    "drivers": {
+      "license": "per-file",
+      "scope": "drivers/ 不适用根 GPL-3.0-or-later；每个文件保留并沿用原文件声明（Dual MIT/GPLv2 规范化映射为 MIT OR GPL-2.0-only，BSD/LGPL 双许可保持原样）；MODULE_LICENSE 只是模块元数据，不替代文件许可。"
+    },
+    "local_payloads": {
+      "license": "not-distributed",
+      "scope": "debs/、vendor/、build/、third_party/ 与 *.deb 为本地取得/构建的载荷，不随公开制品发布，不适用任何仓库许可证。"
+    }
+  },
   "source_root": "drivers",
   "source_origin": "Deepin innogpu-fh2m 20250421190503-debug source payload",
   "project_owned_paths": [
@@ -25,10 +44,38 @@
     ],
     "normalized_spdx": "MIT OR GPL-2.0-only"
   },
+  "root_license": {
+    "path": "LICENSE",
+    "scope_marker": "license_scope=original-layer-only",
+    "required_markers": [
+      "GNU GENERAL PUBLIC LICENSE",
+      "Version 3",
+      "GPL-3.0-or-later"
+    ]
+  },
+  "upstream_mit_notice": {
+    "path": "THIRD_PARTY_NOTICES.md",
+    "required_text": [
+      "Copyright (c) 2026 Tim Hant",
+      "MIT License",
+      "github.com/timhant/innogpu-fh2m-debian-trixie"
+    ]
+  },
+  "mit_license_text": {
+    "path": "LICENSES/MIT.txt",
+    "required_text": [
+      "Copyright (c) 2026 Tim Hant"
+    ]
+  },
   "required_license_texts": [
     {
+      "path": "LICENSES/GPL-3.0-or-later.txt",
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "spdx": "GPL-3.0-or-later"
+    },
+    {
       "path": "LICENSES/MIT.txt",
-      "sha256": "508a77d2e7b51d98adeed32648ad124b7b30241a8e70b2e72c99f92d8e5874d1",
+      "sha256": "32b483bc9772fb057a164fb0d7730ebc1a483bacdb9465a44fbac5fa20923e47",
       "spdx": "MIT"
     },
     {
@@ -45,38 +92,23 @@
       "path": "LICENSES/LGPL-2.1-only.txt",
       "sha256": "20e50fe7aae3e56378ebf0417d9de904f55a0e61e4df315333e632a4d3555d95",
       "spdx": "LGPL-2.1-only"
+    },
+    {
+      "path": "LICENSES/MPL-2.0.txt",
+      "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+      "spdx": "MPL-2.0"
     }
   ],
-  "modified_paths": {
-    "drivers/Kbuild": ["patch-001"],
-    "drivers/innogpu/compat_kernel6.h": ["patch-001"],
-    "drivers/innogpu/hal_power.c": ["patch-001"],
-    "drivers/innogpu/inno_drm.c": ["patch-001"],
-    "drivers/innogpu/inno_mm.c": ["patch-001"],
-    "drivers/innogpu/inno_pci.c": ["patch-001"],
-    "drivers/innogpu/inno_task.c": ["patch-001"],
-    "drivers/innogpu/inno_uuid.c": ["patch-001"],
-    "drivers/innopmbus/innopmbus_drv.c": ["patch-001"],
-    "drivers/innopower/inno_devfreq_gov.c": ["patch-001"],
-    "drivers/innosmmu/innosmmu_drv.c": ["patch-001"],
-    "drivers/innosrvkm/gen_g3_ne_hdmi.c": ["patch-001"],
-    "drivers/innosrvkm/include/innodpu_compatibility.h": ["patch-025"],
-    "drivers/innosrvkm/include/innodpu_drm_gem.h": ["patch-023"],
-    "drivers/innosrvkm/include/pvr_fence_trace.h": ["patch-001"],
-    "drivers/innosrvkm/include/rogue_trace_events.h": ["patch-001"],
-    "drivers/innosrvkm/innodpu_connector.c": ["patch-002", "patch-006", "patch-009"],
-    "drivers/innosrvkm/innodpu_dp.c": ["patch-001", "patch-002"],
-    "drivers/innosrvkm/innodpu_drm_fb.c": ["patch-007"],
-    "drivers/innosrvkm/innodpu_drm_gem.c": ["patch-023", "patch-025", "patch-027"],
-    "drivers/innosrvkm/innodpu_drm_modeset.c": ["patch-001"],
-    "drivers/innosrvkm/innodpu_hdmi.c": ["patch-001"],
-    "drivers/innosrvkm/innodpu_panel_backlight.c": ["patch-001"],
-    "drivers/innosrvkm/innodpu_vga.c": ["patch-001"],
-    "drivers/innosrvkm/innogpu_drm.c": ["patch-001"],
-    "drivers/innosrvkm/pdp0_crtc.c": ["patch-026"],
-    "drivers/innosrvkm/pvr_drm.c": ["patch-001"],
-    "drivers/innovpu/innovpu_drv.c": ["patch-001"]
-  },
+  "allowed_spdx_expressions": [
+    "GPL-3.0-or-later",
+    "MIT",
+    "MIT OR GPL-2.0-only",
+    "BSD-3-Clause OR LGPL-2.1-only",
+    "GPL-2.0-only",
+    "BSD-3-Clause",
+    "LGPL-2.1-only",
+    "MPL-2.0"
+  ],
   "module_license_metadata": {
     "drivers/innodma/innodma_drv.c": "Dual MIT/GPL",
     "drivers/innogpu/innogpu_pci_drv.c": "Dual MIT/GPL",
@@ -95,8 +127,117 @@
   ],
   "manifest": {
     "path": "binary-manifest.json",
-    "unresolved_marker": "vendor-binary",
-    "resolved_licenses": {}
+    "unresolved_marker": "vendor-binary"
+  },
+  "license_authority_doc": {
+    "path": "docs/project/licensing.md",
+    "status_marker_prefix": "license_release_gate="
+  },
+  "non_drivers_licenses": {
+    "original_roots": [
+      ".github/",
+      "baselines/",
+      "docs/",
+      "scripts/",
+      "tests/",
+      "tools/"
+    ],
+    "original": "GPL-3.0-or-later",
+    "paths": {
+      "LICENSE": "GPL-3.0-or-later",
+      "license-audit-policy.json": "GPL-3.0-or-later",
+      "LICENSES/README.md": "GPL-3.0-or-later",
+      "THIRD_PARTY_NOTICES.md": "GPL-3.0-or-later",
+      "binary-manifest.json": "GPL-3.0-or-later",
+      "LICENSES/MIT.txt": "MIT",
+      "LICENSES/GPL-3.0-or-later.txt": "GPL-3.0-or-later",
+      "LICENSES/GPL-2.0-only.txt": "GPL-2.0-only",
+      "LICENSES/BSD-3-Clause.txt": "BSD-3-Clause",
+      "LICENSES/LGPL-2.1-only.txt": "LGPL-2.1-only",
+      "LICENSES/MPL-2.0.txt": "MPL-2.0",
+      ".gitignore": "MIT",
+      "README.md": "MIT",
+      "scripts/install.sh": "MIT",
+      "components/fbterm/001-configurable-redraw-scrolling.patch": "GPL-2.0-only",
+      "components/picom/001-probe-explicit-uniform-location.patch": "MPL-2.0",
+      "components/picom/picom.conf": "GPL-3.0-or-later"
+    }
+  },
+  "notice_gate": {
+    "path": "THIRD_PARTY_NOTICES.md",
+    "exempt_expression": "GPL-3.0-or-later",
+    "standard_text_root": "LICENSES/",
+    "entries": [
+      {
+        "paths": [
+          ".gitignore",
+          "README.md",
+          "scripts/install.sh"
+        ],
+        "markers": [
+          "Copyright (c) 2026 Tim Hant",
+          "MIT License"
+        ]
+      },
+      {
+        "paths": [
+          "components/fbterm/001-configurable-redraw-scrolling.patch"
+        ],
+        "markers": [
+          "fbterm",
+          "dragchan",
+          "GPL-2.0-only"
+        ]
+      },
+      {
+        "paths": [
+          "components/picom/001-probe-explicit-uniform-location.patch"
+        ],
+        "markers": [
+          "picom",
+          "Copyright (c) Yuxuan Shui <yshuiv7@gmail.com>",
+          "MPL-2.0",
+          "6d676824c457a933c52e3e92c5a1856466f90545"
+        ]
+      }
+    ]
+  },
+  "artifacts": {
+    "project-tools": {
+      "status": "CLEARED",
+      "allowlist_file": "docs/project/project-tools-allowlist.txt",
+      "denylist": [
+        "^drivers/",
+        "^patches/",
+        "^debs/",
+        "^vendor/",
+        "^build/",
+        "^third_party/",
+        "\\.deb$",
+        "\\.o_shipped$",
+        "\\.o(\\.cmd)?$",
+        "\\.ko$",
+        "\\.so(\\.\\d+)*$",
+        "\\.fw$"
+      ],
+      "reason": "候选制品（机械门禁 CLEARED，发布待监督批准）：失败关闭分类——允许清单 = 已批准原创前缀（.github/baselines/docs/scripts/tests/tools，GPL-3.0-or-later）+ 显式路径映射（上游继承层 MIT、LICENSES/ 标准文本组、components/ 第三方派生组）；任何不在前缀/映射内的路径一律拒绝（non_drivers_unclassified），无全局默认 GPL；components/ 许可材料已封存（picom 固定 commit 6d676824…：目标文件级 MPL-2.0，Copyright (c) Yuxuan Shui，文本见 LICENSES/MPL-2.0.txt；picom.conf 为项目原创 GPL-3.0-or-later；fbterm Debian 1.7-5：(C) 2008 dragchan，GPL-2.0-only），NOTICE 按路径组绑定版权/许可标记（notice_gate）；排除 patches/（混合/未决许可，含未分类驱动源码片段，整体排除）、debs/（整目录）、drivers/、vendor/、build/、third_party/ 与载荷；GitHub 主分支本身仍分发阻断路径，仓库级发布未闭环，本归档仅为候选制品。"
+    },
+    "driver-source": {
+      "status": "BLOCKED",
+      "allowlist_file": "docs/project/driver-source-allowlist.txt",
+      "denylist": [
+        "^vendor/",
+        "^build/",
+        "^third_party/",
+        "\\.deb$",
+        "\\.o_shipped$",
+        "\\.o(\\.cmd)?$",
+        "\\.ko$",
+        "\\.so(\\.\\d+)*$",
+        "\\.fw$"
+      ],
+      "reason": "仅含明确许可声明文件（408 dual + 2 BSD/LGPL + drivers/README.md）；confidential x3 与无许可 x70 已排除；排除后无法独立构建（缺 Kbuild 等构建文件），非完整驱动；再分发权利链待监督复审，不假 PASS。"
+    }
   },
   "expected_summary": {
     "tracked_paths": 484,
@@ -108,14 +249,6 @@
     "standard_spdx": 0,
     "unclassified": 70,
     "module_license_files": 10,
-    "declaration_conflicts": 2,
-    "manifest_entries": 192,
-    "manifest_unresolved": 192
-  },
-  "release_blockers": [
-    "strict-confidential-redistribution-rights",
-    "unclassified-source-license-review",
-    "imported-source-provenance-and-rights-review",
-    "vendor-payload-license-and-redistribution-rights"
-  ]
+    "declaration_conflicts": 2
+  }
 }

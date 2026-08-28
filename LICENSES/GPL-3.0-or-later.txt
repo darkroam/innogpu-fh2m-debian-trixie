@@ -672,26 +672,3 @@ may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <https://www.gnu.org/licenses/why-not-lgpl.html>.
-
----
-
-# 适用范围（License Scope）
-
-本文件顶部的 GNU GPL v3 文本（SPDX: `GPL-3.0-or-later`）**仅适用于本项目原创层**：
-本项目（darkroam 维护的 innogpu-fh2m-debian-trixie fork）后续原创的框架、脚本、工具、测试、
-文档、配置和辅助代码，以及 `drivers/README.md`。license_scope=original-layer-only
-
-本许可证**不覆盖**：
-
-- `drivers/`：导入的厂商驱动源码不适用根许可证；每个文件保留并沿用其自身文件头声明
-  （如 `MIT OR GPL-2.0-only`、`BSD-3-Clause OR LGPL-2.1-only`）；标为 `Strictly Confidential`
-  或无许可声明的文件不因本文件获得任何许可证。
-- fork 上游继承的 MIT 内容：来自 Tim Hant 上游仓库
-  （https://github.com/timhant/innogpu-fh2m-debian-trixie）的原始代码及仍存在的实质性派生内容
-  继续保留 `Copyright (c) 2026 Tim Hant` 的 MIT 授权，完整文本见 `LICENSES/MIT.txt` 与
-  `THIRD_PARTY_NOTICES.md`；本文件不重新许可、也不撤销该授权。
-- 本地载荷：`debs/`、`vendor/`、`build/`、`third_party/` 及 `*.deb` 等本地获取/构建产物
-  不随公开制品发布，不适用本文件。
-
-此前已按 MIT 许可证发布的版本及副本继续保有原 MIT 授权；本许可证变更不撤销既有授权。
-许可边界的唯一权威文档见 `docs/project/licensing.md`。

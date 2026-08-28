@@ -25,6 +25,9 @@ third_party/innogpu-fh2m-deepin-202504/
 # Migrated black-box payload and staging build area (managed by binary-manifest.json + extractor).
 /vendor/
 /build/
+# Python bytecode cache (created by py_compile / imports).
+__pycache__/
+
 # Driver-generated shader cache (appears when GL/Vulkan workloads run).
 /.shaders/
 /desktop-hwgl-*.txt

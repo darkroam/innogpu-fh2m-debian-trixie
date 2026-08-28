@@ -1,6 +1,6 @@
 # 当前状态与问题清单
 
-最后更新：2026-08-26
+最后更新：2026-08-27
 
 本文件是项目当前运行状态的唯一摘要。历史过程、补丁细节和故障推导分别见
 [阶段补丁](../patches/README.md) 与 [事故和经验](../incidents/README.md)。
@@ -27,6 +27,7 @@
 | Vulkan/OpenCL 执行 | 探针 exec 模式 + 真机验证通过（2026-08-24）：Vulkan queue+fence submit+wait、OpenCL add kernel+读回逐元素校验均在 Fantasy II-M 上执行成功；`runtime_vulkan_execution`/`runtime_opencl_execution`=PASS（证据 `baselines/runtime-results-20260824.txt`）；离线失败路径测试 12 项 | [probe-vulkan-devices.c](../../tools/probe-vulkan-devices.c)、[probe-opencl-devices.c](../../tools/probe-opencl-devices.c)、[test-strategy](test-strategy.md) |
 | VA-API 实际解码 | `tools/run-vaapi-decode-test.sh --codec all` 真机执行（2026-08-24）：H.264 Main 与 HEVC Main 强制 VA-API 硬解，各 30 帧 320x240 NV12 framemd5 与软件参考逐帧 hash 一致，Driver/Firmware 状态门禁通过；`runtime_vaapi_decode`=PASS（证据 `baselines/runtime-results-20260824.txt`）；能力边界仅 Main/Main 8-bit 4:2:0 | [run-vaapi-decode-test.sh](../../tools/run-vaapi-decode-test.sh)、[test-strategy](test-strategy.md) |
 | DMA-BUF 回归工具 | `tools/run-dmabuf-regression-test.sh` 已实现（2026-08-24）：同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 + 状态门禁聚合，配套 147 项 fixture 测试；**真机 PASS（2026-08-26 root 权限运行，证据已封存）**：self-import/READ/WRITE/vblank/状态门禁/内核日志全部通过；能力边界不变：仅同设备 PRIME self-import，foreign/cross-device、GBM、V4L2、长期压力与并发仍 UNVERIFIED | [run-dmabuf-regression-test.sh](../../tools/run-dmabuf-regression-test.sh)、[test-strategy](test-strategy.md)、[webkit 调查](../planning/webkit-dmabuf-investigation.md) |
+| 发布边界 | 三层许可模型（原创层 GPL-3.0-or-later / 上游 MIT / drivers/ 逐文件）；`project-tools` 为**候选制品**（机械门禁 CLEARED，发布待监督批准；**失败关闭分类**——已批准原创前缀 + 显式映射，未知路径拒绝，无默认 GPL；排除 patches/、debs/、drivers/、vendor/、build/、third_party/；**路径绑定 NOTICE 门禁**，components/ 许可材料已封存：picom 补丁为文件级 MPL-2.0、`picom.conf` 为原创 GPLv3、fbterm 1.7-5 (C) 2008 dragchan GPL-2.0-only）；`driver-source` 排除 confidential ×3 与无许可 ×70 后非完整驱动（BLOCKED，不假 PASS）；**GitHub 主分支仍公开分发阻断路径，仓库级发布未闭环**（开放决策：主分支是否发布目标）；二进制 deb 与 vendor 载荷不作为当前发布目标；patched-1.deb 为上游历史非阻断；本地 debs/ 与 vendor/ 不参与发布 | [licensing.md](licensing.md)（唯一权威文档）、[source-license-audit.md](source-license-audit.md) |
 
 ## 已解决问题
 
@@ -73,12 +74,16 @@
     验收门槛与回退边界见 [`webkit-dmabuf-investigation.md`](../planning/webkit-dmabuf-investigation.md)。
 11. p23 的 READ page fault 成本已完成 1/4/8/16 MiB 缩放测量，约按 `0.06–0.07ms/page` 增长；
     主要 DMA descriptor/wait 热点位于预编译 `innodma.o_shipped`，当前项目不制作 READ 预取候选。
-12. 许可证机械审计工程侧已完成（2026-08-26）：标准条款副本 `LICENSES/`、484 路径逐文件清单
-    `docs/project/source-license-inventory.tsv`、策略 `license-audit-policy.json` 与审计器
-    `tools/audit-licenses.py`（`license_audit_overall=PASS`）；分类为 408 个 `MIT OR GPL-2.0-only`、
-    2 个 `BSD-3-Clause OR LGPL-2.1-only`、3 个 confidential、70 个 `NOASSERTION`。但 3 + 70 个源码
-    路径及 192 项第三方载荷的权利链仍未关闭，PMBus/VPU 两处声明冲突待澄清。发布状态保持 BLOCKED，见
-    [源码许可证审计](source-license-audit.md)。
+12. 许可证体系最终整理（三层模型，2026-08-28 监督复审前）：原创层 GPL-3.0-or-later、上游
+    MIT 继承层（`Copyright (c) 2026 Tim Hant`）、drivers/ 逐文件声明、本地载荷排除；
+    `project-tools` 为**候选制品**（CLEARED 仅机械门禁）：按权利边界生成允许清单（排除
+    patches/、debs/、drivers/、vendor/、build/、third_party/），非 drivers **失败关闭**分类 +
+    路径绑定 NOTICE 门禁；components/ 许可材料已封存（picom 补丁为文件级 MPL-2.0、配置为
+    原创 GPLv3，fbterm 1.7-5 (C) 2008 dragchan GPL-2.0-only）；`driver-source` 仅含明确许可文件（BLOCKED，
+    非完整驱动）；3 个 confidential 与 70 个
+    无许可路径**排除出公开制品**（不从 Git 历史删除）；GitHub 主分支仍分发阻断路径，仓库级
+    发布未闭环；机械审计 `license_audit_overall=PASS`、`license_release_gate=BLOCKED`，见
+    [源码许可证审计](source-license-audit.md) 与 [licensing.md](licensing.md)。
 13. 运维实现仍有已登记缺口：DRI repair 源码 fallback 与 unit 路径不一致且失败/卸载不闭合；两个
     历史/诊断脚本固定目标用户名；VA-API runner 未把 timeout rc=137 归入超时；音频安装没有对称
     卸载器；check-docs 的链接/隐私范围不是全部 tracked Markdown；包内 vendor `sw-inno-gl.service`
