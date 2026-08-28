@@ -27,7 +27,7 @@
 | Vulkan/OpenCL 执行 | 探针 exec 模式 + 真机验证通过（2026-08-24）：Vulkan queue+fence submit+wait、OpenCL add kernel+读回逐元素校验均在 Fantasy II-M 上执行成功；`runtime_vulkan_execution`/`runtime_opencl_execution`=PASS（证据 `baselines/runtime-results-20260824.txt`）；离线失败路径测试 12 项 | [probe-vulkan-devices.c](../../tools/probe-vulkan-devices.c)、[probe-opencl-devices.c](../../tools/probe-opencl-devices.c)、[test-strategy](test-strategy.md) |
 | VA-API 实际解码 | `tools/run-vaapi-decode-test.sh --codec all` 真机执行（2026-08-24）：H.264 Main 与 HEVC Main 强制 VA-API 硬解，各 30 帧 320x240 NV12 framemd5 与软件参考逐帧 hash 一致，Driver/Firmware 状态门禁通过；`runtime_vaapi_decode`=PASS（证据 `baselines/runtime-results-20260824.txt`）；能力边界仅 Main/Main 8-bit 4:2:0 | [run-vaapi-decode-test.sh](../../tools/run-vaapi-decode-test.sh)、[test-strategy](test-strategy.md) |
 | DMA-BUF 回归工具 | `tools/run-dmabuf-regression-test.sh` 已实现（2026-08-24）：同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 + 状态门禁聚合，配套 147 项 fixture 测试；**真机 PASS（2026-08-26 root 权限运行，证据已封存）**：self-import/READ/WRITE/vblank/状态门禁/内核日志全部通过；能力边界不变：仅同设备 PRIME self-import，foreign/cross-device、GBM、V4L2、长期压力与并发仍 UNVERIFIED | [run-dmabuf-regression-test.sh](../../tools/run-dmabuf-regression-test.sh)、[test-strategy](test-strategy.md)、[webkit 调查](../planning/webkit-dmabuf-investigation.md) |
-| 发布边界 | 三层许可模型（原创层 GPL-3.0-or-later / 上游 MIT / drivers/ 逐文件）；`project-tools` 为**候选制品**（机械门禁 CLEARED，发布待监督批准；**失败关闭分类**——已批准原创前缀 + 显式映射，未知路径拒绝，无默认 GPL；排除 patches/、debs/、drivers/、vendor/、build/、third_party/；**路径绑定 NOTICE 门禁**，components/ 许可材料已封存：picom 补丁为文件级 MPL-2.0、`picom.conf` 为原创 GPLv3、fbterm 1.7-5 (C) 2008 dragchan GPL-2.0-only）；`driver-source` 排除 confidential ×3 与无许可 ×70 后非完整驱动（BLOCKED，不假 PASS）；**GitHub 主分支仍公开分发阻断路径，仓库级发布未闭环**（开放决策：主分支是否发布目标）；二进制 deb 与 vendor 载荷不作为当前发布目标；patched-1.deb 为上游历史非阻断；本地 debs/ 与 vendor/ 不参与发布 | [licensing.md](licensing.md)（唯一权威文档）、[source-license-audit.md](source-license-audit.md) |
+| 发布边界 | 三层许可模型（原创层 GPL-3.0-or-later / 上游 MIT / drivers/ 逐文件）；`project-tools` 为**候选制品**（机械门禁 CLEARED，当前不作为发布目标；**失败关闭分类**——已批准原创前缀 + 显式映射，未知路径拒绝，无默认 GPL；排除 patches/、debs/、drivers/、vendor/、build/、third_party/；**路径绑定 NOTICE 门禁**，components/ 许可材料已封存：picom 补丁为文件级 MPL-2.0、`picom.conf` 为原创 GPLv3、fbterm 1.7-5 (C) 2008 dragchan GPL-2.0-only）；`driver-source` 排除 confidential ×3 与无许可 ×70 后非完整驱动（BLOCKED，不假 PASS）；**GitHub 主分支仍公开分发阻断路径，仓库级发布未闭环**；二进制 deb 与 vendor 载荷不作为当前发布目标；patched-1.deb 为上游历史非阻断；本地 debs/ 与 vendor/ 不参与发布；**发布决策 1C（见 licensing.md §4.1 权威记录）：当前不创建 Release/tag/附件，main 为研究开发仓库、不作为发布目标，BLOCKED 不变；不做 Release 不消除 main 公开跟踪 73 个阻断路径的风险** | [licensing.md](licensing.md)（唯一权威文档）、[source-license-audit.md](source-license-audit.md) |
 
 ## 已解决问题
 
@@ -84,11 +84,19 @@
     无许可路径**排除出公开制品**（不从 Git 历史删除）；GitHub 主分支仍分发阻断路径，仓库级
     发布未闭环；机械审计 `license_audit_overall=PASS`、`license_release_gate=BLOCKED`，见
     [源码许可证审计](source-license-audit.md) 与 [licensing.md](licensing.md)。
-13. 运维实现仍有已登记缺口：DRI repair 源码 fallback 与 unit 路径不一致且失败/卸载不闭合；两个
-    历史/诊断脚本固定目标用户名；VA-API runner 未把 timeout rc=137 归入超时；音频安装没有对称
-    卸载器；check-docs 的链接/隐私范围不是全部 tracked Markdown；包内 vendor `sw-inno-gl.service`
-    没有显式 systemd 依赖或生命周期管理，release gate 也未覆盖其 helper/全部命令链接。详见
-    [代码分析](code-analysis.md) 与 [TODO](../planning/todo.md)，本轮仅修正文档，未改变行为。
+13. 运维子项（第一批，2026-08-28 已修复并加 fixture）：DRI repair 安装器统一 helper 实际安装路径与
+    unit `ExecStart`（包 `/usr/sbin` vs 源码 fallback `/usr/local/sbin` 明确区分）、`enable/start`
+    失败传播（不再 `|| true` 冒充成功）、卸载器安全删除源码 fallback 创建的 helper 符号链接（只删
+    指向本项目脚本的链接，不删用户/包文件）；`check-soft-xorg-dwm.sh` 删除固定 `USER_NAME=ok`，用户
+    解析统一 `INNOGPU_X_USER > SUDO_USER > USER`、home 用 `INNOGPU_X_HOME`/`getent` 且不可确定时明确
+    失败（不再回退 root `$HOME`），`run_x` 使用同一解析用户；`try-hotload-patched17.sh` 提示改为中性
+    （不再“log in as ok”）；VA-API runner 三个阶段都把 GNU timeout rc=124/137 归类为超时（整体退出
+    码 5），新增忽略 TERM→SIGKILL fixture；新增 `tests/unit/run-dri-repair-tests.sh`（34 项：helper
+    路径/ExecStart/PATH 注入忽略/失败回滚只删本次新建/外国文件拒绝/版本不匹配零副作用/package-absent
+    只清 DRI 自有路径/幂等安装卸载/不删除非本项目文件 + 无硬编码用户名静态
+    反例）。仍在 TODO：音频安装器对称卸载与 fixture、check-docs 全 Markdown 扩展、构建依赖门禁、
+    vendor `sw-inno-gl.service` 生命周期，见 [代码分析](code-analysis.md) 与
+    [TODO](../planning/todo.md)。
 
 ## 证据保留规则
 
@@ -102,3 +110,11 @@ patched-20、patched-21 和 patched-22 均为历史候选或验收证据，不�
 p21/p22 的电源、合盖、拔屏和跨硬件限制仍按历史记录保留。当前本地安装判断以 `4.0.0-i1`、
 Phase 4 实机验收、`patched-27` 回退基线及 Phase 5 状态为准；公开发布则被许可证审计阻断。
 `patched-17`/`patched-8` 仅作深层回退。
+
+**发布决策 1C（当前状态，2026-08-28）**：
+
+- 当前**不创建 GitHub Release、tag 或发布附件**；`main` 继续作为研究开发仓库。
+- `license_release_gate=BLOCKED` **保持不变**；`project-tools=CLEARED` 仍只表示候选制品机械门禁
+  通过，`driver-source=BLOCKED` 保持不变。
+- **不得声称“不做 Release”可以消除 `main` 当前公开跟踪 3 个 Strictly Confidential + 70 个无许可
+  路径（共 73 个）的风险**——分支本身仍是公开分发面；其处置保留为独立发布决策。

@@ -98,9 +98,9 @@ Deepin deb(校验 SHA) → generate-binary-manifest(校验+生成) → validate-
 | P1 | 部分脚本用 `/tmp` 硬编码且无 trap 清理（20 个脚本包含 `/tmp`，仅 9 个脚本使用 mktemp+trap） | 各构建/检查脚本 | 并发/中断残留；建议统一 `mktemp -d ${TMPDIR:-/tmp}` + trap |
 | P2 | `check-deb-dkms-build.sh` 等把工作区放 `/tmp`（本会话曾因 /tmp 跨调用丢失踩坑） | check-deb-dkms-build.sh 等 | 长时间构建建议 `$ROOT/.build/`；短期可接受 |
 | P2 | 5 个脚本无 `set -e` | 见上 | 容错设计可接受，但需文档说明；`verify-install-status.sh` 是只读报告器，符合设计 |
-| P1 | DRI repair 源码 fallback 写入 `/usr/local/sbin`，unit 固定调用 `/usr/sbin`；启动失败被忽略，通用卸载器不清理 fallback helper | `install-dri-node-repair-service.sh`、`uninstall-innogpu.sh` | 源码安装不能视为可用/可逆；需统一安装路径、传播启动失败并补安装/卸载 fixture |
-| P1 | 两个历史/诊断脚本仍把目标用户默认写死为 `ok`，其中 `check-soft-xorg-dwm.sh` 还会让用户与 home 推导不一致 | `check-soft-xorg-dwm.sh`、`try-hotload-patched17.sh` | 非该用户名设备会查询或提示错误账户；应统一使用 `INNOGPU_X_USER`/`SUDO_USER`，并补非默认用户测试 |
-| P2 | VA-API runner 只把 GNU timeout rc=124 识别为超时；`--kill-after` 产生 rc=137 时会误归普通输入/参考/解码失败 | `run-vaapi-decode-test.sh` | 退出码 5 契约不完整；应复用 DMA-BUF 的 124/137 判定并增加 SIGKILL fixture |
+| ~~P1~~ 已修复 | DRI repair 源码 fallback 与 unit 路径不一致、启动失败被忽略、卸载不清理 fallback helper | `install-dri-node-repair-service.sh`、`uninstall-innogpu.sh` | 2026-08-28 已修复：helper 三态判定（absent/owned/foreign，外国文件拒绝覆盖）、unit `ExecStart` 指向实际安装的 helper（包 `/usr/sbin` vs 源码 fallback `/usr/local/sbin` 明确区分）、失败回滚只删本次新建、`enable/start` 失败传播、卸载器只删规范化目标精确等于本仓库脚本的符号链接且版本不匹配零副作用、package-absent 只清 DRI 自有路径、失败重装不改已有启用状态且原样恢复既有 unit、卸载器只删带项目 marker 的 unit；`tests/unit/run-dri-repair-tests.sh` 34 项 fixture |
+| ~~P1~~ 已修复 | 两个历史/诊断脚本把目标用户默认写死为 `ok`，`check-soft-xorg-dwm.sh` 用户与 home 推导不一致 | `check-soft-xorg-dwm.sh`、`try-hotload-patched17.sh` | 2026-08-28 已修复：`check-soft-xorg-dwm.sh` 解析顺序 `INNOGPU_X_USER > SUDO_USER > USER`、home 用 `INNOGPU_X_HOME`/`getent` 且不可确定时明确失败（不回退 root `$HOME`）、`run_x` 用同一解析用户；`try-hotload-patched17.sh` 提示改中性；静态反例断言无硬编码用户名 |
+| ~~P2~~ 已修复 | VA-API runner 只把 GNU timeout rc=124 识别为超时，rc=137 误归普通失败 | `run-vaapi-decode-test.sh` | 2026-08-28 已修复：三个阶段统一 `timeout_rc`（124/137 → 整体退出码 5）；`tests/unit/run-vaapi-decode-tests.sh` 增加忽略 TERM→SIGKILL fixture（56 项） |
 | P2 | 音频安装器创建系统/用户 unit、helper 和配置并修改旧用户配置，但没有对称卸载入口或 fixture；多条写入无原文件备份，未运行 `systemd-analyze verify`，用户服务管理失败被忽略 | `install-hygon-hda-audio.sh` | 当前只能人工审阅有限备份后回退；需补冲突检测、幂等卸载、所有权/备份恢复及 systemd fixture |
 | P2 | `check-docs.sh` 的 Markdown 链接与隐私扫描目录集合不覆盖全部受跟踪文档，且不验证内联代码路径 | `check-docs.sh` | `PASS_DOCS` 不能替代全仓链接/隐私审计；应统一从 `git ls-files '*.md'` 枚举并增加代码路径检查 |
 | P2 | 包导入 `sw-inno-gl.service`/helper，但 control 无 `systemd` 依赖，maintainer scripts 不管理单元；release gate 也未校验该组合和全部 10 个 `/usr/bin`+`/usr/sbin` 命令链接 | `build-innogpu-driver.sh`、`check-release-package.sh` | 文件存在不等于服务启用；需决定保留/移除策略，再补依赖、生命周期和包边界 fixture |
@@ -131,9 +131,9 @@ Deepin deb(校验 SHA) → generate-binary-manifest(校验+生成) → validate-
 3. 源码与载荷再分发许可未完成逐项核实（P0 发布阻断）：见 `source-license-audit.md`。
 4. 黑盒符号级分析未完成（远期候选 9）：依赖可观察符号，不修改黑盒。
 5. 能力深挖（DVFS/codec 编码/CORE_ID）为未实施项（见 todo.md），非本阶段范围。
-6. 运维与包生命周期闭环：优先修复上表 DRI service 路径/失败传播、固定用户名、VA-API rc=137、
-   音频卸载、check-docs 覆盖以及 vendor systemd/helper 包边界缺口；这些是实现问题，本轮文档审计只
-   登记事实，未改行为。
+6. 运维与包生命周期闭环：DRI service 路径/失败传播、固定用户名、VA-API rc=137 三项已于
+   2026-08-28 修复并加 fixture（见上表）；音频卸载、check-docs 覆盖、构建依赖门禁以及 vendor
+   systemd/helper 包边界缺口保留为后续批次。
 7. 参考模型版本漂移风险：上游 Picom commit 固定 `6d676824`（CONFIRMED）；Deepin 包 SHA 固定；
    DRM/Mesa 主线仅作行为对照（INFERRED 用途，见 frameworks-and-references.md）。
 

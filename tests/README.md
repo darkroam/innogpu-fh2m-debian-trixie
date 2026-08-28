@@ -56,6 +56,7 @@ bash tests/unit/run-results-parser-tests.sh
 bash tests/unit/run-exec-probes-tests.sh
 bash tests/unit/run-vaapi-decode-tests.sh
 bash tests/unit/run-dmabuf-regression-tests.sh
+bash tests/unit/run-dri-repair-tests.sh
 ```
 
 - manifest 测试用 `tools/validate-binary-manifest.py` 对真实清单与 `tests/fixtures/` 下的恶意
@@ -84,7 +85,16 @@ bash tests/unit/run-dmabuf-regression-tests.sh
   08->09 增长**/post 失效/8 字段逐项增长）、mktemp 失败 rc=2、TERM 信号清理退出 143 无残留（残留检查
   限定本测试 TMPDIR，不扫描全局 /tmp）、无残留与不污染 baseline；fixture 模式成功输出独立命名空间
   fixture_*（overall=PASS 仅表示控制流通过，rc=0 一致）且逐行 -mode=fixture，**绝不输出任何
-  vaapi_decode_* 权威行**。
+  vaapi_decode_* 权威行**。超时判定覆盖 GNU timeout rc=124 与 rc=137（忽略 TERM、由 --kill-after
+  最终 SIGKILL 的忙循环 fixture，无后台进程残留）在三阶段（输入生成/软件参考/硬解）均归类为超时
+  （整体退出码 5）。
+- DRI repair 服务生命周期测试（34 项，CI 无 root/systemd//dev）：fake systemctl + 测试根前缀
+  （`INNOGPU_DRI_TEST_ROOT`/`INNOGPU_UNINSTALL_TEST`，默认关闭）覆盖源码 fallback helper 安装路径与
+  unit `ExecStart` 一致、PATH 注入忽略、失败回滚只删本次新建（已有有效安装在重装失败后保留）、
+  外国普通文件/符号链接拒绝覆盖、`enable/start` 失败传播、幂等安装/卸载、package-absent 只清 DRI
+  自有路径、版本不匹配零副作用、只删除规范化目标等于本仓库脚本的符号链接（同名外国仓库链接/普通
+  文件保留）、测试根安全（空//相对路径 fail closed）、包 helper 分支正例，以及无硬编码目标用户名、
+  无 root `$HOME` 回退的静态反例。
 - DMA-BUF 回归聚合控制流测试（147 项，CI 无 /dev/dri）：fake sysfs/dev/探针注入 + 真实 C 探针契约测试（编译/参数/设备/能力路径 fd 无泄漏）覆盖参数校验（rc=2 设备检测前）、
   fixture 门禁与独立命名空间（零权威 dmabuf_* 行）、编译/cc 缺失、设备发现与身份（缺失/PCI 不匹配/
   card-render 不同源/多目标/非字符设备）、self-import 控制流与能力缺失、READ 输出严格解析（缺行/重复/

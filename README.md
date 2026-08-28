@@ -94,7 +94,7 @@ sudo reboot                                                    # 重启后加载
   [许可证与再分发边界](docs/project/licensing.md)；机械审计见
   [源码许可证审计](docs/project/source-license-audit.md)；第三方声明见
   [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
-- 发布制品：`project-tools`（**候选制品**，机械门禁 `CLEARED`，发布待监督批准：按权利边界生成
+- 发布制品：`project-tools`（**候选制品**，机械门禁 `CLEARED`，当前不作为发布目标——发布决策 1C：按权利边界生成
   的允许清单，排除 patches/、debs/、drivers/、vendor/、build/、third_party/，非 drivers 逐路径
   分类 + NOTICE 门禁）与 `driver-source`（drivers/ 中仅明确许可文件，**非完整驱动**，`BLOCKED`）；
   **GitHub 主分支仍公开分发阻断路径，仓库级发布未闭环**；二进制 deb 与 vendor 载荷不作为

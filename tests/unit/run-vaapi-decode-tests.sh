@@ -39,6 +39,9 @@ fi
 if [[ " $* " == *" -hwaccel "* ]]; then
   [[ "${FAKE_HW_FAIL:-0}" == 1 ]] && { echo "fake: vaapi init failed" >&2; exit 1; }
   if [[ "${FAKE_HW_TIMEOUT:-0}" == 1 || -n "${FAKE_HW_SLEEP:-}" ]]; then sleep "${FAKE_HW_SLEEP:-5}"; fi
+  # ignored-TERM fixture: busy-loop in bash (no child) so GNU timeout must
+  # finally SIGKILL this process (rc=137) via --kill-after; no orphan is left.
+  if [[ "${FAKE_HW_IGNORE_TERM:-0}" == 1 ]]; then trap '' TERM; while :; do :; done; fi
   [[ "${FAKE_HEVC_ONLY_FAIL:-0}" == 1 && " $* " == *"src-hevc"* ]] && { echo "fake: hevc hw fail" >&2; exit 1; }
   if [[ -n "${FAKE_SWAP_STATUS_LINK:-}" && -n "${FAKE_SWAP_STATUS_TARGET:-}" ]]; then
     ln -sf "$FAKE_SWAP_STATUS_TARGET" "$FAKE_SWAP_STATUS_LINK"
@@ -48,11 +51,13 @@ fi
 if [[ " $* " == *" framemd5 "* ]]; then
   [[ "${FAKE_REF_FAIL:-0}" == 1 ]] && { echo "fake: sw ref failed" >&2; exit 1; }
   [[ "${FAKE_REF_TIMEOUT:-0}" == 1 ]] && sleep 5
+  if [[ "${FAKE_REF_IGNORE_TERM:-0}" == 1 ]]; then trap '' TERM; while :; do :; done; fi
   out="${@: -1}"; cat "${FAKE_REF_FRAMEMD5:?}" > "$out"; exit 0
 fi
 if [[ " $* " == *"libx264"* || " $* " == *"libx265"* ]]; then
   [[ "${FAKE_ENCODE_FAIL:-0}" == 1 ]] && { echo "fake: encode failed" >&2; exit 1; }
   [[ "${FAKE_ENCODE_TIMEOUT:-0}" == 1 ]] && sleep 5
+  if [[ "${FAKE_ENCODE_IGNORE_TERM:-0}" == 1 ]]; then trap '' TERM; while :; do :; done; fi
   [[ "${FAKE_HEVC_ONLY_FAIL:-0}" == 1 && " $* " == *"src-hevc"* ]] && { echo "fake: hevc encode fail" >&2; exit 1; }
   out="${@: -1}"; echo "fake-encoded" > "$out"; exit 0
 fi
@@ -168,6 +173,19 @@ run_rc encode_fail         4 "$GOOD FAKE_ENCODE_FAIL=1" --codec h264 --device /d
 run_rc ref_fail            4 "$GOOD FAKE_REF_FAIL=1" --codec h264 --device /dev/dri/renderD128
 run_rc hw_fail             1 "$GOOD FAKE_HW_FAIL=1" --codec h264 --device /dev/dri/renderD128
 run_rc timeout_hw          5 "$GOOD FAKE_HW_TIMEOUT=1" --codec h264 --device /dev/dri/renderD128 --timeout 1
+# GNU timeout rc=137 (child ignores TERM, finally SIGKILLed by --kill-after) is
+# also a timeout on every stage; the busy-loop fixture leaves no background process.
+run_rc timeout_enc_sigkill 5 "$GOOD FAKE_ENCODE_IGNORE_TERM=1" --codec h264 --device /dev/dri/renderD128 --timeout 1
+run_rc timeout_ref_sigkill 5 "$GOOD FAKE_REF_IGNORE_TERM=1" --codec h264 --device /dev/dri/renderD128 --timeout 1
+run_rc timeout_hw_sigkill  5 "$GOOD FAKE_HW_IGNORE_TERM=1" --codec h264 --device /dev/dri/renderD128 --timeout 1
+# rc=137 must be classified as timeout (reason=timeout_*), not as a stage failure
+O="$runtime/sigkill-reason.out"
+env $GOOD FAKE_HW_IGNORE_TERM=1 bash "$SCRIPT" --codec h264 --device /dev/dri/renderD128 --timeout 1 > "$O" 2>&1; rc=$?
+if [ "$rc" -eq 5 ] && grep -q 'reason=timeout_vaapi_decode' "$O" && ! grep -q 'reason=vaapi_decode_failed' "$O"; then
+    pass sigkill_hw_classified_as_timeout
+else
+    fail sigkill_hw_classified_as_timeout "rc=$rc out=$(grep vaapi_decode_h264 "$O")"
+fi
 # ---- 输出校验：真实 framemd5 格式（rc=1）----
 run_rc frame_count_mismatch 1 "$GOOD FAKE_HW_FRAMEMD5=$runtime/hw-1frame.md5" --codec h264 --device /dev/dri/renderD128
 run_rc hash_mismatch       1 "$GOOD FAKE_HW_FRAMEMD5=$runtime/hw-diff.md5" --codec h264 --device /dev/dri/renderD128

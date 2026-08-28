@@ -179,6 +179,7 @@ tests/picom/run-session-tests.sh
 tests/runtime/README.md
 tests/runtime/run-capability-baseline.sh
 tests/unit/run-dmabuf-regression-tests.sh
+tests/unit/run-dri-repair-tests.sh
 tests/unit/run-exec-probes-tests.sh
 tests/unit/run-extractor-tests.sh
 tests/unit/run-license-audit-tests.sh

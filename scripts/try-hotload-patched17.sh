@@ -129,6 +129,7 @@ list_desktop_processes || true
 
 cat <<NEXT
 
-If tty1 is visible locally, log in as ok and run startx if it does not start
-automatically. Keep hardware GL/GBM disabled for now.
+If tty1 is visible locally, log in on tty1 and run startx if it does not start
+automatically (use your normal desktop user). Keep hardware GL/GBM disabled
+for now.
 NEXT

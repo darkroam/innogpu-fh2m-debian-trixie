@@ -67,8 +67,9 @@
 ### 待办
 
 1. **许可证发布阻断**：3 个 confidential 与 70 个无许可路径已**排除出公开制品**（`driver-source`
-   非完整驱动，BLOCKED；`project-tools` 为候选制品，机械门禁 CLEARED，发布待监督批准）；
-   **开放决策：GitHub 主分支是否作为发布目标**（当前仍公开分发阻断路径，仓库级发布未闭环）；
+   非完整驱动，BLOCKED；`project-tools` 为候选制品，机械门禁 CLEARED，当前不作为发布目标）；
+   **发布决策 1C：main 不作为发布目标（研究开发仓库）**（当前仍公开分发阻断路径，仓库级发布未闭环，
+   见 [licensing.md](licensing.md) §4.1 权威记录）；
    关闭 `license_release_gate=BLOCKED` 前不得发布完整源码树或载荷附件，见
    [licensing.md](licensing.md)（唯一权威文档）；
 2. **runtime 剩余能力**：modeset/热插拔/合盖、Picom backend、音频听感和跨硬件矩阵；

@@ -44,14 +44,14 @@
 | `install.sh` | 修改驱动、需重启 | 只调度 patched-8/17；不把 patched-20 诊断候选设为默认 |
 | `install-patched17-and-check.sh` | 修改驱动、需重启 | legacy 深层回退入口；新设备默认入口是 4.0.0-i1 |
 | `install-patched8-and-check.sh` | 修改驱动、需重启 | 更早的历史恢复入口 |
-| `uninstall-innogpu.sh` | 卸载驱动、需重启 | 通用卸载器；版本包装见 `uninstall-patched*.sh`。其内置恢复提示仍固定指向 patched-17，且不会清理源码 fallback 创建的 `/usr/local/sbin` helper；当前版本应以 `docs/user/recovery.md` 的 p27 首选链为准 |
+| `uninstall-innogpu.sh` | 卸载驱动、需重启 | 通用卸载器；版本包装见 `uninstall-patched*.sh`。会安全清理源码 fallback 创建的 `/usr/local/sbin` helper 符号链接（仅当指向本项目 `scripts/repair-dri-nodes.sh`，用户/包文件不删）并移除 repair unit；其内置恢复提示仍固定指向 patched-17，当前应以 `docs/user/recovery.md` 的 p27 首选链为准 |
 | `uninstall-patched17.sh` | 卸载驱动、需重启 | 仅允许卸载版本精确匹配 patched-17 的兼容包装 |
 | `uninstall-patched8.sh` | 卸载驱动、需重启 | 仅允许卸载版本精确匹配 patched-8 的兼容包装 |
 | `disable-incompatible-userspace.sh` | 修改 `/usr` 和 Xorg 配置 | 恢复软件渲染/兼容用户态边界 |
 | `restore-tty1-login.sh` | 修改系统服务 | 优先恢复可见 TTY 登录 |
 | `prepare-soft-xorg-dwm.sh` | 修改 Xorg/会话 | 准备软件 Xorg；若 dotconfig xdisplay 已存在则接入，否则保留软件路径并警告 |
 | `repair-dri-nodes.sh` | 修改 `/dev` 节点 | 根据 sysfs 设备号临时恢复缺失的 DRM/fbdev 节点 |
-| `install-dri-node-repair-service.sh` | 安装系统服务 | 固化 DRM/fbdev 节点权限恢复；包内 `/usr/sbin` helper 路径可用，源码树 fallback 当前存在 `/usr/local/sbin` 与 unit `ExecStart=/usr/sbin` 不一致，修复前不得把 fallback 描述为已验证 |
+| `install-dri-node-repair-service.sh` | 安装系统服务 | 固化 DRM/fbdev 节点权限恢复；helper 仅从受信来源解析（包 `/usr/sbin`→源码 fallback `/usr/local/sbin`，任意 PATH 命中被拒绝），unit `ExecStart` 始终指向实际安装的 helper；`/usr/bin` 为**可选**便利链接（创建失败仅告警不阻断）；`enable/start` 失败传播并统一事务回滚（含恢复既有 unit 字节/权限与 systemd enable 状态）。测试钩子 `INNOGPU_DRI_TEST_ROOT`（默认关闭）供 fixture 无 root 验证 |
 | `install-hygon-hda-audio.sh` | 安装系统/用户服务 | 固化本机 HDA 和 PipeWire 恢复；创建系统/用户 unit、helper、modules-load 与 ALSA 配置并可能改写 profile/PipeWire 旧配置；仅部分文件有条件性备份，当前无 systemd-analyze 门禁、对称自动卸载器或 fixture，人工回退边界见 `docs/project/audio-management.md` |
 
 ## Picom 接入

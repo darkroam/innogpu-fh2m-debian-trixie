@@ -4,7 +4,7 @@
 本文记录许可模型和工程门禁，不提供法律意见，也不以许可证文本存在来推导来源、授权链或再分发权。
 
 > 权威状态字段：`license_release_gate=BLOCKED`（仓库整体不发布；`project-tools` 为**候选制品**
-> （机械门禁 CLEARED，发布待监督批准），见 §4）。审计器机械校验该字段与
+> （机械门禁 CLEARED；当前不作为发布目标，发布决策 1C 见 §4.1））。审计器机械校验该字段与
 > `license-audit-policy.json` 的 `release_status` 一致。
 
 ## 1. 三层许可模型
@@ -67,25 +67,27 @@
 
 | 制品 | 内容 | 状态 | 说明 |
 | --- | --- | --- | --- |
-| `project-tools` | **候选制品**：**失败关闭分类**生成的允许清单（见 [project-tools-allowlist.txt](project-tools-allowlist.txt)）= 已批准原创前缀（`.github/`/`baselines/`/`docs/`/`scripts/`/`tests/`/`tools/`，GPL-3.0-or-later）+ 显式路径映射（上游继承层 MIT：`.gitignore`/`README.md`/`scripts/install.sh`；`LICENSES/` 标准文本组：MIT/GPL-2.0-only/BSD-3-Clause/LGPL-2.1-only/MPL-2.0；`components/` 第三方派生组）；**任何不在前缀/映射内的路径一律拒绝**（无全局默认 GPL） | **CLEARED**（仅机械门禁；发布待监督批准） | `components/` 许可材料已封存：picom 补丁按目标文件级 **MPL-2.0**（Copyright (c) Yuxuan Shui），`picom.conf` 为原创层 GPL-3.0-or-later；fbterm 补丁为 GPL-2.0-only（(C) 2008 dragchan）；NOTICE 门禁按**路径组**绑定版权/许可标记；`patches/`（混合/未决许可，整体排除）、`debs/`（整目录）、`drivers/`、`vendor/`、`build/`、`third_party/` 不含；GitHub 主分支仍分发阻断路径，仓库级发布未闭环（§4.1） |
+| `project-tools` | **候选制品**：**失败关闭分类**生成的允许清单（见 [project-tools-allowlist.txt](project-tools-allowlist.txt)）= 已批准原创前缀（`.github/`/`baselines/`/`docs/`/`scripts/`/`tests/`/`tools/`，GPL-3.0-or-later）+ 显式路径映射（上游继承层 MIT：`.gitignore`/`README.md`/`scripts/install.sh`；`LICENSES/` 标准文本组：MIT/GPL-2.0-only/BSD-3-Clause/LGPL-2.1-only/MPL-2.0；`components/` 第三方派生组）；**任何不在前缀/映射内的路径一律拒绝**（无全局默认 GPL） | **CLEARED**（仅机械门禁；当前不作为发布目标，见 §4.1） | `components/` 许可材料已封存：picom 补丁按目标文件级 **MPL-2.0**（Copyright (c) Yuxuan Shui），`picom.conf` 为原创层 GPL-3.0-or-later；fbterm 补丁为 GPL-2.0-only（(C) 2008 dragchan）；NOTICE 门禁按**路径组**绑定版权/许可标记；`patches/`（混合/未决许可，整体排除）、`debs/`（整目录）、`drivers/`、`vendor/`、`build/`、`third_party/` 不含；GitHub 主分支仍分发阻断路径，仓库级发布未闭环（§4.1） |
 | `driver-source` | `drivers/` 中仅具有明确许可声明的路径（408 dual + 2 BSD/LGPL + `drivers/README.md`）；allowlist 见 [driver-source-allowlist.txt](driver-source-allowlist.txt) | **BLOCKED** | 排除 confidential ×3 与无许可 ×70 后**无法独立构建**（缺 Kbuild 等构建文件），**不是完整驱动**；缺失内容须由用户按原声明从本地原包取得，不假 PASS；再分发权利链待监督复审 |
 
 `local-extractor` 不再是独立制品/门禁：本地载荷提取与校验工具是 `project-tools` 的一个功能，
 见 [docs/user/local-extractor.md](../user/local-extractor.md)。
 
-### 4.1 GitHub 主分支发布面（P1 阻断）
+### 4.1 GitHub 主分支发布面与发布决策 1C（当前结论）
 
 GitHub 仓库 `main` 分支本身是公开分发面：clone / GitHub 源码归档直接分发全部 706 个跟踪路径，
 **不经 `build-release-archive.py`**，因此当前仍公开分发 3 个 confidential 与 70 个无许可文件。
-本仓库因此**不宣称许可证发布闭环**：
+本仓库因此**不宣称许可证发布闭环**。
 
-- `project-tools` 归档只是**候选制品**：它证明「按权利边界生成的归档」在机械上可行且不含阻断
-  内容，但**不能替代** GitHub 主分支的发布决定。
-- **开放决策（需监督/权利方）**：GitHub 主分支是否作为发布目标？
-  - 若否：公开发布流程须先把阻断路径从公开分支移除（本轮**不执行**历史重写/删除，仅记录决策点）；
-  - 若是：须先解决 3 confidential + 70 无许可路径的权利链。
-- `patches/`（驱动派生补丁，含未分类驱动源码片段）在任一情况下都不随 `project-tools` /
-  `driver-source` 发布。
+**发布决策 1C（当前选择，本文为唯一权威记录，其他文档只引用）**：
+
+- 当前**不创建 GitHub Release、tag 或发布附件**；`main` 继续作为研究开发仓库，**不作为发布目标**。
+- `license_release_gate` 状态保持 `BLOCKED` 不变；`project-tools=CLEARED` 仍只表示候选制品机械
+  门禁通过，`driver-source` 状态保持 `BLOCKED` 不变。
+- **不得声称“不做 Release”可以消除 `main` 当前公开跟踪 3 个 Strictly Confidential + 70 个无许可
+  路径（共 73 个）的风险**——分支本身仍是公开分发面；其处置保留为独立发布决策（若未来要发布
+  main，须先把阻断路径从公开分支移除——不执行历史重写——并解决权利链）。
+- `patches/`（驱动派生补丁，含未分类驱动源码片段）不随 `project-tools` / `driver-source` 发布。
 
 ## 5. 机械审计与发布门禁
 

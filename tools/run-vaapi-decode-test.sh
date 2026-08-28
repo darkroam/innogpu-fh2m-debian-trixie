@@ -33,7 +33,6 @@
 
 set -u -o pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FFMPEG_BIN="${FFMPEG_BIN:-ffmpeg}"
 VAINFO_BIN="${VAINFO_BIN:-vainfo}"
 SYSFS_ROOT="${FAKE_SYSFS_ROOT:-/sys}"
@@ -233,6 +232,11 @@ verify_framemd5() {
     ' "$f"
 }
 
+# GNU timeout contract: rc=124 (timeout sent TERM and the child died) and
+# rc=137 (the child ignored TERM and was finally SIGKILLed by --kill-after)
+# are BOTH timeouts; anything else is a real stage failure.
+timeout_rc() { [[ "$1" -eq 124 || "$1" -eq 137 ]]; }
+
 # ---- 单 codec 解码链 ----
 passed=0; failed=0; skipped=0; total=0
 fail_code=0
@@ -249,20 +253,20 @@ decode_one() { # <codec> <encoder> <ext>
     timeout --kill-after=2 "$TIMEOUT" "$FFMPEG_BIN" -y -f lavfi -i "testsrc2=size=320x240:rate=30:duration=1" \
         -c:v "$enc" -profile:v main -pix_fmt yuv420p "$input" >/dev/null 2>&1; rc=$?
     if [[ "$rc" -ne 0 ]]; then
-        if [[ "$rc" -eq 124 ]]; then record_fail "$codec" timeout_input_generation 5; else record_fail "$codec" input_generation_failed 4; fi
+        if timeout_rc "$rc"; then record_fail "$codec" timeout_input_generation 5; else record_fail "$codec" input_generation_failed 4; fi
         return
     fi
     # 2. 软件参考 (-> 4/5)
     timeout --kill-after=2 "$TIMEOUT" "$FFMPEG_BIN" -y -i "$input" -pix_fmt nv12 -f framemd5 "$ref" >/dev/null 2>&1; rc=$?
     if [[ "$rc" -ne 0 ]]; then
-        if [[ "$rc" -eq 124 ]]; then record_fail "$codec" timeout_software_reference 5; else record_fail "$codec" software_reference_failed 4; fi
+        if timeout_rc "$rc"; then record_fail "$codec" timeout_software_reference 5; else record_fail "$codec" software_reference_failed 4; fi
         return
     fi
     # 3. 强制 VAAPI 硬解 (解码失败 -> 1, 超时 -> 5; 无软件回退)
     timeout --kill-after=2 "$TIMEOUT" "$FFMPEG_BIN" -y -hwaccel vaapi -hwaccel_device "$NODE" -hwaccel_output_format vaapi \
         -i "$input" -vf 'hwdownload,format=nv12' -f framemd5 "$hw" >/dev/null 2>&1; rc=$?
     if [[ "$rc" -ne 0 ]]; then
-        if [[ "$rc" -eq 124 ]]; then record_fail "$codec" timeout_vaapi_decode 5; else record_fail "$codec" vaapi_decode_failed 1; fi
+        if timeout_rc "$rc"; then record_fail "$codec" timeout_vaapi_decode 5; else record_fail "$codec" vaapi_decode_failed 1; fi
         return
     fi
     # 4. 输出校验 (-> 1)：30 帧 / 320x240 / NV12 115200 / 32 位 hash / 尾换行，全部通过才比对 hash

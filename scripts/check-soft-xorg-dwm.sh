@@ -3,10 +3,20 @@
 
 set -euo pipefail
 
-USER_NAME=${INNOGPU_X_USER:-ok}
+# Target user resolution order: INNOGPU_X_USER > SUDO_USER > USER. No default
+# username is hard-coded; if no user can be resolved the script fails loudly.
 X_USER="${INNOGPU_X_USER:-${SUDO_USER:-${USER:-}}}"
+if [[ -z "$X_USER" ]]; then
+    echo "ERROR: cannot determine target user (set INNOGPU_X_USER, or run via sudo)" >&2
+    exit 1
+fi
+# Home is taken from INNOGPU_X_HOME or getent passwd; never falls back to root's
+# $HOME, because that would silently run X commands as a different identity.
 USER_HOME="${INNOGPU_X_HOME:-$(getent passwd "$X_USER" 2>/dev/null | cut -d: -f6)}"
-USER_HOME="${USER_HOME:-$HOME}"
+if [[ -z "$USER_HOME" ]]; then
+    echo "ERROR: cannot determine home for user $X_USER (set INNOGPU_X_HOME)" >&2
+    exit 1
+fi
 DISPLAY_NUM=${INNOGPU_X_DISPLAY:-:0}
 
 if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
@@ -41,7 +51,7 @@ run_x() {
     local auth="$1"
     shift
 
-    su - "$USER_NAME" -c "DISPLAY='$DISPLAY_NUM' XAUTHORITY='$auth' $*"
+    su - "$X_USER" -c "DISPLAY='$DISPLAY_NUM' XAUTHORITY='$auth' $*"
 }
 
 process_namespace_unreliable() {

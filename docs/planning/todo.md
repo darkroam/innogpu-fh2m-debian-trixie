@@ -29,20 +29,27 @@
   制品排除（不从 Git 历史删除）；driver-source 制品因排除后无法独立构建且 408+2 个已有声明文件
   的授权链未闭合保持 BLOCKED（不假 PASS）；192 项 manifest 载荷权利链**仅在计划公开二进制制品时**
   需要，当前不作为发布目标。关闭 `license_release_gate=BLOCKED` 前不得发布完整源码树或载荷附件。
-- [ ] **开放决策（需监督/权利方）**：GitHub 主分支是否作为发布目标？当前 main 直接分发 3 个
-  confidential 与 70 个无许可路径，`project-tools` 归档仅候选制品，不构成仓库级发布闭环；
-  若否，公开发布流程须先把阻断路径从公开分支移除（不执行历史重写），若是，须先解决权利链。
-  见 [licensing.md](../project/licensing.md) §4.1。
+- [x] **发布决策 1C 已定（见 licensing.md §4.1 唯一权威记录）**：GitHub 主分支当前不作为发布目标
+  （main 直接分发 3 个 confidential 与 70 个无许可路径，`project-tools` 归档仅候选制品，不构成
+  仓库级发布闭环）；若未来要发布 main，须先把阻断路径从公开分支移除（不执行历史重写）并解决
+  权利链——保留为独立发布决策。
 - [x] 许可证工程侧历史（2026-08-26/27）：标准条款副本、484 路径逐文件清单、确定性审计器与
   归档构建器、`license_audit_overall=PASS`；已由三层模型整理取代（见上一条）。
 - [x] 入口文档重构（2026-08-21）：README 按 7 项要求精简（适配/演进/bug 清单/安装/文档结构/致谢/许可），
   LICENSE 注释更新为迁移后现状，过期表述清理；与 4.0.0-i1 现状对齐。
 - [ ] 为每次新候选包建立独立的 `docs/patches/` 说明和 `docs/incidents/` 验收记录。
 - [ ] 将长期维护所需的脚本参数逐步收敛为可审查的配置，保持 `scripts/<name>` 兼容入口不变。
-- [ ] 闭合运维脚本实现缺口：统一 DRI repair helper 与 unit 路径并传播启动失败；移除
-  `check-soft-xorg-dwm.sh`/`try-hotload-patched17.sh` 的固定用户名；让 VA-API timeout 同时识别
-  rc=124/137；为音频安装补写入冲突/备份保护、`systemd-analyze verify`、对称卸载与 fixture，并明确
-  用户服务管理失败策略；扩展 check-docs 到全部 tracked Markdown 和内联路径。
+- [x] 运维脚本缺口第一批（2026-08-28）：统一 DRI repair helper 实际安装路径与 unit `ExecStart`
+  （包 `/usr/sbin` vs 源码 fallback `/usr/local/sbin` 明确区分）、`systemctl enable/start` 失败传播
+  （不再 `|| true`）、卸载器安全删除源码 fallback helper 符号链接（只删指向本项目脚本的链接）；
+  `check-soft-xorg-dwm.sh` 移除固定 `USER_NAME=ok`（解析顺序 `INNOGPU_X_USER > SUDO_USER > USER`，
+  home 用 `INNOGPU_X_HOME`/`getent`、不可确定时明确失败、`run_x` 用同一解析用户）；
+  `try-hotload-patched17.sh` 提示改中性；VA-API timeout 三阶段同时识别 rc=124/137（整体退出码 5）
+  + SIGKILL fixture；新增 `tests/unit/run-dri-repair-tests.sh`（34 项）。
+- [ ] 运维脚本缺口第二批（音频/check-docs/构建依赖/vendor service）：为音频安装补写入冲突/备份
+  保护、`systemd-analyze verify`、对称卸载与 fixture，并明确用户服务管理失败策略；扩展 check-docs
+  到全部 tracked Markdown 和内联路径；新构建器前置依赖门禁；vendor `sw-inno-gl.service` 生命周期
+  策略（见下两条）。
 - [ ] 为最小化 Debian 环境补齐新构建器前置依赖门禁（至少显式核对/安装 `python3` 及当前直接调用的
   dpkg/coreutils/kmod 工具），避免把 `install-prereqs-debian.sh` 成功误认为完整构建工具链可用。
 - [ ] 明确包内 vendor `sw-inno-gl.service`/`sw-inno-gl` 的保留与生命周期策略；若保留，补齐 control

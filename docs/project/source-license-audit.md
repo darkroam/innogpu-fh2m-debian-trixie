@@ -1,7 +1,8 @@
 # 驱动源码许可证审计
 
 > **发布状态：BLOCKED**（仓库整体与 driver-source 制品不发布；`project-tools` 仅为**候选制品**
-> （机械门禁 CLEARED，发布待监督批准，且 GitHub 主分支本身仍分发阻断路径，仓库级发布未闭环）。
+> （机械门禁 CLEARED；当前不作为发布目标——发布决策 1C 见 [licensing.md](licensing.md) §4.1；且
+> GitHub 主分支本身仍分发阻断路径，仓库级发布未闭环）。
 > 本页只汇总仓库可直接观察到的声明，不提供法律意见，也不把源码或许可证文本可访问等同于获得
 > 再分发授权。权威许可边界见 [licensing.md](licensing.md)。
 
