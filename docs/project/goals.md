@@ -3,7 +3,7 @@
 ## 状态
 
 本文件是项目的**整体目标与工作路线**的唯一权威入口：说明"我们为什么做、要达成什么、按什么顺序
-做"。具体任务状态由 [todo.md](../planning/todo.md) 跟踪；当前运行状态以
+做"。具体任务状态由 [current-work.md](../planning/current-work.md) 跟踪；当前运行状态以
 [status.md](status.md) 为唯一摘要；两者都不在本文件重复维护。
 
 ## 整体目标
@@ -31,8 +31,8 @@
 | 构建可复现 | 达成（目录 mtime 归一化修复，三包逐字一致） | [release 审阅](../planning/release-review-2026-08-20.md) |
 | 源码树迁移 | **阶段 0–4 完成**（设计冻结 ✅、drivers/ 导入 + 9 补丁转提交 + parity ✅、manifest + 幂等提取 + staging 内核编译 ✅、新构建器 4.0.0-i1 并行验证 ✅、实机候选验证 + p27 回退演练 ✅——设备已运行 4.0.0-i1）；阶段 5 第一步（标记 deprecated + 文档同步）完成，第二步（移入 legacy/）待条件满足 + 监督批准 | [source-tree-migration.md](../planning/source-tree-migration.md)、[phase5-retirement-design.md](../planning/phase5-retirement-design.md) |
 | 性能优化（预取等） | 未开始 | [评估候选 4](../planning/reverse-engineering-assessment.md) |
-| 能力深挖（codec 编码 / DVFS / CORE_ID） | 未开始 | [todo.md](../planning/todo.md) |
-| 发布与跨硬件 | 阻断（许可证待核实；跨硬件/电源矩阵待做） | [source-license-audit.md](source-license-audit.md)、[suspended.md](../planning/suspended.md) |
+| 能力深挖（codec 编码 / DVFS / CORE_ID） | 未开始 | [current-work.md](../planning/current-work.md) |
+| 许可证与跨硬件验证 | 整仓发布 BLOCKED；跨硬件/电源矩阵作为研发验证待做 | [source-license-audit.md](source-license-audit.md)、[current-work.md](../planning/current-work.md) |
 
 ## 工作路线
 
@@ -60,37 +60,15 @@
 | 2 manifest 与 staging | 192 项 manifest、幂等提取、staging 构建 | ✅ 完成，G1-G7 PASS |
 | 3 新构建器验证 | 新旧 oracle、模块符号、包边界与可复现性 | ✅ 完成 |
 | 4 实机候选验证 | A1-A12、p27 回退演练、最终重装 | ✅ 完成，设备运行 4.0.0-i1 |
-| 5 旧流程退役 | Step 1 标记 deprecated；Step 2 仅评估旧 wrapper 路径 | Step 1 ✅；Step 2 待发布周期、新设备验证和批准 |
+| 5 旧流程退役 | Step 1 标记 deprecated；Step 2 仅评估旧 wrapper 路径 | Step 1 ✅；Step 2 的发布周期前置在 1C 下未激活 |
 
 详细设计见 [source-tree-migration.md](../planning/source-tree-migration.md)。
 
-### 待办
+### 当前工作入口
 
-1. **许可证发布阻断**：3 个 confidential 与 70 个无许可路径已**排除出公开制品**（`driver-source`
-   非完整驱动，BLOCKED；`project-tools` 为候选制品，机械门禁 CLEARED，当前不作为发布目标）；
-   **发布决策 1C：main 不作为发布目标（研究开发仓库）**（当前仍公开分发阻断路径，仓库级发布未闭环，
-   见 [licensing.md](licensing.md) §4.1 权威记录）；
-   关闭 `license_release_gate=BLOCKED` 前不得发布完整源码树或载荷附件，见
-   [licensing.md](licensing.md)（唯一权威文档）；
-2. **runtime 剩余能力**：modeset/热插拔/合盖、Picom backend、音频听感和跨硬件矩阵；
-   （DMA-BUF 回归已于 2026-08-26 真机 PASS，不再列入待办）
-3. **性能优化**：invisible READ 批量预取（候选 4，需先设计）；apphint 调优（候选 5）；
-   上游 bugfix 移植（候选 6，依赖开源 DDK 可得性）；用户态调用画像（候选 8）；
-4. **能力深挖**：DVFS/功耗实测与调参（候选 7）、CORE_ID/BVNC 直接读取、私有 codec 编码接口验证、
-   WebKit DMA-BUF 上游修复报告；
-5. **远期定向 RE**：`innogpu.o_shipped`（HAL）与 `innodma.o_shipped`（DMA）符号级分析，
-   目标以"开源谱系 + 还原 HAL"组合替换预编译核心；
-6. **发布收尾**：许可证阻断关闭后，完成跨硬件、电源/合盖矩阵及 release 附件审查。
-
-## 计划任务完整清单
-
-唯一任务清单为 [todo.md](../planning/todo.md)，按方向组织：
-
-- 文档与维护（回退演练、脚本收敛、发布一致性）
-- WebKit DMA-BUF 调查（应用级 workaround 已定，上游报告待整理）
-- 逆向工程与能力挖掘（普查 ✅、内核修复 ✅、剩余运行时项、DDK 对照 ✅、预取、符号级分析）
-- 源码树迁移（阶段 0–4 完成；阶段 5 Step 1 完成、Step 2 待条件满足）
-- 发布收尾（跨硬件矩阵、release 附件）
+具体未完成任务只在 [当前待办](../planning/current-work.md) 维护；本文件不复制可快速变化的
+任务列表。已完成工作和时序记录见 [`todo.md`](../planning/todo.md)。发布决策 1C 下，tag、Release
+和发布附件不是当前任务；跨硬件/电源矩阵仅作研发验证推进。
 
 ## 文档导航
 
@@ -99,10 +77,11 @@ README.md（入口）
   └─ docs/project/goals.md（本文件：为什么做、做什么、什么顺序）
        ├─ status.md（当前运行状态）
        ├─ architecture.md（代码架构与组件边界）
-       └─ docs/planning/todo.md（具体任务清单）
+       └─ docs/planning/current-work.md（当前任务清单）
+            ├─ todo.md（已完成工作与时序）
             ├─ source-tree-migration.md（迁移设计）
             ├─ reverse-engineering-assessment.md（评估与候选）
             ├─ capability-survey.md（能力面）
             ├─ ddk-v119-mapping.md（谱系对照）
-            └─ release-review-2026-08-20.md（发布审阅）
+            └─ release-review-2026-08-20.md（历史发布审阅）
 ```

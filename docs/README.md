@@ -21,7 +21,8 @@
 按需查阅：[依赖与外部文件](project/dependencies.md)、[显示接入使用](user/display-guide.md)、
 [许可证与再分发边界](project/licensing.md)（唯一权威文档）、[驱动源码许可证审计](project/source-license-audit.md)、
 [project-tools 允许清单](project/project-tools-allowlist.txt)、[driver-source 允许清单](project/driver-source-allowlist.txt)、
-[实施历史](planning/history.md)、[逆向工程与能力挖掘评估](planning/reverse-engineering-assessment.md)、
+[当前待办](planning/current-work.md)、[已完成工作与时序](planning/todo.md)、[实施历史](planning/history.md)、
+[逆向工程与能力挖掘评估](planning/reverse-engineering-assessment.md)、
 [FH2M 能力普查记录](planning/capability-survey.md)、[release 审阅记录](planning/release-review-2026-08-20.md)、
 [DDK V119 对照表](planning/ddk-v119-mapping.md)、[源码树迁移](planning/source-tree-migration.md)、
 [Phase 4 实机验证](planning/phase4-device-validation.md) 与 [Phase 5 退役设计](planning/phase5-retirement-design.md)。
@@ -37,7 +38,7 @@
 | `project/` | 当前架构、状态、依赖、组件边界和维护契约 | 当前实现与规则 |
 | `patches/` | 与代码补丁一一对应的阶段说明 | 补丁设计与验证 |
 | `incidents/` | 已定位事故和经验积累 | 失败过程与诊断边界 |
-| `planning/` | 历史、活动 TODO、挂起项和迁移计划 | 后续工作状态 |
+| `planning/` | 当前待办、已完成时序、挂起项和迁移计划 | `current-work.md` 管当前任务，`todo.md` 保留已完成记录 |
 | `user/` | 安装、验证、显示使用、Picom 和恢复 | 面向操作者的步骤 |
 | `archive/` | 不再变化但仍需追溯的旧记录 | 历史只读材料 |
 

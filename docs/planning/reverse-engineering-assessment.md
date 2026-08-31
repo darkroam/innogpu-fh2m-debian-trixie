@@ -8,7 +8,7 @@
 - 评估基于 Deepin 202504 原包解包树（`third_party/innogpu-fh2m-deepin-202504/root`）的静态勘察，
   以及既有运行证据（[webkit-dmabuf-investigation.md](webkit-dmabuf-investigation.md)、
   [patched-24 验收](../patches/patched-24-kernel-612101.md)）。
-- 任务状态由 [todo.md](todo.md) 跟踪；当前运行状态以 [status.md](../project/status.md) 为唯一摘要。
+- 任务状态由 [current-work.md](current-work.md) 跟踪；当前运行状态以 [status.md](../project/status.md) 为唯一摘要。
 
 ## 背景与结论摘要
 
@@ -157,7 +157,7 @@
   （见 [维护策略](../project/maintenance-policy.md)）。
 - 探针类工作复用 [tools/README.md](../../tools/README.md) 现有约束（不 modeset、不修改系统配置）。
 - 内核补丁必须分别通过离线 DKMS 编译与实机重启验证，结果写入对应 `docs/patches/` 记录；
-  失败项进入 [todo.md](todo.md) 或 [suspended.md](suspended.md)。
+  失败项进入 [current-work.md](current-work.md) 或 [suspended.md](suspended.md)。
 
 ## 相关文档
 

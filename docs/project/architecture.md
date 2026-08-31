@@ -35,8 +35,9 @@ PCI 0000:06:00.6 [1d94:14c9]
 | `components/fbterm/` | 当前维护的 fbterm 用户态兼容补丁（`001-configurable-redraw-scrolling.patch`） |
 | `debs/` | 本地 release/构建输入输出目录，`.deb` 被 Git 忽略，仅跟踪说明文件 |
 | `scripts/` | 构建、安装、回退、诊断、显示接入、音频固化和验证入口 |
-| `tools/` | DRM/KMS、DMA-BUF、EGL/GBM、X11、Vulkan/OpenCL/VA-API 的最小探针与聚合入口，以及确定性的厂商对象变换工具 |
+| `tools/` | 图形探针与聚合入口、确定性厂商对象变换、许可证/发布归档门禁、协作结构校验和共享隐私模式 |
 | `tests/` | 本项目脚本、fbterm/Picom 和显示接入边界测试；xdisplay 引擎测试留在 dotconfig |
+| `collab/` | dsh/codex 本机协作轮次；`.gitignore` 排除，不属于 Git 或公开分发面 |
 | `docs/project/` | 架构、现状、依赖和维护边界 |
 | `docs/patches/` | 每个代码补丁的独立设计、验证和回退说明 |
 | `docs/incidents/` | 失败现场、根因推导、排除项和经验记录 |
@@ -101,7 +102,7 @@ DKMS 源码应用 `patches/`。9 个启用补丁已转换为 `drivers/` 中的�
 `/etc/modprobe.d/innogpu.conf`、执行 DKMS build/install、校验 coherent DRI、运行
 `ldconfig`/`depmod`/`update-initramfs`，不会 enable 或 start `sw-inno-gl.service`。因此“文件随包存在”
 不能写成“服务已启用”。当前 release gate 也尚未覆盖该 vendor unit/helper 组合及全部 10 个命令链接，
-该缺口记录在 `code-analysis.md` 与 `../planning/todo.md`。
+该缺口记录在 `code-analysis.md` 与 `../planning/current-work.md`。
 
 patched-21 是 coherent 历史规则的首个实际输出：离线包边界、重复构建和当前设备运行验收均已通过，
 但尚未完成跨硬件发布。它的固定补丁矩阵和证据见

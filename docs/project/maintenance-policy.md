@@ -61,7 +61,7 @@
 ### 文档与验证
 
 - 行为修改遵循“文档计划 → 代码/补丁 → 与风险相称的测试 → 文档复核 → 提交”的顺序；失败项
-  进入 `incidents/`、`todo.md` 或 `suspended.md`，不能写成已验证。
+  进入 `incidents/`、`../planning/current-work.md` 或 `../planning/suspended.md`，不能写成已验证。
 - 每个新增补丁或安装行为必须有对应 fixture、静态检查或实机门槛；驱动、Xorg/GLX、fbterm、
   Picom 和显示 watcher 的结果必须分别记录，不能用一个“桌面能显示”结论替代全部验证。
 - 升级 Deepin 用户态、内核、Picom 或 X11 会话入口时，必须重新检查 ABI/符号、固件完整性、

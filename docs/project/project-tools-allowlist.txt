@@ -60,6 +60,7 @@ docs/patches/patched-21-release-candidate.md
 docs/patches/patched-24-kernel-612101.md
 docs/patches/picom/patch-picom-001-explicit-uniform-location.md
 docs/planning/capability-survey.md
+docs/planning/current-work.md
 docs/planning/ddk-v119-mapping.md
 docs/planning/display-integration.md
 docs/planning/history.md

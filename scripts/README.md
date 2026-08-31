@@ -99,7 +99,7 @@ xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项
 
 `run-capability-survey.sh` 编译并运行 Vulkan/OpenCL/VA-API 最小枚举探针并抓取 sysfs 环境快照，输出保存到 `baselines/capability-survey-<ts>.log`（可用 `--out DIR` 改位置）；只读，不 modeset、不改配置。设备无 DRM render 节点时（如无特权容器）优雅降级并记录失败本身。
 其中 `check-docs.sh` 检查根入口、`LICENSES/`、`drivers/`、`docs/`、`scripts/`、`baselines/`、
-`tests/`、`tools/` 下的 Markdown 链接，以及选定项目目录的隐私标记、稳定入口登记、当前版本、
+`tests/`、`tools/` 下的 Markdown 链接，并对受跟踪文档目录与本机 `collab/` 执行隐私扫描，同时检查稳定入口登记、当前版本、
 runtime 统计、manifest 原包 SHA、过期状态断言和 Markdown 表格结构。它还调用
 `tools/audit-licenses.py` 校验逐文件许可证 inventory、策略、条款 hash、模块元数据和 manifest
 许可证证据语义；机械审计通过不解除 `license_release_gate=BLOCKED`。导入源码内容、内联代码路径、

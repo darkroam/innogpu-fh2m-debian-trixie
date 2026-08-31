@@ -5,7 +5,7 @@
 本项目自有工作采用 GPL-3.0-or-later；fork 上游 MIT 内容与导入源码/厂商载荷按各自声明处理，
 当前再分发边界见[许可证与再分发边界](docs/project/licensing.md)（唯一权威文档）。
 
-> 最后更新：2026-08-27 —— 当前驱动包 `4.0.0-i1`（源码级重构版），已完成 Phase 4 实机验收、
+> 最后更新：2026-08-31 —— 当前驱动包 `4.0.0-i1`（源码级重构版），已完成 Phase 4 实机验收、
 > 回退演练、Vulkan/OpenCL 最小执行、VA-API 实际解码及 DMA-BUF 同设备 PRIME self-import 回归验证。
 
 ## 适配的当前系统
@@ -23,7 +23,7 @@
 1. **fork 起步**：fork 自 [timhant/innogpu-fh2m-debian-trixie](https://github.com/timhant/innogpu-fh2m-debian-trixie)，初始为 kernel 6.12 兼容补丁（v3.3.3.42 基线）。
 2. **适配本设备**：DPU/fbdev/connector/背光/GEM 系列修复（patched-8 → patched-27），本机稳定运行。
 3. **迁移 Deepin**：以 Deepin 202504 完整原包为唯一技术基线，统一用户态/固件/DDX 载荷，消除 ABI 混配。
-4. **完全重构（当前）**：取消 patch 叠加模式 → `drivers/` 自有源码树 + manifest 管理黑盒，新构建器产出 `4.0.0-i1`（可复现构建；迁移阶段 0–4 完成，设备已运行）。
+4. **完全重构（当前）**：取消 patch 叠加模式 → `drivers/` 仓库内维护的导入源码树 + manifest 管理黑盒，新构建器产出 `4.0.0-i1`（可复现构建；迁移阶段 0–4 完成，设备已运行）。
 
 ## 主要修复的问题
 
@@ -58,7 +58,8 @@ sudo reboot                                                    # 重启后加载
 | 目标 | 文档 |
 | --- | --- |
 | 推荐阅读顺序 / 完整索引 | [docs/README.md](docs/README.md) |
-| 当前状态、风险、待办 | [docs/project/status.md](docs/project/status.md)、[docs/planning/todo.md](docs/planning/todo.md) |
+| 当前状态、风险、待办 | [docs/project/status.md](docs/project/status.md)、[docs/planning/current-work.md](docs/planning/current-work.md) |
+| 已完成工作与时序 | [docs/planning/todo.md](docs/planning/todo.md) |
 | 整体目标与路线 | [docs/project/goals.md](docs/project/goals.md) |
 | 架构与组件边界 | [architecture.md](docs/project/architecture.md)、[code-analysis.md](docs/project/code-analysis.md) |
 | 技术栈/参考模型 / 测试策略 | [frameworks-and-references.md](docs/project/frameworks-and-references.md)、[test-strategy.md](docs/project/test-strategy.md) |
@@ -66,6 +67,7 @@ sudo reboot                                                    # 重启后加载
 | 补丁与验收 / 事故 | [docs/patches/README.md](docs/patches/README.md)、[docs/incidents/README.md](docs/incidents/README.md) |
 | 源码树迁移与 Phase 4/5 | [source-tree-migration.md](docs/planning/source-tree-migration.md)、[phase4](docs/planning/phase4-device-validation.md)、[phase5](docs/planning/phase5-retirement-design.md) |
 | 脚本 / 工具 / 测试入口 | [scripts/README.md](scripts/README.md)、[tools/README.md](tools/README.md)、[tests/README.md](tests/README.md) |
+| 多 Agent 协作 / 定期文档梳理 | [multiagent-collab.md](docs/project/multiagent-collab.md) |
 
 ## 致谢
 

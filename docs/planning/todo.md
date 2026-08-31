@@ -1,6 +1,9 @@
-# 当前 TODO
+# 已完成工作与时序索引
 
-## 文档与维护
+> 本文件保留已完成工作和历史时序，不再作为当前任务清单。未完成工作的唯一权威入口是
+> [当前待办](current-work.md)。历史 release 审阅和已完成条目保持原文。
+
+## 文档与维护记录
 
 - [x] 许可证体系最终整理（三层模型，2026-08-28 监督复审前）：原创层 GPL-3.0-or-later（根
   [LICENSE](../../LICENSE) + `LICENSES/GPL-3.0-or-later.txt`）、上游 MIT 继承层
@@ -25,10 +28,6 @@
   第三方路径缺条目即 `notice_gate_entry_missing`（已有 picom 字符串不能为无关路径放行）；patches/
   §4 改述为**混合/未决许可，整体排除**（不给未分类片段推定 GPL-2.0-only）；run-license-audit-tests.sh
   48 项全过（新增 unknown-path、third-party-no-entry、licenses-unmapped 反例）。
-- [ ] **发布阻断：权利链人工审查**。3 个 `Strictly Confidential` 文件与 70 个无许可文件已从公开
-  制品排除（不从 Git 历史删除）；driver-source 制品因排除后无法独立构建且 408+2 个已有声明文件
-  的授权链未闭合保持 BLOCKED（不假 PASS）；192 项 manifest 载荷权利链**仅在计划公开二进制制品时**
-  需要，当前不作为发布目标。关闭 `license_release_gate=BLOCKED` 前不得发布完整源码树或载荷附件。
 - [x] **发布决策 1C 已定（见 licensing.md §4.1 唯一权威记录）**：GitHub 主分支当前不作为发布目标
   （main 直接分发 3 个 confidential 与 70 个无许可路径，`project-tools` 归档仅候选制品，不构成
   仓库级发布闭环）；若未来要发布 main，须先把阻断路径从公开分支移除（不执行历史重写）并解决
@@ -41,8 +40,6 @@
   [multiagent-collab.md](../project/multiagent-collab.md)，合作目录 `collab/`（英文目录名）与
   `collab/INDEX.md`；纳入审计边界与 check-docs 登记（不作为原创前缀，`^collab/` 防御性
   排除出 project-tools；`collab/` 为本机私有目录，.gitignore 排除，不上传 GitHub）。
-- [ ] 为每次新候选包建立独立的 `docs/patches/` 说明和 `docs/incidents/` 验收记录。
-- [ ] 将长期维护所需的脚本参数逐步收敛为可审查的配置，保持 `scripts/<name>` 兼容入口不变。
 - [x] 运维脚本缺口第一批（2026-08-28）：统一 DRI repair helper 实际安装路径与 unit `ExecStart`
   （包 `/usr/sbin` vs 源码 fallback `/usr/local/sbin` 明确区分）、`systemctl enable/start` 失败传播
   （不再 `|| true`）、卸载器安全删除源码 fallback helper 符号链接（只删指向本项目脚本的链接）；
@@ -50,24 +47,12 @@
   home 用 `INNOGPU_X_HOME`/`getent`、不可确定时明确失败、`run_x` 用同一解析用户）；
   `try-hotload-patched17.sh` 提示改中性；VA-API timeout 三阶段同时识别 rc=124/137（整体退出码 5）
   + SIGKILL fixture；新增 `tests/unit/run-dri-repair-tests.sh`（34 项）。
-- [ ] 运维脚本缺口第二批（音频/check-docs/构建依赖/vendor service）：为音频安装补写入冲突/备份
-  保护、`systemd-analyze verify`、对称卸载与 fixture，并明确用户服务管理失败策略；扩展 check-docs
-  到全部 tracked Markdown 和内联路径；新构建器前置依赖门禁；vendor `sw-inno-gl.service` 生命周期
-  策略（见下两条）。
-- [ ] 为最小化 Debian 环境补齐新构建器前置依赖门禁（至少显式核对/安装 `python3` 及当前直接调用的
-  dpkg/coreutils/kmod 工具），避免把 `install-prereqs-debian.sh` 成功误认为完整构建工具链可用。
-- [ ] 明确包内 vendor `sw-inno-gl.service`/`sw-inno-gl` 的保留与生命周期策略；若保留，补齐 control
-  依赖、enable/start/卸载边界，并让 release gate fixture 校验 unit、helper 及 10 个 `/usr/bin`+
-  `/usr/sbin` 稳定命令链接；若移除，更新 manifest 与包载荷审计后再构建新版本。
 - [x] 完成 2026-08-20 技术 release 审阅：确认 `debs/` 包、版本、哈希和验证证据一致；该结论不
   覆盖 2026-08-24 发现的许可证发布阻断。
 - [x] 实际演练 patched-17 回退：安装、重启、验证，再恢复 patched-23；两次重启后的 TTY、Xorg/dwm、
   DRM/fbdev、软件 llvmpipe 和硬件 GL 恢复均通过。
 - [x] 完成 release 审阅主体：tag、哈希、包边界、可复现构建（含目录 mtime 修复）、回退路径和附件边界，
   见 [release-review-2026-08-20.md](release-review-2026-08-20.md)。
-- [ ] 剩余发布工作：跨硬件实机矩阵（扩展坞/多屏/无盖桌面/其他机型）、电源/合盖矩阵、release 附件上传。
-- [ ] `source-v4.0.0-i1` 目前只是 Phase 0 规划名，仓库尚无该 tag；许可证发布阻断关闭并完成 release
-  追溯审查后，才能决定是否创建对应 annotated tag，禁止提前把规划名写成现有发布标识。
 - [x] 源码树迁移阶段 0-4（由监督分支 `migration/supervised-source-tree` @ `bd76e91` 中的
   `docs/planning/migration-supervision.md` 管辖；该指南不在 `main`）：
   阶段 0 设计冻结 ✅；阶段 1 drivers/ 导入 + 9 patch 转提交 + parity ✅；阶段 2 binary-manifest.json +
@@ -78,7 +63,7 @@
   第二步设计（一个发布周期 + 新设备 clone 安装 + 4.0.0-i1→p27 恢复演练后评估移入 legacy/）见
   [phase5-retirement-design.md](phase5-retirement-design.md)，**未批准不执行**。
 
-## 当前活动项
+## 已完活动记录
 
 ### WebKit DMA-BUF 调查
 
@@ -97,7 +82,6 @@
 - [x] 定位 invisible READ 的 page fault/DMA 热点；DMA 描述符和 completion wait 位于预编译
   `innodma.o_shipped`，超出本项目可维护源码范围，不制作 READ 预取候选；patched-24 仅处理
   Debian 6.12.101+ DKMS API 兼容。
-- [ ] 将可复现的热点、perf 数据和应用级 workaround 整理为上游/厂商修复报告。
 - [x] tests/runtime/ 真机能力基线第一轮（监督任务 4，2026-08-24 完成）：
   - [x] 实现 run-capability-baseline.sh（12 能力域、枚举/执行分离、PASS/FAIL/SKIP/UNVERIFIED、脱敏摘要）；
     沙箱实测 35 项：15 PASS / 19 SKIP / 1 UNVERIFIED（无 /dev/dri 时设备项不伪造 PASS）。
@@ -147,16 +131,10 @@
   - [x] 真机执行（2026-08-26 root 权限，监督授权）并合并证据：self-import/READ/WRITE/active
     vblank/状态门禁全 PASS、inactive guard 按拓扑通过、kernel_log=clean → runtime_dmabuf_regression
     升级 PASS；foreign import/跨设备 GTT/GBM/V4L2/第二 GPU/长期压力/并发保持 UNVERIFIED。
-- [ ] runtime 剩余真实能力证据：modeset/热插拔/合盖、Picom GLX backend、
-  音频听感确认；当前权威汇总 22 PASS / 9 SKIP / 4 UNVERIFIED。
-- [ ] 代码深度分析与测试体系重构（2026-08-21 开始）：
-  - [x] 产出 code-analysis.md、frameworks-and-references.md、test-strategy.md；新增 unit 测试
-    （manifest 恶意输入 8、版本排序 6、提取器隔离 7）与 fixtures/；全部 tests/ 统一机器格式
-    （`<suite>_tNN=PASS/FAIL/SKIP` + 汇总行）。
-  - [x] runtime 能力基线和 Vulkan/OpenCL 最小执行脚本化；真机执行证据已合并。
-  - [ ] VA-API 未测 profile（H.264 High/Constrained Baseline、HEVC Main10）、编码能力和多屏矩阵继续
-    按独立能力项补证据。
-  - [ ] 构建失败用例补齐（headers 缺失、helper 缺失、SOURCE_DATE_EPOCH 缺失）为 fixture。
+- [x] 产出 code-analysis.md、frameworks-and-references.md、test-strategy.md；新增 unit 测试
+  （manifest 恶意输入 8、版本排序 6、提取器隔离 7）与 fixtures/；全部 tests/ 统一机器格式
+  （`<suite>_tNN=PASS/FAIL/SKIP` + 汇总行）。
+- [x] runtime 能力基线和 Vulkan/OpenCL 最小执行脚本化；真机执行证据已合并。
 
 patched-21 已在 [`../patches/patched-21-release-candidate.md`](../patches/patched-21-release-candidate.md)
 固定输入、补丁集、辅助载荷和验证门槛。本机当前批次已完成：
@@ -167,7 +145,6 @@ patched-21 已在 [`../patches/patched-21-release-candidate.md`](../patches/patc
 - [x] 在 p17 回退、DKMS、headers 和磁盘空间均已确认后部署 p21；完成受控重启；
 - [x] 完成 p21 的 PVR、DRM/fbdev、Xorg/GLX、真实 VT fbterm、xdisplay、Picom、音频和桌面验收。
 
-后续只保留发布前工作：扩展坞、三块及以上外屏、无盖桌面和其他硬件的实机矩阵（release 审阅已于 2026-08-20 完成，见 [release-review-2026-08-20.md](release-review-2026-08-20.md)）。
 patched-17 回退演练已完成。任一验证失败先进入恢复路径和事故记录，不做模块热切换。
 
 显示引擎代码、配置和内部测试已收敛回 dotconfig 维护。本项目当前只保留 Innogpu 设备钩子、会话
@@ -180,7 +157,7 @@ Picom patch、配置和安装流程已按 `picom-integration.md` 完成吸纳。
 ## 逆向工程与能力挖掘
 
 状态：评估与能力普查已落档（[reverse-engineering-assessment.md](reverse-engineering-assessment.md)、
-[capability-survey.md](capability-survey.md)）；以下为未实施或剩余项，每项落地前先补设计、验证与回退。
+[capability-survey.md](capability-survey.md)）；未完成项已迁入 [当前待办](current-work.md)。
 
 - [x] 能力面普查（静态部分）：RGX 特性表 dump（90 宏）、BVNC 35.V.1632.23、G0M_SOC 变体确认、
   Vulkan 128 唯一扩展/OpenCL 3.0/VA-API codec/IFBC 静态证据，已落档 [capability-survey.md](capability-survey.md)。
@@ -188,7 +165,6 @@ Picom patch、配置和安装流程已按 `picom-integration.md` 完成吸纳。
   Vulkan/OpenCL 最小执行 PASS；VA-API H264/HEVC profile/entrypoint 已枚举且 H.264 Main/HEVC Main 实际
   解码验证 PASS（30 帧 320x240 NV12 framemd5 输出校验），结果见
   [capability-survey.md](capability-survey.md)和 [test-strategy.md](../project/test-strategy.md)。
-- [ ] 剩余运行时项：DVFS/功耗实测、CORE_ID/BVNC 直接读取、私有 libinno_codec.so 编码接口验证。
 - [x] 建立 DDK V119 ↔ 开源参照对照表：[ddk-v119-mapping.md](ddk-v119-mapping.md)。
   （注：2019 开源 DDK 与 Fuchsia KM 当前不可得，对照基于主线 drm/imagination + Mesa pvr；
   组件映射、UAPI/特性/用户态对比已落档，同谱系源码获取后可按节升级逐函数对照。）
@@ -198,9 +174,3 @@ Picom patch、配置和安装流程已按 `picom-integration.md` 完成吸纳。
   通过（CRTC 1 vblank 正常、CRTC 0/2 立即 EINVAL）。
 - [x] 落地内核接口修复（三）：foreign DMA-BUF 生命周期（patch-027 / patched-27）已实机验证
   通过（DRI3/PRIME 自导入回归正常；foreign 路径待第二设备）。
-- [ ] invisible READ 批量预取候选调研（调用方批量化，不修改 `innodma.o_shipped` 内部；先补设计）。
-- [ ] DVFS/功耗实测与调参评估（候选 7）。
-- [ ] `inno_apphint.c` 用户态调优评估（候选 5）。
-- [ ] 上游 DDK bugfix/性能 patch 移植（候选 6，依赖开源 DDK 可得性）。
-- [ ] 用户态调用画像：扩展 `trace-loader.c` 到 GL/VK/OCL 路径（候选 8）。
-- [ ] 完成 `innogpu.o_shipped`（HAL）与 `innodma.o_shipped`（DMA）符号级分析，评估预编译核心替换路径（远期定向 RE）。

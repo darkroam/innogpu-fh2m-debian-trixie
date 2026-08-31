@@ -75,7 +75,7 @@
 
 ### 4.1 GitHub 主分支发布面与发布决策 1C（当前结论）
 
-GitHub 仓库 `main` 分支本身是公开分发面：clone / GitHub 源码归档直接分发全部 710 个跟踪路径，
+GitHub 仓库 `main` 分支本身是公开分发面：clone / GitHub 源码归档直接分发全部 712 个跟踪路径，
 **不经 `build-release-archive.py`**，因此当前仍公开分发 3 个 confidential 与 70 个无许可文件。
 本仓库因此**不宣称许可证发布闭环**。
 

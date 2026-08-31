@@ -1,6 +1,6 @@
 # 当前状态与问题清单
 
-最后更新：2026-08-27
+最后更新：2026-08-31
 
 本文件是项目当前运行状态的唯一摘要。历史过程、补丁细节和故障推导分别见
 [阶段补丁](../patches/README.md) 与 [事故和经验](../incidents/README.md)。
@@ -24,9 +24,10 @@
 | Picom | patched v13 进程和 GLX 配置正在使用；最新 runtime 尚未独立确认实际 backend，保持 UNVERIFIED | [compositor-management.md](compositor-management.md)、[runtime 摘要](../../baselines/latest-runtime-baseline.txt) |
 | 音频 | HDA/HDMI 声卡与 PipeWire 默认 sink 枚举正常，`aplay` 命令完成；最新受控听感确认仍为 UNVERIFIED | [audio-management.md](audio-management.md)、[runtime 摘要](../../baselines/latest-runtime-baseline.txt) |
 | 能力验证工具 | `tests/runtime/run-capability-baseline.sh`（12 能力域、35 项、枚举/执行分离）；沙箱基线 15 PASS / 19 SKIP / 1 UNVERIFIED，合并真机证据后的权威摘要为 22 PASS / 9 SKIP / 4 UNVERIFIED | [runtime 摘要](../../baselines/latest-runtime-baseline.txt)、[tests/runtime/README](../../tests/runtime/README.md)、[test-strategy](test-strategy.md) |
-| Vulkan/OpenCL 执行 | 探针 exec 模式 + 真机验证通过（2026-08-24）：Vulkan queue+fence submit+wait、OpenCL add kernel+读回逐元素校验均在 Fantasy II-M 上执行成功；`runtime_vulkan_execution`/`runtime_opencl_execution`=PASS（证据 `baselines/runtime-results-20260824.txt`）；离线失败路径测试 12 项 | [probe-vulkan-devices.c](../../tools/probe-vulkan-devices.c)、[probe-opencl-devices.c](../../tools/probe-opencl-devices.c)、[test-strategy](test-strategy.md) |
+| 维护协作 | dsh 负责监督/审查，codex 负责实现；每 5–6 轮或重大调整后执行两阶段文档梳理；`collab/` 仅本机保存、不进 Git | [多 Agent 协作规约](multiagent-collab.md) |
+| Vulkan/OpenCL 执行 | 探针 exec 模式 + 真机验证通过（2026-08-24）：Vulkan queue+fence submit+wait、OpenCL add kernel+读回逐元素校验均在 Fantasy II-M 上执行成功；`runtime_vulkan_execution`/`runtime_opencl_execution`=PASS（证据 `baselines/runtime-results-20260824.txt`）；离线失败路径已有 fixture | [probe-vulkan-devices.c](../../tools/probe-vulkan-devices.c)、[probe-opencl-devices.c](../../tools/probe-opencl-devices.c)、[test-strategy](test-strategy.md) |
 | VA-API 实际解码 | `tools/run-vaapi-decode-test.sh --codec all` 真机执行（2026-08-24）：H.264 Main 与 HEVC Main 强制 VA-API 硬解，各 30 帧 320x240 NV12 framemd5 与软件参考逐帧 hash 一致，Driver/Firmware 状态门禁通过；`runtime_vaapi_decode`=PASS（证据 `baselines/runtime-results-20260824.txt`）；能力边界仅 Main/Main 8-bit 4:2:0 | [run-vaapi-decode-test.sh](../../tools/run-vaapi-decode-test.sh)、[test-strategy](test-strategy.md) |
-| DMA-BUF 回归工具 | `tools/run-dmabuf-regression-test.sh` 已实现（2026-08-24）：同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 + 状态门禁聚合，配套 147 项 fixture 测试；**真机 PASS（2026-08-26 root 权限运行，证据已封存）**：self-import/READ/WRITE/vblank/状态门禁/内核日志全部通过；能力边界不变：仅同设备 PRIME self-import，foreign/cross-device、GBM、V4L2、长期压力与并发仍 UNVERIFIED | [run-dmabuf-regression-test.sh](../../tools/run-dmabuf-regression-test.sh)、[test-strategy](test-strategy.md)、[webkit 调查](../planning/webkit-dmabuf-investigation.md) |
+| DMA-BUF 回归工具 | `tools/run-dmabuf-regression-test.sh` 已实现（2026-08-24）：同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 + 状态门禁聚合，配套离线 fixture；**真机 PASS（2026-08-26 root 权限运行，证据已封存）**：self-import/READ/WRITE/vblank/状态门禁/内核日志全部通过；能力边界不变：仅同设备 PRIME self-import，foreign/cross-device、GBM、V4L2、长期压力与并发仍 UNVERIFIED | [run-dmabuf-regression-test.sh](../../tools/run-dmabuf-regression-test.sh)、[test-strategy](test-strategy.md)、[webkit 调查](../planning/webkit-dmabuf-investigation.md) |
 | 发布边界 | 三层许可模型（原创层 GPL-3.0-or-later / 上游 MIT / drivers/ 逐文件）；`project-tools` 为**候选制品**（机械门禁 CLEARED，当前不作为发布目标；**失败关闭分类**——已批准原创前缀 + 显式映射，未知路径拒绝，无默认 GPL；排除 patches/、debs/、collab/（本机私有目录，不跟踪）、drivers/、vendor/、build/、third_party/；**路径绑定 NOTICE 门禁**，components/ 许可材料已封存：picom 补丁为文件级 MPL-2.0、`picom.conf` 为原创 GPLv3、fbterm 1.7-5 (C) 2008 dragchan GPL-2.0-only）；`driver-source` 排除 confidential ×3 与无许可 ×70 后非完整驱动（BLOCKED，不假 PASS）；**GitHub 主分支仍公开分发阻断路径，仓库级发布未闭环**；二进制 deb 与 vendor 载荷不作为当前发布目标；patched-1.deb 为上游历史非阻断；本地 debs/ 与 vendor/ 不参与发布；**发布决策 1C（见 licensing.md §4.1 权威记录）：当前不创建 Release/tag/附件，main 为研究开发仓库、不作为发布目标，BLOCKED 不变；不做 Release 不消除 main 公开跟踪 73 个阻断路径的风险** | [licensing.md](licensing.md)（唯一权威文档）、[source-license-audit.md](source-license-audit.md) |
 
 ## 已解决问题
@@ -63,8 +64,8 @@
    `XDISPLAY_INTERNAL_OUTPUTS`、`XDISPLAY_RESTORE_COMMAND` 和会话接入仍兼容。
 7. patched-21 的实际 deb 哈希、离线包审计与完整运行证据已记录；patched-22 的实际 hash、connector
    烟测和重启证据已记录；patched-17 -> patched-23 回退恢复演练已通过，patched-24 的 6.12.101+
-   DKMS 兼容和重启证据已记录，公开发布前仍需完成
-   电源/合盖/拔屏矩阵、跨设备矩阵和 release 审阅。
+   DKMS 兼容和重启证据已记录。电源/合盖/拔屏和跨设备矩阵作为研发验证继续；
+   只有未来明确推翻 1C 时才重新激活 release 审阅。
 8. 当前驱动仍报告 YPan 能力，但 stock fbterm 的加速滚动存在显示错位；用户态 redraw 已验证，
    内核侧应撤销能力声明还是修复平移语义尚未决定。
 9. patched-22/`patch-009` 已修正本设备内置面板的 DRM connector 语义，历史重启测试观察到 `eDP-1` 和
@@ -91,12 +92,12 @@
     解析统一 `INNOGPU_X_USER > SUDO_USER > USER`、home 用 `INNOGPU_X_HOME`/`getent` 且不可确定时明确
     失败（不再回退 root `$HOME`），`run_x` 使用同一解析用户；`try-hotload-patched17.sh` 提示改为中性
     （不再“log in as ok”）；VA-API runner 三个阶段都把 GNU timeout rc=124/137 归类为超时（整体退出
-    码 5），新增忽略 TERM→SIGKILL fixture；新增 `tests/unit/run-dri-repair-tests.sh`（34 项：helper
+    码 5），新增忽略 TERM→SIGKILL fixture；新增 `tests/unit/run-dri-repair-tests.sh`（helper
     路径/ExecStart/PATH 注入忽略/失败回滚只删本次新建/外国文件拒绝/版本不匹配零副作用/package-absent
     只清 DRI 自有路径/幂等安装卸载/不删除非本项目文件 + 无硬编码用户名静态
-    反例）。仍在 TODO：音频安装器对称卸载与 fixture、check-docs 全 Markdown 扩展、构建依赖门禁、
+    反例）。`check-docs.sh` 已覆盖全部 tracked Markdown 和本机 `collab/` 隐私扫描。仍在待办：音频安装器对称卸载与 fixture、构建依赖门禁、
     vendor `sw-inno-gl.service` 生命周期，见 [代码分析](code-analysis.md) 与
-    [TODO](../planning/todo.md)。
+    [当前待办](../planning/current-work.md)。
 
 ## 证据保留规则
 

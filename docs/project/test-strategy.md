@@ -1,40 +1,50 @@
 # 测试体系策略（重构，4.0.0-i1 基线）
 
-> 2026-08-21 建立，2026-08-26 随 DMA-BUF runtime 证据更新。目标：后续优化遵循"先写失败测试 → 修改实现 →
+> 2026-08-21 建立，2026-08-31 完成计数权威收敛。目标：后续优化遵循"先写失败测试 → 修改实现 →
 > 回归验证"。本策略定义分层、能力域、输出规范、风险与执行顺序。约束：不安装驱动、不切换模块、
 > 不重启；runtime 域仅实机授权后执行。
 
-## 一、现有测试盘点（CONFIRMED，2026-08-26 核对）
+## 一、现有测试盘点（CONFIRMED，2026-08-31 核对）
+
+### 当前 CI/沙箱套件汇总（2026-08-31）
+
+数量以各 runner 的运行时汇总行为机械事实；本表是文档中唯一的当前计数汇总。
+
+| 范围 | 入口与用例 | 小计 |
+| --- | --- | --- |
+| unit | manifest 9 + license 50 + version 6 + extractor 7 + results parser 19 + exec probes 12 + VA-API 56 + DMA-BUF 147 + DRI repair 34 + collab 26 | 10 个入口 / 366 项 |
+| 其他 CI/沙箱 | fbterm 1 + package 7 + Picom install 3 + Picom session 3 + xdisplay 5 | 5 个入口 / 19 项 |
+| **合计** | 不含需真实设备/root/副作用授权的 runtime 项 | **15 个入口 / 385 项** |
 
 | 测试 | 位置 | 断言 | 权限/环境 | 修改系统 |
 | --- | --- | --- | --- | --- |
 | fbterm 静态 | tests/fbterm/run-static-tests.sh | bash -n + 补丁内容 grep（set -e 生效） | 无 | 否 |
-| Picom 安装 | tests/picom/run-install-tests.sh | 3 项（空 HOME 配置/幂等/既有配置保留） | 无（fake HOME） | 否 |
-| Picom 会话 | tests/picom/run-session-tests.sh | 3 项（优先/回退/单实例） | 无（fake 命令） | 否 |
-| xdisplay 安装边界 | tests/xdisplay/run-install-tests.sh | 5 项（拒绝私有副本/钩子/幂等/watcher/xprofile） | 无（fake HOME） | 否 |
-| 包边界 | tests/package/run-boundary-tests.sh | 7 项 fixture（新版本通过/私有载荷拒绝/p20 复用拒绝/helper 一致/固件完整/非 amd64/Installed-Size） | dpkg-deb | 否 |
-| manifest/版本/提取器 | tests/unit/run-{manifest,version,extractor}-tests.sh | 22 项 schema、license、路径、哈希、恢复与版本排序 | shell/python/dpkg | 否 |
+| Picom 安装 | tests/picom/run-install-tests.sh | 空 HOME 配置/幂等/既有配置保留 | 无（fake HOME） | 否 |
+| Picom 会话 | tests/picom/run-session-tests.sh | 优先/回退/单实例 | 无（fake 命令） | 否 |
+| xdisplay 安装边界 | tests/xdisplay/run-install-tests.sh | 拒绝私有副本/钩子/幂等/watcher/xprofile | 无（fake HOME） | 否 |
+| 包边界 | tests/package/run-boundary-tests.sh | fixture 覆盖新版本通过/私有载荷拒绝/p20 复用拒绝/helper 一致/固件完整/非 amd64/Installed-Size | dpkg-deb | 否 |
+| manifest/版本/提取器 | tests/unit/run-{manifest,version,extractor}-tests.sh | schema、license、路径、哈希、恢复与版本排序 | shell/python/dpkg | 否 |
 | 许可证审计 | tests/unit/run-license-audit-tests.sh | 三层模型正反例：根 GPLv3 越界覆盖 drivers/ 拒绝、上游 MIT notice 缺失拒绝、project-tools/driver-source 允许清单混入 confidential/vendor/deb/**patches**/无许可路径拒绝（含 `^patches/`、`^debs/` 整目录排除）、**非 drivers 失败关闭分类**（`original_roots` + 显式映射；未知路径如 external/foo.c 拒绝、LICENSES/ 标准文本未映射拒绝——无全局默认 GPL）、**路径绑定 NOTICE 门禁**（新第三方路径缺 notice_gate 条目拒绝、条目标记缺失如 Yuxuan Shui 拒绝）、`vendor-binary`/`NOASSERTION` 当许可证拒绝、畸形 SPDX 拒绝、脏树发布拒绝、allowlist 路径穿越/重复/symlink 拒绝、归档内容不属于 HEAD 拒绝；正例：project-tools 从干净提交构建成功、上游 MIT 随 notice 发布、picom 补丁（文件级 MPL-2.0，固定 commit）与 fbterm 补丁（(C) 2008 dragchan，GPL-2.0-only）材料封存后通过、driver-source 仅含明确许可文件通过、无本地 deb/vendor 时审计仍可运行、只读 `.git` 环境审计通过；外加确定性/陈旧清单/条款缺失/权限模式保留/`--draft` 结构测试 | python/git，临时 fixture repo | 否 |
-| runtime 结果解析 | tests/unit/run-results-parser-tests.sh | 19 项严格解析、授权、重复/粘连/缺失输入、`#` 注释跳过 | 无设备，隔离 baseline | 否 |
-| Vulkan/OpenCL 探针失败路径 | tests/unit/run-exec-probes-tests.sh | 12 项编译、loader/设备失败、格式与清理 | gcc，无设备可跑 | 否 |
-| VA-API 解码控制流 | tests/unit/run-vaapi-decode-tests.sh | 56 项参数/工具/设备/身份/输入/参考/硬解/超时（rc=124 与 rc=137 忽略 TERM→SIGKILL 忙循环 fixture 均归类超时，退出码 5）/真实 framemd5 格式负例/聚合/硬解参数断言/状态门禁严格解析/mktemp/TERM 清理/无残留；fixture 模式独立命名空间 fixture_*，不产出权威 PASS | 无设备（fake ffmpeg/vainfo/sysfs/status），隔离 baseline | 否 |
-| DRI repair 服务生命周期 | tests/unit/run-dri-repair-tests.sh | 34 项 helper 三态判定（absent/owned/foreign；外国普通文件/符号链接拒绝覆盖）与 unit `ExecStart` 一致（包 `/usr/sbin` vs 源码 fallback `/usr/local/sbin` 区分）、**PATH 注入反例（任意同名程序不得被持久化）**、失败回滚**只删本次新建**（已有有效安装在重装失败后保留）、`enable/start` 失败传播、幂等安装/卸载、**package-absent 只清 DRI 自有路径**（不触碰 userspace/modules-load）、**版本不匹配零副作用**、**精确所有权**（只删除规范化目标等于本仓库 `scripts/repair-dri-nodes.sh` 的符号链接；同名外国仓库链接/普通文件保留）、**测试根安全（空//相对路径 fail closed）**、包 helper 分支正例、无硬编码目标用户名/无 root `$HOME` 回退静态反例 | 无 root/systemd//dev（fake systemctl + 测试根前缀钩子，默认关闭） | 否 |
-| DMA-BUF 回归聚合 | tests/unit/run-dmabuf-regression-tests.sh | 147 项参数/设备发现与身份/self-import（含 create_size 与 CLOEXEC 严格断言）/READ 逐轮唯一性解析/性能门槛/WRITE verify/topology 多 CRTC/vblank（active 逐样本校验：顺序 + delta/kernel_delta 数值自洽 + uint32 回绕 + summary 指标与样本重算交叉验证 + 每 CRTC 独立证据；inactive 全 CRTC 守卫：success=0 时指标全零）/状态门禁（增减均拒）/内核日志门禁（独立状态机：新严重行 FAIL/rc1；post 不可用/截断/重排/插入/无重叠 UNVERIFIED/rc3；正常环形轮转只查重叠后新增行）/mktemp/超时/TERM 清理/汇总 + 真实 C 探针契约测试（含生产构建 fixture 钩子编译剔除门禁与正常路径 fd_leak=unknown）；fixture 模式独立命名空间 fixture_dmabuf_*，零权威 dmabuf_* 行 | 无设备（fake sysfs/dev/探针 + 真实探针 FIFO 路径），隔离 baseline | 否 |
-| collab 结构 | tests/unit/run-collab-structure-tests.sh | 26 项目录命名/编号唯一/request+report 模板齐全/INDEX 与目录按编号精确双向一一对应（R01 不误配 R010、重复行、孤立行、孤立目录、日期与主题一致）/状态白名单/根目录散放文件/根目录或内部符号链接/嵌套目录/仅 Markdown/INDEX 与隐藏 Markdown 的大小写无关隐私扫描（两侧共用 tools/private-data-patterns.txt）/缺 INDEX/collab 目录缺失视为通过 | python3，无设备 | 否 |
+| runtime 结果解析 | tests/unit/run-results-parser-tests.sh | 严格解析、授权、重复/粘连/缺失输入、`#` 注释跳过 | 无设备，隔离 baseline | 否 |
+| Vulkan/OpenCL 探针失败路径 | tests/unit/run-exec-probes-tests.sh | 编译、loader/设备失败、格式与清理 | gcc，无设备可跑 | 否 |
+| VA-API 解码控制流 | tests/unit/run-vaapi-decode-tests.sh | 参数/工具/设备/身份/输入/参考/硬解/超时（rc=124 与 rc=137 忽略 TERM→SIGKILL 忙循环 fixture 均归类超时，退出码 5）/真实 framemd5 格式负例/聚合/硬解参数断言/状态门禁严格解析/mktemp/TERM 清理/无残留；fixture 模式独立命名空间 fixture_*，不产出权威 PASS | 无设备（fake ffmpeg/vainfo/sysfs/status），隔离 baseline | 否 |
+| DRI repair 服务生命周期 | tests/unit/run-dri-repair-tests.sh | helper 三态判定（absent/owned/foreign；外国普通文件/符号链接拒绝覆盖）与 unit `ExecStart` 一致（包 `/usr/sbin` vs 源码 fallback `/usr/local/sbin` 区分）、**PATH 注入反例（任意同名程序不得被持久化）**、失败回滚**只删本次新建**（已有有效安装在重装失败后保留）、`enable/start` 失败传播、幂等安装/卸载、**package-absent 只清 DRI 自有路径**（不触碰 userspace/modules-load）、**版本不匹配零副作用**、**精确所有权**（只删除规范化目标等于本仓库 `scripts/repair-dri-nodes.sh` 的符号链接；同名外国仓库链接/普通文件保留）、**测试根安全（空//相对路径 fail closed）**、包 helper 分支正例、无硬编码目标用户名/无 root `$HOME` 回退静态反例 | 无 root/systemd//dev（fake systemctl + 测试根前缀钩子，默认关闭） | 否 |
+| DMA-BUF 回归聚合 | tests/unit/run-dmabuf-regression-tests.sh | 参数/设备发现与身份/self-import（含 create_size 与 CLOEXEC 严格断言）/READ 逐轮唯一性解析/性能门槛/WRITE verify/topology 多 CRTC/vblank（active 逐样本校验：顺序 + delta/kernel_delta 数值自洽 + uint32 回绕 + summary 指标与样本重算交叉验证 + 每 CRTC 独立证据；inactive 全 CRTC 守卫：success=0 时指标全零）/状态门禁（增减均拒）/内核日志门禁（独立状态机：新严重行 FAIL/rc1；post 不可用/截断/重排/插入/无重叠 UNVERIFIED/rc3；正常环形轮转只查重叠后新增行）/mktemp/超时/TERM 清理/汇总 + 真实 C 探针契约测试（含生产构建 fixture 钩子编译剔除门禁与正常路径 fd_leak=unknown）；fixture 模式独立命名空间 fixture_dmabuf_*，零权威 dmabuf_* 行 | 无设备（fake sysfs/dev/探针 + 真实探针 FIFO 路径），隔离 baseline | 否 |
+| collab 结构 | tests/unit/run-collab-structure-tests.sh | 目录命名/编号唯一/request+report 模板齐全/INDEX 与目录按编号精确双向一一对应（R01 不误配 R010、重复行、孤立行、孤立目录、日期与主题一致）/状态白名单/根目录散放文件/根目录或内部符号链接/嵌套目录/仅 Markdown/INDEX 与隐藏 Markdown 的大小写无关隐私扫描（两侧共用 tools/private-data-patterns.txt）/缺 INDEX/collab 目录缺失视为通过 | python3，无设备 | 否 |
 | runtime 能力基线 | tests/runtime/run-capability-baseline.sh | 12 能力域、35 项；默认只读，人工结果显式合并 | 沙箱/真机授权 | 授权项可能有副作用 |
 
 另：`scripts/check-docs.sh`（静态，链接/登记/隐私/版本/边界）、`check-source-parity.sh`（只读 parity）、
 `compare-oracle-candidates.sh` + `compare-module-symbols.sh`（integration oracle）、
 `check-deb-dkms-build.sh`（integration 离线编译，需本机内核头）。
 
-**盘点结论**：unit、fixture、static、integration 和 runtime 五层均已有入口；CI/沙箱套件当前 385 项
-全部通过。主要缺口是完整 DKMS integration 依赖本机 headers，以及 4 个 runtime 能力仍缺真机证据。
+**盘点结论**：unit、fixture、static、integration 和 runtime 五层均已有入口；当前规模见顶部唯一
+套件汇总。主要缺口是完整 DKMS integration 依赖本机 headers，以及 runtime 能力仍缺真机证据。
 
 ## 二、分层定义与映射
 
 | 层 | 定义 | 现有 | 缺口 |
 | --- | --- | --- | --- |
-| unit | manifest/许可证审计/版本排序/路径/哈希/配置解析/执行探针/VA-API 解码/DMA-BUF 回归/DRI repair/collab 结构的纯函数用例 | tests/unit/ 10 个入口，366 项 | 构建器 headers/helper 失败 fixture 待补；法律授权仍需人工审查 |
+| unit | manifest/许可证审计/版本排序/路径/哈希/配置解析/执行探针/VA-API 解码/DMA-BUF 回归/DRI repair/collab 结构的纯函数用例 | 见顶部套件汇总 | 构建器 headers/helper 失败 fixture 待补；法律授权仍需人工审查 |
 | fixture | 恶意路径/缺失/坏哈希/损坏链接/重复项 | tests/fixtures/ + 脚本隔离构造 | 覆盖随新输入边界持续扩展 |
 | static | shell 语法/脚本登记/文档链接/隐私/构建器输入 | check-docs.sh、fbterm 静态 | 语义与法律授权仍需人工审查 |
 | integration | staging/DKMS 离线/包边界/可复现/oracle | 包边界、oracle、parity、离线编译 | 可复现双构建入 CI 需内核头（本机可跑） |
@@ -88,16 +98,14 @@
 - 有副作用测试必须显式参数确认；临时文件必须 `mktemp` + `trap` 清理。
 - 离线/沙箱结果与真机结果**分开保存**（`baselines/` 紧凑标记 + 版本化审计日志）。
 
-当前 CI/沙箱套件共 357 项：fbterm_static×1、picom_install×3、picom_session×3、
-xdisplay_install×5、package_boundary×7、manifest×9、version×6、extractor×7、results_parser×19、
-exec_probes×12、vaapi_decode×56、dmabuf_regression×147、license_audit×48、dri_repair×34。
+当前 CI/沙箱规模见本文顶部唯一套件汇总，本节不复制易过时数量。
 
 ## 六、覆盖清单（本策略要求逐项落实）
 
 **fixture 至少覆盖**：缺少 source deb、源包哈希错误、manifest 缺字段、重复路径、绝对路径、
 `../` 穿越、非法 kind/link_target、缺失/错误 vendor 文件、中断恢复、`--check-only` 缺失文件必须失败。
-→ **已全部落地测试**：`tests/unit/run-manifest-tests.sh`（8 项恶意清单，fixtures/）与
-`tests/unit/run-extractor-tests.sh`（7 项：vendor 缺失时 --check-only 失败、完整提取、幂等重跑、
+→ **已全部落地测试**：`tests/unit/run-manifest-tests.sh`（恶意清单 fixtures）与
+`tests/unit/run-extractor-tests.sh`（vendor 缺失时 --check-only 失败、完整提取、幂等重跑、
 提取后 --check-only 通过、哈希篡改 --check-only 失败、中断/残留重建、源 deb SHA 不匹配失败；
 使用临时 fixture deb 与隔离 vendor 树，通过提取器新增的 `MANIFEST_PATH`/`VENDOR_ROOT` 覆盖）。
 
@@ -108,7 +116,7 @@ exec_probes×12、vaapi_decode×56、dmabuf_regression×147、license_audit×48�
 
 **文档/许可证测试至少覆盖**：链接存在、脚本登记完整、README 当前版本准确、runtime 权威统计一致、
 无个人路径/token/serverauth、历史版本不冒充当前、Markdown 表格结构、许可证逐路径分类/manifest
-证据语义和 Phase 5 边界。→ `check-docs.sh` 调用 `audit-licenses.py` 覆盖可机械验证部分；11 项
+证据语义和 Phase 5 边界。→ `check-docs.sh` 调用 `audit-licenses.py` 覆盖可机械验证部分；
 许可证 fixture 覆盖漂移负例；法律授权和文字语义仍需人工审查。
 
 ## 七、每测试声明模板（tests/README.md 矩阵登记）
@@ -140,7 +148,7 @@ exec_probes×12、vaapi_decode×56、dmabuf_regression×147、license_audit×48�
 - 真机证据通过 `--results-file` 合并；环境探测元数据和人工结果来源分别记录，不能视为同一次会话。
 - `--results-file` 严格解析（2026-08-24）：接受全部已定义项（含 egl_x11_probe/gl_execution）、
   未知名/状态告警忽略、重复名取最后、粘连行拒绝、PASS/FAIL 必须带证据 reason、缺失文件 rc=2、
-  强制 `--allow-authorized-tests`；19 项 fixture 测试（tests/unit/run-results-parser-tests.sh，含 `#`
+  强制 `--allow-authorized-tests`；fixture 测试见 tests/unit/run-results-parser-tests.sh（含 `#`
   注释行跳过与不泄漏断言）。
 - 真机证据合并（2026-08-24）：fbterm、EGL/X11、桌面 GL、Vulkan execution、OpenCL execution 和
   VA-API 实际解码为 PASS，DMA-BUF 回归 2026-08-26 真机 PASS；权威汇总 22 PASS / 9 SKIP / 4 UNVERIFIED，overall=UNVERIFIED。
@@ -153,16 +161,15 @@ exec_probes×12、vaapi_decode×56、dmabuf_regression×147、license_audit×48�
   - 真机 execution 证据（2026-08-24 用户实测已 PASS）：vulkan exec 5000（queue+fence submit+wait）
     与 opencl exec 1024（add kernel+读回逐元素校验）均在 Fantasy II-M 上执行并验证；
     runtime_vulkan_execution/opencl_execution=PASS（evidence: baselines/runtime-results-20260824.txt）。
-  - 测试：tests/unit/run-exec-probes-tests.sh（12 项，CI 无 /dev/dri 可跑）覆盖编译/缺 loader/
+  - 测试：tests/unit/run-exec-probes-tests.sh（CI 无 /dev/dri 可跑）覆盖编译/缺 loader/
     无设备/枚举回归/超时清理/机器格式。
 - VA-API H.264/HEVC 实际解码（2026-08-24）：`tools/run-vaapi-decode-test.sh --codec h264|hevc|all`
   判定链 = 输入生成（lavfi testsrc2 恰好 30 帧 320x240→libx264/libx265）→ 软件参考（NV12 framemd5）→
   **强制 VAAPI 硬解**（hwaccel vaapi + hwaccel_output_format vaapi + hwdownload,format=nv12，初始化失败即
   FAIL，无软件回退）→ **真实 FFmpeg framemd5 格式校验**（尾换行、`#dimensions 320x240`、恰好 30 条合法帧
   记录 stream,dts,pts,duration,size,hash、NV12 帧大小 115200、32 位 hex hash）→ 逐帧 hash 对比；
-  render node 动态定位 1ec8:9810 并验证 sysfs 身份（`--device` 覆盖）；退出码设计为 0-5，但当前
-  timeout 分类只识别 rc=124，`--kill-after` 的 rc=137 会误归普通阶段失败（已列入 TODO，修复前不把
-  所有硬超时都解释为 rc=5）；Driver/Firmware 状态
+  render node 动态定位 1ec8:9810 并验证 sysfs 身份（`--device` 覆盖）；退出码设计为 0-5，输入生成、
+  软件参考和硬解三阶段均把 timeout rc=124/137 归类为 rc=5；Driver/Firmware 状态
   门禁：**两份完整快照**（解码前/后）严格整行解析——Driver/Firmware 行必须 `^...OK[[:space:]]*$`（拒绝
   OKAY 等前缀冒充）、8 类计数字段整行 `^字段名:[[:space:]]+[0-9]+[[:space:]]*$`（拒绝多余 token）且各恰好
   出现一次（拒绝重复行）、值在 awk 中输出规范十进制（剥离前导零，避免 Bash 八进制解析 08/09 误判）——
@@ -177,7 +184,7 @@ exec_probes×12、vaapi_decode×56、dmabuf_regression×147、license_audit×48�
   （evidence: baselines/runtime-results-20260824.txt）；**能力边界**：仅 Main/Main 8-bit 4:2:0，H.264 High/
   Constrained Baseline、HEVC Main10、编码、播放/长时/并发/4K/性能功耗均未验证；枚举
   profile/entrypoint 或 ffmpeg 退出 0 不等于实际解码成功；测试：tests/unit/run-vaapi-decode-tests.sh
-  （52 项，fake fixture，CI 无 /dev/dri）。
+  （fake fixture，CI 无 /dev/dri）。
 - DMA-BUF 回归（2026-08-24 实现，2026-08-26 真机验证）：`tools/run-dmabuf-regression-test.sh` 聚合入口，编译并运行
   四探针，判定链 = 设备发现/身份（动态 1ec8:9810 render+card 同源 BDF）→ 同设备 PRIME self-import
   （CREATE_DUMB→HANDLE_TO_FD→FD_TO_HANDLE→逆序释放，CLOEXEC 验证，多轮无 fd 泄漏）→ invisible GEM
@@ -194,7 +201,7 @@ exec_probes×12、vaapi_decode×56、dmabuf_regression×147、license_audit×48�
   PRIME self-import，foreign import/跨设备 GTT export/GBM/V4L2/第二 GPU/长期压力/并发仍 UNVERIFIED；探针：
   probe-dmabuf-self-import.c（新）、probe-pdp-invisible-read.c、
   probe-drm-topology.c、probe-drm-vblank.c（失败行加 errno）；测试：tests/unit/run-dmabuf-regression-tests.sh
-  （147 项，fake fixture，CI 无 /dev/dri）。
+  （fake fixture，CI 无 /dev/dri）。
 
 ## 十、风险与未覆盖
 

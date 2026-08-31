@@ -63,7 +63,7 @@ bash tests/unit/run-collab-structure-tests.sh
 - manifest 测试用 `tools/validate-binary-manifest.py` 对真实清单与 `tests/fixtures/` 下的恶意
   fixture（绝对路径、`../` 穿越、未知 kind、重复目标、缺 sha256、缺 license、链接逃逸、缺失文件）
   断言通过/拒绝；
-- 许可证审计测试（11 项）覆盖当前逐文件 inventory 一致性、发布门禁保持 BLOCKED、确定性重建、
+- 许可证审计测试覆盖当前逐文件 inventory 一致性、发布门禁保持 BLOCKED、确定性重建、
   陈旧 inventory、许可证文本缺失、confidential 集合漂移、残缺 Dual MIT/GPL 头、manifest license
   缺失、无证据 SPDX 值、项目 README 声明文字隔离和 `MODULE_LICENSE` 元数据集合漂移；不修改
   `drivers/` 或发布状态。
@@ -71,12 +71,12 @@ bash tests/unit/run-collab-structure-tests.sh
 - 提取器测试用临时 fixture deb 与隔离 vendor 树（提取器支持 `MANIFEST_PATH`/`VENDOR_ROOT` 覆盖），
   覆盖：vendor 缺失时 `--check-only` 必须失败、完整提取、幂等重跑、提取后 `--check-only` 通过、
   哈希篡改 `--check-only` 失败、中断/残留文件重建、源 deb SHA 不匹配失败。
-- 结果解析测试（19 项）覆盖 runtime 脚本 `--results-file` 严格解析：合法合并、未知名/未知状态
+- 结果解析测试覆盖 runtime 脚本 `--results-file` 严格解析：合法合并、未知名/未知状态
   告警忽略、重复名采用最后一条、粘连行拒绝、无尾换行处理、PASS/FAIL 缺证据拒绝、文件缺失 rc=2、
   未授权使用 rc=2、`#` 注释行显式跳过（不告警、不泄漏为结果项）。
-- Vulkan/OpenCL 执行探针测试（12 项，CI 无 /dev/dri 可跑）：两探针编译、缺失 loader（env 注入）rc=2、
+- Vulkan/OpenCL 执行探针测试（CI 无 /dev/dri 可跑）：两探针编译、缺失 loader（env 注入）rc=2、
   无设备 rc=3（可解释、不伪造硬件 PASS）、枚举模式仍可用、超时后无残留进程/临时文件、机器可读输出。
-- VA-API 解码脚本控制流测试（52 项，CI 无 /dev/dri）：fake ffmpeg/vainfo/sysfs 注入（真实 framemd5
+- VA-API 解码脚本控制流测试（CI 无 /dev/dri）：fake ffmpeg/vainfo/sysfs 注入（真实 framemd5
   格式 fixture，覆盖 #dimensions/帧数/尺寸/hash/尾换行/坏行/坏 hash/坏尺寸/无尺寸元数据/空输出双零帧/
   空文件）覆盖参数错误（含 --timeout 非数字、缺参值 rc=2）、fixture 钩子缺 INNOGPU_VAAPI_FIXTURE_MODE=1
   rc=2、ffmpeg/vainfo/编码器缺失（按 --codec 分列 libx264/libx265/h264/hevc）、vainfo VLD profile 缺失、
@@ -89,21 +89,21 @@ bash tests/unit/run-collab-structure-tests.sh
   vaapi_decode_* 权威行**。超时判定覆盖 GNU timeout rc=124 与 rc=137（忽略 TERM、由 --kill-after
   最终 SIGKILL 的忙循环 fixture，无后台进程残留）在三阶段（输入生成/软件参考/硬解）均归类为超时
   （整体退出码 5）。
-- DRI repair 服务生命周期测试（34 项，CI 无 root/systemd//dev）：fake systemctl + 测试根前缀
+- DRI repair 服务生命周期测试（CI 无 root/systemd//dev）：fake systemctl + 测试根前缀
   （`INNOGPU_DRI_TEST_ROOT`/`INNOGPU_UNINSTALL_TEST`，默认关闭）覆盖源码 fallback helper 安装路径与
   unit `ExecStart` 一致、PATH 注入忽略、失败回滚只删本次新建（已有有效安装在重装失败后保留）、
   外国普通文件/符号链接拒绝覆盖、`enable/start` 失败传播、幂等安装/卸载、package-absent 只清 DRI
   自有路径、版本不匹配零副作用、只删除规范化目标等于本仓库脚本的符号链接（同名外国仓库链接/普通
   文件保留）、测试根安全（空//相对路径 fail closed）、包 helper 分支正例，以及无硬编码目标用户名、
   无 root `$HOME` 回退的静态反例。
-- DMA-BUF 回归聚合控制流测试（147 项，CI 无 /dev/dri）：fake sysfs/dev/探针注入 + 真实 C 探针契约测试（编译/参数/设备/能力路径 fd 无泄漏）覆盖参数校验（rc=2 设备检测前）、
+- DMA-BUF 回归聚合控制流测试（CI 无 /dev/dri）：fake sysfs/dev/探针注入 + 真实 C 探针契约测试（编译/参数/设备/能力路径 fd 无泄漏）覆盖参数校验（rc=2 设备检测前）、
   fixture 门禁与独立命名空间（零权威 dmabuf_* 行）、编译/cc 缺失、设备发现与身份（缺失/PCI 不匹配/
   card-render 不同源/多目标/非字符设备）、self-import 控制流与能力缺失、READ 输出严格解析（缺行/重复/
   NaN/负数/坏数字/轮数不符/性能越界与覆盖门槛）、WRITE verify 缺失/页数不符、topology（无 active/多 active/
   坏格式/真实形态：active mode 名称为空时 mode=<unnamed> 占位且仍执行 vblank）、active vblank（timeout/fast return/nonadvancing/样本数/乱序/列标题漂移/重复 header/首样本 delta 非零/delta 与序号差不符/kernel_delta 矛盾/内核时间倒退（含最小精度 16.400→16.399）/sequence uint32 越界/summary 指标与样本重算不符/真实 32 位回绕合法）、inactive vblank 守卫（EINVAL 快速通过/
   timeout/错误 errno/过慢/重复 header 或列标题/坏浮点/字段乱序/success=0 时非零 summary/无 inactive 诚实 SKIP）、内核日志门禁（error/GPU hang/dma_buf timeout 均阻断，严重词表驱动覆盖 failure/failures/warn/WARNING/WARN_ON/lockup/wedged 及单复数进行时，debug/installed/hangcheck benign 保持 clean；日志独立状态机：新严重行 FAIL/rc1、post 不可用或截断/重排/插入/无重叠 UNVERIFIED/rc3（一致性失败优先，正 overlap+一致性失败+严重词仍须 UNVERIFIED）、正常环形轮转与完整追加 clean/PASS（多条追加/多条轮转/多新增含严重行均覆盖）、轮转后新增错误 FAIL/rc1、pre 缺失整体 UNVERIFIED）、状态门禁全部负例与错误计数增长、mktemp/外部超时/TERM
   清理无残留（限定 TMPDIR）、不污染 baseline、汇总恒等式与退出码。
-- 多 Agent 协作目录结构与隐私测试（26 项，无设备）：tools/validate-collab.py 持久化 fixture，覆盖目录命名/
+- 多 Agent 协作目录结构与隐私测试（无设备）：tools/validate-collab.py 持久化 fixture，覆盖目录命名/
   编号唯一/request+report 模板齐全/INDEX 与目录按编号精确双向一一对应（R01 不误配 R010、重复行、
   孤立行、孤立目录、登记日期/主题与目录一致）/状态白名单/根目录散放文件/根目录或内部符号链接/嵌套目录/仅
   Markdown/INDEX 与隐藏 Markdown 的大小写无关隐私扫描（含 check-docs.sh 的 rg 层共用

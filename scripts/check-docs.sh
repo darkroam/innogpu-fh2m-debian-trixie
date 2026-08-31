@@ -178,7 +178,7 @@ else
     runtime_text="$runtime_passed PASS / $runtime_skipped SKIP / $runtime_unverified UNVERIFIED"
     require_text docs/project/status.md "$runtime_text"
     require_text docs/project/test-strategy.md "$runtime_text"
-    require_text docs/planning/todo.md "$runtime_text"
+    require_text docs/planning/current-work.md "$runtime_text"
 fi
 require_text baselines/latest-runtime-baseline.txt 'runtime_vulkan_execution=PASS'
 require_text baselines/latest-runtime-baseline.txt 'runtime_opencl_execution=PASS'
@@ -357,6 +357,7 @@ for path in \
     docs/project/multiagent-collab.md \
     docs/patches/patched-21-release-candidate.md \
     docs/incidents/patched-20-legacy-helper-payload.md \
+    docs/planning/current-work.md \
     docs/planning/todo.md \
     docs/planning/history.md \
     docs/user/new-device-install.md \
@@ -371,6 +372,10 @@ for path in \
     docs/user/recovery.md; do
     [[ -f "$path" ]] || fail "required document is missing: $path"
 done
+
+if rg -n '^\s*- \[ \]' docs/planning/todo.md >/dev/null; then
+    fail "completed-work timeline contains an active task; move it to docs/planning/current-work.md"
+fi
 
 for path in \
     docs/patches/README.md \

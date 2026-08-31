@@ -406,7 +406,7 @@ PY
 
 O="$TMP/output"
 
-# ---- real-repo baseline (audit consistency + release gating) ----
+# ---- real-repo baseline (audit consistency + artifact gate) ----
 python3 "$AUDITOR" --root "$ROOT" > "$O" 2>&1
 rc=$?
 expect current_audit_consistent "$rc" "$O" 'license_audit_overall=PASS'
@@ -415,9 +415,17 @@ python3 "$AUDITOR" --root "$ROOT" > "$O" 2>&1
 rc=$?
 expect current_classification_counts "$rc" "$O" 'license_unclassified=70'
 
-python3 "$AUDITOR" --root "$ROOT" --artifact project-tools --require-releasable > "$O" 2>&1
+F="$TMP/scoped-gate-states"
+make_fixture "$F" '/* no license declaration */'
+python3 "$AUDITOR" --root "$F" --policy policy.json --inventory inventory.tsv > "$O" 2>&1
 rc=$?
-expect pre_commit_release_blocked_dirty_tree "$rc" "$O" 'reason=release_tree_not_clean' 2
+if [[ "$rc" -eq 0 ]] \
+    && grep -Fq 'license_release_gate=BLOCKED' "$O" \
+    && grep -Fq 'license_artifact_project-tools_gate=CLEARED' "$O"; then
+    pass isolated_scoped_gate_states
+else
+    fail "isolated_scoped_gate_states:rc=$rc"
+fi
 
 python3 "$AUDITOR" --root "$ROOT" --inventory "$WORK_REL/one.tsv" --write-inventory > "$O" 2>&1
 rc1=$?
