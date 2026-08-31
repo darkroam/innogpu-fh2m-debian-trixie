@@ -210,6 +210,7 @@
         "^drivers/",
         "^patches/",
         "^debs/",
+        "^collab/",
         "^vendor/",
         "^build/",
         "^third_party/",
@@ -220,7 +221,7 @@
         "\\.so(\\.\\d+)*$",
         "\\.fw$"
       ],
-      "reason": "候选制品（机械门禁 CLEARED，当前不作为发布目标（发布决策 1C））：失败关闭分类——允许清单 = 已批准原创前缀（.github/baselines/docs/scripts/tests/tools，GPL-3.0-or-later）+ 显式路径映射（上游继承层 MIT、LICENSES/ 标准文本组、components/ 第三方派生组）；任何不在前缀/映射内的路径一律拒绝（non_drivers_unclassified），无全局默认 GPL；components/ 许可材料已封存（picom 固定 commit 6d676824…：目标文件级 MPL-2.0，Copyright (c) Yuxuan Shui，文本见 LICENSES/MPL-2.0.txt；picom.conf 为项目原创 GPL-3.0-or-later；fbterm Debian 1.7-5：(C) 2008 dragchan，GPL-2.0-only），NOTICE 按路径组绑定版权/许可标记（notice_gate）；排除 patches/（混合/未决许可，含未分类驱动源码片段，整体排除）、debs/（整目录）、drivers/、vendor/、build/、third_party/ 与载荷；GitHub 主分支本身仍分发阻断路径，仓库级发布未闭环，本归档仅为候选制品。"
+      "reason": "候选制品（机械门禁 CLEARED，当前不作为发布目标（发布决策 1C））：失败关闭分类——允许清单 = 已批准原创前缀（.github/baselines/docs/scripts/tests/tools，GPL-3.0-or-later）+ 显式路径映射（上游继承层 MIT、LICENSES/ 标准文本组、components/ 第三方派生组）；任何不在前缀/映射内的路径一律拒绝（non_drivers_unclassified），无全局默认 GPL；components/ 许可材料已封存（picom 固定 commit 6d676824…：目标文件级 MPL-2.0，Copyright (c) Yuxuan Shui，文本见 LICENSES/MPL-2.0.txt；picom.conf 为项目原创 GPL-3.0-or-later；fbterm Debian 1.7-5：(C) 2008 dragchan，GPL-2.0-only），NOTICE 按路径组绑定版权/许可标记（notice_gate）；排除 patches/（混合/未决许可，含未分类驱动源码片段，整体排除）、debs/（整目录）、collab/（多 Agent 协作记录：本机私有目录，.gitignore 排除、不跟踪，不自动重许可、不进发布候选，denylist 防御性保留）、drivers/、vendor/、build/、third_party/ 与载荷；GitHub 主分支本身仍分发阻断路径，仓库级发布未闭环，本归档仅为候选制品。"
     },
     "driver-source": {
       "status": "BLOCKED",

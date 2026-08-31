@@ -1,0 +1,9 @@
+/home/[a-z_][a-z0-9_-]*(?:/|$)
+MiWiFi
+serverauth\.[A-Za-z0-9]
+-----BEGIN (?:OPENSSH |RSA |EC )?PRIVATE KEY-----
+ssh-(?:rsa|ed25519) AAAA
+(?:ghp|github_pat)_[A-Za-z0-9_]+
+\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}
+\bAKIA[0-9A-Z]{16}\b
+\bBearer\s+[A-Za-z0-9._~+/=-]{16,}

@@ -35,3 +35,7 @@ __pycache__/
 /baselines/desktop-hwgl-*.txt
 /ddx-vt-test-*.log
 /ddx-test-*/
+
+# Multi-agent collaboration rounds (dsh + codex): machine-local working
+# records, never uploaded to GitHub (charter: docs/project/multiagent-collab.md).
+/collab/

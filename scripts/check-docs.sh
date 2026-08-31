@@ -18,6 +18,9 @@ require_text() {
     grep -Fq "$text" "$file" || fail "$file is missing required current-state text: $text"
 }
 
+# Link scan based on git ls-files so that EVERY tracked Markdown file is
+# covered, never a hand-maintained directory list (local-only collab/ is not
+# tracked and therefore not scanned here).
 while IFS= read -r -d '' file; do
     while IFS= read -r target; do
         [[ -n "$target" ]] || continue
@@ -30,18 +33,41 @@ while IFS= read -r -d '' file; do
             }
         ' "$file"
     )
-done < <(find README.md LICENSES drivers docs scripts baselines tests tools -type f -name '*.md' -print0)
+done < <(git ls-files -z -- '*.md')
 
+# Privacy patterns come from the single shared source
+# tools/private-data-patterns.txt (loaded by tools/validate-collab.py too);
+# both consumers scan case-insensitively.
+privacy_patterns="tools/private-data-patterns.txt"
 personal_refs="$(
-    rg -n --pcre2 \
-        '(/home/[a-z_][a-z0-9_-]*(?:/|$)|MiWiFi|serverauth\.[[:alnum:]]|-----BEGIN (?:OPENSSH |RSA |EC )?PRIVATE KEY-----|ssh-(?:rsa|ed25519) AAAA|(?:ghp|github_pat)_[A-Za-z0-9_]+)' \
-        README.md docs scripts tests config patches tools \
-        --glob '!scripts/check-docs.sh' 2>/dev/null |
-        rg -v '不得写死 `/home/ok`' || true
+    {
+        # Repository privacy roots: --hidden --no-ignore also covers hidden
+        # and ignored local files under these explicitly selected paths.
+        rg -n --hidden --no-ignore --ignore-case --pcre2 -f "$privacy_patterns" \
+            README.md docs scripts tests config patches tools \
+            --glob '!scripts/check-docs.sh' \
+            --glob '!tools/validate-collab.py' \
+            --glob '!tools/private-data-patterns.txt' 2>/dev/null
+        # collab/ is gitignored, so include hidden and ignored Markdown files
+        # explicitly instead of relying on ripgrep's default traversal.
+        rg -n --hidden --no-ignore --ignore-case --pcre2 -f "$privacy_patterns" collab \
+            --glob '*.md' 2>/dev/null
+    } | rg -v '不得写死 `/home/ok`' || true
 )"
 if [[ -n "$personal_refs" ]]; then
     printf '%s\n' "$personal_refs" >&2
     fail "repository contains a home path, machine identity, authentication file, or secret marker"
+fi
+
+# collab/ round-structure mechanical checks (multiagent-collab.md §五):
+# directory naming, unique ids, request.md/report.md, INDEX registration with
+# a valid status, markdown-only round dirs, and exact INDEX <-> directory
+# one-to-one correspondence. Implemented in tools/validate-collab.py (exact id
+# matching, so R01 never matches R010); persistent fixtures live in
+# tests/unit/run-collab-structure-tests.sh. collab/ is a local-only directory
+# (.gitignore): when it does not exist (fresh clone / CI) the tool passes.
+if ! python3 tools/validate-collab.py; then
+    fail "collab/ round structure or INDEX registration is invalid"
 fi
 
 for removed_copy in \
@@ -203,10 +229,14 @@ import re
 import sys
 
 roots = [Path('README.md'), Path('drivers/README.md'), Path('docs'), Path('scripts'),
-         Path('baselines'), Path('tests')]
+         Path('baselines'), Path('tests'), Path('collab')]
 files = []
 for root in roots:
-    files.extend(root.rglob('*.md') if root.is_dir() else [root])
+    if root.is_dir():
+        files.extend(root.rglob('*.md'))
+    elif root.is_file():
+        files.append(root)
+    # an optional root that is absent (e.g. local-only collab/) is skipped
 
 def cells(line):
     stripped = line.strip()
@@ -324,6 +354,7 @@ for path in \
     docs/project/display-management.md \
     docs/project/glossary.md \
     docs/project/maintenance-policy.md \
+    docs/project/multiagent-collab.md \
     docs/patches/patched-21-release-candidate.md \
     docs/incidents/patched-20-legacy-helper-payload.md \
     docs/planning/todo.md \

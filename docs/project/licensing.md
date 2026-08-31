@@ -67,7 +67,7 @@
 
 | 制品 | 内容 | 状态 | 说明 |
 | --- | --- | --- | --- |
-| `project-tools` | **候选制品**：**失败关闭分类**生成的允许清单（见 [project-tools-allowlist.txt](project-tools-allowlist.txt)）= 已批准原创前缀（`.github/`/`baselines/`/`docs/`/`scripts/`/`tests/`/`tools/`，GPL-3.0-or-later）+ 显式路径映射（上游继承层 MIT：`.gitignore`/`README.md`/`scripts/install.sh`；`LICENSES/` 标准文本组：MIT/GPL-2.0-only/BSD-3-Clause/LGPL-2.1-only/MPL-2.0；`components/` 第三方派生组）；**任何不在前缀/映射内的路径一律拒绝**（无全局默认 GPL） | **CLEARED**（仅机械门禁；当前不作为发布目标，见 §4.1） | `components/` 许可材料已封存：picom 补丁按目标文件级 **MPL-2.0**（Copyright (c) Yuxuan Shui），`picom.conf` 为原创层 GPL-3.0-or-later；fbterm 补丁为 GPL-2.0-only（(C) 2008 dragchan）；NOTICE 门禁按**路径组**绑定版权/许可标记；`patches/`（混合/未决许可，整体排除）、`debs/`（整目录）、`drivers/`、`vendor/`、`build/`、`third_party/` 不含；GitHub 主分支仍分发阻断路径，仓库级发布未闭环（§4.1） |
+| `project-tools` | **候选制品**：**失败关闭分类**生成的允许清单（见 [project-tools-allowlist.txt](project-tools-allowlist.txt)）= 已批准原创前缀（`.github/`/`baselines/`/`docs/`/`scripts/`/`tests/`/`tools/`，GPL-3.0-or-later）+ 显式路径映射（上游继承层 MIT：`.gitignore`/`README.md`/`scripts/install.sh`；`LICENSES/` 标准文本组：MIT/GPL-2.0-only/BSD-3-Clause/LGPL-2.1-only/MPL-2.0；`components/` 第三方派生组）；**任何不在前缀/映射内的路径一律拒绝**（无全局默认 GPL） | **CLEARED**（仅机械门禁；当前不作为发布目标，见 §4.1） | `components/` 许可材料已封存：picom 补丁按目标文件级 **MPL-2.0**（Copyright (c) Yuxuan Shui），`picom.conf` 为原创层 GPL-3.0-or-later；fbterm 补丁为 GPL-2.0-only（(C) 2008 dragchan）；NOTICE 门禁按**路径组**绑定版权/许可标记；`patches/`（混合/未决许可，整体排除）、`debs/`（整目录）、`collab/`（本机私有目录，不跟踪、不自动重许可）、`drivers/`、`vendor/`、`build/`、`third_party/` 不含；GitHub 主分支仍分发阻断路径，仓库级发布未闭环（§4.1） |
 | `driver-source` | `drivers/` 中仅具有明确许可声明的路径（408 dual + 2 BSD/LGPL + `drivers/README.md`）；allowlist 见 [driver-source-allowlist.txt](driver-source-allowlist.txt) | **BLOCKED** | 排除 confidential ×3 与无许可 ×70 后**无法独立构建**（缺 Kbuild 等构建文件），**不是完整驱动**；缺失内容须由用户按原声明从本地原包取得，不假 PASS；再分发权利链待监督复审 |
 
 `local-extractor` 不再是独立制品/门禁：本地载荷提取与校验工具是 `project-tools` 的一个功能，
@@ -75,7 +75,7 @@
 
 ### 4.1 GitHub 主分支发布面与发布决策 1C（当前结论）
 
-GitHub 仓库 `main` 分支本身是公开分发面：clone / GitHub 源码归档直接分发全部 706 个跟踪路径，
+GitHub 仓库 `main` 分支本身是公开分发面：clone / GitHub 源码归档直接分发全部 710 个跟踪路径，
 **不经 `build-release-archive.py`**，因此当前仍公开分发 3 个 confidential 与 70 个无许可文件。
 本仓库因此**不宣称许可证发布闭环**。
 
@@ -106,7 +106,7 @@ python3 tools/build-release-archive.py --artifact project-tools --out /tmp/proje
   已批准原创前缀 + 显式路径映射——上游 MIT、`LICENSES/` 标准文本组、`components/` 第三方派生组；
   未知路径一律拒绝 `non_drivers_unclassified`，**无全局默认 GPL**）+ **路径绑定 NOTICE 门禁**
   （`notice_gate.entries` 按路径组绑定版权/许可标记，缺失即失败；新第三方路径必须有对应条目）；
-  `patches/`、`debs/` 整目录从 project-tools 排除（denylist 拒绝）。
+  `patches/`、`debs/` 整目录与 `collab/`（本机私有目录）从 project-tools 排除（denylist 拒绝）。
 - `status=CLEARED` **本身不是授权依据**：发布模式必须通过全部机械检查且工作树干净
   （工作区 == index == HEAD，policy/allowlist/文件 blob 均从 HEAD 读取）；`--draft` 只做结构
   测试并输出 `archive_draft=OK`，绝不输出 release PASS。

@@ -45,7 +45,7 @@ patched-20 版本号、过期设备接入脚本、不完整 shader、错误架�
 `scripts/check-release-package.sh` 拒绝。它不读取或安装本机 `debs/` 中的真实驱动包，不运行 DKMS，
 也不改变活动 Xorg。
 
-单元测试（manifest 恶意输入、版本排序契约、提取器隔离，CI 可跑、无设备依赖）：
+单元测试（manifest 恶意输入、版本排序契约、提取器隔离、collab 结构，CI 可跑、无设备依赖）：
 
 ```sh
 tests/unit/run-manifest-tests.sh
@@ -57,6 +57,7 @@ bash tests/unit/run-exec-probes-tests.sh
 bash tests/unit/run-vaapi-decode-tests.sh
 bash tests/unit/run-dmabuf-regression-tests.sh
 bash tests/unit/run-dri-repair-tests.sh
+bash tests/unit/run-collab-structure-tests.sh
 ```
 
 - manifest 测试用 `tools/validate-binary-manifest.py` 对真实清单与 `tests/fixtures/` 下的恶意
@@ -102,6 +103,12 @@ bash tests/unit/run-dri-repair-tests.sh
   坏格式/真实形态：active mode 名称为空时 mode=<unnamed> 占位且仍执行 vblank）、active vblank（timeout/fast return/nonadvancing/样本数/乱序/列标题漂移/重复 header/首样本 delta 非零/delta 与序号差不符/kernel_delta 矛盾/内核时间倒退（含最小精度 16.400→16.399）/sequence uint32 越界/summary 指标与样本重算不符/真实 32 位回绕合法）、inactive vblank 守卫（EINVAL 快速通过/
   timeout/错误 errno/过慢/重复 header 或列标题/坏浮点/字段乱序/success=0 时非零 summary/无 inactive 诚实 SKIP）、内核日志门禁（error/GPU hang/dma_buf timeout 均阻断，严重词表驱动覆盖 failure/failures/warn/WARNING/WARN_ON/lockup/wedged 及单复数进行时，debug/installed/hangcheck benign 保持 clean；日志独立状态机：新严重行 FAIL/rc1、post 不可用或截断/重排/插入/无重叠 UNVERIFIED/rc3（一致性失败优先，正 overlap+一致性失败+严重词仍须 UNVERIFIED）、正常环形轮转与完整追加 clean/PASS（多条追加/多条轮转/多新增含严重行均覆盖）、轮转后新增错误 FAIL/rc1、pre 缺失整体 UNVERIFIED）、状态门禁全部负例与错误计数增长、mktemp/外部超时/TERM
   清理无残留（限定 TMPDIR）、不污染 baseline、汇总恒等式与退出码。
+- 多 Agent 协作目录结构与隐私测试（26 项，无设备）：tools/validate-collab.py 持久化 fixture，覆盖目录命名/
+  编号唯一/request+report 模板齐全/INDEX 与目录按编号精确双向一一对应（R01 不误配 R010、重复行、
+  孤立行、孤立目录、登记日期/主题与目录一致）/状态白名单/根目录散放文件/根目录或内部符号链接/嵌套目录/仅
+  Markdown/INDEX 与隐藏 Markdown 的大小写无关隐私扫描（含 check-docs.sh 的 rg 层共用
+  tools/private-data-patterns.txt 模式文件的反例）/缺 INDEX/整个 collab/ 目录缺失视为通过（fresh clone 与 CI）；在临时目录构造，不访问
+  仓库真实 collab/。
 
 ## 测试矩阵（分层，2026-08-21）
 

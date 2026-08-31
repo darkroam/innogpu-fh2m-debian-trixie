@@ -699,6 +699,7 @@ def validate_allowlist(root, policy, name, inventory_rows, all_tracked, index, p
             if not p.startswith("drivers/")
             and not p.startswith("patches/")
             and not p.startswith("debs/")
+            and not p.startswith("collab/")
         }
         expected.discard(self_rel)
         if seen != expected:
@@ -825,12 +826,13 @@ def write_allowlists(root, policy, inventory_rows, all_tracked, problems):
                 if not p.startswith("drivers/")
                 and not p.startswith("patches/")
                 and not p.startswith("debs/")
+                and not p.startswith("collab/")
                 and p != self_rel
             )
             header = (
                 "# project-tools 候选制品允许清单（按权利边界生成）：原创层 GPL-3.0-or-later + "
                 "上游继承层 MIT + components/ 第三方派生分类；"
-                "不含 patches/、debs/、drivers/、vendor/、build/、third_party/"
+                "不含 patches/、debs/、collab/、drivers/、vendor/、build/、third_party/"
             )
         else:
             paths = sorted(

@@ -37,6 +37,10 @@
   归档构建器、`license_audit_overall=PASS`；已由三层模型整理取代（见上一条）。
 - [x] 入口文档重构（2026-08-21）：README 按 7 项要求精简（适配/演进/bug 清单/安装/文档结构/致谢/许可），
   LICENSE 注释更新为迁移后现状，过期表述清理；与 4.0.0-i1 现状对齐。
+- [x] 多 Agent 协作规约（2026-08-31）：建立 dsh（方案/审查）+ codex（实现）协作模式，权威文档
+  [multiagent-collab.md](../project/multiagent-collab.md)，合作目录 `collab/`（英文目录名）与
+  `collab/INDEX.md`；纳入审计边界与 check-docs 登记（不作为原创前缀，`^collab/` 防御性
+  排除出 project-tools；`collab/` 为本机私有目录，.gitignore 排除，不上传 GitHub）。
 - [ ] 为每次新候选包建立独立的 `docs/patches/` 说明和 `docs/incidents/` 验收记录。
 - [ ] 将长期维护所需的脚本参数逐步收敛为可审查的配置，保持 `scripts/<name>` 兼容入口不变。
 - [x] 运维脚本缺口第一批（2026-08-28）：统一 DRI repair helper 实际安装路径与 unit `ExecStart`

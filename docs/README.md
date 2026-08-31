@@ -16,6 +16,7 @@
 9. [阶段补丁](patches/README.md)：每个补丁的目的、开关、验证和回退边界。
 10. [事故与经验](incidents/README.md)：失败证据、根因、排除项和后续门槛。
 11. [用户验证](user/verification.md)：安装或重启后的最小验收流程。
+12. [多 Agent 协作规约](project/multiagent-collab.md)：dsh（方案/审查）+ codex（实现）协作流程、审查门禁与 git 纪律（唯一权威）。
 
 按需查阅：[依赖与外部文件](project/dependencies.md)、[显示接入使用](user/display-guide.md)、
 [许可证与再分发边界](project/licensing.md)（唯一权威文档）、[驱动源码许可证审计](project/source-license-audit.md)、

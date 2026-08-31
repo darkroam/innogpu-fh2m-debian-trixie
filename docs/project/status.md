@@ -27,7 +27,7 @@
 | Vulkan/OpenCL 执行 | 探针 exec 模式 + 真机验证通过（2026-08-24）：Vulkan queue+fence submit+wait、OpenCL add kernel+读回逐元素校验均在 Fantasy II-M 上执行成功；`runtime_vulkan_execution`/`runtime_opencl_execution`=PASS（证据 `baselines/runtime-results-20260824.txt`）；离线失败路径测试 12 项 | [probe-vulkan-devices.c](../../tools/probe-vulkan-devices.c)、[probe-opencl-devices.c](../../tools/probe-opencl-devices.c)、[test-strategy](test-strategy.md) |
 | VA-API 实际解码 | `tools/run-vaapi-decode-test.sh --codec all` 真机执行（2026-08-24）：H.264 Main 与 HEVC Main 强制 VA-API 硬解，各 30 帧 320x240 NV12 framemd5 与软件参考逐帧 hash 一致，Driver/Firmware 状态门禁通过；`runtime_vaapi_decode`=PASS（证据 `baselines/runtime-results-20260824.txt`）；能力边界仅 Main/Main 8-bit 4:2:0 | [run-vaapi-decode-test.sh](../../tools/run-vaapi-decode-test.sh)、[test-strategy](test-strategy.md) |
 | DMA-BUF 回归工具 | `tools/run-dmabuf-regression-test.sh` 已实现（2026-08-24）：同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 + 状态门禁聚合，配套 147 项 fixture 测试；**真机 PASS（2026-08-26 root 权限运行，证据已封存）**：self-import/READ/WRITE/vblank/状态门禁/内核日志全部通过；能力边界不变：仅同设备 PRIME self-import，foreign/cross-device、GBM、V4L2、长期压力与并发仍 UNVERIFIED | [run-dmabuf-regression-test.sh](../../tools/run-dmabuf-regression-test.sh)、[test-strategy](test-strategy.md)、[webkit 调查](../planning/webkit-dmabuf-investigation.md) |
-| 发布边界 | 三层许可模型（原创层 GPL-3.0-or-later / 上游 MIT / drivers/ 逐文件）；`project-tools` 为**候选制品**（机械门禁 CLEARED，当前不作为发布目标；**失败关闭分类**——已批准原创前缀 + 显式映射，未知路径拒绝，无默认 GPL；排除 patches/、debs/、drivers/、vendor/、build/、third_party/；**路径绑定 NOTICE 门禁**，components/ 许可材料已封存：picom 补丁为文件级 MPL-2.0、`picom.conf` 为原创 GPLv3、fbterm 1.7-5 (C) 2008 dragchan GPL-2.0-only）；`driver-source` 排除 confidential ×3 与无许可 ×70 后非完整驱动（BLOCKED，不假 PASS）；**GitHub 主分支仍公开分发阻断路径，仓库级发布未闭环**；二进制 deb 与 vendor 载荷不作为当前发布目标；patched-1.deb 为上游历史非阻断；本地 debs/ 与 vendor/ 不参与发布；**发布决策 1C（见 licensing.md §4.1 权威记录）：当前不创建 Release/tag/附件，main 为研究开发仓库、不作为发布目标，BLOCKED 不变；不做 Release 不消除 main 公开跟踪 73 个阻断路径的风险** | [licensing.md](licensing.md)（唯一权威文档）、[source-license-audit.md](source-license-audit.md) |
+| 发布边界 | 三层许可模型（原创层 GPL-3.0-or-later / 上游 MIT / drivers/ 逐文件）；`project-tools` 为**候选制品**（机械门禁 CLEARED，当前不作为发布目标；**失败关闭分类**——已批准原创前缀 + 显式映射，未知路径拒绝，无默认 GPL；排除 patches/、debs/、collab/（本机私有目录，不跟踪）、drivers/、vendor/、build/、third_party/；**路径绑定 NOTICE 门禁**，components/ 许可材料已封存：picom 补丁为文件级 MPL-2.0、`picom.conf` 为原创 GPLv3、fbterm 1.7-5 (C) 2008 dragchan GPL-2.0-only）；`driver-source` 排除 confidential ×3 与无许可 ×70 后非完整驱动（BLOCKED，不假 PASS）；**GitHub 主分支仍公开分发阻断路径，仓库级发布未闭环**；二进制 deb 与 vendor 载荷不作为当前发布目标；patched-1.deb 为上游历史非阻断；本地 debs/ 与 vendor/ 不参与发布；**发布决策 1C（见 licensing.md §4.1 权威记录）：当前不创建 Release/tag/附件，main 为研究开发仓库、不作为发布目标，BLOCKED 不变；不做 Release 不消除 main 公开跟踪 73 个阻断路径的风险** | [licensing.md](licensing.md)（唯一权威文档）、[source-license-audit.md](source-license-audit.md) |
 
 ## 已解决问题
 
@@ -77,7 +77,7 @@
 12. 许可证体系最终整理（三层模型，2026-08-28 监督复审前）：原创层 GPL-3.0-or-later、上游
     MIT 继承层（`Copyright (c) 2026 Tim Hant`）、drivers/ 逐文件声明、本地载荷排除；
     `project-tools` 为**候选制品**（CLEARED 仅机械门禁）：按权利边界生成允许清单（排除
-    patches/、debs/、drivers/、vendor/、build/、third_party/），非 drivers **失败关闭**分类 +
+    patches/、debs/、collab/、drivers/、vendor/、build/、third_party/），非 drivers **失败关闭**分类 +
     路径绑定 NOTICE 门禁；components/ 许可材料已封存（picom 补丁为文件级 MPL-2.0、配置为
     原创 GPLv3，fbterm 1.7-5 (C) 2008 dragchan GPL-2.0-only）；`driver-source` 仅含明确许可文件（BLOCKED，
     非完整驱动）；3 个 confidential 与 70 个

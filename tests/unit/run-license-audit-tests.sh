@@ -61,8 +61,9 @@ make_fixture() {
     printf '%s\n' 'GNU LESSER GENERAL PUBLIC LICENSE' 'Version 2.1, February 1999' > "$dir/LICENSES/LGPL-2.1-only.txt"
     printf '%s\n' 'Mozilla Public License Version 2.0' 'MPL-2.0 fixture text' > "$dir/LICENSES/MPL-2.0.txt"
     printf '%s\n' '# License Texts' 'fixture copies of standard texts.' > "$dir/LICENSES/README.md"
-    mkdir -p "$dir/patches" "$dir/debs" "$dir/components/fbterm" "$dir/components/picom" "$dir/scripts"
+    mkdir -p "$dir/patches" "$dir/debs" "$dir/components/fbterm" "$dir/components/picom" "$dir/scripts" "$dir/collab"
     printf '%s\n' 'diff -ruN hal_power.c Kbuild compat_kernel6.h inno_devfreq_gov.c ...' > "$dir/patches/001-test.patch"
+    printf '%s\n' '# collab index (user-input content; must stay out of project-tools)' > "$dir/collab/INDEX.md"
     printf '%s\n' '# debs README (project doc inside the local payload dir)' > "$dir/debs/README.md"
     printf '%s\n' 'diff -ruN fbterm source (GPL-2.0-only derived)' > "$dir/components/fbterm/001-fbterm.patch"
     printf '%s\n' 'diff -ruN picom source (MPL-2.0 derived)' > "$dir/components/picom/001-picom.patch"
@@ -225,7 +226,7 @@ policy = {
         "project-tools": {"status": "CLEARED",
                           "allowlist_file": "docs/project/project-tools-allowlist.txt",
                           "denylist": [r"^drivers/", r"^patches/", r"^debs/", r"^vendor/",
-                                       r"^build/", r"^third_party/",
+                                       r"^build/", r"^third_party/", r"^collab/",
                                        r"\.deb$", r"\.o_shipped$", r"\.o(\.cmd)?$", r"\.ko$",
                                        r"\.so(\.\d+)*$", r"\.fw$"],
                           "reason": "fixture"},
@@ -299,6 +300,9 @@ elif mode == "pt-leak-vendor-path":
 elif mode == "pt-leak-patches":
     aw = root / "docs/project/project-tools-allowlist.txt"
     aw.write_text(aw.read_text(encoding="utf-8") + "patches/001-test.patch\n", encoding="utf-8")
+elif mode == "pt-leak-collab":
+    aw = root / "docs/project/project-tools-allowlist.txt"
+    aw.write_text(aw.read_text(encoding="utf-8") + "collab/INDEX.md\n", encoding="utf-8")
 elif mode == "pt-leak-debs-dir":
     aw = root / "docs/project/project-tools-allowlist.txt"
     aw.write_text(aw.read_text(encoding="utf-8") + "debs/README.md\n", encoding="utf-8")
@@ -489,6 +493,24 @@ mutate_fixture "$F" pt-leak-debs-dir
 python3 "$AUDITOR" --root "$F" --policy policy.json --inventory inventory.tsv > "$O" 2>&1
 rc=$?
 expect project_tools_debs_dir_rejected "$rc" "$O" 'reason=allowlist_leak:project-tools:debs/README.md' 1
+
+# ---- negative: collab/ (user-input collaboration records) never enters project-tools ----
+F="$TMP/pt-leak-collab"
+make_fixture "$F" '/* no license declaration */'
+mutate_fixture "$F" pt-leak-collab
+python3 "$AUDITOR" --root "$F" --policy policy.json --inventory inventory.tsv > "$O" 2>&1
+rc=$?
+expect project_tools_collab_leak_rejected "$rc" "$O" 'reason=allowlist_leak:project-tools:collab/INDEX.md' 1
+
+F="$TMP/positive-collab-excluded"
+make_fixture "$F" '/* no license declaration */'
+python3 "$AUDITOR" --root "$F" --policy policy.json --inventory inventory.tsv > "$O" 2>&1
+rc=$?
+if [ "$rc" -eq 0 ] && ! grep -Fq '^collab/' "$F/docs/project/project-tools-allowlist.txt"; then
+    pass project_tools_allowlist_excludes_collab
+else
+    fail "project_tools_allowlist_excludes_collab:rc=$rc"
+fi
 
 # ---- negative: NOTICE gate markers (path-bound entries) - P2 ----
 F="$TMP/notice-gate"

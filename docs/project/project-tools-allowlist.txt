@@ -1,4 +1,4 @@
-# project-tools 候选制品允许清单（按权利边界生成）：原创层 GPL-3.0-or-later + 上游继承层 MIT + components/ 第三方派生分类；不含 patches/、debs/、drivers/、vendor/、build/、third_party/
+# project-tools 候选制品允许清单（按权利边界生成）：原创层 GPL-3.0-or-later + 上游继承层 MIT + components/ 第三方派生分类；不含 patches/、debs/、collab/、drivers/、vendor/、build/、third_party/
 .github/workflows/ci.yml
 .gitignore
 LICENSE
@@ -85,6 +85,7 @@ docs/project/glossary.md
 docs/project/goals.md
 docs/project/licensing.md
 docs/project/maintenance-policy.md
+docs/project/multiagent-collab.md
 docs/project/source-license-audit.md
 docs/project/source-license-inventory.tsv
 docs/project/status.md
@@ -178,6 +179,7 @@ tests/picom/run-install-tests.sh
 tests/picom/run-session-tests.sh
 tests/runtime/README.md
 tests/runtime/run-capability-baseline.sh
+tests/unit/run-collab-structure-tests.sh
 tests/unit/run-dmabuf-regression-tests.sh
 tests/unit/run-dri-repair-tests.sh
 tests/unit/run-exec-probes-tests.sh
@@ -193,6 +195,7 @@ tools/audit-licenses.py
 tools/build-release-archive.py
 tools/generate-binary-manifest.py
 tools/patch-gpupll-object.py
+tools/private-data-patterns.txt
 tools/probe-dmabuf-self-import.c
 tools/probe-drm-topology.c
 tools/probe-drm-vblank.c
@@ -207,3 +210,4 @@ tools/run-dmabuf-regression-test.sh
 tools/run-vaapi-decode-test.sh
 tools/trace-loader.c
 tools/validate-binary-manifest.py
+tools/validate-collab.py
