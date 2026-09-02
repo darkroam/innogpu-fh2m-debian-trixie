@@ -12,9 +12,9 @@
 
 | 范围 | 入口与用例 | 小计 |
 | --- | --- | --- |
-| unit | manifest 9 + license 50 + version 7 + extractor 7 + results parser 19 + exec probes 12 + VA-API 56 + DMA-BUF 147 + DRI repair 34 + collab 26 + suspend/resume 18 | 11 个入口 / 385 项 |
-| 其他 CI/沙箱 | fbterm 1 + package 9 + Picom install 3 + Picom session 3 + xdisplay 5 | 5 个入口 / 21 项 |
-| **合计** | 不含需真实设备/root/副作用授权的 runtime 项 | **16 个入口 / 406 项** |
+| unit | manifest 9 + license 50 + version 9 + extractor 7 + results parser 19 + exec probes 12 + VA-API 56 + DMA-BUF 147 + DRI repair 34 + collab 26 + suspend/resume 21 | 11 个入口 / 390 项 |
+| 其他 CI/沙箱 | fbterm 1 + package 11 + Picom install 3 + Picom session 3 + xdisplay 5 | 5 个入口 / 23 项 |
+| **合计** | 不含需真实设备/root/副作用授权的 runtime 项 | **16 个入口 / 413 项** |
 
 | 测试 | 位置 | 断言 | 权限/环境 | 修改系统 |
 | --- | --- | --- | --- | --- |
@@ -22,7 +22,7 @@
 | Picom 安装 | tests/picom/run-install-tests.sh | 空 HOME 配置/幂等/既有配置保留 | 无（fake HOME） | 否 |
 | Picom 会话 | tests/picom/run-session-tests.sh | 优先/回退/单实例 | 无（fake 命令） | 否 |
 | xdisplay 安装边界 | tests/xdisplay/run-install-tests.sh | 拒绝私有副本/钩子/幂等/watcher/xprofile | 无（fake HOME） | 否 |
-| 包边界 | tests/package/run-boundary-tests.sh | fixture 覆盖新版本通过/私有载荷拒绝/p20 复用拒绝/helper 一致/固件完整/非 amd64/Installed-Size | dpkg-deb | 否 |
+| 包边界 | tests/package/run-boundary-tests.sh | fixture 覆盖新版本通过/私有载荷拒绝/p20 复用拒绝/helper 一致/固件完整/非 amd64/Installed-Size/`.orig` 与 `.rej` 拒绝 | dpkg-deb | 否 |
 | manifest/版本/提取器 | tests/unit/run-{manifest,version,extractor}-tests.sh | schema、license、路径、哈希、恢复与版本排序 | shell/python/dpkg | 否 |
 | 许可证审计 | tests/unit/run-license-audit-tests.sh | 三层模型正反例：根 GPLv3 越界覆盖 drivers/ 拒绝、上游 MIT notice 缺失拒绝、project-tools/driver-source 允许清单混入 confidential/vendor/deb/**patches**/无许可路径拒绝（含 `^patches/`、`^debs/` 整目录排除）、**非 drivers 失败关闭分类**（`original_roots` + 显式映射；未知路径如 external/foo.c 拒绝、LICENSES/ 标准文本未映射拒绝——无全局默认 GPL）、**路径绑定 NOTICE 门禁**（新第三方路径缺 notice_gate 条目拒绝、条目标记缺失如 Yuxuan Shui 拒绝）、`vendor-binary`/`NOASSERTION` 当许可证拒绝、畸形 SPDX 拒绝、脏树发布拒绝、allowlist 路径穿越/重复/symlink 拒绝、归档内容不属于 HEAD 拒绝；正例：project-tools 从干净提交构建成功、上游 MIT 随 notice 发布、picom 补丁（文件级 MPL-2.0，固定 commit）与 fbterm 补丁（(C) 2008 dragchan，GPL-2.0-only）材料封存后通过、driver-source 仅含明确许可文件通过、无本地 deb/vendor 时审计仍可运行、只读 `.git` 环境审计通过；外加确定性/陈旧清单/条款缺失/权限模式保留/`--draft` 结构测试 | python/git，临时 fixture repo | 否 |
 | runtime 结果解析 | tests/unit/run-results-parser-tests.sh | 严格解析、授权、重复/粘连/缺失输入、`#` 注释跳过 | 无设备，隔离 baseline | 否 |
@@ -31,7 +31,7 @@
 | DRI repair 服务生命周期 | tests/unit/run-dri-repair-tests.sh | helper 三态判定（absent/owned/foreign；外国普通文件/符号链接拒绝覆盖）与 unit `ExecStart` 一致（包 `/usr/sbin` vs 源码 fallback `/usr/local/sbin` 区分）、**PATH 注入反例（任意同名程序不得被持久化）**、失败回滚**只删本次新建**（已有有效安装在重装失败后保留）、`enable/start` 失败传播、幂等安装/卸载、**package-absent 只清 DRI 自有路径**（不触碰 userspace/modules-load）、**版本不匹配零副作用**、**精确所有权**（只删除规范化目标等于本仓库 `scripts/repair-dri-nodes.sh` 的符号链接；同名外国仓库链接/普通文件保留）、**测试根安全（空//相对路径 fail closed）**、包 helper 分支正例、无硬编码目标用户名/无 root `$HOME` 回退静态反例 | 无 root/systemd//dev（fake systemctl + 测试根前缀钩子，默认关闭） | 否 |
 | DMA-BUF 回归聚合 | tests/unit/run-dmabuf-regression-tests.sh | 参数/设备发现与身份/self-import（含 create_size 与 CLOEXEC 严格断言）/READ 逐轮唯一性解析/性能门槛/WRITE verify/topology 多 CRTC/vblank（active 逐样本校验：顺序 + delta/kernel_delta 数值自洽 + uint32 回绕 + summary 指标与样本重算交叉验证 + 每 CRTC 独立证据；inactive 全 CRTC 守卫：success=0 时指标全零）/状态门禁（增减均拒）/内核日志门禁（独立状态机：新严重行 FAIL/rc1；post 不可用/截断/重排/插入/无重叠 UNVERIFIED/rc3；正常环形轮转只查重叠后新增行）/mktemp/超时/TERM 清理/汇总 + 真实 C 探针契约测试（含生产构建 fixture 钩子编译剔除门禁与正常路径 fd_leak=unknown）；fixture 模式独立命名空间 fixture_dmabuf_*，零权威 dmabuf_* 行 | 无设备（fake sysfs/dev/探针 + 真实探针 FIFO 路径），隔离 baseline | 否 |
 | collab 结构 | tests/unit/run-collab-structure-tests.sh | 目录命名/编号唯一/request+report 模板齐全/INDEX 与目录按编号精确双向一一对应（R01 不误配 R010、重复行、孤立行、孤立目录、日期与主题一致）/状态白名单/根目录散放文件/根目录或内部符号链接/嵌套目录/仅 Markdown/INDEX 与隐藏 Markdown 的大小写无关隐私扫描（两侧共用 tools/private-data-patterns.txt）/缺 INDEX/collab 目录缺失视为通过 | python3，无设备 | 否 |
-| suspend/resume 静态 | tests/unit/run-suspend-resume-tests.sh | patch-024/025 dry-run/应用、OFF 门禁位于 OPP/PreClock 前、post-atomic 重复光标恢复移除、单文件范围、`4.0.1-i1`/`4.0.1-i2` 与 epoch 失败关闭、编译树与包源码按版本双应用、patched-28 legacy 接线 | shell/python/patch，复制跟踪源码到 `/tmp` | 否 |
+| suspend/resume 静态 | tests/unit/run-suspend-resume-tests.sh | patch-024/025 dry-run/应用、025 三行上下文、OFF 门禁位于 OPP/PreClock 前、post-atomic 重复光标恢复移除、单文件范围、`4.0.1-i3`/`4.0.1-i4` 共用 epoch 且旧迭代失败关闭、零 fuzz/无备份应用、编译树与包源码双扫描、patched-28 legacy 接线 | shell/python/patch，复制跟踪源码到 `/tmp` | 否 |
 | runtime 能力基线 | tests/runtime/run-capability-baseline.sh | 12 能力域、35 项；默认只读，人工结果显式合并 | 沙箱/真机授权 | 授权项可能有副作用 |
 
 另：`scripts/check-docs.sh`（静态，链接/登记/隐私/版本/边界）、`check-source-parity.sh`（只读 parity）、

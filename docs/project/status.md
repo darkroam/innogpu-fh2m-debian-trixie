@@ -9,15 +9,15 @@
 
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
-| 当前运行驱动 | `4.0.0-i1`（迁移源码树 + manifest 黑盒载荷）已安装并重启至 `6.12.101+deb13-amd64`；A1–A12 实机验收全 PASS + p27 回退演练 PASS（2026-08-21 Phase 4） | [phase4 验收](../planning/phase4-device-validation.md)、[迁移设计](../planning/source-tree-migration.md) |
+| 当前运行驱动 | `4.0.1-i2`（patch-024 + patch-025-suspend-resume-display）已安装并重启至 `6.12.101+deb13-amd64`；R05 一次 s2idle 可见恢复、SSH/TTY/Xorg/GL/PVR 门禁通过，但严格因果仍 UNVERIFIED | [patch-025](../patches/025-suspend-resume-display.md) |
 | 最近失败候选 | `4.0.1-i1`：构建、安装、重启与 PVR 机械门禁通过，但真实 s2idle 唤醒后外屏红屏；已回退 `4.0.0-i1`，不得继续安装；deep 未测试 | [patch-024](../patches/024-suspend-resume.md)、[s2idle 红屏事故](../incidents/suspend-resume-s2idle-red-screen-20260902.md) |
-| 当前离线候选 | `4.0.1-i2`：保留 patch-024，增加 patch-025-suspend-resume-display 去除 post-atomic 重复光标恢复；未安装、未挂起验收 | [patch-025-suspend-resume-display](../patches/025-suspend-resume-display.md) |
+| 当前严格 A/B 候选 | R06 A=`4.0.1-i3`（仅 patch-024）/B=`4.0.1-i4`（024+025）：共用 epoch `1788451200`，严格 patch 与无 `.orig/.rej` 门禁、包级单变量比较通过；四轮 s2idle 尚未执行 | [patch-025-suspend-resume-display](../patches/025-suspend-resume-display.md) |
 | 稳定图形历史基线 | 历史记录：`3.3.3.42-patched-21` 已安装、重启并完成本机 PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收；不是当前运行包 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | 历史运行基线 | `3.3.3.42-patched-20` 曾完成运行验收，但 deb 含收敛前辅助载荷，仅保留为历史证据 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
 | 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |
 | 历史运行验收 | p21 完整图形验收通过；p22 完成 connector 分类和开盖桌面烟测，但电源/合盖/拔屏矩阵未完成 | [`patch-009` 验收](../patches/patch-009-local-internal-edp-connector.md) |
 | 源码/用户态基线 | Deepin 202504 完整原包，不混用历史 patched 包 | `scripts/build-innogpu-driver.sh`（新架构）；`build-deepin-coherent.sh` 为 legacy p27 oracle |
-| 源码树迁移 | 阶段 0–4 完成（新构建器 4.0.0-i1 并行验证 + 实机候选验证与回退演练全 PASS）；设备已运行 4.0.0-i1；阶段 5 第一步（标记 deprecated + 文档同步）完成，第二步待条件满足 + 监督批准 | [phase5-retirement-design](../planning/phase5-retirement-design.md) |
+| 源码树迁移 | 阶段 0–4 完成（新构建器 4.0.0-i1 并行验证 + 实机候选验证与回退演练全 PASS）；R05 后设备运行 4.0.1-i2；阶段 5 第一步（标记 deprecated + 文档同步）完成，第二步待条件满足 + 监督批准 | [phase5-retirement-design](../planning/phase5-retirement-design.md) |
 | 固件与 PVR | `4.0.0-i1` 实机验收已确认固件加载，Driver/Firmware 为 OK，错误计数为 0 | [Phase 4 验收](../planning/phase4-device-validation.md) |
 | DRM/fbdev | `4.0.0-i1` 实机验收已确认 `card0`、`renderD128`、`fb0` 可用；fbterm redraw 路径通过真实 VT 验证 | [Phase 4 验收](../planning/phase4-device-validation.md) |
 | Xorg/GLX | 当前桌面和隔离 Xorg 的硬件加速验收通过 | [Phase 4 验收](../planning/phase4-device-validation.md) |
@@ -58,8 +58,8 @@
   但外屏实际整屏红色，故候选验收失败并已回退。s2idle 不是可用规避，`4.0.1-i1` 的 deep 未测试，
   当前不能声称竞态或完整显示恢复已修复。见 [deep 事故](../incidents/suspend-resume-deep-reproduction-20260902.md)
   与 [s2idle 红屏事故](../incidents/suspend-resume-s2idle-red-screen-20260902.md)。
-  `4.0.1-i2` 是基于重复光标恢复假设的离线候选；静态与构建通过不等于真机修复，
-  挂起冻结仍生效。
+  `4.0.1-i2` 已有一次成功 s2idle 可见恢复，但不足以定因；R06 改用 i3/i4 同 epoch 严格包级单变量
+  A->B->A->B，并以 ftrace 与人工画面共同判定。准备门禁通过不等于真机因果成立；deep 冻结仍生效。
 - **登录后短暂黑屏 P2**：`4.0.1-i1` 与回退后的 `4.0.0-i1` 均复现，排除 patch-024 特异回归。
   合盖登录时 xdisplay 把 Xorg 初始布局切为 `EXTERNAL_ONLY`，对应一次 framebuffer 重建及约 5 秒输出
   重查询；画面最终恢复。该问题由 dotconfig/xdisplay 独立跟踪，本项目不在线修改会话配置。

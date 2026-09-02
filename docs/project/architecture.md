@@ -30,7 +30,7 @@ PCI 0000:06:00.6 [1d94:14c9]
 | 路径 | 职责 |
 | --- | --- |
 | `drivers/` | Deepin 202504 DKMS 源码树及已转换为提交的 9 个启用修复 |
-| `patches/` | 历史补丁 provenance 与新行为修复候选；已迁入源码树的补丁不重复叠加，`4.0.1-i2` 由升号构建器应用 patch-024 和 patch-025-suspend-resume-display |
+| `patches/` | 历史补丁 provenance 与新行为修复候选；已迁入源码树的补丁不重复叠加，R06 i3/i4 分别绑定 patch-024 与 patch-024+patch-025-suspend-resume-display |
 | `components/picom/` | 当前维护的 Picom 源码补丁与项目配置模板（`001-probe-explicit-uniform-location.patch`、`picom.conf`） |
 | `components/fbterm/` | 当前维护的 fbterm 用户态兼容补丁（`001-configurable-redraw-scrolling.patch`） |
 | `debs/` | 本地 release/构建输入输出目录，`.deb` 被 Git 忽略，仅跟踪说明文件 |
@@ -49,15 +49,17 @@ PCI 0000:06:00.6 [1d94:14c9]
 
 ## 驱动与图形用户态
 
-`innogpu-fh2m-trixie 4.0.0-i1` 是当前设备已安装并重启、适配 Debian 6.12.101+ 并完成驱动、
+`innogpu-fh2m-trixie 4.0.0-i1` 是已完成基线验收、适配 Debian 6.12.101+ 的版本（当前设备后来运行
+`4.0.1-i2`），并完成驱动、
 DKMS、DRM/fbdev 与 A1–A12 实机验收的版本（迁移源码树 + manifest 黑盒载荷，见
 [source-tree-migration.md](../planning/source-tree-migration.md)）；`patched-27` 转为保留的回退基线；
 `patched-21` 是历史完整图形验收基线，`patched-17` 是深层回退包；它们不再是新设备默认入口。p25/p26/p27 分别增加 dma_resv usage 语义、未活动 CRTC vblank 守卫和 foreign DMA-BUF 生命周期修复，均已通过本机实机验收（见 [patch-025](../patches/patch-025-dma-resv-usage-rw.md)、[patch-026](../patches/patch-026-inactive-crtc-vblank-guard.md)、[patch-027](../patches/patch-027-foreign-dmabuf-lifecycle.md)）。p20 deb 是所有权收敛前的历史运行证据，包内辅助
 脚本不能代表当前源码，禁止重新部署或发布；运行时验收与 release 载荷合规是两个独立结论。当前
 已安装的 `4.0.0-i1` 直接维护 `drivers/` 源码，并从固定 Deepin 202504 原包按 manifest 提取完整
 同源用户态 ABI、固件和黑盒对象；其历史补丁不在构建时叠加。失败候选 `4.0.1-i1` 确定性
-应用 patch-024，s2idle 可见恢复已失败。新候选 `4.0.1-i2` 保留 patch-024 并增加
-patch-025-suspend-resume-display，已离线构建但未安装或挂起验收；后续每次行为变化仍必须独立升号。patched-21 使用
+应用 patch-024，s2idle 可见恢复已失败。`4.0.1-i2` 保留 patch-024 并增加
+patch-025-suspend-resume-display，R05 已完成一次 s2idle 可见恢复；R06 改用 i3/i4 做严格包级单变量
+对照，后续每次行为变化仍必须独立升号。patched-21 使用
 `patch-006`；patched-22
 另加 `patch-009`，patched-23 再加 `patch-023`，patched-24 增加 `patch-001` 的 6.12.101+ API
 兼容，这些版本关系仅用于历史 provenance。connector 修复仅针对本机
@@ -74,14 +76,15 @@ Deepin 202504 deb 同时提供硬件 GL/DDX 用户态。内核模块成功、DRM
 再使用本项目已审查的 Debian maintainer scripts 生成包。`vendor/` 由
 `scripts/extract-vendor-binaries.sh` 从固定 SHA-256 的 Deepin 202504 原包幂等重建，不进入 Git。
 
-对 `4.0.1-i1`，该构建器只应用 patch-024 并锁定 epoch `1788278400`，仅供失败复现。
-默认 `4.0.1-i2` 在复制 `drivers/` 后把 patch-024 和 patch-025-suspend-resume-display 同时
-应用到离线编译 staging 和最终包内 DKMS 源码，并锁定 epoch `1788364800`。当前运行的
-`4.0.0-i1` 不受工作区补丁影响。
+当前构建器只接受 R06 的 `4.0.1-i3/i4` 与共同 epoch `1788451200`：i3 只应用 patch-024，
+默认 i4 在其后应用 patch-025-suspend-resume-display；两者都同时应用到离线编译 staging 和最终
+包内 DKMS 源码，并拒绝 `.orig/.rej` patch 产物。i1/i2 不再由当前源码复用；当前运行的 i2 不受工作区
+补丁修改影响。
 
 Deepin 原包仍是导入源码、用户态 ABI 和黑盒载荷的唯一技术来源。9 个历史启用补丁已转换为
 `drivers/` 中的源码提交；新行为修复必须先以独立补丁和升号候选验证。patch-024 的 i1
-真机验收未通过；patch-025-suspend-resume-display 是 i2 新增的未验收源码实验。旧
+真机验收未通过；patch-025-suspend-resume-display 的 i2 单次恢复通过，但严格因果验证仍使用
+i3/i4 对照。旧
 `build-deepin-coherent.sh` 和 patched wrapper 仅作为 p27 oracle、历史复现和回退证据保留。
 禁止从任一历史 patched 包复制用户态文件、对象或控制脚本后再局部替换源码。
 

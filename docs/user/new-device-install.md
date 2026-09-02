@@ -6,7 +6,9 @@
 
 | 版本 | 用途 | 新设备策略 |
 | --- | --- | --- |
-| `4.0.1-i2` | patch-024 + patch-025-suspend-resume-display 离线候选 | 当前 HEAD 默认构建输出；未安装、未挂起验收，不是新设备默认版本 |
+| `4.0.1-i4` | R06 B：patch-024 + patch-025-suspend-resume-display | 同 epoch 严格 A/B 候选；尚未完成四轮真机验收，不是新设备默认版本 |
+| `4.0.1-i3` | R06 A：patch-024 | 同 epoch 严格 A/B 对照；尚未完成四轮真机验收，不是新设备默认版本 |
+| `4.0.1-i2` | R05 已安装候选 | 当前运行版本；一次 s2idle 可见恢复通过，但不作为 R06 严格 A/B 包复用 |
 | `4.0.1-i1` | patch-024 suspend/resume 失败候选 | s2idle 唤醒红屏，已回退；显式版本/epoch 仅供离线复现，禁止安装 |
 | `4.0.0-i1` | **新架构当前运行包**（迁移源码树 + manifest 黑盒载荷，Phase 4 实机验收通过；deep resume 已知故障） | 只使用已留存且核对过 SHA 的历史构建，不得用当前源码复用版本号 |
 | `patched-27` | 保留的回退基线（SHA `f3841597…`） | `4.0.0-i1` 故障时的首选回退（`--allow-downgrades`） |
@@ -21,7 +23,7 @@ patched-18/19 是问题定位和 coherent 构建演进记录，不是安装推�
 
 新架构包不随 Git 提供。clone 本仓库后，从有权提供该内容的来源取得 Deepin 原包并放入 `debs/`；
 本项目当前不提供该第三方原包或载荷的公开下载。构建器会按 `binary-manifest.json` 校验完整
-SHA-256。默认 `4.0.1-i2` 的固定审核 epoch 为 `1788364800`：
+SHA-256。R06 i3/i4 共用固定审核 epoch `1788451200`（2026-09-04 00:00 +0800）：
 
 ```text
 debs/innogpu-fh2m_20250421190503-debug_amd64.deb
@@ -32,11 +34,9 @@ SHA-256: b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2
 cd "$INNOGPU_ROOT"
 sha256sum debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 bash scripts/extract-vendor-binaries.sh                        # 按 manifest 重建 vendor/ 黑盒载荷
-SOURCE_DATE_EPOCH=1788364800 bash scripts/build-innogpu-driver.sh
-# 输出 build/innogpu-fh2m-trixie_4.0.1-i2.deb；未经独立轮次复审不得安装
-
-# 仅离线复现失败的 i1：
-VERSION=4.0.1-i1 SOURCE_DATE_EPOCH=1788278400 bash scripts/build-innogpu-driver.sh
+SOURCE_DATE_EPOCH=1788451200 bash scripts/build-innogpu-driver.sh
+# 默认输出 build/innogpu-fh2m-trixie_4.0.1-i4.deb；未经 R06 复审不得安装
+# A 对照：VERSION=4.0.1-i3 SOURCE_DATE_EPOCH=1788451200 bash scripts/build-innogpu-driver.sh
 ```
 
 > 新 clone 上 `vendor/` 为空（不入库）：必须先 `extract-vendor-binaries.sh` 重建黑盒载荷，
@@ -129,8 +129,8 @@ patched-17/patched-8。
 该 deb 生成于 xdisplay 所有权收敛前，包内仍有旧引擎/实验辅助文件，且 `patch-008` 会高频写日志。
 当前 `build-patched20-deepin-diagnostic.sh` 仅作为拒绝版本复用的兼容护栏，不再生成包。
 
-`4.0.1-i1` 已判定为失败候选；`4.0.1-i2` 已在 `docs/patches/` 定义版本、源码改动、
-风险和回退，但仍只是未安装的离线候选。后续任何行为变化仍须升新迭代号。
+`4.0.1-i1` 已判定为失败候选；`4.0.1-i2` 是 R05 当前运行候选；R06 i3/i4 已定义版本、
+源码改动、风险和回退，但尚未完成严格真机验收。后续任何行为变化仍须升新迭代号。
 不得以任何 patched deb
 作为源码或载荷基线，也不得从不同版本挑选 DRI、GBM、GLAPI、DDX 或固件拼装。新包还必须通过：
 
@@ -138,9 +138,9 @@ patched-17/patched-8。
 scripts/check-release-package.sh build/<new-package>.deb
 ```
 
-`4.0.1-i1` 已完成离线构建、安装与 s2idle 验收，但因红屏失败；`4.0.1-i2` 只完成
-离线构建和包验证。当前 HEAD **没有自动可安装的新设备默认版本**。4.0.0-i1 仅是现存
-已验证基线且有 deep 已知故障，patched-17 仅作为深层回退保留。
+`4.0.1-i1` 已完成离线构建、安装与 s2idle 验收，但因红屏失败；`4.0.1-i2` 已完成一次
+s2idle 可见恢复；i3/i4 只完成离线构建和包级单变量准备。当前 HEAD **没有自动可安装的新设备默认版本**。
+4.0.0-i1 仅是现存已验证基线且有 deep 已知故障，patched-17 仅作为深层回退保留。
 
 patched-21 已完成当前设备的构建、包边界、部署、重启和运行验收。精确输入、补丁矩阵、清洁载荷边界
 和跨硬件发布前门槛见 [`patched-21-release-candidate.md`](../patches/patched-21-release-candidate.md)。

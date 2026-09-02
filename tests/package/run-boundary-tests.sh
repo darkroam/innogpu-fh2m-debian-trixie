@@ -67,6 +67,14 @@ make_package() {
         missing-installed-size)
             sed -i '/^Installed-Size:/d' "$root/DEBIAN/control"
             ;;
+        patch-orig)
+            install -d "$root/usr/src/innogpu-kernel-2.2/innosrvkm"
+            : > "$root/usr/src/innogpu-kernel-2.2/innosrvkm/source.c.orig"
+            ;;
+        patch-rej)
+            install -d "$root/usr/src/innogpu-kernel-2.2/innosrvkm"
+            : > "$root/usr/src/innogpu-kernel-2.2/innosrvkm/source.c.rej"
+            ;;
     esac
     dpkg-deb --root-owner-group --build "$root" "$deb" >/dev/null
     printf '%s\n' "$deb"
@@ -76,8 +84,8 @@ valid=$(make_package valid 3.3.3.42-patched-21)
 "$CHECK" "$valid" >/dev/null || fail 'T01 valid package failed the boundary check'
 pass 'clean new-version package passes'
 
-candidate=$(make_package candidate 4.0.1-i2)
-"$CHECK" "$candidate" >/dev/null || fail 'T02 current 4.0.1-i2 candidate failed the boundary check'
+candidate=$(make_package candidate 4.0.1-i4)
+"$CHECK" "$candidate" >/dev/null || fail 'T02 current 4.0.1-i4 candidate failed the boundary check'
 pass 'current new-architecture candidate passes'
 
 noncanonical=$(make_package noncanonical 4.0.1-i0)
@@ -121,5 +129,17 @@ if "$CHECK" "$missing_size" >/dev/null 2>&1; then
     fail 'T09 package without Installed-Size passed'
 fi
 pass 'Installed-Size is required'
+
+orig=$(make_package patch-orig 4.0.1-i4 patch-orig)
+if "$CHECK" "$orig" >/dev/null 2>&1; then
+    fail 'T10 package with patch backup file passed'
+fi
+pass 'patch .orig backup files are rejected'
+
+rej=$(make_package patch-rej 4.0.1-i4 patch-rej)
+if "$CHECK" "$rej" >/dev/null 2>&1; then
+    fail 'T11 package with patch reject file passed'
+fi
+pass 'patch .rej files are rejected'
 
 printf 'tests_total=%d tests_passed=%d tests_failed=%d tests_skipped=%d\n' "$tests" "$tests" 0 "$skipped"

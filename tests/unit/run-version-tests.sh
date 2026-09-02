@@ -22,6 +22,8 @@ chk "version_rollback_lt_current" "3.3.3.42-patched-27" lt "4.0.0-i1"
 chk "version_i1x_below_patched"   "1.0.0-i1" lt "3.3.3.42-patched-27"
 chk "version_i2_gt_i1"            "4.0.0-i2" gt "4.0.0-i1"
 chk "version_fix_gt_current"       "4.0.1-i1" gt "4.0.0-i1"
+chk "version_r06_a_gt_i2"          "4.0.1-i3" gt "4.0.1-i2"
+chk "version_r06_b_gt_a"           "4.0.1-i4" gt "4.0.1-i3"
 chk "version_identity"            "4.0.0-i1" eq "4.0.0-i1"
 chk "version_p27_gt_p26"          "3.3.3.42-patched-27" gt "3.3.3.42-patched-26"
 

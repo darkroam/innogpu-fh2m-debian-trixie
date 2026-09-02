@@ -2,9 +2,9 @@
 
 ## 状态
 
-`4.0.1-i2` 的待验证候选修复。已完成静态分析、离线 DKMS 构建和包边界检查；
-**未安装、未执行挂起、不得声称红屏已修复**。当前运行版仍为 `4.0.0-i1`，
-`4.0.1-i1` 仍是仅供复现的失败候选。
+`4.0.1-i2` 已在 R05 完成一次 s2idle 可见恢复验收并作为当前运行版本，但单次成功不足以
+证明根因。R06 以同 epoch 的 `4.0.1-i3`（A：仅 patch-024）与 `4.0.1-i4`（B：024+025）
+重建严格单变量对照；准备阶段已通过，四轮 A->B->A->B 尚未执行，**不得声称根因已证实**。
 
 ## R03 证据与根因假设
 
@@ -44,7 +44,8 @@ hook 又使用保留的 hwdev 光标字段重复编程扫描输出，破坏了�
 
 ## 修复设计
 
-`patches/025-suspend-resume-display.patch` 只修改 `innosrvkm/innodpu_drm_pm.c`：保留
+`patches/025-suspend-resume-display.patch` 是带三行上下文的纯删除补丁，只修改
+`innosrvkm/innodpu_drm_pm.c`：保留
 GEM recover、`drm_atomic_helper_resume()`、fbdev/polling 恢复和所有 DPU/HDMI 子设备 PM
 回调，仅删除 atomic resume 之后的 `innodpu_pdp0_wakeup()` CRTC 遍历。
 
@@ -53,14 +54,29 @@ atomic commit 顺序，只保证光标恢复由 atomic CRTC enable 执行一次�
 
 ## 版本、构建与验收
 
-- 新候选：`4.0.1-i2`；不复用失败候选 `4.0.1-i1`。
-- 固定 epoch：`1788364800`（`2026-09-03 00:00 +0800`），取 R04 后一个本地自然日边界；
-  其他版本/epoch 失败关闭。
-- `scripts/build-innogpu-driver.sh` 保留显式 `4.0.1-i1` 复现路径（只应用 patch-024）；
-  默认 `4.0.1-i2` 在编译 staging 和包内 DKMS 源码中均按序应用 patch-024 +
-  patch-025-suspend-resume-display。
+- 严格对照：A=`4.0.1-i3` 只应用 patch-024；B=`4.0.1-i4` 在其后应用
+  patch-025-suspend-resume-display；i1/i2 不再由当前构建器复用。
+- i3/i4 共用固定 epoch `1788451200`（`2026-09-04 00:00 +0800`）；其他版本/epoch
+  失败关闭。
+- 构建器以 `--fuzz=0 --no-backup-if-mismatch` 应用每个补丁；任一 hunk 失败即终止，并在
+  编译 staging、包内 DKMS 源码与最终 package payload 三处拒绝任何 `.orig/.rej`。
 - 静态门禁只能证明补丁可应用、范围、版本/epoch 和双树接线正确。真机验收
   须另开轮次，保持挂起冻结、独立回退包、watchdog 和人工在场要求。
+
+## R06 包级单变量准备证据
+
+旧 i2 包含未参与编译但不应入包的
+`usr/src/innogpu-kernel-2.2/innosrvkm/innodpu_drm_pm.c.orig`；它由零上下文 025 的
+offset 应用触发 GNU patch mismatch backup。R06 因此在首轮安装前停止，并完成以下修正：
+
+- 025 重生为三行上下文补丁；release package gate 与 fixture 同时拒绝 `.orig/.rej`；
+- i3 SHA-256：`6cab9e521046b386ec2e34ce84d384302b044a4c215c836566274d5de769dcba`；
+- i4 SHA-256：`085e06844607a9973a6d5e3c1e3c4ec986a1cdf6903e6a9169b68285e39969a7`；
+- 完整解包比较显示两包路径、类型、权限和符号链接目标一致；排除目标源码后 payload
+  内容零差异，目标源码只差 025 的 6 行删除；`DEBIAN/` 只差版本、描述与版本提示；两包
+  均无 `.orig/.rej`。
+
+上述只能证明实验包满足单变量前置，不能替代 ftrace 与人工可见画面的四轮真机因果验证。
 
 ## 下一轮观测方案
 

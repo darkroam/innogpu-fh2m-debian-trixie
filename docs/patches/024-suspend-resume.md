@@ -28,9 +28,9 @@
 
 ## 构建接线
 
-`4.0.1-i1` 固定构建 epoch 为 `1788278400`（2026-09-02 00:00 +0800），只应用
-patch-024，仅供失败复现。当前 `4.0.1-i2` 候选仍先应用 patch-024，再应用
-patch-025-suspend-resume-display，详见[独立说明](025-suspend-resume-display.md)。
+历史 `4.0.1-i1` 固定 epoch 为 `1788278400`（2026-09-02 00:00 +0800），只应用
+patch-024。当前 R06 A=`4.0.1-i3` 仍只应用 patch-024，B=`4.0.1-i4` 再应用
+patch-025-suspend-resume-display；两者共用 epoch `1788451200`，详见[独立说明](025-suspend-resume-display.md)。
 
 legacy `scripts/build-deepin-coherent.sh` 的开关为 `APPLY_SUSPEND_RESUME_FIX=1`，默认关闭；
 `scripts/build-patched28-suspend-resume.sh` 继承 patched-27 的完整开关集合后增加 patch-024，只作为
@@ -48,7 +48,7 @@ legacy `scripts/build-deepin-coherent.sh` 的开关为 `APPLY_SUSPEND_RESUME_FIX
 - 电源状态门禁位于 OPP 查询及 PreClock 调用之前；
 - 非 ON 分支保持当前频率并返回；
 - 补丁只触及一个 driver 文件；
-- 新架构构建器对 i1/i2 分别固定 epoch，且编译树和包内源码都应用 patch-024；
+- 新架构构建器对 R06 i3/i4 固定同一 epoch，且编译树和包内源码都应用 patch-024；
 - coherent 构建器与 patched-28 legacy 包装器的开关、版本和 p27 继承关系完整。
 
 这只证明补丁可应用和接线正确，不证明真机恢复问题已经解决。

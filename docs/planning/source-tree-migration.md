@@ -147,7 +147,7 @@ body 引用 `docs/patches/patch-*.md`；记录原 patch hash、目标文件、�
 
 ## 六、staging 构建树与新构建器（`scripts/build-innogpu-driver.sh`）
 
-构建流程（历史 4.0.0-i1 不叠加补丁；4.0.1-i1/i2 按版本应用经审查的新行为修复）：
+构建流程（历史 4.0.0-i1 不叠加补丁；当前 R06 i3/i4 按版本应用经审查的新行为修复）：
 
 ```text
 验证 Deepin 原包

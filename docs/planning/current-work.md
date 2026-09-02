@@ -30,12 +30,11 @@
 
 ## 运行时、测试与上游报告
 
-- [ ] **suspend/resume 候选验收**：patch-024 / `4.0.1-i1` 已完成构建、安装和真实 s2idle entry/exit，
-  PowerLock/PVR 机械错误未增长，但外屏唤醒后整屏红色，候选验收失败并已回退 `4.0.0-i1`；B2 deep
-  未执行，s2idle 也不能作为规避。下一候选必须调查完整 KMS/CRTC/connector 显示恢复时序，验收必须
-  包含人工可见画面、SSH 与 TTY，不能仅依赖自动化 Xorg/GL/PVR 检查。再次挂起前须另开轮次、复审
-  回退与 watchdog 方案；本轮不再挂起。`4.0.1-i2` 已针对 post-atomic 重复光标恢复
-  制作 patch-025-suspend-resume-display 离线候选，尚未安装或验收。见
+- [ ] **suspend/resume 候选验收**：patch-024 / `4.0.1-i1` 的 s2idle 无 PowerLock/PVR 增长但外屏红屏；
+  `4.0.1-i2` 加入 patch-025 后在 R05 完成一次人工可见恢复、SSH/TTY/Xorg/GL/PVR 门禁通过，当前运行
+  i2，但单次成功不构成根因证明。R06 已用同 epoch `1788451200` 构建 A=`4.0.1-i3`（仅 024）与
+  B=`4.0.1-i4`（024+025），严格补丁与 `.orig/.rej` 门禁、完整包级单变量比较通过；待监督复审后按
+  i3->i4->i3->i4 执行四轮 s2idle + ftrace。deep 仍冻结，不能声称已修复。见
   [`024-suspend-resume.md`](../patches/024-suspend-resume.md)、
   [`025-suspend-resume-display.md`](../patches/025-suspend-resume-display.md)
   和 [s2idle 红屏事故](../incidents/suspend-resume-s2idle-red-screen-20260902.md)。

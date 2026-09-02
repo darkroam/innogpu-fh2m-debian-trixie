@@ -144,9 +144,10 @@ done
 grep -Fq 'patches/023-invisible-read-no-writeback.patch' scripts/build-deepin-coherent.sh ||
     fail "coherent builder does not apply the patched-23 driver fix"
 
-# Current-state guards: bumping the driver version requires updating the
-# README current-package marker below (and the architecture require_text).
-require_text README.md '当前驱动包 `4.0.0-i1`'
+# Current-state guards: changing the installed package or R06 comparison roles
+# requires updating both the summary and architecture documents.
+require_text README.md '当前驱动包为 `4.0.1-i2`'
+require_text README.md '`4.0.1-i3`（024）/`4.0.1-i4`（024+025）'
 require_text README.md '(docs/project/licensing.md)'
 require_text docs/README.md '[许可证与再分发边界](project/licensing.md)'
 require_text docs/README.md '[驱动源码许可证审计](project/source-license-audit.md)'
@@ -300,7 +301,8 @@ require_text docs/patches/patched-21-release-candidate.md 'RUNTIME_VALIDATION: P
 require_text docs/project/status.md "\`3.3.3.42-patched-21\` 已安装、重启"
 require_text docs/patches/README.md 'p21 已在当前设备运行验收'
 require_text docs/project/dependencies.md '当前设备已完成运行验收的候选'
-require_text docs/project/architecture.md '4.0.0-i1` 是当前设备已安装并重启'
+require_text docs/project/architecture.md '4.0.0-i1` 是已完成基线验收'
+require_text docs/project/architecture.md 'R06 的 `4.0.1-i3/i4`'
 require_text debs/README.md '已在当前设备完成部署、重启和运行验收'
 require_text docs/user/new-device-install.md 'patched-21 已完成当前设备的构建、包边界、部署、重启和运行验收'
 require_text docs/user/recovery.md 'patched-22 -> patched-21 -> patched-17 -> patched-8'

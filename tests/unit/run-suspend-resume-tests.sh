@@ -71,13 +71,15 @@ else
     fail patch_scope_is_single_driver_file
 fi
 
-if patch --dry-run -s -d "$TMP/tree" -p1 < "$DISPLAY_PATCH"; then
+if patch --dry-run --batch --forward --fuzz=0 --no-backup-if-mismatch \
+    -s -d "$TMP/tree" -p1 < "$DISPLAY_PATCH"; then
     pass display_patch_dry_run
 else
     fail display_patch_dry_run
 fi
 
-if patch -s -d "$TMP/tree" -p1 < "$DISPLAY_PATCH"; then
+if patch --batch --forward --fuzz=0 --no-backup-if-mismatch \
+    -s -d "$TMP/tree" -p1 < "$DISPLAY_PATCH"; then
     pass display_patch_applies
 else
     fail display_patch_applies
@@ -99,6 +101,20 @@ if [[ "$(grep -c '^diff -ruN ' "$DISPLAY_PATCH")" -eq 1 ]] &&
     pass display_patch_scope_is_single_driver_file
 else
     fail display_patch_scope_is_single_driver_file
+fi
+
+if grep -Fq '@@ -288,17 +288,11 @@' "$DISPLAY_PATCH" &&
+   [[ "$(grep -c '^ ' "$DISPLAY_PATCH")" -ge 6 ]]; then
+    pass display_patch_has_three_line_context
+else
+    fail display_patch_has_three_line_context
+fi
+
+if ! find "$TMP/tree" -type f \( -name '*.orig' -o -name '*.rej' \) -print -quit |
+       grep -q .; then
+    pass strict_patch_application_leaves_no_artifacts
+else
+    fail strict_patch_application_leaves_no_artifacts
 fi
 
 if bash -n "$BUILDER" "$WRAPPER" "$CURRENT_BUILDER"; then
@@ -123,9 +139,9 @@ else
     fail patched28_inherits_p27_and_enables_fix
 fi
 
-if grep -Fq 'VERSION="${VERSION:-4.0.1-i2}"' "$CURRENT_BUILDER" &&
-   grep -Fq '4.0.1-i1) EXPECTED_SOURCE_DATE_EPOCH=1788278400' "$CURRENT_BUILDER" &&
-   grep -Fq '4.0.1-i2) EXPECTED_SOURCE_DATE_EPOCH=1788364800' "$CURRENT_BUILDER" &&
+if grep -Fq 'VERSION="${VERSION:-4.0.1-i4}"' "$CURRENT_BUILDER" &&
+   grep -Fq '4.0.1-i3|4.0.1-i4) EXPECTED_SOURCE_DATE_EPOCH=1788451200' "$CURRENT_BUILDER" &&
+   ! grep -Eq '4\.0\.1-i[12]\) EXPECTED_SOURCE_DATE_EPOCH=' "$CURRENT_BUILDER" &&
    grep -Fq 'builder_version_review=FAIL unreviewed package version' "$CURRENT_BUILDER"; then
     pass current_builder_version_is_fail_closed
 else
@@ -135,31 +151,41 @@ fi
 if [[ "$(grep -c 'apply_reviewed_source_fixes "\$' "$CURRENT_BUILDER")" -eq 2 ]] &&
    grep -Fq 'patches/024-suspend-resume.patch' "$CURRENT_BUILDER" &&
    grep -Fq 'patches/025-suspend-resume-display.patch' "$CURRENT_BUILDER" &&
-   grep -Fq '[[ "$VERSION" == "4.0.1-i2" ]]' "$CURRENT_BUILDER"; then
+   grep -Fq '[[ "$VERSION" == "4.0.1-i4" ]]' "$CURRENT_BUILDER"; then
     pass current_builder_patches_compile_and_package_trees
 else
     fail current_builder_patches_compile_and_package_trees
 fi
 
-mkdir -p "$TMP/reject-i2" "$TMP/reject-i3"
-if output=$(INNOGPU_ROOT="$TMP/reject-i2" VERSION=4.0.1-i2 \
-    SOURCE_DATE_EPOCH=1788278400 bash "$CURRENT_BUILDER" 2>&1); then
-    fail current_builder_rejects_i1_epoch_for_i2
-elif grep -Fq 'builder_repro=FAIL 4.0.1-i2 requires SOURCE_DATE_EPOCH=1788364800' <<<"$output" &&
-     [[ ! -e "$TMP/reject-i2/build" ]]; then
-    pass current_builder_rejects_i1_epoch_for_i2
+if [[ "$(grep -c -- '--fuzz=0 --no-backup-if-mismatch' "$CURRENT_BUILDER")" -eq 2 ]] &&
+   grep -Fq -- "-name '*.orig' -o -name '*.rej'" "$CURRENT_BUILDER" &&
+   grep -Fq 'apply_reviewed_source_fixes "$STAGE/source" compile-staging' "$CURRENT_BUILDER" &&
+   grep -Fq 'apply_reviewed_source_fixes "$P/usr/src/innogpu-kernel-2.2" packaged-dkms' "$CURRENT_BUILDER" &&
+   grep -Fq 'reject_patch_artifacts "$P" package-payload' "$CURRENT_BUILDER"; then
+    pass current_builder_patch_application_is_fail_closed
 else
-    fail current_builder_rejects_i1_epoch_for_i2
+    fail current_builder_patch_application_is_fail_closed
 fi
 
-if output=$(INNOGPU_ROOT="$TMP/reject-i3" VERSION=4.0.1-i3 \
+mkdir -p "$TMP/reject-i2" "$TMP/reject-i4"
+if output=$(INNOGPU_ROOT="$TMP/reject-i4" VERSION=4.0.1-i4 \
     SOURCE_DATE_EPOCH=1788364800 bash "$CURRENT_BUILDER" 2>&1); then
-    fail current_builder_rejects_unreviewed_iteration
-elif grep -Fq 'builder_version_review=FAIL unreviewed package version: 4.0.1-i3' <<<"$output" &&
-     [[ ! -e "$TMP/reject-i3/build" ]]; then
-    pass current_builder_rejects_unreviewed_iteration
+    fail current_builder_rejects_old_epoch_for_i4
+elif grep -Fq 'builder_repro=FAIL 4.0.1-i4 requires SOURCE_DATE_EPOCH=1788451200' <<<"$output" &&
+     [[ ! -e "$TMP/reject-i4/build" ]]; then
+    pass current_builder_rejects_old_epoch_for_i4
 else
-    fail current_builder_rejects_unreviewed_iteration
+    fail current_builder_rejects_old_epoch_for_i4
+fi
+
+if output=$(INNOGPU_ROOT="$TMP/reject-i2" VERSION=4.0.1-i2 \
+    SOURCE_DATE_EPOCH=1788364800 bash "$CURRENT_BUILDER" 2>&1); then
+    fail current_builder_rejects_retired_iteration
+elif grep -Fq 'builder_version_review=FAIL unreviewed package version: 4.0.1-i2' <<<"$output" &&
+     [[ ! -e "$TMP/reject-i2/build" ]]; then
+    pass current_builder_rejects_retired_iteration
+else
+    fail current_builder_rejects_retired_iteration
 fi
 
 mkdir -p "$TMP/reject-root"
@@ -173,10 +199,10 @@ else
     fail current_builder_rejects_reused_4_0_0_version
 fi
 
-if output=$(INNOGPU_ROOT="$TMP/reject-root" VERSION=4.0.1-i1 \
+if output=$(INNOGPU_ROOT="$TMP/reject-root" VERSION=4.0.1-i3 \
     SOURCE_DATE_EPOCH=1787342400 bash "$CURRENT_BUILDER" 2>&1); then
     fail current_builder_rejects_unreviewed_epoch
-elif grep -Fq 'builder_repro=FAIL 4.0.1-i1 requires SOURCE_DATE_EPOCH=1788278400' <<<"$output" &&
+elif grep -Fq 'builder_repro=FAIL 4.0.1-i3 requires SOURCE_DATE_EPOCH=1788451200' <<<"$output" &&
      [[ ! -e "$TMP/reject-root/build" ]]; then
     pass current_builder_rejects_unreviewed_epoch
 else

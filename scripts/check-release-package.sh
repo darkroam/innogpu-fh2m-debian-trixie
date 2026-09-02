@@ -42,6 +42,11 @@ trap 'rm -rf "$runtime"' EXIT HUP INT TERM
 dpkg-deb --fsys-tarfile "$DEB" | tar -tf - |
     sed -e 's#^\./##' -e 's#/$##' > "$runtime/files"
 
+if grep -Eq '\.(orig|rej)$' "$runtime/files"; then
+    echo "ERROR: patch backup or reject file is present in package" >&2
+    exit 1
+fi
+
 required=(
     lib/firmware/innogpu/fh2m.fw
     lib/firmware/innogpu/fh2m.sh

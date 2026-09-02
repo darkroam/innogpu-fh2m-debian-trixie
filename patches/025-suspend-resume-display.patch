@@ -1,11 +1,21 @@
 diff -ruN a/innosrvkm/innodpu_drm_pm.c b/innosrvkm/innodpu_drm_pm.c
 --- a/innosrvkm/innodpu_drm_pm.c	2026-09-03 00:00:00.000000000 +0800
 +++ b/innosrvkm/innodpu_drm_pm.c	2026-09-03 00:00:00.000000000 +0800
-@@ -291,2 +290,0 @@
+@@ -288,17 +288,11 @@
+ static int innodpu_drm_resume(struct device *dev)
+ {
+ 	int ret = 0;
 -	struct drm_device *drm_dev = dev_get_drvdata(dev);
 -	struct drm_crtc *crtc = NULL;
-@@ -298,4 +295,0 @@
+ 
+ 	inno_drm_info(dev, "drm resume...");
+ 
+ 	innodpu_drm_gem_recover(dev);
+ 	ret = innodpu_drm_wakeup(dev);
 -
 -	drm_for_each_crtc(crtc, drm_dev) {
 -		innodpu_pdp0_wakeup(crtc);
 -	}
+ 
+ 	return ret;
+ }

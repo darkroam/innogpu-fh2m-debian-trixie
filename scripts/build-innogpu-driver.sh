@@ -9,10 +9,9 @@ set -euo pipefail
 ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$ROOT"
 
-VERSION="${VERSION:-4.0.1-i2}"
+VERSION="${VERSION:-4.0.1-i4}"
 case "$VERSION" in
-    4.0.1-i1) EXPECTED_SOURCE_DATE_EPOCH=1788278400 ;;
-    4.0.1-i2) EXPECTED_SOURCE_DATE_EPOCH=1788364800 ;;
+    4.0.1-i3|4.0.1-i4) EXPECTED_SOURCE_DATE_EPOCH=1788451200 ;;
     *)
         echo "builder_version_review=FAIL unreviewed package version: $VERSION" >&2
         exit 1
@@ -38,16 +37,30 @@ echo "builder_version_ordering=PASS $VERSION > patched-27"
 
 apply_reviewed_source_fixes() {
     local source_tree=$1
-    patch --batch --forward -s -d "$source_tree" -p1 \
+    local scope=$2
+    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$source_tree" -p1 \
         < "$ROOT/patches/024-suspend-resume.patch"
-    if [[ "$VERSION" == "4.0.1-i2" ]]; then
-        patch --batch --forward -s -d "$source_tree" -p1 \
+    if [[ "$VERSION" == "4.0.1-i4" ]]; then
+        patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$source_tree" -p1 \
             < "$ROOT/patches/025-suspend-resume-display.patch"
     fi
+    reject_patch_artifacts "$source_tree" "$scope"
+}
+
+reject_patch_artifacts() {
+    local tree=$1
+    local scope=$2
+    local artifact
+
+    artifact=$(find "$tree" -type f \( -name '*.orig' -o -name '*.rej' \) -print -quit)
+    [[ -z "$artifact" ]] || {
+        echo "builder_patch_artifacts=FAIL scope=$scope path=${artifact#"$tree"/}" >&2
+        exit 1
+    }
 }
 
 APPLIED_SOURCE_FIXES="patch-024"
-[[ "$VERSION" == "4.0.1-i2" ]] &&
+[[ "$VERSION" == "4.0.1-i4" ]] &&
     APPLIED_SOURCE_FIXES+=" patch-025-suspend-resume-display"
 
 # 1) manifest + vendor 就位
@@ -62,7 +75,7 @@ trap 'rm -rf "$STAGE"' EXIT
 mkdir -p "$STAGE/source" "$STAGE/package"
 
 cp -r drivers/. "$STAGE/source/"
-apply_reviewed_source_fixes "$STAGE/source"
+apply_reviewed_source_fixes "$STAGE/source" compile-staging
 for obj in vendor/kernel/*/*.o_shipped; do
     mod=$(basename "$(dirname "$obj")")
     cp "$obj" "$STAGE/source/$mod/"
@@ -90,7 +103,7 @@ P=$STAGE/package/root
 install -d "$P/usr/src/innogpu-kernel-2.2" "$P/etc/ld.so.conf.d" \
     "$P/usr/share/innogpu-fh2m-trixie" "$P/usr/bin" "$P/usr/sbin"
 cp -r drivers/. "$P/usr/src/innogpu-kernel-2.2/"
-apply_reviewed_source_fixes "$P/usr/src/innogpu-kernel-2.2"
+apply_reviewed_source_fixes "$P/usr/src/innogpu-kernel-2.2" packaged-dkms
 rm -f "$P/usr/src/innogpu-kernel-2.2/README.md"
 
 # vendor payload -> install 路径
@@ -117,12 +130,13 @@ while IFS= read -r vp; do
     fi
 done < <(python3 -c "import json;m=json.load(open('binary-manifest.json'));[print(e['vendor_path']) for e in m['entries']]")
 python3 tools/patch-gpupll-object.py "$P/usr/src/innogpu-kernel-2.2/innogpu/innogpu.o_shipped" >/dev/null
-# 包边界守卫: .o.cmd 是内核构建产物, 不入发布包(监督评审边界裁定)。
+# 包边界守卫: 构建产物和 patch 备份/拒绝文件不得进入发布包。
 if find "$P" -name '*.o.cmd' | grep -q .; then
     echo "builder_package_boundary=FAIL .o.cmd build artifacts must not enter the package"; exit 1
 fi
+reject_patch_artifacts "$P" package-payload
 echo "builder_payload_assemble=PASS"
-echo "builder_package_boundary=PASS (no .o.cmd build artifacts)"
+echo "builder_package_boundary=PASS (no .o.cmd/.orig/.rej artifacts)"
 
 printf '%s
 ' '/usr/lib/x86_64-linux-gnu/innogpu-fh2m' > "$P/etc/ld.so.conf.d/0-innogpu-hwgl.conf"

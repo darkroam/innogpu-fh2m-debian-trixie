@@ -155,6 +155,7 @@
       "LICENSES/BSD-3-Clause.txt": "BSD-3-Clause",
       "LICENSES/LGPL-2.1-only.txt": "LGPL-2.1-only",
       "LICENSES/MPL-2.0.txt": "MPL-2.0",
+      ".gitattributes": "GPL-3.0-or-later",
       ".gitignore": "MIT",
       "README.md": "MIT",
       "scripts/install.sh": "MIT",
