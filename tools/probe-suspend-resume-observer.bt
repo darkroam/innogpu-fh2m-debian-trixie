@@ -1,0 +1,122 @@
+struct r07_pdp0_hwdev {
+    uint32_t dpu_id;
+    uint8_t pad_to_cursor_resume[612];
+    uint64_t cursor_resume;
+    uint64_t cursor_is_disable;
+    uint8_t pad_to_cursor_enable[188];
+    uint8_t cursor_enable;
+    uint8_t ow2_cursor_enable;
+    uint8_t cursor_alignment[2];
+    uint64_t cursor_fb;
+    uint32_t cursor_handle;
+    int32_t cursor_x;
+    int32_t cursor_y;
+    int32_t hot_x;
+    int32_t hot_y;
+    int32_t cursor_w;
+    int32_t cursor_h;
+    int32_t cursor_frame_w;
+    int32_t cursor_frame_h;
+    uint32_t x_scaler;
+    uint32_t y_scaler;
+    uint8_t combi;
+    uint8_t dual_link;
+    uint8_t is_nulldisp;
+    uint8_t is_normal_mode;
+    uint64_t waitqueue;
+    uint64_t config_valid;
+    uint64_t vblank_enable;
+    uint64_t crtc;
+};
+
+BEGIN
+{
+    printf("r07_observer=START\n");
+}
+
+kprobe:innogpu:pdp0_cursor_move,
+kprobe:innogpu:pdp0_cursor_set,
+kprobe:innogpu:innodpu_pdp0_wakeup
+{
+    $pdp0 = (uint64)arg0 - 32;
+    $hwaddr = *(uint64 *)$pdp0;
+    $hw = (struct r07_pdp0_hwdev *)$hwaddr;
+    $state = $hw->crtc ? *(uint64 *)($hw->crtc + 1176) : 0;
+    $active_valid = $state ? 1 : 0;
+    $active = $state ? *(uint8 *)($state + 9) : 0;
+    $config = $hw->config_valid ? *(int32 *)$hw->config_valid : -2147483648;
+    printf("r07_event=state source=%s dpu=%u active_valid=%u active=%u crtc_ptr=0x%lx crtc_state_ptr=0x%lx cursor_enable=%u cursor_fb=0x%lx cursor_x=%d cursor_y=%d cursor_w=%d cursor_h=%d cursor_resume_ptr=0x%lx cursor_is_disable_ptr=0x%lx config_valid=%d\n",
+           probe, $hw->dpu_id, $active_valid, $active, $hw->crtc, $state,
+           $hw->cursor_enable, $hw->cursor_fb,
+           $hw->cursor_x, $hw->cursor_y, $hw->cursor_w, $hw->cursor_h,
+           $hw->cursor_resume, $hw->cursor_is_disable, $config);
+    @state_events[probe] = count();
+}
+
+kprobe:innogpu:pdp0_cursor_resume,
+kprobe:innogpu:pdp0_cursor_is_disable,
+kprobe:innogpu:pdp0_set_config_valid
+{
+    $hw = (struct r07_pdp0_hwdev *)arg0;
+    $state = $hw->crtc ? *(uint64 *)($hw->crtc + 1176) : 0;
+    $active_valid = $state ? 1 : 0;
+    $active = $state ? *(uint8 *)($state + 9) : 0;
+    $config = $hw->config_valid ? *(int32 *)$hw->config_valid : -2147483648;
+    printf("r07_event=state source=%s dpu=%u active_valid=%u active=%u crtc_ptr=0x%lx crtc_state_ptr=0x%lx cursor_enable=%u cursor_fb=0x%lx cursor_x=%d cursor_y=%d cursor_w=%d cursor_h=%d cursor_resume_ptr=0x%lx cursor_is_disable_ptr=0x%lx config_valid=%d arg1=%lu\n",
+           probe, $hw->dpu_id, $active_valid, $active, $hw->crtc, $state,
+           $hw->cursor_enable, $hw->cursor_fb,
+           $hw->cursor_x, $hw->cursor_y, $hw->cursor_w, $hw->cursor_h,
+           $hw->cursor_resume, $hw->cursor_is_disable, $config, arg1);
+    @state_events[probe] = count();
+}
+
+kprobe:innogpu:pdp0_cursor_is_disable
+{
+    @is_disable_hwdev[tid] = arg0;
+}
+
+kretprobe:innogpu:pdp0_cursor_is_disable
+/@is_disable_hwdev[tid]/
+{
+    $hw = (struct r07_pdp0_hwdev *)@is_disable_hwdev[tid];
+    printf("r07_event=cursor_is_disable_return dpu=%u retval=%d\n",
+           $hw->dpu_id, retval);
+    delete(@is_disable_hwdev[tid]);
+}
+
+kprobe:innogpu:fh2m_hal_reg_read32
+/arg2 >= 0x258 && arg2 <= 0x25a/
+{
+    @reg_read_ptr[tid] = arg3;
+    @reg_read_dpu[tid] = arg1;
+    @reg_read_id[tid] = arg2;
+}
+
+kretprobe:innogpu:fh2m_hal_reg_read32
+/@reg_read_ptr[tid]/
+{
+    $value = *(uint32 *)@reg_read_ptr[tid];
+    printf("r07_event=hal_read dpu=%lu reg=0x%lx value=0x%x retval=%d\n",
+           @reg_read_dpu[tid], @reg_read_id[tid], $value, retval);
+    delete(@reg_read_ptr[tid]);
+    delete(@reg_read_dpu[tid]);
+    delete(@reg_read_id[tid]);
+}
+
+kprobe:innogpu:fh2m_hal_reg_write32
+/arg2 >= 0x258 && arg2 <= 0x25a/
+{
+    printf("r07_event=hal_write dpu=%lu reg=0x%lx value=0x%lx\n",
+           arg1, arg2, arg3);
+}
+
+END
+{
+    print(@state_events);
+    clear(@state_events);
+    clear(@is_disable_hwdev);
+    clear(@reg_read_ptr);
+    clear(@reg_read_dpu);
+    clear(@reg_read_id);
+    printf("r07_observer=STOP\n");
+}

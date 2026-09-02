@@ -5,9 +5,9 @@
 本项目自有工作采用 GPL-3.0-or-later；fork 上游 MIT 内容与导入源码/厂商载荷按各自声明处理，
 当前再分发边界见[许可证与再分发边界](docs/project/licensing.md)（唯一权威文档）。
 
-> 最后更新：2026-09-02 —— 当前驱动包为 `4.0.1-i2`；R05 完成一次可见恢复正常的 s2idle 验收。
+> 最后更新：2026-09-02 —— 当前驱动包为 `4.0.1-i3`；R06 的首轮 s2idle 正常恢复，但候选 cursor 分支未执行，按停止条件终止 A/B。
 > `4.0.1-i1` 已构建、安装并完成一次真实 s2idle 验证，但唤醒后外屏红屏，候选验收失败，禁止继续安装。
-> R06 使用新构建的 `4.0.1-i3`（024）/`4.0.1-i4`（024+025）执行严格 A/B；准备阶段不等于根因已证实。
+> R07 非挂起观测确认当前桌面 `cursor_enable=0`；patch-025 继续保持 UNVERIFIED，deep 继续冻结。
 
 ## 适配的当前系统
 
@@ -16,9 +16,9 @@
 | 发行版 / 内核 | Debian Trixie (13)，kernel `6.12.101+deb13-amd64` |
 | CPU 平台 | Hygon x86_64 |
 | GPU | Innosilicon Fantasy II-M，PCI `1ec8:9810`，2 GiB VRAM（PowerVR DDK V119 RTM 谱系） |
-| 当前驱动包 | `4.0.1-i2`：patch-024 + patch-025-suspend-resume-display；R05 一次 s2idle 可见恢复、SSH/TTY/Xorg/GL/PVR 门禁通过 |
+| 当前驱动包 | `4.0.1-i3`：仅 patch-024；R06 首轮 s2idle 正常恢复，但 cursor treatment 未入组，不是稳定或修复结论 |
 | 最近失败候选 | `4.0.1-i1`：在新架构构建中应用 patch-024；s2idle 唤醒后外屏红屏，已回退，不得安装或冒充当前运行版本 |
-| 当前严格 A/B 候选 | `4.0.1-i3`：仅 patch-024；`4.0.1-i4`：patch-024 + patch-025-suspend-resume-display；同 epoch、包级单变量复验通过，尚未进入四轮验收 |
+| 当前严格 A/B 候选 | `4.0.1-i3`：仅 patch-024；`4.0.1-i4`：024+025；同 epoch、包级单变量复验通过，但 R06 因 A 不复现且 cursor 分支未执行在 1/4 后停止 |
 | 已验证能力 | Vulkan 1.3.264 枚举及队列提交 / OpenCL 3.0 枚举及 kernel 读回 / GL 4.3 core + GLES 3.2 / VA-API H.264 Main + HEVC Main 实际硬解（30 帧 320x240 NV12 输出校验）/ DMA-BUF 同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 / DRM+fbdev / 桌面硬件 GL / HDA 与 PipeWire 枚举 |
 
 ## 版本演进
@@ -27,7 +27,7 @@
 2. **适配本设备**：DPU/fbdev/connector/背光/GEM 系列修复（patched-8 → patched-27），本机稳定运行。
 3. **迁移 Deepin**：以 Deepin 202504 完整原包为唯一技术基线，统一用户态/固件/DDX 载荷，消除 ABI 混配。
 4. **完全重构（当前）**：取消 patch 叠加模式 → `drivers/` 仓库内维护的导入源码树 + manifest 管理黑盒，新构建器产出 `4.0.0-i1`（可复现构建；迁移阶段 0–4 完成，设备已运行）。
-5. **suspend/resume 修复候选**：`4.0.1-i1` 因 s2idle 红屏失败；`i2` 一次恢复通过；严格定位改用同 epoch 的 `i3`（A）/`i4`（B）做 A->B->A->B。
+5. **suspend/resume 修复候选**：`4.0.1-i1` 因 s2idle 红屏失败；`i2` 一次恢复通过；严格定位在 `i3` 首轮发现 cursor 分支未执行后停止，R07 转为观测与触发条件设计。
 
 ## 主要修复的问题
 
@@ -36,7 +36,7 @@
 - invisible READ mapping 逐页回写缺陷；`dma_resv` usage 语义；未活动 CRTC vblank 守卫
 - foreign DMA-BUF 生命周期；deb 构建可复现性（固定 epoch + 目录 mtime 归一化）
 - deep resume 的 devfreq/PVR 电源状态竞态候选修复（patch-024，`4.0.1-i1` s2idle 可见恢复失败，deep 未测试）
-- s2idle 红屏的 post-atomic 重复光标恢复候选修复（patch-025-suspend-resume-display，待 `i3/i4` 严格 A/B 定因）
+- s2idle 红屏的 post-atomic 重复光标恢复候选修复（patch-025-suspend-resume-display；当前桌面 cursor 分支未入组，保持 UNVERIFIED）
 
 补丁与事故详情见 [docs/patches/README.md](docs/patches/README.md)、[docs/incidents/README.md](docs/incidents/README.md)。
 

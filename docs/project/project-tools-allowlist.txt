@@ -211,6 +211,8 @@ tools/probe-egl-gbm.c
 tools/probe-opencl-devices.c
 tools/probe-pdp-invisible-read.c
 tools/probe-surfaceless-gles2.c
+tools/probe-suspend-resume-observer.bt
+tools/probe-suspend-resume-state.sh
 tools/probe-vaapi.c
 tools/probe-vulkan-devices.c
 tools/probe-x11-egl-gles2.c

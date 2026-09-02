@@ -31,10 +31,12 @@
 ## 运行时、测试与上游报告
 
 - [ ] **suspend/resume 候选验收**：patch-024 / `4.0.1-i1` 的 s2idle 无 PowerLock/PVR 增长但外屏红屏；
-  `4.0.1-i2` 加入 patch-025 后在 R05 完成一次人工可见恢复、SSH/TTY/Xorg/GL/PVR 门禁通过，当前运行
-  i2，但单次成功不构成根因证明。R06 已用同 epoch `1788451200` 构建 A=`4.0.1-i3`（仅 024）与
-  B=`4.0.1-i4`（024+025），严格补丁与 `.orig/.rej` 门禁、完整包级单变量比较通过；待监督复审后按
-  i3->i4->i3->i4 执行四轮 s2idle + ftrace。deep 仍冻结，不能声称已修复。见
+  `4.0.1-i2` 加入 patch-025 后在 R05 完成一次人工可见恢复。R06 用同 epoch 的 i3（仅 024）/i4
+  （024+025）完成包级单变量准备，但 i3 第 1/4 轮正常且 ftrace 为 `wakeup=3/cursor_resume=0`，
+  因处理分支未执行而按规则停止。当前运行 i3；R07 非挂起观测确认 modesetting 桌面
+  `cursor_enable=0`，无 cursor 入口和 `0x258..0x25a` 自然访问。下一步须先经批准建立硬件光标
+  入组，否则转向 primary FB/GEM 与 DPU shadow/config-valid 观测；025 保持 UNVERIFIED，deep
+  仍冻结，不能声称已修复。见
   [`024-suspend-resume.md`](../patches/024-suspend-resume.md)、
   [`025-suspend-resume-display.md`](../patches/025-suspend-resume-display.md)
   和 [s2idle 红屏事故](../incidents/suspend-resume-s2idle-red-screen-20260902.md)。

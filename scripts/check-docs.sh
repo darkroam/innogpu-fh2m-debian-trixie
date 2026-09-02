@@ -144,10 +144,11 @@ done
 grep -Fq 'patches/023-invisible-read-no-writeback.patch' scripts/build-deepin-coherent.sh ||
     fail "coherent builder does not apply the patched-23 driver fix"
 
-# Current-state guards: changing the installed package or R06 comparison roles
-# requires updating both the summary and architecture documents.
-require_text README.md '当前驱动包为 `4.0.1-i2`'
-require_text README.md '`4.0.1-i3`（024）/`4.0.1-i4`（024+025）'
+# Current-state guards: changing the installed package or R06/R07 conclusion
+# requires updating the summary and patch analysis together.
+require_text README.md '当前驱动包为 `4.0.1-i3`'
+require_text README.md '当前桌面 `cursor_enable=0`'
+require_text docs/patches/025-suspend-resume-display.md 'patch-025 仍为 **UNVERIFIED**'
 require_text README.md '(docs/project/licensing.md)'
 require_text docs/README.md '[许可证与再分发边界](project/licensing.md)'
 require_text docs/README.md '[驱动源码许可证审计](project/source-license-audit.md)'

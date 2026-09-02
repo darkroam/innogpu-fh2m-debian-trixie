@@ -78,8 +78,8 @@ Deepin 202504 deb 同时提供硬件 GL/DDX 用户态。内核模块成功、DRM
 
 当前构建器只接受 R06 的 `4.0.1-i3/i4` 与共同 epoch `1788451200`：i3 只应用 patch-024，
 默认 i4 在其后应用 patch-025-suspend-resume-display；两者都同时应用到离线编译 staging 和最终
-包内 DKMS 源码，并拒绝 `.orig/.rej` patch 产物。i1/i2 不再由当前源码复用；当前运行的 i2 不受工作区
-补丁修改影响。
+包内 DKMS 源码，并拒绝 `.orig/.rej` patch 产物。i1/i2 不再由当前源码复用；当前运行 i3，
+R06 因 cursor 分支未入组而没有安装 i4。
 
 Deepin 原包仍是导入源码、用户态 ABI 和黑盒载荷的唯一技术来源。9 个历史启用补丁已转换为
 `drivers/` 中的源码提交；新行为修复必须先以独立补丁和升号候选验证。patch-024 的 i1

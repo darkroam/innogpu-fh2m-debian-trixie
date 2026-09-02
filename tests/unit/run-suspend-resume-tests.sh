@@ -11,6 +11,8 @@ DISPLAY_PATCH="$ROOT/patches/025-suspend-resume-display.patch"
 BUILDER="$ROOT/scripts/build-deepin-coherent.sh"
 WRAPPER="$ROOT/scripts/build-patched28-suspend-resume.sh"
 CURRENT_BUILDER="$ROOT/scripts/build-innogpu-driver.sh"
+OBSERVER="$ROOT/tools/probe-suspend-resume-state.sh"
+OBSERVER_BT="$ROOT/tools/probe-suspend-resume-observer.bt"
 TMP="$(mktemp -d "${TMPDIR:-/tmp}/innogpu-suspend-resume-tests.XXXXXX")"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -207,6 +209,46 @@ elif grep -Fq 'builder_repro=FAIL 4.0.1-i3 requires SOURCE_DATE_EPOCH=1788451200
     pass current_builder_rejects_unreviewed_epoch
 else
     fail current_builder_rejects_unreviewed_epoch
+fi
+
+if bash -n "$OBSERVER" &&
+   ! grep -Fq '/sys/power/state' "$OBSERVER" &&
+   ! grep -Eq '(rtcwake|systemctl[[:space:]]+(suspend|hibernate)|printf .*mem_sleep)' "$OBSERVER" &&
+   grep -Fq "trap 'exit 129' HUP" "$OBSERVER" &&
+   grep -Fq "trap 'exit 130' INT" "$OBSERVER" &&
+   grep -Fq "trap 'exit 143' TERM" "$OBSERVER"; then
+    pass observer_is_non_suspend_and_has_valid_syntax
+else
+    fail observer_is_non_suspend_and_has_valid_syntax
+fi
+
+if grep -Fq 'EXPECTED_OBJECT_SHA=30c594629d1d0e32674e793f2f4235afd4efd3f1e92ee4e4ed1920b315618c2b' "$OBSERVER" &&
+   grep -Fq 'EXPECTED_KERNEL=6.12.101+deb13-amd64' "$OBSERVER" &&
+   grep -Fq 'EXPECTED_VERSION=4.0.1-i3' "$OBSERVER" &&
+   grep -Fq 'EXPECTED_MODULE_BUILD_ID=be315ad1dc8de5248bb4d29f84e0a98fbc1978ab' "$OBSERVER" &&
+   grep -Fq 'loaded_module_build_id_mismatch' "$OBSERVER" &&
+   grep -Fq 'pahole -F dwarf -C "$type" "$OBJECT"' "$OBSERVER" &&
+   grep -Fq '[[ -n $layout ]] || fail "missing_${type}_layout"' "$OBSERVER" &&
+   grep -Fq '"$BUILD_OUTPUT_ROOT"/*|/tmp/*)' "$OBSERVER" &&
+   grep -Fq '[[ ! -e $OUTPUT && ! -L $OUTPUT ]]' "$OBSERVER" &&
+   grep -Fq 'chown -R "$DESKTOP_UID:$DESKTOP_GID" "$OUTPUT"' "$OBSERVER" &&
+   grep -Fq 'cursor_enable_offset_mismatch' "$OBSERVER" &&
+   grep -Fq 'crtc_active_offset_mismatch' "$OBSERVER"; then
+    pass observer_abi_is_fail_closed
+else
+    fail observer_abi_is_fail_closed
+fi
+
+if grep -Fq 'kprobe:innogpu:pdp0_cursor_move' "$OBSERVER_BT" &&
+   grep -Fq 'kprobe:innogpu:innodpu_pdp0_wakeup' "$OBSERVER_BT" &&
+   grep -Fq 'active_valid=' "$OBSERVER_BT" &&
+   grep -Fq 'kprobe:innogpu:fh2m_hal_reg_read32' "$OBSERVER_BT" &&
+   grep -Fq 'kprobe:innogpu:fh2m_hal_reg_write32' "$OBSERVER_BT" &&
+   grep -Fq '/arg2 >= 0x258 && arg2 <= 0x25a/' "$OBSERVER_BT" &&
+   ! grep -Eq 'system\(|override\(|signal\(' "$OBSERVER_BT"; then
+    pass observer_records_natural_driver_activity_only
+else
+    fail observer_records_natural_driver_activity_only
 fi
 
 printf 'tests_total=%d tests_passed=%d tests_failed=%d tests_skipped=0\n' \

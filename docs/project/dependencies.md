@@ -18,10 +18,10 @@
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-25.deb` | patch-025 dma_resv usage 语义修复；已实机验证；当前回退点为 p26；可复现 SHA 见 `debs/README.md` |
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-26.deb` | patch-026 未活动 CRTC vblank 守卫；已实机验证；当前回退点为 p27；可复现 SHA 见 `debs/README.md` |
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb` | patch-027 foreign DMA-BUF 生命周期修复；**保留的回退基线**（Phase 4 后设备已运行 4.0.0-i1）；SHA `f3841597…` |
-| `build/innogpu-fh2m-trixie_4.0.0-i1.deb`（由 `scripts/build-innogpu-driver.sh` 生成） | **新架构当前运行包**：迁移源码树 + manifest 黑盒载荷；可复现 epoch 1787342400，SHA `68aea6c0…`；Phase 4 实机验收全 PASS |
+| `build/innogpu-fh2m-trixie_4.0.0-i1.deb`（由 `scripts/build-innogpu-driver.sh` 生成） | **新架构回退包**：迁移源码树 + manifest 黑盒载荷；可复现 epoch 1787342400，SHA `68aea6c0…`；Phase 4 实机验收全 PASS |
 | `build/innogpu-fh2m-trixie_4.0.1-i1.deb`（本机失败候选） | patch-024 suspend/resume 实验；固定 epoch 1788278400，SHA `a7fe10ed…`；s2idle 唤醒外屏红屏，已回退，禁止安装 |
-| `build/innogpu-fh2m-trixie_4.0.1-i2.deb`（R05 当前运行包） | patch-024 + patch-025-suspend-resume-display；固定 epoch 1788364800，历史 SHA `b26c0b27…`；一次 s2idle 可见恢复通过，不作为 R06 严格 A/B 包复用 |
-| `build/innogpu-fh2m-trixie_4.0.1-i3.deb`（R06 A） | 仅 patch-024；固定 epoch 1788451200；SHA `6cab9e521046b386ec2e34ce84d384302b044a4c215c836566274d5de769dcba`；严格对照准备通过，尚未安装 |
+| `build/innogpu-fh2m-trixie_4.0.1-i2.deb`（R05 历史候选） | patch-024 + patch-025-suspend-resume-display；固定 epoch 1788364800，历史 SHA `b26c0b27…`；一次 s2idle 可见恢复通过，不作为 R06 严格 A/B 包复用 |
+| `build/innogpu-fh2m-trixie_4.0.1-i3.deb`（R06 A，当前运行） | 仅 patch-024；固定 epoch 1788451200；SHA `6cab9e521046b386ec2e34ce84d384302b044a4c215c836566274d5de769dcba`；首轮 s2idle 正常但 cursor 分支未入组，不是稳定结论 |
 | `build/innogpu-fh2m-trixie_4.0.1-i4.deb`（R06 B） | patch-024 + patch-025-suspend-resume-display；固定 epoch 1788451200；SHA `085e06844607a9973a6d5e3c1e3c4ec986a1cdf6903e6a9169b68285e39969a7`；严格对照准备通过，尚未安装 |
 | `debs/innogpu-fh2m_20250421190503-debug_amd64.deb` | Deepin 202504 DKMS/GL/DDX 来源；SHA-256 `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2` |
 

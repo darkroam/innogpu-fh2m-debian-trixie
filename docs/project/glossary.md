@@ -26,5 +26,5 @@
 | `CLEARED` / `BLOCKED` | 某个机械发布门禁通过 / 不可发布 | `project-tools=CLEARED` 只表示候选制品通过机械检查；整仓 `license_release_gate=BLOCKED` 与 `driver-source=BLOCKED` 仍保持，不可互相替代 |
 | `4.0.0-i1` | 新架构基线（drivers/ 源码树 + manifest 黑盒载荷） | Phase 4 已验证；`3.3.3.42-patched-27` 为保留的首选回退基线 |
 | `4.0.1-i1` | patch-024 suspend/resume 修复的失败候选 | 独立升号，固定 epoch 1788278400；已构建/安装，s2idle 唤醒红屏后回退，deep 未测试，禁止安装 |
-| `4.0.1-i2` | 当前运行的 patch-024 + patch-025 候选 | R05 一次 s2idle 可见恢复通过；不复用为严格 A/B，因果仍 UNVERIFIED |
-| `4.0.1-i3` / `4.0.1-i4` | R06 严格 A/B：i3 仅 024，i4 为 024+025 | 共用 epoch 1788451200；包级单变量准备通过，四轮 s2idle 待执行 |
+| `4.0.1-i2` | patch-024 + patch-025 历史候选 | R05 一次 s2idle 可见恢复通过；不复用为严格 A/B，因果仍 UNVERIFIED |
+| `4.0.1-i3` / `4.0.1-i4` | R06 严格 A/B：i3 仅 024，i4 为 024+025 | 共用 epoch 1788451200；包级单变量通过，首轮 i3 未复现且 cursor 分支未入组后停止；当前运行 i3 |
