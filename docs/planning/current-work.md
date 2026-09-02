@@ -36,9 +36,11 @@
   因处理分支未执行而按规则停止。当前运行 i3；R07 非挂起观测确认 modesetting 桌面
   `cursor_enable=0`，无 cursor 入口和 `0x258..0x25a` 自然访问。R08 已建立正常桌面的
   primary FB/GEM/scanout 地址链和 DPU shadow/config-valid 只读基线，并纠正 R07 因旧 DRM
-  偏移造成的空 `crtc->state` 误判；R08 未挂起，假设 2/4 仍未证实。下一步仅可在用户与 dsh
-  另行批准后执行一次带 observer、RTC 与 watchdog 的 i3 s2idle 复现；025 保持 UNVERIFIED，
-  deep 仍冻结，不能声称已修复。见
+  偏移造成的空 `crtc->state` 误判；R08 未挂起，假设 2/4 仍未证实。R09 经批准执行了
+  唯一一次带 observer、RTC 与 watchdog 的 i3 s2idle：内屏/TTY 正常、外屏未连接、红屏
+  未复现，trace 仍为 wakeup=3/cursor_resume=0。2026-09-02 用户决定**暂停 suspend 线**：
+  patch-024 的 deep 修复与 patch-025 均保持 UNVERIFIED，deep 继续冻结，P3 保持打开
+  （红屏三次尝试未复现，deep 未验证）；恢复调查需重新授权。见
   [`024-suspend-resume.md`](../patches/024-suspend-resume.md)、
   [`025-suspend-resume-display.md`](../patches/025-suspend-resume-display.md)
   和 [s2idle 红屏事故](../incidents/suspend-resume-s2idle-red-screen-20260902.md)。
