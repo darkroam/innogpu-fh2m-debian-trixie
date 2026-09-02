@@ -11,7 +11,7 @@
 | --- | --- | --- |
 | 当前运行驱动 | `4.0.1-i3`（仅 patch-024）已安装并重启至 `6.12.101+deb13-amd64`；R06 首轮 s2idle 可见恢复正常，但 cursor treatment 未执行，不能据此晋级 | [patch-025](../patches/025-suspend-resume-display.md) |
 | 最近失败候选 | `4.0.1-i1`：构建、安装、重启与 PVR 机械门禁通过，但真实 s2idle 唤醒后外屏红屏；已回退 `4.0.0-i1`，不得继续安装；deep 未测试 | [patch-024](../patches/024-suspend-resume.md)、[s2idle 红屏事故](../incidents/suspend-resume-s2idle-red-screen-20260902.md) |
-| 当前严格 A/B 候选 | A=`4.0.1-i3`（仅 patch-024）/B=`4.0.1-i4`（024+025）共用 epoch `1788451200` 且包级单变量通过；R06 因 A 不复现红屏且 `cursor_resume=0` 在 1/4 后按规则停止，025 保持 UNVERIFIED | [patch-025-suspend-resume-display](../patches/025-suspend-resume-display.md) |
+| 当前严格 A/B 候选 | A=`4.0.1-i3`（仅 patch-024）/B=`4.0.1-i4`（024+025）共用 epoch `1788451200` 且包级单变量通过；R06 因 A 不复现红屏且 `cursor_resume=0` 在 1/4 后按规则停止；R08 只建立正常桌面 FB/GEM/shadow 基线，025 保持 UNVERIFIED | [patch-025-suspend-resume-display](../patches/025-suspend-resume-display.md) |
 | 稳定图形历史基线 | 历史记录：`3.3.3.42-patched-21` 已安装、重启并完成本机 PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收；不是当前运行包 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | 历史运行基线 | `3.3.3.42-patched-20` 曾完成运行验收，但 deb 含收敛前辅助载荷，仅保留为历史证据 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
 | 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |
@@ -60,8 +60,10 @@
   与 [s2idle 红屏事故](../incidents/suspend-resume-s2idle-red-screen-20260902.md)。
   `4.0.1-i2` 已有一次成功 s2idle 可见恢复但不足以定因；R06 的 i3 首轮也正常，但 ftrace 为
   `wakeup=3/cursor_resume=0`，处理变量未生效，故在 1/4 后停止。R07 非挂起样本进一步确认当前
-  modesetting 桌面 `cursor_enable=0`、无 cursor 入口与目标 HAL 访问。025 保持 UNVERIFIED；须先
-  建立硬件光标入组或转向 primary FB/DPU shadow 观测，不能增加盲测轮次；deep 冻结仍生效。
+  modesetting 桌面 `cursor_enable=0`、无 cursor 入口与目标 HAL 访问。R08 已在不同显示连接状态下
+  建立正常桌面的 primary FB/GEM/scanout 与 shadow/config-valid 自然事件基线，并确认 R07 的空
+  `crtc->state` 是 shipped-object DRM 偏移误读；本轮未挂起，不能将健康基线外推到红屏窗口。
+  025 保持 UNVERIFIED；下一步只允许另行批准的一次受控 i3 s2idle 观测，deep 冻结仍生效。
 - **登录后短暂黑屏 P2**：`4.0.1-i1` 与回退后的 `4.0.0-i1` 均复现，排除 patch-024 特异回归。
   合盖登录时 xdisplay 把 Xorg 初始布局切为 `EXTERNAL_ONLY`，对应一次 framebuffer 重建及约 5 秒输出
   重查询；画面最终恢复。该问题由 dotconfig/xdisplay 独立跟踪，本项目不在线修改会话配置。

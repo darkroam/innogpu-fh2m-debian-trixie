@@ -94,8 +94,8 @@ HDMI-2 主输出上持续移动鼠标的 5 秒样本得到：
 
 - 50 个 `pdp0_set_config_valid` 状态事件，全部来自 dpu1；DRM debugfs 同时确认 dpu1
   `active=1`、primary plane FB 83、1920x1080，HDMI-2 connected/enabled/DPMS On；
-- 事件中的 `hwdev->crtc` 有效，但该厂商路径保存的 `crtc->state` 指针为空，因此 BPF
-  `active` 字段明确标为 unavailable；活动状态以同时间窗只读 DRM debugfs 为准；
+- 事件中的 `hwdev->crtc` 有效；R07 当时按 shipped-object 偏移读得 `crtc->state` 为空并把
+  `active` 标为 unavailable，R08 后续证实这是 ABI 偏移误读（见下）；
 - 所有事件 `cursor_enable=0`，`pdp0_cursor_move/set/resume` 均未出现，`0x258..0x25a`
   自然读写均为 0。primary scanout 内容 CRC 没有已确认的安全只读内核接口，明确记为
   unavailable，不用截图或 fbdev hash 冒充。
@@ -103,6 +103,37 @@ HDMI-2 主输出上持续移动鼠标的 5 秒样本得到：
 当前 Xorg 明确使用 `modesetting` DDX；内核 `inno_dpu_cursor_set()` 是空实现，普通指针移动
 没有进入厂商 `cursor_set2/move`。这与 R06 `cursor_resume=0` 一致，证明当前日常桌面不满足
 cursor 假设的入组条件，但仍不能说明 R03 红屏时的状态。
+
+R07 关于 `crtc->state` 为空的解释已被 R08 纠正：R07 使用 shipped object 的 DRM DWARF
+偏移 `1176` 读取正在运行的内核对象，但加载模块 BTF 中 `drm_crtc.state` 的实际偏移是
+`1480`。因此 R07 的空值是 ABI 偏移误读，不能作为厂商路径未保存 state 的证据；R07 原始
+轮次记录保留不改。
+
+## R08 primary FB/GEM 与 shadow 基线
+
+R08 将包装器改为按 `/sys/kernel/btf/innogpu` 校验运行模块 ABI，并只记录自然调用。2026-09-02
+的首个 15 秒整包装器样本在新接入的 HDMI-2 `2560x1440` 显示器上通过：dpu1 的已完成调用中，
+`pdp0_get_fbaddr()`、`pdp0_get_fb_dev_paddr()` 和 `fh2m_innodpu_gem_get_dev_paddr()` 返回的
+设备地址逐链一致；观察到 FB 83/84、3 个设备地址、28 个 plane update、78 个 shadow 序列
+事件和 26 个 config-valid HAL 写入。样本没有 cursor 入口、cursor 寄存器访问或 GEM free。
+
+随后由 root 直接运行的 10 秒整包装器样本同样通过。采样时外屏已经断开，活动输出变为内屏
+eDP-1 `2560x1600`/dpu2；这不是前一 HDMI 样本的模式漂移。该样本的 129 个
+`pdp0_set_config_valid()` 事件均由运行 BTF 校验后的偏移读到 `active_valid=1, active=1`，
+直接验证了上述 R07 偏移纠正。HAL 原型确认第二、三个参数分别是 `reg_module` 与
+`reg_entity`；日志不再把 `reg_module=15` 错标成 `dpu=15`。debugfs 能提供
+`output_format=RGB`、`output_bpc=0` 和 `broadcast_rgb=Automatic`，其中 `output_bpc=0`
+不能解释为实际线缆位深。
+
+高频样本中 entry 数可大于已捕获 return 数。包装器分别报告 `entries`、`completed` 和
+`unmatched_at_stop`，后者可能包含采样停止边界、kretprobe 未命中或事件输出丢失，不能冒充
+仍在执行的内核调用。只有带完整 return 的链用于地址一致性判断。primary scanout 内容 CRC、
+未知 shadow bank 的自然 readback 仍无已确认的安全只读接口，保持 unavailable。
+
+R07 使用 `1920x1080`，R08 两次分别使用新外屏 `2560x1440` 和内屏 `2560x1600`；显示器与
+活动 connector 不同，所以不能直接比较 mode、pitch、FB 地址或单位时间事件数。R08 只建立
+正常桌面的健康事件结构：它削弱“正常运行时持续存在 FB/scanout 地址不一致”的说法，但没有
+观测 suspend/resume 窗口，故既未证实也未排除假设 2/4，patch-025 继续为 UNVERIFIED。
 
 ## 次优假设与原则性修复
 
@@ -129,17 +160,14 @@ atomic 未覆盖且 pending 的实例。长期应把 legacy cursor 纳入 DRM pl
 
 ## 后续受控实验设计（本轮不执行）
 
-1. 先在独立轮次、用户明确同意和可完整回退条件下验证硬件光标入组。当前使用 modesetting
-   DDX，单独添加 `SWCursor=false` 不足以证明会调用厂商 `cursor_set2`；应先临时试验 vendor
-   DDX 或经 Xorg DRM master 发起 cursor2 的可行路径，重启 X 前保存配置与回退命令。只以
-   观测到 `pdp0_cursor_set/move`、`cursor_enable=1` 和目标寄存器自然写入作为入组成功。
-2. 入组后才规划 i3 最小一次 s2idle：用户在场，先复核回退包，布设 RTC 与 300 秒 watchdog，
-   同时采集本工具、resume 四函数 trace、DRM state、journal 与人工画面。若 A 不稳定复现红屏，
-   立即停止，不以重复次数代替触发控制；只有 A 可重复失败才恢复 i3/i4 A/B。
-3. 若硬件光标始终不能入组，停止 patch-025 因果试验，转向假设 2/4：观测 primary plane FB ID、
-   `pdp0_get_fb_dev_paddr` 自然返回、可用时的 DRM CRTC CRC，以及 primary/shadow/config-valid
-   相关 HAL 写入序列。没有安全 CRC 或自然 readback 时记 unavailable，禁止主动调用 HAL、
-   直接读取未知 MMIO 或把 X 截图当 scanout CRC。
+1. 另开轮次并由用户和 dsh 明确批准后，最多在当前 i3 上执行一次 s2idle 复现；本轮不执行。
+2. 挂起前复核 `4.0.0-i1` 回退包及 SHA-256，确认用户在场，布设 60 秒 RTC 唤醒和挂起后
+   300 秒 watchdog，并验证两者已生效；deep 继续禁止。
+3. 挂起前启动 R08 observer 与 resume 四函数 trace，保存 pre DRM primary FB/GEM、shadow、
+   connector、PVR 与 journal 快照；恢复后立即保存同组 post 证据和人工内屏/外屏/SSH/TTY 结果。
+4. 若红屏复现，只比较完整 entry/return 链、config-valid 次序与 connector 状态，不把截图当
+   scanout CRC；按 watchdog/回退协议停止。若一次未复现或出现任何其他异常，也立即停止，不用
+   重复次数替代触发条件。只有得到故障窗口内的证据差异，才重新评估假设 2/4 或 i3/i4 A/B。
 
 ## 参考
 

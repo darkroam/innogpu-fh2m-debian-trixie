@@ -1,4 +1,4 @@
-struct r07_pdp0_hwdev {
+struct r08_pdp0_hwdev {
     uint32_t dpu_id;
     uint8_t pad_to_cursor_resume[612];
     uint64_t cursor_resume;
@@ -31,7 +31,7 @@ struct r07_pdp0_hwdev {
 
 BEGIN
 {
-    printf("r07_observer=START\n");
+    printf("r08_observer=START\n");
 }
 
 kprobe:innogpu:pdp0_cursor_move,
@@ -40,34 +40,31 @@ kprobe:innogpu:innodpu_pdp0_wakeup
 {
     $pdp0 = (uint64)arg0 - 32;
     $hwaddr = *(uint64 *)$pdp0;
-    $hw = (struct r07_pdp0_hwdev *)$hwaddr;
-    $state = $hw->crtc ? *(uint64 *)($hw->crtc + 1176) : 0;
+    $hw = (struct r08_pdp0_hwdev *)$hwaddr;
+    $state = $hw->crtc ? *(uint64 *)($hw->crtc + 1480) : 0;
     $active_valid = $state ? 1 : 0;
     $active = $state ? *(uint8 *)($state + 9) : 0;
     $config = $hw->config_valid ? *(int32 *)$hw->config_valid : -2147483648;
-    printf("r07_event=state source=%s dpu=%u active_valid=%u active=%u crtc_ptr=0x%lx crtc_state_ptr=0x%lx cursor_enable=%u cursor_fb=0x%lx cursor_x=%d cursor_y=%d cursor_w=%d cursor_h=%d cursor_resume_ptr=0x%lx cursor_is_disable_ptr=0x%lx config_valid=%d\n",
-           probe, $hw->dpu_id, $active_valid, $active, $hw->crtc, $state,
+    printf("r08_event=state time_ns=%llu source=%s dpu=%u active_valid=%u active=%u crtc_ptr=0x%lx crtc_state_ptr=0x%lx cursor_enable=%u cursor_fb=0x%lx cursor_x=%d cursor_y=%d cursor_w=%d cursor_h=%d cursor_resume_ptr=0x%lx cursor_is_disable_ptr=0x%lx config_valid=%d\n",
+           nsecs, probe, $hw->dpu_id, $active_valid, $active, $hw->crtc, $state,
            $hw->cursor_enable, $hw->cursor_fb,
            $hw->cursor_x, $hw->cursor_y, $hw->cursor_w, $hw->cursor_h,
            $hw->cursor_resume, $hw->cursor_is_disable, $config);
-    @state_events[probe] = count();
 }
 
 kprobe:innogpu:pdp0_cursor_resume,
-kprobe:innogpu:pdp0_cursor_is_disable,
-kprobe:innogpu:pdp0_set_config_valid
+kprobe:innogpu:pdp0_cursor_is_disable
 {
-    $hw = (struct r07_pdp0_hwdev *)arg0;
-    $state = $hw->crtc ? *(uint64 *)($hw->crtc + 1176) : 0;
+    $hw = (struct r08_pdp0_hwdev *)arg0;
+    $state = $hw->crtc ? *(uint64 *)($hw->crtc + 1480) : 0;
     $active_valid = $state ? 1 : 0;
     $active = $state ? *(uint8 *)($state + 9) : 0;
     $config = $hw->config_valid ? *(int32 *)$hw->config_valid : -2147483648;
-    printf("r07_event=state source=%s dpu=%u active_valid=%u active=%u crtc_ptr=0x%lx crtc_state_ptr=0x%lx cursor_enable=%u cursor_fb=0x%lx cursor_x=%d cursor_y=%d cursor_w=%d cursor_h=%d cursor_resume_ptr=0x%lx cursor_is_disable_ptr=0x%lx config_valid=%d arg1=%lu\n",
-           probe, $hw->dpu_id, $active_valid, $active, $hw->crtc, $state,
+    printf("r08_event=state time_ns=%llu source=%s dpu=%u active_valid=%u active=%u crtc_ptr=0x%lx crtc_state_ptr=0x%lx cursor_enable=%u cursor_fb=0x%lx cursor_x=%d cursor_y=%d cursor_w=%d cursor_h=%d cursor_resume_ptr=0x%lx cursor_is_disable_ptr=0x%lx config_valid=%d arg1=%lu\n",
+           nsecs, probe, $hw->dpu_id, $active_valid, $active, $hw->crtc, $state,
            $hw->cursor_enable, $hw->cursor_fb,
            $hw->cursor_x, $hw->cursor_y, $hw->cursor_w, $hw->cursor_h,
            $hw->cursor_resume, $hw->cursor_is_disable, $config, arg1);
-    @state_events[probe] = count();
 }
 
 kprobe:innogpu:pdp0_cursor_is_disable
@@ -78,45 +75,181 @@ kprobe:innogpu:pdp0_cursor_is_disable
 kretprobe:innogpu:pdp0_cursor_is_disable
 /@is_disable_hwdev[tid]/
 {
-    $hw = (struct r07_pdp0_hwdev *)@is_disable_hwdev[tid];
-    printf("r07_event=cursor_is_disable_return dpu=%u retval=%d\n",
-           $hw->dpu_id, retval);
+    $hw = (struct r08_pdp0_hwdev *)@is_disable_hwdev[tid];
+    printf("r08_event=cursor_is_disable_return time_ns=%llu dpu=%u retval=%d\n",
+           nsecs, $hw->dpu_id, retval);
     delete(@is_disable_hwdev[tid]);
+}
+
+/* The wrapper verifies these offsets against the loaded module BTF. */
+kprobe:innogpu:pdp0_get_fb_dev_paddr
+{
+    $hw = (struct r08_pdp0_hwdev *)arg0;
+    $fb = (uint64)arg1;
+    $format_ptr = $fb ? *(uint64 *)($fb + 72) : 0;
+    $gem = $fb ? *(uint64 *)($fb + 160) : 0;
+    @fb_dev_hwdev[tid] = arg0;
+    @fb_dev_fb[tid] = arg1;
+    printf("r08_event=fb_dev_paddr_entry time_ns=%llu dpu=%u fb_ptr=0x%lx fb_id=%u format=0x%x width=%u height=%u pitch0=%u gem_ptr=0x%lx gem_name=%d gem_size=%llu\n",
+           nsecs, $hw->dpu_id, $fb,
+           $fb ? *(uint32 *)($fb + 24) : 0,
+           $format_ptr ? *(uint32 *)$format_ptr : 0,
+           $fb ? *(uint32 *)($fb + 128) : 0,
+           $fb ? *(uint32 *)($fb + 132) : 0,
+           $fb ? *(uint32 *)($fb + 88) : 0,
+           $gem, $gem ? *(int32 *)($gem + 224) : -1,
+           $gem ? *(uint64 *)($gem + 216) : 0);
+}
+
+kretprobe:innogpu:pdp0_get_fb_dev_paddr
+/@fb_dev_fb[tid]/
+{
+    $hw = (struct r08_pdp0_hwdev *)@fb_dev_hwdev[tid];
+    $fb = (uint64)@fb_dev_fb[tid];
+    printf("r08_event=fb_dev_paddr_return time_ns=%llu dpu=%u fb_ptr=0x%lx fb_id=%u dev_paddr=0x%lx\n",
+           nsecs, $hw->dpu_id, $fb, *(uint32 *)($fb + 24), retval);
+    delete(@fb_dev_hwdev[tid]);
+    delete(@fb_dev_fb[tid]);
+}
+
+kprobe:innogpu:pdp0_get_fbaddr
+{
+    $hw = (struct r08_pdp0_hwdev *)arg0;
+    $fb = (uint64)arg1;
+    @scanout_hwdev[tid] = arg0;
+    @scanout_fb[tid] = arg1;
+    printf("r08_event=scanout_entry time_ns=%llu dpu=%u fb_ptr=0x%lx fb_id=%u plane_index=%lu\n",
+           nsecs, $hw->dpu_id, $fb,
+           $fb ? *(uint32 *)($fb + 24) : 0, arg3);
+}
+
+kretprobe:innogpu:pdp0_get_fbaddr
+/@scanout_fb[tid]/
+{
+    $hw = (struct r08_pdp0_hwdev *)@scanout_hwdev[tid];
+    $fb = (uint64)@scanout_fb[tid];
+    printf("r08_event=scanout_return time_ns=%llu dpu=%u fb_ptr=0x%lx fb_id=%u scanout_paddr=0x%lx\n",
+           nsecs, $hw->dpu_id, $fb, *(uint32 *)($fb + 24), retval);
+    delete(@scanout_hwdev[tid]);
+    delete(@scanout_fb[tid]);
+}
+
+kprobe:innogpu:fh2m_innodpu_gem_get_dev_paddr
+{
+    @gem_paddr_obj[tid] = arg0;
+    printf("r08_event=gem_dev_paddr_entry time_ns=%llu gem_ptr=0x%lx\n",
+           nsecs, arg0);
+}
+
+kretprobe:innogpu:fh2m_innodpu_gem_get_dev_paddr
+/@gem_paddr_obj[tid]/
+{
+    $gem = (uint64)@gem_paddr_obj[tid];
+    printf("r08_event=gem_dev_paddr_return time_ns=%llu gem_ptr=0x%lx gem_name=%d gem_size=%llu dev_paddr=0x%lx\n",
+           nsecs, $gem, $gem ? *(int32 *)($gem + 224) : -1,
+           $gem ? *(uint64 *)($gem + 216) : 0, retval);
+    delete(@gem_paddr_obj[tid]);
+}
+
+kprobe:innogpu:innodpu_gem_object_free
+{
+    $gem = (uint64)arg0;
+    printf("r08_event=gem_free time_ns=%llu gem_ptr=0x%lx gem_name=%d gem_size=%llu\n",
+           nsecs, $gem, $gem ? *(int32 *)($gem + 224) : -1,
+           $gem ? *(uint64 *)($gem + 216) : 0);
+}
+
+kprobe:innogpu:pdp0_fd_plane_update,
+kprobe:innogpu:pdp0_async_update_fb
+{
+    $plane = (uint64)arg0;
+    $plane_state = $plane ? *(uint64 *)($plane + 1240) : 0;
+    $fb = $plane_state ? *(uint64 *)($plane_state + 16) : 0;
+    printf("r08_event=plane_update time_ns=%llu source=%s plane_ptr=0x%lx plane_state_ptr=0x%lx fb_ptr=0x%lx fb_id=%u\n",
+           nsecs, probe, $plane, $plane_state, $fb,
+           $fb ? *(uint32 *)($fb + 24) : 0);
+}
+
+kprobe:innogpu:pdp0_enter_config_mode,
+kprobe:innogpu:pdp0_leave_config_mode
+{
+    $hw = (struct r08_pdp0_hwdev *)arg0;
+    printf("r08_event=shadow_sequence time_ns=%llu source=%s tid=%u dpu=%u\n",
+           nsecs, probe, tid, $hw->dpu_id);
+}
+
+kprobe:innogpu:pdp0_set_config_valid
+{
+    $hw = (struct r08_pdp0_hwdev *)arg0;
+    $state = $hw->crtc ? *(uint64 *)($hw->crtc + 1480) : 0;
+    $active_valid = $state ? 1 : 0;
+    $active = $state ? *(uint8 *)($state + 9) : 0;
+    $config = $hw->config_valid ? *(int32 *)$hw->config_valid : -2147483648;
+    printf("r08_event=shadow_sequence time_ns=%llu source=%s tid=%u dpu=%u active_valid=%u active=%u value=%u config_valid=%d\n",
+           nsecs, probe, tid, $hw->dpu_id, $active_valid, $active, arg1, $config);
+}
+
+kprobe:innogpu:pdp0_set_and_wait_config_valid
+{
+    $hw = (struct r08_pdp0_hwdev *)arg0;
+    @config_wait_hwdev[tid] = arg0;
+    printf("r08_event=shadow_sequence time_ns=%llu source=%s tid=%u dpu=%u phase=entry\n",
+           nsecs, probe, tid, $hw->dpu_id);
+}
+
+kretprobe:innogpu:pdp0_set_and_wait_config_valid
+/@config_wait_hwdev[tid]/
+{
+    $hw = (struct r08_pdp0_hwdev *)@config_wait_hwdev[tid];
+    printf("r08_event=shadow_sequence time_ns=%llu source=%s tid=%u dpu=%u phase=return retval=%d\n",
+           nsecs, probe, tid, $hw->dpu_id, retval);
+    delete(@config_wait_hwdev[tid]);
 }
 
 kprobe:innogpu:fh2m_hal_reg_read32
 /arg2 >= 0x258 && arg2 <= 0x25a/
 {
     @reg_read_ptr[tid] = arg3;
-    @reg_read_dpu[tid] = arg1;
-    @reg_read_id[tid] = arg2;
+    @reg_read_module[tid] = arg1;
+    @reg_read_entity[tid] = arg2;
 }
 
 kretprobe:innogpu:fh2m_hal_reg_read32
 /@reg_read_ptr[tid]/
 {
     $value = *(uint32 *)@reg_read_ptr[tid];
-    printf("r07_event=hal_read dpu=%lu reg=0x%lx value=0x%x retval=%d\n",
-           @reg_read_dpu[tid], @reg_read_id[tid], $value, retval);
+    printf("r08_event=hal_read time_ns=%llu reg_module=%lu reg_entity=0x%lx value=0x%x retval=%d\n",
+           nsecs, @reg_read_module[tid], @reg_read_entity[tid], $value, retval);
     delete(@reg_read_ptr[tid]);
-    delete(@reg_read_dpu[tid]);
-    delete(@reg_read_id[tid]);
+    delete(@reg_read_module[tid]);
+    delete(@reg_read_entity[tid]);
 }
 
 kprobe:innogpu:fh2m_hal_reg_write32
 /arg2 >= 0x258 && arg2 <= 0x25a/
 {
-    printf("r07_event=hal_write dpu=%lu reg=0x%lx value=0x%lx\n",
-           arg1, arg2, arg3);
+    printf("r08_event=hal_write time_ns=%llu class=cursor reg_module=%lu reg_entity=0x%lx value=0x%lx\n",
+           nsecs, arg1, arg2, arg3);
+}
+
+kprobe:innogpu:fh2m_hal_reg_write32
+/arg2 == 0x1f9/
+{
+    printf("r08_event=hal_write time_ns=%llu class=config_valid reg_module=%lu reg_entity=0x%lx value=0x%lx\n",
+           nsecs, arg1, arg2, arg3);
 }
 
 END
 {
-    print(@state_events);
-    clear(@state_events);
     clear(@is_disable_hwdev);
+    clear(@fb_dev_hwdev);
+    clear(@fb_dev_fb);
+    clear(@scanout_hwdev);
+    clear(@scanout_fb);
+    clear(@gem_paddr_obj);
+    clear(@config_wait_hwdev);
     clear(@reg_read_ptr);
-    clear(@reg_read_dpu);
-    clear(@reg_read_id);
-    printf("r07_observer=STOP\n");
+    clear(@reg_read_module);
+    clear(@reg_read_entity);
+    printf("r08_observer=STOP\n");
 }

@@ -227,13 +227,15 @@ if grep -Fq 'EXPECTED_OBJECT_SHA=30c594629d1d0e32674e793f2f4235afd4efd3f1e92ee4e
    grep -Fq 'EXPECTED_VERSION=4.0.1-i3' "$OBSERVER" &&
    grep -Fq 'EXPECTED_MODULE_BUILD_ID=be315ad1dc8de5248bb4d29f84e0a98fbc1978ab' "$OBSERVER" &&
    grep -Fq 'loaded_module_build_id_mismatch' "$OBSERVER" &&
-   grep -Fq 'pahole -F dwarf -C "$type" "$OBJECT"' "$OBSERVER" &&
+   grep -Fq 'pahole -F btf -C "$type" /sys/kernel/btf/innogpu' "$OBSERVER" &&
    grep -Fq '[[ -n $layout ]] || fail "missing_${type}_layout"' "$OBSERVER" &&
    grep -Fq '"$BUILD_OUTPUT_ROOT"/*|/tmp/*)' "$OBSERVER" &&
    grep -Fq '[[ ! -e $OUTPUT && ! -L $OUTPUT ]]' "$OBSERVER" &&
    grep -Fq 'chown -R "$DESKTOP_UID:$DESKTOP_GID" "$OUTPUT"' "$OBSERVER" &&
    grep -Fq 'cursor_enable_offset_mismatch' "$OBSERVER" &&
-   grep -Fq 'crtc_active_offset_mismatch' "$OBSERVER"; then
+   grep -Fq 'crtc_active_offset_mismatch' "$OBSERVER" &&
+   grep -Fq 'framebuffer_gem_offset_mismatch' "$OBSERVER" &&
+   grep -Fq 'plane_state_fb_offset_mismatch' "$OBSERVER"; then
     pass observer_abi_is_fail_closed
 else
     fail observer_abi_is_fail_closed
@@ -249,6 +251,69 @@ if grep -Fq 'kprobe:innogpu:pdp0_cursor_move' "$OBSERVER_BT" &&
     pass observer_records_natural_driver_activity_only
 else
     fail observer_records_natural_driver_activity_only
+fi
+
+if grep -Fq 'kprobe:innogpu:pdp0_get_fb_dev_paddr' "$OBSERVER_BT" &&
+   grep -Fq 'kretprobe:innogpu:pdp0_get_fb_dev_paddr' "$OBSERVER_BT" &&
+   grep -Fq 'kprobe:innogpu:pdp0_get_fbaddr' "$OBSERVER_BT" &&
+   grep -Fq 'kprobe:innogpu:fh2m_innodpu_gem_get_dev_paddr' "$OBSERVER_BT" &&
+   grep -Fq 'kprobe:innogpu:innodpu_gem_object_free' "$OBSERVER_BT" &&
+   grep -Fq 'kprobe:innogpu:pdp0_fd_plane_update' "$OBSERVER_BT" &&
+   grep -Fq 'r08_drm_primary_fb_snapshot=' "$OBSERVER"; then
+    pass observer_correlates_primary_fb_gem_and_scanout
+else
+    fail observer_correlates_primary_fb_gem_and_scanout
+fi
+
+if grep -Fq 'kprobe:innogpu:pdp0_enter_config_mode' "$OBSERVER_BT" &&
+   grep -Fq 'kprobe:innogpu:pdp0_leave_config_mode' "$OBSERVER_BT" &&
+   grep -Fq 'kprobe:innogpu:pdp0_set_and_wait_config_valid' "$OBSERVER_BT" &&
+   grep -Fq '/arg2 == 0x1f9/' "$OBSERVER_BT" &&
+   grep -Fq 'r08_event=shadow_sequence time_ns=' "$OBSERVER_BT" &&
+   grep -Fq 'r08_shadow_sequence_events=' "$OBSERVER" &&
+   grep -Fq 'active_valid=%u active=%u value=%u' "$OBSERVER_BT"; then
+    pass observer_records_shadow_config_valid_order
+else
+    fail observer_records_shadow_config_valid_order
+fi
+
+if grep -Fq 'xrandr --query --props' "$OBSERVER" &&
+   grep -Fq 'r08_hdmi_connector_snapshot=' "$OBSERVER" &&
+   grep -Fq 'r08_hdmi_format_snapshot=' "$OBSERVER" &&
+   grep -Fq 'output_format=%s:output_bpc=%s:broadcast_rgb=%s' "$OBSERVER" &&
+   grep -Fq 'sub(/:$/, "", plane)' "$OBSERVER" &&
+   grep -Fq 'r08_primary_fb_content_crc=UNAVAILABLE_NO_READ_ONLY_KERNEL_INTERFACE' "$OBSERVER"; then
+    pass observer_snapshots_connector_format_and_reports_unavailable_fields
+else
+    fail observer_snapshots_connector_format_and_reports_unavailable_fields
+fi
+
+if grep -Fq 'r08_fb_dev_paddr_entries=' "$OBSERVER" &&
+   grep -Fq 'r08_fb_dev_paddr_completed=' "$OBSERVER" &&
+   grep -Fq 'r08_fb_dev_paddr_unmatched_at_stop=' "$OBSERVER" &&
+   grep -Fq 'r08_scanout_unmatched_at_stop=' "$OBSERVER" &&
+   grep -Fq 'r08_gem_paddr_unmatched_at_stop=' "$OBSERVER" &&
+   grep -Fq 'r08_return_capture=$RETURN_CAPTURE' "$OBSERVER" &&
+   grep -Fq 'PARTIAL_UNMATCHED_AT_STOP' "$OBSERVER" &&
+   grep -Fq 'fb_dev_return_count_exceeds_entries' "$OBSERVER"; then
+    pass observer_reports_unmatched_calls_at_sample_stop
+else
+    fail observer_reports_unmatched_calls_at_sample_stop
+fi
+
+if grep -Fq 'reg_module=%lu reg_entity=0x%lx' "$OBSERVER_BT" &&
+   ! grep -Eq 'hal_(read|write).*dpu=%lu' "$OBSERVER_BT"; then
+    pass observer_labels_hal_abi_arguments_accurately
+else
+    fail observer_labels_hal_abi_arguments_accurately
+fi
+
+if ! grep -Eq '(/dev/mem|devmem|ioremap|bpf_probe_write_user|copyout|system\(|override\(|signal\()' \
+        "$OBSERVER_BT" "$OBSERVER" &&
+   ! grep -Eq '(xrandr.*--output|modprobe|rmmod|insmod|/sys/power/state|rtcwake)' "$OBSERVER"; then
+    pass observer_has_no_active_driver_or_display_operations
+else
+    fail observer_has_no_active_driver_or_display_operations
 fi
 
 printf 'tests_total=%d tests_passed=%d tests_failed=%d tests_skipped=0\n' \

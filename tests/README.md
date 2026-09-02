@@ -67,8 +67,9 @@ bash tests/unit/run-suspend-resume-tests.sh
 - suspend/resume 静态测试把跟踪的 `pvr_dvfs_device.c` 与 `innodpu_drm_pm.c` 复制到 `/tmp`，验证
   patch-024/patch-025-suspend-resume-display dry-run/应用、025 三行上下文、PowerLock 门禁顺序、
   post-atomic 重复光标恢复移除、单文件范围、`4.0.1-i3`/`4.0.1-i4` 同 epoch 与旧迭代失败关闭、
-  零 fuzz/无备份应用和 `.orig/.rej` 双树门禁及 patched-28 legacy 开关，以及 R07 观测器无挂起动作、
-  固定对象/内核/版本/精确 ABI 失败关闭、只记录自然驱动活动；不读取本地载荷、不构建或安装驱动、
+  零 fuzz/无备份应用和 `.orig/.rej` 双树门禁及 patched-28 legacy 开关，以及 R08 观测器无挂起/显示
+  变更动作、固定对象/内核/版本与已加载模块 BTF ABI 失败关闭、primary FB/GEM/scanout 关联、
+  shadow/config-valid 时序、HAL 参数语义、entry/return 停止边界及 connector/format 快照；不读取本地载荷、不构建或安装驱动、
   不挂起主机；
 - 许可证审计测试覆盖当前逐文件 inventory 一致性、发布门禁保持 BLOCKED、确定性重建、
   陈旧 inventory、许可证文本缺失、confidential 集合漂移、残缺 Dual MIT/GPL 头、manifest license
