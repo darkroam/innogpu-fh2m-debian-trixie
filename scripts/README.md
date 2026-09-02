@@ -28,7 +28,7 @@
 | `generate-binary-manifest.py`（tools/） | 清单生成 | 从 Deepin deb 确定性生成 `binary-manifest.json`（校验 deb SHA、覆盖全部黑盒文件与符号链接、kind/role/license 分类） |
 | `compare-oracle-candidates.sh` | oracle 对比 | 新架构候选包 vs patched-27：对比 control（除 Version/Description/Installed-Size）、文件清单、载荷哈希、DKMS 源码、黑盒对象、maintainer 脚本（版本归一）、版本排序与 module_symbols（调用 compare-module-symbols.sh）；构建产物（.o.cmd/.o/.ko/modules.order/Module.symvers/.mod）统一按 ARTIFACT_RE 排除；输出机器可读 PASS/FAIL |
 | `compare-module-symbols.sh` | 只读符号对比 | 离线构建候选与 patched-27 两包 DKMS 源码（同一内核头），逐 .ko 对比 vermagic/depends/导出符号/导入符号；构建于 `$ROOT/.build/`，不安装不重启；module_symbols=PASS/FAIL/UNCOMPARABLE |
-| `build-innogpu-driver.sh` | **新架构当前构建器** | 当前固定输出 `4.0.1-i1`（epoch 1788278400，其他版本/epoch 失败关闭）；该输出只保留作失败候选复现，禁止安装（s2idle 唤醒外屏红屏）；装配 drivers/ 后把 patch-024 同时应用到编译树和包内 DKMS 源码，再加入 vendor 黑盒与确定性变换并离线编译；`.o.cmd` 守卫保证构建产物不入包 |
+| `build-innogpu-driver.sh` | **新架构当前构建器** | 默认输出未安装的 `4.0.1-i2`（epoch 1788364800）；显式 `4.0.1-i1`/1788278400 仅复现失败候选。i1 只应用 patch-024，i2 在编译树和包内 DKMS 源码中再应用 patch-025-suspend-resume-display；其他版本/epoch 失败关闭；加入 vendor 黑盒与确定性变换后离线编译，`.o.cmd` 守卫保证构建产物不入包 |
 | `build-patched17-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝把 patched-17 作为后续构建父版本 |
 | `build-patched18-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝重建历史混合载荷 patched-18 |
 | `build-patched19-deepin-coherent.sh` | legacy 护栏（保留） | 明确拒绝用当前辅助载荷复用 patched-19 版本号 |

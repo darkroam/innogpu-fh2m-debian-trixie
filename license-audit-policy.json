@@ -159,6 +159,7 @@
       "README.md": "MIT",
       "scripts/install.sh": "MIT",
       "patches/024-suspend-resume.patch": "MIT OR GPL-2.0-only",
+      "patches/025-suspend-resume-display.patch": "MIT OR GPL-2.0-only",
       "components/fbterm/001-configurable-redraw-scrolling.patch": "GPL-2.0-only",
       "components/picom/001-probe-explicit-uniform-location.patch": "MPL-2.0",
       "components/picom/picom.conf": "GPL-3.0-or-later"

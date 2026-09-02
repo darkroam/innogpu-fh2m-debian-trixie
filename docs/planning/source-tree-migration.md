@@ -60,7 +60,7 @@ build/                           Git 忽略的临时 staging 与构建产物
 binary-manifest.json             黑盒来源、路径、哈希、大小、类型、角色和许可证的唯一清单
 scripts/
   extract-vendor-binaries.sh     幂等提取工具
-  build-innogpu-driver.sh        新构建器（4.0.1-i1 起确定性应用新增 patch-024）
+  build-innogpu-driver.sh        新构建器（版本绑定 patch-024/025 与固定 epoch）
   run-dev-tests.sh               草案名称，未创建；实际测试入口登记在 tests/README.md
 tests/kernel/                    草案目录，未创建；离线/fixture/runtime 分布在 tests/ 现有子目录
 docs/project/driver-architecture.md  草案名称；实际权威文档为 docs/project/architecture.md
@@ -147,7 +147,7 @@ body 引用 `docs/patches/patch-*.md`；记录原 patch hash、目标文件、�
 
 ## 六、staging 构建树与新构建器（`scripts/build-innogpu-driver.sh`）
 
-构建流程（历史 4.0.0-i1 不叠加补丁；4.0.1-i1 起应用经审查的新行为修复）：
+构建流程（历史 4.0.0-i1 不叠加补丁；4.0.1-i1/i2 按版本应用经审查的新行为修复）：
 
 ```text
 验证 Deepin 原包
@@ -155,7 +155,7 @@ body 引用 `docs/patches/patch-*.md`；记录原 patch hash、目标文件、�
   -> extract-vendor-binaries.sh --check-only
   -> 创建 build/<unique>/source
   -> 导入 drivers/ 源码
-  -> 对编译树与包内 DKMS 源码应用 patch-024
+  -> 对编译树与包内 DKMS 源码应用 patch-024；i2 再应用 patch-025-suspend-resume-display
   -> 放置已校验 vendor 黑盒对象
   -> 执行确定性 binary transform（patch-000 等价工具）
   -> 编译 DKMS

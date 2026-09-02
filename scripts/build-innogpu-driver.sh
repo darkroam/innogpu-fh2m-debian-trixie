@@ -9,16 +9,17 @@ set -euo pipefail
 ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$ROOT"
 
-VERSION="${VERSION:-4.0.1-i1}"
+VERSION="${VERSION:-4.0.1-i2}"
 case "$VERSION" in
     4.0.1-i1) EXPECTED_SOURCE_DATE_EPOCH=1788278400 ;;
+    4.0.1-i2) EXPECTED_SOURCE_DATE_EPOCH=1788364800 ;;
     *)
         echo "builder_version_review=FAIL unreviewed package version: $VERSION" >&2
         exit 1
         ;;
 esac
 # 可复现构建: 固定审核 epoch 必须显式提供, 禁止回退到当前时间(同源码不同时间产出不同 deb)。
-# 审核 epoch 记录于 docs/patches/024-suspend-resume.md。
+# 审核 epoch 记录于 docs/patches/025-suspend-resume-display.md。
 SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-}"
 [[ "$SOURCE_DATE_EPOCH" =~ ^[0-9]+$ ]] || {
     echo "builder_repro=FAIL SOURCE_DATE_EPOCH must be the fixed audit epoch (see docs)"; exit 1; }
@@ -39,7 +40,15 @@ apply_reviewed_source_fixes() {
     local source_tree=$1
     patch --batch --forward -s -d "$source_tree" -p1 \
         < "$ROOT/patches/024-suspend-resume.patch"
+    if [[ "$VERSION" == "4.0.1-i2" ]]; then
+        patch --batch --forward -s -d "$source_tree" -p1 \
+            < "$ROOT/patches/025-suspend-resume-display.patch"
+    fi
 }
+
+APPLIED_SOURCE_FIXES="patch-024"
+[[ "$VERSION" == "4.0.1-i2" ]] &&
+    APPLIED_SOURCE_FIXES+=" patch-025-suspend-resume-display"
 
 # 1) manifest + vendor 就位
 [[ -f binary-manifest.json ]] || { echo "staging_manifest=FAIL"; exit 1; }
@@ -61,7 +70,7 @@ done
 python3 tools/patch-gpupll-object.py "$STAGE/source/innogpu/innogpu.o_shipped" >/dev/null
 echo "staging_objects=$(ls "$STAGE/source"/*/*.o_shipped | wc -l)"
 echo "staging_deterministic_transform=PASS"
-echo "staging_source_fixes=PASS patch-024"
+echo "staging_source_fixes=PASS $APPLIED_SOURCE_FIXES"
 
 # 3) 离线编译
 cd "$STAGE/source"
@@ -155,7 +164,7 @@ Maintainer: Tim Hant <tthantclaw@outlook.com>
 Homepage: https://github.com/timhant/innogpu-fh2m-debian-trixie
 Description: Innosilicon Fantasy II-M driver (migrated source tree, version $VERSION)
  New-architecture build: drivers/ source tree + manifest-managed black-box
- payload, with the reviewed patch-024 suspend/resume source fix.
+ payload, with the reviewed ${APPLIED_SOURCE_FIXES} suspend/resume fixes.
 EOF
 
 cat > "$P/DEBIAN/postinst" <<EOF

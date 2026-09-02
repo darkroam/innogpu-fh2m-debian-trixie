@@ -44,6 +44,7 @@ docs/incidents/suspend-resume-deep-reproduction-20260902.md
 docs/incidents/suspend-resume-s2idle-red-screen-20260902.md
 docs/new-device-install.md
 docs/patches/024-suspend-resume.md
+docs/patches/025-suspend-resume-display.md
 docs/patches/README.md
 docs/patches/patch-000-skip-first-gpupll.md
 docs/patches/patch-001-kernel-6.12.md

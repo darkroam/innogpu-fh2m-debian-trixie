@@ -76,8 +76,8 @@ valid=$(make_package valid 3.3.3.42-patched-21)
 "$CHECK" "$valid" >/dev/null || fail 'T01 valid package failed the boundary check'
 pass 'clean new-version package passes'
 
-candidate=$(make_package candidate 4.0.1-i1)
-"$CHECK" "$candidate" >/dev/null || fail 'T02 current 4.0.1-i1 candidate failed the boundary check'
+candidate=$(make_package candidate 4.0.1-i2)
+"$CHECK" "$candidate" >/dev/null || fail 'T02 current 4.0.1-i2 candidate failed the boundary check'
 pass 'current new-architecture candidate passes'
 
 noncanonical=$(make_package noncanonical 4.0.1-i0)

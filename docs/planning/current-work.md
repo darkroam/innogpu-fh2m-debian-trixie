@@ -30,11 +30,14 @@
 
 ## 运行时、测试与上游报告
 
-- [ ] **suspend/resume 下一修复**：patch-024 / `4.0.1-i1` 已完成构建、安装和真实 s2idle entry/exit，
+- [ ] **suspend/resume 候选验收**：patch-024 / `4.0.1-i1` 已完成构建、安装和真实 s2idle entry/exit，
   PowerLock/PVR 机械错误未增长，但外屏唤醒后整屏红色，候选验收失败并已回退 `4.0.0-i1`；B2 deep
   未执行，s2idle 也不能作为规避。下一候选必须调查完整 KMS/CRTC/connector 显示恢复时序，验收必须
   包含人工可见画面、SSH 与 TTY，不能仅依赖自动化 Xorg/GL/PVR 检查。再次挂起前须另开轮次、复审
-  回退与 watchdog 方案；本轮不再挂起。见 [`024-suspend-resume.md`](../patches/024-suspend-resume.md)
+  回退与 watchdog 方案；本轮不再挂起。`4.0.1-i2` 已针对 post-atomic 重复光标恢复
+  制作 patch-025-suspend-resume-display 离线候选，尚未安装或验收。见
+  [`024-suspend-resume.md`](../patches/024-suspend-resume.md)、
+  [`025-suspend-resume-display.md`](../patches/025-suspend-resume-display.md)
   和 [s2idle 红屏事故](../incidents/suspend-resume-s2idle-red-screen-20260902.md)。
 - [ ] **登录后短暂黑屏**：在 `4.0.1-i1` 和回退后的 `4.0.0-i1` 均复现，排除 patch-024 特异回归。
   合盖登录时 xdisplay 把初始 Xorg 布局切为 `EXTERNAL_ONLY`，Xorg 重建 1920x1080 framebuffer 并在约

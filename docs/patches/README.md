@@ -6,7 +6,8 @@
 
 **分类说明（`patches/` 目录内两类内容）**：
 
-- `patches/*.patch`（14 个源码 diff：001–009、023–027；另有 stage-000 确定性工具）——其中 13 个
+- `patches/*.patch`（15 个源码 diff：001–009、023–027，以及显示恢复候选
+  `025-suspend-resume-display.patch`；另有 stage-000 确定性工具）——其中 13 个
   历史补丁已在源码树迁移时转为 `drivers/` 内的提交，不再重复叠加；新增 patch-024 是
   `4.0.1-i1` 的独立实验修复，由新架构构建器确定性应用，但 s2idle 可见恢复验收失败。本表保留 provenance、事故证据与
   legacy 回退包复现依据。
@@ -32,6 +33,7 @@
 | 009 | [local-internal-edp-connector](patch-009-local-internal-edp-connector.md) | `APPLY_LOCAL_INTERNAL_EDP=1` | patched-22 至 p27 继承；connector/桌面烟测通过，4.0.0-i1 源码树已包含；电源与合盖矩阵待完成 |
 | 023 | [invisible-read-no-writeback](patch-023-invisible-read-no-writeback.md) | `APPLY_INVISIBLE_READ_NO_WRITEBACK=1` | patched-23 至 p27 继承并实机通过；4.0.0-i1 源码树已包含；Clash 启动态 A/B 已完成 |
 | 024 | [suspend-resume](024-suspend-resume.md) | 新架构 `4.0.1-i1` 固定应用；legacy `APPLY_SUSPEND_RESUME_FIX=1` | 构建/启动门禁通过；真实 s2idle 无 PowerLock 错误但外屏红屏，候选失败并回退；deep 未测试 |
+| 025-display | [suspend-resume-display](025-suspend-resume-display.md) | 新架构 `4.0.1-i2` 在 patch-024 后固定应用 | 去除 atomic state replay 后的重复光标恢复；离线候选，未安装、未挂起验收。编号与历史 025 并存，以完整文件名区分 |
 | 025 | [dma-resv-usage-rw](patch-025-dma-resv-usage-rw.md) | `APPLY_DMA_RESV_USAGE_FIX=1` | patched-25 至 p27 继承并实机通过；4.0.0-i1 源码树已包含 |
 | 026 | [inactive-crtc-vblank-guard](patch-026-inactive-crtc-vblank-guard.md) | `APPLY_INACTIVE_CRTC_VBLANK_GUARD=1` | patched-26/p27 实机通过；4.0.0-i1 源码树已包含；活动/未活动 CRTC 回归通过 |
 | 027 | [foreign-dmabuf-lifecycle](patch-027-foreign-dmabuf-lifecycle.md) | `APPLY_FOREIGN_DMABUF_LIFECYCLE_FIX=1` | patched-27 实机验证安装/HWGL/DRI3 自导入；4.0.0-i1 源码树已包含；foreign/跨设备路径仍未实机触发 |
@@ -48,12 +50,13 @@ patched-24 不增加新的设备行为补丁；它沿用 patched-23 的补丁集
 
 ## 构建顺序
 
-**当前新架构（已回退并运行 4.0.0-i1；4.0.1-i1 为失败候选）**：
+**当前新架构（已回退并运行 4.0.0-i1；4.0.1-i1 为失败候选；4.0.1-i2 为离线候选）**：
 
 ```text
 Deepin 202504 原 deb
-  -> scripts/build-innogpu-driver.sh（drivers/ 源码树 + patch-024 + manifest 黑盒 + 确定性变换）
-  -> 离线 DKMS 编译 + 完整包组装（仅应用版本已审核的 patch-024）
+  -> scripts/build-innogpu-driver.sh（drivers/ 源码树 + 版本绑定补丁 + manifest 黑盒 + 确定性变换）
+  -> 4.0.1-i1：patch-024；4.0.1-i2：patch-024 + patch-025-suspend-resume-display
+  -> 离线 DKMS 编译 + 完整包组装
   -> scripts/check-release-package.sh
 ```
 
@@ -102,5 +105,7 @@ patched-19/20 的固定 wrapper 已改为拒绝执行，因为当前源码的辅
 - patched-28：`scripts/build-patched28-suspend-resume.sh` 继承 p27 并增加 patch-024（resume 早期
   devfreq 电源状态门禁）；补丁编号 024 是空缺回填，包版本不复用历史 patched-24；仅作 legacy
   对照。新架构 `4.0.1-i1` 的 s2idle 可见恢复验收已失败，不再作为可安装候选。
+- `4.0.1-i2`：新架构离线候选，在 patch-024 后增加 patch-025-suspend-resume-display，删除
+  post-atomic 重复光标恢复；固定 epoch `1788364800`，未安装、未挂起验收。
 - p25/26/27 的 deb 均为可复现构建（[release 审阅](../planning/release-review-2026-08-20.md) 修复
   目录 mtime 后重建），SHA 见 [debs/README.md](../../debs/README.md)。

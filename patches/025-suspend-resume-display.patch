@@ -1,0 +1,11 @@
+diff -ruN a/innosrvkm/innodpu_drm_pm.c b/innosrvkm/innodpu_drm_pm.c
+--- a/innosrvkm/innodpu_drm_pm.c	2026-09-03 00:00:00.000000000 +0800
++++ b/innosrvkm/innodpu_drm_pm.c	2026-09-03 00:00:00.000000000 +0800
+@@ -291,2 +290,0 @@
+-	struct drm_device *drm_dev = dev_get_drvdata(dev);
+-	struct drm_crtc *crtc = NULL;
+@@ -298,4 +295,0 @@
+-
+-	drm_for_each_crtc(crtc, drm_dev) {
+-		innodpu_pdp0_wakeup(crtc);
+-	}

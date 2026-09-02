@@ -1,12 +1,13 @@
 #!/bin/bash
-# Static tests for patch-024 and current/legacy builder wiring.
-# The suite copies one tracked source file to /tmp; it does not read local
+# Static tests for patch-024/025 and current/legacy builder wiring.
+# The suite copies two tracked source files to /tmp; it does not read local
 # payload directories, build a package, install a module, or suspend the host.
 
 set -u -o pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 PATCH="$ROOT/patches/024-suspend-resume.patch"
+DISPLAY_PATCH="$ROOT/patches/025-suspend-resume-display.patch"
 BUILDER="$ROOT/scripts/build-deepin-coherent.sh"
 WRAPPER="$ROOT/scripts/build-patched28-suspend-resume.sh"
 CURRENT_BUILDER="$ROOT/scripts/build-innogpu-driver.sh"
@@ -20,6 +21,7 @@ fail() { tests=$((tests + 1)); failures=$((failures + 1)); printf 'suspend_resum
 
 mkdir -p "$TMP/tree/innosrvkm"
 cp "$ROOT/drivers/innosrvkm/pvr_dvfs_device.c" "$TMP/tree/innosrvkm/"
+cp "$ROOT/drivers/innosrvkm/innodpu_drm_pm.c" "$TMP/tree/innosrvkm/"
 
 if patch --dry-run -s -d "$TMP/tree" -p1 < "$PATCH"; then
     pass patch_dry_run
@@ -69,6 +71,36 @@ else
     fail patch_scope_is_single_driver_file
 fi
 
+if patch --dry-run -s -d "$TMP/tree" -p1 < "$DISPLAY_PATCH"; then
+    pass display_patch_dry_run
+else
+    fail display_patch_dry_run
+fi
+
+if patch -s -d "$TMP/tree" -p1 < "$DISPLAY_PATCH"; then
+    pass display_patch_applies
+else
+    fail display_patch_applies
+fi
+
+display_patched="$TMP/tree/innosrvkm/innodpu_drm_pm.c"
+if sed -n '/static int innodpu_drm_resume/,/^}/p' "$display_patched" |
+       grep -Fq 'ret = innodpu_drm_wakeup(dev);' &&
+   ! sed -n '/static int innodpu_drm_resume/,/^}/p' "$display_patched" |
+       grep -Fq 'innodpu_pdp0_wakeup(crtc);'; then
+    pass display_patch_removes_only_post_atomic_cursor_restore
+else
+    fail display_patch_removes_only_post_atomic_cursor_restore
+fi
+
+if [[ "$(grep -c '^diff -ruN ' "$DISPLAY_PATCH")" -eq 1 ]] &&
+   grep -Fq 'a/innosrvkm/innodpu_drm_pm.c b/innosrvkm/innodpu_drm_pm.c' "$DISPLAY_PATCH" &&
+   grep -Fq 'innodpu_pdp0_wakeup(crtc);' "$DISPLAY_PATCH"; then
+    pass display_patch_scope_is_single_driver_file
+else
+    fail display_patch_scope_is_single_driver_file
+fi
+
 if bash -n "$BUILDER" "$WRAPPER" "$CURRENT_BUILDER"; then
     pass builder_shell_syntax
 else
@@ -91,8 +123,9 @@ else
     fail patched28_inherits_p27_and_enables_fix
 fi
 
-if grep -Fq 'VERSION="${VERSION:-4.0.1-i1}"' "$CURRENT_BUILDER" &&
+if grep -Fq 'VERSION="${VERSION:-4.0.1-i2}"' "$CURRENT_BUILDER" &&
    grep -Fq '4.0.1-i1) EXPECTED_SOURCE_DATE_EPOCH=1788278400' "$CURRENT_BUILDER" &&
+   grep -Fq '4.0.1-i2) EXPECTED_SOURCE_DATE_EPOCH=1788364800' "$CURRENT_BUILDER" &&
    grep -Fq 'builder_version_review=FAIL unreviewed package version' "$CURRENT_BUILDER"; then
     pass current_builder_version_is_fail_closed
 else
@@ -100,10 +133,33 @@ else
 fi
 
 if [[ "$(grep -c 'apply_reviewed_source_fixes "\$' "$CURRENT_BUILDER")" -eq 2 ]] &&
-   grep -Fq 'patches/024-suspend-resume.patch' "$CURRENT_BUILDER"; then
+   grep -Fq 'patches/024-suspend-resume.patch' "$CURRENT_BUILDER" &&
+   grep -Fq 'patches/025-suspend-resume-display.patch' "$CURRENT_BUILDER" &&
+   grep -Fq '[[ "$VERSION" == "4.0.1-i2" ]]' "$CURRENT_BUILDER"; then
     pass current_builder_patches_compile_and_package_trees
 else
     fail current_builder_patches_compile_and_package_trees
+fi
+
+mkdir -p "$TMP/reject-i2" "$TMP/reject-i3"
+if output=$(INNOGPU_ROOT="$TMP/reject-i2" VERSION=4.0.1-i2 \
+    SOURCE_DATE_EPOCH=1788278400 bash "$CURRENT_BUILDER" 2>&1); then
+    fail current_builder_rejects_i1_epoch_for_i2
+elif grep -Fq 'builder_repro=FAIL 4.0.1-i2 requires SOURCE_DATE_EPOCH=1788364800' <<<"$output" &&
+     [[ ! -e "$TMP/reject-i2/build" ]]; then
+    pass current_builder_rejects_i1_epoch_for_i2
+else
+    fail current_builder_rejects_i1_epoch_for_i2
+fi
+
+if output=$(INNOGPU_ROOT="$TMP/reject-i3" VERSION=4.0.1-i3 \
+    SOURCE_DATE_EPOCH=1788364800 bash "$CURRENT_BUILDER" 2>&1); then
+    fail current_builder_rejects_unreviewed_iteration
+elif grep -Fq 'builder_version_review=FAIL unreviewed package version: 4.0.1-i3' <<<"$output" &&
+     [[ ! -e "$TMP/reject-i3/build" ]]; then
+    pass current_builder_rejects_unreviewed_iteration
+else
+    fail current_builder_rejects_unreviewed_iteration
 fi
 
 mkdir -p "$TMP/reject-root"

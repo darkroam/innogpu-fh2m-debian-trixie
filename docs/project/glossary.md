@@ -26,3 +26,4 @@
 | `CLEARED` / `BLOCKED` | 某个机械发布门禁通过 / 不可发布 | `project-tools=CLEARED` 只表示候选制品通过机械检查；整仓 `license_release_gate=BLOCKED` 与 `driver-source=BLOCKED` 仍保持，不可互相替代 |
 | `4.0.0-i1` | 当前驱动包版本（新架构：drivers/ 源码树 + manifest 黑盒载荷） | 当前设备运行版；`3.3.3.42-patched-27` 为保留的首选回退基线 |
 | `4.0.1-i1` | patch-024 suspend/resume 修复的失败候选 | 独立升号，固定 epoch 1788278400；已构建/安装，s2idle 唤醒红屏后回退，deep 未测试，禁止安装 |
+| `4.0.1-i2` | patch-024 + patch-025-suspend-resume-display 的离线候选 | 固定 epoch 1788364800；去除 post-atomic 重复光标恢复，已构建但未安装/挂起验收 |
