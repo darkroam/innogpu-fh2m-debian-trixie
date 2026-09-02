@@ -31,6 +31,8 @@
 历史 `4.0.1-i1` 固定 epoch 为 `1788278400`（2026-09-02 00:00 +0800），只应用
 patch-024。当前 R06 A=`4.0.1-i3` 仍只应用 patch-024，B=`4.0.1-i4` 再应用
 patch-025-suspend-resume-display；两者共用 epoch `1788451200`，详见[独立说明](025-suspend-resume-display.md)。
+R10 deep 失败证明该锁外门禁存在 TOCTOU，故 `4.0.2-i1` 保留 patch-024 作为防御性快速路径，
+并新增 [patch-026 生命周期同步](026-suspend-resume-dvfs-lifecycle.md) 作为实际同步边界。
 
 legacy `scripts/build-deepin-coherent.sh` 的开关为 `APPLY_SUSPEND_RESUME_FIX=1`，默认关闭；
 `scripts/build-patched28-suspend-resume.sh` 继承 patched-27 的完整开关集合后增加 patch-024，只作为
@@ -83,6 +85,8 @@ legacy `scripts/build-deepin-coherent.sh` 的开关为 `APPLY_SUSPEND_RESUME_FIX
   不能声称 patch-024 修复了 deep。
 - 当前运行版本已回退为 `4.0.0-i1`。后续修复必须扩大到完整显示恢复时序，不能只以 PowerLock
   错误消失或自动化 Xorg/GL 探针通过作为成功判据。
+- R10 随后在 `4.0.1-i3` 上稳定复现 deep PowerLock 故障，证明 patch-024 的锁外状态读取不能
+  独立关闭竞态；当前修复方向和候选见 patch-026 生命周期同步说明。
 
 ## 参考
 

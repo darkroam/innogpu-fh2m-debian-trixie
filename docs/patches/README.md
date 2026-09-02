@@ -6,8 +6,9 @@
 
 **分类说明（`patches/` 目录内两类内容）**：
 
-- `patches/*.patch`（15 个源码 diff：001–009、023–027，以及显示恢复候选
-  `025-suspend-resume-display.patch`；另有 stage-000 确定性工具）——其中 13 个
+- `patches/*.patch`（16 个源码 diff：001–009、023–027，以及显示恢复候选
+  `025-suspend-resume-display.patch` 和 lifecycle 候选
+  `026-suspend-resume-dvfs-lifecycle.patch`；另有 stage-000 确定性工具）——其中 13 个
   历史补丁已在源码树迁移时转为 `drivers/` 内的提交，不再重复叠加；新增 patch-024 是
   `4.0.1-i1` 的独立实验修复，由新架构构建器确定性应用，但 s2idle 可见恢复验收失败。本表保留 provenance、事故证据与
   legacy 回退包复现依据。
@@ -35,6 +36,7 @@
 | 024 | [suspend-resume](024-suspend-resume.md) | 新架构 `4.0.1-i1` 固定应用；legacy `APPLY_SUSPEND_RESUME_FIX=1` | 构建/启动门禁通过；真实 s2idle 无 PowerLock 错误但外屏红屏，候选失败并回退；deep 未测试 |
 | 025-display | [suspend-resume-display](025-suspend-resume-display.md) | R06 B=`4.0.1-i4` 在 patch-024 后固定应用；A=`4.0.1-i3` 不应用 | 去除 atomic state replay 后的重复光标恢复；i3/i4 包级单变量通过，但首轮 A 未复现且 cursor 分支未入组，A/B 已停止，保持 UNVERIFIED。编号与历史 025 并存，以完整文件名区分 |
 | 025 | [dma-resv-usage-rw](patch-025-dma-resv-usage-rw.md) | `APPLY_DMA_RESV_USAGE_FIX=1` | patched-25 至 p27 继承并实机通过；4.0.0-i1 源码树已包含 |
+| 026-lifecycle | [suspend-resume-dvfs-lifecycle](026-suspend-resume-dvfs-lifecycle.md) | 新架构 `4.0.2-i1` 在 patch-024 后固定应用 | drain devfreq target 后再 PVR 下电、PVR 上电成功后再恢复 devfreq；静态/离线候选，deep 尚未真机验证。编号与历史 026-vblank 并存，以完整文件名区分 |
 | 026 | [inactive-crtc-vblank-guard](patch-026-inactive-crtc-vblank-guard.md) | `APPLY_INACTIVE_CRTC_VBLANK_GUARD=1` | patched-26/p27 实机通过；4.0.0-i1 源码树已包含；活动/未活动 CRTC 回归通过 |
 | 027 | [foreign-dmabuf-lifecycle](patch-027-foreign-dmabuf-lifecycle.md) | `APPLY_FOREIGN_DMABUF_LIFECYCLE_FIX=1` | patched-27 实机验证安装/HWGL/DRI3 自导入；4.0.0-i1 源码树已包含；foreign/跨设备路径仍未实机触发 |
 
@@ -50,12 +52,13 @@ patched-24 不增加新的设备行为补丁；它沿用 patched-23 的补丁集
 
 ## 构建顺序
 
-**当前新架构（运行 `4.0.1-i3`；R06 的 i3/i4 严格对照因 cursor 分支未入组而停止）**：
+**当前新架构（运行/回退 `4.0.0-i1`；`4.0.2-i1` 仅为 R11 静态/离线候选）**：
 
 ```text
 Deepin 202504 原 deb
   -> scripts/build-innogpu-driver.sh（drivers/ 源码树 + 版本绑定补丁 + manifest 黑盒 + 确定性变换）
-  -> 4.0.1-i3：patch-024；4.0.1-i4：patch-024 + patch-025-suspend-resume-display
+  -> 4.0.1-i3：patch-024；4.0.1-i4：patch-024 + patch-025-suspend-resume-display（历史实验）
+  -> 4.0.2-i1：patch-024 + patch-026-suspend-resume-dvfs-lifecycle（当前未安装候选）
   -> 离线 DKMS 编译 + 完整包组装
   -> scripts/check-release-package.sh
 ```
@@ -108,6 +111,8 @@ patched-19/20 的固定 wrapper 已改为拒绝执行，因为当前源码的辅
 - `4.0.1-i2`：R05 完成一次 s2idle 可见恢复；是历史候选，不作为严格 A/B 包复用。
 - `4.0.1-i3/i4`：R06 严格 A/B 对照，共用 epoch `1788451200`；i3 仅 patch-024，i4 再加
   patch-025-suspend-resume-display。包级单变量准备通过；i3 首轮未复现且 cursor 分支未入组，
-  因此在 1/4 后按规则停止，当前运行 i3，R07 转为观测与触发条件设计。
+  后续 deep 在 i3 上复现 PowerLock TOCTOU，机器已回退 `4.0.0-i1`。
+- `4.0.2-i1`：R11 新候选，固定 epoch `1788624000`；只叠加 patch-024 与 lifecycle 026，
+  不含 UNVERIFIED 的 display 025。完成静态/离线门禁前不得安装，deep 必须另获批准。
 - p25/26/27 的 deb 均为可复现构建（[release 审阅](../planning/release-review-2026-08-20.md) 修复
   目录 mtime 后重建），SHA 见 [debs/README.md](../../debs/README.md)。

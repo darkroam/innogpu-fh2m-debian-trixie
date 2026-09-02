@@ -1,6 +1,6 @@
 #!/bin/bash
-# Static tests for patch-024/025 and current/legacy builder wiring.
-# The suite copies two tracked source files to /tmp; it does not read local
+# Static tests for patch-024/025/026 and current/legacy builder wiring.
+# The suite copies three tracked source files to /tmp; it does not read local
 # payload directories, build a package, install a module, or suspend the host.
 
 set -u -o pipefail
@@ -8,6 +8,7 @@ set -u -o pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 PATCH="$ROOT/patches/024-suspend-resume.patch"
 DISPLAY_PATCH="$ROOT/patches/025-suspend-resume-display.patch"
+LIFECYCLE_PATCH="$ROOT/patches/026-suspend-resume-dvfs-lifecycle.patch"
 BUILDER="$ROOT/scripts/build-deepin-coherent.sh"
 WRAPPER="$ROOT/scripts/build-patched28-suspend-resume.sh"
 CURRENT_BUILDER="$ROOT/scripts/build-innogpu-driver.sh"
@@ -24,6 +25,7 @@ fail() { tests=$((tests + 1)); failures=$((failures + 1)); printf 'suspend_resum
 mkdir -p "$TMP/tree/innosrvkm"
 cp "$ROOT/drivers/innosrvkm/pvr_dvfs_device.c" "$TMP/tree/innosrvkm/"
 cp "$ROOT/drivers/innosrvkm/innodpu_drm_pm.c" "$TMP/tree/innosrvkm/"
+cp "$ROOT/drivers/innosrvkm/pvr_drm.c" "$TMP/tree/innosrvkm/"
 
 if patch --dry-run -s -d "$TMP/tree" -p1 < "$PATCH"; then
     pass patch_dry_run
@@ -119,6 +121,84 @@ else
     fail strict_patch_application_leaves_no_artifacts
 fi
 
+if patch --dry-run --batch --forward --fuzz=0 --no-backup-if-mismatch \
+    -s -d "$TMP/tree" -p1 < "$LIFECYCLE_PATCH"; then
+    pass lifecycle_patch_dry_run
+else
+    fail lifecycle_patch_dry_run
+fi
+
+if patch --batch --forward --fuzz=0 --no-backup-if-mismatch \
+    -s -d "$TMP/tree" -p1 < "$LIFECYCLE_PATCH"; then
+    pass lifecycle_patch_applies
+else
+    fail lifecycle_patch_applies
+fi
+
+lifecycle_patched="$TMP/tree/innosrvkm/pvr_drm.c"
+if [[ "$(grep -c '^diff -ruN ' "$LIFECYCLE_PATCH")" -eq 1 ]] &&
+   grep -Fq 'a/innosrvkm/pvr_drm.c b/innosrvkm/pvr_drm.c' "$LIFECYCLE_PATCH" &&
+   grep -Fq '#include "pvr_dvfs_device.h"' "$lifecycle_patched"; then
+    pass lifecycle_patch_scope_is_single_pvr_pm_file
+else
+    fail lifecycle_patch_scope_is_single_pvr_pm_file
+fi
+
+if python3 - "$lifecycle_patched" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+text = Path(sys.argv[1]).read_text(encoding="utf-8")
+suspend = re.search(r"static int pvr_pm_suspend\(.*?\n}\n", text, re.S).group()
+dvfs = suspend.index("SuspendDVFS(priv->dev_node)")
+pvr = suspend.index("PVRSRVDeviceSuspend(ddev)", dvfs)
+rollback = suspend.index("ResumeDVFS(priv->dev_node)", pvr)
+raise SystemExit(0 if dvfs < pvr < rollback else 1)
+PY
+then
+    pass lifecycle_suspend_drains_dvfs_before_pvr_poweroff
+else
+    fail lifecycle_suspend_drains_dvfs_before_pvr_poweroff
+fi
+
+if sed -n '/dvfs_err = SuspendDVFS/,/err = PVRSRVDeviceSuspend/p' "$lifecycle_patched" |
+       grep -Fq 'rollback_err = ResumeDVFS(priv->dev_node);' &&
+   sed -n '/err = PVRSRVDeviceSuspend/,/return err;/p' "$lifecycle_patched" |
+       grep -Fq 'if (err)' &&
+   sed -n '/err = PVRSRVDeviceSuspend/,/return err;/p' "$lifecycle_patched" |
+       grep -Fq 'rollback_err = ResumeDVFS(priv->dev_node);'; then
+    pass lifecycle_suspend_failures_restore_dvfs
+else
+    fail lifecycle_suspend_failures_restore_dvfs
+fi
+
+if python3 - "$lifecycle_patched" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+text = Path(sys.argv[1]).read_text(encoding="utf-8")
+resume = re.search(r"static int pvr_pm_resume\(.*?\n}\n", text, re.S).group()
+pvr = resume.index("err = PVRSRVDeviceResume(ddev)")
+failure_return = resume.index("if (err)\n\t\treturn err;", pvr)
+dvfs = resume.index("ResumeDVFS(priv->dev_node)", failure_return)
+raise SystemExit(0 if pvr < failure_return < dvfs else 1)
+PY
+then
+    pass lifecycle_resume_restores_dvfs_only_after_pvr_poweron
+else
+    fail lifecycle_resume_restores_dvfs_only_after_pvr_poweron
+fi
+
+if [[ "$(grep -c 'defined(SUPPORT_LINUX_DVFS) && (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))' "$lifecycle_patched")" -eq 4 ]] &&
+   sed -n '/#else/,/#endif/p' "$lifecycle_patched" | grep -Fq 'return PVRSRVDeviceSuspend(ddev);' &&
+   sed -n '/#else/,/#endif/p' "$lifecycle_patched" | grep -Fq 'return PVRSRVDeviceResume(ddev);'; then
+    pass lifecycle_old_kernel_uses_existing_callback_path_only
+else
+    fail lifecycle_old_kernel_uses_existing_callback_path_only
+fi
+
 if bash -n "$BUILDER" "$WRAPPER" "$CURRENT_BUILDER"; then
     pass builder_shell_syntax
 else
@@ -141,8 +221,9 @@ else
     fail patched28_inherits_p27_and_enables_fix
 fi
 
-if grep -Fq 'VERSION="${VERSION:-4.0.1-i4}"' "$CURRENT_BUILDER" &&
+if grep -Fq 'VERSION="${VERSION:-4.0.2-i1}"' "$CURRENT_BUILDER" &&
    grep -Fq '4.0.1-i3|4.0.1-i4) EXPECTED_SOURCE_DATE_EPOCH=1788451200' "$CURRENT_BUILDER" &&
+   grep -Fq '4.0.2-i1) EXPECTED_SOURCE_DATE_EPOCH=1788624000' "$CURRENT_BUILDER" &&
    ! grep -Eq '4\.0\.1-i[12]\) EXPECTED_SOURCE_DATE_EPOCH=' "$CURRENT_BUILDER" &&
    grep -Fq 'builder_version_review=FAIL unreviewed package version' "$CURRENT_BUILDER"; then
     pass current_builder_version_is_fail_closed
@@ -153,13 +234,15 @@ fi
 if [[ "$(grep -c 'apply_reviewed_source_fixes "\$' "$CURRENT_BUILDER")" -eq 2 ]] &&
    grep -Fq 'patches/024-suspend-resume.patch' "$CURRENT_BUILDER" &&
    grep -Fq 'patches/025-suspend-resume-display.patch' "$CURRENT_BUILDER" &&
-   grep -Fq '[[ "$VERSION" == "4.0.1-i4" ]]' "$CURRENT_BUILDER"; then
+   grep -Fq 'patches/026-suspend-resume-dvfs-lifecycle.patch' "$CURRENT_BUILDER" &&
+   grep -Fq '[[ "$VERSION" == "4.0.1-i4" ]]' "$CURRENT_BUILDER" &&
+   grep -Fq '[[ "$VERSION" == "4.0.2-i1" ]]' "$CURRENT_BUILDER"; then
     pass current_builder_patches_compile_and_package_trees
 else
     fail current_builder_patches_compile_and_package_trees
 fi
 
-if [[ "$(grep -c -- '--fuzz=0 --no-backup-if-mismatch' "$CURRENT_BUILDER")" -eq 2 ]] &&
+if [[ "$(grep -c -- '--fuzz=0 --no-backup-if-mismatch' "$CURRENT_BUILDER")" -eq 3 ]] &&
    grep -Fq -- "-name '*.orig' -o -name '*.rej'" "$CURRENT_BUILDER" &&
    grep -Fq 'apply_reviewed_source_fixes "$STAGE/source" compile-staging' "$CURRENT_BUILDER" &&
    grep -Fq 'apply_reviewed_source_fixes "$P/usr/src/innogpu-kernel-2.2" packaged-dkms' "$CURRENT_BUILDER" &&
@@ -167,6 +250,27 @@ if [[ "$(grep -c -- '--fuzz=0 --no-backup-if-mismatch' "$CURRENT_BUILDER")" -eq 
     pass current_builder_patch_application_is_fail_closed
 else
     fail current_builder_patch_application_is_fail_closed
+fi
+
+mkdir -p "$TMP/reject-402-epoch" "$TMP/reject-402-version"
+if output=$(INNOGPU_ROOT="$TMP/reject-402-epoch" VERSION=4.0.2-i1 \
+    SOURCE_DATE_EPOCH=1788537600 bash "$CURRENT_BUILDER" 2>&1); then
+    fail current_builder_rejects_old_epoch_for_4_0_2_i1
+elif grep -Fq 'builder_repro=FAIL 4.0.2-i1 requires SOURCE_DATE_EPOCH=1788624000' <<<"$output" &&
+     [[ ! -e "$TMP/reject-402-epoch/build" ]]; then
+    pass current_builder_rejects_old_epoch_for_4_0_2_i1
+else
+    fail current_builder_rejects_old_epoch_for_4_0_2_i1
+fi
+
+if output=$(INNOGPU_ROOT="$TMP/reject-402-version" VERSION=4.0.2-i2 \
+    SOURCE_DATE_EPOCH=1788624000 bash "$CURRENT_BUILDER" 2>&1); then
+    fail current_builder_rejects_unreviewed_4_0_2_iteration
+elif grep -Fq 'builder_version_review=FAIL unreviewed package version: 4.0.2-i2' <<<"$output" &&
+     [[ ! -e "$TMP/reject-402-version/build" ]]; then
+    pass current_builder_rejects_unreviewed_4_0_2_iteration
+else
+    fail current_builder_rejects_unreviewed_4_0_2_iteration
 fi
 
 mkdir -p "$TMP/reject-i2" "$TMP/reject-i4"

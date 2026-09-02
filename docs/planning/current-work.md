@@ -30,20 +30,14 @@
 
 ## 运行时、测试与上游报告
 
-- [ ] **suspend/resume 候选验收**：patch-024 / `4.0.1-i1` 的 s2idle 无 PowerLock/PVR 增长但外屏红屏；
-  `4.0.1-i2` 加入 patch-025 后在 R05 完成一次人工可见恢复。R06 用同 epoch 的 i3（仅 024）/i4
-  （024+025）完成包级单变量准备，但 i3 第 1/4 轮正常且 ftrace 为 `wakeup=3/cursor_resume=0`，
-  因处理分支未执行而按规则停止。当前运行 i3；R07 非挂起观测确认 modesetting 桌面
-  `cursor_enable=0`，无 cursor 入口和 `0x258..0x25a` 自然访问。R08 已建立正常桌面的
-  primary FB/GEM/scanout 地址链和 DPU shadow/config-valid 只读基线，并纠正 R07 因旧 DRM
-  偏移造成的空 `crtc->state` 误判；R08 未挂起，假设 2/4 仍未证实。R09 经批准执行了
-  唯一一次带 observer、RTC 与 watchdog 的 i3 s2idle：内屏/TTY 正常、外屏未连接、红屏
-  未复现，trace 仍为 wakeup=3/cursor_resume=0。2026-09-02 用户决定**暂停 suspend 线**：
-  patch-024 的 deep 修复与 patch-025 均保持 UNVERIFIED，deep 继续冻结，P3 保持打开
-  （红屏三次尝试未复现，deep 未验证）；恢复调查需重新授权。见
-  [`024-suspend-resume.md`](../patches/024-suspend-resume.md)、
-  [`025-suspend-resume-display.md`](../patches/025-suspend-resume-display.md)
-  和 [s2idle 红屏事故](../incidents/suspend-resume-s2idle-red-screen-20260902.md)。
+- [ ] **suspend/resume 候选验收**：R10 在 `4.0.1-i3` 上复现 deep PowerLock POWERED_OFF，证明
+  patch-024 的锁外快速门禁存在 TOCTOU；设备已回退 `4.0.0-i1`。R11 的 `4.0.2-i1` 以
+  patch-024 + patch-026 lifecycle 在 PVR 下电前 drain devfreq、上电成功后再恢复，并补齐失败
+  回滚和失败轮次 finalize fixture。当前只允许静态/离线构建验证；经 dsh 审查提交且用户本人在场
+  重新确认后，才执行一次 deep 冒烟。P3 保持打开。`4.0.1-i4` 的 display 025 仍为独立
+  UNVERIFIED 实验，不进入 i1。见 [`024-suspend-resume.md`](../patches/024-suspend-resume.md)、
+  [`026-suspend-resume-dvfs-lifecycle.md`](../patches/026-suspend-resume-dvfs-lifecycle.md) 和
+  [deep 事故](../incidents/suspend-resume-deep-reproduction-20260902.md)。
 - [ ] **登录后短暂黑屏**：在 `4.0.1-i1` 和回退后的 `4.0.0-i1` 均复现，排除 patch-024 特异回归。
   合盖登录时 xdisplay 把初始 Xorg 布局切为 `EXTERNAL_ONLY`，Xorg 重建 1920x1080 framebuffer 并在约
   5 秒内重复查询输出，与“桌面亮一下、黑几秒、再恢复”时间窗一致。该问题归 dotconfig/xdisplay

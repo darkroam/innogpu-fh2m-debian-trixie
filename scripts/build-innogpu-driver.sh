@@ -1,7 +1,7 @@
 #!/bin/bash
 # New-architecture builder: assemble drivers/ + verified vendor payload into an
 # isolated staging tree, compile the DKMS module offline, and build a coherent
-# package (4.0.1-iN). The old builder remains the p27 oracle.
+# package (4.0.x-iN). The old builder remains the p27 oracle.
 # No install, no hot-swap, no reboot.
 
 set -euo pipefail
@@ -9,16 +9,17 @@ set -euo pipefail
 ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$ROOT"
 
-VERSION="${VERSION:-4.0.1-i4}"
+VERSION="${VERSION:-4.0.2-i1}"
 case "$VERSION" in
     4.0.1-i3|4.0.1-i4) EXPECTED_SOURCE_DATE_EPOCH=1788451200 ;;
+    4.0.2-i1) EXPECTED_SOURCE_DATE_EPOCH=1788624000 ;;
     *)
         echo "builder_version_review=FAIL unreviewed package version: $VERSION" >&2
         exit 1
         ;;
 esac
 # 可复现构建: 固定审核 epoch 必须显式提供, 禁止回退到当前时间(同源码不同时间产出不同 deb)。
-# 审核 epoch 记录于 docs/patches/025-suspend-resume-display.md。
+# 审核 epoch 记录于对应的 docs/patches/ 候选说明。
 SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-}"
 [[ "$SOURCE_DATE_EPOCH" =~ ^[0-9]+$ ]] || {
     echo "builder_repro=FAIL SOURCE_DATE_EPOCH must be the fixed audit epoch (see docs)"; exit 1; }
@@ -44,6 +45,10 @@ apply_reviewed_source_fixes() {
         patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$source_tree" -p1 \
             < "$ROOT/patches/025-suspend-resume-display.patch"
     fi
+    if [[ "$VERSION" == "4.0.2-i1" ]]; then
+        patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$source_tree" -p1 \
+            < "$ROOT/patches/026-suspend-resume-dvfs-lifecycle.patch"
+    fi
     reject_patch_artifacts "$source_tree" "$scope"
 }
 
@@ -62,6 +67,8 @@ reject_patch_artifacts() {
 APPLIED_SOURCE_FIXES="patch-024"
 [[ "$VERSION" == "4.0.1-i4" ]] &&
     APPLIED_SOURCE_FIXES+=" patch-025-suspend-resume-display"
+[[ "$VERSION" == "4.0.2-i1" ]] &&
+    APPLIED_SOURCE_FIXES+=" patch-026-suspend-resume-dvfs-lifecycle"
 
 # 1) manifest + vendor 就位
 [[ -f binary-manifest.json ]] || { echo "staging_manifest=FAIL"; exit 1; }

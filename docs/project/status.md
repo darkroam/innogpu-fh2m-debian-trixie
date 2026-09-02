@@ -1,6 +1,6 @@
 # 当前状态与问题清单
 
-最后更新：2026-09-02
+最后更新：2026-09-03
 
 本文件是项目当前运行状态的唯一摘要。历史过程、补丁细节和故障推导分别见
 [阶段补丁](../patches/README.md) 与 [事故和经验](../incidents/README.md)。
@@ -9,15 +9,15 @@
 
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
-| 当前运行驱动 | `4.0.1-i3`（仅 patch-024）已安装并重启至 `6.12.101+deb13-amd64`；R06 首轮 s2idle 可见恢复正常，但 cursor treatment 未执行，不能据此晋级 | [patch-025](../patches/025-suspend-resume-display.md) |
-| 最近失败候选 | `4.0.1-i1`：构建、安装、重启与 PVR 机械门禁通过，但真实 s2idle 唤醒后外屏红屏；已回退 `4.0.0-i1`，不得继续安装；deep 未测试 | [patch-024](../patches/024-suspend-resume.md)、[s2idle 红屏事故](../incidents/suspend-resume-s2idle-red-screen-20260902.md) |
-| 当前严格 A/B 候选 | A=`4.0.1-i3`（仅 patch-024）/B=`4.0.1-i4`（024+025）共用 epoch `1788451200` 且包级单变量通过；R06 因 A 不复现红屏且 `cursor_resume=0` 在 1/4 后按规则停止；R08 只建立正常桌面 FB/GEM/shadow 基线，025 保持 UNVERIFIED | [patch-025-suspend-resume-display](../patches/025-suspend-resume-display.md) |
+| 当前运行驱动 | `4.0.0-i1` 已在 R10 deep 失败后重新安装并重启至 `6.12.101+deb13-amd64`；包/DKMS/模块/Driver/Firmware/Xorg/HWGL 回退验证通过，只作非 deep 图形基线 | [patch-026-lifecycle](../patches/026-suspend-resume-dvfs-lifecycle.md) |
+| 最近失败候选 | `4.0.1-i3`（仅 patch-024）：R10 deep 唤醒时 PreClock 在 PVR 上电前进入并触发 PowerLock POWERED_OFF，机器未正常恢复；已回退 `4.0.0-i1` | [patch-024](../patches/024-suspend-resume.md)、[deep 事故](../incidents/suspend-resume-deep-reproduction-20260902.md) |
+| 当前静态/离线候选 | `4.0.2-i1` = patch-024 + patch-026 DVFS/PVR 生命周期同步，epoch `1788624000`；不含 UNVERIFIED 的 display 025，尚未安装或执行 deep | [patch-026-lifecycle](../patches/026-suspend-resume-dvfs-lifecycle.md) |
 | 稳定图形历史基线 | 历史记录：`3.3.3.42-patched-21` 已安装、重启并完成本机 PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收；不是当前运行包 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | 历史运行基线 | `3.3.3.42-patched-20` 曾完成运行验收，但 deb 含收敛前辅助载荷，仅保留为历史证据 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
 | 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |
 | 历史运行验收 | p21 完整图形验收通过；p22 完成 connector 分类和开盖桌面烟测，但电源/合盖/拔屏矩阵未完成 | [`patch-009` 验收](../patches/patch-009-local-internal-edp-connector.md) |
 | 源码/用户态基线 | Deepin 202504 完整原包，不混用历史 patched 包 | `scripts/build-innogpu-driver.sh`（新架构）；`build-deepin-coherent.sh` 为 legacy p27 oracle |
-| 源码树迁移 | 阶段 0–4 完成（新构建器 4.0.0-i1 并行验证 + 实机候选验证与回退演练全 PASS）；R06 后设备运行 4.0.1-i3；阶段 5 第一步（标记 deprecated + 文档同步）完成，第二步待条件满足 + 监督批准 | [phase5-retirement-design](../planning/phase5-retirement-design.md) |
+| 源码树迁移 | 阶段 0–4 完成（新构建器 4.0.0-i1 并行验证 + 实机候选验证与回退演练全 PASS）；R10 后设备已回退 4.0.0-i1；阶段 5 第一步完成，第二步待条件满足 + 监督批准 | [phase5-retirement-design](../planning/phase5-retirement-design.md) |
 | 固件与 PVR | `4.0.0-i1` 实机验收已确认固件加载，Driver/Firmware 为 OK，错误计数为 0 | [Phase 4 验收](../planning/phase4-device-validation.md) |
 | DRM/fbdev | `4.0.0-i1` 实机验收已确认 `card0`、`renderD128`、`fb0` 可用；fbterm redraw 路径通过真实 VT 验证 | [Phase 4 验收](../planning/phase4-device-validation.md) |
 | Xorg/GLX | 当前桌面和隔离 Xorg 的硬件加速验收通过 | [Phase 4 验收](../planning/phase4-device-validation.md) |
@@ -63,7 +63,11 @@
   modesetting 桌面 `cursor_enable=0`、无 cursor 入口与目标 HAL 访问。R08 已在不同显示连接状态下
   建立正常桌面的 primary FB/GEM/scanout 与 shadow/config-valid 自然事件基线，并确认 R07 的空
   `crtc->state` 是 shipped-object DRM 偏移误读；本轮未挂起，不能将健康基线外推到红屏窗口。
-  025 保持 UNVERIFIED；下一步只允许另行批准的一次受控 i3 s2idle 观测，deep 冻结仍生效。
+  R10 随后在 i3 上真实进入 deep 并复现 PowerLock POWERED_OFF；反汇编确认 patch-024 的锁外
+  `PVRSRVDefaultDomainPower()` 与后续 PowerLock 之间存在 TOCTOU。R11 的 `4.0.2-i1` 用 patch-026
+  在 PVR 下电前同步停止并 drain devfreq target、PVR 上电成功后才恢复 DVFS；当前仅完成静态/离线
+  候选，deep 冻结仍生效，须经 dsh 审查、提交并由用户在场批准后才可冒烟。display 025 继续
+  UNVERIFIED，不进入 `4.0.2-i1`。
 - **登录后短暂黑屏 P2**：`4.0.1-i1` 与回退后的 `4.0.0-i1` 均复现，排除 patch-024 特异回归。
   合盖登录时 xdisplay 把 Xorg 初始布局切为 `EXTERNAL_ONLY`，对应一次 framebuffer 重建及约 5 秒输出
   重查询；画面最终恢复。该问题由 dotconfig/xdisplay 独立跟踪，本项目不在线修改会话配置。

@@ -46,6 +46,7 @@ docs/incidents/suspend-resume-s2idle-red-screen-20260902.md
 docs/new-device-install.md
 docs/patches/024-suspend-resume.md
 docs/patches/025-suspend-resume-display.md
+docs/patches/026-suspend-resume-dvfs-lifecycle.md
 docs/patches/README.md
 docs/patches/patch-000-skip-first-gpupll.md
 docs/patches/patch-001-kernel-6.12.md
@@ -194,6 +195,7 @@ tests/unit/run-extractor-tests.sh
 tests/unit/run-license-audit-tests.sh
 tests/unit/run-manifest-tests.sh
 tests/unit/run-results-parser-tests.sh
+tests/unit/run-suspend-failure-finalize-tests.sh
 tests/unit/run-suspend-resume-tests.sh
 tests/unit/run-vaapi-decode-tests.sh
 tests/unit/run-version-tests.sh
@@ -201,6 +203,7 @@ tests/xdisplay/run-install-tests.sh
 tools/README.md
 tools/audit-licenses.py
 tools/build-release-archive.py
+tools/finalize-suspend-resume-failure.py
 tools/generate-binary-manifest.py
 tools/patch-gpupll-object.py
 tools/private-data-patterns.txt

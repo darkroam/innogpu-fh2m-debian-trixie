@@ -6,8 +6,9 @@
 
 | 版本 | 用途 | 新设备策略 |
 | --- | --- | --- |
+| `4.0.2-i1` | R11：patch-024 + patch-026 DVFS/PVR 生命周期同步 | 当前静态/离线候选；deep 尚未真机验证，未经本轮第二阶段批准不得安装 |
 | `4.0.1-i4` | R06 B：patch-024 + patch-025-suspend-resume-display | 包级单变量候选；因 A 的 cursor 分支未入组而未安装，不是新设备默认版本 |
-| `4.0.1-i3` | R06 A：patch-024 | 当前实验运行版本；首轮 s2idle 正常但未复现且 cursor 分支未入组，不是新设备默认版本 |
+| `4.0.1-i3` | R06 A/R10 deep 失败候选：patch-024 | R10 复现 PowerLock TOCTOU，已回退，不是新设备默认版本 |
 | `4.0.1-i2` | R05 历史候选 | 一次 s2idle 可见恢复通过，但不作为 R06 严格 A/B 包复用 |
 | `4.0.1-i1` | patch-024 suspend/resume 失败候选 | s2idle 唤醒红屏，已回退；显式版本/epoch 仅供离线复现，禁止安装 |
 | `4.0.0-i1` | **新架构回退包**（迁移源码树 + manifest 黑盒载荷，Phase 4 实机验收通过；deep resume 已知故障） | 只使用已留存且核对过 SHA 的历史构建，不得用当前源码复用版本号 |
@@ -23,7 +24,7 @@ patched-18/19 是问题定位和 coherent 构建演进记录，不是安装推�
 
 新架构包不随 Git 提供。clone 本仓库后，从有权提供该内容的来源取得 Deepin 原包并放入 `debs/`；
 本项目当前不提供该第三方原包或载荷的公开下载。构建器会按 `binary-manifest.json` 校验完整
-SHA-256。R06 i3/i4 共用固定审核 epoch `1788451200`（2026-09-04 00:00 +0800）：
+SHA-256。R11 当前候选使用固定审核 epoch `1788624000`（2026-09-06 00:00 +0800）：
 
 ```text
 debs/innogpu-fh2m_20250421190503-debug_amd64.deb
@@ -34,9 +35,9 @@ SHA-256: b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2
 cd "$INNOGPU_ROOT"
 sha256sum debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 bash scripts/extract-vendor-binaries.sh                        # 按 manifest 重建 vendor/ 黑盒载荷
-SOURCE_DATE_EPOCH=1788451200 bash scripts/build-innogpu-driver.sh
-# 默认输出 build/innogpu-fh2m-trixie_4.0.1-i4.deb；未经 R06 复审不得安装
-# A 对照：VERSION=4.0.1-i3 SOURCE_DATE_EPOCH=1788451200 bash scripts/build-innogpu-driver.sh
+SOURCE_DATE_EPOCH=1788624000 bash scripts/build-innogpu-driver.sh
+# 默认输出 build/innogpu-fh2m-trixie_4.0.2-i1.deb；未经 R11 阶段 2 批准不得安装
+# R06 i3/i4 仅保留为显式历史复现入口
 ```
 
 > 新 clone 上 `vendor/` 为空（不入库）：必须先 `extract-vendor-binaries.sh` 重建黑盒载荷，
@@ -90,7 +91,7 @@ sudo INNOGPU_X_USER="$USER" INNOGPU_X_HOME="$HOME" \
 
 ## 已验证现存包：4.0.0-i1
 
-当前 HEAD 不再构建 `4.0.0-i1`，因为 patch-024/025 已改变源码行为。只有已留存且哈希与 Phase 4 记录
+当前 HEAD 不再构建 `4.0.0-i1`，因为 patch-024/026 已改变源码行为。只有已留存且哈希与 Phase 4 记录
 一致的 4.0.0-i1 包可用于恢复现有基线；它存在已知 deep resume 故障。安装前确认 `patched-27`
 回退包在 `debs/`，并保留真实 TTY/物理电源键恢复通道；按
 [`phase4-device-validation.md`](../planning/phase4-device-validation.md) 先做 B1-B12 基线采集。
@@ -129,9 +130,9 @@ patched-17/patched-8。
 该 deb 生成于 xdisplay 所有权收敛前，包内仍有旧引擎/实验辅助文件，且 `patch-008` 会高频写日志。
 当前 `build-patched20-deepin-diagnostic.sh` 仅作为拒绝版本复用的兼容护栏，不再生成包。
 
-`4.0.1-i1` 已判定为失败候选；`4.0.1-i2` 是 R05 历史候选；当前运行 R06 A=i3，
-但首轮未复现红屏且 cursor 分支未入组，i3/i4 因果验证已按停止条件中止。后续任何行为变化
-仍须升新迭代号。
+`4.0.1-i1` 已判定为失败候选；`4.0.1-i2` 是 R05 历史候选；R06 i3/i4 因果验证按停止条件
+中止，R10 又在 i3 上复现 deep PowerLock TOCTOU。当前运行已回退 `4.0.0-i1`；`4.0.2-i1`
+仅完成静态/离线候选准备。后续任何行为变化仍须升新迭代号。
 不得以任何 patched deb
 作为源码或载荷基线，也不得从不同版本挑选 DRI、GBM、GLAPI、DDX 或固件拼装。新包还必须通过：
 
@@ -140,7 +141,8 @@ scripts/check-release-package.sh build/<new-package>.deb
 ```
 
 `4.0.1-i1` 已完成离线构建、安装与 s2idle 验收，但因红屏失败；`4.0.1-i2` 已完成一次
-s2idle 可见恢复；i3/i4 只完成离线构建和包级单变量准备。当前 HEAD **没有自动可安装的新设备默认版本**。
+s2idle 可见恢复；i3 在 deep 失败，i4 未安装。`4.0.2-i1` 尚未完成真机验收。当前 HEAD
+**没有自动可安装的新设备默认版本**。
 4.0.0-i1 仅是现存已验证基线且有 deep 已知故障，patched-17 仅作为深层回退保留。
 
 patched-21 已完成当前设备的构建、包边界、部署、重启和运行验收。精确输入、补丁矩阵、清洁载荷边界
