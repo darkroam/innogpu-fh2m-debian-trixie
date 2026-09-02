@@ -67,7 +67,7 @@
 - 第二步只允许**变更旧 wrapper 的工作路径**（移入 `legacy/`）或保持原路径标记 deprecated；
   `patches/`、p27/17/8 deb 与全部历史 tag **不得移动或删除**；
 - 不得在第二步条件未满足时把 `build-deepin-coherent.sh` 移出 `scripts/`（check-docs 护栏依赖）；
-- 不得用新架构 deb 覆盖历史版本号（`4.0.0-iN` 与 `3.3.3.42-patched-N` 序列并行保留）；
+- 不得用新架构 deb 覆盖历史版本号（`4.0.x-iN` 与 `3.3.3.42-patched-N` 序列并行保留）；
 - 不得宣称 Phase 5 完成而设备/文档仍停留在旧状态。
 
 ## 参考

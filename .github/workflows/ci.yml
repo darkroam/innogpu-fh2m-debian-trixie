@@ -20,7 +20,7 @@ jobs:
       - name: Repository documentation and boundary checks
         run: bash scripts/check-docs.sh
 
-      - name: Unit tests (manifest, license audit, version ordering, extractor, results parser, exec probes, vaapi decode, dmabuf regression, dri repair, collab structure)
+      - name: Unit tests (manifest, license audit, version ordering, extractor, results parser, exec probes, vaapi decode, dmabuf regression, dri repair, collab structure, suspend resume)
         run: |
           bash tests/unit/run-manifest-tests.sh
           bash tests/unit/run-license-audit-tests.sh
@@ -32,6 +32,7 @@ jobs:
           bash tests/unit/run-dmabuf-regression-tests.sh
           bash tests/unit/run-dri-repair-tests.sh
           bash tests/unit/run-collab-structure-tests.sh
+          bash tests/unit/run-suspend-resume-tests.sh
 
       - name: fbterm static tests
         run: bash tests/fbterm/run-static-tests.sh

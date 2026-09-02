@@ -22,10 +22,10 @@ installed_size=$(dpkg-deb -f "$DEB" Installed-Size)
     echo "ERROR: unexpected package: $package" >&2
     exit 1
 }
-# 接受旧架构 patched-N（N>20）与新架构 4.0.0-iN（迁移阶段 3+）
+# 接受旧架构 patched-N（N>20）与新架构 4.0.x-iN；新架构构建器另行锁定当前审核版本。
 if ! { [[ "$version" =~ ^3\.3\.3\.42-patched-([0-9]+)$ ]] && (( 10#${BASH_REMATCH[1]} > 20 )); } &&
-   ! [[ "$version" =~ ^4\.0\.0-i([0-9]+)$ ]]; then
-    echo "ERROR: release audit only accepts patched-N (N>20) or 4.0.0-iN versions: $version" >&2
+   ! [[ "$version" =~ ^4\.0\.(0|[1-9][0-9]*)-i([1-9][0-9]*)$ ]]; then
+    echo "ERROR: release audit only accepts patched-N (N>20) or canonical 4.0.x-iN versions: $version" >&2
     exit 1
 fi
 [[ "$architecture" == "amd64" ]] || {

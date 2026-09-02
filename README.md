@@ -5,8 +5,8 @@
 本项目自有工作采用 GPL-3.0-or-later；fork 上游 MIT 内容与导入源码/厂商载荷按各自声明处理，
 当前再分发边界见[许可证与再分发边界](docs/project/licensing.md)（唯一权威文档）。
 
-> 最后更新：2026-08-31 —— 当前驱动包 `4.0.0-i1`（源码级重构版），已完成 Phase 4 实机验收、
-> 回退演练、Vulkan/OpenCL 最小执行、VA-API 实际解码及 DMA-BUF 同设备 PRIME self-import 回归验证。
+> 最后更新：2026-09-02 —— 当前驱动包 `4.0.0-i1` 仍是设备运行版；deep resume 已复现故障。
+> 下一修复候选 `4.0.1-i1` 已完成静态接线，尚未构建、安装或挂起验证。
 
 ## 适配的当前系统
 
@@ -16,6 +16,7 @@
 | CPU 平台 | Hygon x86_64 |
 | GPU | Innosilicon Fantasy II-M，PCI `1ec8:9810`，2 GiB VRAM（PowerVR DDK V119 RTM 谱系） |
 | 当前驱动包 | `4.0.0-i1`：Git 管理的导入驱动源码树 `drivers/` + `binary-manifest.json` 管理的黑盒载荷 |
+| 下一候选 | `4.0.1-i1`：在新架构构建中应用 patch-024；未验证，不得冒充当前运行版本 |
 | 已验证能力 | Vulkan 1.3.264 枚举及队列提交 / OpenCL 3.0 枚举及 kernel 读回 / GL 4.3 core + GLES 3.2 / VA-API H.264 Main + HEVC Main 实际硬解（30 帧 320x240 NV12 输出校验）/ DMA-BUF 同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 / DRM+fbdev / 桌面硬件 GL / HDA 与 PipeWire 枚举 |
 
 ## 版本演进
@@ -24,6 +25,7 @@
 2. **适配本设备**：DPU/fbdev/connector/背光/GEM 系列修复（patched-8 → patched-27），本机稳定运行。
 3. **迁移 Deepin**：以 Deepin 202504 完整原包为唯一技术基线，统一用户态/固件/DDX 载荷，消除 ABI 混配。
 4. **完全重构（当前）**：取消 patch 叠加模式 → `drivers/` 仓库内维护的导入源码树 + manifest 管理黑盒，新构建器产出 `4.0.0-i1`（可复现构建；迁移阶段 0–4 完成，设备已运行）。
+5. **suspend/resume 修复候选**：新架构版本升为 `4.0.1-i1`，构建器确定性应用 patch-024；当前仅静态验证。
 
 ## 主要修复的问题
 
@@ -31,6 +33,7 @@
 - fbdev `/dev/fb0` io mmap（ENODEV）；本机 connector/ACPI/eDP 映射
 - invisible READ mapping 逐页回写缺陷；`dma_resv` usage 语义；未活动 CRTC vblank 守卫
 - foreign DMA-BUF 生命周期；deb 构建可复现性（固定 epoch + 目录 mtime 归一化）
+- deep resume 的 devfreq/PVR 电源状态竞态候选修复（patch-024，`4.0.1-i1` 待实机验证）
 
 补丁与事故详情见 [docs/patches/README.md](docs/patches/README.md)、[docs/incidents/README.md](docs/incidents/README.md)。
 
@@ -42,9 +45,8 @@ sudo scripts/install-prereqs-debian.sh                        # 基础构建/运
 # 最小化系统还须确认 python3、dpkg-deb 等新构建器直接命令（见 dependencies.md）
 # 取得 Deepin 202504 原包放入 debs/（完整 SHA-256 见 docs/project/dependencies.md）
 bash scripts/extract-vendor-binaries.sh                       # 按 manifest 重建 vendor/ 黑盒载荷
-SOURCE_DATE_EPOCH=1787342400 bash scripts/build-innogpu-driver.sh  # 构建 4.0.0-i1
-sudo apt install ./build/innogpu-fh2m-trixie_4.0.0-i1.deb     # 安装（同包名升级）
-sudo reboot                                                    # 重启后加载新模块
+SOURCE_DATE_EPOCH=1788278400 bash scripts/build-innogpu-driver.sh  # 构建 4.0.1-i1 候选
+# 该候选尚未完成离线编译/安装/挂起验收；批准前不要安装
 ```
 
 > 新 clone 上 vendor/ 与 debs/ 均为空（不入库）：必须先取得 Deepin 原包并提取黑盒载荷，构建器

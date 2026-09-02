@@ -5,8 +5,8 @@
 
 ## 构建与打包
 
-> **当前入口**：新架构构建器 `build-innogpu-driver.sh`（迁移源码树 + manifest 黑盒载荷，产出
-> 4.0.0-iN）。以下 `build-deepin-coherent.sh`、`build-patchedNN-*.sh` 与历史安装/卸载入口为
+> **当前入口**：新架构构建器 `build-innogpu-driver.sh`（迁移源码树 + 经审查的新修复 + manifest
+> 黑盒载荷，产出 4.0.x-iN）。以下 `build-deepin-coherent.sh`、`build-patchedNN-*.sh` 与历史安装/卸载入口为
 > **legacy（保留）**：永久保留作 p27 oracle、版本护栏、回退包与事故证据；**不作为新工作入口**，
 > 不移动不删除（Phase 5 第二步后再评估，见 `docs/planning/phase5-retirement-design.md`）。
 
@@ -20,6 +20,7 @@
 | `build-patched25-dma-resv-fix.sh` | legacy 包装（保留） | 在 p24 补丁集合上增加 patch-025 dma_resv usage 语义修复；当前仅作 p25 复现/证据入口 |
 | `build-patched26-vblank-guard.sh` | legacy 包装（保留） | 在 p25 补丁集合上增加 patch-026 未活动 CRTC vblank 守卫；当前仅作 p26 复现/证据入口 |
 | `build-patched27-foreign-dmabuf.sh` | legacy 包装（保留） | 在 p26 补丁集合上增加 patch-027 foreign DMA-BUF 生命周期修复；当前仅作 p27 oracle/复现入口 |
+| `build-patched28-suspend-resume.sh` | legacy 候选包装 | 在 p27 补丁集合上增加 patch-024 resume 期间 devfreq 电源状态门禁；只构建候选包，安装、重启与挂起测试须单独执行并保留回退 |
 | `check-deb-dkms-build.sh` | 离线编译检查 | 将指定候选 deb 解包到 `/tmp`，针对指定内核 headers 编译 `innogpu.ko` 并校验 vermagic；不注册或安装 DKMS |
 | `check-source-parity.sh` | 只读 parity 检查 | 在临时目录重建 p27 生成源码树（third_party + 9 个启用补丁按构建器顺序 + 清理 .orig/.rej），与 `drivers/` 逐文件对比（排除 README/.o_shipped/.o.cmd），输出机器可读 PASS/FAIL；不修改源码树、旧构建器或设备 |
 | `phase4-baseline-capture.sh` | 只读基线采集 | Phase 4 安装前 B1-B12 基线采集（dpkg/lsmod/DKMS/modprobe/initramfs/音频内核可见/Picom/用户态一致性/恢复通道），输出存 `baselines/phase4-baseline-<ts>.log`；真实会话项（/dev/dri、Xorg/GL、音频 sink、显示切换）由用户实机执行 |
@@ -27,7 +28,7 @@
 | `generate-binary-manifest.py`（tools/） | 清单生成 | 从 Deepin deb 确定性生成 `binary-manifest.json`（校验 deb SHA、覆盖全部黑盒文件与符号链接、kind/role/license 分类） |
 | `compare-oracle-candidates.sh` | oracle 对比 | 新架构候选包 vs patched-27：对比 control（除 Version/Description/Installed-Size）、文件清单、载荷哈希、DKMS 源码、黑盒对象、maintainer 脚本（版本归一）、版本排序与 module_symbols（调用 compare-module-symbols.sh）；构建产物（.o.cmd/.o/.ko/modules.order/Module.symvers/.mod）统一按 ARTIFACT_RE 排除；输出机器可读 PASS/FAIL |
 | `compare-module-symbols.sh` | 只读符号对比 | 离线构建候选与 patched-27 两包 DKMS 源码（同一内核头），逐 .ko 对比 vermagic/depends/导出符号/导入符号；构建于 `$ROOT/.build/`，不安装不重启；module_symbols=PASS/FAIL/UNCOMPARABLE |
-| `build-innogpu-driver.sh` | **新架构当前构建器** | 装配 drivers/ + vendor 黑盒 + 确定性变换，离线编译 DKMS，产出完整 coherent 包（4.0.0-iN）；版本排序 > patched-27 校验；`SOURCE_DATE_EPOCH` 必填（缺失即失败）；`.o.cmd` 守卫保证构建产物不入包；不安装不重启 |
+| `build-innogpu-driver.sh` | **新架构当前构建器** | 当前唯一已审查输出为 `4.0.1-i1`（固定 epoch 1788278400，其他版本/epoch 失败关闭）；装配 drivers/ 后把 patch-024 同时应用到编译树和包内 DKMS 源码，再加入 vendor 黑盒与确定性变换并离线编译；`.o.cmd` 守卫保证构建产物不入包；不安装不重启 |
 | `build-patched17-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝把 patched-17 作为后续构建父版本 |
 | `build-patched18-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝重建历史混合载荷 patched-18 |
 | `build-patched19-deepin-coherent.sh` | legacy 护栏（保留） | 明确拒绝用当前辅助载荷复用 patched-19 版本号 |

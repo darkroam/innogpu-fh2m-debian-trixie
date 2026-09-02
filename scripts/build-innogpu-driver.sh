@@ -1,7 +1,7 @@
 #!/bin/bash
 # New-architecture builder: assemble drivers/ + verified vendor payload into an
 # isolated staging tree, compile the DKMS module offline, and build a coherent
-# package (4.0.0-iN). The old builder remains the p27 oracle; no patch apply.
+# package (4.0.1-iN). The old builder remains the p27 oracle.
 # No install, no hot-swap, no reboot.
 
 set -euo pipefail
@@ -9,12 +9,21 @@ set -euo pipefail
 ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$ROOT"
 
-VERSION="${VERSION:-4.0.0-i1}"
+VERSION="${VERSION:-4.0.1-i1}"
+case "$VERSION" in
+    4.0.1-i1) EXPECTED_SOURCE_DATE_EPOCH=1788278400 ;;
+    *)
+        echo "builder_version_review=FAIL unreviewed package version: $VERSION" >&2
+        exit 1
+        ;;
+esac
 # 可复现构建: 固定审核 epoch 必须显式提供, 禁止回退到当前时间(同源码不同时间产出不同 deb)。
-# 审核 epoch 记录于 docs/planning/source-tree-migration.md(4.0.0-i1 = 1787342400)。
+# 审核 epoch 记录于 docs/patches/024-suspend-resume.md。
 SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-}"
 [[ "$SOURCE_DATE_EPOCH" =~ ^[0-9]+$ ]] || {
     echo "builder_repro=FAIL SOURCE_DATE_EPOCH must be the fixed audit epoch (see docs)"; exit 1; }
+[[ "$SOURCE_DATE_EPOCH" == "$EXPECTED_SOURCE_DATE_EPOCH" ]] || {
+    echo "builder_repro=FAIL $VERSION requires SOURCE_DATE_EPOCH=$EXPECTED_SOURCE_DATE_EPOCH"; exit 1; }
 export SOURCE_DATE_EPOCH
 KERNEL="${KERNELDIR_VER:-$(uname -r)}"
 KERNELDIR="${KERNELDIR:-/lib/modules/$KERNEL/build}"
@@ -25,6 +34,12 @@ OUT_DEB="${OUT_DEB:-$ROOT/build/innogpu-fh2m-trixie_$VERSION.deb}"
 dpkg --compare-versions "$VERSION" gt 3.3.3.42-patched-27 || {
     echo "builder_version_ordering=FAIL $VERSION is not > patched-27"; exit 1; }
 echo "builder_version_ordering=PASS $VERSION > patched-27"
+
+apply_reviewed_source_fixes() {
+    local source_tree=$1
+    patch --batch --forward -s -d "$source_tree" -p1 \
+        < "$ROOT/patches/024-suspend-resume.patch"
+}
 
 # 1) manifest + vendor 就位
 [[ -f binary-manifest.json ]] || { echo "staging_manifest=FAIL"; exit 1; }
@@ -38,6 +53,7 @@ trap 'rm -rf "$STAGE"' EXIT
 mkdir -p "$STAGE/source" "$STAGE/package"
 
 cp -r drivers/. "$STAGE/source/"
+apply_reviewed_source_fixes "$STAGE/source"
 for obj in vendor/kernel/*/*.o_shipped; do
     mod=$(basename "$(dirname "$obj")")
     cp "$obj" "$STAGE/source/$mod/"
@@ -45,6 +61,7 @@ done
 python3 tools/patch-gpupll-object.py "$STAGE/source/innogpu/innogpu.o_shipped" >/dev/null
 echo "staging_objects=$(ls "$STAGE/source"/*/*.o_shipped | wc -l)"
 echo "staging_deterministic_transform=PASS"
+echo "staging_source_fixes=PASS patch-024"
 
 # 3) 离线编译
 cd "$STAGE/source"
@@ -64,6 +81,7 @@ P=$STAGE/package/root
 install -d "$P/usr/src/innogpu-kernel-2.2" "$P/etc/ld.so.conf.d" \
     "$P/usr/share/innogpu-fh2m-trixie" "$P/usr/bin" "$P/usr/sbin"
 cp -r drivers/. "$P/usr/src/innogpu-kernel-2.2/"
+apply_reviewed_source_fixes "$P/usr/src/innogpu-kernel-2.2"
 rm -f "$P/usr/src/innogpu-kernel-2.2/README.md"
 
 # vendor payload -> install 路径
@@ -137,7 +155,7 @@ Maintainer: Tim Hant <tthantclaw@outlook.com>
 Homepage: https://github.com/timhant/innogpu-fh2m-debian-trixie
 Description: Innosilicon Fantasy II-M driver (migrated source tree, version $VERSION)
  New-architecture build: drivers/ source tree + manifest-managed black-box
- payload, equivalent to patched-27 without patch application.
+ payload, with the reviewed patch-024 suspend/resume source fix.
 EOF
 
 cat > "$P/DEBIAN/postinst" <<EOF

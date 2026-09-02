@@ -19,6 +19,7 @@
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-26.deb` | patch-026 未活动 CRTC vblank 守卫；已实机验证；当前回退点为 p27；可复现 SHA 见 `debs/README.md` |
 | `debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb` | patch-027 foreign DMA-BUF 生命周期修复；**保留的回退基线**（Phase 4 后设备已运行 4.0.0-i1）；SHA `f3841597…` |
 | `build/innogpu-fh2m-trixie_4.0.0-i1.deb`（由 `scripts/build-innogpu-driver.sh` 生成） | **新架构当前运行包**：迁移源码树 + manifest 黑盒载荷；可复现 epoch 1787342400，SHA `68aea6c0…`；Phase 4 实机验收全 PASS |
+| `build/innogpu-fh2m-trixie_4.0.1-i1.deb`（待构建） | patch-024 suspend/resume 修复候选；固定 epoch 1788278400；当前未生成、未安装、未验证 |
 | `debs/innogpu-fh2m_20250421190503-debug_amd64.deb` | Deepin 202504 DKMS/GL/DDX 来源；SHA-256 `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2` |
 
 新架构提取器默认只读取 `debs/innogpu-fh2m_20250421190503-debug_amd64.deb`，其他位置必须通过
@@ -26,9 +27,9 @@
 `prepare-deepin-userspace-root.sh` 仍保留仓库根旧路径的兼容查找；后者将 Deepin deb 解包到被 Git
 忽略的 `third_party/innogpu-fh2m-deepin-202504/root/`。不得依赖该 legacy 回退构建新架构包。
 
-Deepin 202504 原包是后续版本唯一的来源基线。当前构建直接使用 `drivers/` 中已转换的源码提交，
-并按 manifest 从原包提取同源 DRI、GBM、GLAPI、GLVND、DDX、固件和黑盒对象；构建时不再叠加
-`patches/`。历史 patched 包不得作为源码或载荷输入。
+Deepin 202504 原包是后续版本唯一的来源基线。当前构建使用 `drivers/` 中已转换的历史源码提交，
+对 `4.0.1-i1` 确定性应用 patch-024，并按 manifest 从原包提取同源 DRI、GBM、GLAPI、GLVND、DDX、
+固件和黑盒对象。历史 patched 包不得作为源码或载荷输入。
 
 历史 p19/p20 deb 的驱动/用户态结论仍可作为证据，但其辅助文件清单不符合当前所有权边界。当前
 新构建器只接受按 Debian 版本排序高于 `3.3.3.42-patched-27` 的版本，并必须运行

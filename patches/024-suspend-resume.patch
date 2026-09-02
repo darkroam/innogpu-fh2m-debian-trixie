@@ -1,0 +1,13 @@
+diff -ruN a/innosrvkm/pvr_dvfs_device.c b/innosrvkm/pvr_dvfs_device.c
+--- a/innosrvkm/pvr_dvfs_device.c	2026-09-02 00:00:00.000000000 +0800
++++ b/innosrvkm/pvr_dvfs_device.c	2026-09-02 00:00:00.000000000 +0800
+@@ -165 +165,9 @@
++	/* devfreq can run before the PVR resume path has powered the device on. */
++	if (PVRSRVDefaultDomainPower(psDeviceNode) !=
++		PVRSRV_SYS_POWER_STATE_ON)
++	{
++		*requested_freq = psRGXTimingInfo->ui32CoreClockSpeed;
++		return 0;
++	}
++
+ #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0))

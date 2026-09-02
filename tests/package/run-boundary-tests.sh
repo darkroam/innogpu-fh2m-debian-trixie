@@ -76,39 +76,49 @@ valid=$(make_package valid 3.3.3.42-patched-21)
 "$CHECK" "$valid" >/dev/null || fail 'T01 valid package failed the boundary check'
 pass 'clean new-version package passes'
 
+candidate=$(make_package candidate 4.0.1-i1)
+"$CHECK" "$candidate" >/dev/null || fail 'T02 current 4.0.1-i1 candidate failed the boundary check'
+pass 'current new-architecture candidate passes'
+
+noncanonical=$(make_package noncanonical 4.0.1-i0)
+if "$CHECK" "$noncanonical" >/dev/null 2>&1; then
+    fail 'T03 noncanonical new-architecture version passed'
+fi
+pass 'noncanonical new-architecture version is rejected'
+
 legacy=$(make_package legacy 3.3.3.42-patched-21 legacy)
 if "$CHECK" "$legacy" >/dev/null 2>&1; then
-    fail 'T02 package with private xdisplay copy passed'
+    fail 'T04 package with private xdisplay copy passed'
 fi
 pass 'private xdisplay payload is rejected'
 
 historical=$(make_package historical 3.3.3.42-patched-20)
 if "$CHECK" "$historical" >/dev/null 2>&1; then
-    fail 'T03 historical version reuse passed'
+    fail 'T05 historical version reuse passed'
 fi
 pass 'patched-20 version reuse is rejected'
 
 stale=$(make_package stale 3.3.3.42-patched-21 stale-helper)
 if "$CHECK" "$stale" >/dev/null 2>&1; then
-    fail 'T04 stale integration helper passed'
+    fail 'T06 stale integration helper passed'
 fi
 pass 'packaged integration helpers must match current source'
 
 missing_shader=$(make_package missing-shader 3.3.3.42-patched-21 missing-shader)
 if "$CHECK" "$missing_shader" >/dev/null 2>&1; then
-    fail 'T05 package without complete shader firmware passed'
+    fail 'T07 package without complete shader firmware passed'
 fi
 pass 'complete firmware and shader payload is required'
 
 wrong_arch=$(make_package wrong-arch 3.3.3.42-patched-21 wrong-architecture)
 if "$CHECK" "$wrong_arch" >/dev/null 2>&1; then
-    fail 'T06 package with wrong architecture passed'
+    fail 'T08 package with wrong architecture passed'
 fi
 pass 'non-amd64 package is rejected'
 
 missing_size=$(make_package missing-size 3.3.3.42-patched-21 missing-installed-size)
 if "$CHECK" "$missing_size" >/dev/null 2>&1; then
-    fail 'T07 package without Installed-Size passed'
+    fail 'T09 package without Installed-Size passed'
 fi
 pass 'Installed-Size is required'
 

@@ -30,7 +30,7 @@ PCI 0000:06:00.6 [1d94:14c9]
 | 路径 | 职责 |
 | --- | --- |
 | `drivers/` | Deepin 202504 DKMS 源码树及已转换为提交的 9 个启用修复 |
-| `patches/` | 历史内核补丁原件、转换 provenance 和补丁说明；当前源码不再通过 patch 叠加构建 |
+| `patches/` | 历史补丁 provenance 与新行为修复候选；已迁入源码树的补丁不重复叠加，patch-024 当前由升号构建器应用 |
 | `components/picom/` | 当前维护的 Picom 源码补丁与项目配置模板（`001-probe-explicit-uniform-location.patch`、`picom.conf`） |
 | `components/fbterm/` | 当前维护的 fbterm 用户态兼容补丁（`001-configurable-redraw-scrolling.patch`） |
 | `debs/` | 本地 release/构建输入输出目录，`.deb` 被 Git 忽略，仅跟踪说明文件 |
@@ -53,9 +53,11 @@ PCI 0000:06:00.6 [1d94:14c9]
 DKMS、DRM/fbdev 与 A1–A12 实机验收的版本（迁移源码树 + manifest 黑盒载荷，见
 [source-tree-migration.md](../planning/source-tree-migration.md)）；`patched-27` 转为保留的回退基线；
 `patched-21` 是历史完整图形验收基线，`patched-17` 是深层回退包；它们不再是新设备默认入口。p25/p26/p27 分别增加 dma_resv usage 语义、未活动 CRTC vblank 守卫和 foreign DMA-BUF 生命周期修复，均已通过本机实机验收（见 [patch-025](../patches/patch-025-dma-resv-usage-rw.md)、[patch-026](../patches/patch-026-inactive-crtc-vblank-guard.md)、[patch-027](../patches/patch-027-foreign-dmabuf-lifecycle.md)）。p20 deb 是所有权收敛前的历史运行证据，包内辅助
-脚本不能代表当前源码，禁止重新部署或发布；运行时验收与 release 载荷合规是两个独立结论。当前及
-后续 `4.0.0-iN` 包直接维护 `drivers/` 源码，并从固定 Deepin 202504 原包按 manifest 提取完整同源
-用户态 ABI、固件和黑盒对象；历史补丁不再于构建时叠加。patched-21 使用 `patch-006`；patched-22
+脚本不能代表当前源码，禁止重新部署或发布；运行时验收与 release 载荷合规是两个独立结论。当前
+已安装的 `4.0.0-i1` 直接维护 `drivers/` 源码，并从固定 Deepin 202504 原包按 manifest 提取完整
+同源用户态 ABI、固件和黑盒对象；其历史补丁不在构建时叠加。下一候选 `4.0.1-i1` 为避免同版本
+不同源码，确定性应用新增 patch-024；后续 `4.0.x-iN` 每次行为变化必须独立升号。patched-21 使用
+`patch-006`；patched-22
 另加 `patch-009`，patched-23 再加 `patch-023`，patched-24 增加 `patch-001` 的 6.12.101+ API
 兼容，这些版本关系仅用于历史 provenance。connector 修复仅针对本机
 DPU match 141 的内置 DP0/eDP 语义，invisible GEM 修复只跳过 READ staging 页的回写。
@@ -71,8 +73,12 @@ Deepin 202504 deb 同时提供硬件 GL/DDX 用户态。内核模块成功、DRM
 再使用本项目已审查的 Debian maintainer scripts 生成包。`vendor/` 由
 `scripts/extract-vendor-binaries.sh` 从固定 SHA-256 的 Deepin 202504 原包幂等重建，不进入 Git。
 
-Deepin 原包仍是导入源码、用户态 ABI 和黑盒载荷的唯一技术来源，但当前构建不再在每次构建时向
-DKMS 源码应用 `patches/`。9 个启用补丁已转换为 `drivers/` 中的源码提交；旧
+从 `4.0.1-i1` 起，该构建器在复制 `drivers/` 后把 patch-024 同时应用到离线编译 staging 和最终
+包内 DKMS 源码，并锁定版本/epoch；当前运行的 `4.0.0-i1` 不受工作区补丁影响。
+
+Deepin 原包仍是导入源码、用户态 ABI 和黑盒载荷的唯一技术来源。9 个历史启用补丁已转换为
+`drivers/` 中的源码提交；新行为修复必须先以独立补丁和升号候选验证，patch-024 是当前唯一新增
+构建时源码修复。旧
 `build-deepin-coherent.sh` 和 patched wrapper 仅作为 p27 oracle、历史复现和回退证据保留。
 禁止从任一历史 patched 包复制用户态文件、对象或控制脚本后再局部替换源码。
 

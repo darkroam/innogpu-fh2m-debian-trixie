@@ -58,16 +58,23 @@ bash tests/unit/run-vaapi-decode-tests.sh
 bash tests/unit/run-dmabuf-regression-tests.sh
 bash tests/unit/run-dri-repair-tests.sh
 bash tests/unit/run-collab-structure-tests.sh
+bash tests/unit/run-suspend-resume-tests.sh
 ```
 
 - manifest 测试用 `tools/validate-binary-manifest.py` 对真实清单与 `tests/fixtures/` 下的恶意
   fixture（绝对路径、`../` 穿越、未知 kind、重复目标、缺 sha256、缺 license、链接逃逸、缺失文件）
   断言通过/拒绝；
+- suspend/resume 静态测试把跟踪的 `pvr_dvfs_device.c` 复制到 `/tmp`，验证 patch-024 dry-run/
+  应用、电源状态门禁顺序、单文件范围、`4.0.1-i1` 版本/epoch 失败关闭（含旧版本与错误 epoch
+  隔离执行反例）、编译树与包源码双应用及 patched-28 legacy 开关；不读取本地载荷、不构建或安装驱动、
+  不挂起主机；
 - 许可证审计测试覆盖当前逐文件 inventory 一致性、发布门禁保持 BLOCKED、确定性重建、
   陈旧 inventory、许可证文本缺失、confidential 集合漂移、残缺 Dual MIT/GPL 头、manifest license
   缺失、无证据 SPDX 值、项目 README 声明文字隔离和 `MODULE_LICENSE` 元数据集合漂移；不修改
   `drivers/` 或发布状态。
-- 版本测试断言 `4.0.0-i1 > patched-27`、`1.0.0-i1 < patched-27` 等排序契约；
+- 版本测试断言 `4.0.1-i1 > 4.0.0-i1 > patched-27`、`1.0.0-i1 < patched-27` 等排序契约；
+- package boundary 测试覆盖当前 `4.0.1-i1` 新架构候选与 legacy patched-N，并拒绝非规范
+  `4.0.x-iN`、私有载荷、旧 helper、错误架构和不完整包；
 - 提取器测试用临时 fixture deb 与隔离 vendor 树（提取器支持 `MANIFEST_PATH`/`VENDOR_ROOT` 覆盖），
   覆盖：vendor 缺失时 `--check-only` 必须失败、完整提取、幂等重跑、提取后 `--check-only` 通过、
   哈希篡改 `--check-only` 失败、中断/残留文件重建、源 deb SHA 不匹配失败。

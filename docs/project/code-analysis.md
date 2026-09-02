@@ -16,7 +16,8 @@
 - 子目录：`innogpu/`（DPU/GEM/DRM/HAL 源码）、`innosrvkm/`（PVR services + PDP/DP/HDMI 源码）、
   `innovpu/`、`innodma/`、`innosmmu/`、`innopmbus/`、`innopower/`（电源/调频源码）、
   `tools/`（gpu_info 等内核工具）。
-- **关键结论**：当前 `drivers/` 是**直接编译的源码树**，不再依赖 patch 叠加（`CONFIRMED`：
+- **关键结论**：`4.0.0-i1` 的 `drivers/` 是**直接编译的源码树**，不依赖历史 patch 叠加；
+  `4.0.1-i1` 起仅额外应用版本已审核的新修复 patch-024（`CONFIRMED`：
   `build-innogpu-driver.sh` 只做 `cp -r drivers/. ` + 黑盒放置 + 确定性变换，无 `patch -pN`）。
 - 黑盒对象（5 个 `.o_shipped`）**不在** `drivers/` 内（`CONFIRMED`：git ls-files 无
   .o_shipped/.o.cmd；check-docs 有边界守卫）。

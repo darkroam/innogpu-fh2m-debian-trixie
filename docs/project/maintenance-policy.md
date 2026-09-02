@@ -10,8 +10,9 @@
 
 ### 基线与载荷
 
-- 后续驱动候选必须从 `debs/` 中的 Deepin 202504 原包整体重建。**当前新架构（4.0.0-iN）**以
-  `drivers/` 源码树直接构建（`scripts/build-innogpu-driver.sh`，不执行 patch 叠加）；legacy
+- 后续驱动候选必须从 `debs/` 中的 Deepin 202504 原包整体重建。**当前新架构（4.0.x-iN）**以
+  `drivers/` 源码树为基线构建；新增行为修复必须经独立补丁审查、升号，并由
+  `scripts/build-innogpu-driver.sh` 确定性应用到编译树和包内 DKMS 源码。legacy
   patched 系构建（`build-deepin-coherent.sh`）保留作 p27 oracle 与版本护栏。DRI、GBM、GLAPI、
   GLVND、Xorg DDX、固件和 maintainer scripts 一律不得从历史 patched 包拼接。
 - `patched-8` 仅是历史回滚物，`patched-17/18/19` 是回退、故障或候选证据，不是后续实现父版本；
@@ -20,7 +21,8 @@
   即使内核补丁不变也必须提升包版本，并重新建立对应的包边界和运行证据。
 - release wrapper 必须固定经过审阅的 `SOURCE_DATE_EPOCH`；同一源码、输入 deb、版本和开关重复构建
   必须生成逐字一致的包。哈希不一致时先定位构建环境或时间戳来源，禁止选择其中一个直接发布。
-- 补丁/变换边界：历史内核补丁原件在 `patches/`（溯源与回退复现，不再叠加构建）；当前维护的
+- 补丁/变换边界：已迁入 `drivers/` 的历史内核补丁在 `patches/` 保留作溯源与回退复现，不再
+  重复叠加；新行为修复以独立补丁进入升号候选，验证通过后再决定是否迁入源码树。当前维护的
   第三方组件补丁与配置在 `components/`（picom、fbterm）；无法表示为源码 diff 的厂商对象变换使用
   `tools/` 下的严格确定性工具；设计、开关、验证和回退写入对应的 `docs/patches/patch-*.md`。
   不得通过复制 `.so`、固件或 `.ko` 绕过构建失败。

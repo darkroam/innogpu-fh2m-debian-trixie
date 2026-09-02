@@ -25,3 +25,4 @@
 | `collab/` | 多 Agent 轮次的 request/report 本机存档 | 被 Git 忽略，不上传 GitHub、不自动重许可、不进公开制品 |
 | `CLEARED` / `BLOCKED` | 某个机械发布门禁通过 / 不可发布 | `project-tools=CLEARED` 只表示候选制品通过机械检查；整仓 `license_release_gate=BLOCKED` 与 `driver-source=BLOCKED` 仍保持，不可互相替代 |
 | `4.0.0-i1` | 当前驱动包版本（新架构：drivers/ 源码树 + manifest 黑盒载荷） | 当前设备运行版；`3.3.3.42-patched-27` 为保留的首选回退基线 |
+| `4.0.1-i1` | patch-024 suspend/resume 修复的新架构候选 | 独立升号，固定 epoch 1788278400；未安装、未实机验证 |

@@ -6,7 +6,8 @@
 
 | 版本 | 用途 | 新设备策略 |
 | --- | --- | --- |
-| `4.0.0-i1` | **新架构当前运行包**（迁移源码树 + manifest 黑盒载荷，Phase 4 实机验收通过） | **新设备默认入口**：从本仓库构建后 apt 安装（见下） |
+| `4.0.1-i1` | patch-024 suspend/resume 修复候选 | 当前 HEAD 的唯一构建输出；未验证，监督批准前禁止安装 |
+| `4.0.0-i1` | **新架构当前运行包**（迁移源码树 + manifest 黑盒载荷，Phase 4 实机验收通过；deep resume 已知故障） | 只使用已留存且核对过 SHA 的历史构建，不得用当前源码复用版本号 |
 | `patched-27` | 保留的回退基线（SHA `f3841597…`） | `4.0.0-i1` 故障时的首选回退（`--allow-downgrades`） |
 | `patched-17` | 保守历史回退包 | 深层回退点（保留，不再作为默认入口） |
 | `patched-8` | 更早历史回滚物 | 仅在 patched-17 无法恢复时使用 |
@@ -15,11 +16,11 @@
 
 patched-18/19 是问题定位和 coherent 构建演进记录，不是安装推荐版本。
 
-## 准备安装包（主入口 4.0.0-i1）
+## 准备候选包（4.0.1-i1，当前禁止安装）
 
 新架构包不随 Git 提供。clone 本仓库后，从有权提供该内容的来源取得 Deepin 原包并放入 `debs/`；
 本项目当前不提供该第三方原包或载荷的公开下载。构建器会按 `binary-manifest.json` 校验完整
-SHA-256。当前审核 epoch 为 `1787342400`：
+SHA-256。`4.0.1-i1` 的固定审核 epoch 为 `1788278400`：
 
 ```text
 debs/innogpu-fh2m_20250421190503-debug_amd64.deb
@@ -30,8 +31,8 @@ SHA-256: b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2
 cd "$INNOGPU_ROOT"
 sha256sum debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 bash scripts/extract-vendor-binaries.sh                        # 按 manifest 重建 vendor/ 黑盒载荷
-SOURCE_DATE_EPOCH=1787342400 bash scripts/build-innogpu-driver.sh
-sudo apt install ./build/innogpu-fh2m-trixie_4.0.0-i1.deb
+SOURCE_DATE_EPOCH=1788278400 bash scripts/build-innogpu-driver.sh
+# 输出 build/innogpu-fh2m-trixie_4.0.1-i1.deb；监督批准前不要安装
 ```
 
 > 新 clone 上 `vendor/` 为空（不入库）：必须先 `extract-vendor-binaries.sh` 重建黑盒载荷，
@@ -83,9 +84,11 @@ sudo INNOGPU_X_USER="$USER" INNOGPU_X_HOME="$HOME" \
 
 该命令只安装 Innogpu 模式恢复钩子和 X11 会话接入，不会覆盖 dotconfig 的显示引擎。
 
-## 主入口：4.0.0-i1
+## 已验证现存包：4.0.0-i1
 
-安装前准备：确认 `patched-27` 回退包在 `debs/`，并保留 SSH 或真实 TTY 恢复通道；按
+当前 HEAD 不再构建 `4.0.0-i1`，因为 patch-024 已改变源码行为。只有已留存且哈希与 Phase 4 记录
+一致的 4.0.0-i1 包可用于恢复现有基线；它存在已知 deep resume 故障。安装前确认 `patched-27`
+回退包在 `debs/`，并保留真实 TTY/物理电源键恢复通道；按
 [`phase4-device-validation.md`](../planning/phase4-device-validation.md) 先做 B1-B12 基线采集。
 
 ```sh
@@ -122,16 +125,17 @@ patched-17/patched-8。
 该 deb 生成于 xdisplay 所有权收敛前，包内仍有旧引擎/实验辅助文件，且 `patch-008` 会高频写日志。
 当前 `build-patched20-deepin-diagnostic.sh` 仅作为拒绝版本复用的兼容护栏，不再生成包。
 
-下一候选必须先在 `docs/planning/` 定义按 Debian 排序高于 patched-27 的新版本号、源码改动、风险和
-回退，再调用 `build-innogpu-driver.sh` 从 `drivers/` 与 manifest 载荷构建。不得以任何 patched deb
+下一候选已定义为 `4.0.1-i1`；其后每个候选仍必须先在 `docs/planning/` 定义更高的新版本号、源码
+改动、风险和回退，再调用 `build-innogpu-driver.sh` 从 `drivers/`、审查补丁与 manifest 载荷构建。
+不得以任何 patched deb
 作为源码或载荷基线，也不得从不同版本挑选 DRI、GBM、GLAPI、DDX 或固件拼装。新包还必须通过：
 
 ```sh
 scripts/check-release-package.sh build/<new-package>.deb
 ```
 
-在跨硬件矩阵与 release 审阅完成前，新设备默认入口为 4.0.0-i1（Phase 4 已在本机完成全套实机验收）；
-patched-17 仅作为深层回退保留。
+在 `4.0.1-i1` 完成离线构建、安装、重启和 suspend/resume 验收前，当前 HEAD **没有自动可安装的新设备
+默认版本**。4.0.0-i1 仅是现存已验证基线，patched-17 仅作为深层回退保留。
 
 patched-21 已完成当前设备的构建、包边界、部署、重启和运行验收。精确输入、补丁矩阵、清洁载荷边界
 和跨硬件发布前门槛见 [`patched-21-release-candidate.md`](../patches/patched-21-release-candidate.md)。

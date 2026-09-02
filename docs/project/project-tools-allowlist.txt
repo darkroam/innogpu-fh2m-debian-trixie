@@ -40,7 +40,9 @@ docs/incidents/patched-18-userspace-mix.md
 docs/incidents/patched-20-legacy-helper-payload.md
 docs/incidents/patched-20-runtime.md
 docs/incidents/picom-explicit-uniform-location.md
+docs/incidents/suspend-resume-deep-reproduction-20260902.md
 docs/new-device-install.md
+docs/patches/024-suspend-resume.md
 docs/patches/README.md
 docs/patches/patch-000-skip-first-gpupll.md
 docs/patches/patch-001-kernel-6.12.md
@@ -114,6 +116,7 @@ scripts/build-patched24-kernel-612101.sh
 scripts/build-patched25-dma-resv-fix.sh
 scripts/build-patched26-vblank-guard.sh
 scripts/build-patched27-foreign-dmabuf.sh
+scripts/build-patched28-suspend-resume.sh
 scripts/check-deb-dkms-build.sh
 scripts/check-deepin-userspace-coherence.sh
 scripts/check-desktop-hwgl.sh
@@ -188,6 +191,7 @@ tests/unit/run-extractor-tests.sh
 tests/unit/run-license-audit-tests.sh
 tests/unit/run-manifest-tests.sh
 tests/unit/run-results-parser-tests.sh
+tests/unit/run-suspend-resume-tests.sh
 tests/unit/run-vaapi-decode-tests.sh
 tests/unit/run-version-tests.sh
 tests/xdisplay/run-install-tests.sh
