@@ -8,7 +8,7 @@
 
 - `patches/*.patch`（14 个源码 diff：001–009、023–027；另有 stage-000 确定性工具）——其中 13 个
   历史补丁已在源码树迁移时转为 `drivers/` 内的提交，不再重复叠加；新增 patch-024 是
-  `4.0.1-i1` 的独立候选修复，由新架构构建器确定性应用。本表保留 provenance、事故证据与
+  `4.0.1-i1` 的独立实验修复，由新架构构建器确定性应用，但 s2idle 可见恢复验收失败。本表保留 provenance、事故证据与
   legacy 回退包复现依据。
 - `components/picom/`、`components/fbterm/`——**当前维护的第三方组件补丁与配置**（2026-08-21 由
   `patches/picom/`、`patches/fbterm/`、`config/` 迁入，历史内容保留）：补丁由
@@ -31,7 +31,7 @@
 | 008 | [pvr-init-diagnostic](patch-008-pvr-init-diagnostic.md) | `APPLY_PVR_INIT_DIAGNOSTIC=1` | 仅 patched-20 诊断启用 |
 | 009 | [local-internal-edp-connector](patch-009-local-internal-edp-connector.md) | `APPLY_LOCAL_INTERNAL_EDP=1` | patched-22 至 p27 继承；connector/桌面烟测通过，4.0.0-i1 源码树已包含；电源与合盖矩阵待完成 |
 | 023 | [invisible-read-no-writeback](patch-023-invisible-read-no-writeback.md) | `APPLY_INVISIBLE_READ_NO_WRITEBACK=1` | patched-23 至 p27 继承并实机通过；4.0.0-i1 源码树已包含；Clash 启动态 A/B 已完成 |
-| 024 | [suspend-resume](024-suspend-resume.md) | 新架构 `4.0.1-i1` 固定应用；legacy `APPLY_SUSPEND_RESUME_FIX=1` | 静态 fixture 通过；4.0.0-i1 deep 已复现，4.0.1-i1 未运行，s2idle 尝试无效 |
+| 024 | [suspend-resume](024-suspend-resume.md) | 新架构 `4.0.1-i1` 固定应用；legacy `APPLY_SUSPEND_RESUME_FIX=1` | 构建/启动门禁通过；真实 s2idle 无 PowerLock 错误但外屏红屏，候选失败并回退；deep 未测试 |
 | 025 | [dma-resv-usage-rw](patch-025-dma-resv-usage-rw.md) | `APPLY_DMA_RESV_USAGE_FIX=1` | patched-25 至 p27 继承并实机通过；4.0.0-i1 源码树已包含 |
 | 026 | [inactive-crtc-vblank-guard](patch-026-inactive-crtc-vblank-guard.md) | `APPLY_INACTIVE_CRTC_VBLANK_GUARD=1` | patched-26/p27 实机通过；4.0.0-i1 源码树已包含；活动/未活动 CRTC 回归通过 |
 | 027 | [foreign-dmabuf-lifecycle](patch-027-foreign-dmabuf-lifecycle.md) | `APPLY_FOREIGN_DMABUF_LIFECYCLE_FIX=1` | patched-27 实机验证安装/HWGL/DRI3 自导入；4.0.0-i1 源码树已包含；foreign/跨设备路径仍未实机触发 |
@@ -48,7 +48,7 @@ patched-24 不增加新的设备行为补丁；它沿用 patched-23 的补丁集
 
 ## 构建顺序
 
-**当前新架构（已安装 4.0.0-i1；下一候选 4.0.1-i1）**：
+**当前新架构（已回退并运行 4.0.0-i1；4.0.1-i1 为失败候选）**：
 
 ```text
 Deepin 202504 原 deb
@@ -101,6 +101,6 @@ patched-19/20 的固定 wrapper 已改为拒绝执行，因为当前源码的辅
   修复）；已实机验证并合并、打 tag。
 - patched-28：`scripts/build-patched28-suspend-resume.sh` 继承 p27 并增加 patch-024（resume 早期
   devfreq 电源状态门禁）；补丁编号 024 是空缺回填，包版本不复用历史 patched-24；仅作 legacy
-  对照，正式候选为新架构 `4.0.1-i1`。
+  对照。新架构 `4.0.1-i1` 的 s2idle 可见恢复验收已失败，不再作为可安装候选。
 - p25/26/27 的 deb 均为可复现构建（[release 审阅](../planning/release-review-2026-08-20.md) 修复
   目录 mtime 后重建），SHA 见 [debs/README.md](../../debs/README.md)。

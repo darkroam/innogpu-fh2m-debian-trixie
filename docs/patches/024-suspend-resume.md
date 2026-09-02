@@ -53,33 +53,36 @@ legacy `scripts/build-deepin-coherent.sh` 的开关为 `APPLY_SUSPEND_RESUME_FIX
 
 这只证明补丁可应用和接线正确，不证明真机恢复问题已经解决。
 
-## 真机验证计划
+## 真机验证结果
 
-构建需要本地 Deepin 原包，属于本轮禁止读取的 `debs/`/本地载荷边界，因此 `4.0.1-i1` 构建与
-DKMS 安装尚未执行。获得载荷访问授权后按以下顺序执行，每一步先保存输出和 journal cursor：
+2026-09-02 获得本地载荷只读授权后完成以下步骤：
 
-1. 记录 `uname -r`、当前包版本、`cat /sys/power/mem_sleep`、当前启动时间和
-   `journalctl -k --show-cursor`；保留当前 4.0.0-i1 及 patched-27 回退包和恢复命令。
-2. 构建 `4.0.1-i1`，先执行包边界与离线 DKMS 编译检查；保存候选 SHA-256。
-3. 安装后重启，不热切换活动模块；运行
-   `scripts/verify-install-status.sh --require-reboot 4.0.1-i1` 和基础图形检查。
-4. 设为 `deep`，执行一次合盖挂起/唤醒。通过判据：内屏恢复，SSH 和真实 TTY 可用；新增 journal
-   中不存在 `3900372`、`PVRSRVEPowerLock failed` 或新的 PVR/Firmware 错误；驱动状态及错误计数
-   不退化。
-5. s2idle 必须使用经单独复审、能在真实 suspend entry 时保持目标模式的方案，并由外部观察者核对
-   journal 确为 `PM: suspend entry (s2idle)`；禁止再次使用“`systemctl suspend` 返回后 trap 恢复
-   deep”的错误方法。只有实际通过才能把 s2idle 记为短期规避。
+1. 三份 `4.0.0-i1` 回退包逐字节一致，SHA-256 均为
+   `68aea6c07842a0def97d18de5385802175290cb9752571b157250eb38fa68735`。
+2. `4.0.1-i1` 以 epoch `1788278400` 构建成功，离线 DKMS 编译、包边界和包内 patch 检查通过；
+   产物 SHA-256 为 `a7fe10ed8946bee7a850d26151387fa43d01c8bf2ce6253d99a47133a39827e6`。
+3. 通过包安装并重启，没有热切模块；包版本、DKMS、vermagic、模块、Driver/Firmware、设备节点、
+   Xorg 和硬件 GL 基础检查通过，PVR 错误计数为零。
+4. B1 保持 `[s2idle] deep` 并由 RTC 在约 20 秒后唤醒。journal 独立记录
+   `PM: suspend entry (s2idle)`、`InnogpuSysDevPrePowerState(1->0)`、
+   `InnogpuSysDevPostPowerState(0->1)` 和 `PM: suspend exit`，没有 `3900372`、PowerLock 失败或 PVR
+   错误计数增长；但是外屏实际为整屏红色，用户无法正常使用显示。因此用户可见结果优先于机械探针，
+   B1 判定为 **FAIL**。
+5. B1 失败后取消 B2 deep，不再进行任何挂起测试。机器经电源键触发有序关机后重启，随后完整回退
+   `4.0.0-i1` 并再次重启；当前包、DKMS、模块和 Driver/Firmware 状态均已恢复。
 
-若 `4.0.1-i1` 启动或恢复失败，优先回退当前已验证的 `4.0.0-i1`，再按既有链降级 patched-27；
-不要在活动图形会话中热卸载模块。
+原始日志只保留在本机忽略目录 `build/`，不提交到 Git。详见
+[s2idle 红屏事故记录](../incidents/suspend-resume-s2idle-red-screen-20260902.md)。
 
 ## 当前结论
 
-- deep：`4.0.0-i1` 于 2026-09-02 再次复现同一时序及红屏/黑屏/网络失效；`4.0.1-i1` 候选修复
-  已实现但未运行。
-- s2idle：2026-09-02 的尝试无效，脚本在真正挂起前恢复了 deep，journal 明确记录 S3；因此
-  **尚无 s2idle 实测证据，当前不能作为已确认规避方案**。详见
-  [事故记录](../incidents/suspend-resume-deep-reproduction-20260902.md)。
+- patch-024 / `4.0.1-i1`：构建、安装、启动和 PVR 机械门禁通过，但真实 s2idle 唤醒后外屏红屏，
+  **未能恢复可用显示，候选验收失败，不得继续安装**。
+- s2idle：已完成一次有效 entry/exit 验证，但用户可见恢复失败，**不能作为短期规避方案**。
+- deep：`4.0.0-i1` 已复现已知 PowerLock 时序故障；`4.0.1-i1` 因 B1 先失败而未执行 deep 测试，
+  不能声称 patch-024 修复了 deep。
+- 当前运行版本已回退为 `4.0.0-i1`。后续修复必须扩大到完整显示恢复时序，不能只以 PowerLock
+  错误消失或自动化 Xorg/GL 探针通过作为成功判据。
 
 ## 参考
 

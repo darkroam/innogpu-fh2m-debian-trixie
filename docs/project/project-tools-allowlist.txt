@@ -41,6 +41,7 @@ docs/incidents/patched-20-legacy-helper-payload.md
 docs/incidents/patched-20-runtime.md
 docs/incidents/picom-explicit-uniform-location.md
 docs/incidents/suspend-resume-deep-reproduction-20260902.md
+docs/incidents/suspend-resume-s2idle-red-screen-20260902.md
 docs/new-device-install.md
 docs/patches/024-suspend-resume.md
 docs/patches/README.md

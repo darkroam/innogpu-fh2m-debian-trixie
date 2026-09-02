@@ -30,12 +30,16 @@
 
 ## 运行时、测试与上游报告
 
-- [ ] **suspend/resume 修复真机验收**：patch-024、`4.0.1-i1` 新架构候选与 patched-28 legacy
-  对照接线已完成静态验证；获得本地载荷访问授权后构建并离线编译，重启安装后验证 `deep` 修复。
-  `4.0.0-i1` 已再次复现 deep 红屏/黑屏；s2idle 尝试因测试脚本过早恢复 deep 而无效，后续方法须
-  单独复审并由 journal 确认实际 entry 类型。通过
-  判据和 journal/回退流程见 [`024-suspend-resume.md`](../patches/024-suspend-resume.md)。未实测前
-  不得标记缺陷已修复或 s2idle 已可规避。
+- [ ] **suspend/resume 下一修复**：patch-024 / `4.0.1-i1` 已完成构建、安装和真实 s2idle entry/exit，
+  PowerLock/PVR 机械错误未增长，但外屏唤醒后整屏红色，候选验收失败并已回退 `4.0.0-i1`；B2 deep
+  未执行，s2idle 也不能作为规避。下一候选必须调查完整 KMS/CRTC/connector 显示恢复时序，验收必须
+  包含人工可见画面、SSH 与 TTY，不能仅依赖自动化 Xorg/GL/PVR 检查。再次挂起前须另开轮次、复审
+  回退与 watchdog 方案；本轮不再挂起。见 [`024-suspend-resume.md`](../patches/024-suspend-resume.md)
+  和 [s2idle 红屏事故](../incidents/suspend-resume-s2idle-red-screen-20260902.md)。
+- [ ] **登录后短暂黑屏**：在 `4.0.1-i1` 和回退后的 `4.0.0-i1` 均复现，排除 patch-024 特异回归。
+  合盖登录时 xdisplay 把初始 Xorg 布局切为 `EXTERNAL_ONLY`，Xorg 重建 1920x1080 framebuffer 并在约
+  5 秒内重复查询输出，与“桌面亮一下、黑几秒、再恢复”时间窗一致。该问题归 dotconfig/xdisplay
+  会话布局轮次处理，本仓库只保留设备接入事实；修复前不得在线试错 modeset。
 - [ ] 将可复现的热点、perf 数据和应用级 workaround 整理为上游/厂商修复报告。
 - [ ] runtime 剩余真实能力证据：modeset/热插拔/合盖、Picom GLX backend、
   音频听感确认；当前权威汇总 22 PASS / 9 SKIP / 4 UNVERIFIED。

@@ -10,7 +10,7 @@
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
 | 当前运行驱动 | `4.0.0-i1`（迁移源码树 + manifest 黑盒载荷）已安装并重启至 `6.12.101+deb13-amd64`；A1–A12 实机验收全 PASS + p27 回退演练 PASS（2026-08-21 Phase 4） | [phase4 验收](../planning/phase4-device-validation.md)、[迁移设计](../planning/source-tree-migration.md) |
-| 下一修复候选 | `4.0.1-i1`：新架构构建器固定升号并应用 patch-024 suspend/resume 电源状态门禁；仅静态 fixture 通过，尚未构建、安装或挂起验证 | [patch-024](../patches/024-suspend-resume.md) |
+| 最近失败候选 | `4.0.1-i1`：构建、安装、重启与 PVR 机械门禁通过，但真实 s2idle 唤醒后外屏红屏；已回退 `4.0.0-i1`，不得继续安装；deep 未测试 | [patch-024](../patches/024-suspend-resume.md)、[s2idle 红屏事故](../incidents/suspend-resume-s2idle-red-screen-20260902.md) |
 | 稳定图形历史基线 | 历史记录：`3.3.3.42-patched-21` 已安装、重启并完成本机 PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收；不是当前运行包 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | 历史运行基线 | `3.3.3.42-patched-20` 曾完成运行验收，但 deb 含收敛前辅助载荷，仅保留为历史证据 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
 | 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |
@@ -52,10 +52,14 @@
 
 ## 当前未解决或需要后续处理
 
-- **suspend/resume P1**：`4.0.0-i1` 的 deep S3 resume 在 2026-09-02 再次复现：PreClock 在 PVR 电源域 OFF 时取锁失败，
-   随后才执行 PostPowerState，造成外屏红屏、内屏/SSH/TTY 无法恢复。patch-024 / `4.0.1-i1` 是
-   未验证候选；本次所谓 s2idle 尝试因测试脚本在真正挂起前恢复 deep 而无效，s2idle 仍无结论。
-   见[事故记录](../incidents/suspend-resume-deep-reproduction-20260902.md)。
+- **suspend/resume P1**：`4.0.0-i1` 的 deep S3 resume 已复现 PreClock 在 PVR 电源域 OFF 时取锁失败；
+  patch-024 / `4.0.1-i1` 随后完成了有效 s2idle entry/exit，且没有 3900372/PowerLock/PVR 计数增长，
+  但外屏实际整屏红色，故候选验收失败并已回退。s2idle 不是可用规避，`4.0.1-i1` 的 deep 未测试，
+  当前不能声称竞态或完整显示恢复已修复。见 [deep 事故](../incidents/suspend-resume-deep-reproduction-20260902.md)
+  与 [s2idle 红屏事故](../incidents/suspend-resume-s2idle-red-screen-20260902.md)。
+- **登录后短暂黑屏 P2**：`4.0.1-i1` 与回退后的 `4.0.0-i1` 均复现，排除 patch-024 特异回归。
+  合盖登录时 xdisplay 把 Xorg 初始布局切为 `EXTERNAL_ONLY`，对应一次 framebuffer 重建及约 5 秒输出
+  重查询；画面最终恢复。该问题由 dotconfig/xdisplay 独立跟踪，本项目不在线修改会话配置。
 1. p20 的 `patch-008` 历史诊断会对每次 services ioctl 写日志；p21 已关闭它，后续版本不得重新
    启用高频日志而不同时定义限速、证据和回退策略。
 2. `hwinfo_g0m.bin` 仍缺失，但本次不阻止 PVR 进入 `ACTIVE`；是否需要该固件由后续硬件能力需求

@@ -6,7 +6,7 @@
 
 | 版本 | 用途 | 新设备策略 |
 | --- | --- | --- |
-| `4.0.1-i1` | patch-024 suspend/resume 修复候选 | 当前 HEAD 的唯一构建输出；未验证，监督批准前禁止安装 |
+| `4.0.1-i1` | patch-024 suspend/resume 失败候选 | 当前 HEAD 的唯一构建输出；s2idle 唤醒红屏，已回退，只可复现，禁止安装 |
 | `4.0.0-i1` | **新架构当前运行包**（迁移源码树 + manifest 黑盒载荷，Phase 4 实机验收通过；deep resume 已知故障） | 只使用已留存且核对过 SHA 的历史构建，不得用当前源码复用版本号 |
 | `patched-27` | 保留的回退基线（SHA `f3841597…`） | `4.0.0-i1` 故障时的首选回退（`--allow-downgrades`） |
 | `patched-17` | 保守历史回退包 | 深层回退点（保留，不再作为默认入口） |
@@ -16,7 +16,7 @@
 
 patched-18/19 是问题定位和 coherent 构建演进记录，不是安装推荐版本。
 
-## 准备候选包（4.0.1-i1，当前禁止安装）
+## 复现失败候选（4.0.1-i1，禁止安装）
 
 新架构包不随 Git 提供。clone 本仓库后，从有权提供该内容的来源取得 Deepin 原包并放入 `debs/`；
 本项目当前不提供该第三方原包或载荷的公开下载。构建器会按 `binary-manifest.json` 校验完整
@@ -32,7 +32,7 @@ cd "$INNOGPU_ROOT"
 sha256sum debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 bash scripts/extract-vendor-binaries.sh                        # 按 manifest 重建 vendor/ 黑盒载荷
 SOURCE_DATE_EPOCH=1788278400 bash scripts/build-innogpu-driver.sh
-# 输出 build/innogpu-fh2m-trixie_4.0.1-i1.deb；监督批准前不要安装
+# 输出 build/innogpu-fh2m-trixie_4.0.1-i1.deb；仅供离线复现，禁止安装
 ```
 
 > 新 clone 上 `vendor/` 为空（不入库）：必须先 `extract-vendor-binaries.sh` 重建黑盒载荷，
@@ -125,8 +125,8 @@ patched-17/patched-8。
 该 deb 生成于 xdisplay 所有权收敛前，包内仍有旧引擎/实验辅助文件，且 `patch-008` 会高频写日志。
 当前 `build-patched20-deepin-diagnostic.sh` 仅作为拒绝版本复用的兼容护栏，不再生成包。
 
-下一候选已定义为 `4.0.1-i1`；其后每个候选仍必须先在 `docs/planning/` 定义更高的新版本号、源码
-改动、风险和回退，再调用 `build-innogpu-driver.sh` 从 `drivers/`、审查补丁与 manifest 载荷构建。
+`4.0.1-i1` 已判定为失败候选；下一候选必须先在 `docs/planning/` 定义更高的新版本号、源码改动、
+风险和回退，再调整 `build-innogpu-driver.sh` 从 `drivers/`、审查补丁与 manifest 载荷构建。
 不得以任何 patched deb
 作为源码或载荷基线，也不得从不同版本挑选 DRI、GBM、GLAPI、DDX 或固件拼装。新包还必须通过：
 
@@ -134,8 +134,8 @@ patched-17/patched-8。
 scripts/check-release-package.sh build/<new-package>.deb
 ```
 
-在 `4.0.1-i1` 完成离线构建、安装、重启和 suspend/resume 验收前，当前 HEAD **没有自动可安装的新设备
-默认版本**。4.0.0-i1 仅是现存已验证基线，patched-17 仅作为深层回退保留。
+`4.0.1-i1` 已完成离线构建、安装与 s2idle 验收，但因红屏失败；当前 HEAD **没有自动可安装的新设备
+默认版本**。4.0.0-i1 仅是现存已验证基线且有 deep 已知故障，patched-17 仅作为深层回退保留。
 
 patched-21 已完成当前设备的构建、包边界、部署、重启和运行验收。精确输入、补丁矩阵、清洁载荷边界
 和跨硬件发布前门槛见 [`patched-21-release-candidate.md`](../patches/patched-21-release-candidate.md)。
