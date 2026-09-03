@@ -30,14 +30,15 @@
 
 ## 运行时、测试与上游报告
 
-- [ ] **suspend/resume 候选验收**：R10 在 `4.0.1-i3` 上复现 deep PowerLock POWERED_OFF，证明
+- [x] **suspend/resume 正式验收**：R10 在 `4.0.1-i3` 上复现 deep PowerLock POWERED_OFF，证明
   patch-024 的锁外快速门禁存在 TOCTOU。R11 的 `4.0.2-i1` 增加 patch-026 同步 devfreq/PVR
   生命周期后仍在 deep 失败：独立温度 work 从父 PCI resume 零延迟启动，早于 PVR 子设备恢复。
-  i1 只保留历史复现且不得安装/交付；设备已回退 `4.0.0-i1`。R12 的 `4.0.2-i2` 以 patch-028
+  i1 只保留历史复现且不得安装/交付；设备曾回退 `4.0.0-i1`。R12 的 `4.0.2-i2` 以 patch-028
   把 work 延后到全部 PVR 子设备与 DVFS 恢复成功后；R13 的 `4.0.2-i3` 再以 patch-029
-  让 DDCCI 回退模式创建 panel 但不注册 backlight device，当前只允许静态/离线验证。经 qoder 初审、
-  dsh 终审并提交且用户本人在场确认后，才执行 3 次连续 deep 冒烟。P3 保持打开；display 025
-  仍为独立 UNVERIFIED 实验，不进入 i1/i2/i3。见
+  让 DDCCI 回退模式创建 panel 但不注册 backlight device。R13 阶段 2 通过，R14 随后完成
+  D1-D6 共 6/6 deep 正式矩阵（接电/电池、无外屏/外屏），当前设备正式交付 `4.0.2-i3`。
+  P3 回传建议为“已修复，待 dotfiles 复核”；display 025 仍为独立 UNVERIFIED 实验，不进入
+  i1/i2/i3。DDCCI 无亮度控制，`hwinfo_g0m.bin` 仍缺失。见
   [`026-suspend-resume-dvfs-lifecycle.md`](../patches/026-suspend-resume-dvfs-lifecycle.md)、
   [`028-suspend-resume-hal-temp-monitor-delay.md`](../patches/028-suspend-resume-hal-temp-monitor-delay.md)、
   [`029-suspend-resume-ddcci-panel.md`](../patches/029-suspend-resume-ddcci-panel.md) 和

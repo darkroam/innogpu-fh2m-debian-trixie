@@ -25,7 +25,7 @@
 | `build/innogpu-fh2m-trixie_4.0.1-i4.deb`（R06 B） | patch-024 + patch-025-suspend-resume-display；固定 epoch 1788451200；SHA `085e06844607a9973a6d5e3c1e3c4ec986a1cdf6903e6a9169b68285e39969a7`；严格对照准备通过，尚未安装 |
 | `build/innogpu-fh2m-trixie_4.0.2-i1.deb`（R11 失败候选） | patch-024 + patch-026 DVFS/PVR 生命周期同步；固定 epoch 1788624000；双构建 SHA `e115bdcd…`；deep 时温度 work 提前触发 PowerLock/POWERED_OFF，只供历史复现，禁止安装或交付 |
 | `build/innogpu-fh2m-trixie_4.0.2-i2.deb`（R12 历史候选） | i1 + patch-028 温度 work 恢复时序门禁；固定 epoch 1788710400；不含 display 025；仅静态/离线验证，尚未安装 |
-| `build/innogpu-fh2m-trixie_4.0.2-i3.deb`（R13 候选） | i2 + patch-029 DDCCI panel 创建恢复（继承 patch-024/026/028）；固定 epoch 1788796800；不含 display 025；仅静态/离线验证，尚未安装 |
+| `build/innogpu-fh2m-trixie_4.0.2-i3.deb`（当前正式交付） | i2 + patch-029 DDCCI panel 创建恢复（继承 patch-024/026/028）；固定 epoch 1788796800；SHA `177133ee…`；R14 6/6 deep 通过；不含 display 025，DDCCI 无 backlight device，`hwinfo_g0m.bin` 仍缺失 |
 | `debs/innogpu-fh2m_20250421190503-debug_amd64.deb` | Deepin 202504 DKMS/GL/DDX 来源；SHA-256 `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2` |
 
 新架构提取器默认只读取 `debs/innogpu-fh2m_20250421190503-debug_amd64.deb`，其他位置必须通过
@@ -38,7 +38,7 @@ Deepin 202504 原包是后续版本唯一的来源基线。当前构建器使用
 `4.0.2-i3` 在 patch-024 后应用 patch-026 生命周期同步、patch-028 温度 work 恢复时序门禁和
 patch-029 DDCCI panel 创建恢复，
 不含 display 025，并按 manifest 从原包提取同源 DRI、GBM、GLAPI、GLVND、DDX、固件和黑盒对象。
-历史 patched 包不得作为源码或载荷输入。
+该版本已安装并通过 R14 当前设备 6/6 deep 正式矩阵；历史 patched 包不得作为源码或载荷输入。
 
 历史 p19/p20 deb 的驱动/用户态结论仍可作为证据，但其辅助文件清单不符合当前所有权边界。当前
 新构建器只接受按 Debian 版本排序高于 `3.3.3.42-patched-27` 的版本，并必须运行
@@ -60,7 +60,7 @@ patch-029 DDCCI panel 创建恢复，
 环境必须在构建前另行确认这些命令可用。该事实是现有前置依赖脚本的覆盖缺口，不得把脚本运行成功
 等同于完整工具链已安装。
 
-当前 `4.0.0-i1` deb 的实际 control 字段为：`Depends: dkms, build-essential, libdrm2, libepoxy0,
+当前新架构 deb 的实际 control 字段为：`Depends: dkms, build-essential, libdrm2, libepoxy0,
 libpixman-1-0, libwayland-server0, libxcb-randr0`，`Recommends: linux-headers-amd64, libegl1,
 libgles2, libgl1, libglx0, libgles1, libglvnd0`。包内虽然从 vendor 载荷导入
 `/lib/systemd/system/sw-inno-gl.service`，但 control 当前没有显式 `systemd` 依赖，maintainer scripts

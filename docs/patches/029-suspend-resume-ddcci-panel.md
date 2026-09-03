@@ -47,5 +47,11 @@ backlight sysfs 设备、probe 日志与显示结果，再决定是否扩大验�
 
 ## 当前状态
 
-这是静态/离线候选，尚未安装或执行 deep 真机验收，不能据此声称 suspend/resume
-显示恢复问题已经修复。完成 qoder 初审和 dsh 终审并提交前，仍不得交付或安装。
+`4.0.2-i3` 已安装并通过 R14 正式矩阵：D1-D3 接电无外屏、D4 电池无外屏、D5 接电外屏、
+D6 电池外屏，共 6/6 deep；每轮真实 entry/exit 成对，PVR 八项不增长且无目标错误，画面、
+键鼠和 TTY 均由用户确认。包 SHA-256 为
+`177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`，现作为当前设备正式交付。
+
+结论只覆盖 024/026/028/029 组合和当前设备矩阵，不能单独归因于 patch-029。诚实边界保持不变：
+DDCCI 没有亮度控制或 backlight device，`hwinfo_g0m.bin` 仍缺失，display patch-025 仍为
+UNVERIFIED 且未包含。

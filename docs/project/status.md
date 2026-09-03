@@ -9,17 +9,17 @@
 
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
-| 当前运行驱动 | `4.0.0-i1` 已在 R11 deep 失败后重新安装并重启至 `6.12.101+deb13-amd64`；包/DKMS/模块/Driver/Firmware/Xorg/HWGL 回退验证通过，只作非 deep 图形基线 | [patch-028](../patches/028-suspend-resume-hal-temp-monitor-delay.md) |
+| 当前运行驱动 | `4.0.2-i3` 已安装并重启至 `6.12.101+deb13-amd64`；R14 接电/电池、无外屏/外屏 6/6 deep 正式矩阵通过，包 SHA-256 为 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662` | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | 最近失败候选 | `4.0.2-i1`（patch-024 + lifecycle 026）：R11 deep 恢复时独立温度 work 在 PVR 上电前触发 PowerLock POWERED_OFF，画面未恢复；已回退 `4.0.0-i1`，只保留历史复现入口 | [patch-026-lifecycle](../patches/026-suspend-resume-dvfs-lifecycle.md)、[patch-028](../patches/028-suspend-resume-hal-temp-monitor-delay.md) |
-| 当前静态/离线候选 | `4.0.2-i3` = patch-024 + patch-026 + patch-028 + patch-029，epoch `1788796800`；不含 UNVERIFIED 的 display 025，尚未安装或执行 deep | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
+| 当前正式交付 | `4.0.2-i3` = patch-024 + patch-026 + patch-028 + patch-029，epoch `1788796800`；不含 UNVERIFIED 的 display 025。DDCCI 不注册 backlight device，`hwinfo_g0m.bin` 仍缺失 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | 稳定图形历史基线 | 历史记录：`3.3.3.42-patched-21` 已安装、重启并完成本机 PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收；不是当前运行包 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | 历史运行基线 | `3.3.3.42-patched-20` 曾完成运行验收，但 deb 含收敛前辅助载荷，仅保留为历史证据 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
 | 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |
 | 历史运行验收 | p21 完整图形验收通过；p22 完成 connector 分类和开盖桌面烟测，但电源/合盖/拔屏矩阵未完成 | [`patch-009` 验收](../patches/patch-009-local-internal-edp-connector.md) |
 | 源码/用户态基线 | Deepin 202504 完整原包，不混用历史 patched 包 | `scripts/build-innogpu-driver.sh`（新架构）；`build-deepin-coherent.sh` 为 legacy p27 oracle |
-| 源码树迁移 | 阶段 0–4 完成（新构建器 4.0.0-i1 并行验证 + 实机候选验证与回退演练全 PASS）；R10 后设备已回退 4.0.0-i1；阶段 5 第一步完成，第二步待条件满足 + 监督批准 | [phase5-retirement-design](../planning/phase5-retirement-design.md) |
-| 固件与 PVR | `4.0.0-i1` 实机验收已确认固件加载，Driver/Firmware 为 OK，错误计数为 0 | [Phase 4 验收](../planning/phase4-device-validation.md) |
-| DRM/fbdev | `4.0.0-i1` 实机验收已确认 `card0`、`renderD128`、`fb0` 可用；fbterm redraw 路径通过真实 VT 验证 | [Phase 4 验收](../planning/phase4-device-validation.md) |
+| 源码树迁移 | 阶段 0–4 完成；当前构建器产出并已交付 4.0.2-i3，4.0.0-i1 保留为首层回退；阶段 5 第一步完成，第二步待条件满足 + 监督批准 | [phase5-retirement-design](../planning/phase5-retirement-design.md) |
+| 固件与 PVR | `4.0.2-i3` R14 每轮 PVR 八项计数均为 0 且不增长；`hwinfo_g0m.bin` 缺失为已知厂商载荷边界 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
+| DRM/fbdev | `4.0.2-i3` R14 内屏及外屏恢复通过；`card0`、`renderD128`、`fb0` 基线继续可用 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | Xorg/GLX | 当前桌面和隔离 Xorg 的硬件加速验收通过 | [Phase 4 验收](../planning/phase4-device-validation.md) |
 | 真实 VT | 普通用户 fbterm 可绘制和退出；禁用 YPan 后长输出、清屏及跨会话显示正常 | [`fbterm YPan 记录`](../incidents/fbterm-ypan-rendering.md) |
 | 显示管理 | dotconfig 维护 xdisplay 2.0.0；本项目只维护设备钩子和会话接入 | [`display-management.md`](display-management.md) |
@@ -53,7 +53,7 @@
 
 ## 当前未解决或需要后续处理
 
-- **suspend/resume P1**：`4.0.0-i1` 的 deep S3 resume 已复现 PreClock 在 PVR 电源域 OFF 时取锁失败；
+- **suspend/resume P1（本机已修复，保留范围边界）**：`4.0.0-i1` 的 deep S3 resume 已复现 PreClock 在 PVR 电源域 OFF 时取锁失败；
   patch-024 / `4.0.1-i1` 随后完成了有效 s2idle entry/exit，且没有 3900372/PowerLock/PVR 计数增长，
   但外屏实际整屏红色，故候选验收失败并已回退。s2idle 不是可用规避，`4.0.1-i1` 的 deep 未测试，
   当前不能声称竞态或完整显示恢复已修复。见 [deep 事故](../incidents/suspend-resume-deep-reproduction-20260902.md)
@@ -68,9 +68,10 @@
   同步 devfreq/PVR 生命周期，但 deep 恢复仍失败：父 PCI resume 以 delay 0 启动独立温度 work，
   它在 PVR 子设备上电前再次进入 PreClock。i1 已关闭默认入口且不得交付。R12 的 `4.0.2-i2`
   增加 patch-028，在全部 PVR 子设备与 DVFS 恢复成功后才启动温度 work；R13 的 `4.0.2-i3`
-  再增加 patch-029，让 DDCCI 回退模式创建 panel 但不注册 backlight device。当前仅完成
-  静态/离线候选，deep 冻结仍生效，须经 qoder 初审、dsh 终审、提交并由用户在场批准后执行 3 次连续冒烟。
-  display 025 继续 UNVERIFIED，不进入 i1/i2/i3。
+  再增加 patch-029，让 DDCCI 回退模式创建 panel 但不注册 backlight device。R13 阶段 2 冒烟
+  通过后，R14 又完成 D1-D6 正式矩阵：接电/电池、无外屏/外屏共 6/6 deep，真实 entry/exit
+  成对，画面、键鼠、TTY 正常，PVR 八项不增长且无新增目标错误。因此 P1 在当前设备与矩阵下
+  判定已修复；跨设备、更多显示布局和长期压力仍未验证。display 025 继续 UNVERIFIED，不进入 i1/i2/i3。
 - **登录后短暂黑屏 P2**：`4.0.1-i1` 与回退后的 `4.0.0-i1` 均复现，排除 patch-024 特异回归。
   合盖登录时 xdisplay 把 Xorg 初始布局切为 `EXTERNAL_ONLY`，对应一次 framebuffer 重建及约 5 秒输出
   重查询；画面最终恢复。该问题由 dotconfig/xdisplay 独立跟踪，本项目不在线修改会话配置。
@@ -131,8 +132,8 @@
 ## 发布判断
 
 patched-20、patched-21 和 patched-22 均为历史候选或验收证据，不是当前安装入口。p20 不得推广，
-p21/p22 的电源、合盖、拔屏和跨硬件限制仍按历史记录保留。当前本地安装判断以 `4.0.0-i1`、
-Phase 4 实机验收、`patched-27` 回退基线及 Phase 5 状态为准；公开发布则被许可证审计阻断。
+p21/p22 的电源、合盖、拔屏和跨硬件限制仍按历史记录保留。当前本地安装判断以 `4.0.2-i3`、
+R14 正式矩阵、`4.0.0-i1`/`patched-27` 回退链及 Phase 5 状态为准；公开发布仍被许可证审计阻断。
 `patched-17`/`patched-8` 仅作深层回退。
 
 **发布决策 1C（当前状态，2026-08-28）**：

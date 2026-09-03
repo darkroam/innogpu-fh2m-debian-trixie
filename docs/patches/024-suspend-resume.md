@@ -41,8 +41,8 @@ legacy `scripts/build-deepin-coherent.sh` 的开关为 `APPLY_SUSPEND_RESUME_FIX
 旧构建链对照入口。
 
 补丁编号 024 是补丁目录中的历史空缺；包版本 `patched-24` 已用于 Debian 6.12.101+ PCI API
-兼容，不能复用。因此 legacy 对照版本使用 patched-28；正式新架构候选使用 `4.0.1-i1`，也不复用
-当前已安装并验收过的 `4.0.0-i1`。
+兼容，不能复用。因此 legacy 对照版本使用 patched-28；早期新架构候选使用 `4.0.1-i1`，也不复用
+已完成 Phase 4 验收的 `4.0.0-i1`。
 
 ## 离线验证
 
@@ -85,10 +85,14 @@ legacy `scripts/build-deepin-coherent.sh` 的开关为 `APPLY_SUSPEND_RESUME_FIX
 - s2idle：已完成一次有效 entry/exit 验证，但用户可见恢复失败，**不能作为短期规避方案**。
 - deep：`4.0.0-i1` 已复现已知 PowerLock 时序故障；`4.0.1-i1` 因 B1 先失败而未执行 deep 测试，
   不能声称 patch-024 修复了 deep。
-- 当前运行版本已回退为 `4.0.0-i1`。后续修复必须扩大到完整显示恢复时序，不能只以 PowerLock
-  错误消失或自动化 Xorg/GL 探针通过作为成功判据。
+- 该轮结束时运行版本已回退为 `4.0.0-i1`。后续修复必须扩大到完整显示恢复时序，不能只以
+  PowerLock 错误消失或自动化 Xorg/GL 探针通过作为成功判据。
 - R10 随后在 `4.0.1-i3` 上稳定复现 deep PowerLock 故障，证明 patch-024 的锁外状态读取不能
   独立关闭竞态；当前修复方向和候选见 patch-026 生命周期同步说明。
+
+R14 后续结论：patch-024 与 patch-026、patch-028、patch-029 共同进入 `4.0.2-i3`；该组合已在
+当前设备完成接电/电池、无外屏/外屏 6/6 deep 正式矩阵。此结果不能反向证明 patch-024 单独有效，
+也不改变上述 `4.0.1-i1` 的失败结论。
 
 ## 参考
 

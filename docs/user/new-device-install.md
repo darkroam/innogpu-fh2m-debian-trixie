@@ -6,7 +6,7 @@
 
 | 版本 | 用途 | 新设备策略 |
 | --- | --- | --- |
-| `4.0.2-i3` | R13：i2 + patch-029 DDCCI panel 创建恢复（继承 patch-024/026/028） | 当前静态/离线候选；尚未安装，完成审查并另获 deep 阶段批准前不得安装 |
+| `4.0.2-i3` | **当前正式交付**：i2 + patch-029 DDCCI panel 创建恢复（继承 patch-024/026/028） | 当前设备 R14 6/6 deep 通过；新设备安装后仍须先做图形基线和受控 suspend 验收 |
 | `4.0.2-i2` | R12：i1 + patch-028 温度 work 恢复时序门禁 | 历史静态/离线候选；尚未安装，不作为当前安装候选 |
 | `4.0.2-i1` | R11：patch-024 + patch-026 DVFS/PVR 生命周期同步 | deep 恢复失败；只保留历史复现入口，禁止安装或交付 |
 | `4.0.1-i4` | R06 B：patch-024 + patch-025-suspend-resume-display | 包级单变量候选；因 A 的 cursor 分支未入组而未安装，不是新设备默认版本 |
@@ -22,11 +22,11 @@
 
 patched-18/19 是问题定位和 coherent 构建演进记录，不是安装推荐版本。
 
-## 构建 suspend/resume 候选（禁止未审查安装）
+## 构建当前交付包
 
 新架构包不随 Git 提供。clone 本仓库后，从有权提供该内容的来源取得 Deepin 原包并放入 `debs/`；
 本项目当前不提供该第三方原包或载荷的公开下载。构建器会按 `binary-manifest.json` 校验完整
-SHA-256。R13 当前候选使用固定审核 epoch `1788796800`（2026-09-08 00:00 +0800）：
+SHA-256。当前交付版本使用固定审核 epoch `1788796800`（2026-09-08 00:00 +0800）：
 
 ```text
 debs/innogpu-fh2m_20250421190503-debug_amd64.deb
@@ -38,12 +38,27 @@ cd "$INNOGPU_ROOT"
 sha256sum debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 bash scripts/extract-vendor-binaries.sh                        # 按 manifest 重建 vendor/ 黑盒载荷
 SOURCE_DATE_EPOCH=1788796800 bash scripts/build-innogpu-driver.sh
-# 默认输出 build/innogpu-fh2m-trixie_4.0.2-i3.deb；未经 R13 阶段 2 批准不得安装
+# 默认输出 build/innogpu-fh2m-trixie_4.0.2-i3.deb
 # R06 i3/i4 与失败的 R11 i1 仅保留为显式历史复现入口
 ```
 
 > 新 clone 上 `vendor/` 为空（不入库）：必须先 `extract-vendor-binaries.sh` 重建黑盒载荷，
 > 构建器的 `--check-only` 门禁才会通过。
+
+构建后必须核对正式交付制品：
+
+```sh
+echo '177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662  build/innogpu-fh2m-trixie_4.0.2-i3.deb' | sha256sum -c -
+scripts/check-release-package.sh build/innogpu-fh2m-trixie_4.0.2-i3.deb
+sudo apt install ./build/innogpu-fh2m-trixie_4.0.2-i3.deb
+# 禁止热切模块；重启后再做包/DKMS/模块/显示基线和受控 suspend 验收
+```
+
+R14 只证明当前 FH2M 设备在接电/电池、无外屏/单外屏矩阵中的 6 次 deep 恢复。新设备不得
+直接继承该运行结论；至少保留 `4.0.0-i1` 和 patched-27 回退包，并按
+[`verification.md`](verification.md) 与 [`recovery.md`](recovery.md) 完成独立验收。i3 的已知边界是
+DDCCI 不注册 backlight device、没有 brightness sysfs，`hwinfo_g0m.bin` 仍缺失，display patch-025
+仍为 UNVERIFIED 且未包含。
 
 同时保留深层回退包（按 release 记录核对 SHA-256 后放入 `debs/`）：
 
@@ -127,15 +142,15 @@ sudo INNOGPU_X_USER="$USER" INNOGPU_X_HOME="$HOME" \
 ## 历史候选：patched-20
 
 patched-20 仅保留运行证据，不提供重新部署或回退到该版本的路径；它不是新设备安装选项。当前
-`4.0.0-i1` 故障时先按 [`recovery.md`](recovery.md) 回退 patched-27，只有深层恢复才使用
-patched-17/patched-8。
+`4.0.2-i3` 故障时先按 [`recovery.md`](recovery.md) 回退 `4.0.0-i1`，再回退 patched-27；
+只有深层恢复才使用 patched-17/patched-8。
 该 deb 生成于 xdisplay 所有权收敛前，包内仍有旧引擎/实验辅助文件，且 `patch-008` 会高频写日志。
 当前 `build-patched20-deepin-diagnostic.sh` 仅作为拒绝版本复用的兼容护栏，不再生成包。
 
 `4.0.1-i1` 已判定为失败候选；`4.0.1-i2` 是 R05 历史候选；R06 i3/i4 因果验证按停止条件
 中止，R10 又在 i3 上复现 deep PowerLock TOCTOU。R11 i1 在同步 DVFS 后仍因温度 work 提前
-启动而失败。当前运行已回退 `4.0.0-i1`；`4.0.2-i2` 是历史静态/离线候选，`4.0.2-i3` 仅完成静态/离线候选准备。后续任何行为
-变化仍须升新迭代号。
+启动而失败。`4.0.2-i2` 是历史静态/离线候选；`4.0.2-i3` 已安装并通过 R14 6/6 deep
+正式矩阵，现为当前交付版本。后续任何行为变化仍须升新迭代号。
 不得以任何 patched deb
 作为源码或载荷基线，也不得从不同版本挑选 DRI、GBM、GLAPI、DDX 或固件拼装。新包还必须通过：
 
@@ -144,9 +159,9 @@ scripts/check-release-package.sh build/<new-package>.deb
 ```
 
 `4.0.1-i1` 已完成离线构建、安装与 s2idle 验收，但因红屏失败；`4.0.1-i2` 已完成一次
-s2idle 可见恢复；i3 和 `4.0.2-i1` 均在 deep 失败，i4 未安装；`4.0.2-i2` 尚未真机验收。当前 HEAD
-**没有自动可安装的新设备默认版本**。
-4.0.0-i1 仅是现存已验证基线且有 deep 已知故障，patched-17 仅作为深层回退保留。
+s2idle 可见恢复；`4.0.1-i3` 和 `4.0.2-i1` 均在 deep 失败，i4 未安装；`4.0.2-i2` 尚未真机
+验收。当前 HEAD 的交付入口是 `4.0.2-i3`，但新设备必须独立验证，不能把本机 R14 结果外推为
+跨硬件保证。4.0.0-i1 是首层回退包且有 deep 已知故障，patched-17 仅作为深层回退保留。
 
 patched-21 已完成当前设备的构建、包边界、部署、重启和运行验收。精确输入、补丁矩阵、清洁载荷边界
 和跨硬件发布前门槛见 [`patched-21-release-candidate.md`](../patches/patched-21-release-candidate.md)。

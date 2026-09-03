@@ -24,10 +24,10 @@
 | dsh / codex / qoder | 本项目多 Agent 协作中的监督者 / 实现者 / 顾问 | dsh 终审与批准，codex 实现、自测与汇报，qoder 提建议并在参与轮次初审；用户对重大事项最终拍板（见 [multiagent-collab.md](multiagent-collab.md)） |
 | `collab/` | 多 Agent 轮次的 request/report 本机存档 | 被 Git 忽略，不上传 GitHub、不自动重许可、不进公开制品 |
 | `CLEARED` / `BLOCKED` | 某个机械发布门禁通过 / 不可发布 | `project-tools=CLEARED` 只表示候选制品通过机械检查；整仓 `license_release_gate=BLOCKED` 与 `driver-source=BLOCKED` 仍保持，不可互相替代 |
-| `4.0.0-i1` | 新架构基线（drivers/ 源码树 + manifest 黑盒载荷） | Phase 4 已验证；`3.3.3.42-patched-27` 为保留的首选回退基线 |
+| `4.0.0-i1` | 新架构历史回退基线（drivers/ 源码树 + manifest 黑盒载荷） | Phase 4 已验证；当前作为 `4.0.2-i3` 的首层回退，`3.3.3.42-patched-27` 为下一层回退 |
 | `4.0.1-i1` | patch-024 suspend/resume 修复的失败候选 | 独立升号，固定 epoch 1788278400；已构建/安装，s2idle 唤醒红屏后回退，deep 未测试，禁止安装 |
 | `4.0.1-i2` | patch-024 + patch-025 历史候选 | R05 一次 s2idle 可见恢复通过；不复用为严格 A/B，因果仍 UNVERIFIED |
 | `4.0.1-i3` / `4.0.1-i4` | R06 严格 A/B：i3 仅 024，i4 为 024+025 | 共用 epoch 1788451200；A/B 因 cursor 分支未入组停止；R10 后续在 i3 上复现 deep PowerLock TOCTOU，已回退 |
 | `4.0.2-i1` | R11 失败候选：patch-024 + patch-026-suspend-resume-dvfs-lifecycle | epoch 1788624000；deep 时温度 work 提前触发 PowerLock/POWERED_OFF，只供历史复现，禁止安装或交付 |
 | `4.0.2-i2` | R12 候选：i1 + patch-028-suspend-resume-hal-temp-monitor-delay | epoch 1788710400；不含 display 025；仅静态/离线验证，尚未安装或真机 deep 验收 |
-| `4.0.2-i3` | R13 候选：i2 + patch-029-suspend-resume-ddcci-panel | epoch 1788796800；继承 patch-024/026/028，不含 display 025；仅静态/离线验证，尚未安装或真机 deep 验收；DDCCI 不注册 backlight device |
+| `4.0.2-i3` | 当前正式交付：i2 + patch-029-suspend-resume-ddcci-panel | epoch 1788796800；继承 patch-024/026/028，不含 display 025；R14 当前设备 6/6 deep 通过；DDCCI 不注册 backlight device，`hwinfo_g0m.bin` 仍缺失 |
