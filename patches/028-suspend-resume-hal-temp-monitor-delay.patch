@@ -1,0 +1,90 @@
+diff -ruN a/innogpu/hal.h b/innogpu/hal.h
+--- a/innogpu/hal.h	2026-09-07 00:00:00.000000000 +0800
++++ b/innogpu/hal.h	2026-09-07 00:00:00.000000000 +0800
+@@ -1344,6 +1344,9 @@
+ 	void* innosmmu_ops;
+ 
+ 	struct vpuinfo_s vpuinfo;
++
++	/* Queue the parent temperature work only after every PVR child resumes. */
++	atomic_t pvr_resume_count;
+ };
+ 
+ struct apu_platform_data  {
+diff -ruN a/innogpu/innogpu_pci_drv.c b/innogpu/innogpu_pci_drv.c
+--- a/innogpu/innogpu_pci_drv.c	2026-09-07 00:00:00.000000000 +0800
++++ b/innogpu/innogpu_pci_drv.c	2026-09-07 00:00:00.000000000 +0800
+@@ -1672,6 +1672,9 @@
+ 	/*cancle and stop high temperature monitor work*/
+ 	hal_power_sleep(pdev_rsrc);
+ 
++	if (suspend)
++		atomic_set(&pdev_rsrc->pvr_resume_count, 0);
++
+ 	hal_check_reg_accessiable(pdev_rsrc);
+ 
+ 	/*
+@@ -1753,8 +1756,12 @@
+ 	else
+ 		pcie_info(&pdev->dev, "pm_resume callback is NULL\n");
+ 
+-	/*restart high temperature monitor work*/
+-	hal_power_wakeup(pdev_rsrc);
++	/*
++	 * S3 restarts this work after every PVR child has resumed. Keep the
++	 * existing hibernation behavior, whose child callbacks are different.
++	 */
++	if (!is_suspend)
++		hal_power_wakeup(pdev_rsrc);
+ 
+ 	return 0;
+ }
+diff -ruN a/innosrvkm/pvr_drm.c b/innosrvkm/pvr_drm.c
+--- a/innosrvkm/pvr_drm.c	2026-09-07 00:00:00.000000000 +0800
++++ b/innosrvkm/pvr_drm.c	2026-09-07 00:00:00.000000000 +0800
+@@ -142,11 +142,13 @@
+ static int pvr_pm_resume(struct device *dev)
+ {
+ 	struct drm_device *ddev = innogpu_get_drm_from_pdev(dev);
++	plat_data_t *pdata = fh2m_inno_dev_get_platdata(dev);
+ #if defined(SUPPORT_LINUX_DVFS) && (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
+ 	struct pvr_drm_private *priv = innogpu_drm_to_pvr_private(ddev);
+ 	PVRSRV_ERROR dvfs_err;
+-	int err;
+ #endif
++	int resumed;
++	int err;
+ 
+ 	DRM_DEBUG_DRIVER("device %p\n", dev);
+ 
+@@ -156,10 +158,28 @@
+ 		return err;
+ 
+ 	dvfs_err = ResumeDVFS(priv->dev_node);
+-	return OSPVRSRVToNativeError(dvfs_err);
++	err = OSPVRSRVToNativeError(dvfs_err);
+ #else
+-	return PVRSRVDeviceResume(ddev);
++	err = PVRSRVDeviceResume(ddev);
+ #endif
++	if (err)
++		return err;
++
++#if defined(NO_HARDWARE)
++	return 0;
++#else
++	if (!pdata || !pdata->pdev_rsrc || pdata->dev_nums <= 0 ||
++	    pdata->dev_idx >= (unsigned int)pdata->dev_nums)
++		return -ENODEV;
++
++	resumed = atomic_inc_return(&pdata->pdev_rsrc->pvr_resume_count);
++	if (resumed == pdata->dev_nums)
++		hal_power_wakeup(pdata->pdev_rsrc);
++	else if (resumed > pdata->dev_nums)
++		return -EOVERFLOW;
++
++	return 0;
++#endif
+ }
+ 
+ /* Executed before the hibernation image is created. This callback allows to

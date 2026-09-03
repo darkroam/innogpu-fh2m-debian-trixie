@@ -47,6 +47,7 @@ docs/new-device-install.md
 docs/patches/024-suspend-resume.md
 docs/patches/025-suspend-resume-display.md
 docs/patches/026-suspend-resume-dvfs-lifecycle.md
+docs/patches/028-suspend-resume-hal-temp-monitor-delay.md
 docs/patches/README.md
 docs/patches/patch-000-skip-first-gpupll.md
 docs/patches/patch-001-kernel-6.12.md

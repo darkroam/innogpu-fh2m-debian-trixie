@@ -91,6 +91,37 @@ else
     fail path_traversal_in_active_pointer_is_rejected
 fi
 
+state="$TMP/absolute-active"
+make_state "$state"
+printf '/var/tmp/innogpu-r11/round-d0\n' > "$state/active-d0"
+if ! python3 "$TOOL" --state-root "$state" --active-name active-d0 >/dev/null 2>&1 &&
+   [[ -f "$state/active-d0" ]] && [[ ! -e "$state/round-d0/failure-finalized" ]]; then
+    pass absolute_path_in_active_pointer_is_rejected
+else
+    fail absolute_path_in_active_pointer_is_rejected
+fi
+
+state="$TMP/uppercase-active"
+make_state "$state"
+printf 'S0-4.0.2-i1-20260903-005804\n' > "$state/active-d0"
+if ! python3 "$TOOL" --state-root "$state" --active-name active-d0 >/dev/null 2>&1 &&
+   [[ -f "$state/active-d0" ]] && [[ ! -e "$state/round-d0/failure-finalized" ]]; then
+    pass uppercase_round_id_in_active_pointer_is_rejected
+else
+    fail uppercase_round_id_in_active_pointer_is_rejected
+fi
+
+state="$TMP/normalized-active"
+round=s0-4.0.2-i2-20260903-120000
+make_state "$state" "$round"
+if output=$(python3 "$TOOL" --state-root "$state" --active-name active-d0 2>&1) &&
+   [[ ! -e "$state/active-d0" ]] && [[ -f "$state/$round/failure-finalized" ]] &&
+   grep -Fq "failure_finalize=PASS round_id=$round" <<<"$output"; then
+    pass normalized_lowercase_round_id_finalizes_end_to_end
+else
+    fail normalized_lowercase_round_id_finalizes_end_to_end
+fi
+
 if ! python3 "$TOOL" --state-root relative/state --active-name active-d0 >/dev/null 2>&1; then
     pass relative_state_root_is_rejected
 else

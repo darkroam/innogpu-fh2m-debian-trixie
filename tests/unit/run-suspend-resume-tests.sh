@@ -1,6 +1,6 @@
 #!/bin/bash
-# Static tests for patch-024/025/026 and current/legacy builder wiring.
-# The suite copies three tracked source files to /tmp; it does not read local
+# Static tests for patch-024/025/026/028 and current/legacy builder wiring.
+# The suite copies tracked source files to /tmp; it does not read local
 # payload directories, build a package, install a module, or suspend the host.
 
 set -u -o pipefail
@@ -9,6 +9,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 PATCH="$ROOT/patches/024-suspend-resume.patch"
 DISPLAY_PATCH="$ROOT/patches/025-suspend-resume-display.patch"
 LIFECYCLE_PATCH="$ROOT/patches/026-suspend-resume-dvfs-lifecycle.patch"
+TEMP_MONITOR_PATCH="$ROOT/patches/028-suspend-resume-hal-temp-monitor-delay.patch"
 BUILDER="$ROOT/scripts/build-deepin-coherent.sh"
 WRAPPER="$ROOT/scripts/build-patched28-suspend-resume.sh"
 CURRENT_BUILDER="$ROOT/scripts/build-innogpu-driver.sh"
@@ -22,7 +23,9 @@ failures=0
 pass() { tests=$((tests + 1)); printf 'suspend_resume_t%02d=PASS # %s\n' "$tests" "$1"; }
 fail() { tests=$((tests + 1)); failures=$((failures + 1)); printf 'suspend_resume_t%02d=FAIL reason=%s\n' "$tests" "$1"; }
 
-mkdir -p "$TMP/tree/innosrvkm"
+mkdir -p "$TMP/tree/innogpu" "$TMP/tree/innosrvkm"
+cp "$ROOT/drivers/innogpu/hal.h" "$TMP/tree/innogpu/"
+cp "$ROOT/drivers/innogpu/innogpu_pci_drv.c" "$TMP/tree/innogpu/"
 cp "$ROOT/drivers/innosrvkm/pvr_dvfs_device.c" "$TMP/tree/innosrvkm/"
 cp "$ROOT/drivers/innosrvkm/innodpu_drm_pm.c" "$TMP/tree/innosrvkm/"
 cp "$ROOT/drivers/innosrvkm/pvr_drm.c" "$TMP/tree/innosrvkm/"
@@ -199,6 +202,151 @@ else
     fail lifecycle_old_kernel_uses_existing_callback_path_only
 fi
 
+if patch --dry-run --batch --forward --fuzz=0 --no-backup-if-mismatch \
+    -s -d "$TMP/tree" -p1 < "$TEMP_MONITOR_PATCH"; then
+    pass temperature_monitor_patch_dry_run
+else
+    fail temperature_monitor_patch_dry_run
+fi
+
+if patch --batch --forward --fuzz=0 --no-backup-if-mismatch \
+    -s -d "$TMP/tree" -p1 < "$TEMP_MONITOR_PATCH"; then
+    pass temperature_monitor_patch_applies_after_024_and_026
+else
+    fail temperature_monitor_patch_applies_after_024_and_026
+fi
+
+temp_pvr="$TMP/tree/innosrvkm/pvr_drm.c"
+temp_pci="$TMP/tree/innogpu/innogpu_pci_drv.c"
+temp_hal="$TMP/tree/innogpu/hal.h"
+if [[ "$(grep -c '^diff -ruN ' "$TEMP_MONITOR_PATCH")" -eq 3 ]] &&
+   grep -Fq 'a/innogpu/hal.h b/innogpu/hal.h' "$TEMP_MONITOR_PATCH" &&
+   grep -Fq 'a/innogpu/innogpu_pci_drv.c b/innogpu/innogpu_pci_drv.c' "$TEMP_MONITOR_PATCH" &&
+   grep -Fq 'a/innosrvkm/pvr_drm.c b/innosrvkm/pvr_drm.c' "$TEMP_MONITOR_PATCH" &&
+   ! grep -Eq '(\.o_shipped|vendor/)' "$TEMP_MONITOR_PATCH"; then
+    pass temperature_monitor_patch_scope_is_reviewable_source_only
+else
+    fail temperature_monitor_patch_scope_is_reviewable_source_only
+fi
+
+if python3 - "$temp_pvr" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+text = Path(sys.argv[1]).read_text(encoding="utf-8")
+resume = re.search(r"static int pvr_pm_resume\(.*?\n}\n", text, re.S).group()
+pvr = resume.index("err = PVRSRVDeviceResume(ddev)")
+pvr_failure = resume.index("if (err)\n\t\treturn err;", pvr)
+dvfs = resume.index("ResumeDVFS(priv->dev_node)", pvr_failure)
+dvfs_failure = resume.index("if (err)\n\t\treturn err;", dvfs)
+wakeup = resume.index("hal_power_wakeup(pdata->pdev_rsrc)", dvfs_failure)
+raise SystemExit(0 if pvr < pvr_failure < dvfs < dvfs_failure < wakeup else 1)
+PY
+then
+    pass temperature_monitor_starts_after_pvr_and_dvfs_resume
+else
+    fail temperature_monitor_starts_after_pvr_and_dvfs_resume
+fi
+
+if sed -n '/static int pvr_pm_resume/,/^}/p' "$temp_pvr" |
+       grep -Fq 'if (err)' &&
+   sed -n '/static int pvr_pm_resume/,/^}/p' "$temp_pvr" |
+       grep -Fq 'return err;' &&
+   sed -n '/static int pvr_pm_resume/,/^}/p' "$temp_pvr" |
+       grep -Fq 'hal_power_wakeup(pdata->pdev_rsrc);'; then
+    pass temperature_monitor_is_not_started_on_resume_failure
+else
+    fail temperature_monitor_is_not_started_on_resume_failure
+fi
+
+if grep -Fq 'atomic_t pvr_resume_count;' "$temp_hal" &&
+   sed -n '/static int innogpu_device_suspend/,/^}/p' "$temp_pci" |
+       grep -Fq 'atomic_set(&pdev_rsrc->pvr_resume_count, 0);' &&
+   sed -n '/static int pvr_pm_resume/,/^}/p' "$temp_pvr" |
+       grep -Fq 'atomic_inc_return(&pdata->pdev_rsrc->pvr_resume_count)' &&
+   sed -n '/static int pvr_pm_resume/,/^}/p' "$temp_pvr" |
+       grep -Fq 'if (resumed == pdata->dev_nums)'; then
+    pass temperature_monitor_waits_for_all_pvr_children_per_parent
+else
+    fail temperature_monitor_waits_for_all_pvr_children_per_parent
+fi
+
+if python3 - "$ROOT/drivers/innogpu/hal.h" "$temp_hal" <<'PY'
+import sys
+from pathlib import Path
+
+before = Path(sys.argv[1]).read_text(encoding="utf-8")
+after = Path(sys.argv[2]).read_text(encoding="utf-8")
+marker = "\tstruct vpuinfo_s vpuinfo;\n"
+prefix, suffix = before.split(marker, 1)
+expected = prefix + marker + (
+    "\n\t/* Queue the parent temperature work only after every PVR child resumes. */\n"
+    "\tatomic_t pvr_resume_count;\n"
+) + suffix
+raise SystemExit(0 if after == expected else 1)
+PY
+then
+    pass temperature_counter_is_appended_without_shifting_existing_hal_fields
+else
+    fail temperature_counter_is_appended_without_shifting_existing_hal_fields
+fi
+
+if grep -Fq 'inno_rsrc_devres_alloc(sizeof(struct dev_rsrc))' "$temp_pci"; then
+    pass temperature_counter_storage_uses_updated_source_struct_size
+else
+    fail temperature_counter_storage_uses_updated_source_struct_size
+fi
+
+if sed -n '/static int pvr_pm_resume/,/^}/p' "$temp_pvr" |
+       grep -Fq 'pdata->dev_idx >= (unsigned int)pdata->dev_nums' &&
+   sed -n '/static int pvr_pm_resume/,/^}/p' "$temp_pvr" |
+       grep -Fq 'return -ENODEV;' &&
+   sed -n '/static int pvr_pm_resume/,/^}/p' "$temp_pvr" |
+       grep -Fq 'return -EOVERFLOW;'; then
+    pass temperature_monitor_rejects_invalid_or_overflow_resume_state
+else
+    fail temperature_monitor_rejects_invalid_or_overflow_resume_state
+fi
+
+if sed -n '/static int innogpu_device_resume/,/^}/p' "$temp_pci" |
+       grep -Fq 'if (!is_suspend)' &&
+   [[ "$(sed -n '/static int innogpu_device_resume/,/^}/p' "$temp_pci" |
+       grep -c 'hal_power_wakeup(pdev_rsrc);')" -eq 1 ]] &&
+   sed -n '/static int pvr_pm_resume/,/^}/p' "$temp_pvr" |
+       grep -Fq '#if defined(NO_HARDWARE)'; then
+    pass parent_s3_wakeup_removed_and_nonhardware_path_preserved
+else
+    fail parent_s3_wakeup_removed_and_nonhardware_path_preserved
+fi
+
+if sed -n '/#else/,/#endif/p' "$temp_pvr" |
+       grep -Fq 'err = PVRSRVDeviceResume(ddev);' &&
+   sed -n '/static int pvr_pm_resume/,/^}/p' "$temp_pvr" |
+       grep -Fq 'resumed = atomic_inc_return'; then
+    pass old_kernel_path_starts_monitor_only_after_successful_pvr_resume
+else
+    fail old_kernel_path_starts_monitor_only_after_successful_pvr_resume
+fi
+
+if sed -n '/static int innogpu_device_suspend/,/^}/p' "$temp_pci" |
+       grep -Fq 'hal_power_sleep(pdev_rsrc);' &&
+   sed -n '/static int pvr_pm_suspend/,/^}/p' "$temp_pvr" |
+       grep -Fq 'SuspendDVFS(priv->dev_node)' &&
+   sed -n '/static int pvr_pm_suspend/,/^}/p' "$temp_pvr" |
+       grep -Fq 'PVRSRVDeviceSuspend(ddev)'; then
+    pass temperature_patch_preserves_suspend_cancel_and_dvfs_drain
+else
+    fail temperature_patch_preserves_suspend_cancel_and_dvfs_drain
+fi
+
+if ! find "$TMP/tree" -type f \( -name '*.orig' -o -name '*.rej' \) -print -quit |
+       grep -q .; then
+    pass temperature_patch_application_leaves_no_artifacts
+else
+    fail temperature_patch_application_leaves_no_artifacts
+fi
+
 if bash -n "$BUILDER" "$WRAPPER" "$CURRENT_BUILDER"; then
     pass builder_shell_syntax
 else
@@ -221,9 +369,10 @@ else
     fail patched28_inherits_p27_and_enables_fix
 fi
 
-if grep -Fq 'VERSION="${VERSION:-4.0.2-i1}"' "$CURRENT_BUILDER" &&
+if grep -Fq 'VERSION="${VERSION:-4.0.2-i2}"' "$CURRENT_BUILDER" &&
    grep -Fq '4.0.1-i3|4.0.1-i4) EXPECTED_SOURCE_DATE_EPOCH=1788451200' "$CURRENT_BUILDER" &&
    grep -Fq '4.0.2-i1) EXPECTED_SOURCE_DATE_EPOCH=1788624000' "$CURRENT_BUILDER" &&
+   grep -Fq '4.0.2-i2) EXPECTED_SOURCE_DATE_EPOCH=1788710400' "$CURRENT_BUILDER" &&
    ! grep -Eq '4\.0\.1-i[12]\) EXPECTED_SOURCE_DATE_EPOCH=' "$CURRENT_BUILDER" &&
    grep -Fq 'builder_version_review=FAIL unreviewed package version' "$CURRENT_BUILDER"; then
     pass current_builder_version_is_fail_closed
@@ -235,14 +384,15 @@ if [[ "$(grep -c 'apply_reviewed_source_fixes "\$' "$CURRENT_BUILDER")" -eq 2 ]]
    grep -Fq 'patches/024-suspend-resume.patch' "$CURRENT_BUILDER" &&
    grep -Fq 'patches/025-suspend-resume-display.patch' "$CURRENT_BUILDER" &&
    grep -Fq 'patches/026-suspend-resume-dvfs-lifecycle.patch' "$CURRENT_BUILDER" &&
+   grep -Fq 'patches/028-suspend-resume-hal-temp-monitor-delay.patch' "$CURRENT_BUILDER" &&
    grep -Fq '[[ "$VERSION" == "4.0.1-i4" ]]' "$CURRENT_BUILDER" &&
-   grep -Fq '[[ "$VERSION" == "4.0.2-i1" ]]' "$CURRENT_BUILDER"; then
+   grep -Fq '[[ "$VERSION" == "4.0.2-i2" ]]' "$CURRENT_BUILDER"; then
     pass current_builder_patches_compile_and_package_trees
 else
     fail current_builder_patches_compile_and_package_trees
 fi
 
-if [[ "$(grep -c -- '--fuzz=0 --no-backup-if-mismatch' "$CURRENT_BUILDER")" -eq 3 ]] &&
+if [[ "$(grep -c -- '--fuzz=0 --no-backup-if-mismatch' "$CURRENT_BUILDER")" -eq 4 ]] &&
    grep -Fq -- "-name '*.orig' -o -name '*.rej'" "$CURRENT_BUILDER" &&
    grep -Fq 'apply_reviewed_source_fixes "$STAGE/source" compile-staging' "$CURRENT_BUILDER" &&
    grep -Fq 'apply_reviewed_source_fixes "$P/usr/src/innogpu-kernel-2.2" packaged-dkms' "$CURRENT_BUILDER" &&
@@ -265,9 +415,18 @@ fi
 
 if output=$(INNOGPU_ROOT="$TMP/reject-402-version" VERSION=4.0.2-i2 \
     SOURCE_DATE_EPOCH=1788624000 bash "$CURRENT_BUILDER" 2>&1); then
-    fail current_builder_rejects_unreviewed_4_0_2_iteration
-elif grep -Fq 'builder_version_review=FAIL unreviewed package version: 4.0.2-i2' <<<"$output" &&
+    fail current_builder_rejects_old_epoch_for_4_0_2_i2
+elif grep -Fq 'builder_repro=FAIL 4.0.2-i2 requires SOURCE_DATE_EPOCH=1788710400' <<<"$output" &&
      [[ ! -e "$TMP/reject-402-version/build" ]]; then
+    pass current_builder_rejects_old_epoch_for_4_0_2_i2
+else
+    fail current_builder_rejects_old_epoch_for_4_0_2_i2
+fi
+
+if output=$(INNOGPU_ROOT="$TMP/reject-402-version" VERSION=4.0.2-i3 \
+    SOURCE_DATE_EPOCH=1788710400 bash "$CURRENT_BUILDER" 2>&1); then
+    fail current_builder_rejects_unreviewed_4_0_2_iteration
+elif grep -Fq 'builder_version_review=FAIL unreviewed package version: 4.0.2-i3' <<<"$output"; then
     pass current_builder_rejects_unreviewed_4_0_2_iteration
 else
     fail current_builder_rejects_unreviewed_4_0_2_iteration

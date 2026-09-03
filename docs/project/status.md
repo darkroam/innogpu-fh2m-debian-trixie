@@ -9,9 +9,9 @@
 
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
-| 当前运行驱动 | `4.0.0-i1` 已在 R10 deep 失败后重新安装并重启至 `6.12.101+deb13-amd64`；包/DKMS/模块/Driver/Firmware/Xorg/HWGL 回退验证通过，只作非 deep 图形基线 | [patch-026-lifecycle](../patches/026-suspend-resume-dvfs-lifecycle.md) |
-| 最近失败候选 | `4.0.1-i3`（仅 patch-024）：R10 deep 唤醒时 PreClock 在 PVR 上电前进入并触发 PowerLock POWERED_OFF，机器未正常恢复；已回退 `4.0.0-i1` | [patch-024](../patches/024-suspend-resume.md)、[deep 事故](../incidents/suspend-resume-deep-reproduction-20260902.md) |
-| 当前静态/离线候选 | `4.0.2-i1` = patch-024 + patch-026 DVFS/PVR 生命周期同步，epoch `1788624000`；不含 UNVERIFIED 的 display 025，尚未安装或执行 deep | [patch-026-lifecycle](../patches/026-suspend-resume-dvfs-lifecycle.md) |
+| 当前运行驱动 | `4.0.0-i1` 已在 R11 deep 失败后重新安装并重启至 `6.12.101+deb13-amd64`；包/DKMS/模块/Driver/Firmware/Xorg/HWGL 回退验证通过，只作非 deep 图形基线 | [patch-028](../patches/028-suspend-resume-hal-temp-monitor-delay.md) |
+| 最近失败候选 | `4.0.2-i1`（patch-024 + lifecycle 026）：R11 deep 恢复时独立温度 work 在 PVR 上电前触发 PowerLock POWERED_OFF，画面未恢复；已回退 `4.0.0-i1`，只保留历史复现入口 | [patch-026-lifecycle](../patches/026-suspend-resume-dvfs-lifecycle.md)、[patch-028](../patches/028-suspend-resume-hal-temp-monitor-delay.md) |
+| 当前静态/离线候选 | `4.0.2-i2` = patch-024 + patch-026 + patch-028，epoch `1788710400`；不含 UNVERIFIED 的 display 025，尚未安装或执行 deep | [patch-028](../patches/028-suspend-resume-hal-temp-monitor-delay.md) |
 | 稳定图形历史基线 | 历史记录：`3.3.3.42-patched-21` 已安装、重启并完成本机 PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收；不是当前运行包 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | 历史运行基线 | `3.3.3.42-patched-20` 曾完成运行验收，但 deb 含收敛前辅助载荷，仅保留为历史证据 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
 | 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |
@@ -65,9 +65,11 @@
   `crtc->state` 是 shipped-object DRM 偏移误读；本轮未挂起，不能将健康基线外推到红屏窗口。
   R10 随后在 i3 上真实进入 deep 并复现 PowerLock POWERED_OFF；反汇编确认 patch-024 的锁外
   `PVRSRVDefaultDomainPower()` 与后续 PowerLock 之间存在 TOCTOU。R11 的 `4.0.2-i1` 用 patch-026
-  在 PVR 下电前同步停止并 drain devfreq target、PVR 上电成功后才恢复 DVFS；当前仅完成静态/离线
-  候选，deep 冻结仍生效，须经 dsh 审查、提交并由用户在场批准后才可冒烟。display 025 继续
-  UNVERIFIED，不进入 `4.0.2-i1`。
+  同步 devfreq/PVR 生命周期，但 deep 恢复仍失败：父 PCI resume 以 delay 0 启动独立温度 work，
+  它在 PVR 子设备上电前再次进入 PreClock。i1 已关闭默认入口且不得交付。R12 的 `4.0.2-i2`
+  增加 patch-028，在全部 PVR 子设备与 DVFS 恢复成功后才启动温度 work；当前仅完成静态/离线
+  候选，deep 冻结仍生效，须经 qoder 初审、dsh 终审、提交并由用户在场批准后执行 3 次连续冒烟。
+  display 025 继续 UNVERIFIED，不进入 i2。
 - **登录后短暂黑屏 P2**：`4.0.1-i1` 与回退后的 `4.0.0-i1` 均复现，排除 patch-024 特异回归。
   合盖登录时 xdisplay 把 Xorg 初始布局切为 `EXTERNAL_ONLY`，对应一次 framebuffer 重建及约 5 秒输出
   重查询；画面最终恢复。该问题由 dotconfig/xdisplay 独立跟踪，本项目不在线修改会话配置。

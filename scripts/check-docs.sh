@@ -144,12 +144,13 @@ done
 grep -Fq 'patches/023-invisible-read-no-writeback.patch' scripts/build-deepin-coherent.sh ||
     fail "coherent builder does not apply the patched-23 driver fix"
 
-# Current-state guards: changing the installed package or R11 conclusion
+# Current-state guards: changing the installed package or R12 conclusion
 # requires updating the summary and patch analysis together.
 require_text README.md '当前驱动包为 `4.0.0-i1`'
-require_text README.md '`4.0.2-i1` 是 patch-024 + patch-026 生命周期同步的静态/离线候选'
+require_text README.md '`4.0.2-i1` 已在 R11 deep 失败'
+require_text README.md '`4.0.2-i2` 是 patch-024 + patch-026 + patch-028'
 require_text docs/patches/025-suspend-resume-display.md 'patch-025 仍为 **UNVERIFIED**'
-require_text docs/patches/026-suspend-resume-dvfs-lifecycle.md '尚未安装或执行 deep 真机验收'
+require_text docs/patches/028-suspend-resume-hal-temp-monitor-delay.md '尚未安装或执行 deep 真机验收'
 require_text README.md '(docs/project/licensing.md)'
 require_text docs/README.md '[许可证与再分发边界](project/licensing.md)'
 require_text docs/README.md '[驱动源码许可证审计](project/source-license-audit.md)'
@@ -304,8 +305,8 @@ require_text docs/project/status.md "\`3.3.3.42-patched-21\` 已安装、重启"
 require_text docs/patches/README.md 'p21 已在当前设备运行验收'
 require_text docs/project/dependencies.md '当前设备已完成运行验收的候选'
 require_text docs/project/architecture.md '4.0.0-i1` 是已完成基线验收'
-require_text docs/project/architecture.md 'R06 的 `4.0.1-i3/i4`'
-require_text docs/project/architecture.md '`4.0.2-i1` 与固定 epoch `1788624000`'
+require_text docs/project/architecture.md 'R06 `4.0.1-i3/i4`'
+require_text docs/project/architecture.md '`4.0.2-i2` 与固定 epoch `1788710400`'
 require_text debs/README.md '已在当前设备完成部署、重启和运行验收'
 require_text docs/user/new-device-install.md 'patched-21 已完成当前设备的构建、包边界、部署、重启和运行验收'
 require_text docs/user/recovery.md 'patched-22 -> patched-21 -> patched-17 -> patched-8'

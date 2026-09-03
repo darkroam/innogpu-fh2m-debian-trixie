@@ -23,7 +23,8 @@
 | `build/innogpu-fh2m-trixie_4.0.1-i2.deb`（R05 历史候选） | patch-024 + patch-025-suspend-resume-display；固定 epoch 1788364800，历史 SHA `b26c0b27…`；一次 s2idle 可见恢复通过，不作为 R06 严格 A/B 包复用 |
 | `build/innogpu-fh2m-trixie_4.0.1-i3.deb`（R06 A/R10 失败候选） | 仅 patch-024；固定 epoch 1788451200；SHA `6cab9e521046b386ec2e34ce84d384302b044a4c215c836566274d5de769dcba`；R10 deep 复现 PowerLock TOCTOU 后已回退 |
 | `build/innogpu-fh2m-trixie_4.0.1-i4.deb`（R06 B） | patch-024 + patch-025-suspend-resume-display；固定 epoch 1788451200；SHA `085e06844607a9973a6d5e3c1e3c4ec986a1cdf6903e6a9169b68285e39969a7`；严格对照准备通过，尚未安装 |
-| `build/innogpu-fh2m-trixie_4.0.2-i1.deb`（R11 候选） | patch-024 + patch-026 DVFS/PVR 生命周期同步；固定 epoch 1788624000；不含 display 025；双构建 SHA `e115bdcd…`，离线 DKMS/vermagic/modversions/包边界通过，禁止提前安装 |
+| `build/innogpu-fh2m-trixie_4.0.2-i1.deb`（R11 失败候选） | patch-024 + patch-026 DVFS/PVR 生命周期同步；固定 epoch 1788624000；双构建 SHA `e115bdcd…`；deep 时温度 work 提前触发 PowerLock/POWERED_OFF，只供历史复现，禁止安装或交付 |
+| `build/innogpu-fh2m-trixie_4.0.2-i2.deb`（R12 候选） | i1 + patch-028 温度 work 恢复时序门禁；固定 epoch 1788710400；不含 display 025；仅静态/离线验证，尚未安装 |
 | `debs/innogpu-fh2m_20250421190503-debug_amd64.deb` | Deepin 202504 DKMS/GL/DDX 来源；SHA-256 `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2` |
 
 新架构提取器默认只读取 `debs/innogpu-fh2m_20250421190503-debug_amd64.deb`，其他位置必须通过
@@ -32,9 +33,10 @@
 忽略的 `third_party/innogpu-fh2m-deepin-202504/root/`。不得依赖该 legacy 回退构建新架构包。
 
 Deepin 202504 原包是后续版本唯一的来源基线。当前构建器使用 `drivers/` 中已转换的历史源码提交，
-`4.0.1-i1`/`i2` 是历史实验候选；R06 的 i3/i4 保留作复现。当前 `4.0.2-i1` 在 patch-024 后
-应用 patch-026 生命周期同步，不含 display 025，并按 manifest 从原包提取同源 DRI、GBM、GLAPI、GLVND、DDX、
-固件和黑盒对象。历史 patched 包不得作为源码或载荷输入。
+`4.0.1-i1`/`i2` 是历史实验候选；R06 的 i3/i4 和失败的 R11 `4.0.2-i1` 保留作复现。当前
+`4.0.2-i2` 在 patch-024 后应用 patch-026 生命周期同步与 patch-028 温度 work 恢复时序门禁，
+不含 display 025，并按 manifest 从原包提取同源 DRI、GBM、GLAPI、GLVND、DDX、固件和黑盒对象。
+历史 patched 包不得作为源码或载荷输入。
 
 历史 p19/p20 deb 的驱动/用户态结论仍可作为证据，但其辅助文件清单不符合当前所有权边界。当前
 新构建器只接受按 Debian 版本排序高于 `3.3.3.42-patched-27` 的版本，并必须运行

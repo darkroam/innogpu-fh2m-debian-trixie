@@ -19,7 +19,10 @@
 - **关键结论**：`4.0.0-i1` 的 `drivers/` 是**直接编译的源码树**，不依赖历史 patch 叠加；
   失败候选 `4.0.1-i1` 额外应用 patch-024（接线 `CONFIRMED`、s2idle 可见恢复验收失败）。
   `4.0.1-i2` 在其后再应用 patch-025-suspend-resume-display，R05 单次 s2idle 恢复通过；R06
-  使用 i3/i4 同 epoch 包级单变量对照继续定位（准备 `CONFIRMED`，因果仍 `UNVERIFIED`）。
+  使用 i3/i4 同 epoch 包级单变量对照继续定位（准备 `CONFIRMED`，因果仍 `UNVERIFIED`）。R10/R11
+  deep 先后证明 patch-024 与 lifecycle 026 仍未覆盖全部 PreClock 入口；R12 `4.0.2-i2` 增加
+  patch-028，在 PVR 子设备与 DVFS 恢复成功后才启动独立温度 work（静态/离线 `CONFIRMED`，真机
+  `UNVERIFIED`）。
 - 黑盒对象（5 个 `.o_shipped`）**不在** `drivers/` 内（`CONFIRMED`：git ls-files 无
   .o_shipped/.o.cmd；check-docs 有边界守卫）。
 
@@ -27,10 +30,10 @@
 
 | 对象 | 角色 | 状态 |
 | --- | --- | --- |
-| `patches/*.patch`（15） | 13 个历史内核补丁原件 + patch-024/025-suspend-resume-display 行为候选 | 历史项仅作 provenance/回退复现；行为候选按版本接入新构建器 |
+| `patches/*.patch`（17） | 13 个历史内核补丁原件 + patch-024/025-display/026-lifecycle/028-temp-monitor 行为候选 | 历史项仅作 provenance/回退复现；行为候选按版本接入新构建器 |
 | `components/picom|fbterm/` | 第三方组件补丁与配置 | 独立构建入口（`build-patched-*.sh`） |
 | `build-deepin-coherent.sh` | legacy patched 构建器 | p27 oracle + check-docs 版本护栏，保留 |
-| `build-innogpu-driver.sh` | **当前新架构构建器** | R06 仅接受同 epoch 的 i3/i4；分别绑定 024 与 024+025，并拒绝 patch 备份/reject 产物 |
+| `build-innogpu-driver.sh` | **当前新架构构建器** | 默认 i2 绑定 024+026+028；i1 与 R06 i3/i4 仅供历史复现；拒绝未审版本/epoch 和 patch 备份/reject 产物 |
 | `build-patchedNN-*.sh` | legacy 包装/护栏 | 停用护栏（p17-20）与历史候选包装 |
 
 ### A3. 黑盒载荷生命周期（CONFIRMED）

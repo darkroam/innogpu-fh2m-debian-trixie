@@ -31,17 +31,22 @@
 ## 运行时、测试与上游报告
 
 - [ ] **suspend/resume 候选验收**：R10 在 `4.0.1-i3` 上复现 deep PowerLock POWERED_OFF，证明
-  patch-024 的锁外快速门禁存在 TOCTOU；设备已回退 `4.0.0-i1`。R11 的 `4.0.2-i1` 以
-  patch-024 + patch-026 lifecycle 在 PVR 下电前 drain devfreq、上电成功后再恢复，并补齐失败
-  回滚和失败轮次 finalize fixture。当前只允许静态/离线构建验证；经 dsh 审查提交且用户本人在场
-  重新确认后，才执行一次 deep 冒烟。P3 保持打开。`4.0.1-i4` 的 display 025 仍为独立
-  UNVERIFIED 实验，不进入 i1。见 [`024-suspend-resume.md`](../patches/024-suspend-resume.md)、
-  [`026-suspend-resume-dvfs-lifecycle.md`](../patches/026-suspend-resume-dvfs-lifecycle.md) 和
+  patch-024 的锁外快速门禁存在 TOCTOU。R11 的 `4.0.2-i1` 增加 patch-026 同步 devfreq/PVR
+  生命周期后仍在 deep 失败：独立温度 work 从父 PCI resume 零延迟启动，早于 PVR 子设备恢复。
+  i1 只保留历史复现且不得安装/交付；设备已回退 `4.0.0-i1`。R12 的 `4.0.2-i2` 以 patch-028
+  把 work 延后到全部 PVR 子设备与 DVFS 恢复成功后，当前只允许静态/离线验证。经 qoder 初审、
+  dsh 终审并提交且用户本人在场确认后，才执行 3 次连续 deep 冒烟。P3 保持打开；display 025
+  仍为独立 UNVERIFIED 实验，不进入 i2。见
+  [`026-suspend-resume-dvfs-lifecycle.md`](../patches/026-suspend-resume-dvfs-lifecycle.md)、
+  [`028-suspend-resume-hal-temp-monitor-delay.md`](../patches/028-suspend-resume-hal-temp-monitor-delay.md) 和
   [deep 事故](../incidents/suspend-resume-deep-reproduction-20260902.md)。
 - [ ] **登录后短暂黑屏**：在 `4.0.1-i1` 和回退后的 `4.0.0-i1` 均复现，排除 patch-024 特异回归。
   合盖登录时 xdisplay 把初始 Xorg 布局切为 `EXTERNAL_ONLY`，Xorg 重建 1920x1080 framebuffer 并在约
   5 秒内重复查询输出，与“桌面亮一下、黑几秒、再恢复”时间窗一致。该问题归 dotconfig/xdisplay
   会话布局轮次处理，本仓库只保留设备接入事实；修复前不得在线试错 modeset。
+- [ ] 已知偶发 fixture（pre-existing，待单独排查）：exec-probes / VA-API / DMA-BUF
+  在负载下偶发 1–2 项失败（qoder 初审与 dsh 复跑均见过两种状态），非 028 回归；
+  排查前 CI 结果解释需注意"偶发"口径。
 - [ ] 将可复现的热点、perf 数据和应用级 workaround 整理为上游/厂商修复报告。
 - [ ] runtime 剩余真实能力证据：modeset/热插拔/合盖、Picom GLX backend、
   音频听感确认；当前权威汇总 22 PASS / 9 SKIP / 4 UNVERIFIED。
