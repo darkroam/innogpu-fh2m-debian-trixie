@@ -128,6 +128,20 @@ Deepin deb(校验 SHA) → generate-binary-manifest(校验+生成) → validate-
   授权的原创层；`drivers/` 不适用根许可证，confidential 与无许可路径排除出公开制品。
 - 黑盒对象不可读源码（`.o_shipped`），仅字节契约（gpupll 变换）与符号级可观察（OBSERVED）。
 
+### E1. R15 启动告警边界（2026-09-03）
+
+R15 对 6 个启动 journal（2026-09-02 11:50 至 2026-09-03 16:13）做了逐条比对，
+用户报告及 journal 中补充的 10 类告警均在 6/6 boot 出现，判定为 pre-existing，
+`ours=0`。完整归因、证据路径和后续门槛见
+[`启动报错归因事故记录`](../incidents/boot-errors-attribution-20260903.md)。
+
+- AMD-Vi southbridge IOAPIC、microcode vendor、SRSO 和 ACPI `_DOD/_DOS` 是系统/BIOS/CPU
+  microcode 边界，不属于本仓库 GPU 驱动修复范围。
+- `hwinfo_g0m.bin` 缺失及 hwinfo register/DP-HDMI-VGA 默认降级是厂商固件载荷/驱动降级路径；
+  DDCCI 的 panel 可达性由 patch-029 处理，但不伪造 backlight device。
+- journal 的 debugfs 消息实际属于 `dmaengine`，不是用户 OCR 的 `drmengine`；AXI DMA 与
+  PCIe DMA 的注册冲突属于厂商 DMA 驱动边界，patch-029 不涉及该路径。
+
 ## 风险与优化候选
 
 1. 构建环境依赖本机 `/lib/modules/$(uname -r)/build`（P2）：CI 无法跑完整 DKMS 构建，需

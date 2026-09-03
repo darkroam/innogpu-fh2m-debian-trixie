@@ -16,6 +16,7 @@
 | [fbterm YPan 显示错位](fbterm-ypan-rendering.md) | fbdev 快速平移会造成越界感和跨会话残留；强制 redraw 已在真实 VT 验证 |
 | [suspend/resume deep 再现](suspend-resume-deep-reproduction-20260902.md) | s2idle 测试脚本过早恢复 deep，实际再次触发 S3 PowerLock 时序故障；s2idle 仍未有效测试 |
 | [suspend/resume s2idle 红屏](suspend-resume-s2idle-red-screen-20260902.md) | `4.0.1-i1` 的真实 s2idle 无 PowerLock/PVR 计数增长，但外屏整屏红色；候选失败并回退，deep 未测试 |
+| [2026-09-03 启动报错归因](boot-errors-attribution-20260903.md) | 10 类启动告警均为 pre-existing，`ours=0`；涉及系统/BIOS、厂商 hwinfo 缺失降级和 dmaengine debugfs 冲突 |
 
 ## 使用规则
 

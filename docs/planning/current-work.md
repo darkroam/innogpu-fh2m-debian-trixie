@@ -50,6 +50,10 @@
   在负载下偶发 1–2 项失败（qoder 初审与 dsh 复跑均见过两种状态），非 028 回归；
   排查前 CI 结果解释需注意"偶发"口径。
 - [ ] 将可复现的热点、perf 数据和应用级 workaround 整理为上游/厂商修复报告。
+- [ ] **R15 启动告警上游/厂商报告**：整理 `hwinfo_g0m.bin` 未随厂商载荷分发导致的
+  hwinfo 注册失败、DP/HDMI/VGA 默认降级与 DDCCI fallback，以及 `dmaengine` 下 AXI
+  DMA/PCIe DMA 同设备名冲突；AMD-Vi、microcode、SRSO、ACPI `_DOD/_DOS` 另列为平台/BIOS
+  侧事项。详见 [启动报错归因记录](../incidents/boot-errors-attribution-20260903.md)。
 - [ ] runtime 剩余真实能力证据：modeset/热插拔/合盖、Picom GLX backend、
   音频听感确认；当前权威汇总 22 PASS / 9 SKIP / 4 UNVERIFIED。
 - [ ] VA-API 未测 profile（H.264 High/Constrained Baseline、HEVC Main10）、编码能力和多屏矩阵继续

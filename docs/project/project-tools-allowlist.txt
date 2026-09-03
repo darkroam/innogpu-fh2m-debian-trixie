@@ -34,6 +34,7 @@ docs/README.md
 docs/archive/cleanup-20260708.md
 docs/cleanup-20260708.md
 docs/incidents/README.md
+docs/incidents/boot-errors-attribution-20260903.md
 docs/incidents/fbterm-ypan-rendering.md
 docs/incidents/patched-17-fbdev-mmap.md
 docs/incidents/patched-18-shader-firmware.md
