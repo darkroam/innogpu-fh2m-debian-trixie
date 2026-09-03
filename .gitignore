@@ -39,3 +39,7 @@ __pycache__/
 # Multi-agent collaboration rounds (dsh + codex): machine-local working
 # records, never uploaded to GitHub (charter: docs/project/multiagent-collab.md).
 /collab/
+
+
+# qoder agent-local state (tool permissions etc.), not repository content.
+/.qoder/
