@@ -34,11 +34,13 @@
   patch-024 的锁外快速门禁存在 TOCTOU。R11 的 `4.0.2-i1` 增加 patch-026 同步 devfreq/PVR
   生命周期后仍在 deep 失败：独立温度 work 从父 PCI resume 零延迟启动，早于 PVR 子设备恢复。
   i1 只保留历史复现且不得安装/交付；设备已回退 `4.0.0-i1`。R12 的 `4.0.2-i2` 以 patch-028
-  把 work 延后到全部 PVR 子设备与 DVFS 恢复成功后，当前只允许静态/离线验证。经 qoder 初审、
+  把 work 延后到全部 PVR 子设备与 DVFS 恢复成功后；R13 的 `4.0.2-i3` 再以 patch-029
+  让 DDCCI 回退模式创建 panel 但不注册 backlight device，当前只允许静态/离线验证。经 qoder 初审、
   dsh 终审并提交且用户本人在场确认后，才执行 3 次连续 deep 冒烟。P3 保持打开；display 025
-  仍为独立 UNVERIFIED 实验，不进入 i2。见
+  仍为独立 UNVERIFIED 实验，不进入 i1/i2/i3。见
   [`026-suspend-resume-dvfs-lifecycle.md`](../patches/026-suspend-resume-dvfs-lifecycle.md)、
-  [`028-suspend-resume-hal-temp-monitor-delay.md`](../patches/028-suspend-resume-hal-temp-monitor-delay.md) 和
+  [`028-suspend-resume-hal-temp-monitor-delay.md`](../patches/028-suspend-resume-hal-temp-monitor-delay.md)、
+  [`029-suspend-resume-ddcci-panel.md`](../patches/029-suspend-resume-ddcci-panel.md) 和
   [deep 事故](../incidents/suspend-resume-deep-reproduction-20260902.md)。
 - [ ] **登录后短暂黑屏**：在 `4.0.1-i1` 和回退后的 `4.0.0-i1` 均复现，排除 patch-024 特异回归。
   合盖登录时 xdisplay 把初始 Xorg 布局切为 `EXTERNAL_ONLY`，Xorg 重建 1920x1080 framebuffer 并在约

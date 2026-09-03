@@ -6,8 +6,8 @@
 当前再分发边界见[许可证与再分发边界](docs/project/licensing.md)（唯一权威文档）。
 
 > 最后更新：2026-09-03 —— 当前驱动包为 `4.0.0-i1`；`4.0.2-i1` 已在 R11 deep 失败，
-> 只保留历史复现入口且不得安装或交付。`4.0.2-i2` 是 patch-024 + patch-026 + patch-028
-> 的静态/离线候选，尚未安装或真机验证；patch-025-display 继续保持 UNVERIFIED，不进入 i2。
+> 只保留历史复现入口且不得安装或交付。`4.0.2-i3` 是 patch-024 + patch-026 + patch-028 + patch-029
+> 的静态/离线候选，尚未安装或真机验证；patch-025-display 继续保持 UNVERIFIED，不进入 i3。
 
 ## 适配的当前系统
 
@@ -18,7 +18,7 @@
 | GPU | Innosilicon Fantasy II-M，PCI `1ec8:9810`，2 GiB VRAM（PowerVR DDK V119 RTM 谱系） |
 | 当前驱动包 | `4.0.0-i1`：R10 deep 失败后已回退；只作为非 deep 图形基线，日常保持 `[s2idle] deep` |
 | 最近失败候选 | `4.0.2-i1`：patch-024 + patch-026；R11 deep 恢复时温度 work 在 PVR 上电前触发 PowerLock/POWERED_OFF，已回退，仅供历史复现 |
-| 当前 suspend 候选 | `4.0.2-i2`：i1 + patch-028 温度 work 恢复时序门禁，固定 epoch `1788710400`；仅静态/离线验证，未安装 |
+| 当前 suspend 候选 | `4.0.2-i3`：i2 + patch-029 DDCCI panel 创建恢复（继承 024/026/028），固定 epoch `1788796800`；仅静态/离线验证，未安装 |
 | 已验证能力 | Vulkan 1.3.264 枚举及队列提交 / OpenCL 3.0 枚举及 kernel 读回 / GL 4.3 core + GLES 3.2 / VA-API H.264 Main + HEVC Main 实际硬解（30 帧 320x240 NV12 输出校验）/ DMA-BUF 同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 / DRM+fbdev / 桌面硬件 GL / HDA 与 PipeWire 枚举 |
 
 ## 版本演进
@@ -27,7 +27,7 @@
 2. **适配本设备**：DPU/fbdev/connector/背光/GEM 系列修复（patched-8 → patched-27），本机稳定运行。
 3. **迁移 Deepin**：以 Deepin 202504 完整原包为唯一技术基线，统一用户态/固件/DDX 载荷，消除 ABI 混配。
 4. **完全重构（当前）**：取消 patch 叠加模式 → `drivers/` 仓库内维护的导入源码树 + manifest 管理黑盒，新构建器产出 `4.0.0-i1`（可复现构建；迁移阶段 0–4 完成，设备已运行）。
-5. **suspend/resume 修复候选**：R10 证明 patch-024 存在 TOCTOU；R11 的 i1 增加 devfreq/PVR 生命周期同步后，仍因独立温度 work 提前启动而失败；R12 的 i2 用 patch-028 等待 PVR 子设备恢复成功，display 025 保持独立实验状态。
+5. **suspend/resume 修复候选**：R10 证明 patch-024 存在 TOCTOU；R11 的 i1 增加 devfreq/PVR 生命周期同步后，仍因独立温度 work 提前启动而失败；R12 的 i2 用 patch-028 等待 PVR 子设备恢复成功；R13 的 i3 让 DDCCI 回退模式创建 panel 以恢复 GPIO callback，display 025 保持独立实验状态。
 
 ## 主要修复的问题
 
@@ -35,7 +35,7 @@
 - fbdev `/dev/fb0` io mmap（ENODEV）；本机 connector/ACPI/eDP 映射
 - invisible READ mapping 逐页回写缺陷；`dma_resv` usage 语义；未活动 CRTC vblank 守卫
 - foreign DMA-BUF 生命周期；deb 构建可复现性（固定 epoch + 目录 mtime 归一化）
-- deep resume 的 PVR 电源时序候选修复（patch-024 快速门禁 + patch-026 devfreq 生命周期同步 + patch-028 温度 work 延后；`4.0.2-i2` 尚未真机验证）
+- deep resume 的 PVR 电源时序与 DDCCI panel 候选修复（patch-024 快速门禁 + patch-026 devfreq 生命周期同步 + patch-028 温度 work 延后 + patch-029 DDCCI panel；`4.0.2-i3` 尚未真机验证）
 - s2idle 红屏的 post-atomic 重复光标恢复候选修复（patch-025-suspend-resume-display；当前桌面 cursor 分支未入组，保持 UNVERIFIED）
 
 补丁与事故详情见 [docs/patches/README.md](docs/patches/README.md)、[docs/incidents/README.md](docs/incidents/README.md)。
@@ -48,7 +48,7 @@ sudo scripts/install-prereqs-debian.sh                        # 基础构建/运
 # 最小化系统还须确认 python3、dpkg-deb 等新构建器直接命令（见 dependencies.md）
 # 取得 Deepin 202504 原包放入 debs/（完整 SHA-256 见 docs/project/dependencies.md）
 bash scripts/extract-vendor-binaries.sh                       # 按 manifest 重建 vendor/ 黑盒载荷
-SOURCE_DATE_EPOCH=1788710400 bash scripts/build-innogpu-driver.sh  # 默认构建 4.0.2-i2
+SOURCE_DATE_EPOCH=1788796800 bash scripts/build-innogpu-driver.sh  # 默认构建 4.0.2-i3
 # R06 与失败的 R11 i1 仍可显式复现，不能替代当前候选
 # 本轮只允许构建；安装和挂起验收须另开经审查轮次
 ```

@@ -9,11 +9,12 @@ set -euo pipefail
 ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$ROOT"
 
-VERSION="${VERSION:-4.0.2-i2}"
+VERSION="${VERSION:-4.0.2-i3}"
 case "$VERSION" in
     4.0.1-i3|4.0.1-i4) EXPECTED_SOURCE_DATE_EPOCH=1788451200 ;;
     4.0.2-i1) EXPECTED_SOURCE_DATE_EPOCH=1788624000 ;;
     4.0.2-i2) EXPECTED_SOURCE_DATE_EPOCH=1788710400 ;;
+    4.0.2-i3) EXPECTED_SOURCE_DATE_EPOCH=1788796800 ;;
     *)
         echo "builder_version_review=FAIL unreviewed package version: $VERSION" >&2
         exit 1
@@ -46,13 +47,19 @@ apply_reviewed_source_fixes() {
         patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$source_tree" -p1 \
             < "$ROOT/patches/025-suspend-resume-display.patch"
     fi
-    if [[ "$VERSION" == 4.0.2-i1 || "$VERSION" == 4.0.2-i2 ]]; then
+    if [[ "$VERSION" == 4.0.2-i1 || "$VERSION" == 4.0.2-i2 || "$VERSION" == 4.0.2-i3 ]]; then
         patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$source_tree" -p1 \
             < "$ROOT/patches/026-suspend-resume-dvfs-lifecycle.patch"
     fi
     if [[ "$VERSION" == "4.0.2-i2" ]]; then
         patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$source_tree" -p1 \
             < "$ROOT/patches/028-suspend-resume-hal-temp-monitor-delay.patch"
+    fi
+    if [[ "$VERSION" == "4.0.2-i3" ]]; then
+        patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$source_tree" -p1 \
+            < "$ROOT/patches/028-suspend-resume-hal-temp-monitor-delay.patch"
+        patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$source_tree" -p1 \
+            < "$ROOT/patches/029-suspend-resume-ddcci-panel.patch"
     fi
     reject_patch_artifacts "$source_tree" "$scope"
 }
@@ -76,6 +83,8 @@ APPLIED_SOURCE_FIXES="patch-024"
     APPLIED_SOURCE_FIXES+=" patch-026-suspend-resume-dvfs-lifecycle"
 [[ "$VERSION" == "4.0.2-i2" ]] &&
     APPLIED_SOURCE_FIXES+=" patch-028-suspend-resume-hal-temp-monitor-delay"
+[[ "$VERSION" == "4.0.2-i3" ]] &&
+    APPLIED_SOURCE_FIXES+=" patch-026-suspend-resume-dvfs-lifecycle patch-028-suspend-resume-hal-temp-monitor-delay patch-029-suspend-resume-ddcci-panel"
 
 # 1) manifest + vendor 就位
 [[ -f binary-manifest.json ]] || { echo "staging_manifest=FAIL"; exit 1; }

@@ -31,9 +31,10 @@
 历史 `4.0.1-i1` 固定 epoch 为 `1788278400`（2026-09-02 00:00 +0800），只应用
 patch-024。当前 R06 A=`4.0.1-i3` 仍只应用 patch-024，B=`4.0.1-i4` 再应用
 patch-025-suspend-resume-display；两者共用 epoch `1788451200`，详见[独立说明](025-suspend-resume-display.md)。
-R10 deep 失败证明该锁外门禁存在 TOCTOU，故 `4.0.2-i1/i2` 保留 patch-024 作为防御性快速路径，
-并以 [patch-026 生命周期同步](026-suspend-resume-dvfs-lifecycle.md) 和
-[patch-028 温度 work 门禁](028-suspend-resume-hal-temp-monitor-delay.md) 建立实际同步边界。
+R10 deep 失败证明该锁外门禁存在 TOCTOU，故 `4.0.2-i1/i2/i3` 保留 patch-024 作为防御性快速路径，
+并以 [patch-026 生命周期同步](026-suspend-resume-dvfs-lifecycle.md)、
+[patch-028 温度 work 门禁](028-suspend-resume-hal-temp-monitor-delay.md) 和
+[patch-029 DDCCI panel](029-suspend-resume-ddcci-panel.md) 建立实际同步边界。
 
 legacy `scripts/build-deepin-coherent.sh` 的开关为 `APPLY_SUSPEND_RESUME_FIX=1`，默认关闭；
 `scripts/build-patched28-suspend-resume.sh` 继承 patched-27 的完整开关集合后增加 patch-024，只作为

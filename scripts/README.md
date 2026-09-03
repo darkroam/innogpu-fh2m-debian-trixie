@@ -28,7 +28,7 @@
 | `generate-binary-manifest.py`（tools/） | 清单生成 | 从 Deepin deb 确定性生成 `binary-manifest.json`（校验 deb SHA、覆盖全部黑盒文件与符号链接、kind/role/license 分类） |
 | `compare-oracle-candidates.sh` | oracle 对比 | 新架构候选包 vs patched-27：对比 control（除 Version/Description/Installed-Size）、文件清单、载荷哈希、DKMS 源码、黑盒对象、maintainer 脚本（版本归一）、版本排序与 module_symbols（调用 compare-module-symbols.sh）；构建产物（.o.cmd/.o/.ko/modules.order/Module.symvers/.mod）统一按 ARTIFACT_RE 排除；输出机器可读 PASS/FAIL |
 | `compare-module-symbols.sh` | 只读符号对比 | 离线构建候选与 patched-27 两包 DKMS 源码（同一内核头），逐 .ko 对比 vermagic/depends/导出符号/导入符号；构建于 `$ROOT/.build/`，不安装不重启；module_symbols=PASS/FAIL/UNCOMPARABLE |
-| `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i2`（epoch `1788710400`）应用 patch-024 + patch-026 DVFS/PVR 生命周期同步 + patch-028 温度 work 门禁，不含 UNVERIFIED 的 display 025；仍接受 R06 i3/i4 和失败的 R11 i1 作历史复现。补丁以 `--fuzz=0 --no-backup-if-mismatch` 应用，编译树、包内 DKMS 树及完整 payload 均拒绝 `.orig/.rej`，`.o.cmd` 也不得入包 |
+| `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`（epoch `1788796800`）应用 patch-024 + patch-026 DVFS/PVR 生命周期同步 + patch-028 温度 work 门禁 + patch-029 DDCCI panel 创建恢复，不含 UNVERIFIED 的 display 025；仍接受 i1/i2、R06 i3/i4 和失败的 R11 i1 作历史复现。补丁以 `--fuzz=0 --no-backup-if-mismatch` 应用，编译树、包内 DKMS 树及完整 payload 均拒绝 `.orig/.rej`，`.o.cmd` 也不得入包 |
 | `build-patched17-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝把 patched-17 作为后续构建父版本 |
 | `build-patched18-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝重建历史混合载荷 patched-18 |
 | `build-patched19-deepin-coherent.sh` | legacy 护栏（保留） | 明确拒绝用当前辅助载荷复用 patched-19 版本号 |

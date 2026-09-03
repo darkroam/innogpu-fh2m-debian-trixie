@@ -26,6 +26,7 @@ chk "version_r06_a_gt_i2"          "4.0.1-i3" gt "4.0.1-i2"
 chk "version_r06_b_gt_a"           "4.0.1-i4" gt "4.0.1-i3"
 chk "version_r11_candidate_gt_r06" "4.0.2-i1" gt "4.0.1-i4"
 chk "version_r12_candidate_gt_r11" "4.0.2-i2" gt "4.0.2-i1"
+chk "version_r13_candidate_gt_r12" "4.0.2-i3" gt "4.0.2-i2"
 chk "version_identity"            "4.0.0-i1" eq "4.0.0-i1"
 chk "version_p27_gt_p26"          "3.3.3.42-patched-27" gt "3.3.3.42-patched-26"
 

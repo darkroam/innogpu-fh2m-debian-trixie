@@ -1,0 +1,27 @@
+diff -ruN a/innosrvkm/innodpu_dp_debugfs.c b/innosrvkm/innodpu_dp_debugfs.c
+--- a/innosrvkm/innodpu_dp_debugfs.c	2026-09-08 00:00:00.000000000 +0800
++++ b/innosrvkm/innodpu_dp_debugfs.c	2026-09-08 00:00:00.000000000 +0800
+@@ -554,3 +554,3 @@
+ 	backlight_mode = innodpu_get_connector_backlight_mode(dp_dev->dev, dp_dev->chip.reg_module);
+-	if (backlight_mode >= CONNECTOR_BACKLIGHT_PWM0 &&
++	if (backlight_mode >= CONNECTOR_BACKLIGHT_DDCCI &&
+ 		backlight_mode <= CONNECTOR_BACKLIGHT_AUX_HDR) {
+@@ -562,2 +562,4 @@
+-		connector->force = DRM_FORCE_ON;
++		if (backlight_mode >= CONNECTOR_BACKLIGHT_PWM0 &&
++			backlight_mode <= CONNECTOR_BACKLIGHT_AUX_HDR)
++			connector->force = DRM_FORCE_ON;
+ 	} else {
+diff -ruN a/innosrvkm/innodpu_panel_backlight.c b/innosrvkm/innodpu_panel_backlight.c
+--- a/innosrvkm/innodpu_panel_backlight.c	2026-09-08 00:00:00.000000000 +0800
++++ b/innosrvkm/innodpu_panel_backlight.c	2026-09-08 00:00:00.000000000 +0800
+@@ -876,6 +876,9 @@
+ 		dev_warn(panel->dev, "pdev invalid, backlight has not used\n");
+ 		return -EINVAL;
+ 	}
++
++	if (backlight_mode == CONNECTOR_BACKLIGHT_DDCCI)
++		return 0;
+ 
+ 	bl = devm_kzalloc(panel->dev, sizeof(*bl), fh2m_hal_get_inno_gfp_kernel());
+ 	if (!bl) {

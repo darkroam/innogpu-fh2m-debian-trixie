@@ -2,9 +2,9 @@
 
 ## 状态
 
-`4.0.2-i2` 的静态/离线候选修复，尚未安装或执行 deep 真机验收，不能声称问题已修复。
+`4.0.2-i2` 的静态/离线候选修复，现由 `4.0.2-i3` 继承；两者均尚未安装或执行 deep 真机验收，不能声称问题已修复。
 当前运行与回退基线仍是 `4.0.0-i1`。R11 已证明 `4.0.2-i1` deep 失败，因此该版本只保留
-历史复现入口，**不得安装或交付**。display patch-025 继续保持 **UNVERIFIED**，不进入 i2。
+历史复现入口，**不得安装或交付**。display patch-025 继续保持 **UNVERIFIED**，不进入 i2 或 i3。
 
 本补丁编号为 028，避免与已发布历史补丁
 [`patch-027-foreign-dmabuf-lifecycle`](patch-027-foreign-dmabuf-lifecycle.md) 冲突。
@@ -51,7 +51,7 @@ PVR 已上电的同步点。补丁因此不在该调用后简单重排，而是�
 
 `4.0.2-i2 = patch-024 + patch-026-suspend-resume-dvfs-lifecycle + patch-028`，固定 epoch
 `1788710400`（2026-09-07 00:00 +0800）。`4.0.2-i1` 的 epoch `1788624000` 仅供失败候选
-历史复现，构建器默认入口已切换到 i2。
+历史复现，构建器默认入口已切换到 i3；i3 在其上增加 patch-029。
 
 静态 fixture 覆盖严格零 fuzz 应用、补丁范围、既有 `dev_rsrc` 字段偏移不变、父/子调用顺序、
 多父/多 PVR 子设备计数、PVR/DVFS 失败、旧内核、`NO_HARDWARE`、hibernate 保留、版本与 epoch

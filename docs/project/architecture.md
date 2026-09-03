@@ -30,7 +30,7 @@ PCI 0000:06:00.6 [1d94:14c9]
 | 路径 | 职责 |
 | --- | --- |
 | `drivers/` | Deepin 202504 DKMS 源码树及已转换为提交的 9 个启用修复 |
-| `patches/` | 历史补丁 provenance 与新行为修复候选；已迁入源码树的补丁不重复叠加，R12 `4.0.2-i2` 绑定 patch-024 + patch-026-lifecycle + patch-028，R06 i3/i4 与失败的 R11 i1 保留为历史实验入口 |
+| `patches/` | 历史补丁 provenance 与新行为修复候选；已迁入源码树的补丁不重复叠加，R13 `4.0.2-i3` 绑定 patch-024 + patch-026-lifecycle + patch-028 + patch-029，R12 i2、R06 i3/i4 与失败的 R11 i1 保留为历史实验入口 |
 | `components/picom/` | 当前维护的 Picom 源码补丁与项目配置模板（`001-probe-explicit-uniform-location.patch`、`picom.conf`） |
 | `components/fbterm/` | 当前维护的 fbterm 用户态兼容补丁（`001-configurable-redraw-scrolling.patch`） |
 | `debs/` | 本地 release/构建输入输出目录，`.deb` 被 Git 忽略，仅跟踪说明文件 |
@@ -60,8 +60,9 @@ DKMS、DRM/fbdev 与 A1–A12 实机验收的版本（迁移源码树 + manifest
 patch-025-suspend-resume-display，R05 已完成一次 s2idle 可见恢复；R06 改用 i3/i4 做严格包级单变量
   对照，R10 随后在 i3 上复现 deep PowerLock TOCTOU 并回退 `4.0.0-i1`。R11 的 `4.0.2-i1`
   应用 patch-024 + lifecycle 026，但独立温度 work 仍在 PVR 恢复前触发并导致 deep 失败。
-  R12 的 `4.0.2-i2` 再增加 patch-028，等待全部 PVR 子设备与 DVFS 恢复成功；两者都不含
-  display 025，且 i2 尚未安装。后续每次行为变化仍必须独立升号。patched-21 使用
+  R12 的 `4.0.2-i2` 再增加 patch-028，等待全部 PVR 子设备与 DVFS 恢复成功；R13 的
+  `4.0.2-i3` 再增加 patch-029，让 DDCCI 回退模式创建 panel 但不注册 backlight device；
+  三者都不含 display 025，且 i3 尚未安装。后续每次行为变化仍必须独立升号。patched-21 使用
 `patch-006`；patched-22
 另加 `patch-009`，patched-23 再加 `patch-023`，patched-24 增加 `patch-001` 的 6.12.101+ API
 兼容，这些版本关系仅用于历史 provenance。connector 修复仅针对本机
@@ -78,8 +79,8 @@ Deepin 202504 deb 同时提供硬件 GL/DDX 用户态。内核模块成功、DRM
 再使用本项目已审查的 Debian maintainer scripts 生成包。`vendor/` 由
 `scripts/extract-vendor-binaries.sh` 从固定 SHA-256 的 Deepin 202504 原包幂等重建，不进入 Git。
 
-当前构建器默认接受 `4.0.2-i2` 与固定 epoch `1788710400`：在 patch-024 后应用
-patch-026-suspend-resume-dvfs-lifecycle 与 patch-028，不含 UNVERIFIED 的 display 025。补丁同时
+当前构建器默认接受 `4.0.2-i3` 与固定 epoch `1788796800`：在 patch-024 后应用
+patch-026-suspend-resume-dvfs-lifecycle、patch-028 与 patch-029，不含 UNVERIFIED 的 display 025。补丁同时
 应用到离线编译 staging 和最终包内 DKMS 源码，并拒绝 `.orig/.rej/.o.cmd` 产物。失败的
 `4.0.2-i1`（epoch `1788624000`）与 R06 `4.0.1-i3/i4` 仍可显式复现；更早 i1/i2 不再由当前
 源码复用。当前运行版本是回退后的 `4.0.0-i1`。
@@ -88,8 +89,8 @@ Deepin 原包仍是导入源码、用户态 ABI 和黑盒载荷的唯一技术�
 `drivers/` 中的源码提交；新行为修复必须先以独立补丁和升号候选验证。patch-024 的 i1
 真机验收未通过；patch-025-suspend-resume-display 的 i2 单次恢复通过，但严格因果验证仍使用
 i3/i4 对照；R11 lifecycle 026 用 Debian 6.12 devfreq 的同步 suspend 语义关闭 devfreq 并发源，
-但 R11 deep 揭示独立温度 work 的第二条入口；R12 patch-028 为此增加 PVR 子设备恢复门禁，仍需
-真机 deep 验收。旧
+但 R11 deep 揭示独立温度 work 的第二条入口；R12 patch-028 为此增加 PVR 子设备恢复门禁，R13
+patch-029 为 DDCCI 回退模式恢复 panel GPIO callback，仍需真机 deep 验收。旧
 `build-deepin-coherent.sh` 和 patched wrapper 仅作为 p27 oracle、历史复现和回退证据保留。
 禁止从任一历史 patched 包复制用户态文件、对象或控制脚本后再局部替换源码。
 

@@ -6,10 +6,11 @@
 
 **分类说明（`patches/` 目录内两类内容）**：
 
-- `patches/*.patch`（17 个源码 diff：001–009、023–028，以及显示恢复候选
+- `patches/*.patch`（18 个源码 diff：001–009、023–029，以及显示恢复候选
   `025-suspend-resume-display.patch` 和 lifecycle 候选
   `026-suspend-resume-dvfs-lifecycle.patch`、温度 work 候选
-  `028-suspend-resume-hal-temp-monitor-delay.patch`；另有 stage-000 确定性工具）——其中 13 个
+  `028-suspend-resume-hal-temp-monitor-delay.patch`、DDCCI panel 候选
+  `029-suspend-resume-ddcci-panel.patch`；另有 stage-000 确定性工具）——其中 13 个
   历史补丁已在源码树迁移时转为 `drivers/` 内的提交，不再重复叠加；新增 patch-024 是
   `4.0.1-i1` 的独立实验修复，由新架构构建器确定性应用，但 s2idle 可见恢复验收失败。本表保留 provenance、事故证据与
   legacy 回退包复现依据。
@@ -40,7 +41,8 @@
 | 026-lifecycle | [suspend-resume-dvfs-lifecycle](026-suspend-resume-dvfs-lifecycle.md) | 新架构 `4.0.2-i1/i2` 在 patch-024 后固定应用 | drain devfreq target 后再 PVR 下电、PVR 上电成功后再恢复 devfreq；i1 deep 失败，i2 继续继承。编号与历史 026-vblank 并存，以完整文件名区分 |
 | 026 | [inactive-crtc-vblank-guard](patch-026-inactive-crtc-vblank-guard.md) | `APPLY_INACTIVE_CRTC_VBLANK_GUARD=1` | patched-26/p27 实机通过；4.0.0-i1 源码树已包含；活动/未活动 CRTC 回归通过 |
 | 027 | [foreign-dmabuf-lifecycle](patch-027-foreign-dmabuf-lifecycle.md) | `APPLY_FOREIGN_DMABUF_LIFECYCLE_FIX=1` | patched-27 实机验证安装/HWGL/DRI3 自导入；4.0.0-i1 源码树已包含；foreign/跨设备路径仍未实机触发 |
-| 028 | [suspend-resume-hal-temp-monitor-delay](028-suspend-resume-hal-temp-monitor-delay.md) | 新架构 `4.0.2-i2` 在 patch-024 + lifecycle 026 后固定应用 | 等待全部 PVR 子设备及 DVFS 恢复成功后再启动温度 work；仅静态/离线候选，deep 未验收 |
+| 028 | [suspend-resume-hal-temp-monitor-delay](028-suspend-resume-hal-temp-monitor-delay.md) | 新架构 `4.0.2-i2/i3` 在 patch-024 + lifecycle 026 后固定应用 | 等待全部 PVR 子设备及 DVFS 恢复成功后再启动温度 work；仅静态/离线候选，deep 未验收 |
+| 029 | [suspend-resume-ddcci-panel](029-suspend-resume-ddcci-panel.md) | 新架构 `4.0.2-i3` 在 patch-024 + lifecycle 026 + patch-028 后固定应用 | DDCCI 回退模式创建 panel，但不注册 backlight device；仅静态/离线候选，deep 未验收 |
 
 patched-24 不增加新的设备行为补丁；它沿用 patched-23 的补丁集合，并把 patch-001 的
 `6.12.101+` PCI API 兼容修复打包进去，供新内核 headers 的 DKMS 自动构建使用。
@@ -54,14 +56,15 @@ patched-24 不增加新的设备行为补丁；它沿用 patched-23 的补丁集
 
 ## 构建顺序
 
-**当前新架构（运行/回退 `4.0.0-i1`；`4.0.2-i1` 已失败；`4.0.2-i2` 仅静态/离线）**：
+**当前新架构（运行/回退 `4.0.0-i1`；`4.0.2-i1` 已失败；`4.0.2-i2/i3` 仅静态/离线）**：
 
 ```text
 Deepin 202504 原 deb
   -> scripts/build-innogpu-driver.sh（drivers/ 源码树 + 版本绑定补丁 + manifest 黑盒 + 确定性变换）
   -> 4.0.1-i3：patch-024；4.0.1-i4：patch-024 + patch-025-suspend-resume-display（历史实验）
   -> 4.0.2-i1：patch-024 + patch-026-suspend-resume-dvfs-lifecycle（R11 deep 失败）
-  -> 4.0.2-i2：i1 + patch-028-suspend-resume-hal-temp-monitor-delay（当前未安装候选）
+  -> 4.0.2-i2：i1 + patch-028-suspend-resume-hal-temp-monitor-delay（历史未安装候选）
+  -> 4.0.2-i3：i2 + patch-029-suspend-resume-ddcci-panel（当前未安装候选）
   -> 离线 DKMS 编译 + 完整包组装
   -> scripts/check-release-package.sh
 ```
@@ -117,7 +120,10 @@ patched-19/20 的固定 wrapper 已改为拒绝执行，因为当前源码的辅
   后续 deep 在 i3 上复现 PowerLock TOCTOU，机器已回退 `4.0.0-i1`。
 - `4.0.2-i1`：R11 失败候选，固定 epoch `1788624000`；只叠加 patch-024 与 lifecycle 026。
   deep 恢复时温度 work 仍提前触发 PowerLock/POWERED_OFF，保留历史复现入口但不得安装或交付。
-- `4.0.2-i2`：R12 当前静态/离线候选，固定 epoch `1788710400`；在 i1 上增加 patch-028，
-  不含 UNVERIFIED 的 display 025。完成 qoder/dsh 审查并提交前不得安装，deep 必须另获批准。
+- `4.0.2-i2`：R12 历史静态/离线候选，固定 epoch `1788710400`；在 i1 上增加 patch-028，
+  不含 UNVERIFIED 的 display 025。不得作为当前安装候选，deep 必须另获批准。
+- `4.0.2-i3`：R13 当前静态/离线候选，固定 epoch `1788796800`；在 i2 上增加 patch-029，
+  让 DDCCI 回退模式创建 panel 但不注册 backlight device；不含 display 025。完成 qoder/dsh
+  审查并提交前不得安装，deep 必须另获批准。
 - p25/26/27 的 deb 均为可复现构建（[release 审阅](../planning/release-review-2026-08-20.md) 修复
   目录 mtime 后重建），SHA 见 [debs/README.md](../../debs/README.md)。

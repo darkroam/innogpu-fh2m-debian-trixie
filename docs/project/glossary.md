@@ -30,3 +30,4 @@
 | `4.0.1-i3` / `4.0.1-i4` | R06 严格 A/B：i3 仅 024，i4 为 024+025 | 共用 epoch 1788451200；A/B 因 cursor 分支未入组停止；R10 后续在 i3 上复现 deep PowerLock TOCTOU，已回退 |
 | `4.0.2-i1` | R11 失败候选：patch-024 + patch-026-suspend-resume-dvfs-lifecycle | epoch 1788624000；deep 时温度 work 提前触发 PowerLock/POWERED_OFF，只供历史复现，禁止安装或交付 |
 | `4.0.2-i2` | R12 候选：i1 + patch-028-suspend-resume-hal-temp-monitor-delay | epoch 1788710400；不含 display 025；仅静态/离线验证，尚未安装或真机 deep 验收 |
+| `4.0.2-i3` | R13 候选：i2 + patch-029-suspend-resume-ddcci-panel | epoch 1788796800；继承 patch-024/026/028，不含 display 025；仅静态/离线验证，尚未安装或真机 deep 验收；DDCCI 不注册 backlight device |

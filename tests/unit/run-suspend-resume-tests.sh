@@ -1,5 +1,5 @@
 #!/bin/bash
-# Static tests for patch-024/025/026/028 and current/legacy builder wiring.
+# Static tests for patch-024/025/026/028/029 and current/legacy builder wiring.
 # The suite copies tracked source files to /tmp; it does not read local
 # payload directories, build a package, install a module, or suspend the host.
 
@@ -10,6 +10,7 @@ PATCH="$ROOT/patches/024-suspend-resume.patch"
 DISPLAY_PATCH="$ROOT/patches/025-suspend-resume-display.patch"
 LIFECYCLE_PATCH="$ROOT/patches/026-suspend-resume-dvfs-lifecycle.patch"
 TEMP_MONITOR_PATCH="$ROOT/patches/028-suspend-resume-hal-temp-monitor-delay.patch"
+DDCCI_PANEL_PATCH="$ROOT/patches/029-suspend-resume-ddcci-panel.patch"
 BUILDER="$ROOT/scripts/build-deepin-coherent.sh"
 WRAPPER="$ROOT/scripts/build-patched28-suspend-resume.sh"
 CURRENT_BUILDER="$ROOT/scripts/build-innogpu-driver.sh"
@@ -29,6 +30,8 @@ cp "$ROOT/drivers/innogpu/innogpu_pci_drv.c" "$TMP/tree/innogpu/"
 cp "$ROOT/drivers/innosrvkm/pvr_dvfs_device.c" "$TMP/tree/innosrvkm/"
 cp "$ROOT/drivers/innosrvkm/innodpu_drm_pm.c" "$TMP/tree/innosrvkm/"
 cp "$ROOT/drivers/innosrvkm/pvr_drm.c" "$TMP/tree/innosrvkm/"
+cp "$ROOT/drivers/innosrvkm/innodpu_dp_debugfs.c" "$TMP/tree/innosrvkm/"
+cp "$ROOT/drivers/innosrvkm/innodpu_panel_backlight.c" "$TMP/tree/innosrvkm/"
 
 if patch --dry-run -s -d "$TMP/tree" -p1 < "$PATCH"; then
     pass patch_dry_run
@@ -347,6 +350,98 @@ else
     fail temperature_patch_application_leaves_no_artifacts
 fi
 
+if patch --dry-run --batch --forward --fuzz=0 --no-backup-if-mismatch \
+    -s -d "$TMP/tree" -p1 < "$DDCCI_PANEL_PATCH"; then
+    pass ddcci_panel_patch_dry_run
+else
+    fail ddcci_panel_patch_dry_run
+fi
+
+if patch --batch --forward --fuzz=0 --no-backup-if-mismatch \
+    -s -d "$TMP/tree" -p1 < "$DDCCI_PANEL_PATCH"; then
+    pass ddcci_panel_patch_applies_after_lifecycle_fixes
+else
+    fail ddcci_panel_patch_applies_after_lifecycle_fixes
+fi
+
+ddcci_debugfs="$TMP/tree/innosrvkm/innodpu_dp_debugfs.c"
+ddcci_backlight="$TMP/tree/innosrvkm/innodpu_panel_backlight.c"
+if [[ "$(grep -c '^diff -ruN ' "$DDCCI_PANEL_PATCH")" -eq 2 ]] &&
+   grep -Fq 'a/innosrvkm/innodpu_dp_debugfs.c b/innosrvkm/innodpu_dp_debugfs.c' "$DDCCI_PANEL_PATCH" &&
+   grep -Fq 'a/innosrvkm/innodpu_panel_backlight.c b/innosrvkm/innodpu_panel_backlight.c' "$DDCCI_PANEL_PATCH" &&
+   ! grep -Eq '(\.o_shipped|vendor/)' "$DDCCI_PANEL_PATCH"; then
+    pass ddcci_panel_patch_scope_is_two_reviewable_source_files
+else
+    fail ddcci_panel_patch_scope_is_two_reviewable_source_files
+fi
+
+if python3 - "$ddcci_debugfs" "$ddcci_backlight" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+debugfs = Path(sys.argv[1]).read_text(encoding="utf-8")
+backlight = Path(sys.argv[2]).read_text(encoding="utf-8")
+
+panel_cond = re.search(
+    r"if \(backlight_mode >= CONNECTOR_BACKLIGHT_DDCCI &&\n"
+    r"\s*backlight_mode <= CONNECTOR_BACKLIGHT_AUX_HDR\) \{(.*?)\n\t\} else \{",
+    debugfs,
+    re.S,
+).group(1)
+force_cond = re.search(
+    r"if \(backlight_mode >= CONNECTOR_BACKLIGHT_PWM0 &&\n"
+    r"\s*backlight_mode <= CONNECTOR_BACKLIGHT_AUX_HDR\)\n"
+    r"\s*connector->force = DRM_FORCE_ON;",
+    panel_cond,
+)
+assert "panel_pwr_create" in panel_cond
+assert force_cond is not None
+assert panel_cond.index("panel_pwr_create") < panel_cond.index("connector->force")
+assert "CONNECTOR_BACKLIGHT_DDCCI" in backlight
+ddcci_return = backlight.index(
+    "if (backlight_mode == CONNECTOR_BACKLIGHT_DDCCI)\n\t\treturn 0;"
+)
+assert ddcci_return < backlight.index("devm_kzalloc", ddcci_return)
+assert ddcci_return < backlight.index("devm_backlight_device_register")
+
+def panel_created(mode):
+    return 0 <= mode <= 3
+
+def force_on(mode):
+    return 1 <= mode <= 3
+
+assert [panel_created(mode) for mode in (0, 1, 2, 3, 4, 255)] == [True, True, True, True, False, False]
+assert [force_on(mode) for mode in (0, 1, 2, 3, 4, 255)] == [False, True, True, True, False, False]
+PY
+then
+    pass ddcci_fixture_covers_panel_backlight_and_force_semantics
+else
+    fail ddcci_fixture_covers_panel_backlight_and_force_semantics
+fi
+
+if python3 - "$ddcci_backlight" <<'PY'
+import sys
+from pathlib import Path
+
+text = Path(sys.argv[1]).read_text(encoding="utf-8")
+early = text.index("if (backlight_mode == CONNECTOR_BACKLIGHT_DDCCI)\n\t\treturn 0;")
+register = text.index("devm_backlight_device_register")
+raise SystemExit(0 if early < register else 1)
+PY
+then
+    pass ddcci_mode_has_no_backlight_device_registration
+else
+    fail ddcci_mode_has_no_backlight_device_registration
+fi
+
+if ! find "$TMP/tree" -type f \( -name '*.orig' -o -name '*.rej' \) -print -quit |
+       grep -q .; then
+    pass ddcci_patch_application_leaves_no_artifacts
+else
+    fail ddcci_patch_application_leaves_no_artifacts
+fi
+
 if bash -n "$BUILDER" "$WRAPPER" "$CURRENT_BUILDER"; then
     pass builder_shell_syntax
 else
@@ -369,10 +464,11 @@ else
     fail patched28_inherits_p27_and_enables_fix
 fi
 
-if grep -Fq 'VERSION="${VERSION:-4.0.2-i2}"' "$CURRENT_BUILDER" &&
+if grep -Fq 'VERSION="${VERSION:-4.0.2-i3}"' "$CURRENT_BUILDER" &&
    grep -Fq '4.0.1-i3|4.0.1-i4) EXPECTED_SOURCE_DATE_EPOCH=1788451200' "$CURRENT_BUILDER" &&
    grep -Fq '4.0.2-i1) EXPECTED_SOURCE_DATE_EPOCH=1788624000' "$CURRENT_BUILDER" &&
    grep -Fq '4.0.2-i2) EXPECTED_SOURCE_DATE_EPOCH=1788710400' "$CURRENT_BUILDER" &&
+   grep -Fq '4.0.2-i3) EXPECTED_SOURCE_DATE_EPOCH=1788796800' "$CURRENT_BUILDER" &&
    ! grep -Eq '4\.0\.1-i[12]\) EXPECTED_SOURCE_DATE_EPOCH=' "$CURRENT_BUILDER" &&
    grep -Fq 'builder_version_review=FAIL unreviewed package version' "$CURRENT_BUILDER"; then
     pass current_builder_version_is_fail_closed
@@ -385,14 +481,16 @@ if [[ "$(grep -c 'apply_reviewed_source_fixes "\$' "$CURRENT_BUILDER")" -eq 2 ]]
    grep -Fq 'patches/025-suspend-resume-display.patch' "$CURRENT_BUILDER" &&
    grep -Fq 'patches/026-suspend-resume-dvfs-lifecycle.patch' "$CURRENT_BUILDER" &&
    grep -Fq 'patches/028-suspend-resume-hal-temp-monitor-delay.patch' "$CURRENT_BUILDER" &&
+   grep -Fq 'patches/029-suspend-resume-ddcci-panel.patch' "$CURRENT_BUILDER" &&
    grep -Fq '[[ "$VERSION" == "4.0.1-i4" ]]' "$CURRENT_BUILDER" &&
-   grep -Fq '[[ "$VERSION" == "4.0.2-i2" ]]' "$CURRENT_BUILDER"; then
+   grep -Fq '[[ "$VERSION" == "4.0.2-i2" ]]' "$CURRENT_BUILDER" &&
+   grep -Fq '[[ "$VERSION" == "4.0.2-i3" ]]' "$CURRENT_BUILDER"; then
     pass current_builder_patches_compile_and_package_trees
 else
     fail current_builder_patches_compile_and_package_trees
 fi
 
-if [[ "$(grep -c -- '--fuzz=0 --no-backup-if-mismatch' "$CURRENT_BUILDER")" -eq 4 ]] &&
+if [[ "$(grep -c -- '--fuzz=0 --no-backup-if-mismatch' "$CURRENT_BUILDER")" -eq 6 ]] &&
    grep -Fq -- "-name '*.orig' -o -name '*.rej'" "$CURRENT_BUILDER" &&
    grep -Fq 'apply_reviewed_source_fixes "$STAGE/source" compile-staging' "$CURRENT_BUILDER" &&
    grep -Fq 'apply_reviewed_source_fixes "$P/usr/src/innogpu-kernel-2.2" packaged-dkms' "$CURRENT_BUILDER" &&
@@ -423,13 +521,23 @@ else
     fail current_builder_rejects_old_epoch_for_4_0_2_i2
 fi
 
-if output=$(INNOGPU_ROOT="$TMP/reject-402-version" VERSION=4.0.2-i3 \
+if output=$(INNOGPU_ROOT="$TMP/reject-402-version" VERSION=4.0.2-i4 \
     SOURCE_DATE_EPOCH=1788710400 bash "$CURRENT_BUILDER" 2>&1); then
     fail current_builder_rejects_unreviewed_4_0_2_iteration
-elif grep -Fq 'builder_version_review=FAIL unreviewed package version: 4.0.2-i3' <<<"$output"; then
+elif grep -Fq 'builder_version_review=FAIL unreviewed package version: 4.0.2-i4' <<<"$output"; then
     pass current_builder_rejects_unreviewed_4_0_2_iteration
 else
     fail current_builder_rejects_unreviewed_4_0_2_iteration
+fi
+
+if output=$(INNOGPU_ROOT="$TMP/reject-402-version" VERSION=4.0.2-i3 \
+    SOURCE_DATE_EPOCH=1788710400 bash "$CURRENT_BUILDER" 2>&1); then
+    fail current_builder_rejects_old_epoch_for_4_0_2_i3
+elif grep -Fq 'builder_repro=FAIL 4.0.2-i3 requires SOURCE_DATE_EPOCH=1788796800' <<<"$output" &&
+     [[ ! -e "$TMP/reject-402-version/build" ]]; then
+    pass current_builder_rejects_old_epoch_for_4_0_2_i3
+else
+    fail current_builder_rejects_old_epoch_for_4_0_2_i3
 fi
 
 mkdir -p "$TMP/reject-i2" "$TMP/reject-i4"

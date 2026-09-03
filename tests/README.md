@@ -66,11 +66,11 @@ bash tests/unit/run-suspend-failure-finalize-tests.sh
   fixture（绝对路径、`../` 穿越、未知 kind、重复目标、缺 sha256、缺 license、链接逃逸、缺失文件）
   断言通过/拒绝；
 - suspend/resume 静态测试把跟踪的 HAL/PCI/PVR/DVFS/显示相关源码复制到 `/tmp`，验证
-  patch-024/patch-025-display/patch-026-lifecycle/patch-028-temp-monitor dry-run/应用、025 三行上下文、PowerLock 门禁顺序、
+  patch-024/patch-025-display/patch-026-lifecycle/patch-028-temp-monitor/patch-029-ddcci-panel dry-run/应用、025 三行上下文、PowerLock 门禁顺序、
   post-atomic 重复光标恢复移除、单文件范围、`4.0.1-i3`/`4.0.1-i4` 同 epoch 与旧迭代失败关闭、
   lifecycle 的 devfreq drain/PVR 下电顺序、失败回滚、上电后恢复、旧内核防双调；patch-028 的父子 PM
   顺序、多父/多 PVR 子设备、结构尾部 ABI、失败/NO_HARDWARE 门禁、`4.0.2-i1/i2` epoch；零 fuzz/无备份
-  应用和 `.orig/.rej` 双树门禁及 patched-28 legacy 开关，以及 R08 观测器无挂起/显示
+  应用和 `.orig/.rej` 双树门禁及 patched-28 legacy 开关；patch-029 的 DDCCI panel/backlight/force fixture、i3 epoch，以及 R08 观测器无挂起/显示
   变更动作、固定对象/内核/版本与已加载模块 BTF ABI 失败关闭、primary FB/GEM/scanout 关联、
   shadow/config-valid 时序、HAL 参数语义、entry/return 停止边界及 connector/format 快照；不读取本地载荷、不构建或安装驱动、
   不挂起主机；
@@ -81,7 +81,7 @@ bash tests/unit/run-suspend-failure-finalize-tests.sh
   陈旧 inventory、许可证文本缺失、confidential 集合漂移、残缺 Dual MIT/GPL 头、manifest license
   缺失、无证据 SPDX 值、项目 README 声明文字隔离和 `MODULE_LICENSE` 元数据集合漂移；不修改
   `drivers/` 或发布状态。
-- 版本测试断言 `4.0.2-i2 > 4.0.2-i1 > 4.0.1-i4 > 4.0.1-i3 > 4.0.0-i1 > patched-27`、`1.0.0-i1 < patched-27` 等排序契约；
+- 版本测试断言 `4.0.2-i3 > 4.0.2-i2 > 4.0.2-i1 > 4.0.1-i4 > 4.0.1-i3 > 4.0.0-i1 > patched-27`、`1.0.0-i1 < patched-27` 等排序契约；
 - package boundary 测试覆盖 `4.0.x-iN` 新架构候选与 legacy patched-N，并拒绝非规范
   `4.0.x-iN`、私有载荷、旧 helper、错误架构、不完整包及 `.orig/.rej` patch 产物；
 - 提取器测试用临时 fixture deb 与隔离 vendor 树（提取器支持 `MANIFEST_PATH`/`VENDOR_ROOT` 覆盖），

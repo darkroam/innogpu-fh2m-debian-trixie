@@ -2,8 +2,8 @@
 
 ## 状态
 
-本补丁进入 `4.0.2-i1` 和 `4.0.2-i2`。i1 已在 R11 deep 冒烟中失败，只保留历史复现入口，
-不得安装或交付；i2 在其上增加 patch-028，目前只完成静态/离线验证。当前运行和回退基线均为
+本补丁进入 `4.0.2-i1`、`4.0.2-i2` 和 `4.0.2-i3`。i1 已在 R11 deep 冒烟中失败，只保留历史复现入口，
+不得安装或交付；i2 在其上增加 patch-028，i3 再增加 patch-029，目前均只完成静态/离线验证。当前运行和回退基线均为
 `4.0.0-i1`，日常必须保持 `[s2idle] deep`，不得执行 deep。
 
 本补丁与已经实机验收的历史
@@ -58,8 +58,8 @@ R10 在 `4.0.1-i3` 上复现 deep 失败：`PVRSRVDevicePreClockSpeedChange()` �
 失败候选 `4.0.2-i1 = patch-024 + patch-026-suspend-resume-dvfs-lifecycle`，固定 epoch
 `1788624000`（2026-09-06 00:00 +0800）。R11 证明 patch-026 虽然关闭了 devfreq 并发源，
 独立的 HAL 温度 work 仍会在 PVR 子设备恢复前进入 PreClock，因此 i1 不得安装或交付。
-当前静态/离线候选 i2 在 i1 基础上增加 [patch-028](028-suspend-resume-hal-temp-monitor-delay.md)，
-固定 epoch `1788710400`。display patch-025 不进入 i1 或 i2。
+当前静态/离线候选 i3 在 i2 基础上增加 [patch-029](029-suspend-resume-ddcci-panel.md)，
+固定 epoch `1788796800`；i2 的固定 epoch 为 `1788710400`。display patch-025 不进入 i1、i2 或 i3。
 
 静态 fixture 验证补丁零 fuzz 应用、单文件范围、suspend/resume 顺序、两条 suspend 失败回滚、
 resume 失败不提前恢复 DVFS、旧内核防双调、版本/epoch 失败关闭和编译/包源码双接线。

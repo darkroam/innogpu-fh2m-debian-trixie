@@ -6,7 +6,8 @@
 
 | 版本 | 用途 | 新设备策略 |
 | --- | --- | --- |
-| `4.0.2-i2` | R12：i1 + patch-028 温度 work 恢复时序门禁 | 当前静态/离线候选；尚未安装，完成审查并另获 deep 阶段批准前不得安装 |
+| `4.0.2-i3` | R13：i2 + patch-029 DDCCI panel 创建恢复（继承 patch-024/026/028） | 当前静态/离线候选；尚未安装，完成审查并另获 deep 阶段批准前不得安装 |
+| `4.0.2-i2` | R12：i1 + patch-028 温度 work 恢复时序门禁 | 历史静态/离线候选；尚未安装，不作为当前安装候选 |
 | `4.0.2-i1` | R11：patch-024 + patch-026 DVFS/PVR 生命周期同步 | deep 恢复失败；只保留历史复现入口，禁止安装或交付 |
 | `4.0.1-i4` | R06 B：patch-024 + patch-025-suspend-resume-display | 包级单变量候选；因 A 的 cursor 分支未入组而未安装，不是新设备默认版本 |
 | `4.0.1-i3` | R06 A/R10 deep 失败候选：patch-024 | R10 复现 PowerLock TOCTOU，已回退，不是新设备默认版本 |
@@ -25,7 +26,7 @@ patched-18/19 是问题定位和 coherent 构建演进记录，不是安装推�
 
 新架构包不随 Git 提供。clone 本仓库后，从有权提供该内容的来源取得 Deepin 原包并放入 `debs/`；
 本项目当前不提供该第三方原包或载荷的公开下载。构建器会按 `binary-manifest.json` 校验完整
-SHA-256。R12 当前候选使用固定审核 epoch `1788710400`（2026-09-07 00:00 +0800）：
+SHA-256。R13 当前候选使用固定审核 epoch `1788796800`（2026-09-08 00:00 +0800）：
 
 ```text
 debs/innogpu-fh2m_20250421190503-debug_amd64.deb
@@ -36,8 +37,8 @@ SHA-256: b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2
 cd "$INNOGPU_ROOT"
 sha256sum debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 bash scripts/extract-vendor-binaries.sh                        # 按 manifest 重建 vendor/ 黑盒载荷
-SOURCE_DATE_EPOCH=1788710400 bash scripts/build-innogpu-driver.sh
-# 默认输出 build/innogpu-fh2m-trixie_4.0.2-i2.deb；未经 R12 阶段 2 批准不得安装
+SOURCE_DATE_EPOCH=1788796800 bash scripts/build-innogpu-driver.sh
+# 默认输出 build/innogpu-fh2m-trixie_4.0.2-i3.deb；未经 R13 阶段 2 批准不得安装
 # R06 i3/i4 与失败的 R11 i1 仅保留为显式历史复现入口
 ```
 
@@ -133,7 +134,7 @@ patched-17/patched-8。
 
 `4.0.1-i1` 已判定为失败候选；`4.0.1-i2` 是 R05 历史候选；R06 i3/i4 因果验证按停止条件
 中止，R10 又在 i3 上复现 deep PowerLock TOCTOU。R11 i1 在同步 DVFS 后仍因温度 work 提前
-启动而失败。当前运行已回退 `4.0.0-i1`；`4.0.2-i2` 仅完成静态/离线候选准备。后续任何行为
+启动而失败。当前运行已回退 `4.0.0-i1`；`4.0.2-i2` 是历史静态/离线候选，`4.0.2-i3` 仅完成静态/离线候选准备。后续任何行为
 变化仍须升新迭代号。
 不得以任何 patched deb
 作为源码或载荷基线，也不得从不同版本挑选 DRI、GBM、GLAPI、DDX 或固件拼装。新包还必须通过：
