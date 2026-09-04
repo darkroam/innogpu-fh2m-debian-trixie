@@ -60,6 +60,7 @@ bash tests/unit/run-dri-repair-tests.sh
 bash tests/unit/run-collab-structure-tests.sh
 bash tests/unit/run-suspend-resume-tests.sh
 bash tests/unit/run-suspend-failure-finalize-tests.sh
+bash tests/unit/run-p2-normalize-tests.sh
 ```
 
 - manifest 测试用 `tools/validate-binary-manifest.py` 对真实清单与 `tests/fixtures/` 下的恶意
@@ -125,6 +126,10 @@ bash tests/unit/run-suspend-failure-finalize-tests.sh
   Markdown/INDEX 与隐藏 Markdown 的大小写无关隐私扫描（含 check-docs.sh 的 rg 层共用
   tools/private-data-patterns.txt 模式文件的反例）/缺 INDEX/整个 collab/ 目录缺失视为通过（fresh clone 与 CI）；在临时目录构造，不访问
   仓库真实 collab/。
+- P2 规范化映射测试（CI 无 build/ 可跑）：完全隔离（mktemp + trap，`P2_NORM_D_SRC`/`P2_NORM_F_SRC`
+  注入合成树，不触碰仓库 `build/`），覆盖合成正例两次逐字节一致且内容正确（确定性 + 规范化路径 +
+  F-only 状态）、D 根缺失 rc=3、F 根缺失 rc=3、D/F 存在但无 `.c/.h` rc=4、canonical-path 冲突
+  rc=1、多余参数 rc=2；所有失败路径断言退出码、stderr 诊断关键词和未创建输出。
 
 ## 测试矩阵（分层，2026-08-21）
 

@@ -29,6 +29,7 @@
 | `finalize-suspend-resume-failure.py` | deep 失败轮次收尾 | 校验 active 指针、真实证据目录以及“失败证据已捕获/回退已验证/重启已验证”三个绑定 round ID 的 PASS 标记；全部满足后只移除指定 active 指针并写入 finalize 标记，保留 journal 等证据和其他 active 状态；拒绝符号链接、路径穿越、缺失/错配标记与已有 finalize 文件 |
 | `probe-suspend-resume-state.sh` | 只读真机观测包装器 | 对固定的 4.0.1-i3/内核/厂商对象及已加载模块 BTF ABI 失败关闭，保存 XRandR properties、DRM debugfs、connector/primary format 与 PVR 快照，并限时运行 bpftrace；entry/已完成 return/停止时未匹配项分开报告，存在未匹配项时证据质量标为 `PARTIAL_UNMATCHED_AT_STOP`，不解释为仍在执行；不挂起、不 modeset、不调用驱动函数或主动读写寄存器 |
 | `probe-suspend-resume-observer.bt` | 只读内核动态观测 | 记录自然发生的 primary FB/GEM 地址返回、plane update、shadow/config-valid、cursor 与 HAL `0x258..0x25a`/config-valid 访问；HAL 参数按 `reg_module`/`reg_entity` 原型标记，CRTC active 偏移由运行模块 BTF 门禁；无自然事件或安全接口时明确报告不可用 |
+| `p2-normalize-v3.py` | 构建期清单生成 | D/F 文件规范化映射：将 Deepin（inno*/pvr*/rgx*/img_*）与 fantgpu（fant*/ft*/ftx_*）源树文件名规范化到统一命名空间，生成 TSV manifest。默认输入依赖 `build/r16-unpack-D/usr/src/innogpu-kernel-2.2` 与 `build/r16-fantgpu-deb/usr/src/fantgpu-fh2m-kernel-2.2`（仅 fixture 可通过 `P2_NORM_D_SRC`/`P2_NORM_F_SRC` 覆盖）。用法 `p2-normalize-v3.py [OUTPUT_PATH]`，默认输出 `build/p2-manifest.tsv`；LC_ALL=C 确定性排序。退出码：0=成功、1=canonical-path 冲突（stderr `CONFLICT`）、2=参数错误（stderr `Usage`）、3=输入根缺失（stderr `FATAL: ... not found`）、4=扫描无 `.c/.h` 文件（stderr `FATAL: no .c/.h`）；失败时不创建新输出文件 |
 
 ## 使用约束
 

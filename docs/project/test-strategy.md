@@ -12,9 +12,9 @@
 
 | 范围 | 入口与用例 | 小计 |
 | --- | --- | --- |
-| unit | manifest 9 + license 50 + version 12 + extractor 7 + results parser 19 + exec probes 12 + VA-API 56 + DMA-BUF 147 + DRI repair 34 + collab 26 + suspend/resume 60 + suspend failure finalize 15 | 12 个入口 / 447 项 |
+| unit | manifest 9 + license 50 + version 12 + extractor 7 + results parser 19 + exec probes 12 + VA-API 56 + DMA-BUF 147 + DRI repair 34 + collab 26 + suspend/resume 60 + suspend failure finalize 15 + p2-normalize 6 | 13 个入口 / 453 项 |
 | 其他 CI/沙箱 | fbterm 1 + package 11 + Picom install 3 + Picom session 3 + xdisplay 5 | 5 个入口 / 23 项 |
-| **合计** | 不含需真实设备/root/副作用授权的 runtime 项 | **17 个入口 / 462 项** |
+| **合计** | 不含需真实设备/root/副作用授权的 runtime 项 | **18 个入口 / 468 项** |
 
 | 测试 | 位置 | 断言 | 权限/环境 | 修改系统 |
 | --- | --- | --- | --- | --- |
@@ -33,6 +33,7 @@
 | collab 结构 | tests/unit/run-collab-structure-tests.sh | 目录命名/编号唯一/request+report 模板齐全/INDEX 与目录按编号精确双向一一对应（R01 不误配 R010、重复行、孤立行、孤立目录、日期与主题一致）/状态白名单/根目录散放文件/根目录或内部符号链接/嵌套目录/仅 Markdown/INDEX 与隐藏 Markdown 的大小写无关隐私扫描（两侧共用 tools/private-data-patterns.txt）/缺 INDEX/collab 目录缺失视为通过 | python3，无设备 | 否 |
 | suspend/resume 静态 | tests/unit/run-suspend-resume-tests.sh | patch-024/025-display/026-lifecycle/028-temp-monitor/029-ddcci-panel dry-run/应用、OFF 快速门禁、devfreq drain→PVR suspend、PVR/DVFS resume→温度 work 锁序、多父/多子计数、结构尾部 ABI、失败/旧内核/NO_HARDWARE、版本/epoch 失败关闭、DDCCI panel/backlight/force fixture、零 fuzz/无备份应用、编译树与包源码双扫描、patched-28 legacy 接线、R08 只读观测契约 | shell/python/patch，复制跟踪源码到 `/tmp` | 否 |
 | suspend 失败收尾 | tests/unit/run-suspend-failure-finalize-tests.sh | 失败证据/回退/重启三标记齐全后只移除指定 active 指针并保留证据；缺失/错配、路径穿越、绝对路径/大写 ID、符号链接和重复 finalize 失败关闭 | shell/python，隔离临时状态树 | 否 |
+| P2 规范化映射 | tests/unit/run-p2-normalize-tests.sh | 合成正例两次逐字节一致且内容正确（确定性 + 规范化路径 + F-only 状态）、D 根缺失 rc=3、F 根缺失 rc=3、空扫描 rc=4、canonical-path 冲突 rc=1、多余参数 rc=2；失败路径断言退出码/stderr 诊断/未创建输出；完全隔离（mktemp + trap + env 注入），不触碰 `build/` | python3，无设备 | 否 |
 | runtime 能力基线 | tests/runtime/run-capability-baseline.sh | 12 能力域、35 项；默认只读，人工结果显式合并 | 沙箱/真机授权 | 授权项可能有副作用 |
 
 另：`scripts/check-docs.sh`（静态，链接/登记/隐私/版本/边界）、`check-source-parity.sh`（只读 parity）、
@@ -46,7 +47,7 @@
 
 | 层 | 定义 | 现有 | 缺口 |
 | --- | --- | --- | --- |
-| unit | manifest/许可证审计/版本排序/路径/哈希/配置解析/执行探针/VA-API 解码/DMA-BUF 回归/DRI repair/collab 结构的纯函数用例 | 见顶部套件汇总 | 构建器 headers/helper 失败 fixture 待补；法律授权仍需人工审查 |
+| unit | manifest/许可证审计/版本排序/路径/哈希/配置解析/执行探针/VA-API 解码/DMA-BUF 回归/DRI repair/collab 结构/P2 规范化映射的纯函数用例 | 见顶部套件汇总 | 构建器 headers/helper 失败 fixture 待补；法律授权仍需人工审查 |
 | fixture | 恶意路径/缺失/坏哈希/损坏链接/重复项 | tests/fixtures/ + 脚本隔离构造 | 覆盖随新输入边界持续扩展 |
 | static | shell 语法/脚本登记/文档链接/隐私/构建器输入 | check-docs.sh、fbterm 静态 | 语义与法律授权仍需人工审查 |
 | integration | staging/DKMS 离线/包边界/可复现/oracle | 包边界、oracle、parity、离线编译 | 可复现双构建入 CI 需内核头（本机可跑） |

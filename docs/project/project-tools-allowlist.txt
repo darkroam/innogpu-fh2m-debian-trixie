@@ -72,6 +72,7 @@ docs/planning/capability-survey.md
 docs/planning/current-work.md
 docs/planning/ddk-v119-mapping.md
 docs/planning/display-integration.md
+docs/planning/fantgpu-base-update-evaluation.md
 docs/planning/history.md
 docs/planning/patch-provenance.md
 docs/planning/phase4-device-validation.md
@@ -197,6 +198,7 @@ tests/unit/run-exec-probes-tests.sh
 tests/unit/run-extractor-tests.sh
 tests/unit/run-license-audit-tests.sh
 tests/unit/run-manifest-tests.sh
+tests/unit/run-p2-normalize-tests.sh
 tests/unit/run-results-parser-tests.sh
 tests/unit/run-suspend-failure-finalize-tests.sh
 tests/unit/run-suspend-resume-tests.sh
@@ -208,6 +210,7 @@ tools/audit-licenses.py
 tools/build-release-archive.py
 tools/finalize-suspend-resume-failure.py
 tools/generate-binary-manifest.py
+tools/p2-normalize-v3.py
 tools/patch-gpupll-object.py
 tools/private-data-patterns.txt
 tools/probe-dmabuf-self-import.c
