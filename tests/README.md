@@ -61,6 +61,9 @@ bash tests/unit/run-collab-structure-tests.sh
 bash tests/unit/run-suspend-resume-tests.sh
 bash tests/unit/run-suspend-failure-finalize-tests.sh
 bash tests/unit/run-p2-normalize-tests.sh
+bash tests/unit/run-r16-gate-tests.sh
+bash tests/unit/run-r16-build-bc-map-tests.sh
+bash tests/unit/run-r16-classify-tests.sh
 ```
 
 - manifest 测试用 `tools/validate-binary-manifest.py` 对真实清单与 `tests/fixtures/` 下的恶意
@@ -130,6 +133,30 @@ bash tests/unit/run-p2-normalize-tests.sh
   注入合成树，不触碰仓库 `build/`），覆盖合成正例两次逐字节一致且内容正确（确定性 + 规范化路径 +
   F-only 状态）、D 根缺失 rc=3、F 根缺失 rc=3、D/F 存在但无 `.c/.h` rc=4、canonical-path 冲突
   rc=1、多余参数 rc=2；所有失败路径断言退出码、stderr 诊断关键词和未创建输出。
+- R16 per-file 门禁测试（CI 无 build/ 可跑，13 项）：完全隔离（mktemp + env 注入 `R16_MANIFEST` /
+  `R16_BC_MAP` / `R16_PER_FILE`），覆盖 **G0 production cardinality**（differs=432 + F-only=3
+  = 435，任意组成错配 2 例负例拒绝）+ raw-row duplicate canonical path 拒绝 + 未知 manifest
+  status 拒绝（白名单 differs/identical/D-only/F-only/F-only-deferred）+ BC 映射数量
+  （435/duplicate/BC 覆盖 23）+ per-file 处置覆盖（435/sum/invalid disposition）+ BC/per-file
+  一致性（BC tag 不同步拒绝）+ fail-closed 违规（BEHAVIORAL+drop 拒绝）+ malformed manifest
+  行拒绝 + `MISSING` 分类拒绝（MISSING+drop 与 MISSING+defer 均拒绝）+ 两次运行字节一致。
+- R16 build-bc-map 生成器测试（CI 无 build/ 可跑，10 项）：完全隔离（mktemp + env 注入
+  `R16_MANIFEST` / `R16_BC_MAP_OUT`），覆盖合成正例 rc=0 输出 436 行（header + 432 differs +
+  3 F-only = 435）+ **production cardinality 硬校验**（differs != 432 或 F-only != 3 立即
+  FATAL；含 435 differs + 0 F-only 错配 + 431 differs + 3 F-only 短缺 2 例负例）+ raw-row
+  duplicate canonical path 拒绝 + 未知 status 拒绝（白名单同上）+ malformed manifest 行 rc=1
+  无输出 + 空 differs rc=1 无输出 + **fail-closed 输出纪律**（预存在输出文件 SHA-256 在失败后
+  保持不变；不仅断言"未创建"，还断言"已存在文件未被覆盖"）+ 两次运行字节一致。
+- R16 classify 生成器测试（CI 无 build/ 可跑，10 项）：完全隔离（mktemp + env 注入 `R16_MANIFEST` /
+  `R16_D_SRC` / `R16_F_SRC` / `R16_D_LICENSE` / `R16_F_LICENSE` / `R16_OUT_DIR`），覆盖合成
+  正例 3 differs（PURE_RENAME/BEHAVIORAL/F-ONLY）→ per-file + per-bc 均写入 +
+  **production cardinality 硬校验**（differs != 432 或 F-only != 3 立即 FATAL；含 434 differs +
+  0 F-only 错配 1 例负例）+ raw-row duplicate canonical path 拒绝 + 未知 status 拒绝 +
+  malformed manifest rc=1 + 空 differs rc=1 + 两次运行字节一致 + 缺失 F 内容 rc=1 无输出 +
+  **fail-closed 输出纪律**（预存在 per-file + per-bc 双输出文件 SHA-256 在失败后保持不变；
+  不仅断言"未创建"，还断言"已存在文件未被覆盖"）+ **schema 字段数硬断言**（per-file 严格 8
+  字段、per-bc 严格 9 字段，header 与每行 tab 分隔字段数逐行 `awk` 检查，header 字面值
+  锁定列名顺序）。
 
 ## 测试矩阵（分层，2026-08-21）
 

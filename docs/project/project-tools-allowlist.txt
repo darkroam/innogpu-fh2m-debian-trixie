@@ -199,6 +199,9 @@ tests/unit/run-extractor-tests.sh
 tests/unit/run-license-audit-tests.sh
 tests/unit/run-manifest-tests.sh
 tests/unit/run-p2-normalize-tests.sh
+tests/unit/run-r16-build-bc-map-tests.sh
+tests/unit/run-r16-classify-tests.sh
+tests/unit/run-r16-gate-tests.sh
 tests/unit/run-results-parser-tests.sh
 tests/unit/run-suspend-failure-finalize-tests.sh
 tests/unit/run-suspend-resume-tests.sh
@@ -225,6 +228,9 @@ tools/probe-suspend-resume-state.sh
 tools/probe-vaapi.c
 tools/probe-vulkan-devices.c
 tools/probe-x11-egl-gles2.c
+tools/r16-build-bc-map.py
+tools/r16-classify.py
+tools/r16-gate.py
 tools/run-dmabuf-regression-test.sh
 tools/run-vaapi-decode-test.sh
 tools/trace-loader.c

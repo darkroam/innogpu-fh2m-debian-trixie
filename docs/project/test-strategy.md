@@ -4,17 +4,17 @@
 > 回归验证"。本策略定义分层、能力域、输出规范、风险与执行顺序。约束：不安装驱动、不切换模块、
 > 不重启；runtime 域仅实机授权后执行。
 
-## 一、现有测试盘点（CONFIRMED，2026-09-03 核对）
+## 一、现有测试盘点（CONFIRMED，2026-09-05 核对）
 
-### 当前 CI/沙箱套件汇总（2026-09-03）
+### 当前 CI/沙箱套件汇总（2026-09-05）
 
 数量以各 runner 的运行时汇总行为机械事实；本表是文档中唯一的当前计数汇总。
 
 | 范围 | 入口与用例 | 小计 |
 | --- | --- | --- |
-| unit | manifest 9 + license 50 + version 12 + extractor 7 + results parser 19 + exec probes 12 + VA-API 56 + DMA-BUF 147 + DRI repair 34 + collab 26 + suspend/resume 60 + suspend failure finalize 15 + p2-normalize 6 | 13 个入口 / 453 项 |
+| unit | manifest 9 + license 50 + version 12 + extractor 7 + results parser 19 + exec probes 12 + VA-API 56 + DMA-BUF 147 + DRI repair 34 + collab 26 + suspend/resume 60 + suspend failure finalize 15 + p2-normalize 6 + r16-gate 13 + r16-build-bc-map 10 + r16-classify 10 | 16 个入口 / 486 项 |
 | 其他 CI/沙箱 | fbterm 1 + package 11 + Picom install 3 + Picom session 3 + xdisplay 5 | 5 个入口 / 23 项 |
-| **合计** | 不含需真实设备/root/副作用授权的 runtime 项 | **18 个入口 / 468 项** |
+| **合计** | 不含需真实设备/root/副作用授权的 runtime 项 | **21 个入口 / 509 项** |
 
 | 测试 | 位置 | 断言 | 权限/环境 | 修改系统 |
 | --- | --- | --- | --- | --- |
@@ -34,6 +34,9 @@
 | suspend/resume 静态 | tests/unit/run-suspend-resume-tests.sh | patch-024/025-display/026-lifecycle/028-temp-monitor/029-ddcci-panel dry-run/应用、OFF 快速门禁、devfreq drain→PVR suspend、PVR/DVFS resume→温度 work 锁序、多父/多子计数、结构尾部 ABI、失败/旧内核/NO_HARDWARE、版本/epoch 失败关闭、DDCCI panel/backlight/force fixture、零 fuzz/无备份应用、编译树与包源码双扫描、patched-28 legacy 接线、R08 只读观测契约 | shell/python/patch，复制跟踪源码到 `/tmp` | 否 |
 | suspend 失败收尾 | tests/unit/run-suspend-failure-finalize-tests.sh | 失败证据/回退/重启三标记齐全后只移除指定 active 指针并保留证据；缺失/错配、路径穿越、绝对路径/大写 ID、符号链接和重复 finalize 失败关闭 | shell/python，隔离临时状态树 | 否 |
 | P2 规范化映射 | tests/unit/run-p2-normalize-tests.sh | 合成正例两次逐字节一致且内容正确（确定性 + 规范化路径 + F-only 状态）、D 根缺失 rc=3、F 根缺失 rc=3、空扫描 rc=4、canonical-path 冲突 rc=1、多余参数 rc=2；失败路径断言退出码/stderr 诊断/未创建输出；完全隔离（mktemp + trap + env 注入），不触碰 `build/` | python3，无设备 | 否 |
+| R16 per-file 门禁 | tests/unit/run-r16-gate-tests.sh | 完全隔离（mktemp + env 注入 `R16_MANIFEST`/`R16_BC_MAP`/`R16_PER_FILE`），覆盖 **G0 production cardinality**（differs=432 + F-only=3 = 435，任意组成错配拒绝）+ raw-row duplicate canonical path 拒绝 + 未知 manifest status 拒绝 + BC 映射数量（435/duplicate/BC 覆盖 23）+ per-file 处置覆盖（435/sum/invalid disposition）+ BC/per-file 一致性（BC tag 不同步拒绝）+ fail-closed 违规（BEHAVIORAL+drop/MISSING+drop/MISSING+defer 均拒绝）+ malformed manifest 行拒绝 + 两次运行字节一致 | python3，无设备 | 否 |
+| R16 build-bc-map 生成器 | tests/unit/run-r16-build-bc-map-tests.sh | 完全隔离（mktemp + env 注入 `R16_MANIFEST`/`R16_BC_MAP_OUT`），覆盖合成正例 rc=0 输出 436 行（header + 432 differs + 3 F-only = 435）+ **production cardinality 硬校验**（differs != 432 或 F-only != 3 立即 FATAL）+ raw-row duplicate canonical path 拒绝 + 未知 status 拒绝 + malformed manifest 行 rc=1 无输出 + 空 differs rc=1 无输出 + **fail-closed 输出纪律**（预存在输出文件 SHA-256 在失败后保持不变）+ 两次运行字节一致 | python3，无设备 | 否 |
+| R16 classify 生成器 | tests/unit/run-r16-classify-tests.sh | 完全隔离（mktemp + env 注入 `R16_MANIFEST`/`R16_D_SRC`/`R16_F_SRC`/`R16_D_LICENSE`/`R16_F_LICENSE`/`R16_OUT_DIR`），覆盖合成正例 3 differs（PURE_RENAME/BEHAVIORAL/F-ONLY）→ per-file + per-bc 均写入 + **production cardinality 硬校验**（differs != 432 或 F-only != 3 立即 FATAL）+ raw-row duplicate canonical path 拒绝 + 未知 status 拒绝 + malformed manifest rc=1 + 空 differs rc=1 + 两次运行字节一致 + 缺失 F 内容 rc=1 无输出 + **fail-closed 输出纪律**（预存在 per-file + per-bc 双输出文件 SHA-256 在失败后保持不变） | python3，无设备 | 否 |
 | runtime 能力基线 | tests/runtime/run-capability-baseline.sh | 12 能力域、35 项；默认只读，人工结果显式合并 | 沙箱/真机授权 | 授权项可能有副作用 |
 
 另：`scripts/check-docs.sh`（静态，链接/登记/隐私/版本/边界）、`check-source-parity.sh`（只读 parity）、
