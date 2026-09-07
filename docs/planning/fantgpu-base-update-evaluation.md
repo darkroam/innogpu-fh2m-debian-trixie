@@ -1133,3 +1133,21 @@ dsh P4 终审已放行（2026-09-04），P0 勘误重开同时裁定。**P5 当�
   **不必也不应**强制跟踪或改动 `build/` 忽略边界。
 - **详细执行记录**：`collab/R16-2026-09-03-基座更新迭代评估/qoder-notes.md`（本机，不入 Git）
 - **正式报告**：`collab/R16-2026-09-03-基座更新迭代评估/report.md`（本机，不入 Git）
+
+## 下一阶段衔接：R-F 前置（030+ 补丁重归纳设计）
+
+P5 已确认结论：B 路线可吸收项 = 0，319 项需逐一适配；规模远超 A 路线
+（44 adapted-port）。P5 实测绘结果（435 = 116 drop + 319 defer + 0 selected、
+BC 覆盖 23/23、fail-closed 零违反）已可作为 R-F 阶段的设计输入。
+
+R-F（Re-derivation / Fantgpu 5.0 基座）的前置步骤已正式列为
+**「030+ 补丁重归纳设计」**：以 P5 的 19 项台账（44 adapted-port + 7 已覆盖 +
+6 retain + 2 runtime-verify）+ D→F0 文件级差异审计（条数以 O-2 实际生成为准；
+38 为 dsh 提出的预期值）为输入，起草
+030 起新补丁系列的设计文档（每个补丁编号 030-NNN，与 Deepin 血统 000-029
+严格不重叠）。
+
+完整框架定义见 `docs/planning/030-patch-rederivation-design.md`（设计稿，
+待 codex 初审 → dsh 终审 → 用户批准）。流程硬约束：设计定稿 → codex → dsh →
+用户批准 → 才允许 R-F 第一批（030-NNN 实际实现）开始；批准前不得 `git commit`
+任何 030 内容。
