@@ -82,6 +82,7 @@ xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项
 
 - `check-deepin-userspace-coherence.sh`
 - `check-docs.sh`
+- `materialize-d-stage.sh`
 - `check-desktop-hwgl.sh`
 - `check-innogpu-progress.sh`
 - `check-patched17-baseline.sh`
@@ -105,6 +106,9 @@ runtime 统计、manifest 原包 SHA、过期状态断言和 Markdown 表格结�
 `tools/audit-licenses.py` 校验逐文件许可证 inventory、策略、条款 hash、模块元数据和 manifest
 许可证证据语义；机械审计通过不解除 `license_release_gate=BLOCKED`。导入源码内容、内联代码路径、
 法律授权与文档语义仍须人工审查。
+`materialize-d-stage.sh` 是阶段一 D_stage 物化入口：只读 `third_party/` D 快照，按 4.0.2-i3
+配方（显式补丁文件名清单，builder 序 + suspend 组）重放补丁到 `/tmp/r16-d-stage/`，补丁失败或
+`.orig/.rej` 残留 fail-closed；只写 `/tmp/r16-d-stage/`，不修改仓库任何路径，不安装不 modeset。
 `check-release-package.sh` 只解包读取指定 deb，核对版本、关键载荷、禁止文件和设备接入脚本，
 不会安装包。发布包边界的可重复 fixture 见 `tests/package/run-boundary-tests.sh`。
 `verify-install-status.sh --require-reboot VERSION` 用于运行验收：除常规状态外，它要求包元数据早于当前

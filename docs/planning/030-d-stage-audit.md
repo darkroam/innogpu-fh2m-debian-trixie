@@ -1,4 +1,4 @@
-# D → D_stage 完整性审计（O-2 v24 · tree-manifest 可执行 + 9 类 symlink 闭合 + F-only 移除 + atomic commit + 跨树判定显式定义 + `realpath -m` canonicalize + 三子命令接口 + 目录级 staging + reconcile-first + tar.zst 精确版本锁 + 排他锁（先于一切变更）+ 持久化事务目录 + 结构化 journal 协议（含旧对精确指纹）+ staging_dir 路径约束 + 三者事实一致性（指纹严格匹配 + 共享分类函数）+ 状态专属不变量 + 旧对自洽校验 + 旧对完整性 fail-closed + 幂等 no-op（复用严格 sidecar 校验）+ selfcheck fail-closed + fsync 状态依赖数据屏障（断电一致性；跨目录 rename 源、目标双目录同步；verified 清理 .txn 屏障；回滚还原逐次 mv 屏障）+ rolling_back 合法中途态白名单（集合成员判断可执行等价判定）+ 无 journal 恢复走全新路径 + Python 实现契约 + 启动恢复 + 故障注入测试 28 场景（含 power-loss）+ `--reference-manifest` CLI 解析 + meta.json 路径统一 + jq 工具链前置 + 退出码子命令作用域契约）
+# D → D_stage 完整性审计（O-2 v24 · tree-manifest 可执行 + 9 类 symlink 闭合 + F-only 移除 + atomic commit + 跨树判定显式定义 + `realpath -m` canonicalize + 三子命令接口 + 目录级 staging + reconcile-first + tar.zst 精确版本锁 + 排他锁（先于一切变更）+ 持久化事务目录 + 结构化 journal 协议（含旧对精确指纹）+ staging_dir 路径约束 + 三者事实一致性（指纹严格匹配 + 共享分类函数）+ 状态专属不变量 + 旧对自洽校验 + 旧对完整性 fail-closed + 幂等 no-op（复用严格 sidecar 校验）+ selfcheck fail-closed + fsync 状态依赖数据屏障（断电一致性；跨目录 rename 源、目标双目录同步；verified 清理 .txn 屏障；回滚还原逐次 mv 屏障）+ rolling_back 合法中途态白名单（集合成员判断可执行等价判定）+ 无 journal 恢复走全新路径 + Python 实现契约 + 启动恢复 + 故障注入测试 29 场景（含 power-loss）+ `--reference-manifest` CLI 解析 + meta.json 路径统一 + jq 工具链前置 + 退出码子命令作用域契约）
 
 > 创建日期：2026-09-05（v5: 2026-09-05 dsh 三阶段返工指令后；v6: 2026-09-05 codex v5 初审 P1 #3 + P2 #5 闭环后；v7: 2026-09-05 codex v6 初审 P1 #2 + P1 #3 + P1 #4 + P1 #5 + P2 #6 闭环后；v8: 2026-09-05 codex v7 初审 P1 #1 + P1 #2 + P1 #3 + P1 #4 + P1 #5 + P1 #6 + P1 #7 + P2 #8 闭环后；v9: 2026-09-05 codex v8 初审 6 P1 + 2 P2 闭环后；v10: 2026-09-05 codex v9 初审 5 P1 + 3 P2 闭环后；v11: 2026-09-05 codex v10 初审 4 P1 + 1 P2 闭环后；v12: 2026-09-05 codex v11 初审 2 P1 + 2 P2 闭环后；v13: 2026-09-05 codex v12 初审 4 P1 + 1 P2 闭环后；v14: 2026-09-05 codex v13 初审 2 P1 + 2 P2 闭环后；v15: 2026-09-05 codex v14 初审 2 P1 + 2 P2 闭环后；v16: 2026-09-05 codex v15 初审 2 P1 + 1 P2 闭环后；v17: 2026-09-05 codex v16 初审 2 P1 + 1 P2 闭环后；v18: 2026-09-05 codex v17 初审 2 P1 + 2 P2 闭环后；v19: 2026-09-06 codex v18 初审 2 P1 + 1 P2 闭环后；v20: 2026-09-06 codex v19 初审 1 P1 + 1 P2 闭环后；v21: 2026-09-06 codex v20 初审 3 P1 闭环后；v22: 2026-09-06 codex v21 初审 1 P1 闭环后；**v23: 2026-09-06 codex v22 初审 1 P1 闭环后**；v24: 2026-09-06 codex v23 初审 1 P1 + 1 P2 闭环后）
 > 起草：qoder
@@ -696,7 +696,123 @@ D / D_stage tree-manifest 锁定后由 qoder 实现并 codex 复审。
 #                                (old,absent) 由持久化保证；v24 per codex v23
 #                                P1 #1 任一 fsync 失败 exit 5 统一退出码契约，
 #                                journal 保持 rolling_back 重入收敛），
-#                                清理后再次 fsync_dir(OUT_DIR)
+#                                回滚收敛清理 = **目录级 rename tombstone**：
+#                                os.rename(.txn → .txn.tombstone) 原子提交事务
+#                                终态（journal 在 .txn 内，随 rename 原子消失）+
+#                                fsync_dir(OUT_DIR)；随后 rmtree(tombstone)（失败
+#                                exit 5，事务已提交，残骸由下次启动严格丢弃）；
+#                                rename 失败 exit 9 保 journal 重入收敛——
+#                                **禁止先删 journal 再删 .txn、禁止把 rmtree
+#                                (.txn) 当作原子清理**（rmtree 中途崩溃会留下
+#                                journal 已删而 old.* 残留的不可重入状态）
+#
+# 测试注入接缝（阶段一工具实现轮新增，per codex 十轮复审 P1 + 十一轮复审
+# P1；生产与正常测试零影响）：
+#   inject_pause(tag: str) -> None
+#       # 仅当环境变量 INNOGPU_DSTAGE_INJECT_DIR 与 INNOGPU_DSTAGE_INJECT_TAG
+#       # 同时设置且 tag == INNOGPU_DSTAGE_INJECT_TAG 时生效，否则直通：
+#       # ① 写 <INJECT_DIR>/at-<tag> marker（内容含 tag/pid/每轮唯一
+#       #    INNOGPU_DSTAGE_INJECT_TOKEN 行；文件 fsync + fsync_dir(INJECT_DIR)，
+#       #    断电后仍为注入点执行证据；token 用于拒绝上一轮残留 marker，
+#       #    codex 十一轮复审 P1；写失败 exit 5）
+#       # ② 阻塞轮询 <INJECT_DIR>/release-<tag> 出现即返回；超时
+#       #    （300s）放行——注入未命中由 harness 恢复前状态验证 fail-closed
+#       #    检出，工具自身不因测试环境悬挂
+#       # 16 个接缝（每个都在该注入点的状态持久化边界之后）：
+#       #   staging_built（staging 完整生成后、journal(staged) 前）
+#       #   staged_persisted（journal(staged) 后、备份 mv 前）
+#       #   backup_tar_fsync_window / backup_sha_fsync_window
+#       #     （单个备份 mv 后、该 mv 双目录 fsync 前）
+#       #   backup_mv_complete（备份双 fsync 后、journal(backed_up) 前）
+#       #   backed_up_persisted（journal(backed_up) 后、新 tar 提交前）
+#       #   tarball_mv_committed（新 tar mv + fsync_dir(OUT_DIR) 后、
+#       #     journal(tarball_committed) 前）
+#       #   verified_persisted（journal(verified) 后、清理开始前）
+#       #   cleanup_journal_rm（rm old.* + fsync(.txn) + rm journal 后、
+#       #     rmtree .txn 前）
+#       #   rollback_deleted_tar（回滚 rm 新 tar 后、rm 新 sidecar 前）
+#       #   rollback_restore_tar_mv / rollback_restore_sha_mv
+#       #     （回滚单个还原 mv 后、该 mv 双目录 fsync 前）
+#       #   rollback_restored_tar（旧 tar 还原 + 双 fsync 后、旧 sidecar 前）
+#       #   rollback_restore_complete（还原 + 自校验后、tombstone rename 前）
+#       #   rollback_tombstone_rmtree（rename + fsync 后、rmtree 前）
+#       #   rollback_tombstone_final_fsync（rmtree 后、最终 fsync 前）
+#       # harness 六模式驱动协议（--vm-prepare / --vm-mark / --vm-setup-
+#       # injection / --vm-inject / --vm-verify / --vm-summarize）在
+#       # tests/unit/d-stage-audit-fault-tests.py 实现：--vm-inject 以注入
+#       # 环境启动 snapshot 并等待 marker（内容校验 tag+每轮 token），驱动
+#       # 在工具阻塞于接缝处强制断电（窗口确定性成立，无轮询竞态）；
+#       # --vm-setup-injection 在每次注入前清理 inject_dir 残留
+#       # at-*/release-* 并 fsync（codex 十一轮复审 P1）；rolling_back 场景
+#       # 由 --vm-setup-injection 构造等价前置状态（journal=rolling_back +
+#       # OUT=(new,new) + old.* 在 .txn，正常 snapshot 不会自校验失败进入
+#       # 回滚；旧 sidecar 窗口用 rolling_back_sha_restored 变体
+#       # OUT=(old,absent) + old.sha 在 .txn）；power_loss_after_restore_
+#       # mv_before_cleanup 按 genesis 三窗口拆为 a/b/c 子窗口
+#       # （a=rollback_restore_complete / b=rollback_tombstone_rmtree /
+#       # c=rollback_tombstone_final_fsync），power_loss_rollback_restore_
+#       # fsync_window 拆为 tar/sha 双窗口（四态矩阵分支 1-2 / 3-4 分别
+#       # 覆盖，codex 十一轮复审 P1），各子窗口独立注入 + 恢复前状态验证 +
+#       # 退出码/终态契约。
+#       # codex 十二轮复审 P1 证据强化：--vm-inject 在注入前清理本 tag 残留
+#       # marker（含同名目录），marker 内容含 pid 行且必须与**当前 spawn 的
+#       # snapshot 子进程 pid** 一致（注入时实时校验，pid 记入 runtime，
+#       # verify/summarize 复核——外部伪造 marker 无法通过）；verify 将恢复
+#       # run 的 stdout+stderr 写入 recovery.log（fsync）并记录 sha，rc 类别
+#       # 由工具输出完成行独立判定（OK: rolled back → 1 / OK: → 0 /
+#       # ERROR: → 9），不信任 result 自报；result 写后 chmod 444 与 spec
+#       # 同为只读信任根；rc=9 的 evidence 分支必须核验旧文件**真实双存在或
+#       # 均缺失**（合法四态 + 无关 journal 不得冒充 fail-closed 证据）；
+#       # summarize 自身读取当前 boot_id，必须等于末窗口 verify 的
+#       # boot_id_after（summarize 须在末窗口 verify 同一 boot 内运行）。
+#       # codex 十三轮复审 P1/P2：每个子窗口独立 out_dir 与独立
+#       # recovery<sw>.log（多子窗口场景不得共享，否则后续窗口重置摧毁早期
+#       # 窗口终态证据）；marker 写入改为 O_CREAT|O_EXCL（marker 只能由工具
+#       # 进程创建，外部预置/残留使工具 exit 5 fail-closed）+ 内容含每轮
+#       # 一次性 secret 行（secret 仅经 env 传给工具子进程、触发后才落盘
+#       # runtime，外部驱动无法预先伪造内容；注入时实时校验 pid+secret，
+#       # verify/summarize 复核）。
+#       # codex 十四轮复审 P1/P2：每个子窗口独立 inject_dir（inject /
+#       # inject-<sw>，后续子窗口 setup 仅清理本窗口目录，早期窗口 marker
+#       # 证据不被摧毁；无子窗口场景的 key=None 条目不参与场景 subwindows
+#       # 字典校验）；marker 来源认证绑定受保护 IPC——工具在接缝（marker
+#       # 持久化后、阻塞前）向 stdout 输出 INJECT_MARKER 收据行，stdout 是
+#       # harness 私有管道（驱动无法写入），收据经管道到达即工具侧认证；
+#       # 收据记入 runtime（fsync），verify/summarize 要求 marker 文件内容
+#       # 与管道收据一致（marker 位于驱动可写目录、可被 unlink/替换，仅作
+#       # 断电后持久证据）。
+#       # codex 十五轮复审 P1/P2：管道收据的不可变持久载体 =
+#       # inject_dir/receipt（inject 写后 chmod 444；verify/summarize 校验
+#       # 无写位 + 逐字节 == 收据行+\n；runtime.inject_receipt 必须与之一致，
+#       # 不得仅依赖可变 runtime）；工具写 marker 后 chmod 444（无写位校验）；
+#       # marker 内容 = 固定 schema 四行（tag/pid/token/secret，固定顺序、
+#       # 无额外内容），校验为**逐字节全内容相等**（拒绝重复字段/额外字段/
+#       # 行序变化），与管道收据为同一四元组的两份渲染；注入失败路径
+#       # （子进程提前退出/收据不匹配/超时/收据持久化失败）必须 terminate →
+#       # wait → kill → wait 回收子进程，确认其不再修改事务目录（SIGKILL
+#       # 仅作进程清理，不替代断电注入语义）。
+#       # codex 十六轮复审 P1/P2：chmod 444 不防目录所有者 unlink/替换——
+#       # inject 对 receipt 与 marker 施加 chattr +i（ext4/xfs/btrfs 白名单
+#       # 均支持），verify/summarize 用 lsattr 校验 i 标志（不可重写信任根；
+#       # chattr/lsattr 失败一律 fail-closed）；chmod 变更必须文件元数据
+#       # fsync + 目录 fsync（断电不得丢失无写位/i 标志，否则真实注入被误判
+#       # 失败）；残留清理先 chattr -i 再删除；_stop_child 返回存活状态，
+#       # 无法回收的子进程显式记录 PID 并升级失败（不得吞异常静默继续）。
+#       # codex 十七轮复审 P1/P2：chattr +i/-i 成功后同样必须 fsync 文件
+#       # inode + 父目录（i 标志与 chmod 同为元数据）；_remove_residue 仅保留
+#       # 先 chattr -i 的版本（禁止重复定义覆盖）；result 只读 mode 变更走
+#       # _chmod_and_fsync（文件+目录 fsync），断电不得令合法 result 被判无效。
+#       # codex 十八轮复审 P1：receipt 校验**先显式拒绝 symlink**（os.stat/
+#       # open 会跟随符号链接校验目标 inode 而非 receipt 自身），再 regular
+#       # file / 无写位 / 逐字节内容 / chattr i 标志（统一走 _receipt_file_ok）。
+#       # codex 十九轮复审（无新 finding；残余风险注记加固）：receipt 与
+#       # marker 的内容读取改用 **O_NOFOLLOW + fd 锚定**（os.open(O_RDONLY|
+#       # O_NOFOLLOW) + fstat + fdopen）——open 即失败于 symlink，消除
+#       # islink-then-open 的 TOCTOU 竞态窗口。
+#       # 已知残余风险（dsh 裁定 2026-09-08 记录，不阻塞 O-2 闭合）：单用户
+#       # 本地证据工具威胁模型下，+i 已设置的正常协议中无可确认绕过；未来
+#       # 进入多用户/自动化环境前必须复核升级（注：十九轮已实施 O_NOFOLLOW
+#       # 加固，残余面为并发对抗性竞态，未由实际测试覆盖）。
 ```
 
 **脚本不变量（v8 per codex v7 P1 #1 + P1 #5 + P1 #6 规范）**：
@@ -1109,6 +1225,12 @@ classification \t d_rel \t d_stage_rel \t symlink_target_d \t symlink_target_dst
 2. **任何工具 exit ≠ 0**：diff / git / python3 / sha256sum / find / jq 任一工具
    exit 非零 → 生成脚本立即 exit 同码（fail-fast），不写入任何产物；
    **v11 per codex v10 P1 #3 新增 jq**：jq 1.7.1 纳入工具链前置；
+   **jq 前置口径（dsh 裁定 2026-09-08）**：以 **dpkg 包版本 ≥ 1.7.1 为准**
+   （`dpkg-query -W -f='${Version}' jq` + `dpkg --compare-versions`），
+   `--version` 接受 `1.7.1`/`1.7`——打印 "jq-1.7" 是 Debian 1.7.1 构建的
+   版本串打印怪癖（包版本 1.7.1-6+deb13u3、dpkg -V 完整性通过），非功能
+   缺口；dpkg 佐证缺失/不符一律 exit 78 fail-closed；
+   fixture：`reg_jq_acceptance`（tests/unit/d-stage-audit-fault-tests.py）；
 3. **schema 校验失败（v10 per codex v7 P1 #3 + P1 #4 + codex v10 P1 #2 强化）**：
    - 主表 6 字段校验：`awk -F'\t' 'NF != 6' < d-stage-audit.tsv | wc -l` 必须返回 `0`；
    - 专表 7 字段校验：`awk -F'\t' 'NF != 7' < d-stage-audit.symlink.tsv | wc -l` 必须返回 `0`；
@@ -1309,7 +1431,7 @@ O-2 v24 沿用 v10 对 v7 的"9 文件"显式拆分，**避免** v7 那种"9 文
     "tar_path": "<absolute path to tar used>",
     "zstd_path": "<absolute path to zstd used>",
     "build_environment": "<hostname + uname -a + locale>",
-    "notes": "v20 per codex v19 P1 #1 + P2 #2 + codex v18 P1 #1+#2 + P2 #3 + codex v17 P1 #1+#2 + P2 #3 + codex v16 P1 #1+#2 + P2 #3 + codex v15 P1 #1+#2 + codex v14 P1 #1+#2 + codex v13 P1 #1+#2 + P2 #3 + codex v12 P1 #1-#4 + codex v11 P1 #1 + codex v10 P1 #3 + codex v9 P2 #6：精确锁定 tar 1.35 + zstd 1.5.7（本机实测）；**v11 新增 jq 1.7.1 工具链前置条件**（阶段三 §9.2 F0 迁移起点的 `git_tag_ref` 读取必须用 jq 或已声明的 JSON 解析入口，不允许临时引入未声明的工具）。如需在非本机环境复现 SHA，必须使用完全相同的 tar + zstd + jq 版本 + 相同构建环境（locale / libc / 容器）。"
+    "notes": "v20 per codex v19 P1 #1 + P2 #2 + codex v18 P1 #1+#2 + P2 #3 + codex v17 P1 #1+#2 + P2 #3 + codex v16 P1 #1+#2 + P2 #3 + codex v15 P1 #1+#2 + codex v14 P1 #1+#2 + codex v13 P1 #1+#2 + P2 #3 + codex v12 P1 #1-#4 + codex v11 P1 #1 + codex v10 P1 #3 + codex v9 P2 #6：精确锁定 tar 1.35 + zstd 1.5.7（本机实测）；**v11 新增 jq 1.7.1 工具链前置条件**（阶段三 §9.2 F0 迁移起点的 `git_tag_ref` 读取必须用 jq 或已声明的 JSON 解析入口，不允许临时引入未声明的工具）。**jq 前置口径（dsh 裁定 2026-09-08）**：以 dpkg 包版本 ≥ 1.7.1 为准（dpkg-query 佐证 + dpkg --compare-versions），--version 接受 1.7.1/1.7（Debian 1.7.1 构建的版本串打印怪癖，非功能缺口）。如需在非本机环境复现 SHA，必须使用完全相同的 tar + zstd + jq 版本 + 相同构建环境（locale / libc / 容器）。"
   },
   "snapshot_boundary": "v20 per codex v19 P1 #1 + P2 #2 + codex v18 P1 #1+#2 + P2 #3 + codex v17 P1 #1+#2 + P2 #3 + codex v16 P1 #1+#2 + P2 #3 + codex v15 P1 #1+#2 + codex v14 P1 #1+#2 + codex v13 P1 #1+#2 + P2 #3 + codex v12 P1 #1-#4 + codex v11 P1 #1 + codex v10 P1 #3 + codex v9 P2 #6：本快照 SHA 仅在 tar 1.35 + zstd 1.5.7 + jq 1.7.1 + 本机构建环境下可复现；其他版本/环境需重新生成 reference snapshot 并按 genesis.json tool_versions 比对。",
   "fault_injection_tests": {
@@ -1460,8 +1582,8 @@ O-2 v24 沿用 v10 对 v7 的"9 文件"显式拆分，**避免** v7 那种"9 文
         "passed": <bool>
       },
       "power_loss_after_restore_mv_before_cleanup": {
-        "injection": "force power-off after rollback restore mv + fsync_dir(OUT_DIR) + fsync_dir(.txn) complete, before rm journal / rm -rf .txn",
-        "expected_final_state": "journal=rolling_back + OUT_DIR complete old pair (target directory entries durable) + .txn has no old.* (source directory deletion durable → NO double-existence) → re-enter rollback segment: no new files to delete, no old.* to restore → self-check PASS → cleanup → exit 1; final OUT_DIR = complete old pair (v20 per codex v19 P1 #1)",
+        "injection": "force power-off after rollback restore mvs + per-mv fsync complete, at one of three cleanup windows: (a) before atomic rename .txn → .txn.tombstone; (b) after rename + fsync_dir(OUT_DIR), during rmtree(.txn.tombstone); (c) after rmtree, before final fsync_dir(OUT_DIR)",
+        "expected_final_state": "journal=rolling_back + OUT_DIR complete old pair + .txn has no old.* → re-enter rollback segment: no new files to delete, no old.* to restore → self-check PASS → rollback commit = atomic rename .txn → .txn.tombstone + fsync_dir(OUT_DIR) → exit 1; final OUT_DIR = complete old pair (v20 per codex v19 P1 #1 + 阶段一工具实现轮 tombstone 协议：window (a) → journal 仍在 .txn，下次启动重入收敛；window (b)/(c) → 事务已提交，.txn.tombstone 残骸由下次启动严格丢弃；任何窗口绝不产生 journal 已删而 old.* 残留的不可重入状态)",
         "actual_final_state": "<filled by O-2 tool>",
         "passed": <bool>
       },
