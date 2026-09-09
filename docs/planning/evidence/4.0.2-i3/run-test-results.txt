@@ -1,0 +1,30 @@
+stage2_verification=BLOCKED
+date=2026-09-09
+package=innogpu-fh2m-trixie
+version=4.0.2-i3
+package_sha256=177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662
+
+[build]
+build_a=PASS
+build_b=PASS
+byte_reproducible=PASS
+builder_checks=PASS (DKMS build, vermagic, payload boundary, .o.cmd/.orig/.rej rejection, check-release-package)
+
+[static]
+run-r16-build-bc-map-tests.sh=PASS (10/10)
+run-suspend-resume-tests.sh=PASS (60/60)
+tools/r16-gate.py=PASS (all gates)
+scripts/check-release-package.sh=PASS
+tools/audit-licenses.py=PASS (release gate remains BLOCKED by repository policy)
+scripts/check-docs.sh=PASS
+tools/validate-collab.py=PASS
+
+[runtime]
+runtime-capability-baseline.sh=FAIL (11 passed, 1 failed, 19 skipped, 4 unverified; package version probe expected the legacy 4.0.0-i1 baseline and observed 4.0.2-i3)
+run-dmabuf-regression-test.sh=UNVERIFIED (no fh2m render node /dev/dri)
+run-vaapi-decode-test.sh=UNVERIFIED (no fh2m render node /dev/dri)
+probe-suspend-resume-state.sh=UNVERIFIED (observer requires root and a real device session)
+install_rollback=UNVERIFIED (not executed; requires root, installation, reboot, and supervised rollback)
+
+tag_eligibility=BLOCKED
+note=No runtime or installation result is promoted to PASS; deepin-4.0.2-i3 tag must not be issued from this record.

@@ -1,0 +1,104 @@
+{
+  "schema_version": "1.0",
+  "version": "4.0.2-i3",
+  "git_tag_ref": "deepin-4.0.2-i3",
+  "git_tag_ref_confirmation": "dsh 唯一确认（2026-09-09 阶段二执行范围转达；不得自创/改写其他 tag 名）",
+  "package": {
+    "name": "innogpu-fh2m-trixie",
+    "version": "4.0.2-i3",
+    "deb_path": "build/innogpu-fh2m-trixie_4.0.2-i3.deb",
+    "sha256": "177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662",
+    "status": "verified-deterministic-build"
+  },
+  "epoch": {
+    "source_date_epoch": 1788796800,
+    "rule": "固定审核 epoch 必须显式提供 SOURCE_DATE_EPOCH=1788796800（禁止回退当前时间）；包内全部文件 mtime touch 到 @epoch；per scripts/build-innogpu-driver.sh 4.0.2-i3 分支"
+  },
+  "build_commands": {
+    "build_a": "VERSION=4.0.2-i3 SOURCE_DATE_EPOCH=1788796800 scripts/build-innogpu-driver.sh",
+    "build_b": "同上（第二次 clean run；两轮输出分别记录 build-A.sha256 / build-B.sha256 并比较字节一致）",
+    "note": "builder 只构建不安装（No install, no hot-swap, no reboot）；OUT_DEB 默认 build/innogpu-fh2m-trixie_4.0.2-i3.deb"
+  },
+  "patch_list": {
+    "order": [
+      "baseline: Deepin 20250421190503 导入",
+      "patch-000: tools/patch-gpupll-object.py 构建期对象单点字节变换（工具 SHA e5f9ee94f55aed2507359d0708f2d88b5b3251582380f5792cab54892a35274a）",
+      "001-kernel-6.12-compat.patch (-p6；SHA be5c8ae9e08f5a2979e939bd18d4f9cc35593c5333fe80b1fb7748ffdcf71ab5)",
+      "002-dp-fbdev-fallback-mode.patch (SHA 1a12de65f201839232a99f542707f43240b175bbe80029926b4ed3ab180f7329)",
+      "006-local-connector-acpi-map.patch (SHA 63a6569ccb13adfadc7d717cf0b1bc6a338ff7f0231429e6b9d266b0a07340b5)",
+      "009-local-internal-edp-connector.patch (SHA e6b955fd3cbde69f211098108c2770fdce8d8eb052096ee20d03b9522e5bb26c)",
+      "007-fbdev-io-mmap.patch (SHA 1adb7a3744abb936d41e4c6e54f490f4535b3a2e344d0538aa9368a824337733)",
+      "024-suspend-resume.patch (SHA 3e2c9ab19e2675cfc900ed96c74c7bae947248f369854c7dea5913461f7eec48)",
+      "025-dma-resv-usage-rw.patch (SHA 05de1bdd503d3a83d82b7e0de44d74535c39d02ae153be4649c90e0c1ae0a027)",
+      "023-invisible-read-no-writeback.patch (rebased；SHA ea35a852d3b0d2818cd1abfbf20c888eacaccdc87371fd9a20f9520d5ee01f63，重基仅改上下文不改语义，仓库 patch 文件不可变)",
+      "026-inactive-crtc-vblank-guard.patch (SHA 864bc3d651250ed9b701d376f6408fe7f506b2fea5fe7129007034e95a80216b)",
+      "027-foreign-dmabuf-lifecycle.patch (SHA ab2d1b418fa315fc0528c65e425ad37e16ecdde9ae81066869a487a5c6ce7ca5)",
+      "026-suspend-resume-dvfs-lifecycle.patch (SHA 5f6f834f4a6c3bd42d69dab29ac55f988f63e1be60d92c54d4a5177acab11d26)",
+      "028-suspend-resume-hal-temp-monitor-delay.patch (SHA 3adbc25dfd49198f44943b10248babd3fc06c1bccad3e233d3f36ded082ef4aa)",
+      "029-suspend-resume-ddcci-panel.patch (SHA c44f129ec6df50e9aceb6d11e76f17aacdf8b86efb57d5926fef809882690e36)"
+    ],
+    "excluded": [
+      "003 / 004 / 005 / 008（关闭项，patched-27 集合外）",
+      "025-suspend-resume-display（i4-only；runtime-verify，根因假设未证实/证伪，4.0.2-i3 不应用）"
+    ],
+    "provenance": "docs/planning/030-mapping-table.md §三.3（19 项 SHA-256 均 sha256sum 实测，2026-09-08）"
+  },
+  "unverified_record": {
+    "scope": "fault_injection_tests.snapshot_subcommand 的 15 个 VM 断电窗口（12 power-loss 场景含 tombstone a/b/c 与 restore-fsync tar/sha 子窗口）",
+    "status": "UNVERIFIED-pending-VM",
+    "ruling": "dsh 裁决 2026-09-08：阶段一验收与阶段二启动硬前置解除；风险由 dsh 确认；日后有 VM 断电环境补测；本 meta.json 如实记录该状态",
+    "note": "harness 复跑曾受环境限制（临时目录为 tmpfs，不满足 ext4/xfs/btrfs 前置）；O-2 最终验收不因本批通过"
+  },
+  "tool_versions": {
+    "tar": "1.35",
+    "zstd": "1.5.7",
+    "jq": {
+      "criterion": "dpkg 包版本 >= 1.7.1 为准；--version 接受 1.7.1/1.7（Debian 1.7.1 构建版本串怪癖）+ dpkg-query 佐证",
+      "ruling": "dsh 裁定 2026-09-08"
+    }
+  },
+  "evidence": {
+    "snapshot": {
+      "path": "docs/planning/evidence/4.0.2-i3/d-stage-snapshot.tar.zst",
+      "sha256": "5b71601e957398012de33bc8e1fe14551d83a2f8b382417bdbf1627201636c0b",
+      "status": "generated"
+    },
+    "build_a_sha256": {
+      "path": "docs/planning/evidence/4.0.2-i3/build-A.sha256",
+      "status": "verified"
+    },
+    "build_b_sha256": {
+      "path": "docs/planning/evidence/4.0.2-i3/build-B.sha256",
+      "status": "verified"
+    },
+    "run_test_results": {
+      "path": "docs/planning/evidence/4.0.2-i3/run-test-results.txt",
+      "status": "blocked-unverified（当前会话无 /dev/dri，运行时项目无法 PASS；详见记录）"
+    },
+    "install_rollback": {
+      "path": "docs/planning/evidence/4.0.2-i3/install-rollback.txt",
+      "status": "pending-待实测（dpkg 安装/回退验证证据）"
+    }
+  },
+  "install_rollback_instructions": {
+    "install": "dpkg -i build/innogpu-fh2m-trixie_4.0.2-i3.deb（需 root；安装后重启）",
+    "rollback": "docs/user/recovery.md 首选恢复链（p27 oracle 包 + 恢复通道）；通用卸载 scripts/uninstall-innogpu.sh",
+    "note": "阶段二构建验证不安装；安装/回退由运行验收环节按框架执行并记录 install-rollback.txt"
+  },
+  "stage2_verification_matrix": {
+    "reference": "docs/planning/030-patch-rederivation-design.md §7.1（源码复现双 clean-build / 包载荷 / 许可 / DKMS / 运行时 / 安装回退 / 门禁汇总）",
+    "hard_constraints": [
+      "不得引用任何 F0 内容（路径/SHA/命名空间/文件）",
+      "不得引用阶段三的任何 fixture/工具",
+      "任何阶段二验证失败 → deepin-4.0.2-i3 tag 不得签发 → 阶段三不得启动"
+    ],
+    "status": "partial（2026-09-09 实测：build 双 clean-build 字节一致 PASS + static 全套 PASS；runtime = BLOCKED/UNVERIFIED（无 /dev/dri、suspend observer 需 root、install-rollback 未执行）；详见 run-test-results.txt）",
+    "tag_eligibility": "BLOCKED（运行时与安装回退验证完成前，deepin-4.0.2-i3 annotated tag 不得签发）"
+  },
+  "dsh_confirmations": [
+    "git_tag_ref = deepin-4.0.2-i3 唯一确认（2026-09-09）",
+    "15 VM 断电窗口 UNVERIFIED-pending-VM 登记继续（2026-09-08）",
+    "jq dpkg 包版本口径裁定（2026-09-08）",
+    "D 根裁决 / 005 勘误 / 023-025 重基 / 隐私泄漏修正（2026-09-08 终审）"
+  ]
+}
