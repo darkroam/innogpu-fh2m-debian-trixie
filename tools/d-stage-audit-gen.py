@@ -22,7 +22,6 @@ import os
 import platform
 import re
 import shutil
-import socket
 import subprocess
 import sys
 import tempfile
@@ -154,6 +153,18 @@ def realpath_m(path):
 
 def is_within(path_abs, root_abs):
     return path_abs == root_abs or path_abs.startswith(root_abs + "/")
+
+
+def public_evidence_path(path):
+    # Evidence is tracked and must not capture a developer's home directory.
+    # Keep an absolute, stable logical path for repository inputs instead.
+    absolute = realpath_m(path)
+    repo_root = realpath_m(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    if is_within(absolute, repo_root):
+        relative = os.path.relpath(absolute, repo_root)
+        return "/repo/innogpu-fh2m-debian-trixie" + (
+            "" if relative == "." else "/" + relative)
+    return absolute
 
 
 def check_out_dir(out_dir):
@@ -787,14 +798,21 @@ def gen_full_audit(argv):
         "zstd": ZSTD_REQUIRED,
         "jq": tool_ver(["jq", "--version"]),
     }
+    jq_dpkg = subprocess.run(["dpkg-query", "-W", "-f=${Version}", "jq"],
+                              capture_output=True, text=True,
+                              env=dict(os.environ, LC_ALL="C"), timeout=30)
+    if jq_dpkg.returncode != 0 or not jq_dpkg.stdout.strip():
+        exit_err(EX_CONFIG, "dpkg-query could not report jq package version")
+    tool_versions["jq_dpkg_version"] = jq_dpkg.stdout.strip()
     snapshot_tool_versions = {
         "tar": TAR_REQUIRED,
         "zstd": ZSTD_REQUIRED,
         "tar_path": which("tar"),
         "zstd_path": which("zstd"),
-        "build_environment": "%s %s %s" % (
-            socket.gethostname(), " ".join(platform.uname()),
-            "LC_ALL=C"),
+        "build_environment": "host=REDACTED system=%s release=%s "
+                             "version=%s machine=%s LC_ALL=C" % (
+                                 platform.system(), platform.release(),
+                                 platform.version(), platform.machine()),
         "notes": "精确锁定 tar 1.35 + zstd 1.5.7（本机实测）；如需在非本机"
                  "环境复现 SHA，必须使用完全相同的 tar + zstd + jq 版本 + "
                  "相同构建环境（locale / libc / 容器）。",
@@ -890,38 +908,42 @@ def gen_full_audit(argv):
          "malformed/duplicate sidecar NEVER accepted by no-op"),
     ]
     power_loss_defs = [
-        ("power_loss_after_staged_persist", "journal=staged + staging durable → "
-         "recovery completes backup → commit → verified → cleanup; OUT_DIR = new pair"),
-        ("power_loss_before_staged_persist", "journal absent → discard .txn "
-         "residue → fresh path (or 4a idempotent no-op); old pair untouched"),
-        ("power_loss_after_backed_up_persist", "journal=backed_up + .txn/old.* "
-         "durable → recovery commits new pair → cleanup; OUT_DIR = new pair"),
-        ("power_loss_after_tarball_mv", "journal=backed_up + new tar durable in "
-         "OUT_DIR → recovery skips tar commit, commits sha; OUT_DIR = new pair"),
-        ("power_loss_after_verified_before_cleanup", "journal=verified + complete "
-         "new pair → redo cleanup → exit 0"),
-        ("power_loss_after_backup_mv_before_persist", "journal=staged + old pair "
-         "only in .txn → backup guard skips → persist(backed_up) → commit → "
-         "verified; OUT_DIR = new pair"),
-        ("power_loss_backup_mv_fsync_window", "journal=staged; three-way: "
-         "consistent → auto-resume; double-existence → exit 9; both absent → "
-         "exit 9 (fail-closed)"),
-        ("power_loss_after_restore_mv_before_cleanup", "journal=rolling_back + "
-         "OUT_DIR complete old pair → re-enter rollback: self-check PASS → "
-         "rollback commit = atomic rename .txn→.txn.tombstone + fsync → exit 1; "
-         "crash after rename → tombstone residue discarded at next startup"),
-        ("power_loss_rollback_mid_delete_window", "OUT_DIR pair = (absent,new) → "
-         "whitelist allows → continue deleting new sidecar → restore old pair "
-         "→ exit 1 (NEVER exit 9)"),
-        ("power_loss_rollback_mid_restore_window", "OUT_DIR pair = (old,absent) "
-         "DETERMINISTIC (per-mv barrier) → whitelist allows → complete sidecar "
-         "restore → exit 1"),
-        ("power_loss_rollback_restore_fsync_window", "per-restored-file four-way "
-         "matrix: tar target-only (old,absent) / source-only (absent,absent); "
-         "sidecar target-only (old,old) / source-only (old,absent) → whitelist "
-         "re-enter; double-existence / both-absent → exit 9 (fail-closed)"),
-        ("power_loss_verified_cleanup_after_journal_rm", "journal absent + .txn "
-         "without old.* → fresh path → 4a idempotent no-op exit 0"),
+        ("power_loss_after_staged_persist",
+         "poweroff after durable journal=staged and staging fsync",
+         "journal=staged + staging durable → recovery completes backup → commit → verified → cleanup; OUT_DIR = new pair"),
+        ("power_loss_before_staged_persist",
+         "poweroff before persist_journal(state=staged)",
+         "journal absent → discard .txn residue → fresh path (or 4a idempotent no-op); old pair untouched"),
+        ("power_loss_after_backed_up_persist",
+         "poweroff after durable journal=backed_up and old pair fsync",
+         "journal=backed_up + .txn/old.* durable → recovery commits new pair → cleanup; OUT_DIR = new pair"),
+        ("power_loss_after_tarball_mv",
+         "poweroff after new tarball mv and before sha commit",
+         "journal=backed_up + new tar durable in OUT_DIR → recovery skips tar commit, commits sha; OUT_DIR = new pair"),
+        ("power_loss_after_verified_before_cleanup",
+         "poweroff after durable journal=verified and before cleanup",
+         "journal=verified + complete new pair → redo cleanup → exit 0"),
+        ("power_loss_after_backup_mv_before_persist",
+         "poweroff after old pair backup mv and before journal=backed_up",
+         "journal=staged + old pair only in .txn → backup guard skips → persist(backed_up) → commit → verified; OUT_DIR = new pair"),
+        ("power_loss_backup_mv_fsync_window",
+         "poweroff after backup mv and before either cross-directory fsync",
+         "journal=staged; three-way: consistent → auto-resume; double-existence → exit 9; both absent → exit 9 (fail-closed)"),
+        ("power_loss_after_restore_mv_before_cleanup",
+         "poweroff after rollback restore and before tombstone cleanup",
+         "journal=rolling_back + OUT_DIR complete old pair → re-enter rollback: self-check PASS → rollback commit = atomic rename .txn→.txn.tombstone + fsync → exit 1; crash after rename → tombstone residue discarded at next startup"),
+        ("power_loss_rollback_mid_delete_window",
+         "poweroff while rolling_back deletes the new sidecar",
+         "OUT_DIR pair = (absent,new) → whitelist allows → continue deleting new sidecar → restore old pair → exit 1 (NEVER exit 9)"),
+        ("power_loss_rollback_mid_restore_window",
+         "poweroff after rollback restores old tar and before old sidecar",
+         "OUT_DIR pair = (old,absent) DETERMINISTIC (per-mv barrier) → whitelist allows → complete sidecar restore → exit 1"),
+        ("power_loss_rollback_restore_fsync_window",
+         "poweroff after one rollback restore mv and before its cross-directory fsync",
+         "per-restored-file four-way matrix: tar target-only (old,absent) / source-only (absent,absent); sidecar target-only (old,old) / source-only (old,absent) → whitelist re-enter; double-existence / both-absent → exit 9 (fail-closed)"),
+        ("power_loss_verified_cleanup_after_journal_rm",
+         "poweroff after journal removal and before .txn cleanup",
+         "journal absent + .txn without old.* → fresh path → 4a idempotent no-op exit 0"),
     ]
     for name, inj, exp in scenario_defs + power_loss_defs:
         fault_tests["snapshot_subcommand"][name] = {
@@ -944,8 +966,8 @@ def gen_full_audit(argv):
     genesis = {
         "schema_version": GENESIS_SCHEMA,
         # codex 复审 P2：genesis 路径必须绝对路径（canonicalize）
-        "d_root_path": realpath_m(args.d_root),
-        "d_stage_root_path": realpath_m(args.d_stage_root),
+        "d_root_path": public_evidence_path(args.d_root),
+        "d_stage_root_path": public_evidence_path(args.d_stage_root),
         "d_manifest_sha256": hashlib.sha256(
             build_manifest_tsv(args.d_root).encode()).hexdigest(),
         "d_stage_manifest_sha256": hashlib.sha256(

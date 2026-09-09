@@ -84,6 +84,27 @@ firmware_files=(
     lib/firmware/innogpu/fh2c.fw
     lib/firmware/innogpu/fh2c.sh
 )
+
+apply_rebased_invisible_read_patch() {
+    local source_tree="$1"
+    local rebased
+    rebased="$(mktemp "${TMPDIR:-/tmp}/innogpu-rebased-023.XXXXXX")"
+    # 023 and 025 overlap in CPU_PREP.  025 is applied first and 023 is
+    # rebased in /tmp so the source patch files remain immutable.
+    sed \
+        -e 's/, write, true/, innodpu_dma_resv_usage_rw(write), true/' \
+        -e 's/, write))/, innodpu_dma_resv_usage_rw(write)))/' \
+        "$ROOT/patches/023-invisible-read-no-writeback.patch" > "$rebased"
+    if patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s \
+        -d "$source_tree" -p1 < "$rebased"; then
+        rm -f -- "$rebased"
+    else
+        local rc=$?
+        rm -f -- "$rebased"
+        return "$rc"
+    fi
+}
+
 for relative in "${vendor_files[@]}"; do
     [[ -e "$W/root/$relative" || -L "$W/root/$relative" ]] || {
         echo "ERROR: Deepin ABI file is missing: $relative" >&2
@@ -124,14 +145,18 @@ done
     if [[ "$APPLY_PVR_INIT_DIAGNOSTIC" == "1" ]]; then
         patch -p1 < "$ROOT/patches/008-pvr-init-diagnostic.patch"
     fi
-    if [[ "$APPLY_INVISIBLE_READ_NO_WRITEBACK" == "1" ]]; then
-        patch -p1 < "$ROOT/patches/023-invisible-read-no-writeback.patch"
-    fi
     if [[ "$APPLY_SUSPEND_RESUME_FIX" == "1" ]]; then
         patch -p1 < "$ROOT/patches/024-suspend-resume.patch"
     fi
     if [[ "$APPLY_DMA_RESV_USAGE_FIX" == "1" ]]; then
         patch -p1 < "$ROOT/patches/025-dma-resv-usage-rw.patch"
+    fi
+    if [[ "$APPLY_INVISIBLE_READ_NO_WRITEBACK" == "1" ]]; then
+        if [[ "$APPLY_DMA_RESV_USAGE_FIX" == "1" ]]; then
+            apply_rebased_invisible_read_patch "$PWD"
+        else
+            patch -p1 < "$ROOT/patches/023-invisible-read-no-writeback.patch"
+        fi
     fi
     if [[ "$APPLY_INACTIVE_CRTC_VBLANK_GUARD" == "1" ]]; then
         patch -p1 < "$ROOT/patches/026-inactive-crtc-vblank-guard.patch"
