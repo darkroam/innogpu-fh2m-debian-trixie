@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0",
+  "id": "030-007",
+  "ledger_ref": {
+    "item": "007",
+    "neutral_record": "D005",
+    "mapping": "docs/planning/030-mapping-table.md §三.3/§三.4",
+    "description": "fbdev-io-mmap"
+  },
+  "deepin_patch": {
+    "path": "patches/007-fbdev-io-mmap.patch",
+    "sha256": "1adb7a3744abb936d41e4c6e54f490f4535b3a2e344d0538aa9368a824337733",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "docs/planning/evidence/o-stage/f0-snapshot.tar.zst",
+      "sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e"
+    },
+    "tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+    "chain_base": {
+      "id": "030-009",
+      "after_tree_hash": "b3f003bb9b07eca81421bbbb23f55f4c0256f5df5fee6ce6de847c39faa4af76"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "adapted-port",
+      "summary": "台账 007 共 1 语义项（P5 line 356，F 完全缺失）：fbdev ops 增加 .fb_mmap = fb_io_mmap（配套 #include <linux/fb.h>），使 fbcon 通过 io-memory 映射用户空间 fb 内存。F0 同位移植：s_fant_fbdev_ops 与 D 侧 pre-patch 结构同构（.fb_mmap 插入 .fb_pan_display 与 .fb_blank 之间，与 D 侧位置一致）；include 块与 D 侧同位（第二个 fant_drm_version.h 之后、linux/suspend.h 之前）。"
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "D 端目标分类 mit-or-gpl-2.0-only（030-mapping-table §三.1，BC-09 innodpu_drm_fb.c→srvkm/dpu_drm_fb.c）；fb_io_mmap 为内核既有符号（drivers/video/fbdev/core），未引入第三方文件或 notice；正式 tools/audit-licenses.py 结果待批次验证。"
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "030-001, 030-002, 030-006, 030-009 applied",
+      "summary": "链基 = 030-009 after_tree_hash b3f003bb…；builder 序 007 在 009 之后（per scripts/build-deepin-coherent.sh），已满足；不依赖其他未应用 030-NNN。"
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "adapted-port",
+      "summary": "纯同位移植：F0 fantdpu_drm_fb.c 与 D 侧 innodpu_drm_fb.c pre-patch 状态结构同构（同名顺序的 include 块 + s_fant_fbdev_ops fb_ops 结构体），两 hunk 落点与 D 侧完全一致；fb_io_mmap 由 CONFIG_FB 提供且整个文件受 CONFIG_DRM_FBDEV_EMULATION 包裹，编译前提一致；无 hunk 被 F0 基线吸收、无伪造改动。"
+    }
+  },
+  "apply": {
+    "before_tree_hash": "b3f003bb9b07eca81421bbbb23f55f4c0256f5df5fee6ce6de847c39faa4af76",
+    "after_tree_hash": "9fe864c1c0547046b0fbef50828c6f5448dcdfb9bb30adc763282ef8d24b04d6",
+    "patch_sha256": "51b37b4948b96749f0df61491b87b46c6805815968d5f3b446366d8862f75a77",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <CHAIN_BASE> < patches/030-007.patch",
+    "result": "1 file changed (fantsrvkm/fantdpu_drm_fb.c); no .orig/.rej; fresh replay tree hash == after_tree_hash"
+  },
+  "rollback": {
+    "command": "remove O_stage and re-extract chain base (F0 snapshot + 030-001.patch + 030-002.patch + 030-006.patch + 030-009.patch); do not reverse-edit F0",
+    "target": "chain base tree hash b3f003bb9b07eca81421bbbb23f55f4c0256f5df5fee6ce6de847c39faa4af76"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "fresh chain-base replay: -p1, --fuzz=0, rc=0",
+        "no .orig/.rej artifacts",
+        "replay tree hash 9fe864c1c0547046b0fbef50828c6f5448dcdfb9bb30adc763282ef8d24b04d6 == adapted tree",
+        "apply_level -p1 按来源 patch 实际 diff 头（a/innosrvkm/… 单层前缀）实测测定"
+      ]
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "阶段三 O-3 fixture、内核模块编译/加载及 per-030 验证矩阵；含 fbdev mmap 实机路径确认（4.0.2-i3 阶段二已验证该能力的 D 侧语义，F0 侧待实机复现）"
+    }
+  }
+}

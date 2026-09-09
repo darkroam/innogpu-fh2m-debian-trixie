@@ -1,0 +1,19 @@
+diff -ruN -x '*.o' -x '*.ko' -x '*.mod*' -x '.tmp*' -x Module.symvers -x modules.order a/fantsrvkm/fantdpu_drm_fb.c b/fantsrvkm/fantdpu_drm_fb.c
+--- a/fantsrvkm/fantdpu_drm_fb.c	2022-01-01 08:00:00.000000000 +0800
++++ b/fantsrvkm/fantdpu_drm_fb.c	2026-09-09 18:29:31.199079001 +0800
+@@ -44,6 +44,7 @@
+ #include "fant_drm_version.h"
+ #include <linux/export.h>
+ #include "fant_drm_version.h"
++#include <linux/fb.h>
+ #include <linux/suspend.h>
+ #if (DRM_VERSION >= KERNEL_VERSION(5, 5, 0))
+ #include <drm/drm_device.h>
+@@ -231,6 +232,7 @@
+ 	.fb_copyarea = cfb_copyarea,
+ 	.fb_imageblit = cfb_imageblit,
+ 	.fb_pan_display = drm_fb_helper_pan_display,
++	.fb_mmap = fb_io_mmap,
+ 	.fb_blank = drm_fb_helper_blank,
+ 	.fb_setcmap = drm_fb_helper_setcmap,
+ 	.fb_debug_enter = drm_fb_helper_debug_enter,
