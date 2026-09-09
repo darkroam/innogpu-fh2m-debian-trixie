@@ -249,22 +249,24 @@ decode_one() { # <codec> <encoder> <ext>
     local codec="$1" enc="$2" ext="$3" rc=0
     total=$((total+1))
     local input="$runtime/src-$codec.$ext" ref="$runtime/ref-$codec.md5" hw="$runtime/hw-$codec.md5"
-    # 1. 输入生成 (输入/参考失败 -> 4, 超时 -> 5)
+    # 1. 输入生成 (输入/参考失败 -> 4, 超时 -> 5)；</dev/null 阻断 ffmpeg 的
+    #    tty stdin 交互（前台阻塞读键 / 后台 SIGTTIN 停止，真机矩阵实测根因：
+    #    ffmpeg T 态 do_signal_stop；测试脚本不得消费调用方终端）
     timeout --kill-after=2 "$TIMEOUT" "$FFMPEG_BIN" -y -f lavfi -i "testsrc2=size=320x240:rate=30:duration=1" \
-        -c:v "$enc" -profile:v main -pix_fmt yuv420p "$input" >/dev/null 2>&1; rc=$?
+        -c:v "$enc" -profile:v main -pix_fmt yuv420p "$input" </dev/null >/dev/null 2>&1; rc=$?
     if [[ "$rc" -ne 0 ]]; then
         if timeout_rc "$rc"; then record_fail "$codec" timeout_input_generation 5; else record_fail "$codec" input_generation_failed 4; fi
         return
     fi
     # 2. 软件参考 (-> 4/5)
-    timeout --kill-after=2 "$TIMEOUT" "$FFMPEG_BIN" -y -i "$input" -pix_fmt nv12 -f framemd5 "$ref" >/dev/null 2>&1; rc=$?
+    timeout --kill-after=2 "$TIMEOUT" "$FFMPEG_BIN" -y -i "$input" -pix_fmt nv12 -f framemd5 "$ref" </dev/null >/dev/null 2>&1; rc=$?
     if [[ "$rc" -ne 0 ]]; then
         if timeout_rc "$rc"; then record_fail "$codec" timeout_software_reference 5; else record_fail "$codec" software_reference_failed 4; fi
         return
     fi
     # 3. 强制 VAAPI 硬解 (解码失败 -> 1, 超时 -> 5; 无软件回退)
     timeout --kill-after=2 "$TIMEOUT" "$FFMPEG_BIN" -y -hwaccel vaapi -hwaccel_device "$NODE" -hwaccel_output_format vaapi \
-        -i "$input" -vf 'hwdownload,format=nv12' -f framemd5 "$hw" >/dev/null 2>&1; rc=$?
+        -i "$input" -vf 'hwdownload,format=nv12' -f framemd5 "$hw" </dev/null >/dev/null 2>&1; rc=$?
     if [[ "$rc" -ne 0 ]]; then
         if timeout_rc "$rc"; then record_fail "$codec" timeout_vaapi_decode 5; else record_fail "$codec" vaapi_decode_failed 1; fi
         return

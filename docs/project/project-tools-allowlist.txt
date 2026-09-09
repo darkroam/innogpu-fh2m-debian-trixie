@@ -80,6 +80,7 @@ docs/planning/evidence/4.0.2-i3/build-A.sha256
 docs/planning/evidence/4.0.2-i3/build-B.sha256
 docs/planning/evidence/4.0.2-i3/d-stage-snapshot.tar.zst
 docs/planning/evidence/4.0.2-i3/d-stage-snapshot.tar.zst.sha256
+docs/planning/evidence/4.0.2-i3/install-rollback.txt
 docs/planning/evidence/4.0.2-i3/run-test-results.txt
 docs/planning/evidence/d-stage-audit.D.manifest.tsv
 docs/planning/evidence/d-stage-audit.D.manifest.tsv.sha256

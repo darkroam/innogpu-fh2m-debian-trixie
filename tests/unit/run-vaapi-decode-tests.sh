@@ -12,7 +12,7 @@ SCRIPT="$ROOT/tools/run-vaapi-decode-test.sh"
 runtime="$(mktemp -d "${TMPDIR:-/tmp}/inno-vaapi-decode-tests.XXXXXX")"
 trap 'rm -rf "$runtime"' EXIT
 
-mkdir -p "$runtime/bin" "$runtime/scratch" "$runtime/sysfs/class/drm/renderD128/device" "$runtime/sysfs-intel/class/drm/renderD128/device"
+mkdir -p "$runtime/bin" "$runtime/scratch" "$runtime/sysfs/class/drm/renderD128/device" "$runtime/sysfs-intel/class/drm/renderD128/device" "$runtime/sysfs-none"
 printf '0x1ec8\n' > "$runtime/sysfs/class/drm/renderD128/device/vendor"
 printf '0x9810\n' > "$runtime/sysfs/class/drm/renderD128/device/device"
 printf '0x8086\n' > "$runtime/sysfs-intel/class/drm/renderD128/device/vendor"
@@ -161,7 +161,9 @@ run_rc decoder_missing     2 "$GOOD FAKE_NO_DECODER_H264=1" --codec h264 --devic
 run_rc decoder_hevc_only_ok 0 "$GOOD FAKE_NO_DECODER_H264=1" --codec hevc --device /dev/dri/renderD128
 run_rc vainfo_missing      2 "FFMPEG_BIN=$runtime/bin/ffmpeg VAINFO_BIN=/nonexistent/vainfo INNOGPU_VAAPI_FIXTURE_MODE=1" --codec all
 # ---- 设备/身份（rc=3）----
-run_rc device_missing      3 "$OK" --codec all
+# device_missing 必须在真机环境（存在真实 /dev/dri/renderD128）下也成立：
+# 注入空 fake sysfs 使 resolve_node 无命中（真机矩阵 t15 FAIL 根因，2026-09-09）
+run_rc device_missing      3 "$OK FAKE_SYSFS_ROOT=$runtime/sysfs-none" --codec all
 printf 'x' > "$runtime/plain-node"
 run_rc device_not_char     3 "$OK" --codec all --device "$runtime/plain-node"
 run_rc pci_mismatch        3 "$OK INNOGPU_VAAPI_SKIP_DEVICE_CHECKS=1 FAKE_SYSFS_ROOT=$runtime/sysfs-intel" --codec all --device /dev/dri/renderD128

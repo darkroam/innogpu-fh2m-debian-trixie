@@ -62,9 +62,11 @@ EXPECTED_KERNEL=6.12.101+deb13-amd64
 # 待测包版本经 INNOGPU_EXPECT_VERSION 传入（dsh 阶段二夹具修正 2026-09-09，
 # 与 run-capability-baseline.sh 同口径）；默认保持 4.0.1-i3 历史 pinned 值。
 # 注意：EXPECTED_OBJECT_SHA / EXPECTED_MODULE_BUILD_ID 为构建产物指纹安全
-# 门禁，跑 4.0.2-i3 observer 时必须换用该构建的实测指纹（运行时矩阵执行时更新）。
+# 门禁。2026-09-09 真机 4.0.2-i3 实测：innosrvkm.o_shipped（已装包）=
+# 30c59462… 与 pinned 一致（无需更新）；加载模块 build-id =
+# 75c16519ff1b2bb1581029ad91f873621556f07d（已更新）。
 EXPECTED_VERSION="${INNOGPU_EXPECT_VERSION:-4.0.1-i3}"
-EXPECTED_MODULE_BUILD_ID=be315ad1dc8de5248bb4d29f84e0a98fbc1978ab
+EXPECTED_MODULE_BUILD_ID=75c16519ff1b2bb1581029ad91f873621556f07d
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BUILD_OUTPUT_ROOT="$ROOT/build"
 if [[ -L $BUILD_OUTPUT_ROOT ]]; then

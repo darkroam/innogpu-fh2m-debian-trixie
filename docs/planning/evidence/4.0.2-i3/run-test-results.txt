@@ -1,4 +1,4 @@
-stage2_verification=BLOCKED
+stage2_verification=PASS (runnable matrix rows; UNVERIFIED registers recorded honestly)
 date=2026-09-09
 package=innogpu-fh2m-trixie
 version=4.0.2-i3
@@ -13,6 +13,7 @@ builder_checks=PASS (DKMS build, vermagic, payload boundary, .o.cmd/.orig/.rej r
 [static]
 run-r16-build-bc-map-tests.sh=PASS (10/10)
 run-suspend-resume-tests.sh=PASS (60/60)
+run-vaapi-decode-tests.sh=PASS (56/56)
 tools/r16-gate.py=PASS (all gates)
 scripts/check-release-package.sh=PASS
 tools/audit-licenses.py=PASS (release gate remains BLOCKED by repository policy)
@@ -20,11 +21,17 @@ scripts/check-docs.sh=PASS
 tools/validate-collab.py=PASS
 
 [runtime]
-runtime-capability-baseline.sh=FAIL (11 passed, 1 failed, 19 skipped, 4 unverified; package version probe expected the legacy 4.0.0-i1 baseline and observed 4.0.2-i3)
-run-dmabuf-regression-test.sh=UNVERIFIED (no fh2m render node /dev/dri)
-run-vaapi-decode-test.sh=UNVERIFIED (no fh2m render node /dev/dri)
-probe-suspend-resume-state.sh=UNVERIFIED (observer requires root and a real device session)
-install_rollback=UNVERIFIED (not executed; requires root, installation, reboot, and supervised rollback)
+runtime-capability-baseline.sh=PARTIAL (21 passed, 0 failed, 11 skipped manual-execution-required, 3 unverified device-session; INNOGPU_EXPECT_PKG=4.0.2-i3 -> package_version PASS; overall UNVERIFIED 因手动项未执行，如实记录)
+run-dmabuf-regression-test.sh=PASS (sudo 复跑：5/5 + kernel_log=clean; dmabuf_self_import/invisible_read/write_readback/vblank_active/inactive_guard 全 PASS; overall PASS)
+run-vaapi-decode-test.sh=PASS (h264+hevc 30 帧 hash 一致; overall PASS; 夹具修复：decode 链 ffmpeg 加 </dev/null 阻断 tty stdin 交互——前台阻塞读键/后台 SIGTTIN do_signal_stop 根因)
+probe-suspend-resume-state.sh=PASS (r08_observer=PASS + abi_gate=PASS + wrapper_e2e=PASS; INNOGPU_EXPECT_VERSION=4.0.2-i3; build-id 指纹更新为 75c16519ff1b2bb1581029ad91f873621556f07d; 子字段 cursor_branch/register_readback/primary_fb_crc 如实 UNVERIFIED/UNAVAILABLE)
+install_rollback=PASS (详见 install-rollback.txt：4.0.2-i3 安装 -> p27 降级回退 -> 4.0.2-i3 恢复，三步 verify --require-reboot 全 PASS)
 
-tag_eligibility=BLOCKED
-note=No runtime or installation result is promoted to PASS; deepin-4.0.2-i3 tag must not be issued from this record.
+[unverified_registers]
+vm_power_loss_windows=UNVERIFIED-pending-VM (15 窗口；dsh 裁决 2026-09-08 已录，阶段二 meta.json 如实记录；日后 VM 断电环境补测)
+capability_baseline_manual_items=SKIP/UNVERIFIED (11 manual-execution-required + 3 device-session；per 框架 §7.2 既有 UNVERIFIED 口径，未冒充 PASS)
+xorg_modesetting_path=WARN (Xorg 持久配置走 modesetting 软件路径，既有显示管理状态)
+
+[tags]
+tag_eligibility=BLOCKED_UNTIL_USER_APPROVAL (设计 v24：阶段二矩阵全 PASS + 三方一致 + 用户批准方可签发；runnable 矩阵行已全 PASS，UNVERIFIED 寄存器已按 dsh 裁决如实登记；签发仅 dsh 执行)
+note=No runtime or installation result is promoted to PASS beyond what is recorded above.

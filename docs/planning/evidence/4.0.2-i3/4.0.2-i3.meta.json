@@ -73,12 +73,28 @@
     },
     "run_test_results": {
       "path": "docs/planning/evidence/4.0.2-i3/run-test-results.txt",
-      "status": "blocked-unverified（当前会话无 /dev/dri，运行时项目无法 PASS；详见记录）"
+      "status": "completed（2026-09-09 真机矩阵：runnable 行全 PASS，UNVERIFIED 寄存器如实登记）"
     },
     "install_rollback": {
       "path": "docs/planning/evidence/4.0.2-i3/install-rollback.txt",
-      "status": "pending-待实测（dpkg 安装/回退验证证据）"
+      "status": "verified（4.0.2-i3 安装 -> p27 降级回退 -> 4.0.2-i3 恢复，三步 verify --require-reboot 全 PASS）"
     }
+  },
+  "runtime_matrix": {
+    "date": "2026-09-09",
+    "environment": "真机（FH2M，/dev/dri renderD128 + card0；root 监督执行）",
+    "results": {
+      "capability_baseline": "PARTIAL（21 PASS / 0 FAIL / 11 SKIP manual / 3 UNVERIFIED device-session；package_version PASS via INNOGPU_EXPECT_PKG=4.0.2-i3）",
+      "dmabuf": "PASS（5/5 + kernel_log clean，sudo 复跑）",
+      "vaapi": "PASS（h264+hevc；</dev/null 夹具修复）",
+      "suspend_observer": "PASS（r08_observer + abi_gate + wrapper_e2e；build-id 75c16519ff1b2bb1581029ad91f873621556f07d）",
+      "install_rollback": "PASS（往返闭环）"
+    },
+    "fixture_fixes": [
+      "run-capability-baseline.sh package_version 探针参数化（INNOGPU_EXPECT_PKG）",
+      "probe-suspend-resume-state.sh EXPECTED_VERSION 参数化（INNOGPU_EXPECT_VERSION）+ build-id 更新",
+      "run-vaapi-decode-test.sh decode 链 ffmpeg </dev/null（tty stdin 交互根因）+ run-vaapi-decode-tests.sh device_missing 空 sysfs 注入（真机环境兼容）"
+    ]
   },
   "install_rollback_instructions": {
     "install": "dpkg -i build/innogpu-fh2m-trixie_4.0.2-i3.deb（需 root；安装后重启）",
@@ -92,8 +108,8 @@
       "不得引用阶段三的任何 fixture/工具",
       "任何阶段二验证失败 → deepin-4.0.2-i3 tag 不得签发 → 阶段三不得启动"
     ],
-    "status": "partial（2026-09-09 实测：build 双 clean-build 字节一致 PASS + static 全套 PASS；runtime = BLOCKED/UNVERIFIED（无 /dev/dri、suspend observer 需 root、install-rollback 未执行）；详见 run-test-results.txt）",
-    "tag_eligibility": "BLOCKED（运行时与安装回退验证完成前，deepin-4.0.2-i3 annotated tag 不得签发）"
+    "status": "completed（2026-09-09 真机矩阵：build 双 clean-build 字节一致 PASS + static 全套 PASS + runtime runnable 行全 PASS（dmabuf/vaapi/observer/install-rollback）；UNVERIFIED 寄存器（15 VM 窗口、baseline 手动项、Xorg modesetting WARN）如实登记；详见 run-test-results.txt）",
+    "tag_eligibility": "BLOCKED_UNTIL_USER_APPROVAL（设计 v24：阶段二矩阵全 PASS + 三方一致 + 用户批准方可签发；签发仅 dsh 执行，任何其他方不得创建/推送 deepin-4.0.2-i3）"
   },
   "dsh_confirmations": [
     "git_tag_ref = deepin-4.0.2-i3 唯一确认（2026-09-09）",

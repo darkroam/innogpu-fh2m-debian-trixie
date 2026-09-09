@@ -1,0 +1,23 @@
+stage2_install_rollback=PASS
+date=2026-09-09
+package=innogpu-fh2m-trixie
+version=4.0.2-i3
+package_sha256=177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662
+kernel=6.12.101+deb13-amd64
+
+[install]
+dpkg_install=PASS (build/innogpu-fh2m-trixie_4.0.2-i3.deb; DKMS uninstall->build->sign(mok)->install->initramfs, 无错)
+verify_after_reboot=PASS (scripts/verify-install-status.sh --require-reboot 4.0.2-i3 -> RESULT: PASS_INSTALL_STATUS; 包元数据早于启动 / 模块加载 / Driver+Firmware OK / card0+renderD128+fb0 / 桌面 GL=Innosilicon/Fantasy / DRI3)
+warnings=WARN: Xorg persistent config uses modesetting software path（既有显示管理状态，非本批引入）
+
+[rollback]
+rollback_target=3.3.3.42-patched-27 (docs/user/recovery.md 首选回退链)
+downgrade_install=PASS (sudo apt install --allow-downgrades debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb + depmod + update-initramfs)
+verify_after_rollback_reboot=PASS (verify-install-status.sh --require-reboot 3.3.3.42-patched-27 -> RESULT: PASS_INSTALL_STATUS)
+restore_4_0_2_i3=PASS (sudo dpkg -i build/innogpu-fh2m-trixie_4.0.2-i3.deb + reboot)
+verify_after_restore_reboot=PASS (verify-install-status.sh --require-reboot 4.0.2-i3 -> RESULT: PASS_INSTALL_STATUS)
+
+[notes]
+supervised=dsh 全程监督执行（2026-09-09 真机矩阵）
+roundtrip=4.0.2-i3 安装 PASS -> p27 降级回退 PASS -> 4.0.2-i3 恢复 PASS（完整往返闭环）
+side_effect=apt 顺带配置了此前未配置的 linux-headers-6.12.107（无害）
