@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "created_utc": "2026-09-09T04:58:59Z",
+  "created_utc": "2026-09-09T07:40:59Z",
   "label": "F0",
   "src_root": "/tmp/r16-f0/usr/src/fantgpu-fh2m-kernel-2.2",
   "deb": {
@@ -40,6 +40,6 @@
   },
   "tool": {
     "path": "tools/o4-f0-lock-gen.py",
-    "sha256": "b36695b2da1f153a404205059cd115a786d45111045ac95f8ec72a44fc0f7d33"
+    "sha256": "b6e5117e17103291b95ce69c07330865f7316dc0e6091cb87770d27cf7511b8d"
   }
 }

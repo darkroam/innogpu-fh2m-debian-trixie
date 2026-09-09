@@ -41,6 +41,7 @@ GENESIS_SCHEMA = "1.0"
 PROTECTED_TOPS = ("debs", "vendor", "build", "third_party", "migration",
                   "drivers", "baselines", "patches")
 ALLOWED_OUT_SUFFIXES = ("docs/planning/evidence/o-stage",)
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 
 def eprint(msg):
@@ -60,14 +61,27 @@ def check_env():
 
 
 def check_out_dir(out_dir):
+    # codex O-4 初审 P1：真实路径边界校验（realpath + commonpath 精确
+    # 边界），替代字符串匹配——
+    #   - 拒绝 /tmpfoo 前缀误匹配（/tmpfoo realpath 不在 /tmp 下）；
+    #   - 拒绝仓库外同名 docs/planning/evidence/o-stage（以本仓库
+    #     realpath 为锚的精确 commonpath）；
+    #   - 拒绝输出目录为 symlink（含指向保护区的 symlink：realpath 会
+    #     解析到保护区路径，makedirs/写入跟随 symlink 即保护区零写入违反）。
     ap = os.path.abspath(out_dir)
-    if ap.startswith("/tmp"):
+    if os.path.lexists(ap) and os.path.islink(ap):
+        exit_err(EX_CFG, "out-dir is a symlink: %s (refuse to write through it)"
+                 % ap)
+    rp = os.path.realpath(ap)
+    tmp_root = os.path.realpath("/tmp")
+    allowed = os.path.realpath(os.path.join(REPO_ROOT, ALLOWED_OUT_SUFFIXES[0]))
+    ok_tmp = rp == tmp_root or rp.startswith(tmp_root + os.sep)
+    ok_ostage = rp == allowed or rp.startswith(allowed + os.sep)
+    if ok_tmp or ok_ostage:
         return ap
-    for suf in ALLOWED_OUT_SUFFIXES:
-        if ap.endswith("/" + suf) or ap == suf:
-            return ap
-    exit_err(EX_CFG, "out-dir not allowed: %s (must be %s or under /tmp)"
-             % (out_dir, " / ".join(ALLOWED_OUT_SUFFIXES)))
+    exit_err(EX_CFG, "out-dir not allowed: %s (realpath=%s; must be under "
+             "/tmp or the repo's %s)" % (out_dir, rp,
+                                         ALLOWED_OUT_SUFFIXES[0]))
     return None
 
 
@@ -245,28 +259,191 @@ def update_genesis(out_dir, mutator):
         fh.write("\n")
 
 
+def inject_fail(point):
+    # 故障注入钩子（codex O-4 复审 P1 要求的替换间故障测试）：仅当
+    # O4_FAIL_INJECT 与 point 匹配时抛 OSError；生产运行零影响。
+    if os.environ.get("O4_FAIL_INJECT") == point:
+        raise OSError("injected failure at %s" % point)
+
+
+def sidecar_matches(path, expected_sha):
+    expected = "%s  %s\n" % (expected_sha, SNAPSHOT_BASENAME)
+    try:
+        with open(path, "r", encoding="ascii", newline="") as fh:
+            return fh.read() == expected
+    except (OSError, UnicodeError):
+        return False
+
+
+def recover_interrupted(out_dir, dest, sidecar, bak_tar, bak_sha, txn, det,
+                        sha_tmp):
+    # codex O-4 复审 P1 三轮：启动恢复按状态处理，禁止盲目删除备份——
+    #   1) 备份对完整且正式对缺失 → 先恢复备份（中断于备份后/提交前，
+    #      备份是唯一旧证据）；
+    #   2) 正式新对与 genesis 一致 → 清理备份与事务残留；
+    #   3) 混合/无法判定 → 保留全部文件并失败退出，不得删除。
+    has_dest = os.path.lexists(dest)
+    has_side = os.path.lexists(sidecar)
+    has_bak_tar = os.path.lexists(bak_tar)
+    has_bak_sha = os.path.lexists(bak_sha)
+    formal = has_dest and has_side
+    backup_pair = has_bak_tar and has_bak_sha
+
+    def clean_txn_residue():
+        for stale in (txn, det, sha_tmp):
+            if os.path.lexists(stale):
+                os.unlink(stale)
+
+    if backup_pair and not formal:
+        # codex O-4 复审 P1 四轮：两步恢复必须可撤销——第二步失败时撤销
+        # 第一步，保留完整 backup-only 状态供下次启动重试（不得留下
+        # "正式 tar + bak sidecar" 的 partial 状态）
+        os.replace(bak_tar, dest)
+        try:
+            inject_fail("restore_sha")
+            os.replace(bak_sha, sidecar)
+        except OSError:
+            try:
+                os.replace(dest, bak_tar)
+            except OSError:
+                exit_err(5, "restore rollback failed; partial state preserved "
+                            "(formal tar + bak sidecar); manual resolution "
+                            "required before re-run")
+            raise
+        clean_txn_residue()
+        inject_fail("post_recovery")
+        return
+    if formal:
+        gpath = os.path.join(out_dir, GENESIS_BASENAME)
+        consistent = False
+        if os.path.isfile(gpath):
+            try:
+                with open(gpath, "r", encoding="utf-8") as fh:
+                    g = json.load(fh)
+                dest_sha = sha256_file(dest)
+                snapshot = g.get("snapshot", {})
+                consistent = (
+                    snapshot.get("basename") == SNAPSHOT_BASENAME
+                    and snapshot.get("sha256") == dest_sha
+                    and snapshot.get("byte_count") == os.path.getsize(dest)
+                    and sidecar_matches(sidecar, dest_sha)
+                )
+            except (OSError, ValueError):
+                consistent = False
+        if not consistent:
+            exit_err(5, "formal snapshot pair inconsistent with sidecar/genesis; "
+                        "all files preserved; manual resolution required "
+                        "before re-run")
+        if has_bak_tar or has_bak_sha:
+            for stale in (bak_tar, bak_sha):
+                if os.path.lexists(stale):
+                    os.unlink(stale)
+        clean_txn_residue()
+        return
+    # 无正式对
+    if not (has_bak_tar or has_bak_sha):
+        clean_txn_residue()
+        return
+    exit_err(5, "interrupted state undeterminable (backup without formal "
+                "pair); all files preserved; manual resolution required "
+                "before re-run")
+
+
 def cmd_snapshot(args):
+    # codex O-4 复审 P1：快照/sidecar/genesis 一致提交——备份旧对 →
+    # 提交新对 → 原子更新 genesis；任一步失败回滚旧对（首跑失败则移除
+    # 新文件），不产生"新快照+旧 sidecar"类不一致证据。zstd -o 拒绝
+    # 覆盖既有目标，故快照先写事务临时文件（同目录，原子替换）。
     tv, zv = require_tools()
     dest = os.path.join(args.out_dir, SNAPSHOT_BASENAME)
-    sha_a = build_snapshot(args.src_root, dest)
-    tmp2 = dest + ".det2.tmp"
-    sha_b = build_snapshot(args.src_root, tmp2)
+    sidecar = dest + ".sha256"
+    txn = dest + ".txn.tmp"
+    det = dest + ".det2.tmp"
+    sha_tmp = dest + ".sha256.txn.tmp"
+    bak_tar = dest + ".bak.tmp"
+    bak_sha = sidecar + ".bak.tmp"
+    try:
+        recover_interrupted(args.out_dir, dest, sidecar, bak_tar, bak_sha,
+                            txn, det, sha_tmp)
+    except OSError as e:
+        exit_err(5, "snapshot recovery failed: %s" % e)
+    sha_a = build_snapshot(args.src_root, txn)
+    sha_b = build_snapshot(args.src_root, det)
     deterministic = (sha_a == sha_b)
-    os.unlink(tmp2)
+    os.unlink(det)
     if not deterministic:
-        exit_err(5, "snapshot not deterministic (two runs differ)")
-
-    with open(dest + ".sha256", "w", encoding="utf-8") as fh:
+        os.unlink(txn)
+        exit_err(5, "snapshot not deterministic (two runs differ); old "
+                    "evidence preserved")
+    with open(sha_tmp, "w", encoding="utf-8") as fh:
         fh.write("%s  %s\n" % (sha_a, SNAPSHOT_BASENAME))
-
-    def mut(g):
+    had = {dest: os.path.lexists(dest), sidecar: os.path.lexists(sidecar)}
+    gpath = os.path.join(args.out_dir, GENESIS_BASENAME)
+    gtmp = gpath + ".txn.tmp"
+    try:
+        # 备份旧对（任一备份失败回滚已备份者）
+        moved = []
+        for src, bak in ((dest, bak_tar), (sidecar, bak_sha)):
+            if os.path.lexists(src):
+                try:
+                    os.replace(src, bak)
+                    moved.append((src, bak))
+                except OSError:
+                    for s, b in reversed(moved):
+                        os.replace(b, s)
+                    raise
+        inject_fail("backup_done")
+        os.replace(txn, dest)
+        inject_fail("commit_tar")
+        os.replace(sha_tmp, sidecar)
+        inject_fail("commit_sha")
+        # genesis 原子更新（tmp + replace）
+        with open(gpath, "r", encoding="utf-8") as fh:
+            g = json.load(fh)
         g["snapshot"] = {"basename": SNAPSHOT_BASENAME, "sha256": sha_a,
                          "byte_count": os.path.getsize(dest)}
         g["snapshot_tool_versions"] = {"tar": tv, "zstd": zv,
                                        "tar_required": TAR_REQUIRED,
                                        "zstd_required": ZSTD_REQUIRED}
         g["determinism_self_check"] = "pass" if deterministic else "fail"
-    update_genesis(args.out_dir, mut)
+        with open(gtmp, "w", encoding="utf-8") as fh:
+            json.dump(g, fh, indent=2, ensure_ascii=False)
+            fh.write("\n")
+        inject_fail("genesis_write")
+        os.replace(gtmp, gpath)
+    except Exception as e:
+        # 回滚：仅发生在 genesis 提交点之前——还原旧对（有备份者以备份
+        # 覆盖；无备份且非旧文件者移除），不产生不一致证据
+        for src, bak in ((dest, bak_tar), (sidecar, bak_sha)):
+            if os.path.lexists(bak):
+                try:
+                    os.replace(bak, src)
+                except OSError:
+                    pass
+            elif not had.get(src):
+                try:
+                    if os.path.lexists(src):
+                        os.unlink(src)
+                except OSError:
+                    pass
+        if os.path.lexists(gtmp):
+            try:
+                os.unlink(gtmp)
+            except OSError:
+                pass
+        exit_err(5, "snapshot transaction failed (rolled back; old evidence "
+                    "preserved): %s" % e)
+    # codex O-4 复审 P1（二轮）：genesis 已提交 = 事务提交点已过——
+    # 备份清理失败**不得**触发回滚（回滚会以旧对覆盖新对而 genesis 已新，
+    # 形成"旧对+新 genesis"不一致）；清理失败仅留 .bak.tmp 残留，由下次
+    # 启动统一清理，完整新对保持生效。
+    for _s, b in moved:
+        try:
+            inject_fail("cleanup_bak")
+            if os.path.lexists(b):
+                os.unlink(b)
+        except OSError:
+            pass
     print("snapshot: %s sha256=%s determinism=%s"
           % (SNAPSHOT_BASENAME, sha_a, "pass" if deterministic else "fail"))
     return 0
