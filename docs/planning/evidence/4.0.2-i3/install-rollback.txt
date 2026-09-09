@@ -18,6 +18,6 @@ restore_4_0_2_i3=PASS (sudo dpkg -i build/innogpu-fh2m-trixie_4.0.2-i3.deb + reb
 verify_after_restore_reboot=PASS (verify-install-status.sh --require-reboot 4.0.2-i3 -> RESULT: PASS_INSTALL_STATUS)
 
 [notes]
-supervised=dsh 全程监督执行（2026-09-09 真机矩阵）
+supervised=user 全程监督执行（2026-09-09 真机矩阵；署名修正 per 用户确认 2026-09-09：原「dsh 全程监督执行」表述不准确，本协作会话 dsh 未物理监督）
 roundtrip=4.0.2-i3 安装 PASS -> p27 降级回退 PASS -> 4.0.2-i3 恢复 PASS（完整往返闭环）
 side_effect=apt 顺带配置了此前未配置的 linux-headers-6.12.107（无害）
