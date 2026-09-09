@@ -1,0 +1,46 @@
+diff -ruN -x '*.o' -x '*.ko' -x '*.mod*' -x '.tmp*' -x Module.symvers -x modules.order a/fantsrvkm/fantdpu_connector.c b/fantsrvkm/fantdpu_connector.c
+--- a/fantsrvkm/fantdpu_connector.c	2026-09-09 18:07:40.951211929 +0800
++++ b/fantsrvkm/fantdpu_connector.c	2026-09-09 18:22:19.527065871 +0800
+@@ -1454,6 +1454,20 @@
+ 	return ret;
+ }
+ 
++/*
++ * This DPU match identifies the KaiTian X7 G1e internal panel on the
++ * current device.  Its DP0 connector is the built-in panel, but the
++ * optional hwinfo query is unavailable and otherwise falls back to DP.
++ */
++#define FANTGPU_LOCAL_INTERNAL_EDP_DPU_MATCH 141
++#define FANTGPU_LOCAL_INTERNAL_EDP_OUTPUT_INDEX 9
++
++static bool fantdpu_local_internal_edp(enum connector_module conn_module)
++{
++	return conn_module == CONNECTOR_M_DP0 &&
++		s_dpu_match == FANTGPU_LOCAL_INTERNAL_EDP_DPU_MATCH;
++}
++
+ static void fantdpu_logo_extime_blacklist(struct drm_device *drm_dev)
+ {
+ 	struct hw_board_info *match_board = NULL;
+@@ -2213,6 +2227,10 @@
+ 
+ 	version = fh2m_hal_hwinfo_version(pdev);
+ 	if (version < 0) {
++		if (fantdpu_local_internal_edp(conn_module)) {
++			conn_info(dev, "hwinfo unavailable; using local internal eDP output\n");
++			return FANTGPU_LOCAL_INTERNAL_EDP_OUTPUT_INDEX;
++		}
+ 		fh2m_fantdpu_err(dev, "hwinfo version failed\n");
+ 		return -EFAULT;
+ 	}
+@@ -2226,6 +2244,10 @@
+ 
+ 		ret = fh2m_hal_get_output_mode(pdev, connector_id, &val);
+ 		if (ret < 0) {
++			if (fantdpu_local_internal_edp(conn_module)) {
++				conn_info(dev, "output mode unavailable; using local internal eDP output\n");
++				return FANTGPU_LOCAL_INTERNAL_EDP_OUTPUT_INDEX;
++			}
+ 			fh2m_fantdpu_err(dev, "fh2m_hal_get_output_mode failed, Using 0\n");
+ 			val = 0;
+ 		}

@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0",
+  "id": "030-009",
+  "ledger_ref": {
+    "item": "009",
+    "neutral_record": "D006",
+    "mapping": "docs/planning/030-mapping-table.md §三.3/§三.4",
+    "description": "local-internal-edp-connector"
+  },
+  "deepin_patch": {
+    "path": "patches/009-local-internal-edp-connector.patch",
+    "sha256": "e6b955fd3cbde69f211098108c2770fdce8d8eb052096ee20d03b9522e5bb26c",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "docs/planning/evidence/o-stage/f0-snapshot.tar.zst",
+      "sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e"
+    },
+    "tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+    "chain_base": {
+      "id": "030-006",
+      "after_tree_hash": "46a7621812d916bc9b018d1c705e9d9b0bb34bf009e53677905eefccbf6fed39"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "adapted-port",
+      "summary": "台账 009 共 4 语义项（P5 line 357，F 完全缺失）：① 常量 FANTGPU_LOCAL_INTERNAL_EDP_DPU_MATCH 141 / OUTPUT_INDEX 9 + 判定函数（reg_module==REG_M_DP && s_dpu_match==141）；② get_interface_mode 中 internal-edp 命中且 (hal_version<0 || ret<0) 且 output_mode==DisplayPort 时重映射为 eDP；③ get_output_index hwinfo version<0 时返回 9；④ get_output_index get_output_mode ret<0 时返回 9。F0 移植：hunk ① 命名适配（INNOGPU_→FANTGPU_、innodpu_→fantdpu_、REG_M_DP→CONNECTOR_M_DP0、reg_module→conn_module 枚举）；hunk ③④ 同位移植到 F0 单一 chokepoint fantdpu_get_output_index（fant_dev* + conn_module 签名）；hunk ② 语义经 F0 查表路径等价覆盖（dp_output_mode[9]=eDP 表项实现 D 侧 val==9→eDP 语义，F0 所有 get_connector_output_mode 调用均经 get_output_index），未重复移植 remap。残余风险（如实）：version∈[0,0x7) 且 dp2vga 查询失败时 D 侧 hunk ② remap 触发而 F0 保持 DP——该路径需旧 hwinfo（<0x7），G0M 现代 HAL 下预期不可达，记 UNVERIFIED。"
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "D 端目标分类 mit-or-gpl-2.0-only（030-mapping-table §三.1，BC-09 innodpu_connector.c→srvkm/dpu_connector.c）；未引入第三方文件或 notice；正式 tools/audit-licenses.py 结果待批次验证。"
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "030-001, 030-002, 030-006 applied",
+      "summary": "链基 = 030-006 after_tree_hash 46a76218…；builder 序 009 先于 007（per scripts/build-deepin-coherent.sh），本批位于 006 之后、007 之前；不依赖其他未应用 030-NNN。"
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "adapted-port",
+      "summary": "结构合并的同位移植：D 侧双函数路径（innodpu_get_interface_mode 的 reg_module switch + innodpu_get_output_index）在 F0 合并为单一 fantdpu_get_output_index → fantdpu_get_connector_output_mode 查表路径；hunk ③④ 落点按 F0 结构落位（get_output_index 内 version<0 / ret<0 两分支，缩进与 D 侧一致），hunk ② 重映射语义经 dp_output_mode[9]=eDP 表项等价覆盖；无 hunk 被 F0 基线吸收、无伪造改动。"
+    }
+  },
+  "apply": {
+    "before_tree_hash": "46a7621812d916bc9b018d1c705e9d9b0bb34bf009e53677905eefccbf6fed39",
+    "after_tree_hash": "b3f003bb9b07eca81421bbbb23f55f4c0256f5df5fee6ce6de847c39faa4af76",
+    "patch_sha256": "2e4240bd4bdeae82e60375bc22a820440e1df25bd03982ef3e9d7e4785d90203",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <CHAIN_BASE> < patches/030-009.patch",
+    "result": "1 file changed (fantsrvkm/fantdpu_connector.c); no .orig/.rej; fresh replay tree hash == after_tree_hash"
+  },
+  "rollback": {
+    "command": "remove O_stage and re-extract chain base (F0 snapshot + 030-001.patch + 030-002.patch + 030-006.patch); do not reverse-edit F0",
+    "target": "chain base tree hash 46a7621812d916bc9b018d1c705e9d9b0bb34bf009e53677905eefccbf6fed39"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "fresh chain-base replay: -p1, --fuzz=0, rc=0",
+        "no .orig/.rej artifacts",
+        "replay tree hash b3f003bb9b07eca81421bbbb23f55f4c0256f5df5fee6ce6de847c39faa4af76 == adapted tree",
+        "apply_level -p1 按来源 patch 实际 diff 头（a/innosrvkm/… 单层前缀）实测测定"
+      ]
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "阶段三 O-3 fixture、内核模块编译/加载及 per-030 验证矩阵；含内接 eDP 输出模式实机确认（hwinfo 缺失/输出查询失败两路径）与 version<0x7 残余风险观测（UNVERIFIED）"
+    }
+  }
+}
