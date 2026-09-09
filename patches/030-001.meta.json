@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0",
+  "id": "030-001",
+  "ledger_ref": {
+    "item": "001",
+    "neutral_record": "D002",
+    "mapping": "docs/planning/030-mapping-table.md §三.3/§三.4",
+    "description": "kernel-6.12 compatibility prerequisite"
+  },
+  "deepin_patch": {
+    "path": "patches/001-kernel-6.12-compat.patch",
+    "sha256": "be5c8ae9e08f5a2979e939bd18d4f9cc35593c5333fe80b1fb7748ffdcf71ab5",
+    "apply_level": "-p6"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "docs/planning/evidence/o-stage/f0-snapshot.tar.zst",
+      "sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e"
+    },
+    "tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+    "source_root": "/tmp/r16-f0/usr/src/fantgpu-fh2m-kernel-2.2"
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "adapted-port",
+      "summary": "重放 001 的 6.12 API 兼容语义到 F0 fant* 命名树；inno_*→fant_*、innosrvkm→fantsrvkm、pvr_fence_trace.h→ft_fence_trace.h、pvr_drm.c→ft_drm.c 均按 §三.2 映射适配。"
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "030-mapping-table §三.1/§三.2 的 D 端目标分类为 mit-or-gpl-2.0-only；未引入第三方文件或 notice，正式 tools/audit-licenses.py 结果待批次验证。"
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "none",
+      "summary": "台账项 001 为构建前提，映射表标注最先应用；不依赖其他 030-NNN。"
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "adapted-port",
+      "summary": "F0 已有 fant* 目录及 ft_* 文件名；Kbuild 保留 F0 的 -fstack-protector-strong，仅移植 5 项 -Wno-error 豁免。fant_task.c 的对应 hunk 已被 F0 基线吸收，未伪造改动。"
+    }
+  },
+  "apply": {
+    "before_tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+    "after_tree_hash": "bdcd0bbb9f1794607a2dd890e190a6c628c170496510d00acec167906b176b91",
+    "patch_sha256": "fe8b2c1a158b92e255f577ef6d4f467e44d1c21f18aff927a6aa5a5aec22a362",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <F0_ROOT> < patches/030-001.patch",
+    "result": "20 files changed, 1 new file; no .orig/.rej"
+  },
+  "rollback": {
+    "command": "remove O_stage and re-extract docs/planning/evidence/o-stage/f0-snapshot.tar.zst; do not reverse-edit F0",
+    "target": "F0 base tree hash 7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "adapted patch dry-run: -p6, --fuzz=0",
+        "fresh F0 replay: -p1, --fuzz=0",
+        "no .orig/.rej artifacts",
+        "after tree manifest regenerated: 507 rows / tree hash bdcd0bbb9f1794607a2dd890e190a6c628c170496510d00acec167906b176b91"
+      ]
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "阶段三 O-3 fixture、内核模块编译/加载及 per-030 验证矩阵"
+    }
+  }
+}
