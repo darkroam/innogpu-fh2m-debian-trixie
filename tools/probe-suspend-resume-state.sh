@@ -59,7 +59,11 @@ DESKTOP_UID="$(id -u "$DESKTOP_USER")"
 DESKTOP_GID="$(id -g "$DESKTOP_USER")"
 EXPECTED_OBJECT_SHA=30c594629d1d0e32674e793f2f4235afd4efd3f1e92ee4e4ed1920b315618c2b
 EXPECTED_KERNEL=6.12.101+deb13-amd64
-EXPECTED_VERSION=4.0.1-i3
+# 待测包版本经 INNOGPU_EXPECT_VERSION 传入（dsh 阶段二夹具修正 2026-09-09，
+# 与 run-capability-baseline.sh 同口径）；默认保持 4.0.1-i3 历史 pinned 值。
+# 注意：EXPECTED_OBJECT_SHA / EXPECTED_MODULE_BUILD_ID 为构建产物指纹安全
+# 门禁，跑 4.0.2-i3 observer 时必须换用该构建的实测指纹（运行时矩阵执行时更新）。
+EXPECTED_VERSION="${INNOGPU_EXPECT_VERSION:-4.0.1-i3}"
 EXPECTED_MODULE_BUILD_ID=be315ad1dc8de5248bb4d29f84e0a98fbc1978ab
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BUILD_OUTPUT_ROOT="$ROOT/build"

@@ -595,7 +595,7 @@ fi
 
 if grep -Fq 'EXPECTED_OBJECT_SHA=30c594629d1d0e32674e793f2f4235afd4efd3f1e92ee4e4ed1920b315618c2b' "$OBSERVER" &&
    grep -Fq 'EXPECTED_KERNEL=6.12.101+deb13-amd64' "$OBSERVER" &&
-   grep -Fq 'EXPECTED_VERSION=4.0.1-i3' "$OBSERVER" &&
+   grep -Fq 'EXPECTED_VERSION="${INNOGPU_EXPECT_VERSION:-4.0.1-i3}"' "$OBSERVER" &&
    grep -Fq 'EXPECTED_MODULE_BUILD_ID=be315ad1dc8de5248bb4d29f84e0a98fbc1978ab' "$OBSERVER" &&
    grep -Fq 'loaded_module_build_id_mismatch' "$OBSERVER" &&
    grep -Fq 'pahole -F btf -C "$type" /sys/kernel/btf/innogpu' "$OBSERVER" &&

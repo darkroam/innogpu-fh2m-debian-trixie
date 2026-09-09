@@ -1,5 +1,7 @@
 #!/bin/bash
-# Real-device capability baseline for FH2M (4.0.0-i1, kernel 6.12.101+deb13-amd64).
+# Real-device capability baseline for FH2M (kernel 6.12.101+deb13-amd64).
+# 待测版本经 INNOGPU_EXPECT_PKG 传入（未设置时 package_version 探针记
+# UNVERIFIED；dsh 阶段二夹具修正 2026-09-09，禁止硬编码版本号）。
 #
 # Read-only by default. Side-effect operations (real VT fbterm, modeset/hotplug/
 # lid, audio playback, Vulkan/OpenCL/VA-API/DMA-BUF execution) are NEVER
@@ -109,13 +111,18 @@ HAS_TTY=$([ -t 0 ] && echo yes || echo no)
 HAS_X=$([ -n "${DISPLAY:-}" ] && echo yes || echo no)
 KERNEL="$(uname -r)"
 PKG="$(dpkg-query -W -f='${Version}' innogpu-fh2m-trixie 2>/dev/null || echo unknown)"
+# 待测版本由环境传入（dsh 阶段二运行时矩阵夹具修正 2026-09-09：版本探针
+# 不得硬编码——硬编码 4.0.0-i1 对 4.0.2-i3 恒 FAIL，属夹具陈旧非产品缺陷）；
+# 未提供 INNOGPU_EXPECT_PKG 时版本探针记 UNVERIFIED（不冒充 PASS/FAIL）
+EXPECT_PKG="${INNOGPU_EXPECT_PKG:-}"
 # lspci -nnD 输出带 domain 前缀(0000:)，与 /sys/bus/pci/devices/ 路径一致
 BDF="$(lspci -nnD 2>/dev/null | grep '1ec8:9810' | awk '{print $1}' | head -1 || true)"
 BDF_N="$(lspci -nnD 2>/dev/null | grep -c '1ec8:9810' || true)"
 PCI_LINE="$(lspci -nnD 2>/dev/null | grep '1ec8:9810' | head -1 || true)"
 SCRIPT_COMMIT="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
 
-printf '# runtime-capability-baseline (4.0.0-i1) %s mode=%s\n' "$TS" "$MODE"
+printf '# runtime-capability-baseline (expect=%s) %s mode=%s\n' \
+    "${EXPECT_PKG:-unset}" "$TS" "$MODE"
 printf '# kernel=%s package=%s pci_bdf=%s(%s) tested_commit=%s root=%s dri=%s fb=%s tty=%s x=%s\n' \
   "$KERNEL" "$PKG" "${BDF:-none}" "${BDF_N:-0}" "$SCRIPT_COMMIT" "$IS_ROOT" "$HAS_DRI" "$HAS_FB" "$HAS_TTY" "$HAS_X"
 for t in lspci drm_info glxinfo vulkaninfo clinfo vainfo aplay wpctl gcc xrandr; do
@@ -160,7 +167,19 @@ else
     record pci_driver_binding UNVERIFIED "no bdf discovered"
 fi
 
-if [[ "$PKG" == "4.0.0-i1" ]]; then record package_version PASS; else record package_version FAIL "got=$PKG"; fi
+if [[ -n "$EXPECT_PKG" ]]; then
+    if [[ "$PKG" == "$EXPECT_PKG" ]]; then
+        record package_version PASS
+    else
+        record package_version FAIL "got=$PKG expect=$EXPECT_PKG"
+    fi
+else
+    if [[ "$PKG" == unknown ]]; then
+        record package_version FAIL "got=$PKG"
+    else
+        record package_version UNVERIFIED "got=$PKG (INNOGPU_EXPECT_PKG not set; expectation not asserted)"
+    fi
+fi
 
 DKMS="$(/usr/sbin/dkms status 2>/dev/null | grep 'innogpu-kernel/2.2' | head -1 || true)"
 if [[ "$DKMS" == *installed* ]]; then record dkms_status PASS; else record dkms_status FAIL "dkms=$DKMS"; fi
