@@ -91,6 +91,11 @@ docs/planning/evidence/d-stage-audit.symlink.tsv
 docs/planning/evidence/d-stage-audit.symlink.tsv.sha256
 docs/planning/evidence/d-stage-audit.tsv
 docs/planning/evidence/d-stage-audit.tsv.sha256
+docs/planning/evidence/o-stage/f0-snapshot.tar.zst
+docs/planning/evidence/o-stage/f0-snapshot.tar.zst.sha256
+docs/planning/evidence/o-stage/f0.manifest.tsv
+docs/planning/evidence/o-stage/f0.manifest.tsv.sha256
+docs/planning/evidence/o-stage/o4-f0.genesis.json
 docs/planning/fantgpu-base-update-evaluation.md
 docs/planning/history.md
 docs/planning/patch-provenance.md
@@ -236,6 +241,7 @@ tools/build-release-archive.py
 tools/d-stage-audit-gen.py
 tools/finalize-suspend-resume-failure.py
 tools/generate-binary-manifest.py
+tools/o4-f0-lock-gen.py
 tools/p2-normalize-v3.py
 tools/patch-gpupll-object.py
 tools/private-data-patterns.txt
