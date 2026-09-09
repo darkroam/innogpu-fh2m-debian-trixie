@@ -179,35 +179,35 @@ F0 内容、不预判阶段三决策**）：
 | Kbuild（001 的 -Wno-error 豁免） | 001 | 无 TSV 行（归 build-metadata，非源码文件） | — |
 | gpu/compat_kernel6.h（001 新增文件） | 001 | 无 TSV 行（D 端新增，F 侧无对应） | — |
 
-### 三.3 来源 patch SHA-256 与顺序（2026-09-07 填实；SHA 待 sha256sum 实测复核）
+### 三.3 来源 patch SHA-256 与顺序（2026-09-08 sha256sum 实测复核）
 
 SHA-256 来源：`docs/planning/patch-provenance.md` 记录值（9 项启用 +
-4 项关闭）+ 工具 SHA（patch-000）。5 项 suspend patch 的 SHA 待
-sha256sum 实测（批次1b，需 Bash）；9 项记录值同样待实测复核后再认定
-为"已填实"。顺序约束来源：patch-provenance 启用集合（patched-27 开关
-集合）+ docs/patches/024-suspend-resume.md 构建接线记录。
+4 项关闭）+ 工具 SHA（patch-000）。19 项来源文件（含 5 项此前 TBD）
+均已由 sha256sum 实测，记录值与磁盘内容一致。顺序约束来源：
+patch-provenance 启用集合（patched-27 开关集合）+
+docs/patches/024-suspend-resume.md 构建接线记录。
 
-| 台账项 | 来源 patch（文件） | SHA-256（记录值/待实测） | 顺序约束 |
+| 台账项 | 来源 patch（文件） | SHA-256（实测） | 顺序约束 |
 |---|---|---|---|
-| 1 001 | `patches/001-kernel-6.12-compat.patch` | be5c8ae9e08f5a2979e939bd18d4f9cc35593c5333fe80b1fb7748ffdcf71ab5（待复核） | **最先应用**（构建前提；Kbuild -Wno-error 豁免归 build-metadata） |
-| 2 002 | `patches/002-dp-fbdev-fallback-mode.patch` | 1a12de65f201839232a99f542707f43240b175bbe80029926b4ed3ab180f7329（待复核） | patched-27 启用集；001 之后 |
-| 3 006 | `patches/006-local-connector-acpi-map.patch` | 63a6569ccb13adfadc7d717cf0b1bc6a338ff7f0231429e6b9d266b0a07340b5（待复核） | patched-27 启用集 |
-| 4 007 | `patches/007-fbdev-io-mmap.patch` | 1adb7a3744abb936d41e4c6e54f490f4535b3a2e344d0538aa9368a824337733（待复核） | patched-27 启用集 |
-| 5 009 | `patches/009-local-internal-edp-connector.patch` | e6b955fd3cbde69f211098108c2770fdce8d8eb052096ee20d03b9522e5bb26c（待复核） | patched-27 启用集（**builder 序：009 先于 007**，per scripts/build-deepin-coherent.sh） |
-| 6 023 | `patches/023-invisible-read-no-writeback.patch` | ea35a852d3b0d2818cd1abfbf20c888eacaccdc87371fd9a20f9520d5ee01f63（待复核） | patched-27 启用集 |
-| 7 025-dma | `patches/025-dma-resv-usage-rw.patch` | 05de1bdd503d3a83d82b7e0de44d74535c39d02ae153be4649c90e0c1ae0a027（待复核） | patched-27 启用集 |
-| 8 026-vblank | `patches/026-inactive-crtc-vblank-guard.patch` | 864bc3d651250ed9b701d376f6408fe7f506b2fea5fe7129007034e95a80216b（待复核） | patched-27 启用集 |
-| 9 027 | `patches/027-foreign-dmabuf-lifecycle.patch` | ab2d1b418fa315fc0528c65e425ad37e16ecdde9ae81066869a487a5c6ce7ca5（待复核） | patched-27 启用集 |
-| 10 024 | `patches/024-suspend-resume.patch` | TBD（sha256sum 待 Bash） | suspend 组：builder 序在 **023 后、025 前**（build-deepin-coherent.sh），先于 026-lifecycle / 028 / 029（防御性快速路径） |
-| 11 026-lifecycle | `patches/026-suspend-resume-dvfs-lifecycle.patch` | TBD | suspend 组：024 之后 |
-| 12 028 | `patches/028-suspend-resume-hal-temp-monitor-delay.patch` | TBD | suspend 组：024 之后 |
-| 13 029 | `patches/029-suspend-resume-ddcci-panel.patch` | TBD | suspend 组：4.0.2-i3 源树配方 026-lifecycle → 028 → 029（per scripts/build-innogpu-driver.sh，DDCCI 退场验证前置） |
-| 14 stage-000 | `tools/patch-gpupll-object.py`（binary-transform，无 .patch 文件）+ Deepin 基线导入 | e5f9ee94f55aed2507359d0708f2d88b5b3251582380f5792cab54892a35274a（工具 SHA） | 基线最先；对象单点字节变换在构建期执行 |
-| 15 003 | `patches/003-panel-backlight-fallback.patch` | 8cd6b492b01e2c42c3eb6dfa8d7042bc2e5f57654159dc579a11a66d6a2c6f7b（待复核） | **关闭项**（patched-27 集合外，不应用） |
-| 16 004 | `patches/004-panel-platform-fallback.patch` | 330c3a06998400bb4235385ccaff24a27dc319df508f613eeaf7a80b42814513（待复核） | 关闭项 |
-| 17 005 | `patches/005-backlight-initial-enable.patch` | 9fee230ceb3347b05c107bdb4454fd8d19f3ee32d19f194c7f492526d6deec15（待复核） | 关闭项 |
-| 18 008 | `patches/008-pvr-init-diagnostic.patch` | 4cfd545afcfbac337e8a018cfaea4f079d28d0332be6cddfea167cb84bfb6394（待复核） | 关闭项 |
-| 19 025-display | `patches/025-suspend-resume-display.patch` | TBD | 4.0.1-i4 曾启用；4.0.2-i3 **关闭**（runtime-verify，根因假设未证实/证伪） |
+| 1 001 | `patches/001-kernel-6.12-compat.patch` | be5c8ae9e08f5a2979e939bd18d4f9cc35593c5333fe80b1fb7748ffdcf71ab5 | **最先应用**（构建前提；Kbuild -Wno-error 豁免归 build-metadata） |
+| 2 002 | `patches/002-dp-fbdev-fallback-mode.patch` | 1a12de65f201839232a99f542707f43240b175bbe80029926b4ed3ab180f7329 | patched-27 启用集；001 之后 |
+| 3 006 | `patches/006-local-connector-acpi-map.patch` | 63a6569ccb13adfadc7d717cf0b1bc6a338ff7f0231429e6b9d266b0a07340b5 | patched-27 启用集 |
+| 4 007 | `patches/007-fbdev-io-mmap.patch` | 1adb7a3744abb936d41e4c6e54f490f4535b3a2e344d0538aa9368a824337733 | patched-27 启用集 |
+| 5 009 | `patches/009-local-internal-edp-connector.patch` | e6b955fd3cbde69f211098108c2770fdce8d8eb052096ee20d03b9522e5bb26c | patched-27 启用集（**builder 序：009 先于 007**，per scripts/build-deepin-coherent.sh） |
+| 6 023 | `patches/023-invisible-read-no-writeback.patch` | ea35a852d3b0d2818cd1abfbf20c888eacaccdc87371fd9a20f9520d5ee01f63 | patched-27 启用集；与 025-dma 重叠，物化时按 025 后的上下文重基 |
+| 7 025-dma | `patches/025-dma-resv-usage-rw.patch` | 05de1bdd503d3a83d82b7e0de44d74535c39d02ae153be4649c90e0c1ae0a027 | patched-27 启用集；先于 023 的重基步骤 |
+| 8 026-vblank | `patches/026-inactive-crtc-vblank-guard.patch` | 864bc3d651250ed9b701d376f6408fe7f506b2fea5fe7129007034e95a80216b | patched-27 启用集 |
+| 9 027 | `patches/027-foreign-dmabuf-lifecycle.patch` | ab2d1b418fa315fc0528c65e425ad37e16ecdde9ae81066869a487a5c6ce7ca5 | patched-27 启用集 |
+| 10 024 | `patches/024-suspend-resume.patch` | 3e2c9ab19e2675cfc900ed96c74c7bae947248f369854c7dea5913461f7eec48 | suspend 组：builder 序为 **024 → 025 → 023(rebased)**，先于 026-lifecycle / 028 / 029（防御性快速路径） |
+| 11 026-lifecycle | `patches/026-suspend-resume-dvfs-lifecycle.patch` | 5f6f834f4a6c3bd42d69dab29ac55f988f63e1be60d92c54d4a5177acab11d26 | suspend 组：024 之后 |
+| 12 028 | `patches/028-suspend-resume-hal-temp-monitor-delay.patch` | 3adbc25dfd49198f44943b10248babd3fc06c1bccad3e233d3f36ded082ef4aa | suspend 组：024 之后 |
+| 13 029 | `patches/029-suspend-resume-ddcci-panel.patch` | c44f129ec6df50e9aceb6d11e76f17aacdf8b86efb57d5926fef809882690e36 | 4.0.2-i3 源树配方 026-lifecycle → 028 → 029（per scripts/build-innogpu-driver.sh，DDCCI 退场验证前置） |
+| 14 stage-000 | `tools/patch-gpupll-object.py`（binary-transform，无 .patch 文件）+ Deepin 基线导入 | e5f9ee94f55aed2507359d0708f2d88b5b3251582380f5792cab54892a35274a | 基线最先；对象单点字节变换在构建期执行 |
+| 15 003 | `patches/003-panel-backlight-fallback.patch` | 8cd6b492b01e2c42c3eb6dfa8d7042bc2e5f57654159dc579a11a66d6a2c6f7b | **关闭项**（patched-27 集合外，不应用） |
+| 16 004 | `patches/004-panel-platform-fallback.patch` | 330c3a06998400bb4235385ccaff24a27dc319df508f613eeaf7a80b42814513 | 关闭项 |
+| 17 005 | `patches/005-backlight-force-initial-enable.patch` | 9fee230ceb3347b05c107bdb4454fd8d19f3ee32d19f194c7f492526d6deec15 | 关闭项 |
+| 18 008 | `patches/008-pvr-init-diagnostic.patch` | 4cfd545afcfbac337e8a018cfaea4f079d28d0332be6cddfea167cb84bfb6394 | 关闭项 |
+| 19 025-display | `patches/025-suspend-resume-display.patch` | dfd251570d12d43cca8bf1fae9bee6e612965b8b158cf50f60f784418d9521c1 | 4.0.1-i4 曾启用；4.0.2-i3 **关闭**（runtime-verify，根因假设未证实/证伪） |
 
 ### 三.4 Deepin 中性变更记录展开（D-NNN 骨架 · 2026-09-07）
 
@@ -229,17 +229,17 @@ sha256sum 实测（批次1b，需 Bash）；9 项记录值同样待实测复核�
 | D004 | 006 | P5 line 355（4 项） | `patches/006-local-connector-acpi-map.patch` | innosrvkm/innodpu_connector.c | 本地 connector ACPI 映射（device-profile 边界） | builder 序 006 | TBD | 候选 |
 | D005 | 007 | P5 line 356（1 项） | `patches/007-fbdev-io-mmap.patch` | innosrvkm/innodpu_drm_fb.c | fbdev io mmap | builder 序 009 之后 | TBD | 候选 |
 | D006 | 009 | P5 line 357（4 项） | `patches/009-local-internal-edp-connector.patch` | innosrvkm/innodpu_connector.c | 本地内接 eDP connector（device-profile 边界） | builder 序 007 之前 | TBD | 候选 |
-| D007 | 023 | P5 line 358（5 项） | `patches/023-invisible-read-no-writeback.patch` | innosrvkm/innodpu_drm_gem.c + include/innodpu_drm_gem.h | invisible GEM 读不写回 | builder 序 023 | TBD | 候选 |
-| D008 | 025-dma | P5 line 359（2 项） | `patches/025-dma-resv-usage-rw.patch` | innosrvkm/innodpu_drm_gem.c + include/innodpu_compatibility.h | dma_resv usage R/W 语义 | builder 序 024 之后 | TBD | 候选 |
+| D007 | 023 | P5 line 358（5 项） | `patches/023-invisible-read-no-writeback.patch` | innosrvkm/innodpu_drm_gem.c + include/innodpu_drm_gem.h | invisible GEM 读不写回 | 025-dma 后重基应用 | TBD | 候选 |
+| D008 | 025-dma | P5 line 359（2 项） | `patches/025-dma-resv-usage-rw.patch` | innosrvkm/innodpu_drm_gem.c + include/innodpu_compatibility.h | dma_resv usage R/W 语义 | 024 后、023 重基前 | TBD | 候选 |
 | D009 | 026-vblank | P5 line 360（1 项） | `patches/026-inactive-crtc-vblank-guard.patch` | innosrvkm/pdp0_crtc.c | inactive CRTC vblank 守卫 | builder 序 026 | TBD | 候选 |
 | D010 | 027 | P5 line 361（4 项） | `patches/027-foreign-dmabuf-lifecycle.patch` | innosrvkm/innodpu_drm_gem.c | foreign dmabuf 生命周期（prime_import 类型混淆修复） | builder 序 027 | TBD | 候选 |
-| D011 | 024 | P5 line 362（1 项） | `patches/024-suspend-resume.patch` | innosrvkm/pvr_dvfs_device.c | deep S3 唤醒 devfreq 电源状态门禁（防御性快速路径） | builder 序 023 后、025 前 | TBD | 候选 |
+| D011 | 024 | P5 line 362（1 项） | `patches/024-suspend-resume.patch` | innosrvkm/pvr_dvfs_device.c | deep S3 唤醒 devfreq 电源状态门禁（防御性快速路径） | builder 序 024 → 025 → 023(rebased) | TBD | 候选 |
 | D012 | 026-lifecycle | P5 line 363（3 项） | `patches/026-suspend-resume-dvfs-lifecycle.patch` | innosrvkm/pvr_drm.c | DVFS suspend/resume 生命周期同步 | i3 组第一 | TBD | 候选 |
 | D013 | 028 | P5 line 364（4 项） | `patches/028-suspend-resume-hal-temp-monitor-delay.patch` | gpu/hal.h + gpu/innogpu_pci_drv.c + pvr_drm.c | HAL 温度 work 门禁（原子计数协调） | i3 组第二 | TBD | 候选 |
 | D014 | 029 | P5 line 365（2 项） | `patches/029-suspend-resume-ddcci-panel.patch` | innosrvkm/innodpu_dp_debugfs.c + innodpu_panel_backlight.c | DDCCI panel 显式逻辑 | i3 组第三 | TBD | 候选 |
 | D015 | 003 | P5 line 367（2 项） | `patches/003-panel-backlight-fallback.patch` | innodpu_connector.c、innodpu_panel_backlight.c | 关闭项（patched-27 集合外） | 不应用 | TBD（候选 retain/no-op；**不预设**） | 候选 |
 | D016 | 004 | P5 line 368（2 项） | `patches/004-panel-platform-fallback.patch` | innodpu_panel_pwr.c、innodpu_panel_backlight.c | 关闭项 | 不应用 | TBD（同上） | 候选 |
-| D017 | 005 | P5 line 369（1 项） | `patches/005-backlight-initial-enable.patch` | innodpu_panel_backlight.c | 关闭项 | 不应用 | TBD（同上） | 候选 |
+| D017 | 005 | P5 line 369（1 项） | `patches/005-backlight-force-initial-enable.patch` | innodpu_panel_backlight.c | 关闭项 | 不应用 | TBD（同上） | 候选 |
 | D018 | 008 | P5 line 370（1 项） | `patches/008-pvr-init-diagnostic.patch` | innogpu_drm.c | 关闭项 | 不应用 | TBD（同上） | 候选 |
 | D019 | 025-display | P5 line 371（1 项） | `patches/025-suspend-resume-display.patch` | innosrvkm/innodpu_drm_pm.c | 关闭项（i4-only；根因假设未证实/证伪） | i3 不应用 | TBD（runtime-verify 口径） | 候选 |
 
@@ -327,26 +327,30 @@ O-1 视为**全闭合**（阶段一即可进入终审）**当且仅当**：
     **不计入**阶段一统计量）；
 11. 通过 codex 阶段一复跑 + finding 闭环。
 
-**当前状态（v12 + 2026-09-07 阶段一开工）**：
+**当前状态（v12 + 2026-09-08 批次实测后、阶段一最终验收前）**：
 
 - 第 1 项已闭合（2026-09-07 追溯 BC 反查填实：§三 19 行 + §三.1 明细 +
   §三.2 未匹配参照登记，全部来自 per-file-classification.tsv 原文反查，
   非估算）；
-- 第 2 项未闭合（O-2 依赖 O-1 闭合前启动）；
-- 第 3 项未闭合（处置待 O-2 differs 证据终判，批次3）；
-- 第 5 项部分填实（§三.3：来源 patch 编号 19/19 填实；SHA-256 13/19
-  有记录值待 sha256sum 复核 + 5 项 suspend 待实测 + stage-000 工具
-  SHA，批次1b 需 Bash）；
-- 第 6 项已填实（§三.3 顺序约束：patched-27 启用集 + suspend 组 024
-  先行 + 关闭项不应用 + stage-000 基线最先）；
+- 第 2 项已闭合（2026-09-08 O-2 九件套生成：主表/专表/D、D_stage
+  manifest + genesis，见 `docs/planning/evidence/`）；
+- 第 3 项未闭合（§三.4 处置列仍 TBD；待 O-2 differs 行逐项反查后终判，
+  阶段一最终验收环节完成）；
+- 第 5 项已闭合（2026-09-08：§三.3 全部 19 项 SHA-256 由 sha256sum
+  实测，记录值与磁盘一致；含 5 项 suspend patch + 025-display + stage-000
+  工具 SHA；005 文件名勘误 + 023/025 重基顺序同步入表）；
+- 第 6 项已闭合（§三.3 顺序约束：patched-27 启用集 + suspend 组 024
+  先行 + 023 与 025-dma 重基关系 + 关闭项不应用 + stage-000 基线最先）；
 - 第 7 项已落实（v5 已删除 F0 / 030-NNN 字段，v6 三列分离强化，**v8**
   F-only 整体移到阶段三 O-4 per codex v7 P1 #1；v9-v12 保持该政策，仅
   配套标签同步）；
-- 第 8-9 项未闭合；
+- 第 8-9 项待阶段一最终验收（可重放回放 + 双向追溯校验，依赖第 3 项
+  处置终判 + O-2 证据）；
 - 第 10 项已落实（v6 §四 F-only excluded-deferred 登记；**v8** 明确为
   阶段三 O-4 输入占位；v9-v12 保持）；
-- 第 11 项待启动。
-- **O-1 v12 远未全闭合**，阶段一启动后才能推进。
+- 第 11 项：本批已通过 codex 初审 + dsh 终审（dsh 裁决 2026-09-08 已录）；
+- **O-1 全闭合的最后一环 = 第 3/8/9 项（处置终判 + 可重放 + 双向追溯），
+  在阶段一最终验收环节完成。**
 
 ## 六、不在 O-1 范围内
 

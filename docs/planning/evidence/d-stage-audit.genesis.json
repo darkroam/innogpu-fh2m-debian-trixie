@@ -1,0 +1,268 @@
+{
+  "byte_counts": {
+    "d-stage-audit.D.manifest.tsv": 48500,
+    "d-stage-audit.D_stage.manifest.tsv": 48593,
+    "d-stage-audit.symlink.tsv": 0,
+    "d-stage-audit.tsv": 44177
+  },
+  "d_manifest_sha256": "17803bb3c6d6ebcd0bff53447c0d01fb346ca8da510594d260da7601008d453e",
+  "d_root_path": "/repo/innogpu-fh2m-debian-trixie/third_party/innogpu-fh2m-deepin-202504/root/usr/src/innogpu-kernel-2.2",
+  "d_stage_manifest_sha256": "d814a6e27c71b6a2760dadadd52dc7701501ade6ea85ad9f99b81725e658e3b0",
+  "d_stage_root_path": "/tmp/r16-d-stage",
+  "determinism_self_check": "pass",
+  "exit_code_test_coverage": {
+    "gen-manifest": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "7",
+      "8",
+      "78"
+    ],
+    "notes": "\u6bcf\u4e2a\u5b50\u547d\u4ee4\u7684\u9000\u51fa\u7801\u4f5c\u7528\u57df\u5951\u7ea6\u5fc5\u987b\u7531\u5355\u5143\u6d4b\u8bd5\u8986\u76d6\uff08\u6bcf\u4e2a\u5df2\u58f0\u660e\u9000\u51fa\u7801 + 0 \u6210\u529f\u8def\u5f84\uff09\uff1b\u9000\u51fa\u7801\u4ec5\u5728\u5b50\u547d\u4ee4\u4f5c\u7528\u57df\u5185\u89e3\u91ca\uff0c\u4e25\u7981\u8de8\u5b50\u547d\u4ee4\u5bf9\u7167\u3002",
+    "reconcile": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "schema_version": "1.0",
+    "snapshot": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "9",
+      "78"
+    ]
+  },
+  "f0_reference_check": "pass (no F0 paths detected)",
+  "fault_injection_tests": {
+    "notes": "\u5171 29 \u573a\u666f\uff0817 \u5355\u5143 + 12 power-loss\uff09\u3002power-loss \u573a\u666f\u6ce8\u5165\u65b9\u5f0f = \u5f3a\u5236\u65ad\u7535\uff08VM poweroff / \u62d4\u76d8\u540e\u91cd\u542f\uff09\uff0c**\u4e0d\u5f97\u7528 kill -9 \u4ee3\u66ff**\uff1b\u5355\u5143\u573a\u666f\u7531 tests/unit/d-stage-audit-fault-tests.py\u6267\u884c\u5e76\u56de\u5199 actual_final_state / passed\u3002\u672a\u7ecf\u5168\u90e8\u573a\u666f\u901a\u8fc7\u7684snapshot \u7981\u6b62\u5728\u9636\u6bb5\u4e8c release commit \u4e2d\u4f7f\u7528\u3002",
+    "schema_version": "13.0",
+    "snapshot_subcommand": {
+      "crash_after_backed_up_persist": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "journal=backed_up \u2192 recovery commits new tarball + new sha256 \u2192 self-check \u2192 cleanup; final OUT_DIR = new pair",
+        "injection": "kill -9 after persist_journal(state=backed_up), before new tarball mv\uff08\u7b49\u4ef7\u6001\u6784\u9020\uff09",
+        "passed": null
+      },
+      "crash_after_staged_persist": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "next run parses journal=staged \u2192 validates staging_dir constraints + staging fingerprint \u2192 completes backup \u2192 backed_up \u2192 commit new pair \u2192 verified \u2192 cleanup; final OUT_DIR = new pair",
+        "injection": "kill -9 after persist_journal(state=staged), before backup old tarball mv\uff08\u7b49\u4ef7\u6001\u6784\u9020\uff09",
+        "passed": null
+      },
+      "crash_between_backup_mvs": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "journal=staged + facts (old tar in .txn, old sha in OUT_DIR) \u2192 recovery completes remaining backup mv (guarded idempotent); final OUT_DIR = new pair",
+        "injection": "kill -9 after old tarball mv into .txn, before old sha256 mv\uff08\u7b49\u4ef7\u6001\u6784\u9020\uff09",
+        "passed": null
+      },
+      "crash_between_tarball_mv_and_journal": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "journal=backed_up + facts (new tar in OUT_DIR) \u2192 recovery skips tarball commit, commits sha256 directly; final OUT_DIR = new pair",
+        "injection": "kill -9 after new tarball mv to OUT_DIR, before persist_journal(state=tarball_committed)\uff08\u7b49\u4ef7\u6001\u6784\u9020\uff09",
+        "passed": null
+      },
+      "immediate_rollback_sidecar_unknown": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "shared classify_out_pair classifies sidecar unknown \u2192 exit 9; sidecar deleted ONLY when precisely identified as new; journal and files preserved",
+        "injection": "before in-process rollback, rewrite OUT_DIR .sha256 to a format-legal single line whose hash field != new_tar_sha256",
+        "passed": null
+      },
+      "journal_corrupt": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "startup parse fails \u2192 exit 9 + clear error; dsh manual cleanup",
+        "injection": "echo garbage > .txn/journal before snapshot",
+        "passed": null
+      },
+      "journal_write_fail_at_staged": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "persist fails \u2192 exit 5; old pair NEVER moved (ordering guarantee); no data loss",
+        "injection": "make .txn read-only before persist_journal(state=staged)",
+        "passed": null
+      },
+      "lock_contention": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "B acquire_snapshot_lock fails \u2192 exit 6 + clear error; B exits BEFORE creating any temp file / .txn / staging modification; A completes normally",
+        "injection": "process A holds .snapshot.lock; start process B concurrently",
+        "passed": null
+      },
+      "noop_duplicate_sidecar": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "idempotent no-op reuses strict sidecar validation \u2192 exit 9; malformed/duplicate sidecar NEVER accepted by no-op",
+        "injection": "pre-place OUT_DIR pair whose tarball == new snapshot content, but .sha256 contains two duplicate format-legal lines",
+        "passed": null
+      },
+      "old_pair_incomplete": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "4a completeness fail-closed \u2192 exit 9; no journal written, no files moved",
+        "injection": "pre-place OUT_DIR with only d-stage-snapshot.tar.zst (no .sha256)",
+        "passed": null
+      },
+      "old_pair_inconsistent": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "4a self-consistency check fails \u2192 exit 9; corruption evidence not silently discarded",
+        "injection": "pre-place OUT_DIR old pair whose tarball and .sha256 contents mismatch each other",
+        "passed": null
+      },
+      "old_pair_restore_incomplete": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "three-way facts consistency check fails \u2192 exit 9; never silently restored to half-pair",
+        "injection": "journal old_tar=present but old tarball absent in both .txn and OUT_DIR, then re-run",
+        "passed": null
+      },
+      "out_dir_readonly": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "lock/txn open fails \u2192 exit 5; OUT_DIR = old pair untouched; re-run after fixing perms resumes",
+        "injection": "chmod -w OUT_DIR before snapshot",
+        "passed": null
+      },
+      "power_loss_after_backed_up_persist": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "journal=backed_up + .txn/old.* durable \u2192 recovery commits new pair \u2192 cleanup; OUT_DIR = new pair",
+        "injection": "poweroff after durable journal=backed_up and old pair fsync",
+        "passed": null
+      },
+      "power_loss_after_backup_mv_before_persist": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "journal=staged + old pair only in .txn \u2192 backup guard skips \u2192 persist(backed_up) \u2192 commit \u2192 verified; OUT_DIR = new pair",
+        "injection": "poweroff after old pair backup mv and before journal=backed_up",
+        "passed": null
+      },
+      "power_loss_after_restore_mv_before_cleanup": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "journal=rolling_back + OUT_DIR complete old pair \u2192 re-enter rollback: self-check PASS \u2192 rollback commit = atomic rename .txn\u2192.txn.tombstone + fsync \u2192 exit 1; crash after rename \u2192 tombstone residue discarded at next startup",
+        "injection": "poweroff after rollback restore and before tombstone cleanup",
+        "passed": null
+      },
+      "power_loss_after_staged_persist": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "journal=staged + staging durable \u2192 recovery completes backup \u2192 commit \u2192 verified \u2192 cleanup; OUT_DIR = new pair",
+        "injection": "poweroff after durable journal=staged and staging fsync",
+        "passed": null
+      },
+      "power_loss_after_tarball_mv": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "journal=backed_up + new tar durable in OUT_DIR \u2192 recovery skips tar commit, commits sha; OUT_DIR = new pair",
+        "injection": "poweroff after new tarball mv and before sha commit",
+        "passed": null
+      },
+      "power_loss_after_verified_before_cleanup": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "journal=verified + complete new pair \u2192 redo cleanup \u2192 exit 0",
+        "injection": "poweroff after durable journal=verified and before cleanup",
+        "passed": null
+      },
+      "power_loss_backup_mv_fsync_window": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "journal=staged; three-way: consistent \u2192 auto-resume; double-existence \u2192 exit 9; both absent \u2192 exit 9 (fail-closed)",
+        "injection": "poweroff after backup mv and before either cross-directory fsync",
+        "passed": null
+      },
+      "power_loss_before_staged_persist": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "journal absent \u2192 discard .txn residue \u2192 fresh path (or 4a idempotent no-op); old pair untouched",
+        "injection": "poweroff before persist_journal(state=staged)",
+        "passed": null
+      },
+      "power_loss_rollback_mid_delete_window": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "OUT_DIR pair = (absent,new) \u2192 whitelist allows \u2192 continue deleting new sidecar \u2192 restore old pair \u2192 exit 1 (NEVER exit 9)",
+        "injection": "poweroff while rolling_back deletes the new sidecar",
+        "passed": null
+      },
+      "power_loss_rollback_mid_restore_window": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "OUT_DIR pair = (old,absent) DETERMINISTIC (per-mv barrier) \u2192 whitelist allows \u2192 complete sidecar restore \u2192 exit 1",
+        "injection": "poweroff after rollback restores old tar and before old sidecar",
+        "passed": null
+      },
+      "power_loss_rollback_restore_fsync_window": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "per-restored-file four-way matrix: tar target-only (old,absent) / source-only (absent,absent); sidecar target-only (old,old) / source-only (old,absent) \u2192 whitelist re-enter; double-existence / both-absent \u2192 exit 9 (fail-closed)",
+        "injection": "poweroff after one rollback restore mv and before its cross-directory fsync",
+        "passed": null
+      },
+      "power_loss_verified_cleanup_after_journal_rm": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "journal absent + .txn without old.* \u2192 fresh path \u2192 4a idempotent no-op exit 0",
+        "injection": "poweroff after journal removal and before .txn cleanup",
+        "passed": null
+      },
+      "selfcheck_fail": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "4e sha256sum -c FAIL \u2192 persist rolling_back \u2192 classify: tampered sidecar \u2192 unknown \u2192 exit 9 keeping journal and scene (fail-closed; pre-v17 'auto rollback to old pair' expectation retired)",
+        "injection": "write wrong sha256 content (same file size)",
+        "passed": null
+      },
+      "staging_dir_path_traversal": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "path constraint validation fails \u2192 exit 9; no mv performed",
+        "injection": "rewrite journal staging_dir to point outside .txn/staging",
+        "passed": null
+      },
+      "unknown_content_in_out_dir": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "fingerprint classification = unknown \u2192 exit 9; unknown content never misjudged/deleted",
+        "injection": "replace OUT_DIR tarball with a third-party file",
+        "passed": null
+      },
+      "verified_half_pair": {
+        "actual_final_state": "<filled by O-2 tool>",
+        "expected_final_state": "state-specific invariant fails \u2192 exit 9; NO evidence cleanup",
+        "injection": "manually craft journal=verified with OUT_DIR containing only the new tarball (no .sha256)",
+        "passed": null
+      }
+    }
+  },
+  "finished_at": "2026-09-08T09:59:29.871528+00:00",
+  "lc_all": "C",
+  "row_counts": {
+    "d_only": 0,
+    "d_stage_only": 1,
+    "differs": 32,
+    "identical": 475,
+    "symlink_broken": 0,
+    "symlink_d2dstage": 0,
+    "symlink_dangling": 0,
+    "symlink_dstage2d": 0,
+    "symlink_loop": 0,
+    "symlink_same_target": 0,
+    "symlink_single_side_d": 0,
+    "symlink_single_side_dstage": 0,
+    "symlink_target_changed": 0,
+    "symlink_total": 0
+  },
+  "schema_check": "pass",
+  "schema_version": "2.4",
+  "snapshot_boundary": "\u672c\u5feb\u7167 SHA \u4ec5\u5728 tar 1.35 + zstd 1.5.7 + jq \u2265 1.7.1 \uff08dpkg \u5305\u7248\u672c\u53e3\u5f84\uff0cdsh \u88c1\u5b9a 2026-09-08\uff09+ \u672c\u673a\u6784\u5efa\u73af\u5883\u4e0b\u53ef\u590d\u73b0\uff1b\u5176\u4ed6\u7248\u672c/\u73af\u5883\u9700\u91cd\u65b0\u751f\u6210 reference snapshot \u5e76\u6309 genesis.json tool_versions \u6bd4\u5bf9\u3002",
+  "snapshot_tool_versions": {
+    "build_environment": "host=REDACTED system=Linux release=6.12.101+deb13-amd64 version=#1 SMP PREEMPT_DYNAMIC Debian 6.12.101-1 (2026-08-05) machine=x86_64 LC_ALL=C",
+    "notes": "\u7cbe\u786e\u9501\u5b9a tar 1.35 + zstd 1.5.7\uff08\u672c\u673a\u5b9e\u6d4b\uff09\uff1b\u5982\u9700\u5728\u975e\u672c\u673a\u73af\u5883\u590d\u73b0 SHA\uff0c\u5fc5\u987b\u4f7f\u7528\u5b8c\u5168\u76f8\u540c\u7684 tar + zstd + jq \u7248\u672c + \u76f8\u540c\u6784\u5efa\u73af\u5883\uff08locale / libc / \u5bb9\u5668\uff09\u3002",
+    "tar": "1.35",
+    "tar_path": "/usr/bin/tar",
+    "zstd": "1.5.7",
+    "zstd_path": "/usr/bin/zstd"
+  },
+  "started_at": "2026-09-08T09:59:29.669465+00:00",
+  "symlink_bc_check": "pass (symlink entries use SYM-N-A or UNASSIGNED only)",
+  "tool_versions": {
+    "coreutils": "9.7",
+    "diffutils": "3.10",
+    "findutils": "4.10.0",
+    "git": "2.47.3",
+    "jq": "1.7",
+    "jq_dpkg_version": "1.7.1-6+deb13u3",
+    "python3": "3.13.5",
+    "tar": "1.35",
+    "zstd": "1.5.7"
+  }
+}

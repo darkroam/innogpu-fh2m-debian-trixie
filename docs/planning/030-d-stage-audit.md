@@ -256,14 +256,14 @@ echo "OK: ${OUT_DIR}/d-stage-audit.${LABEL}.manifest.tsv ($(LC_ALL=C wc -l < "${
 ```bash
 # 调用 D（输入 lock 1）
 tools/d-stage-audit-gen.py gen-manifest \
-  --d-root /path/to/migration/supervised-source-tree/<D 子路径> \
+  --d-root /path/to/repository/third_party/innogpu-fh2m-deepin-202504/root/usr/src/innogpu-kernel-2.2 \
   --d-stage-root /tmp/r16-d-stage \
   --out-dir docs/planning/evidence \
   --label D
 
 # 调用 D_stage（输入 lock 2；**独立调用，参数明确，不复用 D 的状态**）
 tools/d-stage-audit-gen.py gen-manifest \
-  --d-root /path/to/migration/supervised-source-tree/<D 子路径> \
+  --d-root /path/to/repository/third_party/innogpu-fh2m-deepin-202504/root/usr/src/innogpu-kernel-2.2 \
   --d-stage-root /tmp/r16-d-stage \
   --out-dir docs/planning/evidence \
   --label D_stage
@@ -324,7 +324,7 @@ tools/d-stage-audit-gen.py gen-manifest \
 
 | 输入 | 说明 | 路径 | 锁定方式 |
 | --- | --- | --- | --- |
-| **D 源树根** | Deepin 4.0.x 原始快照 | `migration/supervised-source-tree/` 内由 dsh 指定的 D 子路径（**绝对保护区** per `docs/project/multiagent-collab.md:40-41`；脚本只读） | tree-manifest SHA-256（`d-stage-audit.D.manifest.tsv.sha256`） |
+| **D 源树根** | Deepin 4.0.x 原始快照 | `third_party/innogpu-fh2m-deepin-202504/root/usr/src/innogpu-kernel-2.2`（仓库内只读快照；脚本只读） | tree-manifest SHA-256（`d-stage-audit.D.manifest.tsv.sha256`） |
 | **D_stage 源树根** | 阶段一输出的 Deepin-derived staging 树 | **`/tmp/r16-d-stage/`**（v24 唯一合法路径；系统 `$TMPDIR`，**不在仓库任何路径下**） | tree-manifest SHA-256（`d-stage-audit.D_stage.manifest.tsv.sha256`） |
 
 **前置条件**：O-1 全闭合（19 项台账全部展开为 Deepin 中性变更记录 +
@@ -366,7 +366,7 @@ D / D_stage tree-manifest 锁定后由 qoder 实现并 codex 复审。
 # 子命令 1：gen-manifest
 #   输入：
 #     --d-root         <path>   D 源树根（**只读**；不得修改；v7 per codex v6 P1 #1
-#                                默认 = `migration/supervised-source-tree/` 内 dsh 指定子路径）
+#                                默认 = 仓库内 `third_party/innogpu-fh2m-deepin-202504/root/usr/src/innogpu-kernel-2.2`）
 #     --d-stage-root   <path>   D_stage 源树根（v24 唯一合法路径 = `/tmp/r16-d-stage/`，
 #                                系统 $TMPDIR，不在仓库任何路径下）
 #     --out-dir        <path>   输出目录（必须为非保护区；v7 默认
@@ -1370,8 +1370,8 @@ O-2 v24 沿用 v10 对 v7 的"9 文件"显式拆分，**避免** v7 那种"9 文
   - 4 个产物 tsv（主表 + 专表 + D manifest + D_stage manifest）
   - 4 个 sha256 锁定文件（每个 tsv 对应一个 .sha256）
 - **1 个运行时元数据文件**（**不计入** SHA 一致判定；仅供调试 + 运行时上下文）：
-  - `d-stage-audit.genesis.json`（含 `started_at` / `finished_at` / 绝对路径 /
-    工具版本 / row_counts 等；不写入任何 sha256 字段，自身也不被 .sha256
+  - `d-stage-audit.genesis.json`（含 `started_at` / `finished_at` / 绝对逻辑路径 /
+    工具版本 / row_counts 等；仓库路径前缀归一化且主机标识脱敏；不写入任何 sha256 字段，自身也不被 .sha256
     覆盖；详 §十一.3 v8）
 
 | # | 文件 | 类型 | SHA-256 计算 | 写入 .sha256 | 内容 |
@@ -1411,8 +1411,8 @@ O-2 v24 沿用 v10 对 v7 的"9 文件"显式拆分，**避免** v7 那种"9 文
 ```json
 {
   "schema_version": "2.4",
-  "d_root_path": "<absolute path to D>",
-  "d_stage_root_path": "<absolute path to D_stage>",
+  "d_root_path": "<absolute logical path to D; repository prefix normalized>",
+  "d_stage_root_path": "<absolute logical path to D_stage>",
   "d_manifest_sha256": "<sha256 of d-stage-audit.D.manifest.tsv>",
   "d_stage_manifest_sha256": "<sha256 of d-stage-audit.D_stage.manifest.tsv>",
   "tool_versions": {
@@ -1423,14 +1423,15 @@ O-2 v24 沿用 v10 对 v7 的"9 文件"显式拆分，**避免** v7 那种"9 文
     "findutils": "4.9.0",
     "tar": "1.35",
     "zstd": "1.5.7",
-    "jq": "1.7.1"
+    "jq": "1.7",
+    "jq_dpkg_version": "1.7.1-6+deb13u3"
   },
   "snapshot_tool_versions": {
     "tar": "1.35",
     "zstd": "1.5.7",
     "tar_path": "<absolute path to tar used>",
     "zstd_path": "<absolute path to zstd used>",
-    "build_environment": "<hostname + uname -a + locale>",
+    "build_environment": "<host redacted + uname without node identity + locale>",
     "notes": "v20 per codex v19 P1 #1 + P2 #2 + codex v18 P1 #1+#2 + P2 #3 + codex v17 P1 #1+#2 + P2 #3 + codex v16 P1 #1+#2 + P2 #3 + codex v15 P1 #1+#2 + codex v14 P1 #1+#2 + codex v13 P1 #1+#2 + P2 #3 + codex v12 P1 #1-#4 + codex v11 P1 #1 + codex v10 P1 #3 + codex v9 P2 #6：精确锁定 tar 1.35 + zstd 1.5.7（本机实测）；**v11 新增 jq 1.7.1 工具链前置条件**（阶段三 §9.2 F0 迁移起点的 `git_tag_ref` 读取必须用 jq 或已声明的 JSON 解析入口，不允许临时引入未声明的工具）。**jq 前置口径（dsh 裁定 2026-09-08）**：以 dpkg 包版本 ≥ 1.7.1 为准（dpkg-query 佐证 + dpkg --compare-versions），--version 接受 1.7.1/1.7（Debian 1.7.1 构建的版本串打印怪癖，非功能缺口）。如需在非本机环境复现 SHA，必须使用完全相同的 tar + zstd + jq 版本 + 相同构建环境（locale / libc / 容器）。"
   },
   "snapshot_boundary": "v20 per codex v19 P1 #1 + P2 #2 + codex v18 P1 #1+#2 + P2 #3 + codex v17 P1 #1+#2 + P2 #3 + codex v16 P1 #1+#2 + P2 #3 + codex v15 P1 #1+#2 + codex v14 P1 #1+#2 + codex v13 P1 #1+#2 + P2 #3 + codex v12 P1 #1-#4 + codex v11 P1 #1 + codex v10 P1 #3 + codex v9 P2 #6：本快照 SHA 仅在 tar 1.35 + zstd 1.5.7 + jq 1.7.1 + 本机构建环境下可复现；其他版本/环境需重新生成 reference snapshot 并按 genesis.json tool_versions 比对。",
@@ -1724,7 +1725,7 @@ schema 校验失败按 §九 失败关闭规则 exit 1。
 1. **D_stage 物化根就位**（`/tmp/r16-d-stage/`，per §〇.5 v7）：
    - D_stage 源树已生成；
    - D_stage 源树 SHA-256 锁定（`d-stage-audit.D_stage.manifest.tsv.sha256`）；
-2. **D 源树根就位**（`migration/supervised-source-tree/` 内 dsh 指定子路径）：
+2. **D 源树根就位**（仓库内 `third_party/innogpu-fh2m-deepin-202504/root/usr/src/innogpu-kernel-2.2` 只读快照）：
    - D 源树 SHA-256 锁定（`d-stage-audit.D.manifest.tsv.sha256`）；
 3. **完整性闭合**：D_stage 中所有**实际存在**文件均能由 D + 阶段一中性
    变更记录声明的有效 patch 清单 + 应用顺序**重放得到**（无 hidden

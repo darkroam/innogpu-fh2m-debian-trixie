@@ -233,7 +233,7 @@ srvkm/include/common_ri_bridge.h）的处理：
 
 | 项 | 路径 | 类型 | 说明 |
 | --- | --- | --- | --- |
-| **D 源树根** | `migration/supervised-source-tree/` 内由 dsh 指定的 D 子路径（只读） | 阶段一输入 | 仓库绝对保护区（per `docs/project/multiagent-collab.md:40-41`）；脚本只读，不得修改 |
+| **D 源树根** | `third_party/innogpu-fh2m-deepin-202504/root/usr/src/innogpu-kernel-2.2`（仓库内只读快照） | 阶段一输入 | 只读输入；脚本只读，不得修改 |
 | **D_stage 物化路径** | `/tmp/r16-d-stage/`（**绝对路径**，**不在仓库任何路径下**） | 阶段一输出 | 系统临时目录（`$TMPDIR`）；非仓库路径，**不与** drivers/ / baselines/ / patches/ / `migration/supervised-source-tree/` 任何子路径冲突；阶段一脚本**全权读写** |
 | **阶段二 release commit 内容** | 阶段一产出物（`docs/planning/evidence/d-stage-audit.tsv*`、`030-mapping-table.md` 闭合、`4.0.2-i3.meta.json` + 双构建证据）+ **`/tmp/r16-d-stage/` 的 D_stage 完整快照以 tarball 形式嵌入 `docs/planning/evidence/4.0.2-i3/d-stage-snapshot.tar.zst`（独立路径，不在保护区清单内）** | 阶段二输出 | commit 仅含：方案文档 + 证据 + 元数据 + D_stage 快照；**不含**任何 030-NNN / F0 内容 |
 | **阶段二 release commit 形成规则** | 1. 阶段一产物全部就位 + 双 clean-build 复现通过；2. 三方一致 + dsh 终审 + 用户批准；3. **单次独立 commit**（不与阶段一文档 commit / O-2 工具 commit 混合）；4. commit message 必须包含"阶段二 release commit for 4.0.2-i3" 关键字 + 关联 evidence 路径 + SHA-256 | 阶段二流程 | 严禁 amend / 修改既有 commit |
@@ -386,7 +386,7 @@ srvkm/include/common_ri_bridge.h）的处理：
 
 | 输入 | 说明 | 来源 / 物化路径 |
 | --- | --- | --- |
-| **D 源树** | Deepin 4.0.x 原始源树（SHA-256 锁定，**只读**） | `migration/supervised-source-tree/` 内由 dsh 指定的 D 子路径（**绝对保护区** per `docs/project/multiagent-collab.md:40-41`；脚本只读，不得修改） |
+| **D 源树** | Deepin 4.0.x 原始源树（SHA-256 锁定，**只读**） | `third_party/innogpu-fh2m-deepin-202504/root/usr/src/innogpu-kernel-2.2`（仓库内只读快照；脚本只读，不得修改） |
 | **当前 Deepin-derived staging** | 仓库现有的 Deepin 修改 staging 树 | 仓库当前 working tree / branch |
 | **D_stage 物化根**（阶段一输出） | **非保护区**临时输出根（**v8 per codex v6 P1 #1 + codex v7 P1 #7**：已从 `migration/supervised-source-tree/_r16-d-stage/` 迁出；tar.zst 可复现规范详 §五.3） | **`/tmp/r16-d-stage/`**（系统 `$TMPDIR`，不与仓库任何路径冲突）；阶段一完成后须将 D_stage 完整快照打包为 `docs/planning/evidence/4.0.2-i3/d-stage-snapshot.tar.zst` 嵌入阶段二 release commit（详 §〇.5 + §五.2 + §五.3） |
 | **现有 000-029 patch** | Deepin 血统下既有 patch 系列（000-029） | `patches/000-029`（只读） |
