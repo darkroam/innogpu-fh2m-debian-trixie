@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "created_utc": "2026-09-09T04:58:59Z",
+  "label": "F0",
+  "src_root": "/tmp/r16-f0/usr/src/fantgpu-fh2m-kernel-2.2",
+  "deb": {
+    "path": "debs/fantgpu-fh2m_3.3.8.126-driver-linux-desktop-sp-generic_amd64.deb",
+    "sha256": "6f0daaf79fb6b2a547138c17628bb990dff0d0c684ee1c13775bebc2d28fd11b",
+    "package": "fantgpu-fh2m",
+    "version": "3.3.8.126-driver-linux-desktop-sp-generic",
+    "architecture": "amd64"
+  },
+  "counts": {
+    "dirs": 16,
+    "files": 490,
+    "symlinks": 0
+  },
+  "byte_counts": {
+    "f0.manifest.tsv": 48331
+  },
+  "manifest_sha256": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+  "tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+  "tree_hash_definition": "SHA-256 of f0.manifest.tsv canonical sorted bytes",
+  "epoch_mtime": "@1640995200",
+  "snapshot_tool_versions": {
+    "tar": "1.35",
+    "zstd": "1.5.7",
+    "tar_required": "1.35",
+    "zstd_required": "1.5.7"
+  },
+  "snapshot": {
+    "basename": "f0-snapshot.tar.zst",
+    "sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e",
+    "byte_count": 11016737
+  },
+  "determinism_self_check": "pass",
+  "verify": {
+    "status": "pass",
+    "rebuilt_tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb"
+  },
+  "tool": {
+    "path": "tools/o4-f0-lock-gen.py",
+    "sha256": "b36695b2da1f153a404205059cd115a786d45111045ac95f8ec72a44fc0f7d33"
+  }
+}
