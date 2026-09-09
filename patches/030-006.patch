@@ -1,0 +1,12 @@
+diff -ruN -x '*.o' -x '*.ko' -x '*.mod*' -x '.tmp*' -x Module.symvers -x modules.order a/fantsrvkm/fantdpu_connector.c b/fantsrvkm/fantdpu_connector.c
+--- a/fantsrvkm/fantdpu_connector.c	2026-09-09 17:32:04.874160819 +0800
++++ b/fantsrvkm/fantdpu_connector.c	2026-09-09 18:07:16.807237322 +0800
+@@ -1485,7 +1485,7 @@
+ 		{4096, 3840, 2160,  60},
+ 		{3840, 3840, 2160,  60},
+ 		{2048, 1920, 1200, 120},
+-		{2880, 2880, 1800,  90},
++		{2880, 2880, 1800,  60},
+ 		{7680, 7680, 4320,  30},
+ 	};
+ 	struct disp_interface_info info;

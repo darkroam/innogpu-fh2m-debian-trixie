@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0",
+  "id": "030-006",
+  "ledger_ref": {
+    "item": "006",
+    "neutral_record": "D004",
+    "mapping": "docs/planning/030-mapping-table.md §三.3/§三.4",
+    "description": "local-connector-acpi-map"
+  },
+  "deepin_patch": {
+    "path": "patches/006-local-connector-acpi-map.patch",
+    "sha256": "63a6569ccb13adfadc7d717cf0b1bc6a338ff7f0231429e6b9d266b0a07340b5",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "docs/planning/evidence/o-stage/f0-snapshot.tar.zst",
+      "sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e"
+    },
+    "tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+    "chain_base": {
+      "id": "030-002",
+      "after_tree_hash": "22c8254240d2e6028b5b146f35323cc282ebdf824f060eac63cc5a25b0285aa7"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "adapted-port + reconcile",
+      "summary": "台账 006 共 4 语义项（P5 line 355，3 sem-eq + 1 partial + reconcile）。① ACPI _DSD DPU_MATCH 读取：F0 HAL 层 fantgpu_acpi_data_init（fantgpu_pci_drv.c:1352-1462）与 D 侧 innogpu_acpi_dpu_match 语义等价（同 GUID 0xdaffd814、同 TARGET_PATH、DPU_ID \"1ec8\"、DPU_MATCH 整数解析；失败置 dpu_match=-1），且 <linux/acpi.h> F0 已包含（fantdpu_connector.c:47）——已覆盖，未伪造改动。② 分辨率表扩展：F0 fantdpu_interface_info_register 的 limit_array 已含 {3840,3840,2160,60} 行（覆盖 patch 的 3840 替代语义）；2880 行刷新率为 90Hz，D patch 语义为 60Hz（D_stage innodpu_get_interface_max_resolution DP0==2880 分支）——唯一移植增量：90→60，对齐 4.0.2-i3 实机验证过的 Deepin 血统值。③ 命名常量替换魔术数字：F0 s_connector_map 全程命名常量，无 D 侧 0/1/4/6 魔术索引形态——已覆盖。④ reconcile：F0 fantdpu_custom_init:1551-1553 已为 ACPI 优先 + dpu_match<=0 回退 fh2m_hal_get_dpu_match——已覆盖。"
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "D 端目标分类 mit-or-gpl-2.0-only（030-mapping-table §三.1，BC-09 innodpu_connector.c→srvkm/dpu_connector.c）；未引入第三方文件或 notice；正式 tools/audit-licenses.py 结果待批次验证。"
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "030-001, 030-002 applied",
+      "summary": "链基 = 030-002 after_tree_hash 22c82542…（构建前提 030-001 与 dp-fbdev-fallback-mode 030-002 已应用；006 不依赖其他 030-NNN）。"
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "adapted-port + reconcile",
+      "summary": "机制不同构的同位移植：D 侧 innodpu_fill_interface_info 为数组式（fh2m_hal_detect_registered_interface + append），F0 为每 connector 注册式 fantdpu_interface_info_register（同一语义通道 struct disp_interface_info → fh2m_hal_display_interface_info_register），D 侧 innodpu_get_interface_max_resolution/fill_interface_info 无 F0 对应函数；4 语义项中 3 项已被 F0 基线吸收、1 项（2880 刷新率）以 limit_array 值对齐完成 reconcile，无伪造改动。另记录 base-vs-base 差异（不入 030-006 范围，记入 O_stage 整体验收 UNVERIFIED 矩阵）：F0 limit_array 缺 2560 行（D_stage 基线既有 2560→2560x1440@100 分支，非 patch 006 增量），而 F0 s_connector_map 存在 44 个 max_width=2560 条目（HDMI0×15/HDMI1×15/DP0×14），未命中时 info.max_hdisp 保持 -1，消费方 fh2m_hal_display_interface_info_register 为预编译符号、-1 语义不可静态判定，待 tools/probe-drm-topology.c 实机观测。"
+    }
+  },
+  "apply": {
+    "before_tree_hash": "22c8254240d2e6028b5b146f35323cc282ebdf824f060eac63cc5a25b0285aa7",
+    "after_tree_hash": "46a7621812d916bc9b018d1c705e9d9b0bb34bf009e53677905eefccbf6fed39",
+    "patch_sha256": "17f0df86aa3ee05c1b4b3f8546a6c38f5c254ea5abeb3265802dfed2a68ad102",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <CHAIN_BASE> < patches/030-006.patch",
+    "result": "1 file changed (fantsrvkm/fantdpu_connector.c); no .orig/.rej; fresh replay tree hash == after_tree_hash"
+  },
+  "rollback": {
+    "command": "remove O_stage and re-extract chain base (F0 snapshot + 030-001.patch + 030-002.patch); do not reverse-edit F0",
+    "target": "chain base tree hash 22c8254240d2e6028b5b146f35323cc282ebdf824f060eac63cc5a25b0285aa7"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "fresh chain-base replay: -p1, --fuzz=0, rc=0",
+        "no .orig/.rej artifacts",
+        "replay tree hash 46a7621812d916bc9b018d1c705e9d9b0bb34bf009e53677905eefccbf6fed39 == adapted tree",
+        "apply_level -p1 按来源 patch 实际 diff 头（a/innosrvkm/… 单层前缀）实测测定"
+      ]
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "阶段三 O-3 fixture、内核模块编译/加载及 per-030 验证矩阵；含 2880x1800 实机 DP 输出刷新率确认（60Hz vs 90Hz）与 2560 base-vs-base 差异观测（UNVERIFIED）"
+    }
+  }
+}
