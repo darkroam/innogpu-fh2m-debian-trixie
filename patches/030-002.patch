@@ -1,0 +1,36 @@
+diff -ruN -x '*.o' -x '*.ko' -x '*.mod*' -x '.tmp*' -x Module.symvers -x modules.order a/fantsrvkm/fantdpu_connector.c b/fantsrvkm/fantdpu_connector.c
+--- a/fantsrvkm/fantdpu_connector.c	2022-01-01 08:00:00.000000000 +0800
++++ b/fantsrvkm/fantdpu_connector.c	2026-09-09 17:32:04.874160819 +0800
+@@ -49,6 +49,14 @@
+ extern unsigned int s_dpu_match;
+ 
+ static const struct drm_display_mode s_noedid_modes[] = {
++	/*
++	 * FH2M notebook internal AUO panel: EDID can be readable while the final
++	 * probed DRM mode list is empty during fbdev setup. This reduced-blanking
++	 * mode has been verified on the device and gives fbcon a safe pre-X mode.
++	 */
++	{DRM_MODE("1920x1200", DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED, 154000, 1920, 1968,
++			  2000, 2080, 0, 1200, 1203, 1209, 1235, 0,
++			  DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC),},
+ 	{DRM_MODE("1920x1080", DRM_MODE_TYPE_DRIVER, 148500, 1920, 2008,
+ 			  2052, 2200, 0, 1080, 1084, 1089, 1125, 0,
+ 			  DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC),
+diff -ruN -x '*.o' -x '*.ko' -x '*.mod*' -x '.tmp*' -x Module.symvers -x modules.order a/fantsrvkm/fantdpu_dp.c b/fantsrvkm/fantdpu_dp.c
+--- a/fantsrvkm/fantdpu_dp.c	2026-09-09 17:29:54.464460945 +0800
++++ b/fantsrvkm/fantdpu_dp.c	2026-09-09 17:32:04.874160819 +0800
+@@ -2297,6 +2297,14 @@
+ 	if (!dp_get_edid(&fant_dp->chip) || (fant_dp->chip.hal_edid_mode == EDID_STR_PUSH))
+ 		fant_dp_get_edid(connector, fant_dp->chip.hal_edid_mode);
+ 
++	/*
++	 * Keep a known-good mode available even when EDID exists. On FH2M the
++	 * internal AUO panel can expose EDID but still leave the DRM connector
++	 * mode list empty during fbdev setup, which prevents fbcon/tty1 from appearing.
++	 */
++	if (connector->status == connector_status_connected)
++		fant_dp->chip.modes += fantdpu_add_modes_without_edid(connector, NULL);
++
+ #if (DRM_VERSION <= KERNEL_VERSION(4, 16, 0))
+ 	drm_edid_to_eld(connector, dp_get_edid(&fant_dp->chip));
+ #endif

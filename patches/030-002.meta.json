@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0",
+  "id": "030-002",
+  "ledger_ref": {
+    "item": "002",
+    "neutral_record": "D003",
+    "mapping": "docs/planning/030-mapping-table.md §三.3/§三.4",
+    "description": "dp-fbdev-fallback-mode"
+  },
+  "deepin_patch": {
+    "path": "patches/002-dp-fbdev-fallback-mode.patch",
+    "sha256": "1a12de65f201839232a99f542707f43240b175bbe80029926b4ed3ab180f7329",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "docs/planning/evidence/o-stage/f0-snapshot.tar.zst",
+      "sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e"
+    },
+    "tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+    "chain_base": {
+      "id": "030-001",
+      "after_tree_hash": "bdcd0bbb9f1794607a2dd890e190a6c628c170496510d00acec167906b176b91"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "adapted-port",
+      "summary": "两处 hunk：① fantsrvkm/fantdpu_connector.c s_noedid_modes[] 新增 1920x1200 reduced-blanking PREFERRED 模式（pixelclock 154000、PHSYNC|NVSYNC；AUO 内屏 EDID 可读但 fbdev 阶段模式列表为空时的安全 pre-X 模式）；② fantsrvkm/fantdpu_dp.c get_modes 中 connector_status_connected 即追加 fantdpu_add_modes_without_edid 回退模式（EDID 可能存在仍追加，未误改为 EDID-absent 条件）。"
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "D 端目标分类 mit-or-gpl-2.0-only（030-mapping-table §三.1）；未引入第三方文件或 notice；正式 tools/audit-licenses.py 结果待批次验证。"
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "030-001 applied",
+      "summary": "链基 = 030-001 after_tree_hash bdcd0bbb…（构建前提已应用）。"
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "adapted-port",
+      "summary": "同位移植：F0 fant_dp_connector_helper_get_modes 与 D 侧 inno_dp_connector_helper_get_modes 结构同构（含 fantdpu_modes_drop_repeat 去重），hunk 落点与 D 侧一致；命名 innodpu_*→fantdpu_*、inno_dp→fant_dp；无 hunk 被 F0 吸收，无伪造改动。"
+    }
+  },
+  "apply": {
+    "before_tree_hash": "bdcd0bbb9f1794607a2dd890e190a6c628c170496510d00acec167906b176b91",
+    "after_tree_hash": "22c8254240d2e6028b5b146f35323cc282ebdf824f060eac63cc5a25b0285aa7",
+    "patch_sha256": "dbff23475443d251a928c2458ff06275f6637dc65fb9f9822a133848676d19ca",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <CHAIN_BASE> < patches/030-002.patch",
+    "result": "2 files changed (fantsrvkm/fantdpu_connector.c, fantsrvkm/fantdpu_dp.c); no .orig/.rej; fresh replay tree hash == after_tree_hash"
+  },
+  "rollback": {
+    "command": "remove O_stage and re-extract chain base (F0 snapshot + 030-001.patch); do not reverse-edit F0",
+    "target": "chain base tree hash bdcd0bbb9f1794607a2dd890e190a6c628c170496510d00acec167906b176b91"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "fresh chain-base replay: -p1, --fuzz=0, rc=0",
+        "no .orig/.rej artifacts",
+        "replay tree hash 22c8254240d2e6028b5b146f35323cc282ebdf824f060eac63cc5a25b0285aa7 == adapted tree"
+      ]
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "阶段三 O-3 fixture、内核模块编译/加载及 per-030 验证矩阵"
+    }
+  }
+}
