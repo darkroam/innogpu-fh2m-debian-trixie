@@ -75,6 +75,17 @@ docs/planning/capability-survey.md
 docs/planning/current-work.md
 docs/planning/ddk-v119-mapping.md
 docs/planning/display-integration.md
+docs/planning/evidence/4.0.2-i3/d-stage-snapshot.tar.zst
+docs/planning/evidence/4.0.2-i3/d-stage-snapshot.tar.zst.sha256
+docs/planning/evidence/d-stage-audit.D.manifest.tsv
+docs/planning/evidence/d-stage-audit.D.manifest.tsv.sha256
+docs/planning/evidence/d-stage-audit.D_stage.manifest.tsv
+docs/planning/evidence/d-stage-audit.D_stage.manifest.tsv.sha256
+docs/planning/evidence/d-stage-audit.genesis.json
+docs/planning/evidence/d-stage-audit.symlink.tsv
+docs/planning/evidence/d-stage-audit.symlink.tsv.sha256
+docs/planning/evidence/d-stage-audit.tsv
+docs/planning/evidence/d-stage-audit.tsv.sha256
 docs/planning/fantgpu-base-update-evaluation.md
 docs/planning/history.md
 docs/planning/patch-provenance.md
