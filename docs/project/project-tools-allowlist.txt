@@ -225,6 +225,8 @@ tests/unit/run-exec-probes-tests.sh
 tests/unit/run-extractor-tests.sh
 tests/unit/run-license-audit-tests.sh
 tests/unit/run-manifest-tests.sh
+tests/unit/run-o4-f0-lock-tests.sh
+tests/unit/run-o4-f0-snapshot-txn-tests.sh
 tests/unit/run-p2-normalize-tests.sh
 tests/unit/run-r16-build-bc-map-tests.sh
 tests/unit/run-r16-classify-tests.sh
