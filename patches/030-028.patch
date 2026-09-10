@@ -1,0 +1,89 @@
+diff -ruN -x '*.o' -x '*.ko' -x '*.mod*' -x '.tmp*' -x Module.symvers -x modules.order a/fantgpu/fantgpu_pci_drv.c b/fantgpu/fantgpu_pci_drv.c
+--- a/fantgpu/fantgpu_pci_drv.c	2022-01-01 08:00:00.000000000 +0800
++++ b/fantgpu/fantgpu_pci_drv.c	2026-09-10 08:59:36.687112003 +0800
+@@ -1851,6 +1851,9 @@
+ 	/*cancle and stop high temperature monitor work*/
+ 	hal_power_sleep(pdev_rsrc);
+ 
++	if (suspend)
++		atomic_set(&pdev_rsrc->pvr_resume_count, 0);
++
+ 	hal_check_reg_accessiable(pdev_rsrc);
+ 
+ 	/*
+@@ -1945,8 +1948,12 @@
+ 	else
+ 		pcie_info(&pdev->dev, "pm_resume callback is NULL\n");
+ 
+-	/*restart high temperature monitor work*/
+-	hal_power_wakeup(pdev_rsrc);
++	/*
++	 * S3 restarts this work after every PVR child has resumed. Keep the
++	 * existing hibernation behavior, whose child callbacks are different.
++	 */
++	if (!is_suspend)
++		hal_power_wakeup(pdev_rsrc);
+ 
+ 	return 0;
+ }
+diff -ruN -x '*.o' -x '*.ko' -x '*.mod*' -x '.tmp*' -x Module.symvers -x modules.order a/fantgpu/hal.h b/fantgpu/hal.h
+--- a/fantgpu/hal.h	2022-01-01 08:00:00.000000000 +0800
++++ b/fantgpu/hal.h	2026-09-10 08:59:18.334981291 +0800
+@@ -1383,6 +1383,9 @@
+ 	void* fantsmmu_ops;
+ 
+ 	struct vpuinfo_s vpuinfo;
++
++	/* Queue the parent temperature work only after every PVR child resumes. */
++	atomic_t pvr_resume_count;
+ };
+ 
+ struct apu_platform_data  {
+diff -ruN -x '*.o' -x '*.ko' -x '*.mod*' -x '.tmp*' -x Module.symvers -x modules.order a/fantsrvkm/ft_drm.c b/fantsrvkm/ft_drm.c
+--- a/fantsrvkm/ft_drm.c	2026-09-10 08:37:37.975829316 +0800
++++ b/fantsrvkm/ft_drm.c	2026-09-10 08:59:36.919113654 +0800
+@@ -141,11 +141,13 @@
+ static int ft_pm_resume(struct device *dev)
+ {
+ 	struct drm_device *ddev = fantgpu_get_drm_from_pdev(dev);
++	plat_data_t *pdata = fh2m_fant_dev_get_platdata(dev);
+ #if defined(SUPPORT_LINUX_DVFS) && (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
+ 	struct ft_drm_private *priv = ddev->dev_private;
+ 	PVRSRV_ERROR dvfs_err;
+-	int err;
+ #endif
++	int resumed;
++	int err;
+ 
+ 	DRM_DEBUG_DRIVER("device %p\n", dev);
+ 
+@@ -155,9 +157,27 @@
+ 		return err;
+ 
+ 	dvfs_err = ResumeDVFS(priv->dev_node);
+-	return OSPVRSRVToNativeError(dvfs_err);
++	err = OSPVRSRVToNativeError(dvfs_err);
++#else
++	err = PVRSRVDeviceResume(ddev);
++#endif
++	if (err)
++		return err;
++
++#if defined(NO_HARDWARE)
++	return 0;
+ #else
+-	return PVRSRVDeviceResume(ddev);
++	if (!pdata || !pdata->pdev_rsrc || pdata->dev_nums <= 0 ||
++	    pdata->dev_idx >= (unsigned int)pdata->dev_nums)
++		return -ENODEV;
++
++	resumed = atomic_inc_return(&pdata->pdev_rsrc->pvr_resume_count);
++	if (resumed == pdata->dev_nums)
++		hal_power_wakeup(pdata->pdev_rsrc);
++	else if (resumed > pdata->dev_nums)
++		return -EOVERFLOW;
++
++	return 0;
+ #endif
+ }
+ 
