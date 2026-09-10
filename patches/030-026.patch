@@ -1,0 +1,24 @@
+diff -ruN -x '*.o' -x '*.ko' -x '*.mod*' -x '.tmp*' -x Module.symvers -x modules.order a/fantsrvkm/pdp0_crtc.c b/fantsrvkm/pdp0_crtc.c
+--- a/fantsrvkm/pdp0_crtc.c	2022-01-01 08:00:00.000000000 +0800
++++ b/fantsrvkm/pdp0_crtc.c	2026-09-10 08:16:40.950658040 +0800
+@@ -1140,6 +1140,20 @@
+ {
+ 	struct fantdpu_pdp0_drm *pdp0_drm = crtc_to_pdp0_device(crtc);
+ 
++	if (!pdp0_drm->hwdev->is_nulldisp) {
++		/* The hardware cannot deliver vblank for a CRTC that is not
++		 * active or has no valid mode. Refuse instead of returning
++		 * success so userspace WAIT_VBLANK fails immediately rather
++		 * than blocking forever on an inactive CRTC. */
++		if (!crtc->state || !crtc->state->active || !crtc->state->mode.clock) {
++			fh2m_fantdpu_err(crtc->dev->dev,
++					 "crtc %s: vblank not available (active=%d clock=%d)\n",
++					 crtc->name,
++					 crtc->state ? crtc->state->active : 0,
++					 crtc->state ? crtc->state->mode.clock : 0);
++			return -EINVAL;
++		}
++	}
+ 	atomic_set(pdp0_drm->hwdev->vblank_enable, 1);
+ 
+ 	return 0;

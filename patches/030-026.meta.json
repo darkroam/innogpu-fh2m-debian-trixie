@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0",
+  "id": "030-026",
+  "ledger_ref": {
+    "item": "026-vblank",
+    "neutral_record": "D009",
+    "mapping": "docs/planning/030-mapping-table.md §三.3/§三.4",
+    "description": "inactive-crtc-vblank-guard"
+  },
+  "deepin_patch": {
+    "path": "patches/026-inactive-crtc-vblank-guard.patch",
+    "sha256": "864bc3d651250ed9b701d376f6408fe7f506b2fea5fe7129007034e95a80216b",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "docs/planning/evidence/o-stage/f0-snapshot.tar.zst",
+      "sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e"
+    },
+    "tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+    "chain_base": {
+      "id": "030-024",
+      "after_tree_hash": "ace30d133210ffa4e8486ac8b8e1e9a2522885c125a0cf751883161c4d89c4b2"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "adapted-port",
+      "summary": "台账 026-vblank 共 1 语义项（P5 line 360，inactive CRTC guard，F 覆盖 0/1）：pdp0_crtc_enable_vblank 在非 nulldisp 路径上，对 !crtc->state || !active || !mode.clock 的 CRTC 拒绝使能 vblank 并返回 -EINVAL（错误日志注明 active/clock），使 userspace WAIT_VBLANK 在 inactive CRTC 上快速失败而非永久阻塞。F0 移植：guard 落点 = 简化版 pdp0_crtc_enable_vblank 的 atomic_set 之前，并以 !pdp0_drm->hwdev->is_nulldisp 包裹精确复刻 D 侧 else 分支语义（D 侧 nulldisp 分支不设防，F0 侧一致）；命名适配 fh2m_innodpu_err→fh2m_fantdpu_err、innodpu_pdp0_drm→fantdpu_pdp0_drm。"
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "D 端目标分类 mit-or-gpl-2.0-only（030-mapping-table §三.1，BC-09 innosrvkm/pdp0_crtc.c→srvkm/pdp0_crtc.c）；未引入第三方文件或 notice；正式 tools/audit-licenses.py 结果待批次验证。"
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "030-001, 030-002, 030-006, 030-009, 030-007, 030-023, 030-025, 030-024 applied",
+      "summary": "链基 = 030-024 after_tree_hash ace30d13…；026 目标文件 pdp0_crtc.c 与 024 的 ft_dvfs_device.c 不重叠，无 hunk 冲突；不依赖其他未应用 030-NNN。"
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "adapted-port + nulldisp-exclusion",
+      "summary": "结构差异适配（如实）：D_stage 侧 enable_vblank 含 if(is_nulldisp) 分支（hrtimer 假 vblank，不设防）与 else 分支（guard + atomic_set）；F0 侧 enable_vblank 为简化函数（nulldisp timer 逻辑已移至 pdp0_crtc_atomic_enable_legacy——F0 vendor 重构，base-vs-base 差异不入本 patch 范围）；guard 以 !pdp0_drm->hwdev->is_nulldisp 包裹精确复刻 D 侧 else 分支语义（nulldisp 路径不设防与 D 一致），插入点 = atomic_set 之前。无 hunk 被 F0 基线吸收、无伪造改动。"
+    }
+  },
+  "apply": {
+    "before_tree_hash": "ace30d133210ffa4e8486ac8b8e1e9a2522885c125a0cf751883161c4d89c4b2",
+    "after_tree_hash": "ff52a59993c37b7a5fce1c1d8b6880dad83c9e23366cbd1eb6fe5ca4f02c178c",
+    "patch_sha256": "8188ef696395a357b408a41abe9ec2267048d9592e12aef6549007d91293c4b5",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <CHAIN_BASE> < patches/030-026.patch",
+    "result": "1 file changed (fantsrvkm/pdp0_crtc.c); no .orig/.rej; fresh replay tree hash == after_tree_hash"
+  },
+  "rollback": {
+    "command": "remove O_stage and re-extract chain base (F0 snapshot + 030-001.patch + 030-002.patch + 030-006.patch + 030-009.patch + 030-007.patch + 030-023.patch + 030-025.patch + 030-024.patch); do not reverse-edit F0",
+    "target": "chain base tree hash ace30d133210ffa4e8486ac8b8e1e9a2522885c125a0cf751883161c4d89c4b2"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "fresh chain-base replay: -p1, --fuzz=0, rc=0",
+        "no .orig/.rej artifacts",
+        "replay tree hash ff52a59993c37b7a5fce1c1d8b6880dad83c9e23366cbd1eb6fe5ca4f02c178c == adapted tree",
+        "apply_level -p1 按来源 patch 实际 diff 头（diff -ruN a/… b/… 单层前缀）实测测定"
+      ]
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "阶段三 O-3 fixture、内核模块编译/加载及 per-030 验证矩阵；含 tools/probe-drm-vblank.c inactive CRTC 预期快速 EINVAL 实机确认（D009 观测项）"
+    }
+  }
+}
