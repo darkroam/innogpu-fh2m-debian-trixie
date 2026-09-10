@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0",
+  "id": "030-024",
+  "ledger_ref": {
+    "item": "024",
+    "neutral_record": "D011",
+    "mapping": "docs/planning/030-mapping-table.md §三.3/§三.4",
+    "description": "suspend-resume"
+  },
+  "deepin_patch": {
+    "path": "patches/024-suspend-resume.patch",
+    "sha256": "3e2c9ab19e2675cfc900ed96c74c7bae947248f369854c7dea5913461f7eec48",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "docs/planning/evidence/o-stage/f0-snapshot.tar.zst",
+      "sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e"
+    },
+    "tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+    "chain_base": {
+      "id": "030-025",
+      "after_tree_hash": "5e2a4006735a3adf836d93167b30d7197856534dcc2e656e1da8fd1d30c10bca"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "adapted-port",
+      "summary": "台账 024 共 1 语义项（P5 line 362，DVFS 协调前提，F 覆盖 0/1）：devfreq_target 增加防御性快速路径——当 PVRSRVDefaultDomainPower(psDeviceNode) != PVRSRV_SYS_POWER_STATE_ON（设备未上电，devfreq 可能先于 PVR resume 路径运行）时，直接置 *requested_freq = psRGXTimingInfo->ui32CoreClockSpeed 并 return 0，跳过 OPP 推荐与频率切换。F0 移植：ft_dvfs_device.c 的 devfreq_target 与 D 侧 pvr_dvfs_device.c 完全同构（同函数签名、同 psDeviceNode/psRGXData/psRGXTimingInfo/bEnabled 结构、同 4.11 LINUX_VERSION 守卫列 0 落点），插入点与 D 侧同位（bEnabled 快速返回块之后、4.11 #if 之前）。"
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "D 端目标分类 mit-or-gpl-2.0-only（030-mapping-table §三.1/§三.2，BC-10 参照：TSV 无 inno 行，pvr_dvfs_device.c→srvkm/ft_dvfs_device.c = defer/BEHAVIORAL）；未引入第三方文件或 notice；正式 tools/audit-licenses.py 结果待批次验证。"
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "030-001, 030-002, 030-006, 030-009, 030-007, 030-023, 030-025 applied",
+      "summary": "链基 = 030-025 after_tree_hash 5e2a4006…（F0 重放序按 dsh 放行：023→025→024；D 侧 builder 序为 024→025→023(rebased)，顺序差异无 hunk 冲突——024 目标文件 ft_dvfs_device.c 与 023/025 的 gem 文件不重叠）。"
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "adapted-port",
+      "summary": "结构同构的同位移植：F0 fantsrvkm/ft_dvfs_device.c 与 D 侧 innosrvkm/pvr_dvfs_device.c 的 devfreq_target 完全同构（PVRSRV*/psDeviceNode/psRGXTimingInfo 等 PVRSRV 命名空间符号在 F0 保留原样，仅文件名 pvr_→ft_ 与目录 fantsrvkm 变化）；hunk 落点与 D 侧一致（bEnabled 快速返回块之后、LINUX_VERSION_CODE 4.11 守卫 #if 之前，守卫行同为列 0）；无命名适配改动、无 hunk 被 F0 基线吸收、无伪造改动。"
+    }
+  },
+  "apply": {
+    "before_tree_hash": "5e2a4006735a3adf836d93167b30d7197856534dcc2e656e1da8fd1d30c10bca",
+    "after_tree_hash": "ace30d133210ffa4e8486ac8b8e1e9a2522885c125a0cf751883161c4d89c4b2",
+    "patch_sha256": "29ead7b607fb56ce3a3b22c7e0c6c736423938c711caa70027123f7ed366a7b6",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <CHAIN_BASE> < patches/030-024.patch",
+    "result": "1 file changed (fantsrvkm/ft_dvfs_device.c); no .orig/.rej; fresh replay tree hash == after_tree_hash"
+  },
+  "rollback": {
+    "command": "remove O_stage and re-extract chain base (F0 snapshot + 030-001.patch + 030-002.patch + 030-006.patch + 030-009.patch + 030-007.patch + 030-023.patch + 030-025.patch); do not reverse-edit F0",
+    "target": "chain base tree hash 5e2a4006735a3adf836d93167b30d7197856534dcc2e656e1da8fd1d30c10bca"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "fresh chain-base replay: -p1, --fuzz=0, rc=0",
+        "no .orig/.rej artifacts",
+        "replay tree hash ace30d133210ffa4e8486ac8b8e1e9a2522885c125a0cf751883161c4d89c4b2 == adapted tree",
+        "apply_level -p1 按来源 patch 实际 diff 头（diff -ruN a/… b/… 单层前缀）实测测定"
+      ]
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "阶段三 O-3 fixture、内核模块编译/加载及 per-030 验证矩阵；含 deep S3 唤醒 devfreq 电源状态门禁实机确认（运行时部分按框架 §七.1 走 UNVERIFIED，suspend 组验证时合并覆盖）"
+    }
+  }
+}

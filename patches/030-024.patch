@@ -1,0 +1,18 @@
+diff -ruN -x '*.o' -x '*.ko' -x '*.mod*' -x '.tmp*' -x Module.symvers -x modules.order a/fantsrvkm/ft_dvfs_device.c b/fantsrvkm/ft_dvfs_device.c
+--- a/fantsrvkm/ft_dvfs_device.c	2022-01-01 08:00:00.000000000 +0800
++++ b/fantsrvkm/ft_dvfs_device.c	2026-09-10 08:06:23.286463006 +0800
+@@ -162,6 +162,14 @@
+ 		return 0;
+ 	}
+ 
++	/* devfreq can run before the PVR resume path has powered the device on. */
++	if (PVRSRVDefaultDomainPower(psDeviceNode) !=
++		PVRSRV_SYS_POWER_STATE_ON)
++	{
++		*requested_freq = psRGXTimingInfo->ui32CoreClockSpeed;
++		return 0;
++	}
++
+ #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0))
+ 	rcu_read_lock();
+ #endif
