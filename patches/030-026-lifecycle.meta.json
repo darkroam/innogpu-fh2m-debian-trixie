@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0",
+  "id": "030-026-lifecycle",
+  "ledger_ref": {
+    "item": "026-lifecycle",
+    "neutral_record": "D012",
+    "mapping": "docs/planning/030-mapping-table.md §三.3/§三.4",
+    "description": "suspend-resume-dvfs-lifecycle"
+  },
+  "deepin_patch": {
+    "path": "patches/026-suspend-resume-dvfs-lifecycle.patch",
+    "sha256": "5f6f834f4a6c3bd42d69dab29ac55f988f63e1be60d92c54d4a5177acab11d26",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "docs/planning/evidence/o-stage/f0-snapshot.tar.zst",
+      "sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e"
+    },
+    "tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+    "chain_base": {
+      "id": "030-027",
+      "after_tree_hash": "a73f9b34c6947d4da25501cddc0ac26ea348310bdc4992c1ae4dbf0f50446f9f"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "adapted-port",
+      "summary": "台账 026-lifecycle 共 3 语义项（P5 line 363，DVFS suspend/resume 生命周期同步，F 覆盖 0/3）：① 增加 #include \"osfunc.h\" + #include \"ft_dvfs_device.h\"（OSPVRSRVToNativeError 与 SuspendDVFS/ResumeDVFS 声明来源）；② ft_pm_suspend 中 SuspendDVFS 先于 PVRSRVDeviceSuspend，SuspendDVFS 失败时 ResumeDVFS 回滚（devfreq suspend 计数可能已递增）并返回 OSPVRSRVToNativeError(dvfs_err)，PVRSRVDeviceSuspend 失败同样回滚后返回 err；③ ft_pm_resume 中 PVRSRVDeviceResume 成功后 ResumeDVFS 并返回 OSPVRSRVToNativeError(dvfs_err)。守卫 `#if defined(SUPPORT_LINUX_DVFS) && (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))` 与 D 侧一致：F0 Kbuild:48 `-include config_kernel.h`（config_kernel.h:349 `#define SUPPORT_LINUX_DVFS 1`）→ 6.12 下 DVFS 路径编译期激活。"
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "D 端目标分类 mit-or-gpl-2.0-only（030-mapping-table §三.1/§三.2，BC-10 参照：TSV 无 inno 行，pvr_drm.c→srvkm/ft_drm.c = defer/BEHAVIORAL）；未引入第三方文件或 notice；正式 tools/audit-licenses.py 结果待批次验证。"
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "030-001, 030-002, 030-006, 030-009, 030-007, 030-023, 030-025, 030-024, 030-026, 030-027 applied",
+      "summary": "链基 = 030-027 after_tree_hash a73f9b34…（F0 重放序按 dsh 放行：suspend 组首项；D 侧标注 i3 组第一，顺序差异无 hunk 冲突——ft_drm.c 与前置项目标文件不重叠）。"
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "adapted-port",
+      "summary": "命名映射：pvr_drm.c→ft_drm.c、pvr_drm_private→ft_drm_private、pvr_dvfs_device.h→ft_dvfs_device.h、innogpu_get_drm_from_pdev→fantgpu_get_drm_from_pdev、osfunc.h 同名保留；D 侧 accessor innogpu_drm_to_pvr_private(ddev) 在 F0 以既有风格 ddev->dev_private 直接访问（ft_drm.c:334 同款写法，F0 无该 accessor 函数）；两 pm 函数 F0 侧为简化版（无 DVFS 逻辑），hunk 落点与 D 侧同位（声明块 + 返回值路径），F0 既有注释块保留不动；无 hunk 被 F0 基线吸收、无伪造改动。"
+    }
+  },
+  "apply": {
+    "before_tree_hash": "a73f9b34c6947d4da25501cddc0ac26ea348310bdc4992c1ae4dbf0f50446f9f",
+    "after_tree_hash": "ff287463aefc2a35f4fc21353f5f2c8a4335a4c95eba27c96f1c7f12ef746831",
+    "patch_sha256": "9dede7934da4c154cd82b56b9457688c5d8f30bb27443129541d943f53ff1424",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <CHAIN_BASE> < patches/030-026-lifecycle.patch",
+    "result": "1 file changed (fantsrvkm/ft_drm.c); no .orig/.rej; fresh replay tree hash == after_tree_hash"
+  },
+  "rollback": {
+    "command": "remove O_stage and re-extract chain base (F0 snapshot + 030-001.patch + 030-002.patch + 030-006.patch + 030-009.patch + 030-007.patch + 030-023.patch + 030-025.patch + 030-024.patch + 030-026.patch + 030-027.patch); do not reverse-edit F0",
+    "target": "chain base tree hash a73f9b34c6947d4da25501cddc0ac26ea348310bdc4992c1ae4dbf0f50446f9f"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "fresh chain-base replay: -p1, --fuzz=0, rc=0",
+        "no .orig/.rej artifacts",
+        "replay tree hash ff287463aefc2a35f4fc21353f5f2c8a4335a4c95eba27c96f1c7f12ef746831 == adapted tree",
+        "apply_level -p1 按来源 patch 实际 diff 头（diff -ruN a/… b/… 单层前缀）实测测定"
+      ]
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "阶段三 O-3 fixture、内核模块编译/加载及 per-030 验证矩阵；DVFS suspend/resume 生命周期与 030-024 一起在 suspend 组实机验证（deep S3 唤醒路径，UNVERIFIED，tools/probe-suspend-resume-state.sh 合并覆盖）"
+    }
+  }
+}

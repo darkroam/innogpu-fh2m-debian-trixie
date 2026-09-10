@@ -1,0 +1,76 @@
+diff -ruN -x '*.o' -x '*.ko' -x '*.mod*' -x '.tmp*' -x Module.symvers -x modules.order a/fantsrvkm/ft_drm.c b/fantsrvkm/ft_drm.c
+--- a/fantsrvkm/ft_drm.c	2026-09-09 17:29:54.464460945 +0800
++++ b/fantsrvkm/ft_drm.c	2026-09-10 08:37:29.791732222 +0800
+@@ -68,6 +68,8 @@
+ #include "ft_drm.h"
+ #include "ft_drv.h"
+ #include "ftversion.h"
++#include "osfunc.h"
++#include "ft_dvfs_device.h"
+ #include "services_kernel_client.h"
+ #include "ft_sync_ioctl_drm.h"
+ #include "physmem_dmabuf_internal.h"
+@@ -99,10 +101,38 @@
+ static int ft_pm_suspend(struct device *dev)
+ {
+ 	struct drm_device *ddev = fantgpu_get_drm_from_pdev(dev);
++#if defined(SUPPORT_LINUX_DVFS) && (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
++	struct ft_drm_private *priv = ddev->dev_private;
++	PVRSRV_ERROR dvfs_err;
++	PVRSRV_ERROR rollback_err;
++	int err;
++#endif
+ 
+ 	DRM_DEBUG_DRIVER("device %p\n", dev);
+ 
++#if defined(SUPPORT_LINUX_DVFS) && (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
++	dvfs_err = SuspendDVFS(priv->dev_node);
++	if (dvfs_err != PVRSRV_OK) {
++		/* SuspendDVFS may have incremented devfreq's suspend count. */
++		rollback_err = ResumeDVFS(priv->dev_node);
++		if (rollback_err != PVRSRV_OK)
++			DRM_ERROR("failed to roll back DVFS suspend (%d)\n",
++				  rollback_err);
++		return OSPVRSRVToNativeError(dvfs_err);
++	}
++
++	err = PVRSRVDeviceSuspend(ddev);
++	if (err) {
++		rollback_err = ResumeDVFS(priv->dev_node);
++		if (rollback_err != PVRSRV_OK)
++			DRM_ERROR("failed to restore DVFS after PVR suspend failure (%d)\n",
++				  rollback_err);
++	}
++
++	return err;
++#else
+ 	return PVRSRVDeviceSuspend(ddev);
++#endif
+ }
+ 
+ /* Executed after the system is woken up from sleep/suspend-to-RAM/S3. This
+@@ -111,10 +141,24 @@
+ static int ft_pm_resume(struct device *dev)
+ {
+ 	struct drm_device *ddev = fantgpu_get_drm_from_pdev(dev);
++#if defined(SUPPORT_LINUX_DVFS) && (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
++	struct ft_drm_private *priv = ddev->dev_private;
++	PVRSRV_ERROR dvfs_err;
++	int err;
++#endif
+ 
+ 	DRM_DEBUG_DRIVER("device %p\n", dev);
+ 
++#if defined(SUPPORT_LINUX_DVFS) && (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
++	err = PVRSRVDeviceResume(ddev);
++	if (err)
++		return err;
++
++	dvfs_err = ResumeDVFS(priv->dev_node);
++	return OSPVRSRVToNativeError(dvfs_err);
++#else
+ 	return PVRSRVDeviceResume(ddev);
++#endif
+ }
+ 
+ /* Executed before the hibernation image is created. This callback allows to
