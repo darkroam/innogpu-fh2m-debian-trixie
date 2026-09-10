@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0",
+  "id": "030-025",
+  "ledger_ref": {
+    "item": "025-dma",
+    "neutral_record": "D008",
+    "mapping": "docs/planning/030-mapping-table.md §三.3/§三.4",
+    "description": "dma-resv-usage-rw"
+  },
+  "deepin_patch": {
+    "path": "patches/025-dma-resv-usage-rw.patch",
+    "sha256": "05de1bdd503d3a83d82b7e0de44d74535c39d02ae153be4649c90e0c1ae0a027",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "docs/planning/evidence/o-stage/f0-snapshot.tar.zst",
+      "sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e"
+    },
+    "tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+    "chain_base": {
+      "id": "030-023",
+      "after_tree_hash": "22eb66ee17d9fd27c320199fc865ea504f2cfd94147c99d5f21d3997309afbec"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "adapted-port",
+      "summary": "台账 025-dma 共 2 语义项（P5 line 359，F 覆盖 0/2，DMA resv usage R/W）：① compatibility 宏 fantdpu_dma_resv_usage_rw（DRM_VERSION>=5.19 时展开为 dma_resv_usage_rw(write) 枚举转换，否则 (write) 透传），落点与 D 侧同位（dma_resv_get_fences_rcu 兼容块 #endif 之后、4.20 块之前）；② fant_gem_object_cpu_prep_ioctl 中 dma_resv_wait_timeout_rcu 与 dma_resv_test_signaled_rcu 两处 write 实参改经宏（5.19+ 内核该 API 的第二个参数为 enum dma_resv_usage；F0 基线以 bool 直传依赖枚举值 READ=0/WRITE=1 巧合等价，宏化后类型语义显式）。命名 innodpu_dma_resv_usage_rw→fantdpu_dma_resv_usage_rw、innodpu_obj→fantdpu_obj。与 030-023 同函数落点关系：023 改声明与 !err 块、025 改 wait/test 两行，无冲突，链式 023→025 重放验证通过。"
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "D 端目标分类 mit-or-gpl-2.0-only（030-mapping-table §三.1，BC-01 include/innodpu_compatibility.h→srvkm/include/dpu_compatibility.h + BC-09 innodpu_drm_gem.c）；dma_resv_usage_rw 为内核既有 API，未引入第三方文件或 notice；正式 tools/audit-licenses.py 结果待批次验证。"
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "030-001, 030-002, 030-006, 030-009, 030-007, 030-023 applied",
+      "summary": "链基 = 030-023 after_tree_hash 22eb66ee…（F0 重放序按 dsh 放行：023 → 025；D 侧 builder 序为 024 后、023 重基前，重基上下文差异已在 030-023 记录）；025-display（D 台账第 19 项 runtime-verify）维持排除，不进 030 序列（dsh 明确）。"
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "adapted-port",
+      "summary": "纯同位移植：F0 fantdpu_compatibility.h 与 D 侧 innodpu_compatibility.h 的 reservation_object 兼容块结构同构（同名 define 序列 + #endif），宏插入位置与 D 侧一致；gem.c cpu_prep_ioctl 两处 dma_resv 调用在 023-after 状态下上下文不变（030-023 未触碰这两行），hunk 上下文直接适配命名即可；无 hunk 被 F0 基线吸收、无伪造改动。"
+    }
+  },
+  "apply": {
+    "before_tree_hash": "22eb66ee17d9fd27c320199fc865ea504f2cfd94147c99d5f21d3997309afbec",
+    "after_tree_hash": "5e2a4006735a3adf836d93167b30d7197856534dcc2e656e1da8fd1d30c10bca",
+    "patch_sha256": "d1989d54431942a98a3202b54b56119554c76d8f19098df0026f108e76f5431a",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <CHAIN_BASE> < patches/030-025.patch",
+    "result": "2 files changed (fantsrvkm/fantdpu_drm_gem.c, fantsrvkm/include/fantdpu_compatibility.h); no .orig/.rej; fresh replay tree hash == after_tree_hash"
+  },
+  "rollback": {
+    "command": "remove O_stage and re-extract chain base (F0 snapshot + 030-001.patch + 030-002.patch + 030-006.patch + 030-009.patch + 030-007.patch + 030-023.patch); do not reverse-edit F0",
+    "target": "chain base tree hash 22eb66ee17d9fd27c320199fc865ea504f2cfd94147c99d5f21d3997309afbec"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "fresh chain-base replay: -p1, --fuzz=0, rc=0",
+        "no .orig/.rej artifacts",
+        "replay tree hash 5e2a4006735a3adf836d93167b30d7197856534dcc2e656e1da8fd1d30c10bca == adapted tree",
+        "apply_level -p1 按来源 patch 实际 diff 头（diff -ruN a/… b/… 单层前缀）实测测定"
+      ]
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "阶段三 O-3 fixture、内核模块编译/加载及 per-030 验证矩阵；dma_resv usage R/W 语义为 5.19+ API 枚举转换显式化（与 bool 直传在 READ=0/WRITE=1 下行为等价），编译/加载验证后行为等价性记录于验证矩阵"
+    }
+  }
+}

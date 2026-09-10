@@ -1,0 +1,34 @@
+diff -ruN -x '*.o' -x '*.ko' -x '*.mod*' -x '.tmp*' -x Module.symvers -x modules.order a/fantsrvkm/fantdpu_drm_gem.c b/fantsrvkm/fantdpu_drm_gem.c
+--- a/fantsrvkm/fantdpu_drm_gem.c	2026-09-09 18:39:11.027783173 +0800
++++ b/fantsrvkm/fantdpu_drm_gem.c	2026-09-10 07:39:29.589911317 +0800
+@@ -2875,13 +2875,13 @@
+ 	if (wait) {
+ 		long lerr;
+ 
+-		lerr = dma_resv_wait_timeout_rcu(fantdpu_obj->resv, write, true, 30 * HZ);
++		lerr = dma_resv_wait_timeout_rcu(fantdpu_obj->resv, fantdpu_dma_resv_usage_rw(write), true, 30 * HZ);
+ 		if (!lerr)
+ 			err = -EBUSY;
+ 		else if (lerr < 0)
+ 			err = lerr;
+ 	} else {
+-		if (!dma_resv_test_signaled_rcu(fantdpu_obj->resv, write))
++		if (!dma_resv_test_signaled_rcu(fantdpu_obj->resv, fantdpu_dma_resv_usage_rw(write)))
+ 			err = -EBUSY;
+ 	}
+ 	if (!err) {
+diff -ruN -x '*.o' -x '*.ko' -x '*.mod*' -x '.tmp*' -x Module.symvers -x modules.order a/fantsrvkm/include/fantdpu_compatibility.h b/fantsrvkm/include/fantdpu_compatibility.h
+--- a/fantsrvkm/include/fantdpu_compatibility.h	2022-01-01 08:00:00.000000000 +0800
++++ b/fantsrvkm/include/fantdpu_compatibility.h	2026-09-10 07:39:29.365908681 +0800
+@@ -125,6 +125,11 @@
+ #define dma_resv_get_excl_rcu  reservation_object_get_excl_rcu
+ #define dma_resv_get_fences_rcu reservation_object_get_fences_rcu
+ #endif
++#if (DRM_VERSION >= KERNEL_VERSION(5, 19, 0))
++#define fantdpu_dma_resv_usage_rw(write) dma_resv_usage_rw(write)
++#else
++#define fantdpu_dma_resv_usage_rw(write) (write)
++#endif
+ 
+ #if (DRM_VERSION < KERNEL_VERSION(4, 20, 0))
+ #define vmf_insert_pfn vm_insert_pfn
