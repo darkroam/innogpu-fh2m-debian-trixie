@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0",
+  "id": "030-029",
+  "ledger_ref": {
+    "item": "029",
+    "neutral_record": "D014",
+    "mapping": "docs/planning/030-mapping-table.md §三.3/§三.4",
+    "description": "suspend-resume-ddcci-panel"
+  },
+  "deepin_patch": {
+    "path": "patches/029-suspend-resume-ddcci-panel.patch",
+    "sha256": "c44f129ec6df50e9aceb6d11e76f17aacdf8b86efb57d5926fef809882690e36",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "docs/planning/evidence/o-stage/f0-snapshot.tar.zst",
+      "sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e"
+    },
+    "tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+    "chain_base": {
+      "id": "030-028",
+      "after_tree_hash": "0620ba91f53e00b22f9bdaaf0f56a82909679d35dc69669e7fefcf896e0cb034"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "adapted-port",
+      "summary": "台账 029 共 2 语义项（P5 line 365，DDCCI 显式逻辑，F 覆盖 0/2）：① fantdpu_dp_debugfs.c 背光模式分支——outer 范围下界 CONNECTOR_BACKLIGHT_PWM0→CONNECTOR_BACKLIGHT_DDCCI（DDCCI 面板也进入 panel_pwr_create 路径），force_on 加内层条件 `PWM0..AUX_HDR_BL`（DDCCI 排除 DRM_FORCE_ON，与 D 侧 `PWM0..AUX_HDR` 语义一致）；② fant_panel_backlight_init——backlight_mode == CONNECTOR_BACKLIGHT_DDCCI 时提前 return 0（DDCCI 背光由面板经 DP AUX 自管，无需内核 backlight 设备，与 D 侧同位）。"
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "D 端目标分类 mit-or-gpl-2.0-only（030-mapping-table §三.1，BC-09×2：innodpu_dp_debugfs.c→srvkm/dpu_dp_debugfs.c、innodpu_panel_backlight.c→srvkm/dpu_panel_backlight.c）；未引入第三方文件或 notice；正式 tools/audit-licenses.py 结果待批次验证。"
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "030-001, 030-002, 030-006, 030-009, 030-007, 030-023, 030-025, 030-024, 030-026, 030-027, 030-026-lifecycle, 030-028 applied",
+      "summary": "链基 = 030-028 after_tree_hash 0620ba91…（suspend 组末项；D 侧 4.0.2-i3 源树配方序 026-lifecycle→028→029 与 F0 重放序一致）；029 两目标文件（dp_debugfs/panel_backlight）与前置项不重叠。"
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "adapted-port + enum-extension-reconciled",
+      "summary": "命名映射：innodpu_*→fantdpu_*、fh2m_hal_get_inno_gfp_kernel→fh2m_hal_get_fant_gfp_kernel、innodpu_get_connector_backlight_mode→fantdpu_get_connector_backlight_mode；CONNECTOR_BACKLIGHT_DDCCI 同名保留（F0 fantdpu_connector.h:160）。枚举扩展差异（如实）：D 侧枚举仅 4 值（DDCCI=0/PWM0/AUX_VESA/AUX_HDR=3），F0 vendor 基线扩展 PWM0_BL/AUX_VESA_BL/AUX_HDR_BL/GAMMA（至 7）且既有 outer 上界为 AUX_HDR_BL=6——029 的语义增量 = outer 包含 DDCCI（下界改）+ force_on 排除 DDCCI（内层条件），F0 扩展的 _BL 范围语义保留不动，与 D 侧增量一致；F0 fant_panel_backlight_init（fant_panel*/fant_dev*/u8 backlight_mode 签名）与 D 侧结构同构。无 hunk 被 F0 基线吸收、无伪造改动。"
+    }
+  },
+  "apply": {
+    "before_tree_hash": "0620ba91f53e00b22f9bdaaf0f56a82909679d35dc69669e7fefcf896e0cb034",
+    "after_tree_hash": "937e37107f692712e6fba9b5eb93a48dd6bb034f138e5e51a2bb9c2beaa0d652",
+    "patch_sha256": "534e23419758ab1590f05726209b1dff5cde9d6f723c2a89d1ac21dd26331fad",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <CHAIN_BASE> < patches/030-029.patch",
+    "result": "2 files changed (fantsrvkm/fantdpu_dp_debugfs.c, fantsrvkm/fantdpu_panel_backlight.c); no .orig/.rej; fresh replay tree hash == after_tree_hash"
+  },
+  "rollback": {
+    "command": "remove O_stage and re-extract chain base (F0 snapshot + 030-001.patch + 030-002.patch + 030-006.patch + 030-009.patch + 030-007.patch + 030-023.patch + 030-025.patch + 030-024.patch + 030-026.patch + 030-027.patch + 030-026-lifecycle.patch + 030-028.patch); do not reverse-edit F0",
+    "target": "chain base tree hash 0620ba91f53e00b22f9bdaaf0f56a82909679d35dc69669e7fefcf896e0cb034"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "fresh chain-base replay: -p1, --fuzz=0, rc=0",
+        "no .orig/.rej artifacts",
+        "replay tree hash 937e37107f692712e6fba9b5eb93a48dd6bb034f138e5e51a2bb9c2beaa0d652 == adapted tree",
+        "apply_level -p1 按来源 patch 实际 diff 头（diff -ruN a/… b/… 单层前缀）实测测定"
+      ]
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "阶段三 O-3 fixture、内核模块编译/加载及 per-030 验证矩阵；DDCCI panel 显式逻辑（DDCCI 面板不强制 force-on、不建内核背光设备）为 DDCCI 退场验证前置，DDCCI 面板路径实机确认（UNVERIFIED）"
+    }
+  }
+}
