@@ -2337,3 +2337,27 @@ qoder / codex **不得**单方面决定或候选化（v7 "候选命名（待 dsh
 | 配套记录 | `collab/R16-2026-09-03-基座更新迭代评估/{qoder-notes,report}.md` |
 | 配套产物 | `docs/planning/030-mapping-table.md`（O-1 v12 P5/阶段一/阶段三 三列分离 + F-only excluded-deferred 隔离）、`docs/planning/030-d-stage-audit.md`（O-2 v24 tree-manifest `SRC_ROOT` 显式 export + symlink 9 类互斥 + F0 完全隔离 + 9 文件输出 = 8 稳定证据 + 1 运行时 genesis.json + tar.zst 可复现规范 + 目录级 staging + reconcile-first + 排他锁（先于一切变更）+ 固定事务目录 `.txn` + 结构化 journal 协议（含旧对精确指纹）+ staging_dir 路径约束 + 三者事实一致性（指纹严格匹配 + 共享分类函数）+ 状态专属不变量 + 旧对自洽校验 + 旧对完整性 fail-closed + 幂等 no-op（复用严格 sidecar 校验）+ selfcheck fail-closed + fsync 状态依赖数据屏障（断电一致性；跨目录 rename 源、目标双目录同步；verified 清理 .txn 屏障；回滚还原逐次 mv 屏障）+ rolling_back 合法中途态白名单（rolling_back_mid_state_ok 集合成员判断）+ 无 journal 恢复走全新路径 + §五 Python 实现契约（唯一实现依据）+ reconcile 子命令唯一入口 + `--reference-manifest` CLI 解析 + 退出码作用域契约 + `realpath -m` canonicalize）、`docs/planning/evidence/d-stage-audit.tsv` + `.sha256` + `.genesis.json` + `.symlink.tsv` + `.symlink.tsv.sha256` + `.D.manifest.tsv` + `.D.manifest.tsv.sha256` + `.D_stage.manifest.tsv` + `.D_stage.manifest.tsv.sha256`（O-2 输出 v24 共 9 文件 = 8 稳定证据 + 1 运行时 genesis.json，待阶段一启动后生成）、`docs/planning/evidence/4.0.2-i3/`（阶段二验证证据 + `d-stage-snapshot.tar.zst` + `.sha256`，**v24 per codex v9 P1 #2 + P1 #3 + P2 #6 + codex v10 P1 #1+#2 + codex v11 P1 #1+#2 + codex v12 P1 #1-#4 + codex v13 P1 #1+#2 + P2 #3 + codex v14 P1 #1+#2 + codex v15 P1 #1+#2 + codex v16 P1 #1+#2 + P2 #3 + codex v17 P1 #1+#2 + P2 #3 + codex v18 P1 #1+#2 + P2 #3 + codex v19 P1 #1 + P2 #2 + codex v20 P1 #1+#2+#3 + codex v21 P1 #1 + codex v22 P1 #1 + codex v23 P1 #1+P2 #2** tar.zst 可复现规范详 §五.3 v24；D_stage 快照嵌入 release commit）、`docs/planning/evidence/o-stage/`（阶段三验证证据）、`docs/planning/evidence/4.0.2-i3/4.0.2-i3.meta.json`（阶段二 release 元数据；**v11 per codex v10 P1 #3 路径统一到 evidence dir**；**v10 per codex v9 P2 #7** Git tag 名称从 `git_tag_ref` 字段读取，禁止硬编码）、`/tmp/r16-d-stage/`（**v24 唯一合法 D_stage 物化根**，系统 `$TMPDIR`，**不在仓库任何路径下**；详 §〇.5 + §四.1 + §五.3 v24） |
 | 预计 review | codex 三阶段分别复审 + dsh 终审 + 用户分阶段批准 |
+
+---
+
+## 十三、双轨变更纪律（两条腿 · 2026-09-10 用户裁定）
+
+与章程 §十一 同源；本节给出操作细则，自 O_stage 构建集成完成后对 5.0.0-iN
+血缘生效。
+
+- **patch 续编规则**：N 从 030 起续编（030-030、030-031…）；每条相对上一
+  after_tree_hash（链基）；规格与既有 030-NNN 完全一致（diff -ruN、-p1
+  --fuzz=0 可重放、零 .orig/.rej、4 目评审、draft→verified 生命周期、
+  rollback 字段、台账引用）。
+- **台账**：`030-mapping-table.md` 增加「5.x 变更台账」小节（或新建 5.x
+  台账文档）；每条改动登记：来源、语义、验证状态、链基 / after hash。
+- **印证门禁**：发布前用 `tools/o4-f0-lock-gen.py manifest`（或同族工具）
+  重算 O_stage 物化树 hash，必须等于「F0 快照 + 全链 030-NNN 重放」树 hash；
+  不一致即阻塞发布。
+- **基座更换流程（未来）**：新 vendor 基座 = F0′ 锁定（O-4 流程复用）→
+  全链 patch 逐项重放 + 适配 → O_stage′；语义裁决直接复用既有 meta 的
+  review 字段，仅更新 o_stage_adaptation 与行号证据。禁止回到考古式逐文件
+  归纳。
+- **链起点**：R16 阶段三已落地的 13 条重放链（001→002→006→009→007→023→
+  025→024→026→027→026-lifecycle→028→029，O_stage = 937e3710…）为链起点；
+  关闭项（003/004/005/008/025-display/patch-000）终判在同链新基座下沿用。
