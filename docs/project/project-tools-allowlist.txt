@@ -68,6 +68,7 @@ docs/patches/patch-027-foreign-dmabuf-lifecycle.md
 docs/patches/patched-21-release-candidate.md
 docs/patches/patched-24-kernel-612101.md
 docs/patches/picom/patch-picom-001-explicit-uniform-location.md
+docs/planning/030-closed-items-decision.md
 docs/planning/030-d-stage-audit.md
 docs/planning/030-mapping-table.md
 docs/planning/030-patch-rederivation-design.md
