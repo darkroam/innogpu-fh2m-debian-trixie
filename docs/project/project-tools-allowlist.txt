@@ -99,6 +99,7 @@ docs/planning/evidence/o-stage/f0.manifest.tsv.sha256
 docs/planning/evidence/o-stage/o4-f0.genesis.json
 docs/planning/fantgpu-base-update-evaluation.md
 docs/planning/history.md
+docs/planning/o-stage-integration-plan.md
 docs/planning/patch-provenance.md
 docs/planning/phase4-device-validation.md
 docs/planning/phase5-retirement-design.md
