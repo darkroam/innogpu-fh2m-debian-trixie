@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0",
+  "id": "030-027",
+  "ledger_ref": {
+    "item": "027",
+    "neutral_record": "D010",
+    "mapping": "docs/planning/030-mapping-table.md §三.3/§三.4",
+    "description": "foreign-dmabuf-lifecycle"
+  },
+  "deepin_patch": {
+    "path": "patches/027-foreign-dmabuf-lifecycle.patch",
+    "sha256": "ab2d1b418fa315fc0528c65e425ad37e16ecdde9ae81066869a487a5c6ce7ca5",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "docs/planning/evidence/o-stage/f0-snapshot.tar.zst",
+      "sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e"
+    },
+    "tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+    "chain_base": {
+      "id": "030-026",
+      "after_tree_hash": "ff52a59993c37b7a5fce1c1d8b6880dad83c9e23366cbd1eb6fe5ca4f02c178c"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "adapted-port + reconcile",
+      "summary": "台账 027 共 4 语义项（P5 line 361，prime_import 类型混淆 + reconcile；F 覆盖 1/4）：① unmap_dma_buf 的 GTT 逐页 DMA 地址回收——sem-eq 已被 F0 基线吸收（fantdpu_gem_prime_unmap_dma_buf 含 GTT 分支 + strstr \"fant\" 驱动名 + fh2m_gtt_paddr_to_cpu_paddr 回收 + fh2m_fant_dma_unmap_page wrapper，与 D 侧 \"inno\"/dma_unmap_page 语义等价；F0 差异：sgt->nents vs D 的 orig_nents、无零地址跳过、sg_dma_len vs sg->length——如实记录，未伪造改动）；② prime_import ops-first 检查（先判 dma_buf->ops == &s_fantdpu_gem_prime_dmabuf_ops 再解引用 dma_buf->priv，杜绝 foreign dmabuf 类型混淆，同时移除原 BUG_ON）——移植；③ dma_buf_attach 的 IS_ERR 错误路径（drm_gem_object_release + kfree + return NULL）——移植；④ idr_alloc 参数 obj→gem_obj（obj 作用域收窄后的悬空引用修正）——移植。"
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "D 端目标分类 mit-or-gpl-2.0-only（030-mapping-table §三.1，BC-09 innodpu_drm_gem.c→srvkm/dpu_drm_gem.c）；未引入第三方文件或 notice；正式 tools/audit-licenses.py 结果待批次验证。"
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "030-001, 030-002, 030-006, 030-009, 030-007, 030-023, 030-025, 030-024, 030-026 applied",
+      "summary": "链基 = 030-026 after_tree_hash ff52a599…；027 与 023/025 同文件（fantdpu_drm_gem.c）但落点不同（027 在 prime_import/unmap_dma_buf 区域，023 在 wdma_sync_pvm/vm_fault/cpu_prep_ioctl 区域，025 在 cpu_prep_ioctl 两行），链式重放验证无 hunk 冲突。"
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "adapted-port + reconcile",
+      "summary": "命名映射：innodpu_*→fantdpu_*、s_innodpu_gem_prime_dmabuf_ops→s_fantdpu_gem_prime_dmabuf_ops、fh2m_hal_get_inno_gfp_kernel→fh2m_hal_get_fant_gfp_kernel。item ① 已被 F0 基线吸收（F0 原生 \"fant\" 驱动名分支为同一语义的 F0 侧实现），未伪造改动；items ②③④ 同位移植（F0 prime_import 与 D 侧 pre-patch 结构同构；F0 独有的 private_object_init NULL 检查保留不动）。"
+    }
+  },
+  "apply": {
+    "before_tree_hash": "ff52a59993c37b7a5fce1c1d8b6880dad83c9e23366cbd1eb6fe5ca4f02c178c",
+    "after_tree_hash": "a73f9b34c6947d4da25501cddc0ac26ea348310bdc4992c1ae4dbf0f50446f9f",
+    "patch_sha256": "183b00f54e75b74451b196bb3b9d378b33f395b7c50e82d1dd2e52c8c098292f",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <CHAIN_BASE> < patches/030-027.patch",
+    "result": "1 file changed (fantsrvkm/fantdpu_drm_gem.c); no .orig/.rej; fresh replay tree hash == after_tree_hash"
+  },
+  "rollback": {
+    "command": "remove O_stage and re-extract chain base (F0 snapshot + 030-001.patch + 030-002.patch + 030-006.patch + 030-009.patch + 030-007.patch + 030-023.patch + 030-025.patch + 030-024.patch + 030-026.patch); do not reverse-edit F0",
+    "target": "chain base tree hash ff52a59993c37b7a5fce1c1d8b6880dad83c9e23366cbd1eb6fe5ca4f02c178c"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "fresh chain-base replay: -p1, --fuzz=0, rc=0",
+        "no .orig/.rej artifacts",
+        "replay tree hash a73f9b34c6947d4da25501cddc0ac26ea348310bdc4992c1ae4dbf0f50446f9f == adapted tree",
+        "apply_level -p1 按来源 patch 实际 diff 头（diff -ruN a/… b/… 单层前缀）实测测定"
+      ]
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "阶段三 O-3 fixture、内核模块编译/加载及 per-030 验证矩阵；含 foreign dmabuf import 生命周期（跨设备 prime fd import + attach 失败路径）与 GTT unmap 地址回收实机确认；DMABUF self-import 既有测试子集（tools/run-dmabuf-regression-test.sh）覆盖部分路径"
+    }
+  }
+}
