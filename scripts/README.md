@@ -83,6 +83,7 @@ xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项
 - `check-deepin-userspace-coherence.sh`
 - `check-docs.sh`
 - `materialize-d-stage.sh`
+- `materialize-o-stage.sh`
 - `check-desktop-hwgl.sh`
 - `check-innogpu-progress.sh`
 - `check-patched17-baseline.sh`
@@ -109,6 +110,18 @@ runtime 统计、manifest 原包 SHA、过期状态断言和 Markdown 表格结�
 `materialize-d-stage.sh` 是阶段一 D_stage 物化入口：只读 `third_party/` D 快照，按 4.0.2-i3
 配方（显式补丁文件名清单，builder 序 + suspend 组）重放补丁到 `/tmp/r16-d-stage/`，补丁失败或
 `.orig/.rej` 残留 fail-closed；只写 `/tmp/r16-d-stage/`，不修改仓库任何路径，不安装不 modeset。
+`materialize-o-stage.sh` 是阶段三 O_stage 物化入口：只读 `docs/planning/evidence/o-stage/f0-snapshot.tar.zst`
+与 `patches/030-*`，按 13 条 030-NNN 链序（-p1 --fuzz=0，每链点 after_tree_hash 校验，最终树 hash
+937e3710…）物化 O_stage 源树，并以五件同代事务产物（o-stage-snapshot.tar.zst + 双 sidecar +
+5.0.0-i1.meta.json 不可变 provenance）写入 `docs/planning/evidence/o-stage/`（阶段三证据/产物目录；
+O-4 F0 输入只读）；tar 1.35/zstd 1.5.7 精确版本锁（不匹配 exit 7）、输出目录 realpath 边界（越界
+exit 78）、排他锁（占用 exit 6）、journal+fsync+恢复、禁止混代；故障注入钩子 `OSTAGE_FAIL_INJECT`
+（仅测试）。契约 = `docs/planning/o-stage-integration-plan.md` §一；回归测试：
+`tests/unit/run-o-stage-materialize-tests.sh`（18 用例：路径越界/symlink 拒绝/SHA 不符/坏输入/
+工具版本锁/事务故障注入（commit 与 staged_done）/恢复/幂等/链点 fail-closed/回滚失败
+rolling_back 保留现场/人工裁决后恢复/committed 写入失败自洽恢复/未知与损坏 journal
+fail-closed/恢复清理失败 fail-closed）+ `tests/unit/run-030-meta-tests.sh`
+（13 条 meta 链点校验）。
 `check-release-package.sh` 只解包读取指定 deb，核对版本、关键载荷、禁止文件和设备接入脚本，
 不会安装包。发布包边界的可重复 fixture 见 `tests/package/run-boundary-tests.sh`。
 `verify-install-status.sh --require-reboot VERSION` 用于运行验收：除常规状态外，它要求包元数据早于当前

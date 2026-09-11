@@ -1,0 +1,141 @@
+{
+  "schema_version": "1.0",
+  "id": "5.0.0-i1",
+  "lineage": "fantgpu",
+  "version": "5.0.0-i1",
+  "tag": "fantgpu-5.0.0-i1",
+  "source_date_epoch": 1788796800,
+  "o_stage_tree_hash": "937e37107f692712e6fba9b5eb93a48dd6bb034f138e5e51a2bb9c2beaa0d652",
+  "tree_hash_definition": "SHA-256 of o-stage.manifest.tsv canonical sorted bytes (O-4 contract)",
+  "input": {
+    "f0_snapshot_sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e",
+    "f0_tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb"
+  },
+  "patch_chain": [
+    {
+      "id": "030-001",
+      "patch": "patches/030-001.patch",
+      "patch_sha256": "fe8b2c1a158b92e255f577ef6d4f467e44d1c21f18aff927a6aa5a5aec22a362",
+      "before_tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+      "after_tree_hash": "bdcd0bbb9f1794607a2dd890e190a6c628c170496510d00acec167906b176b91"
+    },
+    {
+      "id": "030-002",
+      "patch": "patches/030-002.patch",
+      "patch_sha256": "dbff23475443d251a928c2458ff06275f6637dc65fb9f9822a133848676d19ca",
+      "before_tree_hash": "bdcd0bbb9f1794607a2dd890e190a6c628c170496510d00acec167906b176b91",
+      "after_tree_hash": "22c8254240d2e6028b5b146f35323cc282ebdf824f060eac63cc5a25b0285aa7"
+    },
+    {
+      "id": "030-006",
+      "patch": "patches/030-006.patch",
+      "patch_sha256": "17f0df86aa3ee05c1b4b3f8546a6c38f5c254ea5abeb3265802dfed2a68ad102",
+      "before_tree_hash": "22c8254240d2e6028b5b146f35323cc282ebdf824f060eac63cc5a25b0285aa7",
+      "after_tree_hash": "46a7621812d916bc9b018d1c705e9d9b0bb34bf009e53677905eefccbf6fed39"
+    },
+    {
+      "id": "030-009",
+      "patch": "patches/030-009.patch",
+      "patch_sha256": "2e4240bd4bdeae82e60375bc22a820440e1df25bd03982ef3e9d7e4785d90203",
+      "before_tree_hash": "46a7621812d916bc9b018d1c705e9d9b0bb34bf009e53677905eefccbf6fed39",
+      "after_tree_hash": "b3f003bb9b07eca81421bbbb23f55f4c0256f5df5fee6ce6de847c39faa4af76"
+    },
+    {
+      "id": "030-007",
+      "patch": "patches/030-007.patch",
+      "patch_sha256": "51b37b4948b96749f0df61491b87b46c6805815968d5f3b446366d8862f75a77",
+      "before_tree_hash": "b3f003bb9b07eca81421bbbb23f55f4c0256f5df5fee6ce6de847c39faa4af76",
+      "after_tree_hash": "9fe864c1c0547046b0fbef50828c6f5448dcdfb9bb30adc763282ef8d24b04d6"
+    },
+    {
+      "id": "030-023",
+      "patch": "patches/030-023.patch",
+      "patch_sha256": "f0c518e5207de300f97aaf499a978626c60b1808577b50c1d3650e571a462c79",
+      "before_tree_hash": "9fe864c1c0547046b0fbef50828c6f5448dcdfb9bb30adc763282ef8d24b04d6",
+      "after_tree_hash": "22eb66ee17d9fd27c320199fc865ea504f2cfd94147c99d5f21d3997309afbec"
+    },
+    {
+      "id": "030-025",
+      "patch": "patches/030-025.patch",
+      "patch_sha256": "d1989d54431942a98a3202b54b56119554c76d8f19098df0026f108e76f5431a",
+      "before_tree_hash": "22eb66ee17d9fd27c320199fc865ea504f2cfd94147c99d5f21d3997309afbec",
+      "after_tree_hash": "5e2a4006735a3adf836d93167b30d7197856534dcc2e656e1da8fd1d30c10bca"
+    },
+    {
+      "id": "030-024",
+      "patch": "patches/030-024.patch",
+      "patch_sha256": "29ead7b607fb56ce3a3b22c7e0c6c736423938c711caa70027123f7ed366a7b6",
+      "before_tree_hash": "5e2a4006735a3adf836d93167b30d7197856534dcc2e656e1da8fd1d30c10bca",
+      "after_tree_hash": "ace30d133210ffa4e8486ac8b8e1e9a2522885c125a0cf751883161c4d89c4b2"
+    },
+    {
+      "id": "030-026",
+      "patch": "patches/030-026.patch",
+      "patch_sha256": "8188ef696395a357b408a41abe9ec2267048d9592e12aef6549007d91293c4b5",
+      "before_tree_hash": "ace30d133210ffa4e8486ac8b8e1e9a2522885c125a0cf751883161c4d89c4b2",
+      "after_tree_hash": "ff52a59993c37b7a5fce1c1d8b6880dad83c9e23366cbd1eb6fe5ca4f02c178c"
+    },
+    {
+      "id": "030-027",
+      "patch": "patches/030-027.patch",
+      "patch_sha256": "183b00f54e75b74451b196bb3b9d378b33f395b7c50e82d1dd2e52c8c098292f",
+      "before_tree_hash": "ff52a59993c37b7a5fce1c1d8b6880dad83c9e23366cbd1eb6fe5ca4f02c178c",
+      "after_tree_hash": "a73f9b34c6947d4da25501cddc0ac26ea348310bdc4992c1ae4dbf0f50446f9f"
+    },
+    {
+      "id": "030-026-lifecycle",
+      "patch": "patches/030-026-lifecycle.patch",
+      "patch_sha256": "9dede7934da4c154cd82b56b9457688c5d8f30bb27443129541d943f53ff1424",
+      "before_tree_hash": "a73f9b34c6947d4da25501cddc0ac26ea348310bdc4992c1ae4dbf0f50446f9f",
+      "after_tree_hash": "ff287463aefc2a35f4fc21353f5f2c8a4335a4c95eba27c96f1c7f12ef746831"
+    },
+    {
+      "id": "030-028",
+      "patch": "patches/030-028.patch",
+      "patch_sha256": "c1b8a976f77fc08655efac6402739d6e2b26027a2c445a1d94f63dfa30a9e031",
+      "before_tree_hash": "ff287463aefc2a35f4fc21353f5f2c8a4335a4c95eba27c96f1c7f12ef746831",
+      "after_tree_hash": "0620ba91f53e00b22f9bdaaf0f56a82909679d35dc69669e7fefcf896e0cb034"
+    },
+    {
+      "id": "030-029",
+      "patch": "patches/030-029.patch",
+      "patch_sha256": "534e23419758ab1590f05726209b1dff5cde9d6f723c2a89d1ac21dd26331fad",
+      "before_tree_hash": "0620ba91f53e00b22f9bdaaf0f56a82909679d35dc69669e7fefcf896e0cb034",
+      "after_tree_hash": "937e37107f692712e6fba9b5eb93a48dd6bb034f138e5e51a2bb9c2beaa0d652"
+    }
+  ],
+  "unverified": [
+    {
+      "id": "025-display",
+      "note": "excluded (i4-only); runtime observation registered UNVERIFIED"
+    },
+    {
+      "id": "patch-000",
+      "note": "no-transform operational verdict; G0M GPU PLL double-init semantic risk remains UNVERIFIED"
+    }
+  ],
+  "snapshot_artifacts": {
+    "o-stage-snapshot.tar.zst": {
+      "sha256": "468ccf3dea095310ad0544af1c8a8d1a7b1899d59338bb61052054f2749aed85",
+      "byte_count": 10966476
+    },
+    "o-stage-snapshot.tar.zst.sha256": {
+      "sha256": "6754c02fdd8bd2e1aa7b4c31ac1163f8fea185c90177bb7548de9aa7be1bfe19"
+    },
+    "o-stage.manifest.tsv": {
+      "sha256": "937e37107f692712e6fba9b5eb93a48dd6bb034f138e5e51a2bb9c2beaa0d652"
+    },
+    "o-stage.manifest.tsv.sha256": {
+      "sha256": "f1bf5427f076d38073d4a4e5b16961f2127e3891006c6d2b0d2ddeb61f18cfea"
+    }
+  },
+  "validation_results": {
+    "path": "docs/planning/evidence/o-stage/5.0.0-i1-validation-results.json",
+    "schema": "validation-results-1.0"
+  },
+  "epoch_mtime": "@1640995200",
+  "snapshot_tool_versions": {
+    "tar_required": "1.35",
+    "zstd_required": "1.5.7"
+  }
+}

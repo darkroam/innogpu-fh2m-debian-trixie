@@ -1,7 +1,7 @@
 # O_stage 构建集成方案（5.0.0-i1 系列）——起草稿
 
 - 日期：2026-09-10
-- 状态：**方案文档**（不动 builder；materialize-o-stage.sh 仅设计）
+- 状态：**已实现**（scripts/materialize-o-stage.sh + tests/unit/run-o-stage-materialize-tests.sh + tests/unit/run-030-meta-tests.sh 已交付；O_stage 物化实跑完成，五件产物落 evidence/o-stage/；builder 集成待物化验收后单独放行——本方案 §三 builder 部分仍为设计稿）
 - 放行依据：dsh 放行规格（已记 report.md）；约束不变（保护区零写入、debs/F0 只读、builder 不安装不重启）
 - 前置事实：030 重放链 13 项闭合，O_stage 树 hash = `937e37107f692712e6fba9b5eb93a48dd6bb034f138e5e51a2bb9c2beaa0d652`（= 030-029 after_tree_hash）
 
@@ -28,11 +28,11 @@
 6. 记录产物（**materialize 事务产物 = 五件同代**，与提交语义一致）：
    - `o-stage-snapshot.tar.zst` + `.sha256`
    - `o-stage.manifest.tsv` + `.sha256`
-   - `5.0.0-i1.meta.json`：**不可变 provenance**（版本串 5.0.0-i1 / SOURCE_DATE_EPOCH（批准值）/ tag 名 fantgpu-5.0.0-i1 / O_stage 树 hash 937e3710… / 13 条 030-NNN 链（各 patch SHA + after_tree_hash）/ 两条 UNVERIFIED 登记 / 快照产物 SHA-256 四值）——materialize 时一次性写完，**此后不再修改**；验证矩阵结论**不写入本文件**（见下）
+   - `5.0.0-i1.meta.json`：**不可变 provenance**（版本串 5.0.0-i1 / SOURCE_DATE_EPOCH（批准值）/ tag 名 fantgpu-5.0.0-i1 / O_stage 树 hash 937e3710… / 13 条 030-NNN 链（各 patch SHA + after_tree_hash）/ 两条 UNVERIFIED 登记 / **快照四文件各自 SHA-256**（o-stage-snapshot.tar.zst、o-stage-snapshot.tar.zst.sha256、o-stage.manifest.tsv、o-stage.manifest.tsv.sha256））——materialize 时一次性写完，**此后不再修改**；验证矩阵结论**不写入本文件**（见下）
 
 **meta.json 生命周期（消除同代冲突）**：
 
-- materialize 阶段：`5.0.0-i1.meta.json` 作为 provenance 在事务内生成，全部字段在 materialize 时已知（含快照 SHA），随四件快照产物同代提交；此后不可变（任何字段变更 = 新的受控事务 + 全套产物重生成/重校验，不复用旧 sidecar）；
+- materialize 阶段：`5.0.0-i1.meta.json` 作为 provenance 在事务内生成，全部字段在 materialize 时已知（含快照四文件 SHA），随五件同代产物统一提交；此后不可变（任何字段变更 = 新的受控事务 + 全套产物重生成/重校验，不复用旧 sidecar）；
 - 验证阶段：验证矩阵结论写入**独立文件** `docs/planning/evidence/o-stage/5.0.0-i1-validation-results.json`（不属于 materialize 同代产物集；内容 = 阶段三矩阵逐项结论 + 签发前全 PASS 状态）；签发前提 = 该文件全 PASS；
 - 两者绑定关系（**单向绑定，validation 锚定 immutable meta**）：
   - meta.json 固定记录 validation-results 文件路径与 schema（meta 只引用文件名，不引用其哈希——validation 后生成，其哈希在 materialize 时不可知）；
@@ -84,8 +84,8 @@
 
 | 维度 | 验证项 | fixture / 工具 |
 | --- | --- | --- |
-| 静态 | materialize-o-stage.sh 单测（路径边界 / fail-closed / 链点校验 / 幂等 / 事务恢复） | tests/unit/run-o-stage-materialize-tests.sh（**后续新增**：职责 = 本方案 §一契约的单元验证，与 O-4 `run-o4-f0-lock-tests.sh`/`run-o4-f0-snapshot-txn-tests.sh` 同构） |
-| 静态 | 13 条 030-NNN meta 校验（已闭合）+ schema + 文档 + 许可 | **后续新增** `tests/unit/run-030-meta-tests.sh`（职责：逐条校验 030-*.meta.json schema 1.0 字段 + apply 链点哈希衔接 + patch SHA 一致；当前仓库无此 fixture，实现批一并交付）+ 既有 `check-docs.sh` + `validate-collab.py` + `r16-gate.py` + `tools/audit-licenses.py` |
+| 静态 | materialize-o-stage.sh 单测（路径边界 / fail-closed / 链点校验 / 幂等 / 事务恢复） | `tests/unit/run-o-stage-materialize-tests.sh`（**已交付**，18 用例：路径越界/symlink 拒绝/SHA 不符/坏输入/工具版本锁/事务故障注入（commit 与 staged_done）/恢复/幂等/链点 fail-closed/回滚失败 rolling_back 保留现场/人工裁决后恢复/committed 写入失败自洽恢复/未知与损坏 journal fail-closed/恢复清理失败 fail-closed；与 O-4 测试同构） |
+| 静态 | 13 条 030-NNN meta 校验 + schema + 文档 + 许可 | `tests/unit/run-030-meta-tests.sh`（**已交付**：逐条校验 030-*.meta.json schema 1.0 字段 + apply 链点哈希衔接 + patch SHA 一致）+ 既有 `check-docs.sh` + `validate-collab.py` + `r16-gate.py` + `tools/audit-licenses.py` |
 | 静态 | O_stage 编译通过 | gcc/clang 编译门禁（DKMS 构建即覆盖） |
 | 运行时 | DRM device open / fbdev mmap / DMA-BUF self-import / VA-API 解码 | run-capability-baseline.sh + run-dmabuf-regression-test.sh + run-vaapi-decode-test.sh |
 | 运行时 | suspend/resume（024 + 026-lifecycle + 028 合并覆盖） | probe-suspend-resume-state.sh |
@@ -105,7 +105,7 @@
     - `docs/planning/evidence/o-stage/o-stage-snapshot.tar.zst.sha256`
     - `docs/planning/evidence/o-stage/o-stage.manifest.tsv`
     - `docs/planning/evidence/o-stage/o-stage.manifest.tsv.sha256`
-    - `docs/planning/evidence/o-stage/5.0.0-i1.meta.json`：不可变 provenance（版本串 / SOURCE_DATE_EPOCH / tag 名 / O_stage 树 hash / 13 条 030-NNN 链 / 两条 UNVERIFIED 登记 / 快照产物 SHA 四值；materialize 时一次写完，之后不改）
+    - `docs/planning/evidence/o-stage/5.0.0-i1.meta.json`：不可变 provenance（版本串 / SOURCE_DATE_EPOCH / tag 名 / O_stage 树 hash / 13 条 030-NNN 链 / 两条 UNVERIFIED 登记 / 快照四文件各自 SHA-256；materialize 时一次写完，之后不改）
   - **验证结论文件（独立于同代产物集）**：
     - `docs/planning/evidence/o-stage/5.0.0-i1-validation-results.json`：阶段三矩阵逐项结论，验证阶段写入，签发前填充全 PASS 状态；**对 immutable meta 的单向绑定**（记录 materialize_meta_sha256，验证阶段校验一致后方可填充；自身完整性由最终 Git commit / annotated tag 锚定）
 
