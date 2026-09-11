@@ -95,6 +95,9 @@ docs/planning/evidence/d-stage-audit.tsv
 docs/planning/evidence/d-stage-audit.tsv.sha256
 docs/planning/evidence/o-stage/5.0.0-i1.meta.json
 docs/planning/evidence/o-stage/build-5.0.0-i1.sha256
+docs/planning/evidence/o-stage/f-payload-integrity.json
+docs/planning/evidence/o-stage/f-payload.manifest.tsv
+docs/planning/evidence/o-stage/f-payload.manifest.tsv.sha256
 docs/planning/evidence/o-stage/f0-snapshot.tar.zst
 docs/planning/evidence/o-stage/f0-snapshot.tar.zst.sha256
 docs/planning/evidence/o-stage/f0.manifest.tsv
@@ -242,6 +245,7 @@ tests/unit/run-o4-f0-snapshot-txn-tests.sh
 tests/unit/run-p2-normalize-tests.sh
 tests/unit/run-r16-build-bc-map-tests.sh
 tests/unit/run-r16-classify-tests.sh
+tests/unit/run-r16-f-payload-integrity-tests.sh
 tests/unit/run-r16-gate-tests.sh
 tests/unit/run-results-parser-tests.sh
 tests/unit/run-suspend-failure-finalize-tests.sh
@@ -273,6 +277,7 @@ tools/probe-vulkan-devices.c
 tools/probe-x11-egl-gles2.c
 tools/r16-build-bc-map.py
 tools/r16-classify.py
+tools/r16-f-payload-integrity.py
 tools/r16-gate.py
 tools/run-dmabuf-regression-test.sh
 tools/run-vaapi-decode-test.sh
