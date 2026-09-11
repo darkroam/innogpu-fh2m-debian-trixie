@@ -72,6 +72,7 @@ docs/planning/030-closed-items-decision.md
 docs/planning/030-d-stage-audit.md
 docs/planning/030-mapping-table.md
 docs/planning/030-patch-rederivation-design.md
+docs/planning/5.0.0-i1-validation-plan.md
 docs/planning/capability-survey.md
 docs/planning/current-work.md
 docs/planning/ddk-v119-mapping.md
