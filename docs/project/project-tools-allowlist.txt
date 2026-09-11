@@ -93,6 +93,7 @@ docs/planning/evidence/d-stage-audit.symlink.tsv.sha256
 docs/planning/evidence/d-stage-audit.tsv
 docs/planning/evidence/d-stage-audit.tsv.sha256
 docs/planning/evidence/o-stage/5.0.0-i1.meta.json
+docs/planning/evidence/o-stage/build-5.0.0-i1.sha256
 docs/planning/evidence/o-stage/f0-snapshot.tar.zst
 docs/planning/evidence/o-stage/f0-snapshot.tar.zst.sha256
 docs/planning/evidence/o-stage/f0.manifest.tsv
