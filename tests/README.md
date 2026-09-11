@@ -64,6 +64,7 @@ bash tests/unit/run-p2-normalize-tests.sh
 bash tests/unit/run-r16-gate-tests.sh
 bash tests/unit/run-r16-build-bc-map-tests.sh
 bash tests/unit/run-r16-classify-tests.sh
+bash tests/unit/run-r16-f-payload-integrity-tests.sh
 ```
 
 - manifest 测试用 `tools/validate-binary-manifest.py` 对真实清单与 `tests/fixtures/` 下的恶意

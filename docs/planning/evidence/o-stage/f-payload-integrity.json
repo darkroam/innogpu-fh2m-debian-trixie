@@ -1,0 +1,335 @@
+{
+  "audit_id": "c3-a-payload-integrity",
+  "audit_scope": {
+    "closed_by_this_audit": "C3-a precondition 3 (integrity)",
+    "not_closed_by_this_audit": [
+      "C3-a precondition 1 (source chain): closed by dsh 2026-09-11 at level 'official channel confirmed + metadata consistent'",
+      "C3-a precondition 2 (closed-source blob authorization): ruled self-use-only, no redistribution, by dsh 2026-09-11",
+      "C3-a precondition 4 (reproducible build input): pending - binary-manifest.json F entry family + builder rework + double-build byte identity"
+    ]
+  },
+  "baseline_source": {
+    "sha256": "a89ee448c02df40dc29d7c93654b2b4f65d5bd949e341d16e65c564b82ea26db",
+    "source": "default"
+  },
+  "checks": {
+    "A_source_identity": {
+      "control_diff": {},
+      "control_fields_actual": {
+        "Architecture": "amd64",
+        "Description": "Fantasy II driver",
+        "Maintainer": "fant <service@fantasyxpu.com>",
+        "Package": "fantgpu-fh2m",
+        "Version": "3.3.8.126-driver-linux-desktop-sp-generic"
+      },
+      "control_fields_expected": {
+        "Architecture": "amd64",
+        "Description": "Fantasy II driver",
+        "Maintainer": "fant <service@fantasyxpu.com>",
+        "Package": "fantgpu-fh2m",
+        "Version": "3.3.8.126-driver-linux-desktop-sp-generic"
+      },
+      "deb_path": "debs/fantgpu-fh2m_3.3.8.126-driver-linux-desktop-sp-generic_amd64.deb",
+      "deb_sha256_actual": "6f0daaf79fb6b2a547138c17628bb990dff0d0c684ee1c13775bebc2d28fd11b",
+      "deb_sha256_expected": "6f0daaf79fb6b2a547138c17628bb990dff0d0c684ee1c13775bebc2d28fd11b",
+      "deb_sha256_match": true,
+      "deb_size_actual": 57607700,
+      "deb_size_expected": 57607700,
+      "deb_size_match": true,
+      "pass": true
+    },
+    "B_payload_structure": {
+      "count_diff": {},
+      "counts_deb": {
+        "dir": 87,
+        "file": 602,
+        "symlink": 58
+      },
+      "counts_expected": {
+        "dir": 87,
+        "file": 602,
+        "symlink": 58
+      },
+      "counts_unpack": {
+        "dir": 87,
+        "file": 602,
+        "symlink": 58
+      },
+      "entries_deb": 747,
+      "entries_unpack": 747,
+      "field_diffs": [],
+      "only_in_deb": [],
+      "only_in_unpack": [],
+      "pass": true
+    },
+    "C_control_and_md5sums": {
+      "control_bytes_mismatch": [],
+      "control_files_deb": [
+        "control",
+        "md5sums",
+        "postinst",
+        "postrm",
+        "prerm"
+      ],
+      "control_files_expected": [
+        "control",
+        "md5sums",
+        "postinst",
+        "postrm",
+        "prerm"
+      ],
+      "control_files_unpack": [
+        "control",
+        "md5sums",
+        "postinst",
+        "postrm",
+        "prerm"
+      ],
+      "control_only_in_deb": [],
+      "control_only_in_unpack": [],
+      "control_set_diff_vs_expected": [],
+      "md5sums_exact_count": 507,
+      "md5sums_exact_expected": 507,
+      "md5sums_exact_mismatch": [],
+      "md5sums_relocated_by_class": {
+        "docdir": 1,
+        "opt": 54,
+        "opt+privlib": 4,
+        "privlib": 36
+      },
+      "md5sums_relocated_by_class_expected": {
+        "docdir": 1,
+        "opt": 54,
+        "opt+privlib": 4,
+        "privlib": 36
+      },
+      "md5sums_relocated_count": 95,
+      "md5sums_relocated_expected": 95,
+      "md5sums_relocated_md5_mismatch": [],
+      "md5sums_relocated_unexplained": [],
+      "md5sums_rows": 602,
+      "md5sums_rows_expected": 602,
+      "pass": true,
+      "payload_files": 602,
+      "relocation_bijection": true,
+      "relocation_counts_match": true,
+      "relocation_injective": true,
+      "unlisted_leftover": [],
+      "unlisted_payload_files": 95,
+      "upstream_md5sums_path_defect": {
+        "characterization": "DEBIAN/md5sums was generated against a pre-relocation staging layout that lacks three path components: opt/fantgpu-fh2m/, usr/lib/<triplet>/fantgpu-fh2m/ and usr/share/doc/fantgpu-fh2m/. 507 rows match exactly; the remaining 95 rows match exactly after applying that relocation, the mapping is injective, and its image equals the set of 95 otherwise-unlisted payload files. Content integrity is therefore established; the defect is confined to the md5sums path column.",
+        "content_integrity_basis": "check B proves the unpack is byte-faithful to the deb data archive for all payload entries (type/size/mode/sha256/symlink target), and check D pins every file by SHA-256; the vendor md5sums is not the integrity authority here",
+        "dpkg_v_impact": "dpkg -V on a real machine reports these 95 paths as missing and leaves 95 real files unowned; this is an upstream packaging artifact and must not be misattributed to the 030 chain during R-item verification",
+        "obligation_for_audit_item_4": "the C3-a builder rework must regenerate md5sums from the payload it actually installs, and must not inherit the vendor file verbatim",
+        "verdict": "confirmed-and-bounded"
+      }
+    },
+    "E_lineage_coherence": {
+      "dangling_symlinks": [],
+      "forbidden_o_loader_names": [
+        "innogpu_dri.so",
+        "innogpu_drv.so",
+        "innogpu_drv_video.so",
+        "innogpu_gbm.so",
+        "inno_drv_video.so"
+      ],
+      "forbidden_present": [],
+      "pass": true,
+      "required_broken_symlink": [],
+      "required_f_paths": [
+        "etc/OpenCL/vendors/FANT_fh2m.icd",
+        "etc/cdi/fantgpu-fh2m.yaml",
+        "etc/modprobe.d/blacklist-fh2m.conf",
+        "etc/vulkan/icd.d/fh2m_conf.json",
+        "lib/firmware/fantgpu/fh2m/fh2c.fw",
+        "lib/firmware/fantgpu/fh2m/fh2c.sh",
+        "lib/firmware/fantgpu/fh2m/fh2m.fw",
+        "lib/firmware/fantgpu/fh2m/fh2m.sh",
+        "opt/fantgpu-fh2m/usr/lib/xorg/modules/drivers/fh2m_drv.so.1.19",
+        "opt/fantgpu-fh2m/usr/lib/xorg/modules/drivers/fh2m_drv.so.1.20",
+        "opt/fantgpu-fh2m/usr/lib/xorg/modules/drivers/fh2m_drv.so.1.21",
+        "usr/lib/i386-linux-gnu/dri/fh2m_dri.so",
+        "usr/lib/x86_64-linux-gnu/dri/fh2m_dri.so",
+        "usr/lib/x86_64-linux-gnu/dri/fh2m_drv_video.so",
+        "usr/lib/x86_64-linux-gnu/gbm/fh2m_gbm.so",
+        "usr/share/X11/xorg.conf.d/10-fh2m.conf",
+        "usr/share/drirc.d/01-fh2m_drv.conf",
+        "usr/share/fantgpu-fh2m-kernel-dkms/postinst",
+        "usr/share/glvnd/egl_vendor.d/00_fh2m.json",
+        "usr/src/fantgpu-fh2m-kernel-2.2/dkms.conf"
+      ],
+      "required_missing": [],
+      "required_resolved": {
+        "etc/OpenCL/vendors/FANT_fh2m.icd": {
+          "kind": "regular"
+        },
+        "etc/cdi/fantgpu-fh2m.yaml": {
+          "kind": "regular"
+        },
+        "etc/modprobe.d/blacklist-fh2m.conf": {
+          "kind": "regular"
+        },
+        "etc/vulkan/icd.d/fh2m_conf.json": {
+          "kind": "regular"
+        },
+        "lib/firmware/fantgpu/fh2m/fh2c.fw": {
+          "kind": "regular"
+        },
+        "lib/firmware/fantgpu/fh2m/fh2c.sh": {
+          "kind": "regular"
+        },
+        "lib/firmware/fantgpu/fh2m/fh2m.fw": {
+          "kind": "regular"
+        },
+        "lib/firmware/fantgpu/fh2m/fh2m.sh": {
+          "kind": "regular"
+        },
+        "opt/fantgpu-fh2m/usr/lib/xorg/modules/drivers/fh2m_drv.so.1.19": {
+          "kind": "regular"
+        },
+        "opt/fantgpu-fh2m/usr/lib/xorg/modules/drivers/fh2m_drv.so.1.20": {
+          "kind": "regular"
+        },
+        "opt/fantgpu-fh2m/usr/lib/xorg/modules/drivers/fh2m_drv.so.1.21": {
+          "kind": "regular"
+        },
+        "usr/lib/i386-linux-gnu/dri/fh2m_dri.so": {
+          "kind": "regular"
+        },
+        "usr/lib/x86_64-linux-gnu/dri/fh2m_dri.so": {
+          "kind": "regular"
+        },
+        "usr/lib/x86_64-linux-gnu/dri/fh2m_drv_video.so": {
+          "kind": "regular"
+        },
+        "usr/lib/x86_64-linux-gnu/gbm/fh2m_gbm.so": {
+          "chain": [
+            "../fantgpu-fh2m/libfh2m_gbm.so",
+            "libfh2m_gbm.so.1",
+            "libfh2m_gbm.so.1.0.0"
+          ],
+          "kind": "symlink",
+          "resolves_to": "usr/lib/x86_64-linux-gnu/fantgpu-fh2m/libfh2m_gbm.so.1.0.0"
+        },
+        "usr/share/X11/xorg.conf.d/10-fh2m.conf": {
+          "kind": "regular"
+        },
+        "usr/share/drirc.d/01-fh2m_drv.conf": {
+          "kind": "regular"
+        },
+        "usr/share/fantgpu-fh2m-kernel-dkms/postinst": {
+          "kind": "regular"
+        },
+        "usr/share/glvnd/egl_vendor.d/00_fh2m.json": {
+          "kind": "regular"
+        },
+        "usr/src/fantgpu-fh2m-kernel-2.2/dkms.conf": {
+          "kind": "regular"
+        }
+      },
+      "required_wrong_type": [],
+      "scope_note": "filename-level only; blacklist-fh2m.conf and DEBIAN/control legitimately carry innogpu tokens in their contents, so a content-level scan would false-positive",
+      "symlink_count": 58
+    },
+    "F_firmware_reconciliation": {
+      "firmware": {
+        "lib/firmware/fantgpu/fh2m/fh2c.fw": {
+          "eval_doc_prefix": "96043630",
+          "eval_doc_ref": "fantgpu-base-update-evaluation.md:231",
+          "match": true,
+          "prefix_consistent": true,
+          "sha256_actual": "9604363034d0f2a73fa200aca3a5161c9055cc0bc65df88093da1e5244a59d8e",
+          "sha256_expected": "9604363034d0f2a73fa200aca3a5161c9055cc0bc65df88093da1e5244a59d8e"
+        },
+        "lib/firmware/fantgpu/fh2m/fh2c.sh": {
+          "eval_doc_prefix": "f2b0ead7",
+          "eval_doc_ref": "fantgpu-base-update-evaluation.md:232",
+          "match": true,
+          "prefix_consistent": true,
+          "sha256_actual": "f2b0ead7edb7f06486e25b12534969f321cd28bdaf4b784b42f3c48221a6d0e5",
+          "sha256_expected": "f2b0ead7edb7f06486e25b12534969f321cd28bdaf4b784b42f3c48221a6d0e5"
+        },
+        "lib/firmware/fantgpu/fh2m/fh2m.fw": {
+          "eval_doc_prefix": "8d39a405",
+          "eval_doc_ref": "fantgpu-base-update-evaluation.md:229",
+          "match": true,
+          "prefix_consistent": true,
+          "sha256_actual": "8d39a4056ea1e12443cbe5701db4e84940875a0bf1c29c62d293c61704a5ada3",
+          "sha256_expected": "8d39a4056ea1e12443cbe5701db4e84940875a0bf1c29c62d293c61704a5ada3"
+        },
+        "lib/firmware/fantgpu/fh2m/fh2m.sh": {
+          "eval_doc_prefix": "f2b0ead7",
+          "eval_doc_ref": "fantgpu-base-update-evaluation.md:230",
+          "match": true,
+          "prefix_consistent": true,
+          "sha256_actual": "f2b0ead7edb7f06486e25b12534969f321cd28bdaf4b784b42f3c48221a6d0e5",
+          "sha256_expected": "f2b0ead7edb7f06486e25b12534969f321cd28bdaf4b784b42f3c48221a6d0e5"
+        }
+      },
+      "mismatched": [],
+      "pass": true
+    },
+    "G_install_time_staging": {
+      "ddx_abi_missing": [],
+      "ddx_abi_variants_expected": [
+        "1.19",
+        "1.20",
+        "1.21"
+      ],
+      "ddx_abi_variants_found": {
+        "1.19": "opt/fantgpu-fh2m/usr/lib/xorg/modules/drivers/fh2m_drv.so.1.19",
+        "1.20": "opt/fantgpu-fh2m/usr/lib/xorg/modules/drivers/fh2m_drv.so.1.20",
+        "1.21": "opt/fantgpu-fh2m/usr/lib/xorg/modules/drivers/fh2m_drv.so.1.21"
+      },
+      "note": "opt/fantgpu-fh2m is install-time staging: DEBIAN/postinst probes Xorg -version (drv_install, :122-136), /etc/os-release ID+VERSION_ID, /usr/share/alsa/ucm2 presence and pulseaudio --version (ucm_install, :64-120), and libwayland-client0 version (update_wayland, :29-48) to materialize DDX / ALSA UCM / wayland compat libs from /opt into /usr at install time. Recorded as a fact for C3-a audit item 4 (reproducible build input); it is not a defect of audit item 3. The postinst device gate must carry exactly the locked PCI ID(s): a missing or non-locked ID fails this check.",
+      "opt_staging_files": 58,
+      "pass": true,
+      "postinst_pci_ids": [
+        "1ec8:9810"
+      ],
+      "postinst_pci_ids_expected": [
+        "1ec8:9810"
+      ],
+      "postinst_pci_missing": [],
+      "postinst_pci_unexpected": []
+    }
+  },
+  "entry_counts_full_tree": {
+    "dir": 88,
+    "file": 607,
+    "symlink": 58
+  },
+  "entry_counts_payload": {
+    "dir": 87,
+    "file": 602,
+    "symlink": 58
+  },
+  "generator": "tools/r16-f-payload-integrity.py",
+  "lineage": "fantgpu",
+  "manifest": {
+    "columns": [
+      "type",
+      "path",
+      "size",
+      "mode",
+      "sha256",
+      "md5",
+      "link_target"
+    ],
+    "file": "f-payload.manifest.tsv",
+    "row_scope": "full unpack tree including DEBIAN/",
+    "rows": 753,
+    "sha256": "f3b32f3aa797e6482fa1122927de2646d8dcc07c0e29f8d365ad451bf1a44a10"
+  },
+  "overall_pass": true,
+  "payload_bytes": 245888497,
+  "payload_files": 602,
+  "reproducibility_note": "Artifacts carry no wall-clock timestamp; provenance is the git commit that introduces them. gen is byte-idempotent and verify recomputes from the deb plus the unpack tree without writing.",
+  "schema_version": "1.0",
+  "source_deb": {
+    "path": "debs/fantgpu-fh2m_3.3.8.126-driver-linux-desktop-sp-generic_amd64.deb",
+    "sha256": "6f0daaf79fb6b2a547138c17628bb990dff0d0c684ee1c13775bebc2d28fd11b",
+    "size": 57607700
+  },
+  "unpack_tree": "build/r16-fantgpu-deb"
+}
