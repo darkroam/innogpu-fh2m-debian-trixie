@@ -296,6 +296,13 @@ rc=$?
 set -e
 [[ "$rc" == 0 ]] && ok "t18 final reset rerun rc=0" || bad "t18" "rc=$rc"
 
+# t19 成功终态：journal 与 lock 已清理（dsh P2 遗留修复断言）
+if [[ ! -e "$REAL_OUT/.materialize.journal" && ! -e "$REAL_OUT/.materialize.lock" ]]; then
+    ok "t19 success leaves no journal/lock residue"
+else
+    bad "t19" "journal/lock residue after success"
+fi
+
 echo
 echo "PASS=$PASS FAIL=$FAILN"
 [[ "$FAILN" == 0 ]] || exit 1

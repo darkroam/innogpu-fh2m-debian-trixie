@@ -633,6 +633,10 @@ commit_artifacts "$TREE" "$chain_json"
 
 rm -f -- "$chain_json"
 flock -u 9 2>/dev/null || true
+# 成功终态清理（dsh P2 遗留：journal+lock 不入 Git、终态干净；
+# 失败路径保留二者供恢复）——先释放锁再删锁文件
+rm -f -- "$JOURNAL"
+rm -f -- "$LOCK_FILE"
 
 echo "materialize=OK"
 echo "o_stage_tree_hash=$got_final"

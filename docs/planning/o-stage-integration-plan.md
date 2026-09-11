@@ -61,24 +61,25 @@
 
 **快照参数先例**：tar 1.35 / zstd 1.5.7 / @1640995200 / --sort=name / owner·group 0 / transform 前缀 `o-stage`——与 O-4（前缀 f0）与 D_stage 先例完全同构，仅前缀不同。
 
-## 二、版本与 epoch 定稿提案（待 dsh/用户批准）
+## 二、版本与 epoch 定稿（dsh 已批准 2026-09-10）
 
-| 字段 | 提案 | 理由 |
+| 字段 | 定稿值 | 理由 |
 | --- | --- | --- |
 | 版本串 | `5.0.0-i1` | fantgpu 血统新系列（Deepin 血统为 4.0.2-i3）；dpkg 版本字段 5.0.0-i1 > 4.0.2-i3，升级序天然正确，无需 deb Epoch 字段（保持缺省） |
 | tag 名 | `fantgpu-5.0.0-i1`（dsh 唯一确认，仅此名） | 与 Deepin 血统 `deepin-4.0.2-i3` 区分；签发仍须三方一致 + 用户批准 |
-| SOURCE_DATE_EPOCH | **沿用 `1788796800`**（= 2026-09-07 16:00 UTC，4.0.2-i3 已审核值） | ① epoch 仅决定字节确定性，与版本比较无关（升级序由版本串保证）；② 沿用已审核值零新增审核面；③ 与 4.0.2-i3 同 epoch 使双血统产物比对时**排除 mtime/epoch 造成的时间差异**（版本/包名/构建配置/工具链/载荷本身的差异仍会体现在字节中，epoch 仅排除时间戳一类） |
-| 替代方案（不推荐） | 新固定值 `1789056000`（= 2026-09-10 16:00 UTC） | 若项目惯例要求 release 间区分可用此值；但签发日尚未定，取"未来日期"反直觉且需新增审核。**提交 dsh/用户批准后定稿** |
+| SOURCE_DATE_EPOCH | **`1788796800`**（dsh 批准：沿用 4.0.2-i3 审核值，= 2026-09-07 16:00 UTC） | ① epoch 仅决定字节确定性，与版本比较无关（升级序由版本串保证）；② 沿用已审核值零新增审核面；③ 与 4.0.2-i3 同 epoch 使双血统产物比对时**排除 mtime/epoch 造成的时间差异**（版本/包名/构建配置/工具链/载荷本身的差异仍会体现在字节中） |
 | 包内 mtime | 全部文件 `touch -h -d @1788796800`（同 4.0.2-i3 规则） | 确定性；与 SOURCE_DATE_EPOCH 一致 |
 
-## 三、builder 集成设计（设计稿，不动 builder）
+## 三、builder 集成（5.0.0-i1 分支已实现于 scripts/build-innogpu-driver.sh）
 
-1. **DKMS 源改 O_stage**：5.0.0-i1 分支的 DKMS 源根 = materialize-o-stage.sh 产物解包（替代 4.0.2-i3 流程中 D_stage 源 + 内联 patch 的路径）；builder 脚本增加 `5.0.0-i1` 分支（EXPECTED_SOURCE_DATE_EPOCH=1788796800、源快照引用 o-stage-snapshot.tar.zst、13 条 030-NNN 不再由 builder 内联应用而是验证 materialize 产物）；
-2. **vermagic**：模块 vermagic 由内核构建体系自动生成，运行时矩阵记录（沿用 4.0.2-i3 验证口径）；
-3. **载荷边界**：debs/ 产物 = fantgpu 血统 5.0.0-i1 包（fantgpu-fh2m-kernel）；包内文件清单与 4.0.2-i3 对齐（fant* 命名树）；
-4. **patch-000 no-transform 声明**：builder 无任何 o_shipped 字节变换步骤（F0 对象原样，关闭项决策批已裁定 no-transform，PLL 语义风险 UNVERIFIED 登记）；
-5. **不安装契约**：builder 仅构建；安装/回退由验证矩阵阶段手动执行（同 4.0.2-i3 先例）；
-6. **双 clean-build 字节一致证据计划**：5.0.0-i1 双 clean-build（build-A/B）SHA-256 比对，与 4.0.2-i3 证据同构。
+1. **DKMS 源改 O_stage**（已实现）：5.0.0-i1 分支的 DKMS 源根 = o-stage-snapshot.tar.zst 解包（快照 SHA + 解包树 hash 937e3710… 双重校验；030 链 13 项已在 materialize 阶段应用，builder 不内联应用）；EXPECTED_SOURCE_DATE_EPOCH=1788796800；
+2. **vermagic**：模块 vermagic 自动生成，5.0.0-i1 分支校验 `fantgpu.ko` + vermagic 前缀匹配（运行时矩阵记录）；
+3. **载荷边界**：debs/ 产物 = fantgpu 血统包 `fantgpu-fh2m-trixie_5.0.0-i1`（DKMS 名 fantgpu-fh2m-kernel v2.2、模块 fantgpu、源目录 usr/src/fantgpu-fh2m-kernel-2.2）；Conflicts/Replaces 含 innogpu-fh2m-trixie（升级路径）；vendor userspace 载荷沿用（Deepin 系 DRI/GBM/GLAPI/DDX）；vendor kernel/* Deepin 血统对象跳过（树自带 fant* o_shipped）；
+4. **patch-000 no-transform 声明**（已实现）：builder 5.0.0-i1 分支无任何 o_shipped 字节变换步骤（PLL 语义风险 UNVERIFIED 登记）；
+5. **不安装契约**（已实现）：builder 仅构建；安装/回退由验证矩阵阶段手动执行；
+6. **保护区边界**：STAGE_ROOT/BUILD_LOG/OUT_DEB 可注入（5.0.0-i1 实跑注入 /tmp，build/ 保护区零写入；4.0.x-iN 默认保持历史行为）；
+7. **待裁决项（如实记录）**：check-release-package.sh 尚锁定 innogpu 包名与 4.0.x-iN 版本格式——5.0.0-i1 分支保留 .o.cmd/.orig/.rej 包边界守卫、release 审计门禁适配另行裁决；fantgpu 模块 modprobe options 参数名未经设备审核，5.0.0-i1 分支不写 options（待 O_stage 运行时矩阵确认）；
+8. **双 clean-build 字节一致证据**：5.0.0-i1 双 clean-build（build-A/B）SHA-256 比对，证据落 docs/planning/evidence/o-stage/。
 
 ## 四、验证计划（阶段三验证矩阵清单）
 
