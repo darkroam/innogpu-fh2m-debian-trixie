@@ -92,10 +92,15 @@ docs/planning/evidence/d-stage-audit.symlink.tsv
 docs/planning/evidence/d-stage-audit.symlink.tsv.sha256
 docs/planning/evidence/d-stage-audit.tsv
 docs/planning/evidence/d-stage-audit.tsv.sha256
+docs/planning/evidence/o-stage/5.0.0-i1.meta.json
 docs/planning/evidence/o-stage/f0-snapshot.tar.zst
 docs/planning/evidence/o-stage/f0-snapshot.tar.zst.sha256
 docs/planning/evidence/o-stage/f0.manifest.tsv
 docs/planning/evidence/o-stage/f0.manifest.tsv.sha256
+docs/planning/evidence/o-stage/o-stage-snapshot.tar.zst
+docs/planning/evidence/o-stage/o-stage-snapshot.tar.zst.sha256
+docs/planning/evidence/o-stage/o-stage.manifest.tsv
+docs/planning/evidence/o-stage/o-stage.manifest.tsv.sha256
 docs/planning/evidence/o-stage/o4-f0.genesis.json
 docs/planning/fantgpu-base-update-evaluation.md
 docs/planning/history.md
@@ -180,6 +185,7 @@ scripts/install-xdisplay-user.sh
 scripts/install.sh
 scripts/mark-patched17-soft-baseline.sh
 scripts/materialize-d-stage.sh
+scripts/materialize-o-stage.sh
 scripts/patch-skip-first-gpupll.sh
 scripts/phase4-baseline-capture.sh
 scripts/picom-session.sh
@@ -219,6 +225,7 @@ tests/picom/run-session-tests.sh
 tests/runtime/README.md
 tests/runtime/run-capability-baseline.sh
 tests/unit/d-stage-audit-fault-tests.py
+tests/unit/run-030-meta-tests.sh
 tests/unit/run-collab-structure-tests.sh
 tests/unit/run-d-stage-audit-fault-tests.sh
 tests/unit/run-dmabuf-regression-tests.sh
@@ -227,6 +234,7 @@ tests/unit/run-exec-probes-tests.sh
 tests/unit/run-extractor-tests.sh
 tests/unit/run-license-audit-tests.sh
 tests/unit/run-manifest-tests.sh
+tests/unit/run-o-stage-materialize-tests.sh
 tests/unit/run-o4-f0-lock-tests.sh
 tests/unit/run-o4-f0-snapshot-txn-tests.sh
 tests/unit/run-p2-normalize-tests.sh
