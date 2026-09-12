@@ -233,16 +233,20 @@ tests/runtime/README.md
 tests/runtime/run-capability-baseline.sh
 tests/unit/d-stage-audit-fault-tests.py
 tests/unit/run-030-meta-tests.sh
+tests/unit/run-builder-fantgpu-gates-tests.sh
+tests/unit/run-check-release-package-tests.sh
 tests/unit/run-collab-structure-tests.sh
 tests/unit/run-d-stage-audit-fault-tests.sh
 tests/unit/run-dmabuf-regression-tests.sh
 tests/unit/run-dri-repair-tests.sh
 tests/unit/run-exec-probes-tests.sh
 tests/unit/run-extractor-tests.sh
+tests/unit/run-fantgpu-helper-transform-tests.sh
 tests/unit/run-gen-fantgpu-manifest-tests.sh
 tests/unit/run-gen-package-md5sums-tests.sh
 tests/unit/run-license-audit-tests.sh
 tests/unit/run-manifest-tests.sh
+tests/unit/run-materialize-fantgpu-payload-tests.sh
 tests/unit/run-o-stage-materialize-tests.sh
 tests/unit/run-o4-f0-lock-tests.sh
 tests/unit/run-o4-f0-snapshot-txn-tests.sh
@@ -267,6 +271,7 @@ tools/finalize-suspend-resume-failure.py
 tools/gen-fantgpu-manifest.py
 tools/gen-package-md5sums.py
 tools/generate-binary-manifest.py
+tools/materialize-fantgpu-payload.py
 tools/o4-f0-lock-gen.py
 tools/p2-normalize-v3.py
 tools/patch-gpupll-object.py
@@ -290,6 +295,7 @@ tools/r16-gate.py
 tools/run-dmabuf-regression-test.sh
 tools/run-vaapi-decode-test.sh
 tools/trace-loader.c
+tools/transform-fantgpu-helper.sh
 tools/validate-binary-manifest-fantgpu.py
 tools/validate-binary-manifest.py
 tools/validate-collab.py
