@@ -149,6 +149,7 @@
       "LICENSES/README.md": "GPL-3.0-or-later",
       "THIRD_PARTY_NOTICES.md": "GPL-3.0-or-later",
       "binary-manifest.json": "GPL-3.0-or-later",
+      "binary-manifest-fantgpu.json": "GPL-3.0-or-later",
       "LICENSES/MIT.txt": "MIT",
       "LICENSES/GPL-3.0-or-later.txt": "GPL-3.0-or-later",
       "LICENSES/GPL-2.0-only.txt": "GPL-2.0-only",
