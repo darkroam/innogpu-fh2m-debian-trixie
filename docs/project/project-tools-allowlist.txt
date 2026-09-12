@@ -97,6 +97,7 @@ docs/planning/evidence/d-stage-audit.tsv
 docs/planning/evidence/d-stage-audit.tsv.sha256
 docs/planning/evidence/o-stage/5.0.0-i1.meta.json
 docs/planning/evidence/o-stage/build-5.0.0-i1.sha256
+docs/planning/evidence/o-stage/build-5.0.0-i2.sha256
 docs/planning/evidence/o-stage/f-payload-integrity.json
 docs/planning/evidence/o-stage/f-payload.manifest.tsv
 docs/planning/evidence/o-stage/f-payload.manifest.tsv.sha256
