@@ -69,6 +69,10 @@ bash tests/unit/run-gen-package-md5sums-tests.sh
 bash tests/unit/run-gen-fantgpu-manifest-tests.sh
 bash tests/unit/run-validate-fantgpu-manifest-tests.sh
 bash tests/unit/run-r16-restore-tests.sh
+bash tests/unit/run-materialize-fantgpu-payload-tests.sh
+bash tests/unit/run-builder-fantgpu-gates-tests.sh
+bash tests/unit/run-check-release-package-tests.sh
+bash tests/unit/run-fantgpu-helper-transform-tests.sh
 ```
 
 - manifest 测试用 `tools/validate-binary-manifest.py` 对真实清单与 `tests/fixtures/` 下的恶意

@@ -5,6 +5,7 @@
 # No install, no hot-swap, no reboot.
 
 set -euo pipefail
+umask 022  # 设计 §四：物化/组装目录 mode 确定性（不受调用者 umask 影响）
 
 ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$ROOT"
@@ -16,15 +17,16 @@ case "$VERSION" in
     4.0.2-i2) EXPECTED_SOURCE_DATE_EPOCH=1788710400 ;;
     4.0.2-i3) EXPECTED_SOURCE_DATE_EPOCH=1788796800 ;;
     5.0.0-i1) EXPECTED_SOURCE_DATE_EPOCH=1788796800 ;;  # dsh 批准：沿用 4.0.2-i3 审核 epoch
+    5.0.0-i2) EXPECTED_SOURCE_DATE_EPOCH=1788796800 ;;  # dsh 批准：沿用审核 epoch
     *)
         echo "builder_version_review=FAIL unreviewed package version: $VERSION" >&2
         exit 1
         ;;
 esac
-# 血统：5.0.0-i1 = fantgpu 血统（O_stage 物化源树，030 链 13 项，patch-000 no-transform）；
-# 其余 = innogpu/Deepin 血统（drivers/ 树 + 内联 patch + patch-000 字节变换）。
+# 血统：5.0.0-iN = fantgpu 血统（O_stage 物化源树，030 链 13 项，patch-000
+# no-transform；i2 起含 F 血统 userspace/固件载荷）；其余 = innogpu/Deepin 血统。
 FANT_LINEAGE=0
-[[ "$VERSION" == "5.0.0-i1" ]] && FANT_LINEAGE=1
+[[ "$VERSION" == 5.0.0-i* ]] && FANT_LINEAGE=1
 # 保护区边界：staging 根与构建日志可注入（5.0.0-i1 实跑注入 /tmp，build/ 保护区零写入；
 # 4.0.x-iN 默认保持历史行为）
 STAGE_ROOT="${STAGE_ROOT:-$ROOT/build}"
@@ -100,10 +102,17 @@ APPLIED_SOURCE_FIXES="patch-024"
 [[ "$VERSION" == "4.0.2-i3" ]] &&
     APPLIED_SOURCE_FIXES+=" patch-026-suspend-resume-dvfs-lifecycle patch-028-suspend-resume-hal-temp-monitor-delay patch-029-suspend-resume-ddcci-panel"
 
-# 1) manifest + vendor 就位
-[[ -f binary-manifest.json ]] || { echo "staging_manifest=FAIL"; exit 1; }
-bash scripts/extract-vendor-binaries.sh --check-only | grep -q 'vendor_extraction_overall=PASS' || {
-    echo "staging_vendor_check=FAIL"; exit 1; }
+# 1) manifest + vendor 就位（按血统分支：F 分支只要求 F 输入）
+if [[ "$FANT_LINEAGE" == 1 ]]; then
+    [[ -f binary-manifest-fantgpu.json ]] || { echo "staging_f_manifest=FAIL"; exit 1; }
+    python3 tools/validate-binary-manifest-fantgpu.py || {
+        echo "staging_fpayload_input=FAIL"; exit 1; }
+    echo "staging_fpayload_input=PASS"
+else
+    [[ -f binary-manifest.json ]] || { echo "staging_manifest=FAIL"; exit 1; }
+    bash scripts/extract-vendor-binaries.sh --check-only | grep -q 'vendor_extraction_overall=PASS' || {
+        echo "staging_vendor_check=FAIL"; exit 1; }
+fi
 
 # 2) staging 源码树
 mkdir -p "$STAGE_ROOT"
@@ -190,8 +199,10 @@ cd "$ROOT"
 P=$STAGE/package/root
 if [[ "$FANT_LINEAGE" == 1 ]]; then
     DKMS_SRC_NAME="fantgpu-fh2m-kernel-2.2"
+    SHARE_DIR="fantgpu-fh2m-trixie"
+    CMD_PREFIX="fantgpu-"
     install -d "$P/usr/src" "$P/etc/ld.so.conf.d" \
-        "$P/usr/share/innogpu-fh2m-trixie" "$P/usr/bin" "$P/usr/sbin"
+        "$P/usr/share/$SHARE_DIR" "$P/usr/bin" "$P/usr/sbin"
     # DKMS 源 = 快照重新解包（干净树）——不得用被 make 污染的 $STAGE/source
     # （.o/.o.cmd 等编译产物会进入包内并破坏双构建字节一致）
     tar --use-compress-program=zstd -xf "$OSTAGE_SNAP" -C "$P/usr/src"
@@ -202,40 +213,60 @@ if [[ "$FANT_LINEAGE" == 1 ]]; then
     # no-transform：树自带 fant*.o_shipped 原样进入 DKMS 源（不跑 patch-gpupll）
     # 无 apply_reviewed_source_fixes（030 链已在 materialize 阶段应用）
 else
+    SHARE_DIR="innogpu-fh2m-trixie"
+    CMD_PREFIX="innogpu-"
     install -d "$P/usr/src/innogpu-kernel-2.2" "$P/etc/ld.so.conf.d" \
-        "$P/usr/share/innogpu-fh2m-trixie" "$P/usr/bin" "$P/usr/sbin"
+        "$P/usr/share/$SHARE_DIR" "$P/usr/bin" "$P/usr/sbin"
     cp -r drivers/. "$P/usr/src/innogpu-kernel-2.2/"
     apply_reviewed_source_fixes "$P/usr/src/innogpu-kernel-2.2" packaged-dkms
     rm -f "$P/usr/src/innogpu-kernel-2.2/README.md"
     python3 tools/patch-gpupll-object.py "$P/usr/src/innogpu-kernel-2.2/innogpu/innogpu.o_shipped" >/dev/null
 fi
 
-# vendor payload -> install 路径
-while IFS= read -r vp; do
-    case "$vp" in
-        kernel/*)
-            # fantgpu 血统：跳过 vendor Deepin 血统内核对象（O_stage 树自带 fant* 对象）
-            [[ "$FANT_LINEAGE" == 1 ]] && continue
-            dst="$P/usr/src/innogpu-kernel-2.2/${vp#kernel/}" ;;
-        userspace/x86_64-linux-gnu/*)      dst="$P/usr/lib/x86_64-linux-gnu/${vp#userspace/x86_64-linux-gnu/}" ;;
-        userspace/i386-linux-gnu/*)        dst="$P/usr/lib/i386-linux-gnu/${vp#userspace/i386-linux-gnu/}" ;;
-        userspace/xorg/*)                  dst="$P/usr/lib/xorg/${vp#userspace/xorg/}" ;;
-        userspace/usr/lib/kgc/*)           dst="$P/usr/lib/kgc/${vp#userspace/usr/lib/kgc/}" ;;
-        userspace/usr/sbin/*)              dst="$P/usr/sbin/${vp#userspace/usr/sbin/}" ;;
-        userspace/share/*)                 dst="$P/usr/share/${vp#userspace/share/}" ;;
-        userspace/etc/*)                   dst="$P/etc/${vp#userspace/etc/}" ;;
-        userspace/lib/systemd/system/*)    dst="$P/lib/systemd/system/${vp#userspace/lib/systemd/system/}" ;;
-        opt/innogpu/*)                     dst="$P/opt/${vp#opt/}" ;;
-        firmware/*)                        dst="$P/lib/firmware/innogpu/${vp#firmware/}" ;;
-        *) echo "builder_payload_map=FAIL $vp"; exit 1 ;;
-    esac
-    mkdir -p "$(dirname "$dst")"
-    if [[ -L "vendor/$vp" ]]; then
-        ln -sfn "$(readlink "vendor/$vp")" "$dst"
-    else
-        cp "vendor/$vp" "$dst"
-    fi
-done < <(python3 -c "import json;m=json.load(open('binary-manifest.json'));[print(e['vendor_path']) for e in m['entries']]")
+# vendor payload -> install 路径（F 分支走 manifest 物化 M1-M6；O 分支保持 case 映射）
+if [[ "$FANT_LINEAGE" == 1 ]]; then
+    F_XORG_ABI="${F_XORG_ABI:-1.21}" F_UCM_LAYOUT="${F_UCM_LAYOUT:-ucm2}" \
+    F_WAYLAND_COMPAT="${F_WAYLAND_COMPAT:-off}" \
+        python3 tools/materialize-fantgpu-payload.py \
+        --manifest binary-manifest-fantgpu.json --vendor vendor/fantgpu \
+        --pkg-root "$P" --trace "$STAGE/materialize-trace.tsv" \
+        --ostage-manifest docs/planning/evidence/o-stage/o-stage.manifest.tsv \
+        || { echo "builder_fpayload_materialize=FAIL"; exit 1; }
+    # trace 逐行复核（codex 初审 P1-5：destination/kind/SHA/mode/target +
+    # locked 来源零出现 + 行数 == f + ostage）
+    python3 tools/materialize-fantgpu-payload.py --verify-trace \
+        "$STAGE/materialize-trace.tsv" \
+        --manifest binary-manifest-fantgpu.json --vendor vendor/fantgpu \
+        --pkg-root "$P" \
+        --ostage-manifest docs/planning/evidence/o-stage/o-stage.manifest.tsv \
+        || { echo "builder_materialize_trace=FAIL"; exit 1; }
+    trace_rows="$(wc -l < "$STAGE/materialize-trace.tsv")"
+    echo "builder_materialize_trace=PASS trace_entries=$trace_rows"
+else
+    while IFS= read -r vp; do
+        case "$vp" in
+            kernel/*)
+                dst="$P/usr/src/innogpu-kernel-2.2/${vp#kernel/}" ;;
+            userspace/x86_64-linux-gnu/*)      dst="$P/usr/lib/x86_64-linux-gnu/${vp#userspace/x86_64-linux-gnu/}" ;;
+            userspace/i386-linux-gnu/*)        dst="$P/usr/lib/i386-linux-gnu/${vp#userspace/i386-linux-gnu/}" ;;
+            userspace/xorg/*)                  dst="$P/usr/lib/xorg/${vp#userspace/xorg/}" ;;
+            userspace/usr/lib/kgc/*)           dst="$P/usr/lib/kgc/${vp#userspace/usr/lib/kgc/}" ;;
+            userspace/usr/sbin/*)              dst="$P/usr/sbin/${vp#userspace/usr/sbin/}" ;;
+            userspace/share/*)                 dst="$P/usr/share/${vp#userspace/share/}" ;;
+            userspace/etc/*)                   dst="$P/etc/${vp#userspace/etc/}" ;;
+            userspace/lib/systemd/system/*)    dst="$P/lib/systemd/system/${vp#userspace/lib/systemd/system/}" ;;
+            opt/innogpu/*)                     dst="$P/opt/${vp#opt/}" ;;
+            firmware/*)                        dst="$P/lib/firmware/innogpu/${vp#firmware/}" ;;
+            *) echo "builder_payload_map=FAIL $vp"; exit 1 ;;
+        esac
+        mkdir -p "$(dirname "$dst")"
+        if [[ -L "vendor/$vp" ]]; then
+            ln -sfn "$(readlink "vendor/$vp")" "$dst"
+        else
+            cp "vendor/$vp" "$dst"
+        fi
+    done < <(python3 -c "import json;m=json.load(open('binary-manifest.json'));[print(e['vendor_path']) for e in m['entries']]")
+fi
 if [[ "$FANT_LINEAGE" != 1 ]]; then
     python3 tools/patch-gpupll-object.py "$P/usr/src/innogpu-kernel-2.2/innogpu/innogpu.o_shipped" >/dev/null
 fi
@@ -253,39 +284,54 @@ reject_patch_artifacts "$P" package-payload
 echo "builder_payload_assemble=PASS"
 echo "builder_package_boundary=PASS (no .o.cmd/.orig/.rej artifacts)"
 
-printf '%s
-' '/usr/lib/x86_64-linux-gnu/innogpu-fh2m' > "$P/etc/ld.so.conf.d/0-innogpu-hwgl.conf"
+# 血统参数：share 目录与命令前缀（C1-① 按改后实际内容断言；包装配开头已按血统
+# 初始化，此处仅对 4.0.x-iN 兜底——避免重复定义冲突）
+: "${SHARE_DIR:=innogpu-fh2m-trixie}"
+: "${CMD_PREFIX:=innogpu-}"
+if [[ "$FANT_LINEAGE" == 1 ]]; then
+    printf '%s\n' '/usr/lib/x86_64-linux-gnu/fantgpu-fh2m' > "$P/etc/ld.so.conf.d/0-fantgpu-hwgl.conf"
+else
+    printf '%s\n' '/usr/lib/x86_64-linux-gnu/innogpu-fh2m' > "$P/etc/ld.so.conf.d/0-innogpu-hwgl.conf"
+fi
 
 helpers=(disable-incompatible-userspace.sh repair-dri-nodes.sh test-xorg-once.sh
     restore-dp1-mode-x11.sh xdisplay-session.sh install-xdisplay-user.sh
     restore-tty1-login.sh display-recover-and-diagnose.sh prepare-soft-xorg-dwm.sh
     start-soft-xorg-dwm-from-ssh.sh check-soft-xorg-dwm.sh install-dri-node-repair-service.sh)
 for h in "${helpers[@]}"; do
-    install -m 0755 "scripts/$h" "$P/usr/share/innogpu-fh2m-trixie/$h"
+    if [[ "$FANT_LINEAGE" == 1 ]]; then
+        # F 血统：变换 helper 内部调用链 token（命令名/share 路径/模块条件）；
+        # O 血统保持脚本原始字节（check-release-package cmp 契约）
+        bash tools/transform-fantgpu-helper.sh < "scripts/$h" \
+            > "$P/usr/share/$SHARE_DIR/$h"
+        chmod 0755 "$P/usr/share/$SHARE_DIR/$h"
+    else
+        install -m 0755 "scripts/$h" "$P/usr/share/$SHARE_DIR/$h"
+    fi
 done
-declare -A cmds=( [innogpu-disable-incompatible-userspace]=disable-incompatible-userspace.sh
-    [innogpu-repair-dri-nodes]=repair-dri-nodes.sh [innogpu-test-xorg-once]=test-xorg-once.sh
-    [innogpu-restore-dp1-mode-x11]=restore-dp1-mode-x11.sh [innogpu-restore-tty1-login]=restore-tty1-login.sh
-    [innogpu-display-recover-and-diagnose]=display-recover-and-diagnose.sh
-    [innogpu-prepare-soft-xorg-dwm]=prepare-soft-xorg-dwm.sh
-    [innogpu-start-soft-xorg-dwm]=start-soft-xorg-dwm-from-ssh.sh
-    [innogpu-check-soft-xorg-dwm]=check-soft-xorg-dwm.sh
-    [innogpu-install-dri-node-repair-service]=install-dri-node-repair-service.sh)
+declare -A cmds=( [${CMD_PREFIX}disable-incompatible-userspace]=disable-incompatible-userspace.sh
+    [${CMD_PREFIX}repair-dri-nodes]=repair-dri-nodes.sh [${CMD_PREFIX}test-xorg-once]=test-xorg-once.sh
+    [${CMD_PREFIX}restore-dp1-mode-x11]=restore-dp1-mode-x11.sh [${CMD_PREFIX}restore-tty1-login]=restore-tty1-login.sh
+    [${CMD_PREFIX}display-recover-and-diagnose]=display-recover-and-diagnose.sh
+    [${CMD_PREFIX}prepare-soft-xorg-dwm]=prepare-soft-xorg-dwm.sh
+    [${CMD_PREFIX}start-soft-xorg-dwm]=start-soft-xorg-dwm-from-ssh.sh
+    [${CMD_PREFIX}check-soft-xorg-dwm]=check-soft-xorg-dwm.sh
+    [${CMD_PREFIX}install-dri-node-repair-service]=install-dri-node-repair-service.sh)
 for c in "${!cmds[@]}"; do
-    ln -sfn "../share/innogpu-fh2m-trixie/${cmds[$c]}" "$P/usr/bin/$c"
-    ln -sfn "../share/innogpu-fh2m-trixie/${cmds[$c]}" "$P/usr/sbin/$c"
+    ln -sfn "../share/$SHARE_DIR/${cmds[$c]}" "$P/usr/bin/$c"
+    ln -sfn "../share/$SHARE_DIR/${cmds[$c]}" "$P/usr/sbin/$c"
 done
 
 install -d "$P/DEBIAN"
 installed_size=$(du -sk --exclude=DEBIAN "$P" | awk '{print $1}')
 if [[ "$FANT_LINEAGE" == 1 ]]; then
     PKG_NAME="fantgpu-fh2m-trixie"
-    PKG_DESC="Innosilicon Fantasy II-M driver (fantgpu lineage 5.0.0-i1, O_stage materialized tree)"
+    PKG_DESC="Innosilicon Fantasy II-M driver (fantgpu lineage $VERSION, O_stage materialized tree)"
     DKMS_MOD="fantgpu-fh2m-kernel"
     DKMS_VER="2.2"
     KERNEL_MOD="fantgpu"
     PKG_CONFLICTS="innogpu-fh2m, innogpu-fh2m-kernel-dkms, innogpu-kernel-dkms, innogpu-fh2m-trixie"
-    DESC_BODY=$(printf ' fantgpu lineage: O_stage materialized source tree (030 chain of 13,\n patch-000 no-transform), coherent Deepin userspace payload.')
+    DESC_BODY=$(printf ' fantgpu lineage: O_stage materialized source tree (030 chain of 13,\n patch-000 no-transform), coherent fantgpu (F) userspace payload (binary-manifest-fantgpu.json locked; build-time DDX/UCM/wayland selection).')
 else
     PKG_NAME="innogpu-fh2m-trixie"
     PKG_DESC="Innosilicon Fantasy II-M driver (migrated source tree, version $VERSION)"
@@ -347,10 +393,25 @@ dkms add -m $DKMS_MOD -v $DKMS_VER 2>/dev/null || true
 dkms build -m $DKMS_MOD -v $DKMS_VER -k "\$kernel_ver" --force
 dkms install -m $DKMS_MOD -v $DKMS_VER -k "\$kernel_ver" --force
 
-# The package ships a complete, matching Deepin DRI/GBM/GLAPI/DDX set.
+# The package ships a complete, matching coherent userspace set.
 # Never move or restore an individual vendor library here.
-if [ ! -f /usr/lib/x86_64-linux-gnu/dri/innogpu_dri.so ]; then
-    echo "ERROR: coherent Deepin innogpu_dri.so is missing" >&2
+if [[ "$FANT_LINEAGE" == 1 ]]; then
+    DRI_SO=/usr/lib/x86_64-linux-gnu/dri/fh2m_dri.so
+    DRI_NAME=fh2m_dri.so
+    # 设备门（③ G 检查锁定 PCI ID）：缺失 WARNING 不中止；lspci 不可用同样
+    # 必须 WARNING（codex 初审 P2：不得静默跳过）——安装器在无设备机可完成
+    # 构建/测试场景；真机批步骤 3 的设备存在性由 R 项权威判定。
+    if ! command -v lspci >/dev/null 2>&1; then
+        echo "WARNING: lspci unavailable; 1ec8:9810 device gate not executed" >&2
+    elif ! lspci -n -d 1ec8:9810 | grep -q .; then
+        echo "WARNING: no 1ec8:9810 device present" >&2
+    fi
+else
+    DRI_SO=/usr/lib/x86_64-linux-gnu/dri/innogpu_dri.so
+    DRI_NAME=innogpu_dri.so
+fi
+if [ ! -f "\$DRI_SO" ]; then
+    echo "ERROR: coherent \$DRI_NAME is missing" >&2
     exit 1
 fi
 
@@ -360,7 +421,11 @@ if command -v update-initramfs >/dev/null 2>&1; then
     update-initramfs -u -k "\$kernel_ver"
 fi
 
-echo "Installed coherent Deepin 202504 userspace; module autoload policy was not changed."
+if [[ "$FANT_LINEAGE" == 1 ]]; then
+    echo "Installed coherent fantgpu (F) userspace payload; module autoload policy was not changed."
+else
+    echo "Installed coherent Deepin 202504 userspace; module autoload policy was not changed."
+fi
 exit 0
 EOF
 
@@ -401,6 +466,12 @@ exit 0
 PEOF
 
 chmod 0755 "$P/DEBIAN/postinst" "$P/DEBIAN/prerm" "$P/DEBIAN/postrm"
+# F 分支：md5sums 按实际安装载荷重生成（④ 强制项 1；不得继承厂商 95 条路径错配）
+if [[ "$FANT_LINEAGE" == 1 ]]; then
+    python3 tools/gen-package-md5sums.py --root "$P" || {
+        echo "builder_md5sums=FAIL"; exit 1; }
+    echo "builder_md5sums=PASS"
+fi
 find "$P" -exec touch -h -d "@$SOURCE_DATE_EPOCH" {} +
 
 mkdir -p "$(dirname "$OUT_DEB")"
@@ -409,10 +480,10 @@ echo "builder_package_build=PASS $OUT_DEB"
 
 # 5) 边界检查
 if [[ "$FANT_LINEAGE" == 1 ]]; then
-    # 5.0.0-i1（fantgpu 血统）：check-release-package.sh 尚锁定 innogpu 包名与
-    # 4.0.x-iN 版本格式，fantgpu 血统的 release 审计门禁适配另行裁决（本分支
-    # 保留 .o.cmd/.orig/.rej 包边界守卫，见上）
-    echo "builder_package_boundary=PASS (fantgpu lineage; release-audit gate pending adaptation)"
+    # fantgpu 血统：C1-②（required 载荷断言按 F 路径）与 release 审计门禁恢复
+    # 调用在 ④ 落地 + 重构建之后同批交付（批 3）——本分支保留 .o.cmd/.orig/.rej
+    # 包边界守卫，见上。
+    echo "builder_package_boundary=PASS (fantgpu lineage; release-audit gate pending batch-3 C1-2)"
 else
     scripts/check-release-package.sh "$OUT_DEB" || { echo "builder_package_boundary=FAIL"; exit 1; }
     echo "builder_package_boundary=PASS"

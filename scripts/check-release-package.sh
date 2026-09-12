@@ -18,16 +18,27 @@ package=$(dpkg-deb -f "$DEB" Package)
 version=$(dpkg-deb -f "$DEB" Version)
 architecture=$(dpkg-deb -f "$DEB" Architecture)
 installed_size=$(dpkg-deb -f "$DEB" Installed-Size)
-[[ "$package" == "innogpu-fh2m-trixie" ]] || {
-    echo "ERROR: unexpected package: $package" >&2
-    exit 1
-}
-# 接受旧架构 patched-N（N>20）与新架构 4.0.x-iN；新架构构建器另行锁定当前审核版本。
-if ! { [[ "$version" =~ ^3\.3\.3\.42-patched-([0-9]+)$ ]] && (( 10#${BASH_REMATCH[1]} > 20 )); } &&
-   ! [[ "$version" =~ ^4\.0\.(0|[1-9][0-9]*)-i([1-9][0-9]*)$ ]]; then
-    echo "ERROR: release audit only accepts patched-N (N>20) or canonical 4.0.x-iN versions: $version" >&2
-    exit 1
-fi
+# C1-①：包名白名单增加 fantgpu 血统，且**包名与版本血统强制配对**
+# （codex 初审 P1-4：禁止 innogpu↔5.0.0-iN / fantgpu↔patched·4.x 笛卡尔积）。
+case "$package" in
+    innogpu-fh2m-trixie)
+        if ! { [[ "$version" =~ ^3\.3\.3\.42-patched-([0-9]+)$ ]] && (( 10#${BASH_REMATCH[1]} > 20 )); } &&
+           ! [[ "$version" =~ ^4\.0\.(0|[1-9][0-9]*)-i([1-9][0-9]*)$ ]]; then
+            echo "ERROR: innogpu-fh2m-trixie only accepts patched-N (N>20) or 4.0.x-iN versions: $version" >&2
+            exit 1
+        fi
+        ;;
+    fantgpu-fh2m-trixie)
+        [[ "$version" =~ ^5\.0\.0-i([1-9][0-9]*)$ ]] || {
+            echo "ERROR: fantgpu-fh2m-trixie only accepts 5.0.0-iN versions: $version" >&2
+            exit 1
+        }
+        ;;
+    *)
+        echo "ERROR: unexpected package: $package" >&2
+        exit 1
+        ;;
+esac
 [[ "$architecture" == "amd64" ]] || {
     echo "ERROR: unexpected architecture: $architecture" >&2
     exit 1
@@ -58,9 +69,9 @@ required=(
     usr/lib/x86_64-linux-gnu/innogpu-fh2m/libglapi_inno.so.0.0.0
     usr/lib/xorg/modules/drivers/innogpu_drv.so
     usr/share/glvnd/egl_vendor.d/00_inno.json
-    usr/share/innogpu-fh2m-trixie/restore-dp1-mode-x11.sh
-    usr/share/innogpu-fh2m-trixie/xdisplay-session.sh
-    usr/share/innogpu-fh2m-trixie/install-xdisplay-user.sh
+    "usr/share/$package/restore-dp1-mode-x11.sh"
+    "usr/share/$package/xdisplay-session.sh"
+    "usr/share/$package/install-xdisplay-user.sh"
 )
 for path in "${required[@]}"; do
     grep -Fxq "$path" "$runtime/files" || {
@@ -92,7 +103,7 @@ done
 install -d "$runtime/helpers"
 for helper in restore-dp1-mode-x11.sh xdisplay-session.sh install-xdisplay-user.sh; do
     dpkg-deb --fsys-tarfile "$DEB" |
-        tar -xOf - "./usr/share/innogpu-fh2m-trixie/$helper" > "$runtime/helpers/$helper"
+        tar -xOf - "./usr/share/$package/$helper" > "$runtime/helpers/$helper"
     cmp -s "$ROOT/scripts/$helper" "$runtime/helpers/$helper" || {
         echo "ERROR: packaged integration helper differs from current source: $helper" >&2
         exit 1
