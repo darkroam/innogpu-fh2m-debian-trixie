@@ -33,6 +33,11 @@
 # 子命令：
 #   gen     生成 f-payload.manifest.tsv(+.sha256) 与 f-payload-integrity.json
 #   verify  不写盘；重算并与既有产物逐字节比对（供三方独立复验）
+#   restore ④ 落库（dsh 授权的一次性保护区写入）：事务化 + 写前状态机 +
+#           排他锁 + 逐状态真值表 fail-closed，把来源 deb 解包到
+#           vendor/fantgpu/（剔 DEBIAN/；严格清点 SHA/mode/target 与
+#           binary-manifest-fantgpu.json 双射）——见 design
+#           c3-a-4-reproducible-input-plan.md §一 v12。
 #
 # gen 提交事务（三件产物同代，杜绝混代证据；codex 初审 P1-1 / re-review
 # P1-1/P1-2/P2 / re-review#2 P1-1/P1-2 / re-review#4 P1-1/P1-2 /
@@ -85,6 +90,7 @@ import hashlib
 import json
 import os
 import re
+import secrets
 import shutil
 import subprocess
 import sys
@@ -114,6 +120,22 @@ TXN_PREFIX = ".f-payload.txn."
 BAK_SUFFIX = ".bak"
 JOURNAL_NAME = "f-payload.commit.journal"
 JOURNAL_STATES = ("backing_up", "committing", "committed", "rolling_back")
+
+# ------------------------------------------------------ restore 落库（④ 批 1）
+# 依据 = docs/planning/c3-a-4-reproducible-input-plan.md §一（v12）：
+# 事务化 + 写前状态机 + 排他锁 + 逐状态真值表 fail-closed。
+# 保证范围（设计稿 v12 已收窄）：进程中断与并发进程；不承诺掉电/系统崩溃。
+RESTORE_LOCK_NAME = ".fantgpu-restore.lock"
+RESTORE_JOURNAL_NAME = ".fantgpu-restore.journal"
+RESTORE_TXN_PREFIX = ".fantgpu-txn."
+RESTORE_OLD_PREFIX = ".fantgpu-old."
+RESTORE_STATES = ("staged", "moving_old", "moved_old", "moving_new",
+                  "committed")
+RESTORE_NAME_RE = re.compile(r"^\.fantgpu-(txn|old)\.[0-9a-z]{8}$")
+RESTORE_EXPECTED_COUNTS = {"dir": 87, "file": 602, "symlink": 58}
+F_MANIFEST_NAME = "binary-manifest-fantgpu.json"
+F_DEB_SHA256 = ("6f0daaf79fb6b2a547138c17628bb990dff0d0c684ee1c13775b"
+                "ebc2d28fd11b")
 
 PROTECTED_TOP = ("debs", "vendor", "build", "third_party", "migration",
                  "drivers", "baselines", "patches")
@@ -1428,6 +1450,441 @@ def compare_existing(out_dir, manifest_bytes, integrity_obj):
     return diffs
 
 
+# ------------------------------------------------------------ restore 实现
+
+def load_f_manifest(path):
+    """读 binary-manifest-fantgpu.json → (entries, expect_counts)。
+
+    FPI_RESTORE_FIXTURE=1（仅单测）：放宽全局 660/deb SHA 检查，改用
+    合成夹具 manifest（生产运行必须缺省——与 ③ 工具 --baseline 同口径）。
+    """
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            m = json.load(fh)
+    except (OSError, ValueError) as exc:
+        die("F manifest unreadable: %s (%s)" % (path, exc))
+    if not isinstance(m, dict) or not isinstance(m.get("entries"), list):
+        die("F manifest schema invalid: %s" % path)
+    fixture = os.environ.get("FPI_RESTORE_FIXTURE") == "1"
+    if not fixture:
+        if m.get("source_deb_sha256") != F_DEB_SHA256:
+            die("F manifest source_deb_sha256 mismatch")
+        if m.get("input_entries") != 660:
+            die("F manifest input_entries != 660: %r" % m.get("input_entries"))
+    entries = {}
+    for e in m["entries"]:
+        p = e.get("source_path")
+        if not isinstance(p, str) or e.get("vendor_path") != "fantgpu/" + p:
+            die("F manifest entry vendor_path mismatch: %r" % p)
+        entries[p] = e
+    expect = {
+        "dir": m.get("dir_entries", RESTORE_EXPECTED_COUNTS["dir"]),
+        "file": m.get("file_entries", RESTORE_EXPECTED_COUNTS["file"]),
+        "symlink": m.get("symlink_entries",
+                         RESTORE_EXPECTED_COUNTS["symlink"]),
+    }
+    return entries, expect
+
+
+def restore_content_check(dirpath, entries, expect):
+    """严格清点 + SHA/mode/target 校验（设计稿 §一 步骤 4 同一例程）。
+
+    dirpath == S_INPUT 严格双射：目录/常规文件/符号链接计数与 expect
+    一致，零额外路径（含零 DEBIAN/ 残留）；目录 mode 固定 0755。
+    不符 → die（fail-closed 保留现场，由调用方决定清理范围）。
+    """
+    if not os.path.isdir(dirpath) or os.path.islink(dirpath):
+        die("candidate is not a real directory: %s" % dirpath)
+    files = {}
+    syms = {}
+    dirs = 0
+    for dp, dn, fn in os.walk(dirpath, followlinks=False):
+        dn.sort()
+        fn.sort()
+        for n in dn:
+            ap = os.path.join(dp, n)
+            if os.path.islink(ap):
+                die("symlink directory in candidate: %s" % ap)
+            mode = "%04o" % (os.stat(ap).st_mode & 0o7777)
+            if mode != "0755":
+                die("directory mode drift: %s (%s)" % (ap, mode))
+            dirs += 1
+        for n in fn:
+            ap = os.path.join(dp, n)
+            rel = os.path.relpath(ap, dirpath).replace(os.sep, "/")
+            if os.path.islink(ap):
+                syms[rel] = os.readlink(ap)
+            else:
+                h = hashlib.sha256()
+                with open(ap, "rb") as fh:
+                    for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+                        h.update(chunk)
+                files[rel] = h.hexdigest()
+    if dirs != expect["dir"] \
+            or len(files) != expect["file"] \
+            or len(syms) != expect["symlink"]:
+        die("candidate counts %s != expected %s: %s"
+            % (json.dumps({"dir": dirs, "file": len(files),
+                           "symlink": len(syms)}, sort_keys=True),
+               json.dumps(expect, sort_keys=True), dirpath))
+    if set(entries) != (set(files) | set(syms)):
+        extra = sorted((set(files) | set(syms)) - set(entries))
+        missing = sorted(set(entries) - (set(files) | set(syms)))
+        die("candidate not a bijection with manifest: extra=%s missing=%s"
+            % (extra[:3] or "[]", missing[:3] or "[]"))
+    for p, got_sha in files.items():
+        e = entries[p]
+        if e.get("sha256") != got_sha:
+            die("candidate sha256 drift: %s" % p)
+        mode = "%04o" % (os.stat(os.path.join(dirpath, p)).st_mode & 0o7777)
+        if mode != e.get("mode"):
+            die("candidate mode drift: %s (want %s, got %s)"
+                % (p, e.get("mode"), mode))
+    for p, got_target in syms.items():
+        if entries[p].get("target") != got_target:
+            die("candidate symlink target drift: %s" % p)
+        # 载荷根边界校验（codex re-review P1-2）：绝对 target 或解析后逃出
+        # 载荷根一律拒绝；最终解析对象必须是载荷根内常规文件（含链接链）
+        if os.path.isabs(got_target):
+            die("candidate symlink target is absolute: %s -> %s"
+                % (p, got_target))
+        root_real = os.path.realpath(dirpath)
+        link_dir = os.path.realpath(os.path.dirname(
+            os.path.join(dirpath, p)))
+        final = os.path.realpath(os.path.join(link_dir, got_target))
+        if not (final == root_real
+                or final.startswith(root_real + os.sep)):
+            die("candidate symlink escapes payload root: %s -> %s"
+                % (p, got_target))
+        if not os.path.isfile(final):
+            die("candidate symlink does not resolve to a regular file "
+                "in payload root: %s" % p)
+
+
+def _restore_candidates(parent, cur, journal):
+    txn = os.path.join(parent, journal["txn"])
+    old = os.path.join(parent, journal["old"])
+    for label, path in (("current", cur), ("txn", txn), ("old", old)):
+        if os.path.lexists(path):
+            if os.path.islink(path) or not os.path.isdir(path):
+                die("restore candidate %s is not a real directory: %s"
+                    % (label, path))
+    return txn, old
+
+
+def _r_rmtree(path):
+    if os.path.lexists(path):
+        shutil.rmtree(path)
+
+
+def _r_unlink(path):
+    if os.path.lexists(path):
+        os.unlink(path)
+
+
+def _r_write_journal(parent, state, pre_existing, txn, old):
+    _maybe_inject("restore-journal." + state)
+    fd, tmp = tempfile.mkstemp(prefix=".fjt.", dir=parent)
+    try:
+        with os.fdopen(fd, "wb") as fh:
+            fh.write((json.dumps({"state": state,
+                                  "pre_existing": pre_existing,
+                                  "txn": txn, "old": old},
+                                 sort_keys=True) + "\n").encode("ascii"))
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, os.path.join(parent, RESTORE_JOURNAL_NAME))
+    except BaseException:
+        try:
+            if os.path.lexists(tmp):
+                os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
+def _r_read_journal(parent):
+    """journal 字段安全校验（codex re-review#4 P1-2）→ (state, pre, txn, old)。"""
+    path = os.path.join(parent, RESTORE_JOURNAL_NAME)
+    if not os.path.lexists(path):
+        return None
+    if os.path.islink(path):
+        die("restore journal is a symlink (refusing to follow): %s" % path)
+    if not os.path.isfile(path):
+        die("restore journal is not a regular file: %s" % path)
+    try:
+        with open(path, "r", encoding="ascii") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError) as exc:
+        die("restore journal unreadable: %s (%s)" % (path, exc))
+    if not isinstance(data, dict) \
+            or data.get("state") not in RESTORE_STATES \
+            or not isinstance(data.get("pre_existing"), bool):
+        die("restore journal has unknown state/fields: %s" % path)
+    for key, kind in (("txn", "txn"), ("old", "old")):
+        val = data.get(key)
+        if not isinstance(val, str) or not RESTORE_NAME_RE.match(val) \
+                or not val.startswith(".fantgpu-%s." % kind):
+            die("restore journal %s field not tool-generated: %r"
+                % (key, val))
+    if (os.path.realpath(os.path.dirname(path))
+            != os.path.realpath(parent)):
+        die("restore journal not in expected parent dir: %s" % path)
+    return data["state"], data["pre_existing"], data["txn"], data["old"]
+
+
+def _r_safe_delete(path):
+    """按对象类型安全删除：目录 → rmtree；文件/symlink → unlink。"""
+    if not os.path.lexists(path):
+        return
+    if os.path.isdir(path) and not os.path.islink(path):
+        shutil.rmtree(path)
+    else:
+        os.unlink(path)
+
+
+def _restore_scan(parent, cur, entries, expect):
+    """启动扫描（锁内，幂等，真值表 v12；不可产生组合 → fail-closed die）。
+
+    含 codex 初审 P1-1 修正：有 journal 时同样扫描全部 .fantgpu-txn.*/
+    .fantgpu-old.*，除 journal 指定对象外的任何候选 → 保留现场 rc=2。
+    """
+    jp = os.path.join(parent, RESTORE_JOURNAL_NAME)
+    stray_txn = sorted(n for n in os.listdir(parent)
+                       if n.startswith(RESTORE_TXN_PREFIX))
+    stray_old = sorted(n for n in os.listdir(parent)
+                       if n.startswith(RESTORE_OLD_PREFIX))
+    got = _r_read_journal(parent)
+    if got is None:
+        # 无 journal：txn 一律垃圾（安全按类型删除）；任何 .old → fail-closed
+        for n in stray_old:
+            die("restore residue: %s without journal — cannot prove "
+                "generation; preserve for adjudication: %s" % (n, parent))
+        try:
+            for n in stray_txn:
+                _r_safe_delete(os.path.join(parent, n))
+        except OSError as exc:
+            die("restore residue: stale txn cleanup failed (%s); "
+                "preserve: %s" % (exc, parent))
+        return
+    state, pre, txn, old = got
+    # 额外候选：journal 指名之外的一切 txn/old → fail-closed 保留现场
+    extras = ([n for n in stray_txn if n != txn]
+              + [n for n in stray_old if n != old])
+    if extras:
+        die("restore residue: unreferenced transaction candidates %s; "
+            "preserve for adjudication: %s" % (", ".join(extras), parent))
+    txn_p, old_p = _restore_candidates(parent, cur,
+                                       {"txn": txn, "old": old})
+    cto = (1 if os.path.lexists(cur) else 0,
+           1 if os.path.lexists(txn_p) else 0,
+           1 if os.path.lexists(old_p) else 0)
+
+    def check_c():
+        restore_content_check(cur, entries, expect)
+
+    def check_o():
+        restore_content_check(old_p, entries, expect)
+
+    action = None
+    table = {
+        ("staged", True, (1, 1, 0)): "rm_t_j",
+        ("staged", True, (1, 0, 0)): "rm_j",
+        ("staged", False, (0, 1, 0)): "rm_t_j",
+        ("staged", False, (0, 0, 0)): "rm_j",
+        ("moving_old", True, (1, 1, 0)): "rm_t_j",
+        ("moving_old", True, (0, 1, 1)): "as_moved_old",
+        ("moving_old", True, (1, 0, 0)): "rm_j",
+        ("moved_old", True, (0, 1, 1)): "restore_o",
+        ("moved_old", True, (1, 1, 0)): "check_c_rm_t_j",
+        ("moved_old", True, (1, 0, 0)): "check_c_rm_j",
+        ("moving_new", True, (0, 1, 1)): "as_moved_old",
+        ("moving_new", True, (1, 0, 1)): "as_committed",
+        ("moving_new", True, (1, 1, 0)): "check_c_rm_t_j",
+        ("moving_new", True, (1, 0, 0)): "check_c_rm_j",
+        ("moving_new", False, (0, 1, 0)): "rm_t_j",
+        ("moving_new", False, (0, 0, 0)): "rm_j",
+        ("moving_new", False, (1, 0, 0)): "check_c_rm_j",
+        ("committed", True, (1, 0, 1)): "check_c_rm_o_j",
+        ("committed", True, (1, 0, 0)): "check_c_rm_j",
+        ("committed", False, (1, 0, 0)): "check_c_rm_j",
+    }
+    action = table.get((state, pre, cto))
+    if action is None:
+        die("restore residue: combination state=%s pre=%s (C,T,O)=%s is "
+            "not producible by the state machine; preserve for "
+            "adjudication: %s" % (state, pre, cto, parent))
+    try:
+        if action == "rm_t_j":
+            _r_safe_delete(txn_p)
+            _r_unlink(jp)
+        elif action == "rm_j":
+            _r_unlink(jp)
+        elif action == "as_moved_old":
+            if cto != (0, 1, 1):
+                die("internal: as_moved_old requires (0,1,1)")
+            check_o()
+            os.replace(old_p, cur)
+            _r_safe_delete(txn_p)
+            _r_unlink(jp)
+        elif action == "restore_o":
+            check_o()
+            os.replace(old_p, cur)
+            _r_safe_delete(txn_p)
+            _r_unlink(jp)
+        elif action == "check_c_rm_t_j":
+            check_c()
+            _r_safe_delete(txn_p)
+            _r_unlink(jp)
+        elif action == "check_c_rm_j":
+            check_c()
+            _r_unlink(jp)
+        elif action == "as_committed":
+            check_c()
+            _r_safe_delete(old_p)
+            _r_unlink(jp)
+        elif action == "check_c_rm_o_j":
+            check_c()
+            _r_safe_delete(old_p)
+            _r_unlink(jp)
+    except OSError as exc:
+        die("restore residue: recovery incomplete (%s); journal "
+            "preserved for retry: %s" % (exc, parent))
+
+
+def _restore_lock(parent):
+    """排他锁：O_CREAT|O_RDWR|O_NOFOLLOW + flock(LOCK_EX|LOCK_NB)；永不删除。"""
+    lock_path = os.path.join(parent, RESTORE_LOCK_NAME)
+    try:
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW,
+                     0o644)
+    except OSError as exc:
+        if getattr(exc, "errno", None) == getattr(os, "ELOOP", 40):
+            die("restore lock is a symlink (refusing to follow): %s"
+                % lock_path)
+        raise
+    import fcntl
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        os.close(fd)
+        die("restore already in progress (lock held): %s" % lock_path)
+    return fd
+
+
+def cmd_restore(root, deb, vendor_dir, manifest_path):
+    vendor_abs = (vendor_dir if os.path.isabs(vendor_dir)
+                  else os.path.join(root, vendor_dir))
+    parent = os.path.dirname(os.path.abspath(vendor_abs))
+    if not os.path.isdir(parent):
+        die("vendor parent dir does not exist: %s" % parent)
+    lock_fd = _restore_lock(parent)
+    try:
+        return _restore_locked(root, deb, vendor_abs, manifest_path, parent)
+    finally:
+        import fcntl
+        fcntl.flock(lock_fd, fcntl.LOCK_UN)
+        os.close(lock_fd)
+
+
+def _r_rmtree_best_effort(path):
+    try:
+        _r_rmtree(path)
+    except OSError as exc:
+        eprint("WARNING: txn cleanup failed (%s); residue kept for "
+               "next-startup recovery: %s" % (exc, path))
+
+
+def _restore_locked(root, deb, cur, manifest_path, parent):
+    # 启动扫描（锁内；含无 journal 残留处理与真值表恢复）
+    manifest_abs = (manifest_path if os.path.isabs(manifest_path)
+                    else os.path.join(root, manifest_path))
+    if not os.path.isfile(manifest_abs):
+        die("F manifest not found: %s" % manifest_abs)
+    entries, expect = load_f_manifest(manifest_abs)
+    _restore_scan(parent, cur, entries, expect)
+
+    # 1. deb 预检（fixture 模式跳过全局 SHA——合成 deb 仅测事务语义）
+    if not os.path.isfile(deb):
+        die("source deb not found: %s" % deb)
+    if os.environ.get("FPI_RESTORE_FIXTURE") != "1":
+        deb_sha = sha256_file(deb)
+        if deb_sha != F_DEB_SHA256:
+            die("deb SHA-256 mismatch (want %s, got %s)" % (F_DEB_SHA256,
+                                                            deb_sha))
+
+    # 2-4. 解包 + 剔 DEBIAN/ + 严格清点
+    rand = secrets.token_hex(4)
+    txn_name = RESTORE_TXN_PREFIX + rand
+    old_name = RESTORE_OLD_PREFIX + rand
+    txn = os.path.join(parent, txn_name)
+    old = os.path.join(parent, old_name)
+    if os.path.lexists(txn) or os.path.lexists(old):
+        die("transaction name collision: %s" % rand)
+    proc = subprocess.run(["dpkg-deb", "-R", deb, txn],
+                          capture_output=True)
+    if proc.returncode != 0:
+        _r_rmtree_best_effort(txn)
+        die("dpkg-deb -R failed (rc=%d)" % proc.returncode)
+    try:
+        if os.environ.get("FPI_RESTORE_KEEP_DEBIAN") != "1":
+            _r_rmtree(os.path.join(txn, "DEBIAN"))
+        restore_content_check(txn, entries, expect)
+    except SystemExit:
+        _r_rmtree_best_effort(txn)
+        raise
+
+    # 5. 写前状态机切换
+    pre = os.path.lexists(cur)
+    if pre:
+        # 首次切换同样校验 C 为非 symlink 真目录（codex re-review P1-1；
+        # _restore_candidates 只覆盖已有 journal 的恢复路径）
+        if os.path.islink(cur) or not os.path.isdir(cur):
+            die("restore candidate current is not a real directory: %s"
+                % cur)
+    try:
+        _r_write_journal(parent, "staged", pre, txn_name, old_name)
+        if pre:
+            _r_write_journal(parent, "moving_old", pre, txn_name, old_name)
+            _maybe_inject("restore-mv.old")
+            os.replace(cur, old)
+            _r_write_journal(parent, "moved_old", pre, txn_name, old_name)
+        _r_write_journal(parent, "moving_new", pre, txn_name, old_name)
+        _maybe_inject("restore-mv.new")
+        os.replace(txn, cur)
+        _r_write_journal(parent, "committed", pre, txn_name, old_name)
+    except SystemExit:
+        raise
+    except OSError as exc:
+        # 失败 → 按真值表恢复（旧代零改动）；恢复本身失败保留现场待下次启动
+        try:
+            _restore_scan(parent, cur, entries, expect)
+        except SystemExit:
+            pass
+        die("failed to commit restore (%s); state machine recovered "
+            "per truth table" % exc)
+
+    # 清理（best-effort：old 清理失败 → journal 保持 committed，下次启动
+    # 按真值表 committed 分支继续；只有 old 清理成功才删 journal）
+    cleanup_failed = False
+    try:
+        _maybe_inject("restore-cleanup.1")
+        _r_rmtree(old)
+    except OSError:
+        cleanup_failed = True
+    if not cleanup_failed:
+        try:
+            _r_unlink(os.path.join(parent, RESTORE_JOURNAL_NAME))
+        except OSError:
+            cleanup_failed = True
+    if cleanup_failed:
+        eprint("WARNING: restore cleanup incomplete; residue kept for "
+               "next-startup recovery")
+    print("RESULT: PASS_RESTORE_FANTGPU_PAYLOAD vendor=%s entries=660"
+          % cur)
+    return 0
+
+
 # ------------------------------------------------------------------- main
 
 def baseline_fingerprint(bl):
@@ -1438,16 +1895,21 @@ def baseline_fingerprint(bl):
 
 def main():
     ap = argparse.ArgumentParser(prog=PROG)
-    ap.add_argument("command", choices=("gen", "verify"))
+    ap.add_argument("command", choices=("gen", "verify", "restore"))
     ap.add_argument("--root", default=os.getcwd(),
                     help="repository root (default: cwd)")
     ap.add_argument("--deb", default=DEFAULT_DEB,
                     help="source deb, relative to --root (read-only)")
     ap.add_argument("--unpack", default=DEFAULT_UNPACK,
                     help="unpacked payload tree, relative to --root "
-                         "(read-only)")
+                         "(read-only; gen/verify only)")
     ap.add_argument("--out-dir", default=DEFAULT_OUT,
-                    help="artifact output directory")
+                    help="artifact output directory (gen/verify)")
+    ap.add_argument("--vendor-dir", default="vendor/fantgpu",
+                    help="restore landing dir (restore only; authorized "
+                         "protected-area write)")
+    ap.add_argument("--manifest", default=F_MANIFEST_NAME,
+                    help="F payload manifest (restore only)")
     ap.add_argument("--baseline", default=None,
                     help="JSON file fully replacing the locked baseline "
                          "(unit tests only; production runs must omit it so "
@@ -1458,6 +1920,14 @@ def main():
     root = os.path.realpath(args.root)
     if not os.path.isdir(root):
         die("--root is not a directory: %s" % root)
+
+    if args.command == "restore":
+        # dsh 授权的一次性保护区写入（vendor/fantgpu/ + 事务文件）；不走
+        # check_protected_out——该守卫针对 gen/verify 的产物路径。
+        deb_r = (args.deb if os.path.isabs(args.deb)
+                 else os.path.join(root, args.deb))
+        return cmd_restore(root, deb_r, args.vendor_dir, args.manifest)
+
     deb = args.deb if os.path.isabs(args.deb) else os.path.join(root, args.deb)
     unpack = (args.unpack if os.path.isabs(args.unpack)
               else os.path.join(root, args.unpack))
