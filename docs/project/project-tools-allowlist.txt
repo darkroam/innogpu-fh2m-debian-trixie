@@ -26,6 +26,7 @@ baselines/latest-runtime-baseline.txt
 baselines/phase4-baseline-20260821-142632.log
 baselines/post-reboot-hwgl-20260821-144338.txt
 baselines/runtime-results-20260824.txt
+binary-manifest-fantgpu.json
 binary-manifest.json
 components/fbterm/001-configurable-redraw-scrolling.patch
 components/picom/001-probe-explicit-uniform-location.patch
@@ -238,6 +239,8 @@ tests/unit/run-dmabuf-regression-tests.sh
 tests/unit/run-dri-repair-tests.sh
 tests/unit/run-exec-probes-tests.sh
 tests/unit/run-extractor-tests.sh
+tests/unit/run-gen-fantgpu-manifest-tests.sh
+tests/unit/run-gen-package-md5sums-tests.sh
 tests/unit/run-license-audit-tests.sh
 tests/unit/run-manifest-tests.sh
 tests/unit/run-o-stage-materialize-tests.sh
@@ -248,10 +251,12 @@ tests/unit/run-r16-build-bc-map-tests.sh
 tests/unit/run-r16-classify-tests.sh
 tests/unit/run-r16-f-payload-integrity-tests.sh
 tests/unit/run-r16-gate-tests.sh
+tests/unit/run-r16-restore-tests.sh
 tests/unit/run-results-parser-tests.sh
 tests/unit/run-suspend-failure-finalize-tests.sh
 tests/unit/run-suspend-resume-tests.sh
 tests/unit/run-vaapi-decode-tests.sh
+tests/unit/run-validate-fantgpu-manifest-tests.sh
 tests/unit/run-version-tests.sh
 tests/xdisplay/run-install-tests.sh
 tools/README.md
@@ -259,6 +264,8 @@ tools/audit-licenses.py
 tools/build-release-archive.py
 tools/d-stage-audit-gen.py
 tools/finalize-suspend-resume-failure.py
+tools/gen-fantgpu-manifest.py
+tools/gen-package-md5sums.py
 tools/generate-binary-manifest.py
 tools/o4-f0-lock-gen.py
 tools/p2-normalize-v3.py
@@ -283,5 +290,6 @@ tools/r16-gate.py
 tools/run-dmabuf-regression-test.sh
 tools/run-vaapi-decode-test.sh
 tools/trace-loader.c
+tools/validate-binary-manifest-fantgpu.py
 tools/validate-binary-manifest.py
 tools/validate-collab.py
