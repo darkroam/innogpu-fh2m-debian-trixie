@@ -479,15 +479,10 @@ dpkg-deb --root-owner-group --build "$P" "$OUT_DEB"
 echo "builder_package_build=PASS $OUT_DEB"
 
 # 5) 边界检查
-if [[ "$FANT_LINEAGE" == 1 ]]; then
-    # fantgpu 血统：C1-②（required 载荷断言按 F 路径）与 release 审计门禁恢复
-    # 调用在 ④ 落地 + 重构建之后同批交付（批 3）——本分支保留 .o.cmd/.orig/.rej
-    # 包边界守卫，见上。
-    echo "builder_package_boundary=PASS (fantgpu lineage; release-audit gate pending batch-3 C1-2)"
-else
-    scripts/check-release-package.sh "$OUT_DEB" || { echo "builder_package_boundary=FAIL"; exit 1; }
-    echo "builder_package_boundary=PASS"
-fi
+# C1-②：release 审计门禁对两条血统均无条件执行（check-release-package.sh
+# 按包名血统分派 required/forbidden 断言，batch-3 交付）。
+scripts/check-release-package.sh "$OUT_DEB" || { echo "builder_package_boundary=FAIL"; exit 1; }
+echo "builder_package_boundary=PASS"
 echo "builder_overall=PASS"
 echo "builder_out_deb=$OUT_DEB"
 echo "builder_lineage=$([[ "$FANT_LINEAGE" == 1 ]] && echo fantgpu || echo innogpu)"

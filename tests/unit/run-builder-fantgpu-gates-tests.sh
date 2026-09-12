@@ -137,11 +137,12 @@ else
     bad t13 "meta.json reference changed"
 fi
 
-# t14 静态契约：release-audit 跳过行指向批 3 C1-②
-if grep -Fq 'pending batch-3 C1-2' "$BUILDER"; then
+# t14 静态契约：release-audit 门禁无条件调用恢复（批 3 C1-②；无跳过行）
+if grep -Fq 'scripts/check-release-package.sh "$OUT_DEB" || { echo "builder_package_boundary=FAIL"; exit 1; }' "$BUILDER" \
+   && ! grep -Fq 'release-audit gate pending' "$BUILDER"; then
     ok t14
 else
-    bad t14 "gate skip comment not updated"
+    bad t14 "gate call not restored or skip line remains"
 fi
 
 echo "PASS=$PASS FAIL=$FAILN"

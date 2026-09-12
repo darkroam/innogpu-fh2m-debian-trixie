@@ -74,12 +74,12 @@
 
 1. **DKMS 源改 O_stage**（已实现）：5.0.0-i1 分支的 DKMS 源根 = o-stage-snapshot.tar.zst 解包（快照 SHA + 解包树 hash 937e3710… 双重校验；030 链 13 项已在 materialize 阶段应用，builder 不内联应用）；EXPECTED_SOURCE_DATE_EPOCH=1788796800；
 2. **vermagic**：模块 vermagic 自动生成，5.0.0-i1 分支校验 `fantgpu.ko` + vermagic 前缀匹配（运行时矩阵记录）；
-3. **载荷边界**：debs/ 产物 = fantgpu 血统包 `fantgpu-fh2m-trixie_5.0.0-i1`（DKMS 名 fantgpu-fh2m-kernel v2.2、模块 fantgpu、源目录 usr/src/fantgpu-fh2m-kernel-2.2）；Conflicts/Replaces 含 innogpu-fh2m-trixie（升级路径）；vendor userspace 载荷沿用（Deepin 系 DRI/GBM/GLAPI/DDX）；vendor kernel/* Deepin 血统对象跳过（树自带 fant* o_shipped）；
+3. **载荷边界**：debs/ 产物 = fantgpu 血统包 `fantgpu-fh2m-trixie_5.0.0-i2`（DKMS 名 fantgpu-fh2m-kernel v2.2、模块 fantgpu、源目录 usr/src/fantgpu-fh2m-kernel-2.2）；Conflicts/Replaces 含 innogpu-fh2m-trixie（升级路径）；**C3-a 落地后（2026-09-12）**：userspace 与固件载荷 = F 血统（`binary-manifest-fantgpu.json` 锁定，构建期预选 DDX ABI 1.21 / UCM ucm2 / wayland off，M1-M6 物化），不再沿用 Deepin 系 DRI/GBM/GLAPI/DDX；vendor kernel/* Deepin 血统对象跳过（树自带 fant* o_shipped）；
 4. **patch-000 no-transform 声明**（已实现）：builder 5.0.0-i1 分支无任何 o_shipped 字节变换步骤（PLL 语义风险 UNVERIFIED 登记）；
 5. **不安装契约**（已实现）：builder 仅构建；安装/回退由验证矩阵阶段手动执行；
 6. **保护区边界**：STAGE_ROOT/BUILD_LOG/OUT_DEB 可注入（5.0.0-i1 实跑注入 /tmp，build/ 保护区零写入；4.0.x-iN 默认保持历史行为）；
-7. **待裁决项（如实记录）**：check-release-package.sh 尚锁定 innogpu 包名与 4.0.x-iN 版本格式——5.0.0-i1 分支保留 .o.cmd/.orig/.rej 包边界守卫、release 审计门禁适配另行裁决；fantgpu 模块 modprobe options 参数名未经设备审核，5.0.0-i1 分支不写 options（待 O_stage 运行时矩阵确认）；
-8. **双 clean-build 字节一致证据**：5.0.0-i1 双 clean-build（build-A/B）SHA-256 比对，证据落 docs/planning/evidence/o-stage/。
+7. **待裁决项（如实记录）**：check-release-package.sh 的门禁适配**已闭合（2026-09-12，C3-a 批 3）**——包名白名单/版本正则按血统配对（C1-①）+ required/forbidden 载荷断言按血统分派（C1-②）+ builder release 审计门禁对两血统无条件调用；fantgpu 模块 modprobe options 参数名未经设备审核，5.0.0-iN 分支不写 options（待 O_stage 运行时矩阵确认）；
+8. **双 clean-build 字节一致证据**：5.0.0-i1 双 clean-build（build-A/B）SHA-256 比对，证据落 docs/planning/evidence/o-stage/（`build-5.0.0-i1.sha256`）；**5.0.0-i2（C3-a 重构建）证据 `build-5.0.0-i2.sha256` 与 i1 并存不覆盖**。
 
 ## 四、验证计划（阶段三验证矩阵清单）
 
