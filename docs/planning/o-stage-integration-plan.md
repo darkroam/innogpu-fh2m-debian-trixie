@@ -28,16 +28,16 @@
 6. 记录产物（**materialize 事务产物 = 五件同代**，与提交语义一致）：
    - `o-stage-snapshot.tar.zst` + `.sha256`
    - `o-stage.manifest.tsv` + `.sha256`
-   - `5.0.0-i1.meta.json`：**不可变 provenance**（版本串 5.0.0-i1 / SOURCE_DATE_EPOCH（批准值）/ tag 名 fantgpu-5.0.0-i1 / O_stage 树 hash 937e3710… / 13 条 030-NNN 链（各 patch SHA + after_tree_hash）/ 两条 UNVERIFIED 登记 / **快照四文件各自 SHA-256**（o-stage-snapshot.tar.zst、o-stage-snapshot.tar.zst.sha256、o-stage.manifest.tsv、o-stage.manifest.tsv.sha256））——materialize 时一次性写完，**此后不再修改**；验证矩阵结论**不写入本文件**（见下）
+   - `5.0.0-i1.meta.json`：**不可变 provenance**（版本串 5.0.0-i1 / SOURCE_DATE_EPOCH（批准值）/ tag 名 fantgpu-5.0.0-i1——**meta 全部字段保持 i1 不变**（2026-09-13 dsh 返工批 R-3：i1 从未安装/签发，发布版本 = i2，materialize_meta_sha256 绑定不变；meta 内 version/tag 串为 O_stage 快照代次标识，与 deb 发布版本解耦）/ O_stage 树 hash 937e3710… / 13 条 030-NNN 链（各 patch SHA + after_tree_hash）/ 两条 UNVERIFIED 登记 / **快照四文件各自 SHA-256**（o-stage-snapshot.tar.zst、o-stage-snapshot.tar.zst.sha256、o-stage.manifest.tsv、o-stage.manifest.tsv.sha256））——materialize 时一次性写完，**此后不再修改**；验证矩阵结论**不写入本文件**（见下）
 
 **meta.json 生命周期（消除同代冲突）**：
 
 - materialize 阶段：`5.0.0-i1.meta.json` 作为 provenance 在事务内生成，全部字段在 materialize 时已知（含快照四文件 SHA），随五件同代产物统一提交；此后不可变（任何字段变更 = 新的受控事务 + 全套产物重生成/重校验，不复用旧 sidecar）；
-- 验证阶段：验证矩阵结论写入**独立文件** `docs/planning/evidence/o-stage/5.0.0-i1-validation-results.json`（不属于 materialize 同代产物集；内容 = 阶段三矩阵逐项结论 + 签发前全 PASS 状态）；签发前提 = 该文件全 PASS；
+- 验证阶段：验证矩阵结论写入**独立文件** `docs/planning/evidence/o-stage/5.0.0-i2-validation-results.json`（不属于 materialize 同代产物集；内容 = 阶段三矩阵逐项结论 + 签发前全 PASS 状态；2026-09-13 dsh 返工批 R-3 由 i1 更名——i1 从未安装/签发；meta 内 validation_results.path 前向指针保持 i1 路径不变，属不可变 meta 的历史前向引用，验证结论以本文件为准）；签发前提 = 该文件全 PASS；
 - 两者绑定关系（**单向绑定，validation 锚定 immutable meta**）：
   - meta.json 固定记录 validation-results 文件路径与 schema（meta 只引用文件名，不引用其哈希——validation 后生成，其哈希在 materialize 时不可知）；
   - validation-results 记录 `materialize_meta_sha256`（= 5.0.0-i1.meta.json 的 SHA-256，验证阶段校验一致后方可填充结论）；
-  - validation-results 自身完整性由最终 Git commit / annotated tag（fantgpu-5.0.0-i1）或独立 validation sidecar 锚定——不做「互引 SHA-256」，因为 mutual 引用在生成时序上不可实现（meta 先于 validation 固化）。
+  - validation-results 自身完整性由最终 Git commit / annotated tag（fantgpu-5.0.0-i2）或独立 validation sidecar 锚定——不做「互引 SHA-256」，因为 mutual 引用在生成时序上不可实现（meta 先于 validation 固化）。
 
 **fail-closed**：链中任一 patch 失败（rc≠0 / .orig/.rej / 链点 hash 不符）→ 清理事务目录、不产任何快照产物、非零退出。
 
@@ -61,12 +61,12 @@
 
 **快照参数先例**：tar 1.35 / zstd 1.5.7 / @1640995200 / --sort=name / owner·group 0 / transform 前缀 `o-stage`——与 O-4（前缀 f0）与 D_stage 先例完全同构，仅前缀不同。
 
-## 二、版本与 epoch 定稿（dsh 已批准 2026-09-10）
+## 二、版本与 epoch 定稿（dsh 已批准 2026-09-10；版本串/tag 于 2026-09-13 返工批 R-3 切换至 i2——i1 从未安装/签发，发布版本 = i2，meta 与 SOURCE_DATE_EPOCH 保持 i1 不变）
 
 | 字段 | 定稿值 | 理由 |
 | --- | --- | --- |
-| 版本串 | `5.0.0-i1` | fantgpu 血统新系列（Deepin 血统为 4.0.2-i3）；dpkg 版本字段 5.0.0-i1 > 4.0.2-i3，升级序天然正确，无需 deb Epoch 字段（保持缺省） |
-| tag 名 | `fantgpu-5.0.0-i1`（dsh 唯一确认，仅此名） | 与 Deepin 血统 `deepin-4.0.2-i3` 区分；签发仍须三方一致 + 用户批准 |
+| 版本串 | `5.0.0-i2`（deb；2026-09-13 返工批 R-3 定稿） | fantgpu 血统新系列（Deepin 血统为 4.0.2-i3）；dpkg 版本字段 5.0.0-i2 > 4.0.2-i3，升级序天然正确，无需 deb Epoch 字段（保持缺省）；materialize meta 的 version 串保持 `5.0.0-i1`（O_stage 快照代次标识，不可变） |
+| tag 名 | `fantgpu-5.0.0-i2`（2026-09-13 返工批 R-3 定稿，仅此名；i1 从未签发） | 与 Deepin 血统 `deepin-4.0.2-i3` 区分；签发仍须三方一致 + 用户批准 |
 | SOURCE_DATE_EPOCH | **`1788796800`**（dsh 批准：沿用 4.0.2-i3 审核值，= 2026-09-07 16:00 UTC） | ① epoch 仅决定字节确定性，与版本比较无关（升级序由版本串保证）；② 沿用已审核值零新增审核面；③ 与 4.0.2-i3 同 epoch 使双血统产物比对时**排除 mtime/epoch 造成的时间差异**（版本/包名/构建配置/工具链/载荷本身的差异仍会体现在字节中） |
 | 包内 mtime | 全部文件 `touch -h -d @1788796800`（同 4.0.2-i3 规则） | 确定性；与 SOURCE_DATE_EPOCH 一致 |
 
@@ -78,7 +78,7 @@
 4. **patch-000 no-transform 声明**（已实现）：builder 5.0.0-i1 分支无任何 o_shipped 字节变换步骤（PLL 语义风险 UNVERIFIED 登记）；
 5. **不安装契约**（已实现）：builder 仅构建；安装/回退由验证矩阵阶段手动执行；
 6. **保护区边界**：STAGE_ROOT/BUILD_LOG/OUT_DEB 可注入（5.0.0-i1 实跑注入 /tmp，build/ 保护区零写入；4.0.x-iN 默认保持历史行为）；
-7. **待裁决项（如实记录）**：check-release-package.sh 的门禁适配**已闭合（2026-09-12，C3-a 批 3）**——包名白名单/版本正则按血统配对（C1-①）+ required/forbidden 载荷断言按血统分派（C1-②）+ builder release 审计门禁对两血统无条件调用；fantgpu 模块 modprobe options 参数名未经设备审核，5.0.0-iN 分支不写 options（待 O_stage 运行时矩阵确认）；
+7. **待裁决项（如实记录）**：check-release-package.sh 的门禁适配**已闭合（2026-09-12，C3-a 批 3）**——包名白名单/版本正则按血统配对（C1-①）+ required/forbidden 载荷断言按血统分派（C1-②）+ builder release 审计门禁对两血统无条件调用；fantgpu 模块 modprobe options 已三方定案（2026-09-13 dsh 终裁修订，`docs/planning/evidence/o-stage/c2-ruling.md`）：decision=write-options、firmware_en=1——options 文件由包内确定性 payload 承载（builder 组装期写 `etc/modprobe.d/fantgpu.conf`，dpkg 管理、postinst 不写），两血统运行时 firmware_en 均须为 1（O 真机实测 = 1；O 分支保持 postinst 直写历史口径）；
 8. **双 clean-build 字节一致证据**：5.0.0-i1 双 clean-build（build-A/B）SHA-256 比对，证据落 docs/planning/evidence/o-stage/（`build-5.0.0-i1.sha256`）；**5.0.0-i2（C3-a 重构建）证据 `build-5.0.0-i2.sha256` 与 i1 并存不覆盖**。
 
 ## 四、验证计划（阶段三验证矩阵清单）
@@ -94,7 +94,7 @@
 | 运行时 | DDCCI panel 显式逻辑（029）+ 2880x1800 刷新率（006）+ 2560 base-vs-base 观察（006 登记） | probe-drm-topology.c + 实机面板 |
 | 运行时 | **UNVERIFIED 登记 1**：025-display 唤醒显示观察（i4-only 假设不迁移，观察 F0 维持 i3 语义的行为） | probe-suspend-resume-state.sh 扩展观察项 |
 | 运行时 | **UNVERIFIED 登记 2**：patch-000 G0M GPU PLL 双重初始化症状观察（no-transform 操作结论，语义未闭合） | 阶段三矩阵观察项 |
-| 安装/回退 | 5.0.0-i1 dpkg 安装 + 完整系统快照回退往返 | 手动记录 + 验证脚本（同 4.0.2-i3 install-rollback 先例） |
+| 安装/回退 | 5.0.0-i2 dpkg 安装 + 完整系统快照回退往返 | 手动记录 + 验证脚本（同 4.0.2-i3 install-rollback 先例） |
 | 门禁汇总 | check-docs rc=0 + validate-collab rc=0 + r16-gate rc=0 | 每批提交后实跑并记录 |
 
 ## 五、产物落点
@@ -108,8 +108,8 @@
     - `docs/planning/evidence/o-stage/o-stage.manifest.tsv.sha256`
     - `docs/planning/evidence/o-stage/5.0.0-i1.meta.json`：不可变 provenance（版本串 / SOURCE_DATE_EPOCH / tag 名 / O_stage 树 hash / 13 条 030-NNN 链 / 两条 UNVERIFIED 登记 / 快照四文件各自 SHA-256；materialize 时一次写完，之后不改）
   - **验证结论文件（独立于同代产物集）**：
-    - `docs/planning/evidence/o-stage/5.0.0-i1-validation-results.json`：阶段三矩阵逐项结论，验证阶段写入，签发前填充全 PASS 状态；**对 immutable meta 的单向绑定**（记录 materialize_meta_sha256，验证阶段校验一致后方可填充；自身完整性由最终 Git commit / annotated tag 锚定）
+    - `docs/planning/evidence/o-stage/5.0.0-i2-validation-results.json`：阶段三矩阵逐项结论，验证阶段写入，签发前填充全 PASS 状态；**对 immutable meta 的单向绑定**（记录 materialize_meta_sha256——= 5.0.0-i1.meta.json 的 SHA-256，验证阶段校验一致后方可填充；自身完整性由最终 Git commit / annotated tag 锚定）
 
 ## 六、签发链
 
-O_stage 构建集成 → 阶段三验证矩阵全 PASS（= `5.0.0-i1-validation-results.json` 全 PASS 状态）→ 三方一致 + dsh 终审 + 用户批准 → 签发 annotated tag `fantgpu-5.0.0-i1`（仅此名）。
+O_stage 构建集成 → 阶段三验证矩阵全 PASS（= `5.0.0-i2-validation-results.json` 全 PASS 状态）→ 三方一致 + dsh 终审 + 用户批准 → 签发 annotated tag `fantgpu-5.0.0-i2`（仅此名）。

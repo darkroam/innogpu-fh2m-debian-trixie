@@ -233,7 +233,15 @@ if [[ "$VERM" == "$KERNEL "* ]]; then record module_vermagic PASS; else record m
 if [[ -d "$(sysfs "$SYS_MOD")" ]]; then
     record module_loaded PASS
     FWEN="$(cat "$(sysfs "$SYS_MOD/parameters/firmware_en")" 2>/dev/null || true)"
-    if [[ "$FWEN" == "1" ]]; then record module_param_firmware_en PASS; else record module_param_firmware_en FAIL "firmware_en=$FWEN"; fi
+    # C2 三方定案（2026-09-13 dsh 终裁修订，c2-ruling.md）：decision=write-options、
+    # firmware_en=1，两血统同口径——O builder 写 options innogpu firmware_en=1
+    # （真机实测 = 1），F postinst 写 options fantgpu firmware_en=1（同构）。
+    # 任何非 1 值 FAIL（禁止隐式漏写 options 或放宽检查绕过）。
+    if [[ "$FWEN" == "1" ]]; then
+        record module_param_firmware_en PASS
+    else
+        record module_param_firmware_en FAIL "firmware_en=$FWEN (C2 write-options expects 1)"
+    fi
 else
     record module_loaded FAIL "$MOD_NAME module not loaded (may need reboot after install)"
 fi

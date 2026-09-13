@@ -1,5 +1,12 @@
 #!/bin/bash
 # VA-API H.264/HEVC real decode verification for FH2M (Innosilicon 1ec8:9810).
+# F7 lineage 参数化：INNOGPU_LINEAGE=innogpu（缺省，O 血统）|fantgpu；非法值
+# fail-closed（exit 2）。proc 状态缺省路径按血统派生（fantgpu →
+# /proc/driver/fantgpu/gpu00/status）。vainfo 身份门按血统分派：fantgpu 血统
+# 只接受精确 fh2m 标识（独立 token 匹配；厂商/显示标签如 innosilicon 仅辅助
+# 证据，不得单独过身份门）；vainfo 未建立 fh2m 身份 → fail-closed（exit 3）。
+# --status-file FILE 为独立非夹具 CLI 参数：优先级 CLI > 夹具 env
+# INNOGPU_VAAPI_STATUS_FILE > 血统缺省路径；CLI 参数不触发 fixture mode。
 #
 # Generates a fixed lavfi testsrc2 source (exactly 30 frames @ 320x240), encodes
 # H.264 Main / HEVC Main with the system software encoders, decodes via the
@@ -15,7 +22,9 @@
 # is compared individually for growth; any invalid/missing snapshot => FAIL.
 #
 # Usage:
-#   bash tools/run-vaapi-decode-test.sh --codec h264|hevc|all [--device /dev/dri/renderDNN] [--timeout SEC]
+#   bash tools/run-vaapi-decode-test.sh --codec h264|hevc|all [--device /dev/dri/renderDNN]
+#       [--timeout SEC] [--status-file FILE]
+#   INNOGPU_LINEAGE=innogpu|fantgpu（缺省 innogpu；非法值 fail-closed exit 2）
 #
 # Exit codes: 0=requested codecs all PASS  1=decode/verify/status FAIL  2=arg/tool/codec missing
 #            3=render node missing/permission/identity mismatch  4=input gen/software ref FAIL  5=timeout/cleanup
@@ -36,12 +45,12 @@ set -u -o pipefail
 FFMPEG_BIN="${FFMPEG_BIN:-ffmpeg}"
 VAINFO_BIN="${VAINFO_BIN:-vainfo}"
 SYSFS_ROOT="${FAKE_SYSFS_ROOT:-/sys}"
-STATUS_FILE="${INNOGPU_VAAPI_STATUS_FILE:-/proc/driver/innogpu/gpu00/status}"
+STATUS_FILE_CLI=""
 CODEC="" DEVICE="" TIMEOUT=30
 FIXTURE_MODE=0
 NS=""
 
-usage() { sed -n '2,18p' "${BASH_SOURCE[0]}" | sed 's/^# \?//'; }
+usage() { sed -n '2,26p' "${BASH_SOURCE[0]}" | sed 's/^# \?//'; }
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -54,12 +63,36 @@ while [[ $# -gt 0 ]]; do
         --timeout)
             [[ $# -ge 2 && -n "$2" ]] || { echo "--timeout needs a value" >&2; exit 2; }
             TIMEOUT="$2"; shift 2 ;;
+        --status-file)
+            [[ $# -ge 2 && -n "$2" ]] || { echo "--status-file needs a value" >&2; exit 2; }
+            STATUS_FILE_CLI="$2"; shift 2 ;;
         -h|--help) usage; exit 0 ;;
         *) echo "unknown option: $1" >&2; exit 2 ;;
     esac
 done
 case "$CODEC" in h264|hevc|all) ;; *) echo "--codec required: h264|hevc|all" >&2; exit 2 ;; esac
 [[ "$TIMEOUT" =~ ^[1-9][0-9]*$ ]] || { echo "--timeout must be a positive integer: $TIMEOUT" >&2; exit 2; }
+
+# ---- lineage 参数族（F7；权威血统映射表为唯一命名依据）----
+LINEAGE="${INNOGPU_LINEAGE:-innogpu}"
+case "$LINEAGE" in
+    innogpu|fantgpu) ;;
+    *)
+        echo "ERROR: INNOGPU_LINEAGE must be innogpu or fantgpu (got: $LINEAGE)" >&2
+        exit 2
+        ;;
+esac
+# 状态文件来源优先级：CLI --status-file（独立非夹具）> 夹具 env
+# INNOGPU_VAAPI_STATUS_FILE > 血统缺省路径（fantgpu → /proc/driver/fantgpu/...）
+if [[ -n "$STATUS_FILE_CLI" ]]; then
+    STATUS_FILE="$STATUS_FILE_CLI"
+elif [[ -n "${INNOGPU_VAAPI_STATUS_FILE:-}" ]]; then
+    STATUS_FILE="${INNOGPU_VAAPI_STATUS_FILE}"
+elif [[ "$LINEAGE" == "fantgpu" ]]; then
+    STATUS_FILE="/proc/driver/fantgpu/gpu00/status"
+else
+    STATUS_FILE="/proc/driver/innogpu/gpu00/status"
+fi
 
 # ---- fixture 模式检测：任何注入钩子都必须显式声明；fixture 模式使用独立命名空间 fixture_* ----
 if [[ "${INNOGPU_VAAPI_FIXTURE_MODE:-0}" == "1" \
@@ -123,9 +156,26 @@ fi
 echo "${NS}vaapi_decode_node=ok $NODE (1ec8:9810)$(oktag)"
 
 # ---- vainfo 身份 + 按 codec 的 VLD profile (exit 3) ----
+# 身份门按血统分派（F7）：O 保持历史口径（innosilicon|innogpu）；
+# fantgpu 血统只接受 **Driver version 身份行**中的精确 fh2m 标识（独立
+# token，前后须为非标识符字符；不接受 fh2m 作为更长标识符的子串，也不
+# 接受其他输出行含 fh2m 但身份行不含的情形——codex 复审 P2）；厂商/显示
+# 标签（innosilicon 等）仅辅助证据，不得单独过门；vainfo 未建立 fh2m
+# 身份 → fail-closed exit 3。
 VAINFO_OUT="$("$VAINFO_BIN" --display drm --device "$NODE" 2>&1)"; VAINFO_RC=$?
-if [[ "$VAINFO_RC" -ne 0 ]] || ! echo "$VAINFO_OUT" | grep -qiE 'innosilicon|innogpu'; then
-    echo "${NS}vaapi_decode_vainfo=fail reason=$(tag vainfo_init_failed_or_not_innogpu)" >&2; exit 3;
+if [[ "$VAINFO_RC" -ne 0 ]]; then
+    echo "${NS}vaapi_decode_vainfo=fail reason=$(tag vainfo_init_failed)" >&2; exit 3;
+fi
+VAINFO_DRIVER_LINE="$(echo "$VAINFO_OUT" | grep -iE 'Driver version:' | head -1 || true)"
+if [[ "$LINEAGE" == "fantgpu" ]]; then
+    if [[ -z "$VAINFO_DRIVER_LINE" ]] \
+       || ! grep -qiE '(^|[^[:alnum:]_])fh2m([^[:alnum:]_]|$)' <<<"$VAINFO_DRIVER_LINE"; then
+        echo "${NS}vaapi_decode_vainfo=fail reason=$(tag vainfo_identity_not_fh2m)" >&2; exit 3;
+    fi
+else
+    if ! echo "$VAINFO_OUT" | grep -qiE 'innosilicon|innogpu'; then
+        echo "${NS}vaapi_decode_vainfo=fail reason=$(tag vainfo_init_failed_or_not_innogpu)" >&2; exit 3;
+    fi
 fi
 if [[ "$need_h264" -eq 1 ]] && ! echo "$VAINFO_OUT" | grep -qE 'VAProfileH264Main[^:]*:[[:space:]]*VAEntrypointVLD'; then
     echo "${NS}vaapi_decode_vainfo=fail reason=$(tag no_h264_vld_profile)" >&2; exit 3;

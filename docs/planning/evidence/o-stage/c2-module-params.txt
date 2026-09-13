@@ -16,11 +16,13 @@
 #   F 侧 fantgpu/fantgpu_pci_drv.c：:914 hal_hwinfo_deinit、:1183 fh2m_hal_hwinfo_version、
 #     :1222 "hwinfo" 命名、:1239 hal_hwinfo_init、:1241 dev_rsrc_reinit_nulldisp_by_hwinfo
 #   O 侧 drivers/innogpu/innogpu_pci_drv.c：:890/:1159/:1196/:1213/:1215（同上序列）
-# 判定契约注意（codex 初审 P1-1 + 复审 P1-2 裁决进展）：validation-plan C2
+# 判定契约注意（codex 初审 P1-1 + 复审 P1-2 + dsh 终审）：validation-plan C2
 #   判定字段②原写「类型（bool）」，实际两侧声明均为 int。codex 复审（2026-09-13）
 #   已核对本文件重定位/反汇编证据并建议判定条件改为 int；qoder 已依建议更新
-#   validation-plan:225（类型 int + 消费点证据 + 日期记录）。dsh 终审确认前，
-#   write-options 与安装回路均不放行（fail-closed）。
+#   validation-plan:225（类型 int + 消费点证据 + 日期记录）。**dsh 终审
+#   （2026-09-13，dsh 终裁修订）已定案：decision=write-options、firmware_en=1**
+#   （与 O 血统实测有效配置对齐：O builder:389 写 options innogpu firmware_en=1、
+#   真机 /sys 实测 = 1），三方署名与依据行见同目录 `c2-ruling.md`（真机前可定位证据）。
 # 格式：文件:行 参数名 类型 默认值
 # 生成：qoder 2026-09-13（python3 一次性解析；默认值取同文件变量初始化，无则 -）
 # 特殊项：fant_apphint.c 的 AppHint 参数由 module_param_cb 宏循环动态生成

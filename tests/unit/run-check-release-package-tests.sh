@@ -155,6 +155,7 @@ mkfdeb() {  # mkfdeb <name> <mode: full|forbidden|rawhelper|dirtype|dangling|dro
         etc/OpenCL/vendors/FANT_fh2m.icd
         usr/share/drirc.d/01-fh2m_drv.conf
         etc/modprobe.d/blacklist-fh2m.conf
+        etc/modprobe.d/fantgpu.conf
         usr/share/X11/xorg.conf.d/10-fh2m.conf
         etc/ld.so.conf.d/0-fantgpu-hwgl.conf
         usr/lib/x86_64-linux-gnu/fantgpu-fh2m/libfh2m_gbm.so.1.0.0
@@ -183,6 +184,9 @@ mkfdeb() {  # mkfdeb <name> <mode: full|forbidden|rawhelper|dirtype|dangling|dro
         mkdir -p "$root/$(dirname "$p")"
         touch "$root/$p"
     done
+    # C2 write-options=1 精确内容（codex re-review P1：逐字节断言）
+    printf '%s\n' 'options fantgpu firmware_en=1' \
+        > "$root/etc/modprobe.d/fantgpu.conf"
     # ELF 真身条目写入 \x7fELF magic（codex 复审#2 P1：空文件必须被内容断言拒绝）
     # gbm/fh2m_gbm.so 与真品一致是 M2 shim symlink，不入 ELF 清单（见 links）。
     local elf f
@@ -241,6 +245,14 @@ mkfdeb() {  # mkfdeb <name> <mode: full|forbidden|rawhelper|dirtype|dangling|dro
         rm -f "$root/usr/lib/x86_64-linux-gnu/fantgpu-fh2m/libVK_FANT_fh2m.so"
         ln -s libEGL_fh2m.so.1 \
             "$root/usr/lib/x86_64-linux-gnu/fantgpu-fh2m/libVK_FANT_fh2m.so"
+    elif [[ "$mode" == confbad ]]; then
+        # C2 write-options 内容断言负向：firmware_en=0 → FAIL
+        printf '%s\n' 'options fantgpu firmware_en=0' \
+            > "$root/etc/modprobe.d/fantgpu.conf"
+    elif [[ "$mode" == confdangling ]]; then
+        # C2 write-options 类型断言负向：有效 symlink → FAIL
+        rm -f "$root/etc/modprobe.d/fantgpu.conf"
+        ln -s blacklist-fh2m.conf "$root/etc/modprobe.d/fantgpu.conf"
     elif [[ "$mode" == plainlink ]]; then
         # 链成员被替换为普通文件（codex 复审#4 P1）
         rm -f "$root/usr/lib/x86_64-linux-gnu/fantgpu-fh2m/libVK_FANT_fh2m.so"
@@ -381,6 +393,26 @@ if [ "$RC" -eq 1 ] && grep -Fq "must be a symlink, found regular file" "$TMP/g.e
     ok t21
 else
     bad t21 "rc=$RC err=[$(head -1 "$TMP/g.err")]"
+fi
+
+# t22 F 负向：fantgpu.conf 内容为 firmware_en=0（codex re-review P1）→ 精确内容拒绝
+eval "$(mkfdeb t22 confbad)"
+run_gate "$DEB"
+if [ "$RC" -eq 1 ] && grep -Fq 'content mismatch' "$TMP/g.err" \
+   && grep -Fq 'etc/modprobe.d/fantgpu.conf' "$TMP/g.err"; then
+    ok t22
+else
+    bad t22 "rc=$RC err=[$(head -1 "$TMP/g.err")]"
+fi
+
+# t23 F 负向：fantgpu.conf 为有效 symlink（codex re-review P1）→ 普通文件拒绝
+eval "$(mkfdeb t23 confdangling)"
+run_gate "$DEB"
+if [ "$RC" -eq 1 ] && grep -Fq 'must be a regular file, not a symlink' "$TMP/g.err" \
+   && grep -Fq 'etc/modprobe.d/fantgpu.conf' "$TMP/g.err"; then
+    ok t23
+else
+    bad t23 "rc=$RC err=[$(head -1 "$TMP/g.err")]"
 fi
 
 echo "PASS=$PASS FAIL=$FAILN"

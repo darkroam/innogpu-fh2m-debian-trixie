@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # tools/r16-f-payload-integrity.py — C3-a ③ F 载荷完整性审计（生成 + 复验）
 #
-# 依据 = docs/planning/5.0.0-i1-validation-plan.md §三「C3-a 放行前置」第 ③ 项
+# 依据 = docs/planning/5.0.0-i2-validation-plan.md §三「C3-a 放行前置」第 ③ 项
 # （dsh 2026-09-11 裁决：① 来源已闭合、② 授权已定档「仅自用、不分发」、
 # ③④ 交 qoder 技术执行）。本工具只实现 ③：F 载荷逐文件 SHA-256 清单 +
 # 与来源包 DEBIAN/md5sums 交叉校验，证据落 docs/planning/evidence/o-stage/。

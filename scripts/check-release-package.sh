@@ -85,6 +85,7 @@ if [[ "$package" == "fantgpu-fh2m-trixie" ]]; then
         etc/OpenCL/vendors/FANT_fh2m.icd
         usr/share/drirc.d/01-fh2m_drv.conf
         etc/modprobe.d/blacklist-fh2m.conf
+        etc/modprobe.d/fantgpu.conf
         usr/share/X11/xorg.conf.d/10-fh2m.conf
         etc/ld.so.conf.d/0-fantgpu-hwgl.conf
         # codex 初审 P1-1 + 复审 P1：权威清单（validation-plan §三 C3 第二层
@@ -175,6 +176,11 @@ EOF
         'usr/share/glvnd/egl_vendor.d/00_fh2m.json	libEGL_fh2m.so.0' \
         'etc/OpenCL/vendors/FANT_fh2m.icd	libFTOCL_fh2m.so' \
         > "$runtime/cfgrefs.tsv"
+    # C2 write-options=1 精确内容断言（codex re-review P1：必须普通文件 +
+    # 逐字节 == "options fantgpu firmware_en=1\n"；symlink/其他内容均 FAIL）
+    printf '%s\n' \
+        'etc/modprobe.d/fantgpu.conf	options fantgpu firmware_en=1' \
+        > "$runtime/confexact.tsv"
     # codex 复审#4 P1：required symlink 的期望 target 映射（与真品逐字节一致，
     # 从 build-A typed 清单核对）——target 错误或链成员被换成普通文件均 fail。
     printf '%s\n' \
@@ -193,16 +199,18 @@ EOF
 else
     : > "$runtime/elfs.list"
     : > "$runtime/cfgrefs.tsv"
+    : > "$runtime/confexact.tsv"
     : > "$runtime/links.tsv"
 fi
 python3 - "$DEB" "$runtime/typed" "$runtime/required.list" "$runtime/forbidden.list" \
-    "$runtime/elfs.list" "$runtime/cfgrefs.tsv" "$runtime/links.tsv" <<'PYEOF'
+    "$runtime/elfs.list" "$runtime/cfgrefs.tsv" "$runtime/confexact.tsv" \
+    "$runtime/links.tsv" <<'PYEOF'
 import sys
 import subprocess
 import tarfile
 
-deb, typed_path, required_path, forbidden_path, elfs_path, cfgrefs_path, links_path = \
-    sys.argv[1:8]
+deb, typed_path, required_path, forbidden_path, elfs_path, cfgrefs_path, \
+    confexact_path, links_path = sys.argv[1:9]
 entries = {}
 with open(typed_path, encoding="utf-8", errors="surrogateescape") as f:
     for line in f:
@@ -218,6 +226,12 @@ with open(cfgrefs_path, encoding="utf-8", errors="surrogateescape") as f:
         parts = line.rstrip("\n").split("\t")
         if len(parts) >= 2 and parts[0].strip():
             cfgrefs[parts[0]] = [t for t in parts[1:] if t]
+confexact = {}
+with open(confexact_path, encoding="utf-8", errors="surrogateescape") as f:
+    for line in f:
+        parts = line.rstrip("\n").split("\t")
+        if len(parts) >= 2 and parts[0].strip():
+            confexact[parts[0]] = parts[1]
 link_expect = {}
 with open(links_path, encoding="utf-8", errors="surrogateescape") as f:
     for line in f:
@@ -226,7 +240,7 @@ with open(links_path, encoding="utf-8", errors="surrogateescape") as f:
             link_expect[parts[0]] = parts[1]
 
 content = {}
-if elf_paths or cfgrefs:
+if elf_paths or cfgrefs or confexact:
     proc = subprocess.Popen(
         ["dpkg-deb", "--fsys-tarfile", deb], stdout=subprocess.PIPE)
     with tarfile.open(fileobj=proc.stdout, mode="r|") as tf:
@@ -235,6 +249,8 @@ if elf_paths or cfgrefs:
             if name in elf_paths and m.isfile():
                 content[name] = tf.extractfile(m).read(4)
             elif name in cfgrefs and m.isfile():
+                content[name] = tf.extractfile(m).read()
+            elif name in confexact and m.isfile():
                 content[name] = tf.extractfile(m).read()
     proc.wait()
     if proc.returncode != 0:
@@ -271,7 +287,7 @@ with open(required_path, encoding="utf-8", errors="surrogateescape") as f:
         if t == "l":
             # codex 复审#3 P1：ELF 真身与配置本体必须为普通文件——有效
             # symlink 同样拒绝（否则内容断言可被链接指向任意包内文件绕过）。
-            if p in elf_paths or p in cfgrefs:
+            if p in elf_paths or p in cfgrefs or p in confexact:
                 errors.append(
                     "ERROR: required release file must be a regular file, "
                     "not a symlink: %s" % p)
@@ -307,6 +323,12 @@ with open(required_path, encoding="utf-8", errors="surrogateescape") as f:
                 errors.append(
                     "ERROR: required release file content does not reference "
                     "expected library: %s (missing: %s)" % (p, ",".join(missing)))
+        if p in confexact:
+            expected = confexact[p].encode("utf-8") + b"\n"
+            if content.get(p) != expected:
+                errors.append(
+                    "ERROR: required release file content mismatch: %s "
+                    "(C2 write-options expects exactly: %r)" % (p, expected))
 with open(forbidden_path, encoding="utf-8", errors="surrogateescape") as f:
     for p in (line.rstrip("\n") for line in f if line.strip()):
         if p in entries:

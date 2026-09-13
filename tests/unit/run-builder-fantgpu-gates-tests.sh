@@ -84,9 +84,15 @@ else
 fi
 
 # t07 静态契约：postinst F 分支 fh2m_dri.so + lspci 设备门（含不可用 WARNING 分支）
+# + C2 生命周期契约（codex re-review P1）：F postinst 不得写 fantgpu.conf（该
+# options 文件由 builder 组装期写入 $P 包内确定性 payload、dpkg 管理），O 分支
+# 保持历史直写口径
 if grep -Fq 'DRI_SO=/usr/lib/x86_64-linux-gnu/dri/fh2m_dri.so' "$BUILDER" \
    && grep -Fq 'lspci -n -d 1ec8:9810' "$BUILDER" \
-   && grep -Fq 'lspci unavailable; 1ec8:9810 device gate not executed' "$BUILDER"; then
+   && grep -Fq 'lspci unavailable; 1ec8:9810 device gate not executed' "$BUILDER" \
+   && grep -Fq "'options innogpu firmware_en=1' > /etc/modprobe.d/innogpu.conf" "$BUILDER" \
+   && grep -Fq "'options fantgpu firmware_en=1' > \"\$P/etc/modprobe.d/fantgpu.conf\"" "$BUILDER" \
+   && ! grep -Fq "'options fantgpu firmware_en=1' > /etc/modprobe.d/fantgpu.conf" "$BUILDER"; then
     ok t07
 else
     bad t07 "postinst F assertions missing"

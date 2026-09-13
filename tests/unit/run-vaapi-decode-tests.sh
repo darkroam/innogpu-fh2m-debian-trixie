@@ -67,6 +67,28 @@ cat > "$runtime/bin/vainfo" <<'FAKEV'
 #!/bin/bash
 if [[ "${FAKE_VAINFO_FAIL:-0}" == 1 ]]; then echo "vainfo: init failed" >&2; exit 1; fi
 if [[ "${FAKE_VAINFO_INTEL:-0}" == 1 ]]; then echo "vainfo: Driver version: Intel i965"; exit 0; fi
+if [[ "${FAKE_VAINFO_VENDOR_ONLY:-0}" == 1 ]]; then
+  echo "vainfo: Vendor: Innosilicon"
+  echo "vainfo: Driver version: Fantasy GPU display driver"
+  exit 0
+fi
+if [[ "${FAKE_VAINFO_FH2M_ELSEWHERE:-0}" == 1 ]]; then
+  echo "vainfo: VA-API version 1.22"
+  echo "vainfo: Driver version: Fantasy GPU display driver"
+  echo "vainfo: Note: fh2m backend (non-identity line)"
+  echo "vainfo: Supported profile and entrypoints:"
+  echo "      VAProfileH264Main               : VAEntrypointVLD"
+  echo "      VAProfileHEVCMain               : VAEntrypointVLD"
+  exit 0
+fi
+if [[ "${FAKE_VAINFO_FH2M:-0}" == 1 ]]; then
+  echo "vainfo: VA-API version 1.22"
+  echo "vainfo: Driver version: fh2m"
+  echo "vainfo: Supported profile and entrypoints:"
+  [[ "${FAKE_VAINFO_NO_H264:-0}" == 1 ]] || echo "      VAProfileH264Main               : VAEntrypointVLD"
+  echo "      VAProfileHEVCMain               : VAEntrypointVLD"
+  exit 0
+fi
 echo "vainfo: VA-API version 1.22"
 echo "vainfo: Driver version: Innogpu VA driver"
 echo "vainfo: Supported profile and entrypoints:"
@@ -170,6 +192,15 @@ run_rc pci_mismatch        3 "$OK INNOGPU_VAAPI_SKIP_DEVICE_CHECKS=1 FAKE_SYSFS_
 run_rc vainfo_not_inno     3 "$OK INNOGPU_VAAPI_SKIP_DEVICE_CHECKS=1 FAKE_SYSFS_ROOT=$runtime/sysfs FAKE_VAINFO_INTEL=1" --codec all --device /dev/dri/renderD128
 run_rc vainfo_no_h264_profile 3 "$GOOD FAKE_VAINFO_NO_H264=1" --codec h264 --device /dev/dri/renderD128
 run_rc vainfo_hevc_ok      0 "$GOOD FAKE_VAINFO_NO_H264=1" --codec hevc --device /dev/dri/renderD128
+# ---- F7 lineage（dsh 返工批 R-2）：身份门按血统分派 + 独立 --status-file ----
+run_rc f7_illegal_lineage         2 "$OK INNOGPU_LINEAGE=bogus" --codec h264
+run_rc f7_fh2m_identity_pass      0 "$GOOD INNOGPU_LINEAGE=fantgpu FAKE_VAINFO_FH2M=1" --codec h264 --device /dev/dri/renderD128
+run_rc f7_o_identity_rejected_for_f 3 "$OK INNOGPU_VAAPI_SKIP_DEVICE_CHECKS=1 FAKE_SYSFS_ROOT=$runtime/sysfs INNOGPU_LINEAGE=fantgpu" --codec all --device /dev/dri/renderD128
+run_rc f7_vendor_label_alone_rejected 3 "$OK INNOGPU_VAAPI_SKIP_DEVICE_CHECKS=1 FAKE_SYSFS_ROOT=$runtime/sysfs INNOGPU_LINEAGE=fantgpu FAKE_VAINFO_VENDOR_ONLY=1" --codec all --device /dev/dri/renderD128
+run_rc f7_fh2m_elsewhere_not_identity 3 "$OK INNOGPU_VAAPI_SKIP_DEVICE_CHECKS=1 FAKE_SYSFS_ROOT=$runtime/sysfs INNOGPU_LINEAGE=fantgpu FAKE_VAINFO_FH2M_ELSEWHERE=1" --codec all --device /dev/dri/renderD128
+run_rc f7_status_file_missing_value 2 "$OK" --codec h264 --status-file
+run_rc f7_status_file_cli_overrides_env 0 "$GOOD INNOGPU_VAAPI_STATUS_FILE=/nonexistent/status" --codec h264 --device /dev/dri/renderD128 --status-file "$runtime/status-ok"
+run_rc f7_status_file_cli_priority_over_env 1 "$GOOD" --codec h264 --device /dev/dri/renderD128 --status-file /nonexistent/status
 # ---- 解码链失败路径 ----
 run_rc encode_fail         4 "$GOOD FAKE_ENCODE_FAIL=1" --codec h264 --device /dev/dri/renderD128
 run_rc ref_fail            4 "$GOOD FAKE_REF_FAIL=1" --codec h264 --device /dev/dri/renderD128
@@ -313,6 +344,32 @@ BASELINE_BEFORE="$(sha256sum "$ROOT/baselines/latest-runtime-baseline.txt" 2>/de
 env $GOOD bash "$SCRIPT" --codec all --device /dev/dri/renderD128 >/dev/null 2>&1
 BASELINE_AFTER="$(sha256sum "$ROOT/baselines/latest-runtime-baseline.txt" 2>/dev/null | cut -d' ' -f1)"
 if [ "$BASELINE_BEFORE" == "$BASELINE_AFTER" ]; then pass baseline_untouched; else fail baseline_untouched "baseline changed"; fi
+
+# ---- F7 静态断言（dsh 返工批 R-2）----
+# 1) lineage 参数族 + 非法值 fail-closed；2) fantgpu 缺省 proc 路径派生；
+# 3) F 身份门只接受精确 fh2m token（前后非标识符字符）；4) --status-file
+# 独立非夹具 CLI（优先级 CLI > env > 血统缺省；不触发 fixture mode）
+if grep -Fq 'LINEAGE="${INNOGPU_LINEAGE:-innogpu}"' "$SCRIPT" \
+   && grep -Fq 'INNOGPU_LINEAGE must be innogpu or fantgpu' "$SCRIPT" \
+   && grep -Fq 'STATUS_FILE="/proc/driver/fantgpu/gpu00/status"' "$SCRIPT" \
+   && grep -Fq 'STATUS_FILE="/proc/driver/innogpu/gpu00/status"' "$SCRIPT" \
+   && grep -Fq 'vainfo_identity_not_fh2m' "$SCRIPT" \
+   && grep -Fq '(^|[^[:alnum:]_])fh2m([^[:alnum:]_]|$)' "$SCRIPT" \
+   && grep -Fq 'VAINFO_DRIVER_LINE' "$SCRIPT" \
+   && grep -Fq "grep -iE 'Driver version:'" "$SCRIPT" \
+   && grep -Fq 'STATUS_FILE_CLI="$2"; shift 2' "$SCRIPT" \
+   && grep -Fq 'if [[ -n "$STATUS_FILE_CLI" ]]' "$SCRIPT"; then
+    pass f7_static_lineage_and_status_file
+else
+    fail f7_static_lineage_and_status_file "F7 static elements missing"
+fi
+TRIG="$(sed -n '/---- fixture 模式检测/,/^tag()/p' "$SCRIPT")"
+if echo "$TRIG" | grep -Fq 'INNOGPU_VAAPI_STATUS_FILE' \
+   && ! echo "$TRIG" | grep -Fq 'STATUS_FILE_CLI'; then
+    pass f7_status_file_cli_not_fixture_trigger
+else
+    fail f7_status_file_cli_not_fixture_trigger "trigger block=$([ -n "$TRIG" ] && echo set || echo empty)"
+fi
 
 printf 'tests_total=%d tests_passed=%d tests_failed=%d tests_skipped=0\n' "$t" "$passed" "$failed"
 [ "$failed" -eq 0 ]

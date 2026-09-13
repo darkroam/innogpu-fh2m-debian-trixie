@@ -3,8 +3,10 @@
 #
 # 契约（validation-plan §〇 F1 自测行）：fake root fixture 以 lineage=fantgpu
 # 参数族生成假包名/模块名/sysfs/proc 路径 → 断言全部走 fantgpu 路径（用
-# innogpu 诱饵路径反向证明：诱饵 firmware_en=0、fantgpu=1，PASS 即证明读的
-# 是 fantgpu 路径）；非法 lineage / 非法 fake root fail-closed。
+# innogpu 诱饵路径反向证明：firmware_en 两血统同口径期望 1（C2 终裁修订
+# write-options=1——O builder 写 options innogpu firmware_en=1 + 真机实测 1，
+# F postinst 同构写 options fantgpu firmware_en=1），诱饵=0，PASS 即证明读的
+# 是对应血统路径）；非法 lineage / 非法 fake root fail-closed。
 # 退出码：0=全过 1=用例失败 2=环境错误。
 
 set -euo pipefail
@@ -77,7 +79,8 @@ run_baseline() {  # run_baseline <lineage> <expect_pkg> <fakeroot>
     ERRTEXT="$(cat "$TMP/b.err")"
 }
 
-# t01 fantgpu lineage：模块/固件参数/proc/包版本全部走 fantgpu 路径（innogpu 诱饵=0）
+# t01 fantgpu lineage：模块/固件参数/proc/包版本全部走 fantgpu 路径
+# （firmware_en 期望 1 = C2 终裁修订 write-options；innogpu 诱饵=0 反证路径）
 make_fakeroot "$TMP/fk-fant" fantgpu
 run_baseline fantgpu 5.0.0-i2 "$TMP/fk-fant"
 if grep -Fq 'runtime_module_loaded=PASS' "$TMP/b.out" \
@@ -93,7 +96,8 @@ else
     bad t01 "rc=$RC out=[$(grep -E 'runtime_(module|proc|package|dmabuf|drm_nodes|fbdev)' "$TMP/b.out" | tr '\n' ';')]"
 fi
 
-# t02 innogpu lineage 缺省回归：同样断言走 innogpu 路径（fantgpu 诱饵=0）
+# t02 innogpu lineage 缺省回归：同样断言走 innogpu 路径（firmware_en 期望 1
+# = O 血统 options 契约；fantgpu 诱饵=0 反证路径）
 make_fakeroot "$TMP/fk-inno" innogpu
 run_baseline innogpu 4.0.2-i3 "$TMP/fk-inno"
 if grep -Fq 'runtime_module_loaded=PASS' "$TMP/b.out" \
@@ -159,6 +163,18 @@ if grep -Fq 'EGL_LIB_PATH="/usr/lib/x86_64-linux-gnu/fantgpu-fh2m"' "$BASELINE" 
     ok t07
 else
     bad t07 "lineage-aware lib path missing"
+fi
+
+# t08 负向（C2 终裁修订 strictness）：fantgpu 血统 firmware_en=0（漏写 options
+# 或残留声明默认值）→ module_param_firmware_en 必须 FAIL，不得放宽为 0/1 皆可
+make_fakeroot "$TMP/fk-fen0" fantgpu
+printf '0\n' > "$TMP/fk-fen0/sys/module/fantgpu/parameters/firmware_en"
+run_baseline fantgpu 5.0.0-i2 "$TMP/fk-fen0"
+if grep -Fq 'runtime_module_param_firmware_en=FAIL' "$TMP/b.out" \
+   && grep -Fq 'C2 write-options expects 1' "$TMP/b.out"; then
+    ok t08
+else
+    bad t08 "out=[$(grep 'runtime_module_param_firmware_en' "$TMP/b.out")]"
 fi
 
 echo "PASS=$PASS FAIL=$FAILN"

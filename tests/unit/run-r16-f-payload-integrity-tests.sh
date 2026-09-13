@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tests/unit/run-r16-f-payload-integrity-tests.sh — tools/r16-f-payload-integrity.py 单元验证
 #
-# 职责（docs/planning/5.0.0-i1-validation-plan.md §三 C3-a 放行前置 ③）：
+# 职责（docs/planning/5.0.0-i2-validation-plan.md §三 C3-a 放行前置 ③）：
 # 用**小型合成 deb + 合成解包树**验证 来源身份 / deb↔解包字节忠实 /
 # md5sums 精确子集与重定位子集 / 血统相干 / 固件对账 / 安装期暂存 /
 # 确定性 / verify 复验 / 篡改检出 / 写保护 / fail-closed 输出纪律。

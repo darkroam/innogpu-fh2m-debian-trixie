@@ -322,6 +322,16 @@ for c in "${!cmds[@]}"; do
     ln -sfn "../share/$SHARE_DIR/${cmds[$c]}" "$P/usr/sbin/$c"
 done
 
+# C2 定案（write-options=1）：modprobe options 由包内确定性 payload 承载
+# （dpkg 管理——postinst 不写、remove/purge 由 dpkg 自动移除，符合
+# 「本包不创建任何不由 dpkg 管理的文件/链接」契约；codex re-review P1
+# 生命周期缺陷修复）。O 血统保持 postinst 直写历史口径（grandfathered）。
+# 必须在 installed_size 计算之前写入（codex re-review P2：Installed-Size
+# 不得低估实际包内容）。
+if [[ "$FANT_LINEAGE" == 1 ]]; then
+    mkdir -p "$P/etc/modprobe.d"
+    printf '%s\n' 'options fantgpu firmware_en=1' > "$P/etc/modprobe.d/fantgpu.conf"
+fi
 install -d "$P/DEBIAN"
 installed_size=$(du -sk --exclude=DEBIAN "$P" | awk '{print $1}')
 if [[ "$FANT_LINEAGE" == 1 ]]; then
@@ -382,8 +392,11 @@ echo "Configuring $PKG_NAME $VERSION..."
 
 install -d /etc/modprobe.d
 if [[ "$FANT_LINEAGE" == 1 ]]; then
-    # fantgpu 血统：模块参数名未经设备审核，不写 modprobe options（待 O_stage
-    # 运行时矩阵确认后另行裁决）
+    # C2 三方定案（2026-09-13 dsh 终裁修订，c2-ruling.md）：decision=write-options、
+    # firmware_en=1——由包内确定性 payload 承载（builder 组装期写入
+    # etc/modprobe.d/fantgpu.conf，dpkg 管理；postinst 不写、卸载/回退由
+    # dpkg 自动移除，符合「不创建任何不由 dpkg 管理的文件」契约——
+    # codex re-review P1 生命周期缺陷修复）
     :
 else
     printf '%s\n' 'options innogpu firmware_en=1' > /etc/modprobe.d/innogpu.conf

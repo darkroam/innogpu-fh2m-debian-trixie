@@ -73,7 +73,7 @@ docs/planning/030-closed-items-decision.md
 docs/planning/030-d-stage-audit.md
 docs/planning/030-mapping-table.md
 docs/planning/030-patch-rederivation-design.md
-docs/planning/5.0.0-i1-validation-plan.md
+docs/planning/5.0.0-i2-validation-plan.md
 docs/planning/c3-a-4-reproducible-input-plan.md
 docs/planning/capability-survey.md
 docs/planning/current-work.md
@@ -99,6 +99,7 @@ docs/planning/evidence/o-stage/5.0.0-i1.meta.json
 docs/planning/evidence/o-stage/build-5.0.0-i1.sha256
 docs/planning/evidence/o-stage/build-5.0.0-i2.sha256
 docs/planning/evidence/o-stage/c2-module-params.txt
+docs/planning/evidence/o-stage/c2-ruling.md
 docs/planning/evidence/o-stage/f-payload-integrity.json
 docs/planning/evidence/o-stage/f-payload.manifest.tsv
 docs/planning/evidence/o-stage/f-payload.manifest.tsv.sha256

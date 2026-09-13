@@ -2,7 +2,7 @@
 
 - 日期：2026-09-12
 - 状态：**已交付（2026-09-12 批 3 完成）**。设计经 dsh 终审通过（2026-09-11，437f363/1e324a2 已提交）；实现分三批落地、每批独立 codex 初审 + dsh 终审：批 1 落库/restore/manifest/工具（17956b4）、批 2 builder 改造 + M1-M6 物化 + C1-①（346a23a）、批 3 重构建 5.0.0-i2 双构建字节一致证据 + C1-② + builder release 门禁恢复（本批）。原「设计稿」状态（先方案，不动 builder/manifest/保护区；实现待 codex 初审 + dsh 放行）已失效。**前置已闭合**：③ 完整性（工具 `tools/r16-f-payload-integrity.py` + 三件证据 + 单测 54 项，dsh 终审通过，0eaff0e/b5d11ec 已提交）；① 来源、② 授权由 dsh 定档。v2 修正：codex 初审 3 P1（三集合建模、materialization 规则、md5sums 确定性）+ 1 建议（可复现输入口径收紧）。v3 修正：codex re-review 2 P1（restore 事务化 + DEBIAN/ 排除、M6 闭合 + postinst 行为固定）。v4 修正：codex re-review#2 2 P1（sw-fant-gl 生命周期矛盾裁决、restore journal 状态机）。v5 修正：codex re-review#3 1 P1（状态写入失败窗口——写前状态 + 存在性/内容复核）。v6 修正：codex re-review#4 2 P1（恢复分支幂等 + journal 字段路径安全约束）。v7 修正：codex re-review#5 4 P1 + 1 P2（逐状态存在性真值表、并发排他锁、mode 锁定、builder 改造清单补全、fsync 保证范围收窄）。v8 修正：codex re-review#6 1 P1 + 2 P2 + 1 契约（真值表矛盾修正、锁生命周期 O_NOFOLLOW+永不删除、PKG_DESC 版本串参数化、M2 来源判定改内容 hash+物化 trace）。v9 修正：codex re-review#7 1 P1 + 2 P2（真值表收紧为仅可产生组合、S_INPUT 隐含集合弃单值 set、materialize-trace 可执行契约、postinst 文案消歧）。v10 修正：codex re-review#8 2 P1（moving_new(pre=F) 正向组合修正为 (0,1,0)、trace 计数三分拆分 + 分源 SHA 校验）。v11 修正：codex re-review#9 1 P1（trace 四列 + kind 类型语义、目录不入 trace 由计数/mode/subtree hash 单独断言、sidecar 弃用 materialized_files 旧字段）。v12 修正：codex re-review#10 1 P1（O_stage regular 文件 mode 来源定稿 = 锁定快照承载，trace 对 ostage-kernel 行仅校验 SHA）。
-- 依据：`5.0.0-i1-validation-plan.md` §三 C3-a 第 ④ 项 +「③ 对 ④ 的传导」（两项强制）+「C3-a 的 builder 改造点清单」（8 点）+ §二「C3 若选 a/b 的版本与 provenance 传导」+ dsh 2026-09-11 放行「④ qoder 可开工（技术项）」。
+- 依据：`5.0.0-i2-validation-plan.md` §三 C3-a 第 ④ 项 +「③ 对 ④ 的传导」（两项强制）+「C3-a 的 builder 改造点清单」（8 点）+ §二「C3 若选 a/b 的版本与 provenance 传导」+ dsh 2026-09-11 放行「④ qoder 可开工（技术项）」。
 - **不变式（全设计约束，违反任一即 FAIL）**：
   1. materialize 五件产物与 `5.0.0-i1.meta.json` **不变**（O_stage 树 hash `937e3710…` 不变，本设计不动内核源树）；
   2. F 载荷**字节不入 git**（② 定档「仅自用、不分发」；`/vendor/`（.gitignore:26）、`/build/`（:27）、`/debs/*`（:9-10）既有本地保存策略维持）——**清单（含逐文件 SHA-256）入 git，载荷本地保存**，与 O 血统 `binary-manifest.json` + `vendor/` 同构；
@@ -176,8 +176,8 @@ F manifest（`binary-manifest-fantgpu.json`，git 追踪）顶层 schema 同 O�
 - **版本**：载荷实质变化 → **`5.0.0-i2`（已定案并交付，见 §七 已裁决项 2）**。builder 版本分支同 5.0.0-i1 逻辑；
 - **双构建字节一致**：clean 双跑（build-A/B）→ SHA 一致 + `fantgpu.ko` vermagic PASS + **DEBIAN/md5sums 逐字节一致** → 新证据 `build-5.0.0-i2.sha256`，与 `build-5.0.0-i1.sha256` **并存不覆盖**；
 - **materialize 五件产物与 `5.0.0-i1.meta.json` 不变**（本设计不动内核源树；`o_stage_tree_hash 937e3710…` 不变）→ 无需重跑 materialize、无需参数化 `materialize-o-stage.sh`；
-- **validation-results 的包 provenance**：真机批实际安装的 `package_version=5.0.0-i2` + `package_deb_sha256=45205dc71092316aad54edac0745d28583be9702f26b8cbb074830dcb99aa900`（2026-09-12 双构建实测；批 3 执行回填）+ build 证据引用 `build-5.0.0-i2.sha256`；`materialize_meta_sha256` 保持绑定现有 meta 不变；
-- **文档同步**：`o-stage-integration-plan.md:77` 载荷边界改为「F 血统 userspace 载荷 + 固件（`binary-manifest-fantgpu.json` 锁定；构建期预选 DDX/UCM/wayland）」；`5.0.0-i1-validation-plan.md` ④ 状态更新。
+- **validation-results 的包 provenance**：真机批实际安装的 `package_version=5.0.0-i2` + `package_deb_sha256=dd42ebe53a68893486187de8b79be18b11330f6317ffe39689bf6a200002f4f4`（2026-09-13/14 C2 定案回路重构建双构建实测——write-options=1 入包内确定性 payload `etc/modprobe.d/fantgpu.conf`（dpkg 管理、postinst 不写）；批 3 初版 SHA `45205dc7…` 已被本重构建替代）+ build 证据引用 `build-5.0.0-i2.sha256`；`materialize_meta_sha256` 保持绑定现有 meta 不变；
+- **文档同步**：`o-stage-integration-plan.md:77` 载荷边界改为「F 血统 userspace 载荷 + 固件（`binary-manifest-fantgpu.json` 锁定；构建期预选 DDX/UCM/wayland）」；`5.0.0-i2-validation-plan.md` ④ 状态更新。
 
 ## 六、测试、门禁与提交批时序
 
@@ -196,7 +196,7 @@ F manifest（`binary-manifest-fantgpu.json`，git 追踪）顶层 schema 同 O�
 ## 七、已裁决项（定案记录；2026-09-11/12 全部闭合）
 
 1. **落库位置与保护区授权**（§一）：**已定案 A**——`vendor/fantgpu/` 落库 + restore 事务化流程，dsh 授权一次性执行（批 1 已执行，17956b4）。
-2. **版本号**：**已定案 `5.0.0-i2`**（批 3 双构建使用；deb SHA `45205dc7…`，证据 `build-5.0.0-i2.sha256`）。
+2. **版本号**：**已定案 `5.0.0-i2`**（批 3 双构建使用；deb SHA `dd42ebe5…`，证据 `build-5.0.0-i2.sha256`）。
 3. **构建期预选默认值**：**已定案** `F_XORG_ABI=1.21` / `F_UCM_LAYOUT=ucm2` / `F_WAYLAND_COMPAT=off`（批 2 实现，build 输出 preset 行确认）。
 4. **share 目录/命令名血统参数化**（§三 6/7）：**已实现（批 2）**——builder F 分支按 `SHARE_DIR=fantgpu-fh2m-trixie`/`CMD_PREFIX=fantgpu-` 落位（validation-plan 权威映射表曾标注的「builder 未分支」状态已消除）；C1-① 按**改后实际内容**断言并已交付（批 2/3）。
 
