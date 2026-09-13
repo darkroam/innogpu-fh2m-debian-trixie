@@ -214,7 +214,19 @@ else
     if [[ -n "${FAKE_TOP_INACTIVE:-}" ]]; then for i in ${FAKE_TOP_INACTIVE//,/ }; do echo "  index=$i id=$((10+i)) active=no fb=0 position=0,0 size=0x0 mode=- refresh=0"; done; fi
 fi
 echo "Connectors:"
-echo "  type=10 type_id=0 id=5 status=connected mm=597x336 modes=1 encoder=3 crtc_id=11 crtc_index=1"
+if [[ "${FAKE_TOP_NEW_FMT:-0}" == "1" ]]; then
+    echo "  connector 51 eDP-1 status=connected modes=1"
+    echo "  1920x1080@60"
+    echo "  connector 51 ddcci-props=none"
+    echo "Backlight:"
+    echo "  intel_backlight -> /sys/devices/pci0000:00/0000:00:02.0/drm/card0/card0-eDP-1"
+fi
+# codex 复审 P1-3：消费者要求 topology_collect 恰好一行且为 complete
+case "${FAKE_TOP_COLLECT:-complete}" in
+    none) ;;
+    partial) echo "topology_collect=partial" ;;
+    *) echo "topology_collect=complete" ;;
+esac
 exit 0
 FAKETOP
 
@@ -384,7 +396,23 @@ run_rc compile_failed 2 "$GOOD_CC PROBE_CC=$runtime/bin/fake-cc-fail" --size 764
 run_rc probe_bin_missing 1 "$GOOD PROBE_VBLANK_BIN=/nonexistent/fake-vblank" --size 7646720
 
 # ================= 4. 设备发现与身份 (rc=3) =================
-run_rc device_missing 3 "$OK INNOGPU_DMABUF_STATUS_FILE=$runtime/status-ok" --size 7646720
+# 环境自适应（目标机准备态）：真机 1ec8:9810 存在时 device_missing 断言
+# 不适用——如实跳过并注明（其余设备用例均用 FAKE_SYSFS_ROOT，不受影响）。
+real_target_present() {
+    local n v d
+    for n in /sys/class/drm/renderD* /sys/class/drm/card*; do
+        [[ -e "$n" ]] || continue
+        v="$(cat "$n/device/vendor" 2>/dev/null || true)"
+        d="$(cat "$n/device/device" 2>/dev/null || true)"
+        [[ "$v" == "0x1ec8" && "$d" == "0x9810" ]] && return 0
+    done
+    return 1
+}
+if real_target_present; then
+    pass device_missing_env_adaptive_real_device_present
+else
+    run_rc device_missing 3 "$OK INNOGPU_DMABUF_STATUS_FILE=$runtime/status-ok" --size 7646720
+fi
 run_rc render_identity_mismatch 3 "$OK FAKE_SYSFS_ROOT=$runtime/sysfs-intel FAKE_DEV_DIR=$runtime/dev INNOGPU_DMABUF_SKIP_DEVICE_CHECKS=1 INNOGPU_DMABUF_STATUS_FILE=$runtime/status-ok" --render-device /dev/dri/renderD128 --card-device /dev/dri/card0
 run_rc not_char_device 3 "$OK FAKE_SYSFS_ROOT=$runtime/sysfs INNOGPU_DMABUF_STATUS_FILE=$runtime/status-ok" --render-device "$runtime/dev/renderD128" --card-device /dev/dri/card0
 mkdir -p "$runtime/dev-multi"
@@ -843,6 +871,25 @@ if [ -x "$PROBE_BIN" ]; then
         fail real_probe_prod_ignores_fixture_hook "prod gcc: $(head -3 "$runtime/cc-prod.log")"
     fi
 fi
+
+# ================= F6 lineage 参数化（validation-plan §〇 F6 自测行） =================
+run_rc f6_invalid_lineage 2 "$OK" --lineage bogus
+run_rc f6_status_file_missing_value 2 "$OK" --status-file
+run_rc f6_fantgpu_lineage_full_run 0 "$GOOD" --lineage fantgpu --status-file "$runtime/status-ok" --size 7646720
+if grep -Fq 'KLOG_SRC_RE="$MOD_NAME|pvr|drm|gpu|dma[-_]?buf|dma[-_]?resv|fence"' "$SCRIPT" &&
+   grep -Fq 'STATUS_FILE="/proc/driver/$MOD_NAME/gpu00/status"' "$SCRIPT" &&
+   grep -Fq -- '--lineage must be innogpu or fantgpu' "$SCRIPT" &&
+   grep -Fq -- '-n "${INNOGPU_DMABUF_STATUS_FILE:-}"' "$SCRIPT"; then
+    pass f6_non_fixture_lineage_params_static
+else
+    fail f6_non_fixture_lineage_params_static "static contract mismatch"
+fi
+
+# ================= F5 输出契约解析容忍（validation-plan §〇 F5 自测行） =================
+run_rc f5_topology_new_fmt_parse 0 "$GOOD FAKE_TOP_NEW_FMT=1" --size 7646720
+# codex 复审 P1-3 负向：partial 标记 / 缺失标记必须被消费者拒绝
+run_rc f5_topology_collect_partial_rejected 1 "$GOOD FAKE_TOP_COLLECT=partial" --size 7646720
+run_rc f5_topology_collect_missing_rejected 1 "$GOOD FAKE_TOP_COLLECT=none" --size 7646720
 
 printf 'tests_total=%d tests_passed=%d tests_failed=%d tests_skipped=0\n' "$t" "$passed" "$failed"
 [ "$failed" -eq 0 ]

@@ -42,33 +42,89 @@ done
     echo "ERROR: --seconds must be an integer from 1 through 99" >&2
     exit 2
 }
-if [[ $EUID -ne 0 ]]; then
+
+# ---- 单测夹具钩子（生产运行绝不设置）----
+# INNOGPU_PROBE_FIXTURE=1：跳过 EUID/desktop-user 检查（仅静态自测）。
+# INNOGPU_FAKE_ROOT：非空绝对路径时，将 /sys、/proc 探测重映射到该根下。
+FIXTURE_MODE="${INNOGPU_PROBE_FIXTURE:-0}"
+FAKE_ROOT="${INNOGPU_FAKE_ROOT:-}"
+if [[ -n "$FAKE_ROOT" ]]; then
+    [[ "$FAKE_ROOT" == /* && -d "$FAKE_ROOT" ]] || {
+        echo "ERROR: INNOGPU_FAKE_ROOT must be an existing absolute directory" >&2
+        exit 2
+    }
+fi
+fssys()  { printf '%s' "${FAKE_ROOT}${1}"; }   # fssys /sys/... → $FAKE_ROOT/sys/...
+fsproc() { printf '%s' "${FAKE_ROOT}${1}"; }   # fsproc /proc/... → $FAKE_ROOT/proc/...
+
+if [[ "$FIXTURE_MODE" != "1" && $EUID -ne 0 ]]; then
     echo "ERROR: run this observer with sudo" >&2
     exit 1
 fi
 
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 BT="$ROOT/tools/probe-suspend-resume-observer.bt"
-OBJECT="$ROOT/vendor/kernel/innosrvkm/innosrvkm.o_shipped"
+
+# ---- lineage 参数族（F3；权威血统映射表 validation-plan §〇 为唯一命名依据）----
+# 包名/模块名/btf 路径/对象名按血统参数化；期望指纹（内核/包版本/对象 SHA/
+# 加载模块 build-id）经 INNOGPU_EXPECT_* 注入——O 血统保持历史 pinned 默认，
+# fantgpu 血统必须显式注入（真机批步骤 3 采集），缺任一 → fail-closed。
+LINEAGE="${INNOGPU_LINEAGE:-innogpu}"
+case "$LINEAGE" in
+    innogpu|fantgpu) ;;
+    *)
+        echo "ERROR: INNOGPU_LINEAGE must be innogpu or fantgpu (got: $LINEAGE)" >&2
+        exit 2
+        ;;
+esac
+if [[ "$LINEAGE" == "fantgpu" ]]; then
+    PKG_NAME="fantgpu-fh2m-trixie"
+    MOD_NAME="fantgpu"
+    BTF_PATH="/sys/kernel/btf/fantgpu"
+    SYS_MOD_PATH="/sys/module/fantgpu"
+    OBJECT="$ROOT/vendor/fantgpu/usr/src/fantgpu-fh2m-kernel-2.2/fantsrvkm/fantsrvkm.o_shipped"
+else
+    PKG_NAME="innogpu-fh2m-trixie"
+    MOD_NAME="innogpu"
+    BTF_PATH="/sys/kernel/btf/innogpu"
+    SYS_MOD_PATH="/sys/module/innogpu"
+    OBJECT="$ROOT/vendor/kernel/innosrvkm/innosrvkm.o_shipped"
+fi
+# 期望指纹：O 血统历史 pinned 默认（可 env 覆盖）；fantgpu 血统必须全部注入
+EXPECTED_KERNEL="${INNOGPU_EXPECT_KERNEL:-6.12.101+deb13-amd64}"
+EXPECTED_VERSION="${INNOGPU_EXPECT_VERSION:-4.0.1-i3}"
+EXPECTED_OBJECT_SHA="${INNOGPU_EXPECT_OBJECT_SHA:-30c594629d1d0e32674e793f2f4235afd4efd3f1e92ee4e4ed1920b315618c2b}"
+EXPECTED_MODULE_BUILD_ID="${INNOGPU_EXPECT_MODULE_BUILD_ID:-75c16519ff1b2bb1581029ad91f873621556f07d}"
+if [[ "$LINEAGE" == "fantgpu" ]]; then
+    for v in INNOGPU_EXPECT_KERNEL INNOGPU_EXPECT_VERSION \
+             INNOGPU_EXPECT_OBJECT_SHA INNOGPU_EXPECT_MODULE_BUILD_ID; do
+        if [[ -z "${!v:-}" ]]; then
+            echo "ERROR: $v must be provided for lineage=fantgpu (real-device batch step 3 collected fingerprints)" >&2
+            exit 1
+        fi
+    done
+fi
 DESKTOP_USER="${SUDO_USER:-}"
-[[ -n $DESKTOP_USER && $DESKTOP_USER != root ]] || {
-    echo "ERROR: sudo must preserve the invoking desktop user" >&2
-    exit 1
-}
+if [[ "$FIXTURE_MODE" != "1" ]]; then
+    [[ -n $DESKTOP_USER && $DESKTOP_USER != root ]] || {
+        echo "ERROR: sudo must preserve the invoking desktop user" >&2
+        exit 1
+    }
+else
+    DESKTOP_USER="${DESKTOP_USER:-${USER:-fixture}}"
+fi
 DESKTOP_UID="$(id -u "$DESKTOP_USER")"
 DESKTOP_GID="$(id -g "$DESKTOP_USER")"
-EXPECTED_OBJECT_SHA=30c594629d1d0e32674e793f2f4235afd4efd3f1e92ee4e4ed1920b315618c2b
-EXPECTED_KERNEL=6.12.101+deb13-amd64
-# 待测包版本经 INNOGPU_EXPECT_VERSION 传入（dsh 阶段二夹具修正 2026-09-09，
-# 与 run-capability-baseline.sh 同口径）；默认保持 4.0.1-i3 历史 pinned 值。
-# 注意：EXPECTED_OBJECT_SHA / EXPECTED_MODULE_BUILD_ID 为构建产物指纹安全
-# 门禁。2026-09-09 真机 4.0.2-i3 实测：innosrvkm.o_shipped（已装包）=
-# 30c59462… 与 pinned 一致（无需更新）；加载模块 build-id =
-# 75c16519ff1b2bb1581029ad91f873621556f07d（已更新）。
-EXPECTED_VERSION="${INNOGPU_EXPECT_VERSION:-4.0.1-i3}"
-EXPECTED_MODULE_BUILD_ID=75c16519ff1b2bb1581029ad91f873621556f07d
+# 期望指纹（见文件头 lineage 参数族块）：O 血统 pinned 值保持 2026-09-09
+# 真机 4.0.2-i3 实测口径（innosrvkm.o_shipped=30c59462…、加载模块
+# build-id=75c16519…）；fantgpu 血统必须经 INNOGPU_EXPECT_* 显式注入。
 STAMP="$(date +%Y%m%d-%H%M%S)"
-BUILD_OUTPUT_ROOT="$ROOT/build"
+if [[ "$FIXTURE_MODE" == "1" ]]; then
+    # 夹具模式不得写入仓库 build/ 保护区
+    BUILD_OUTPUT_ROOT="${TMPDIR:-/tmp}"
+else
+    BUILD_OUTPUT_ROOT="$ROOT/build"
+fi
 if [[ -L $BUILD_OUTPUT_ROOT ]]; then
     echo "ERROR: build output root must not be a symlink: $BUILD_OUTPUT_ROOT" >&2
     exit 2
@@ -109,27 +165,43 @@ fail() {
     exit 1
 }
 
-command -v bpftrace >/dev/null || fail missing_bpftrace
-command -v pahole >/dev/null || fail missing_pahole
-[[ -r /sys/kernel/btf/vmlinux && -r /sys/kernel/btf/innogpu ]] || fail missing_kernel_or_module_btf
+if [[ "$LINEAGE" == "innogpu" ]]; then
+    command -v bpftrace >/dev/null || fail missing_bpftrace
+    command -v pahole >/dev/null || fail missing_pahole
+fi
+[[ -r "$(fssys /sys/kernel/btf/vmlinux)" && -r "$(fssys "$BTF_PATH")" ]] || fail missing_kernel_or_module_btf
 [[ $(uname -r) == "$EXPECTED_KERNEL" ]] || fail unexpected_kernel
-[[ $(dpkg-query -W -f='${Version}' innogpu-fh2m-trixie 2>/dev/null) == "$EXPECTED_VERSION" ]] ||
+[[ $(dpkg-query -W -f='${Version}' "$PKG_NAME" 2>/dev/null) == "$EXPECTED_VERSION" ]] ||
     fail unexpected_package_version
-[[ -r /sys/module/innogpu/notes/.note.gnu.build-id ]] || fail missing_loaded_module_build_id
+[[ -r "$(fssys "$SYS_MOD_PATH/notes/.note.gnu.build-id")" ]] || fail missing_loaded_module_build_id
 LOADED_MODULE_BUILD_ID="$(
-    od -An -j16 -N20 -tx1 /sys/module/innogpu/notes/.note.gnu.build-id | tr -d ' \n'
+    od -An -j16 -N20 -tx1 "$(fssys "$SYS_MOD_PATH/notes/.note.gnu.build-id")" | tr -d ' \n'
 )"
 [[ $LOADED_MODULE_BUILD_ID == "$EXPECTED_MODULE_BUILD_ID" ]] || fail loaded_module_build_id_mismatch
 [[ $(sha256sum "$OBJECT" | cut -d' ' -f1) == "$EXPECTED_OBJECT_SHA" ]] || fail shipped_object_hash_mismatch
 
+# 夹具模式在指纹门禁后结束（gates-only）：不跑 ABI/pahole、不跑 xrandr/bpftrace
+if [[ "$FIXTURE_MODE" == "1" ]]; then
+    {
+        echo "fixture_gates=PASS lineage=$LINEAGE"
+        echo "fixture_loaded_module_build_id=$LOADED_MODULE_BUILD_ID"
+        echo "fixture_object_sha256=$EXPECTED_OBJECT_SHA"
+        echo "fixture_package_version=$EXPECTED_VERSION"
+    } | tee "$OUTPUT/fixture-summary.txt"
+    exit 0
+fi
+
 read_module_layout() {
     local type=$1 layout
 
-    layout="$(pahole -F btf -C "$type" /sys/kernel/btf/innogpu 2>/dev/null || :)"
+    layout="$(pahole -F btf -C "$type" "$BTF_PATH" 2>/dev/null || :)"
     [[ -n $layout ]] || fail "missing_${type}_layout"
     printf '%s\n' "$layout"
 }
 
+# ABI 偏移门禁与 kallsyms 符号门禁是 O 血统 4.0.2-i3 实测 pinned 指纹；对
+# fantgpu 血统显式记录不适用（F 侧采集待真机批），不静默跳过。
+if [[ "$LINEAGE" == "innogpu" ]]; then
 ABI="$(read_module_layout innodpu_pdp0_hw_device)"
 grep -Eq 'cursor_resume.*\/\*[[:space:]]+616[[:space:]]+8 \*\/' <<<"$ABI" || fail cursor_resume_offset_mismatch
 grep -Eq 'cursor_enable.*\/\*[[:space:]]+820[[:space:]]+1 \*\/' <<<"$ABI" || fail cursor_enable_offset_mismatch
@@ -169,6 +241,10 @@ for symbol in pdp0_cursor_move pdp0_cursor_set pdp0_cursor_resume \
               fh2m_hal_reg_read32 fh2m_hal_reg_write32; do
     grep -qw "$symbol" /proc/kallsyms || fail "missing_symbol_$symbol"
 done
+else
+    # fantgpu 血统：O 树 ABI/符号 pinned 指纹不适用（显式记录，非静默跳过）
+    echo "abi_gate=O_LINEAGE_PINS_NOT_APPLICABLE lineage=fantgpu reason=O-tree 4.0.2-i3 ABI offset pins and kallsyms symbol pins are innogpu-specific; F-side collection pending real-device batch"
+fi
 
 XAUTH="$(
     find /tmp -maxdepth 1 -type f -user "$DESKTOP_USER" -name 'serverauth.*' \
@@ -183,7 +259,7 @@ runuser -u "$DESKTOP_USER" -- env DISPLAY=:0 XAUTHORITY="$XAUTH" \
 {
     echo "timestamp=$(date --iso-8601=seconds)"
     echo "kernel=$(uname -r)"
-    echo "package_version=$(dpkg-query -W -f='${Version}' innogpu-fh2m-trixie)"
+    echo "package_version=$(dpkg-query -W -f='${Version}' "$PKG_NAME")"
     echo "mem_sleep=$(</sys/power/mem_sleep)"
     for connector in card0-HDMI-A-1 card0-HDMI-A-2 card0-eDP-1; do
         [[ -e /sys/class/drm/$connector/status ]] || continue
@@ -197,7 +273,7 @@ runuser -u "$DESKTOP_USER" -- env DISPLAY=:0 XAUTHORITY="$XAUTH" \
         echo "hdmi2_edid_sha256=UNAVAILABLE"
     fi
 } > "$OUTPUT/display-state.txt"
-cp -- /proc/driver/innogpu/gpu00/status "$OUTPUT/pvr-status.txt"
+cp -- "$(fsproc "/proc/driver/$MOD_NAME/gpu00/status")" "$OUTPUT/pvr-status.txt"
 find /sys/kernel/debug/dri -maxdepth 3 -type f -name state -print0 2>/dev/null |
     while IFS= read -r -d '' state; do
         cp -- "$state" "$OUTPUT/drm-state-$(basename "$(dirname "$state")").txt"
@@ -266,6 +342,7 @@ if (( ${#DRM_STATE_FILES[@]} > 0 )); then
     [[ -n $HDMI_FORMAT_SNAPSHOT ]] || HDMI_FORMAT_SNAPSHOT=none
 fi
 
+if [[ "$LINEAGE" == "innogpu" ]]; then
 RAW="$OUTPUT/bpftrace.txt"
 echo "sampling_seconds=$SECONDS_TO_SAMPLE"
 echo "ACTION: use the pointer normally over the active display during this non-suspend sample"
@@ -330,6 +407,19 @@ SCANOUT_ADDRS="$(sed -n 's/^r08_event=scanout_return .* scanout_paddr=\([^ ]*\)$
 grep '^r08_event=shadow_sequence ' "$RAW" > "$OUTPUT/shadow-sequence.txt" || true
 grep -E '^r08_event=(fb_dev_paddr|scanout|gem_dev_paddr|gem_free|plane_update)' "$RAW" \
     > "$OUTPUT/primary-fb-gem-events.txt" || true
+else
+    # fantgpu 血统：bpftrace 观察脚本面向 innogpu 符号（kprobe:innogpu:*），
+    # 不适用于 F 模块——显式记录不适用并跳过采样（状态快照仍已采集）。
+    echo "bpftrace_phase=O_SYMBOL_SCRIPT_NOT_APPLICABLE lineage=fantgpu reason=probe-suspend-resume-observer.bt targets kprobe:innogpu:*; F-side observer adaptation pending real-device batch"
+    STATE_EVENTS=0; ACTIVE_VALID_EVENTS=0; CURSOR_ENABLED_EVENTS=0
+    CURSOR_RESUME_EVENTS=0; REG_READ_EVENTS=0; REG_WRITE_EVENTS=0
+    FB_DEV_ENTRIES=0; FB_DEV_COMPLETED=0; FB_DEV_UNMATCHED_AT_STOP=0
+    SCANOUT_ENTRIES=0; SCANOUT_COMPLETED=0; SCANOUT_UNMATCHED_AT_STOP=0
+    GEM_PADDR_ENTRIES=0; GEM_PADDR_COMPLETED=0; GEM_PADDR_UNMATCHED_AT_STOP=0
+    RETURN_CAPTURE=COMPLETE
+    GEM_FREE_EVENTS=0; PLANE_EVENTS=0; SHADOW_EVENTS=0; CONFIG_REGISTER_WRITES=0
+    FB_DEV_ADDRS=""; SCANOUT_ADDRS=""
+fi
 
 {
     echo "r08_state_events=$STATE_EVENTS"
@@ -367,8 +457,17 @@ grep -E '^r08_event=(fb_dev_paddr|scanout|gem_dev_paddr|gem_free|plane_update)' 
     fi
     echo "r08_register_readback=$([[ $REG_READ_EVENTS -gt 0 ]] && echo OBSERVED || echo UNAVAILABLE_NO_NATURAL_READS)"
     echo "r08_primary_fb_content_crc=UNAVAILABLE_NO_READ_ONLY_KERNEL_INTERFACE"
-    echo "r08_observer_result=PASS"
-    echo "r08_wrapper_e2e=PASS"
+    if [[ "$LINEAGE" == "fantgpu" ]]; then
+        echo "r08_observer_result=OBSERVER_SNAPSHOT_ONLY lineage=fantgpu"
+        echo "r08_wrapper_e2e=OBSERVER_SNAPSHOT_ONLY lineage=fantgpu"
+    else
+        echo "r08_observer_result=PASS"
+        echo "r08_wrapper_e2e=PASS"
+    fi
 } | tee "$OUTPUT/summary.txt"
 
-echo "r08_observer=PASS output=$OUTPUT"
+if [[ "$LINEAGE" == "fantgpu" ]]; then
+    echo "r08_observer=OBSERVER_SNAPSHOT_ONLY lineage=fantgpu output=$OUTPUT"
+else
+    echo "r08_observer=PASS output=$OUTPUT"
+fi

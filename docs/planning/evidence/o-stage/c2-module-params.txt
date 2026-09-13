@@ -1,0 +1,163 @@
+# C2 静态采集：O_stage 树 module_param 声明（fantgpu/fantsrvkm 范围）
+# 采集来源：docs/planning/evidence/o-stage/o-stage-snapshot.tar.zst
+#   快照 SHA-256：468ccf3dea095310ad0544af1c8a8d1a7b1899d59338bb61052054f2749aed85
+#   对照基线（O 血统）：drivers/innogpu/innogpu_pci_drv.c:292-294 firmware_en int 0
+#   （MODULE_PARM_DESC 与 F 侧逐字相同）
+# firmware_en 代码消费点（codex 复审 P1-1 修正：readelf -r 重定位 + objdump -dr 反汇编）：
+#   F 侧 fantgpu.o_shipped：重定位 1 条 R_X86_64_PC32 firmware_en（偏移 0xfc08），
+#     指令位于 0xfc05 = hwinfo_register+0x6c：mov 0x0(%rip),%r9d 将 firmware_en 载入寄存器
+#   O 侧 vendor/kernel/innogpu/innogpu.o_shipped：重定位 1 条 R_X86_64_PC32
+#     firmware_en（偏移 0xdd86），指令位于 0xdd83 = hwinfo_register+0x5a：同型 mov 载入
+#   两侧各唯一代码消费点均位于同名函数 hwinfo_register 内（「firmware analysis
+#   hwinfo first」语义一致）。
+# 注：grep -aob 字节偏移 F 2410906/3745431、O 2335164/3631402 为字符串表命中
+#   （参数名/desc 字符串），不是代码消费点——不得据此称「两处消费」。
+# hwinfo init/deinit 调用点对照（两侧同构、同一函数序列）：
+#   F 侧 fantgpu/fantgpu_pci_drv.c：:914 hal_hwinfo_deinit、:1183 fh2m_hal_hwinfo_version、
+#     :1222 "hwinfo" 命名、:1239 hal_hwinfo_init、:1241 dev_rsrc_reinit_nulldisp_by_hwinfo
+#   O 侧 drivers/innogpu/innogpu_pci_drv.c：:890/:1159/:1196/:1213/:1215（同上序列）
+# 判定契约注意（codex 初审 P1-1 + 复审 P1-2 裁决进展）：validation-plan C2
+#   判定字段②原写「类型（bool）」，实际两侧声明均为 int。codex 复审（2026-09-13）
+#   已核对本文件重定位/反汇编证据并建议判定条件改为 int；qoder 已依建议更新
+#   validation-plan:225（类型 int + 消费点证据 + 日期记录）。dsh 终审确认前，
+#   write-options 与安装回路均不放行（fail-closed）。
+# 格式：文件:行 参数名 类型 默认值
+# 生成：qoder 2026-09-13（python3 一次性解析；默认值取同文件变量初始化，无则 -）
+# 特殊项：fant_apphint.c 的 AppHint 参数由 module_param_cb 宏循环动态生成
+#   （fant_apphint.c:66-72，APPHINT_LIST_MODPARAM_COMMON + APPHINT_LIST_MODPARAM），
+#   无法静态枚举逐个参数名，保留注释行如下：
+fantgpu/fant_apphint.c:66-72 module_param_cb(name, &fant_apphint_kparam_fops, &apphint.val[number], perm) 类型- 默认值-（宏循环生成，见注释）
+
+fantgpu/fant_debug.c:75 s_dpu_debug uint -
+fantgpu/fant_debug.c:79 s_dpu_open_log bool true
+fantgpu/fant_misc.c:78 gPVRDebugLevel uint 0
+fantgpu/fantgpu_pci_drv.c:112 card_cnt int 8
+fantgpu/fantgpu_pci_drv.c:116 dpu_mem_total_size ulong 0x20000000
+fantgpu/fantgpu_pci_drv.c:120 vpu_mem_total_size ulong 0x20000000
+fantgpu/fantgpu_pci_drv.c:124 limited_vpu_and_dpu_total_size ulong 0x80000000
+fantgpu/fantgpu_pci_drv.c:128 apu_mem_total_size ulong 0x20000000
+fantgpu/fantgpu_pci_drv.c:132 mixed_mem_size ulong 0x21400000
+fantgpu/fantgpu_pci_drv.c:136 dma_mem_block_size ulong 0x1000000
+fantgpu/fantgpu_pci_drv.c:140 vram_reserved_size ulong 0x1400000
+fantgpu/fantgpu_pci_drv.c:144 memsize_en bool false
+fantgpu/fantgpu_pci_drv.c:148 is_need_limit_vpu_and_dpu bool true
+fantgpu/fantgpu_pci_drv.c:152 system_work_mode ulong -
+fantgpu/fantgpu_pci_drv.c:160 gpu_mc_mode int HAL_GPU_WORK_MODE_MC1
+fantgpu/fantgpu_pci_drv.c:165 prohibit_umd_gtt_alloc int 0
+fantgpu/fantgpu_pci_drv.c:170 pci_config_hook_enable bool true
+fantgpu/fantgpu_pci_drv.c:174 gpu_core_index int 0
+fantgpu/fantgpu_pci_drv.c:179 gpu_core_index2 int 2
+fantgpu/fantgpu_pci_drv.c:183 dpu_mem_right int 0
+fantgpu/fantgpu_pci_drv.c:187 gpu_core_num int 1
+fantgpu/fantgpu_pci_drv.c:191 gpu_vram_num int 4
+fantgpu/fantgpu_pci_drv.c:195 gpu_vram_unit_size ulong -
+fantgpu/fantgpu_pci_drv.c:199 pmbus_nums int 3
+fantgpu/fantgpu_pci_drv.c:203 nulldisplay_drm_pipe_num int 1
+fantgpu/fantgpu_pci_drv.c:207 dpu_hw_support_gtt bool false
+fantgpu/fantgpu_pci_drv.c:211 gpu_nulldisplay bool false
+fantgpu/fantgpu_pci_drv.c:215 snd_card_num int 1
+fantgpu/fantgpu_pci_drv.c:223 vpu_nums int 6
+fantgpu/fantgpu_pci_drv.c:227 apu_nums int 0
+fantgpu/fantgpu_pci_drv.c:231 sr_nums int 1
+fantgpu/fantgpu_pci_drv.c:235 itlv int 0
+fantgpu/fantgpu_pci_drv.c:239 bar_len int -
+fantgpu/fantgpu_pci_drv.c:243 resize_len int -
+fantgpu/fantgpu_pci_drv.c:247 g0m_axi_lt_info_en bool false
+fantgpu/fantgpu_pci_drv.c:251 g0m_gtt_dma_mask_256G bool true
+fantgpu/fantgpu_pci_drv.c:256 unlimit_freq bool false
+fantgpu/fantgpu_pci_drv.c:260 mod_update_voltage_enable bool true
+fantgpu/fantgpu_pci_drv.c:264 adj_voltage_perstep bool true
+fantgpu/fantgpu_pci_drv.c:268 idle_voltage int 770
+fantgpu/fantgpu_pci_drv.c:272 pwrd_l int 0
+fantgpu/fantgpu_pci_drv.c:276 enable_dyn_freq bool true
+fantgpu/fantgpu_pci_drv.c:280 mod_pcie_drop_timeout int 10
+fantgpu/fantgpu_pci_drv.c:288 g0_is_g0c bool false
+fantgpu/fantgpu_pci_drv.c:292 gtt_max_percent int -1
+fantgpu/fantgpu_pci_drv.c:296 gtt_enable_oom_check bool true
+fantgpu/fantgpu_pci_drv.c:300 gtt_avail_limit_size int 512
+fantgpu/fantgpu_pci_drv.c:304 g0m_raw_enable bool false
+fantgpu/fantgpu_pci_drv.c:308 firmware_en int 0
+fantgpu/fantgpu_pci_drv.c:312 card_work_mode int 0
+fantgpu/fantgpu_pci_drv.c:317 s_max_width int 16384
+fantgpu/fantgpu_pci_drv.c:319 s_max_height int 16384
+fantgpu/fantgpu_pci_drv.c:327 s_vkms_width uint -
+fantgpu/fantgpu_pci_drv.c:331 s_vkms_height uint -
+fantgpu/fantgpu_pci_drv.c:337 fant_s4_imagesize_en int 1
+fantgpu/fantgpu_pci_drv.c:345 acpi_pcie_wait_secs int 0
+fantgpu/fantgpu_pci_drv.c:351 gpu_mode uint -
+fantgpu/fantgpu_pci_drv.c:355 monitor_mode int 0
+fantgpu/fantgpu_pci_drv.c:359 raw_sync_enable bool false
+fantgpu/fantgpu_pci_drv.c:363 raw_test_loop_cnt ulong 100
+fantgpu/fantgpu_pci_drv.c:367 read_after_write_bypass bool false
+fantgpu/fantgpu_pci_drv.c:371 read_after_write_timeout uint -
+fantgpu/fantgpu_pci_drv.c:375 hash_type uint -
+fantgpu/fantgpu_pci_drv.c:379 hash_version uint -
+fantgpu/fantgpu_pci_drv.c:383 div_addr_en uint -
+fantgpu/fantgpu_pci_drv.c:387 use_real_ddr bool true
+fantgpu/fantgpu_pci_drv.c:391 do_deep_test bool false
+fantgpu/fantgpu_pci_drv.c:395 sparse_ddr_test bool true
+fantgpu/fantgpu_pci_drv.c:399 sparse_ddr_stride int 1
+fantgpu/fantgpu_pci_drv.c:403 pciedma_nums int 1
+fantgpu/fantgpu_pci_drv.c:407 axidma_nums int 1
+fantgpu/fantgpu_pci_drv.c:411 fantlink_enable int 0
+fantgpu/fantgpu_pci_drv.c:415 gpu_core_clock int 5
+fantgpu/fantgpu_pci_drv.c:420 interrupt_mode int 2
+fantgpu/fantgpu_pci_drv.c:424 gtt_sort_enable int 0
+fantgpu/fantgpu_pci_drv.c:428 multi_memory_regions_en int 0
+fantgpu/fantgpu_pci_drv.c:432 acpi_debug_mask uint -
+fantgpu/hal_bind_numa.c:78 enable_bind_cpu int 0
+fantsrvkm/fant_pmr.c:60 PMRAllocFail uint -
+fantsrvkm/fantaudio_drv.c:59 s_audio_debug bool false
+fantsrvkm/fantdpu_dp.c:68 s_dp_monitor uint 0x26b
+fantsrvkm/fantdpu_dp.c:76 s_dp_swing_param uint 0
+fantsrvkm/fantdpu_dpu.c:53 s_pdp0_debug bool false
+fantsrvkm/fantdpu_dpu.c:57 s_wb_size uint -
+fantsrvkm/fantdpu_dpu.c:61 s_dp_vga int -1
+fantsrvkm/fantdpu_dpu.c:65 s_hdmi_dvi uint -
+fantsrvkm/fantdpu_dpu.c:69 s_hdmi_freq int 0
+fantsrvkm/fantdpu_dpu.c:73 s_hdmi_ddcfreq int 0
+fantsrvkm/fantdpu_dpu.c:77 s_hdmi_anacfg int[] -
+fantsrvkm/fantdpu_drm_drv.c:67 s_combi_dual_sel uint -
+fantsrvkm/fantdpu_drm_drv.c:71 s_dpu_nums uint -
+fantsrvkm/fantdpu_drm_drv.c:75 s_pmbus_nums uint -
+fantsrvkm/fantdpu_drm_drv.c:79 s_hdmi_nums uint -
+fantsrvkm/fantdpu_drm_drv.c:83 s_dp_nums uint -
+fantsrvkm/fantdpu_drm_drv.c:87 s_lvds_nums uint -
+fantsrvkm/fantdpu_drm_drv.c:91 s_vga_nums uint -
+fantsrvkm/fantdpu_drm_drv.c:95 s_logo_extime uint -
+fantsrvkm/fantdpu_drm_drv.c:100 s_hw_cursor uint -
+fantsrvkm/fantdpu_drm_drv.c:109 s_dpu_match uint -
+fantsrvkm/fantdpu_drm_modeset.c:51 s_async_flip_enable bool false
+fantsrvkm/fantdpu_drm_modeset.c:55 s_allow_fb_modifiers bool true
+fantsrvkm/fantdpu_hdmi.c:57 s_hdmi_mask_hpd_irq bool false
+fantsrvkm/fantdpu_hdmi.c:61 s_hdmi_skip_scramble bool false
+fantsrvkm/fantdpu_hdmi.c:65 s_hdmi_delay uint 500
+fantsrvkm/fantdpu_hdmi.c:69 s_hdmi_hwi2c int false
+fantsrvkm/fantdpu_hdmi.c:78 s_g3_hdmi_hwi2c int 0x4
+fantsrvkm/fantdpu_hdmi.c:82 s_hdmi_support_75hz bool true
+fantsrvkm/fantdpu_hdmi.c:86 s_g3_hdmi_hdcp14 bool false
+fantsrvkm/fantdpu_module_param.c:53 s_dpu_has_shared_mem bool false
+fantsrvkm/fantdpu_module_param.c:57 s_dpu_shared_mem_size uint -
+fantsrvkm/fantdpu_module_param.c:61 s_dpu_has_gtt_mem bool true
+fantsrvkm/fantdpu_module_param.c:65 s_dpu_gtt_mem_clear bool true
+fantsrvkm/fantdpu_module_param.c:69 s_dpu_has_nocontinuous_vram bool true
+fantsrvkm/fantdpu_module_param.c:73 s_dpu_support_smmu bool false
+fantsrvkm/fantdpu_module_param.c:77 s_vga_auto_adapt bool true
+fantsrvkm/fantdpu_module_param.c:81 s_vga_hdelay uint -
+fantsrvkm/fantdpu_module_param.c:85 s_vga_vdelay uint -
+fantsrvkm/fantdpu_module_param.c:89 s_vga_trim_limit uint -
+fantsrvkm/fantdpu_module_param.c:94 s_dpu_support_plane_fd bool true
+fantsrvkm/fantdpu_module_param.c:98 s_coladj_force bool false
+fantsrvkm/fantdpu_module_param.c:102 s_dpu_not_use_shared_mem bool true
+fantsrvkm/fantdpu_module_param.c:106 s_dpu_water_line_adj int 8
+fantsrvkm/fantdpu_module_param.c:113 drm_reso_virt uint -
+fantsrvkm/fantdpu_panel_backlight.c:55 s_bl_en_ctrl bool false
+fantsrvkm/fantdpu_panel_pwr.c:60 edp_T3_ms uint 300
+fantsrvkm/fantdpu_panel_pwr.c:64 edp_T10_ms uint 100
+fantsrvkm/fantdpu_panel_pwr.c:68 edp_T12_ms uint 500
+fantsrvkm/fantdpu_vga.c:53 s_vga_ddcci bool true
+fantsrvkm/fantdpu_vga.c:57 s_vga_monitor int 0x15
+fantsrvkm/fantgpu_drm.c:71 s_dpu_driver_group uint -
+fantsrvkm/ft_platform_drv.c:139 gpu_cleanup_retry_cnt uint -
+fantsrvkm/ft_platform_drv.c:143 gpu_cleanup_retry_delay_time uint -
+fantsrvkm/pdp0_crtc.c:48 dump_fb_bmp bool false

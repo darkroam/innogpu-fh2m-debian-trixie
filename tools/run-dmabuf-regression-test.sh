@@ -16,7 +16,10 @@
 # Usage:
 #   bash tools/run-dmabuf-regression-test.sh [--render-device NODE] [--card-device NODE]
 #       [--size BYTES] [--iterations N] [--vblank-samples N] [--timeout SEC]
-#       [--read-munmap-limit-ms MS]
+#       [--read-munmap-limit-ms MS] [--lineage innogpu|fantgpu] [--status-file FILE]
+#
+# --lineage / --status-file 是非夹具血统参数（F6）：不得与下方夹具钩子混淆；
+# 生产运行直接使用（fantgpu 血统默认状态路径 /proc/driver/fantgpu/gpu00/status）。
 #
 # Exit codes: 0=PASS 1=subitem/status FAIL 2=arg/fixture/tool/compile error or overall SKIP
 #            3=device/capability missing or overall UNVERIFIED 5=timeout/cleanup FAIL
@@ -43,7 +46,11 @@ VBLANK_SAMPLES=10
 VBLANK_COLHDR='sample sequence wait_ms kernel_time_ms sequence_delta kernel_delta_ms result'
 TIMEOUT=30
 MUNMAP_LIMIT_MS=40
-STATUS_FILE="${INNOGPU_DMABUF_STATUS_FILE:-/proc/driver/innogpu/gpu00/status}"
+# ---- F6 非夹具血统参数（validation-plan §〇 F6：独立于夹具钩子检测集）----
+LINEAGE="innogpu"
+STATUS_FILE_ARG=""
+# 状态路径缺省按血统派生；INNOGPU_DMABUF_STATUS_FILE 环境变量仍是夹具钩子。
+STATUS_FILE="${INNOGPU_DMABUF_STATUS_FILE:-}"
 SYSFS_ROOT="${FAKE_SYSFS_ROOT:-/sys}"
 DEV_DIR="${FAKE_DEV_DIR:-/dev/dri}"
 PROBE_CC="${PROBE_CC:-gcc}"
@@ -81,10 +88,28 @@ while [[ $# -gt 0 ]]; do
         --read-munmap-limit-ms)
             [[ $# -ge 2 && -n "$2" ]] || { echo "--read-munmap-limit-ms needs a value" >&2; exit 2; }
             MUNMAP_LIMIT_MS="$2"; shift 2 ;;
+        --lineage)
+            [[ $# -ge 2 && -n "$2" ]] || { echo "--lineage needs a value" >&2; exit 2; }
+            LINEAGE="$2"; shift 2 ;;
+        --status-file)
+            [[ $# -ge 2 && -n "$2" ]] || { echo "--status-file needs a value" >&2; exit 2; }
+            STATUS_FILE_ARG="$2"; shift 2 ;;
         -h|--help) usage; exit 0 ;;
         *) echo "unknown option: $1" >&2; exit 2 ;;
     esac
 done
+# F6：血统值 fail-closed；状态路径优先级 = CLI --status-file > 夹具钩子 env >
+# 血统缺省路径。CLI 参数不触发 fixture mode（非夹具参数）。
+case "$LINEAGE" in
+    innogpu|fantgpu) ;;
+    *) echo "--lineage must be innogpu or fantgpu" >&2; exit 2 ;;
+esac
+MOD_NAME="$LINEAGE"
+if [[ -n "$STATUS_FILE_ARG" ]]; then
+    STATUS_FILE="$STATUS_FILE_ARG"
+elif [[ -z "$STATUS_FILE" ]]; then
+    STATUS_FILE="/proc/driver/$MOD_NAME/gpu00/status"
+fi
 [[ "$SIZE" =~ ^[1-9][0-9]*$ && "$SIZE" -le 1073741824 ]] || { echo "--size must be a positive integer <= 1<<30" >&2; exit 2; }
 [[ "$ITERATIONS" =~ ^[1-9][0-9]*$ && "$ITERATIONS" -le 100 ]] || { echo "--iterations must be a positive integer <= 100" >&2; exit 2; }
 [[ "$VBLANK_SAMPLES" =~ ^[1-9][0-9]*$ && "$VBLANK_SAMPLES" -le 10000 ]] || { echo "--vblank-samples must be a positive integer <= 10000" >&2; exit 2; }
@@ -243,9 +268,10 @@ if [[ "$PRE_RC" -ne 0 ]]; then
     exit 1
 fi
 
-# ---- 内核日志窗口（innogpu/PVR/DRM/GPU/DMA-BUF/fence；无权限时 SKIP 元数据，不计数）----
-# 来源正则：除驱动前缀外，覆盖不带 innogpu/pvr/drm 前缀的 dma_buf/dma_resv/fence/GPU 行
-KLOG_SRC_RE='innogpu|pvr|drm|gpu|dma[-_]?buf|dma[-_]?resv|fence'
+# ---- 内核日志窗口（<模块名>/PVR/DRM/GPU/DMA-BUF/fence；无权限时 SKIP 元数据，不计数）----
+# 来源正则：除驱动前缀（F6 按血统参数化）外，覆盖不带模块/pvr/drm 前缀的
+# dma_buf/dma_resv/fence/GPU 行
+KLOG_SRC_RE="$MOD_NAME|pvr|drm|gpu|dma[-_]?buf|dma[-_]?resv|fence"
 # 严重事件：词边界 + 词形覆盖（error/fail/fault/bug/hang/timeout/reset/oops/panic/deadlock/stall/corrupt/abort/warn/lockup/wedged）。
 # 裸子串会误伤正常词：debug→bug、installed→stall、hangcheck→hang；必须 \b 边界且覆盖单复数与进行时。
 KLOG_ERR_RE='\berrors?\b|\bfail(ed|ing|s|ure|ures)?\b|\bfault(s|ed|ing)?\b|\bbugs?\b|\bhangs?\b|\bhanging\b|\bhung\b|\btimeouts?\b|\btimed out\b|\breset(s|ting|ted)?\b|\boops(es)?\b|\bpanic(s|ked|king)?\b|\bdeadlocks?\b|\bstall(s|ed|ing)?\b|\bcorrupt(s|ed|ing|ion)?\b|\babort(s|ed|ing)?\b|\bwarn(s|ing|ings)?\b|\bwarn_on\b|\blockup(s)?\b|\bwedged\b'
@@ -516,8 +542,9 @@ write_readback() {
 }
 
 # ---- 4. vblank（topology → active/inactive）----
-parse_topology() { # <out> -> prints "active=<i,...> inactive=<i,...>"; 严格：header 恰好一次且 device 一致、crtcs=N、CRTC 行全字段、索引唯一且全覆盖 0..N-1
+parse_topology() { # <out> -> prints "active=<i,...> inactive=<i,...>"; 严格：header 恰好一次且 device 一致、crtcs=N、CRTC 行全字段、索引唯一且全覆盖 0..N-1；topology_collect 恰好一行且值必须为 complete（codex 复审 P1-3）
     local out="$1" active="" inactive="" line idx hdr_crtcs="" n_crtcs=0 hdr_count=0
+    local coll_n=0 coll_val=""
     local -a SEEN_IDX=()
     while IFS= read -r line; do
         case "$line" in
@@ -528,7 +555,7 @@ parse_topology() { # <out> -> prints "active=<i,...> inactive=<i,...>"; 严格�
                 hdr_crtcs="${BASH_REMATCH[2]}"
                 [[ "${BASH_REMATCH[1]}" == "$NODE_CARD" ]] || { echo "err:header_device_mismatch"; return 1; }
                 ;;
-            "CRTCs:"* | "Connectors:"*) : ;;
+            "CRTCs:"* | "Connectors:"* | "Backlight:"*) : ;;
             "  index="*)
                 local crtc_re='^  index=([0-9]+) id=([0-9]+) active=(yes|no) fb=[0-9]+ position=[0-9]+,[0-9]+ size=[0-9]+x[0-9]+ mode=[^ ]+ refresh=[0-9]+$'
                 [[ "$line" =~ $crtc_re ]] || { echo "err:bad_crtc_line"; return 1; }
@@ -542,6 +569,15 @@ parse_topology() { # <out> -> prints "active=<i,...> inactive=<i,...>"; 严格�
                 fi
                 ;;
             "  type="* | "  id="*) : ;;
+            "  connector "*) : ;;                # F5 connector 契约行
+            "  "[0-9]*x[0-9]*@[0-9]*) : ;;        # F5 mode 行
+            "  "*" -> "*) : ;;                   # F5 backlight 关联行
+            "topology_collect="*)
+                local coll_re='^topology_collect=(complete|partial)$'
+                [[ "$line" =~ $coll_re ]] || { echo "err:bad_collect_line"; return 1; }
+                coll_n=$((coll_n+1))
+                coll_val="${BASH_REMATCH[1]}"
+                ;;
             "") : ;;
             *) echo "err:unexpected_topology_line"; return 1 ;;
         esac
@@ -555,6 +591,8 @@ parse_topology() { # <out> -> prints "active=<i,...> inactive=<i,...>"; 严格�
     for ((i=hdr_crtcs;i<64;i++)); do
         [[ -z "${SEEN_IDX[$i]+x}" ]] || { echo "err:out_of_range_crtc_index:$i"; return 1; }
     done
+    [[ "$coll_n" -eq 1 && "$coll_val" == "complete" ]] || {
+        echo "err:collect_marker_invalid n=$coll_n val=$coll_val"; return 1; }
     echo "active=$active inactive=$inactive"
 }
 vblank_validate_samples() { # <out> <expected_samples> -> 0 ok；header/列标题/summary 各恰好一行、样本行按 1..N 顺序出现、全文件严格
@@ -741,7 +779,10 @@ vblank_inactive_all() { # <csv inactive indices>
 }
 topology() {
     local out="$runtime/topology.out" rc tparse active inactive
-    timeout --kill-after=2 "$TIMEOUT" "$P_TOP" "$NODE_CARD" >"$out" 2>&1; rc=$?
+    # 聚合运行只消费 CRTC 段：CRTC_ONLY 跳过 F5 契约段/backlight（该模式下
+    # 探针 rc 仅反映 CRTC 段；R7-R9 证据运行不得设置该环境变量）。
+    timeout --kill-after=2 "$TIMEOUT" env INNOGPU_DMABUF_TOPOLOGY_CRTC_ONLY=1 \
+        "$P_TOP" "$NODE_CARD" >"$out" 2>&1; rc=$?
     if is_timeout_rc "$rc"; then
         record_fail vblank_active timeout_topology 5
         record_fail vblank_inactive_guard timeout_topology 5

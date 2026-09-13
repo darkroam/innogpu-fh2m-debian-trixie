@@ -25,6 +25,49 @@ set -u -o pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
+# ---- lineage 参数族（F1；权威血统映射表 validation-plan §〇 为唯一命名依据）----
+# INNOGPU_LINEAGE: innogpu（缺省，O 血统基线）| fantgpu；非法值 fail-closed。
+LINEAGE="${INNOGPU_LINEAGE:-innogpu}"
+case "$LINEAGE" in
+    innogpu|fantgpu) ;;
+    *)
+        echo "ERROR: INNOGPU_LINEAGE must be innogpu or fantgpu (got: $LINEAGE)" >&2
+        exit 2
+        ;;
+esac
+if [[ "$LINEAGE" == "fantgpu" ]]; then
+    PKG_NAME="fantgpu-fh2m-trixie"
+    PCI_DRV="fant-drv"
+    MOD_NAME="fantgpu"
+    DKMS_NAME="fantgpu-fh2m-kernel"
+    PROC_DIR="/proc/driver/fantgpu"
+    SYS_MOD="/sys/module/fantgpu"
+    AUDIO_CARD_TOKEN="FantasyCard"
+else
+    PKG_NAME="innogpu-fh2m-trixie"
+    PCI_DRV="inno-drv"
+    MOD_NAME="innogpu"
+    DKMS_NAME="innogpu-kernel"
+    PROC_DIR="/proc/driver/innogpu"
+    SYS_MOD="/sys/module/innogpu"
+    AUDIO_CARD_TOKEN="InnosiliconCard"
+fi
+KO_FILE="/lib/modules/$(uname -r)/updates/dkms/$MOD_NAME.ko.xz"
+
+# ---- 单测夹具钩子（生产运行绝不设置）----
+# INNOGPU_FAKE_ROOT: 非空绝对路径时，将 /sys、/proc、/dev 探测重映射到
+# $FAKE_ROOT/sys、$FAKE_ROOT/proc、$FAKE_ROOT/dev 下（仅单测用）。
+FAKE_ROOT="${INNOGPU_FAKE_ROOT:-}"
+if [[ -n "$FAKE_ROOT" ]]; then
+    [[ "$FAKE_ROOT" == /* && -d "$FAKE_ROOT" ]] || {
+        echo "ERROR: INNOGPU_FAKE_ROOT must be an existing absolute directory" >&2
+        exit 2
+    }
+fi
+sysfs()  { printf '%s' "${FAKE_ROOT}${1}"; }   # sysfs /x/y
+procdir() { printf '%s' "${FAKE_ROOT}${1}"; }  # procdir /x/y
+devdir() { printf '%s' "${FAKE_ROOT}${1}"; }   # devdir /x/y
+
 usage() {
     cat <<'USAGE'
 Usage: tests/runtime/run-capability-baseline.sh [options]
@@ -105,12 +148,12 @@ record() { # <name> <PASS|FAIL|SKIP|UNVERIFIED> [reason]
 
 # ---- 环境元数据 ----
 IS_ROOT=$([ "$(id -u)" -eq 0 ] && echo yes || echo no)
-HAS_DRI=$([ -d /dev/dri ] && ls /dev/dri 2>/dev/null | grep -q . && echo yes || echo no)
-HAS_FB=$([ -e /dev/fb0 ] && echo yes || echo no)
+HAS_DRI=$([ -d "$(devdir /dev/dri)" ] && ls "$(devdir /dev/dri)" 2>/dev/null | grep -q . && echo yes || echo no)
+HAS_FB=$([ -e "$(devdir /dev/fb0)" ] && echo yes || echo no)
 HAS_TTY=$([ -t 0 ] && echo yes || echo no)
 HAS_X=$([ -n "${DISPLAY:-}" ] && echo yes || echo no)
 KERNEL="$(uname -r)"
-PKG="$(dpkg-query -W -f='${Version}' innogpu-fh2m-trixie 2>/dev/null || echo unknown)"
+PKG="$(dpkg-query -W -f='${Version}' "$PKG_NAME" 2>/dev/null || echo unknown)"
 # 待测版本由环境传入（dsh 阶段二运行时矩阵夹具修正 2026-09-09：版本探针
 # 不得硬编码——硬编码 4.0.0-i1 对 4.0.2-i3 恒 FAIL，属夹具陈旧非产品缺陷）；
 # 未提供 INNOGPU_EXPECT_PKG 时版本探针记 UNVERIFIED（不冒充 PASS/FAIL）
@@ -121,8 +164,8 @@ BDF_N="$(lspci -nnD 2>/dev/null | grep -c '1ec8:9810' || true)"
 PCI_LINE="$(lspci -nnD 2>/dev/null | grep '1ec8:9810' | head -1 || true)"
 SCRIPT_COMMIT="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
 
-printf '# runtime-capability-baseline (expect=%s) %s mode=%s\n' \
-    "${EXPECT_PKG:-unset}" "$TS" "$MODE"
+printf '# runtime-capability-baseline (expect=%s lineage=%s) %s mode=%s\n' \
+    "${EXPECT_PKG:-unset}" "$LINEAGE" "$TS" "$MODE"
 printf '# kernel=%s package=%s pci_bdf=%s(%s) tested_commit=%s root=%s dri=%s fb=%s tty=%s x=%s\n' \
   "$KERNEL" "$PKG" "${BDF:-none}" "${BDF_N:-0}" "$SCRIPT_COMMIT" "$IS_ROOT" "$HAS_DRI" "$HAS_FB" "$HAS_TTY" "$HAS_X"
 for t in lspci drm_info glxinfo vulkaninfo clinfo vainfo aplay wpctl gcc xrandr; do
@@ -156,12 +199,12 @@ else
     record pci_enumeration FAIL "pci id 1ec8:9810 not found"
 fi
 if [[ -n "$BDF" ]]; then
-    BINDING="$(ls -l /sys/bus/pci/devices/$BDF/driver 2>/dev/null | sed 's|.*/||' || true)"
-    BIND_MOD="$(readlink /sys/bus/pci/drivers/$BINDING/module 2>/dev/null | sed 's|.*/||' || true)"
-    if [[ "$BINDING" == inno-drv && "$BIND_MOD" == innogpu ]]; then
+    BINDING="$(ls -l "$(sysfs /sys/bus/pci/devices/$BDF/driver)" 2>/dev/null | sed 's|.*/||' || true)"
+    BIND_MOD="$(readlink "$(sysfs /sys/bus/pci/drivers/$BINDING/module)" 2>/dev/null | sed 's|.*/||' || true)"
+    if [[ "$BINDING" == "$PCI_DRV" && "$BIND_MOD" == "$MOD_NAME" ]]; then
         record pci_driver_binding PASS
     else
-        record pci_driver_binding FAIL "binding=$BINDING module=$BIND_MOD (expect inno-drv/innogpu)"
+        record pci_driver_binding FAIL "binding=$BINDING module=$BIND_MOD (expect $PCI_DRV/$MOD_NAME)"
     fi
 else
     record pci_driver_binding UNVERIFIED "no bdf discovered"
@@ -181,21 +224,21 @@ else
     fi
 fi
 
-DKMS="$(/usr/sbin/dkms status 2>/dev/null | grep 'innogpu-kernel/2.2' | head -1 || true)"
+DKMS="$(/usr/sbin/dkms status 2>/dev/null | grep "$DKMS_NAME/2.2" | head -1 || true)"
 if [[ "$DKMS" == *installed* ]]; then record dkms_status PASS; else record dkms_status FAIL "dkms=$DKMS"; fi
 
-VERM="$(/usr/sbin/modinfo -F vermagic /lib/modules/$KERNEL/updates/dkms/innogpu.ko.xz 2>/dev/null || true)"
+VERM="$(/usr/sbin/modinfo -F vermagic "$KO_FILE" 2>/dev/null || true)"
 if [[ "$VERM" == "$KERNEL "* ]]; then record module_vermagic PASS; else record module_vermagic FAIL "vermagic=$VERM"; fi
 
-if [[ -d /sys/module/innogpu ]]; then
+if [[ -d "$(sysfs "$SYS_MOD")" ]]; then
     record module_loaded PASS
-    FWEN="$(cat /sys/module/innogpu/parameters/firmware_en 2>/dev/null || true)"
+    FWEN="$(cat "$(sysfs "$SYS_MOD/parameters/firmware_en")" 2>/dev/null || true)"
     if [[ "$FWEN" == "1" ]]; then record module_param_firmware_en PASS; else record module_param_firmware_en FAIL "firmware_en=$FWEN"; fi
 else
-    record module_loaded FAIL "innogpu module not loaded (may need reboot after install)"
+    record module_loaded FAIL "$MOD_NAME module not loaded (may need reboot after install)"
 fi
 
-PROC="$(cat /proc/driver/innogpu/gpu00/status 2>/dev/null || true)"
+PROC="$(cat "$(procdir "$PROC_DIR/gpu00/status")" 2>/dev/null || true)"
 if [[ "$PROC" == *"Driver Status:"* ]]; then
     record proc_driver_status PASS
     if [[ "$PROC" == *"Firmware Status: OK"* ]]; then
@@ -206,10 +249,10 @@ if [[ "$PROC" == *"Driver Status:"* ]]; then
     ERRS="$(printf '%s' "$PROC" | grep -E 'Server Errors|WGP Error|TRP Error|APM Event' | awk -F': ' '{s+=$2} END {print s+0}')"
     if [[ "$ERRS" == "0" ]]; then record proc_error_counts PASS; else record proc_error_counts FAIL "sum=$ERRS"; fi
 else
-    record proc_driver_status SKIP "no /proc/driver/innogpu/gpu00/status"
+    record proc_driver_status SKIP "no $PROC_DIR/gpu00/status"
 fi
 
-JERR="$(journalctl -b -k --no-pager 2>/dev/null | grep -iE 'innogpu|pvr' | grep -iE 'error|fail|timeout|panic' | head -5 || true)"
+JERR="$(journalctl -b -k --no-pager 2>/dev/null | grep -iE "$MOD_NAME|pvr" | grep -iE 'error|fail|timeout|panic' | head -5 || true)"
 if [[ -n "$JERR" ]]; then
     record journal_kernel_errors FAIL "$(printf '%s' "$JERR" | head -1 | redact | cut -c1-90)"
 elif [[ "$IS_ROOT" == "yes" || -r /var/log/journal ]]; then
@@ -222,8 +265,8 @@ fi
 # 2. DRM/KMS 与节点
 # =====================================================================
 if [[ "$HAS_DRI" == "yes" ]]; then
-    CARD=$(ls /dev/dri/card* 2>/dev/null | wc -l)
-    REND=$(ls /dev/dri/renderD* 2>/dev/null | wc -l)
+    CARD=$(ls "$(devdir /dev/dri)"/card* 2>/dev/null | wc -l)
+    REND=$(ls "$(devdir /dev/dri)"/renderD* 2>/dev/null | wc -l)
     if [[ "$CARD" -ge 1 && "$REND" -ge 1 ]]; then record drm_nodes PASS; else record drm_nodes FAIL "card=$CARD render=$REND"; fi
     if [[ "$HAS_FB" == "yes" ]]; then record fbdev_node PASS; else record fbdev_node FAIL "/dev/fb0 missing"; fi
     if command -v drm_info >/dev/null 2>&1; then
@@ -254,7 +297,15 @@ record fbterm_real_vt SKIP "manual-execution-required (real VT + authorization):
 PROBE_BIN="$RUNTIME_DIR/probe-egl-gbm"
 if [[ "$HAS_DRI" == "yes" && -f "$ROOT/tools/probe-egl-gbm.c" && "$(command -v gcc 2>/dev/null)" ]]; then
     if gcc -O2 -o "$PROBE_BIN" "$ROOT/tools/probe-egl-gbm.c" 2>/dev/null; then
-        EG="$(INNOGPU_LIB_PATH="$ROOT/vendor/userspace/x86_64-linux-gnu/innogpu-fh2m" "$PROBE_BIN" 2>&1 | tail -4 | redact | tr '\n' ';' | cut -c1-160)"
+        # F 血统：loader 私有库在包内 fantgpu-fh2m 目录（C1-② 锁定的路径族）；
+        # O 血统保持 vendor/userspace 先例。INNOGPU_LIB_PATH 由探针实际消费
+        # （probe-egl-gbm.c 读该环境变量构造绝对 dlopen 路径）。
+        if [[ "$LINEAGE" == "fantgpu" ]]; then
+            EGL_LIB_PATH="/usr/lib/x86_64-linux-gnu/fantgpu-fh2m"
+        else
+            EGL_LIB_PATH="$ROOT/vendor/userspace/x86_64-linux-gnu/innogpu-fh2m"
+        fi
+        EG="$(INNOGPU_LIB_PATH="$EGL_LIB_PATH" "$PROBE_BIN" 2>&1 | tail -4 | redact | tr '\n' ';' | cut -c1-160)"
         record egl_gbm_probe UNVERIFIED "run on device session; output: $EG"
     else
         record egl_gbm_probe SKIP "probe compile failed"
@@ -345,8 +396,15 @@ record vaapi_decode SKIP "manual-execution-required: minimal H264/HEVC decode on
 # =====================================================================
 # 9. DMA-BUF / 同步 / 驱动修复（源码存在性 ≠ 运行能力）
 # =====================================================================
-STATIC_FIX=$(grep -rl 'dma_resv_usage_rw' "$ROOT/drivers" 2>/dev/null | wc -l)
-if [[ "$STATIC_FIX" -ge 1 ]]; then record dmabuf_source_fix_present PASS; else record dmabuf_source_fix_present FAIL "dma_resv_usage_rw not in drivers/"; fi
+if [[ "$LINEAGE" == "fantgpu" ]]; then
+    # F 血统：修复在构建期经 030 链应用到 O_stage 树（快照承载），
+    # 仓库 drivers/ 为 O 血统源码，不适用于 F 运行时归因——如实 UNVERIFIED。
+    record dmabuf_source_fix_present UNVERIFIED \
+        "fantgpu lineage: 030-chain fixes applied at build (o-stage snapshot); runtime source check targets innogpu drivers/ tree only"
+else
+    STATIC_FIX=$(grep -rl 'dma_resv_usage_rw' "$ROOT/drivers" 2>/dev/null | wc -l)
+    if [[ "$STATIC_FIX" -ge 1 ]]; then record dmabuf_source_fix_present PASS; else record dmabuf_source_fix_present FAIL "dma_resv_usage_rw not in drivers/"; fi
+fi
 record dmabuf_regression SKIP "manual-execution-required: bash tools/run-dmabuf-regression-test.sh on device session (authorized)"
 
 # =====================================================================
@@ -380,8 +438,8 @@ record picom_glx SKIP "manual-execution-required: verify GLX backend (compositor
 # =====================================================================
 # 12. 音频
 # =====================================================================
-ACARDS="$(cat /proc/asound/cards 2>/dev/null | tr '\n' ';' | cut -c1-160)"
-if [[ "$ACARDS" == *InnosiliconCard* && "$ACARDS" == *"HDA Intel"* ]]; then
+ACARDS="$(cat "$(procdir /proc/asound/cards)" 2>/dev/null | tr '\n' ';' | cut -c1-160)"
+if [[ "$ACARDS" == *"$AUDIO_CARD_TOKEN"* && "$ACARDS" == *"HDA Intel"* ]]; then
     record audio_cards_enumeration PASS
     printf '# audio_cards=%s\n' "$ACARDS"
 else

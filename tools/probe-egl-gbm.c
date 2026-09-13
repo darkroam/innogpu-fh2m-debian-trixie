@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <EGL/egl.h>
@@ -35,6 +36,20 @@ static int probe_node(const char *node)
 {
     printf("== node %s ==\n", node);
 
+    /* INNOGPU_LIB_PATH（可空）：指定私有 loader 库目录，dlopen 用绝对路径
+     * 直接加载该目录下的 libgbm.so.1/libEGL.so.1（F 血统 = 包内
+     * /usr/lib/x86_64-linux-gnu/fantgpu-fh2m；未设置 = 系统默认搜索）。 */
+    const char *lib_path = getenv("INNOGPU_LIB_PATH");
+    char gbm_path[4096];
+    char egl_path[4096];
+    if (lib_path && *lib_path) {
+        snprintf(gbm_path, sizeof(gbm_path), "%s/libgbm.so.1", lib_path);
+        snprintf(egl_path, sizeof(egl_path), "%s/libEGL.so.1", lib_path);
+    } else {
+        snprintf(gbm_path, sizeof(gbm_path), "libgbm.so.1");
+        snprintf(egl_path, sizeof(egl_path), "libEGL.so.1");
+    }
+
     int fd = open(node, O_RDWR | O_CLOEXEC);
     if (fd < 0) {
         printf("open failed: errno=%d (%s)\n", errno, strerror(errno));
@@ -42,9 +57,9 @@ static int probe_node(const char *node)
     }
     printf("open ok: fd=%d\n", fd);
 
-    void *gbm_lib = dlopen("libgbm.so.1", RTLD_NOW | RTLD_LOCAL);
+    void *gbm_lib = dlopen(gbm_path, RTLD_NOW | RTLD_LOCAL);
     if (!gbm_lib) {
-        printf("dlopen libgbm failed: %s\n", dlerror());
+        printf("dlopen %s failed: %s\n", gbm_path, dlerror());
         close(fd);
         return 1;
     }
@@ -73,9 +88,9 @@ static int probe_node(const char *node)
         printf("gbm backend: %s\n", name ? name : "(null)");
     }
 
-    void *egl_lib = dlopen("libEGL.so.1", RTLD_NOW | RTLD_LOCAL);
+    void *egl_lib = dlopen(egl_path, RTLD_NOW | RTLD_LOCAL);
     if (!egl_lib) {
-        printf("dlopen libEGL failed: %s\n", dlerror());
+        printf("dlopen %s failed: %s\n", egl_path, dlerror());
         gbm_device_destroy(gbm);
         dlclose(gbm_lib);
         close(fd);

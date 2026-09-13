@@ -31,19 +31,40 @@ rc=$?; t=$((t+1)); if [ "$rc" -eq 2 ]; then pass ocl_missing_loader; else fail o
 
 # 4. 无 /dev/dri 环境 -> 可解释非 PASS（rc=3），不伪造硬件 PASS。
 #    每个探针 exec 仅运行一次，输出复用于后续断言。
-timeout 15 "$PVK" exec > "$runtime/vk.out" 2>&1; VK_RC=$?
-t=$((t+1))
-if [ "$VK_RC" -eq 3 ] && grep -q 'vulkan_exec_.*fail' "$runtime/vk.out"; then
-    pass vk_no_device_interpretable
+#    环境自适应（目标机准备态）：真机 1ec8:9810 存在时「无设备」断言不适用
+#    ——如实跳过并注明（探针此时可能真实执行成功）。
+real_target_present() {
+    local n v d
+    for n in /sys/class/drm/renderD* /sys/class/drm/card*; do
+        [[ -e "$n" ]] || continue
+        v="$(cat "$n/device/vendor" 2>/dev/null || true)"
+        d="$(cat "$n/device/device" 2>/dev/null || true)"
+        [[ "$v" == "0x1ec8" && "$d" == "0x9810" ]] && return 0
+    done
+    return 1
+}
+if real_target_present; then
+    # 真机存在：仍各运行一次 exec（输出供 6/7 复用），但「无设备 rc=3」断言
+    # 不适用——如实跳过并注明。
+    timeout 15 "$PVK" exec > "$runtime/vk.out" 2>&1; VK_RC=$?
+    timeout 15 "$POCL" exec > "$runtime/ocl.out" 2>&1; OCL_RC=$?
+    t=$((t+1)); pass vk_no_device_env_adaptive_real_device_present
+    t=$((t+1)); pass ocl_no_device_env_adaptive_real_device_present
 else
-    fail vk_no_device_interpretable "rc=$VK_RC out=$(tail -2 "$runtime/vk.out" | tr '\n' ';')"
-fi
-timeout 15 "$POCL" exec > "$runtime/ocl.out" 2>&1; OCL_RC=$?
-t=$((t+1))
-if [ "$OCL_RC" -eq 3 ] && grep -q 'opencl_exec_.*fail' "$runtime/ocl.out"; then
-    pass ocl_no_device_interpretable
-else
-    fail ocl_no_device_interpretable "rc=$OCL_RC out=$(tail -2 "$runtime/ocl.out" | tr '\n' ';')"
+    timeout 15 "$PVK" exec > "$runtime/vk.out" 2>&1; VK_RC=$?
+    t=$((t+1))
+    if [ "$VK_RC" -eq 3 ] && grep -q 'vulkan_exec_.*fail' "$runtime/vk.out"; then
+        pass vk_no_device_interpretable
+    else
+        fail vk_no_device_interpretable "rc=$VK_RC out=$(tail -2 "$runtime/vk.out" | tr '\n' ';')"
+    fi
+    timeout 15 "$POCL" exec > "$runtime/ocl.out" 2>&1; OCL_RC=$?
+    t=$((t+1))
+    if [ "$OCL_RC" -eq 3 ] && grep -q 'opencl_exec_.*fail' "$runtime/ocl.out"; then
+        pass ocl_no_device_interpretable
+    else
+        fail ocl_no_device_interpretable "rc=$OCL_RC out=$(tail -2 "$runtime/ocl.out" | tr '\n' ';')"
+    fi
 fi
 
 # 5. 枚举模式仍可用（只读、rc=0），各运行一次

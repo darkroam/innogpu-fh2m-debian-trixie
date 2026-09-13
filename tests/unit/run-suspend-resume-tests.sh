@@ -593,12 +593,12 @@ else
     fail observer_is_non_suspend_and_has_valid_syntax
 fi
 
-if grep -Fq 'EXPECTED_OBJECT_SHA=30c594629d1d0e32674e793f2f4235afd4efd3f1e92ee4e4ed1920b315618c2b' "$OBSERVER" &&
-   grep -Fq 'EXPECTED_KERNEL=6.12.101+deb13-amd64' "$OBSERVER" &&
+if grep -Fq 'EXPECTED_OBJECT_SHA="${INNOGPU_EXPECT_OBJECT_SHA:-30c594629d1d0e32674e793f2f4235afd4efd3f1e92ee4e4ed1920b315618c2b}"' "$OBSERVER" &&
+   grep -Fq 'EXPECTED_KERNEL="${INNOGPU_EXPECT_KERNEL:-6.12.101+deb13-amd64}"' "$OBSERVER" &&
    grep -Fq 'EXPECTED_VERSION="${INNOGPU_EXPECT_VERSION:-4.0.1-i3}"' "$OBSERVER" &&
-   grep -Fq 'EXPECTED_MODULE_BUILD_ID=75c16519ff1b2bb1581029ad91f873621556f07d' "$OBSERVER" &&
+   grep -Fq 'EXPECTED_MODULE_BUILD_ID="${INNOGPU_EXPECT_MODULE_BUILD_ID:-75c16519ff1b2bb1581029ad91f873621556f07d}"' "$OBSERVER" &&
    grep -Fq 'loaded_module_build_id_mismatch' "$OBSERVER" &&
-   grep -Fq 'pahole -F btf -C "$type" /sys/kernel/btf/innogpu' "$OBSERVER" &&
+   grep -Fq 'pahole -F btf -C "$type" "$BTF_PATH"' "$OBSERVER" &&
    grep -Fq '[[ -n $layout ]] || fail "missing_${type}_layout"' "$OBSERVER" &&
    grep -Fq '"$BUILD_OUTPUT_ROOT"/*|/tmp/*)' "$OBSERVER" &&
    grep -Fq '[[ ! -e $OUTPUT && ! -L $OUTPUT ]]' "$OBSERVER" &&
@@ -610,6 +610,86 @@ if grep -Fq 'EXPECTED_OBJECT_SHA=30c594629d1d0e32674e793f2f4235afd4efd3f1e92ee4e
     pass observer_abi_is_fail_closed
 else
     fail observer_abi_is_fail_closed
+fi
+
+# ---- F3 lineage 参数化断言（validation-plan §〇 F3 自测行）----
+
+if grep -Fq 'PKG_NAME="fantgpu-fh2m-trixie"' "$OBSERVER" &&
+   grep -Fq 'BTF_PATH="/sys/kernel/btf/fantgpu"' "$OBSERVER" &&
+   grep -Fq 'SYS_MOD_PATH="/sys/module/fantgpu"' "$OBSERVER" &&
+   grep -Fq 'vendor/fantgpu/usr/src/fantgpu-fh2m-kernel-2.2/fantsrvkm/fantsrvkm.o_shipped' "$OBSERVER" &&
+   grep -Fq 'INNOGPU_LINEAGE must be innogpu or fantgpu' "$OBSERVER" &&
+   grep -Fq 'package_version=$(dpkg-query -W -f='"'"'${Version}'"'"' "$PKG_NAME")' "$OBSERVER" &&
+   ! grep -Fq 'dpkg-query -W -f='"'"'${Version}'"'"' innogpu-fh2m-trixie' "$OBSERVER"; then
+    pass f3_fantgpu_lineage_family_defaults
+else
+    fail f3_fantgpu_lineage_family_defaults
+fi
+
+if grep -Fq 'must be provided for lineage=fantgpu' "$OBSERVER" &&
+   grep -Fq 'INNOGPU_EXPECT_KERNEL INNOGPU_EXPECT_VERSION' "$OBSERVER" &&
+   grep -Fq 'INNOGPU_EXPECT_OBJECT_SHA INNOGPU_EXPECT_MODULE_BUILD_ID' "$OBSERVER" &&
+   grep -Fq 'abi_gate=O_LINEAGE_PINS_NOT_APPLICABLE lineage=fantgpu' "$OBSERVER" &&
+   grep -Fq 'bpftrace_phase=O_SYMBOL_SCRIPT_NOT_APPLICABLE lineage=fantgpu' "$OBSERVER" &&
+   grep -Fq 'r08_observer_result=OBSERVER_SNAPSHOT_ONLY lineage=fantgpu' "$OBSERVER" &&
+   grep -Fq 'fixture_gates=PASS lineage=$LINEAGE' "$OBSERVER"; then
+    pass f3_fantgpu_fingerprints_fail_closed_and_pins_recorded
+else
+    fail f3_fantgpu_fingerprints_fail_closed_and_pins_recorded
+fi
+
+# F3 fixture 运行：指纹注入路径可用（fixture 模式跳过 EUID/桌面用户与 ABI/pahole）
+F3_TMP="$(mktemp -d "${TMPDIR:-/tmp}/f3-tests.XXXXXX")"
+trap 'rm -rf "$TMP" "$F3_TMP"' EXIT
+mkdir -p "$F3_TMP/bin" "$F3_TMP/fk/sys/kernel/btf" \
+         "$F3_TMP/fk/sys/module/fantgpu/notes"
+cat > "$F3_TMP/bin/dpkg-query" <<'EOF'
+#!/bin/bash
+case " $* " in
+    *" fantgpu-fh2m-trixie "*) echo "5.0.0-i2" ;;
+    *" innogpu-fh2m-trixie "*) echo "4.0.2-i3" ;;
+    *) exit 1 ;;
+esac
+EOF
+chmod 0755 "$F3_TMP/bin/dpkg-query"
+touch "$F3_TMP/fk/sys/kernel/btf/vmlinux" "$F3_TMP/fk/sys/kernel/btf/fantgpu"
+# 真实 .note.gnu.build-id 前 16 字节为 note 头，随后 20 字节为 ID 原文；
+# 观察脚本 od -tx1 输出其十六进制，故期望值必须是对应 hex 串。
+F3_BUILD_ID="$(printf '61%.0s' {1..20})"
+printf '0123456789abcdef' > "$F3_TMP/fk/sys/module/fantgpu/notes/.note.gnu.build-id"
+printf 'aaaaaaaaaaaaaaaaaaaa' >> "$F3_TMP/fk/sys/module/fantgpu/notes/.note.gnu.build-id"
+F3_OBJ_SHA="$(sha256sum "$ROOT/vendor/fantgpu/usr/src/fantgpu-fh2m-kernel-2.2/fantsrvkm/fantsrvkm.o_shipped" | cut -d' ' -f1)"
+if output=$(PATH="$F3_TMP/bin:$PATH" INNOGPU_PROBE_FIXTURE=1 \
+    INNOGPU_FAKE_ROOT="$F3_TMP/fk" INNOGPU_LINEAGE=fantgpu \
+    INNOGPU_EXPECT_KERNEL="$(uname -r)" INNOGPU_EXPECT_VERSION=5.0.0-i2 \
+    INNOGPU_EXPECT_OBJECT_SHA="$F3_OBJ_SHA" \
+    INNOGPU_EXPECT_MODULE_BUILD_ID="$F3_BUILD_ID" \
+    bash "$OBSERVER" --seconds 5 2>&1) &&
+   grep -Fq 'fixture_gates=PASS lineage=fantgpu' <<<"$output" &&
+   grep -Fq "fixture_loaded_module_build_id=$F3_BUILD_ID" <<<"$output" &&
+   grep -Fq "fixture_object_sha256=$F3_OBJ_SHA" <<<"$output"; then
+    pass f3_fantgpu_fingerprint_injection_path_works
+else
+    fail f3_fantgpu_fingerprint_injection_path_works
+fi
+
+if output=$(PATH="$F3_TMP/bin:$PATH" INNOGPU_PROBE_FIXTURE=1 \
+    INNOGPU_FAKE_ROOT="$F3_TMP/fk" INNOGPU_LINEAGE=fantgpu \
+    bash "$OBSERVER" --seconds 5 2>&1); then
+    fail f3_fantgpu_missing_fingerprint_is_fail_closed
+elif grep -Fq 'INNOGPU_EXPECT_KERNEL must be provided for lineage=fantgpu' <<<"$output"; then
+    pass f3_fantgpu_missing_fingerprint_is_fail_closed
+else
+    fail f3_fantgpu_missing_fingerprint_is_fail_closed
+fi
+
+if output=$(PATH="$F3_TMP/bin:$PATH" INNOGPU_PROBE_FIXTURE=1 \
+    INNOGPU_LINEAGE=bogus bash "$OBSERVER" --seconds 5 2>&1); then
+    fail f3_invalid_lineage_is_fail_closed
+elif grep -Fq 'INNOGPU_LINEAGE must be innogpu or fantgpu' <<<"$output"; then
+    pass f3_invalid_lineage_is_fail_closed
+else
+    fail f3_invalid_lineage_is_fail_closed
 fi
 
 if grep -Fq 'kprobe:innogpu:pdp0_cursor_move' "$OBSERVER_BT" &&
