@@ -98,6 +98,7 @@ docs/planning/evidence/d-stage-audit.tsv.sha256
 docs/planning/evidence/o-stage/5.0.0-i1.meta.json
 docs/planning/evidence/o-stage/build-5.0.0-i1.sha256
 docs/planning/evidence/o-stage/build-5.0.0-i2.sha256
+docs/planning/evidence/o-stage/c2-module-params.txt
 docs/planning/evidence/o-stage/f-payload-integrity.json
 docs/planning/evidence/o-stage/f-payload.manifest.tsv
 docs/planning/evidence/o-stage/f-payload.manifest.tsv.sha256
@@ -235,14 +236,17 @@ tests/runtime/run-capability-baseline.sh
 tests/unit/d-stage-audit-fault-tests.py
 tests/unit/run-030-meta-tests.sh
 tests/unit/run-builder-fantgpu-gates-tests.sh
+tests/unit/run-capability-baseline-tests.sh
 tests/unit/run-check-release-package-tests.sh
 tests/unit/run-collab-structure-tests.sh
 tests/unit/run-d-stage-audit-fault-tests.sh
 tests/unit/run-dmabuf-regression-tests.sh
 tests/unit/run-dri-repair-tests.sh
+tests/unit/run-drm-topology-tests.sh
 tests/unit/run-exec-probes-tests.sh
 tests/unit/run-extractor-tests.sh
 tests/unit/run-fantgpu-helper-transform-tests.sh
+tests/unit/run-fbdev-mmap-tests.sh
 tests/unit/run-gen-fantgpu-manifest-tests.sh
 tests/unit/run-gen-package-md5sums-tests.sh
 tests/unit/run-license-audit-tests.sh
@@ -262,6 +266,7 @@ tests/unit/run-suspend-failure-finalize-tests.sh
 tests/unit/run-suspend-resume-tests.sh
 tests/unit/run-vaapi-decode-tests.sh
 tests/unit/run-validate-fantgpu-manifest-tests.sh
+tests/unit/run-verify-install-status-tests.sh
 tests/unit/run-version-tests.sh
 tests/xdisplay/run-install-tests.sh
 tools/README.md
@@ -281,6 +286,7 @@ tools/probe-dmabuf-self-import.c
 tools/probe-drm-topology.c
 tools/probe-drm-vblank.c
 tools/probe-egl-gbm.c
+tools/probe-fbdev-mmap.c
 tools/probe-opencl-devices.c
 tools/probe-pdp-invisible-read.c
 tools/probe-surfaceless-gles2.c
