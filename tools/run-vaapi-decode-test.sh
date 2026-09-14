@@ -156,21 +156,32 @@ fi
 echo "${NS}vaapi_decode_node=ok $NODE (1ec8:9810)$(oktag)"
 
 # ---- vainfo 身份 + 按 codec 的 VLD profile (exit 3) ----
-# 身份门按血统分派（F7）：O 保持历史口径（innosilicon|innogpu）；
-# fantgpu 血统只接受 **Driver version 身份行**中的精确 fh2m 标识（独立
-# token，前后须为非标识符字符；不接受 fh2m 作为更长标识符的子串，也不
-# 接受其他输出行含 fh2m 但身份行不含的情形——codex 复审 P2）；厂商/显示
-# 标签（innosilicon 等）仅辅助证据，不得单独过门；vainfo 未建立 fh2m
-# 身份 → fail-closed exit 3。
+# 身份门按血统分派（F7）：
+# O 保持历史口径（innosilicon|innogpu）。
+# fantgpu 血统 = **三证据合一**（2026-09-14 真机实测失配后三方定案修订，
+# codex 批准规格）：
+#   ① 输出包含精确 loader 路径 .../dri/fh2m_drv_video.so（libva 按 DRM 名
+#      fh2m 拼装 loader——C3 判据本意）；
+#   ② 输出包含精确 "va_openDriver() returns 0"（打开成功确认）；
+#   ③ 首个 Driver version: 身份行含独立 token `fant` 或 `fh2m`（大小写不
+#      敏感，前后不得为 [[:alnum:]_]——FANTASTIC 等更长标识符不命中；
+#      仅厂商标签 innosilicon 不得过门；fh2m 保留为兼容身份）。
+# 任一不满足 → fail-closed exit 3（分项 reason 可机器解析）。
 VAINFO_OUT="$("$VAINFO_BIN" --display drm --device "$NODE" 2>&1)"; VAINFO_RC=$?
 if [[ "$VAINFO_RC" -ne 0 ]]; then
     echo "${NS}vaapi_decode_vainfo=fail reason=$(tag vainfo_init_failed)" >&2; exit 3;
 fi
 VAINFO_DRIVER_LINE="$(echo "$VAINFO_OUT" | grep -iE 'Driver version:' | head -1 || true)"
 if [[ "$LINEAGE" == "fantgpu" ]]; then
+    if ! echo "$VAINFO_OUT" | grep -Fq '/dri/fh2m_drv_video.so'; then
+        echo "${NS}vaapi_decode_vainfo=fail reason=$(tag vainfo_loader_path_missing)" >&2; exit 3;
+    fi
+    if ! echo "$VAINFO_OUT" | grep -Fq 'va_openDriver() returns 0'; then
+        echo "${NS}vaapi_decode_vainfo=fail reason=$(tag vainfo_open_not_confirmed)" >&2; exit 3;
+    fi
     if [[ -z "$VAINFO_DRIVER_LINE" ]] \
-       || ! grep -qiE '(^|[^[:alnum:]_])fh2m([^[:alnum:]_]|$)' <<<"$VAINFO_DRIVER_LINE"; then
-        echo "${NS}vaapi_decode_vainfo=fail reason=$(tag vainfo_identity_not_fh2m)" >&2; exit 3;
+       || ! grep -qiE '(^|[^[:alnum:]_])(fant|fh2m)([^[:alnum:]_]|$)' <<<"$VAINFO_DRIVER_LINE"; then
+        echo "${NS}vaapi_decode_vainfo=fail reason=$(tag vainfo_identity_not_fant_fh2m)" >&2; exit 3;
     fi
 else
     if ! echo "$VAINFO_OUT" | grep -qiE 'innosilicon|innogpu'; then

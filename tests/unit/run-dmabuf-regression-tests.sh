@@ -144,6 +144,9 @@ FAKESELF
 cat > "$runtime/bin/fake-invisible-read" <<'FAKEREAD'
 #!/bin/bash
 acc="$4"
+if [[ -n "${FAKE_READ_ENV_LOG:-}" ]]; then
+    printf '%s\n' "${INNOGPU_PDP_INVISIBLE_FLAG:-unset}" >> "$FAKE_READ_ENV_LOG"
+fi
 if [[ "${FAKE_READ_RC:-0}" != "0" ]]; then echo "fake invisible failed" >&2; exit "$FAKE_READ_RC"; fi
 if [[ -n "${FAKE_SWAP_STATUS_LINK:-}" && -n "${FAKE_SWAP_STATUS_TARGET:-}" ]]; then
     ln -sf "$FAKE_SWAP_STATUS_TARGET" "$FAKE_SWAP_STATUS_LINK"
@@ -154,7 +157,9 @@ fi
 iters="${3:-3}"
 pages="${FAKE_READ_PAGES:-1867}"
 msize="${FAKE_READ_MSIZE:-7647232}"
-echo "device=${FAKE_READ_BAD_DEVICE:-$1} handle=200 requested_size=${FAKE_READ_BAD_SIZE:-$2} map_size=$msize pages=$pages offset=0x0 iterations=${FAKE_READ_ITER:-$iters} access=${FAKE_READ_BAD_ACCESS:-$acc} page_stride=${FAKE_READ_BAD_STRIDE:-1}"
+flag_src="${FAKE_READ_FLAG:-${INNOGPU_PDP_INVISIBLE_FLAG:-0x10000000}}"
+flag_hex="$(printf '0x%08x' "$((flag_src))")"
+echo "device=${FAKE_READ_BAD_DEVICE:-$1} handle=200 requested_size=${FAKE_READ_BAD_SIZE:-$2} map_size=$msize pages=$pages offset=0x0 iterations=${FAKE_READ_ITER:-$iters} access=${FAKE_READ_BAD_ACCESS:-$acc} page_stride=${FAKE_READ_BAD_STRIDE:-1} invisible_flag=$flag_hex"
 for ((i=1; i<=iters; i++)); do
     ms="${FAKE_READ_MUNMAP_MS:-2.500}"
     [[ "${FAKE_READ_DROP:-0}" == "1" && "$i" -eq 1 ]] && : || echo "iteration=$i phase=${acc}_touch wall_ms=3.000 user_ms=1.000 system_ms=1.500"
@@ -890,6 +895,77 @@ run_rc f5_topology_new_fmt_parse 0 "$GOOD FAKE_TOP_NEW_FMT=1" --size 7646720
 # codex 复审 P1-3 负向：partial 标记 / 缺失标记必须被消费者拒绝
 run_rc f5_topology_collect_partial_rejected 1 "$GOOD FAKE_TOP_COLLECT=partial" --size 7646720
 run_rc f5_topology_collect_missing_rejected 1 "$GOOD FAKE_TOP_COLLECT=none" --size 7646720
+
+# ================= X. INVISIBLE flag 血统注入（2026-09-14 三方定案）=================
+# 聚合脚本按 --lineage 强制注入 INNOGPU_PDP_INVISIBLE_FLAG 并覆盖继承值；
+# 探针头部记录实际生效值；权威 reason 携带 invisible_flag=0x........。
+# x1 fantgpu 注入 0x2（覆盖继承垃圾值 0xdead）
+: > "$runtime/flag-env.log"
+O="$runtime/flag-fant.out"
+env $GOOD FAKE_READ_ENV_LOG=$runtime/flag-env.log INNOGPU_PDP_INVISIBLE_FLAG=0xdead \
+    bash "$SCRIPT" --size 7646720 --iterations 3 --vblank-samples 10 --lineage fantgpu > "$O" 2>&1; rc=$?
+if [ "$rc" -eq 0 ] \
+   && grep -q 'fixture_dmabuf_invisible_read=PASS reason=.*invisible_flag=0x00000002' "$O" \
+   && grep -q 'fixture_dmabuf_write_readback=PASS reason=.*invisible_flag=0x00000002' "$O" \
+   && [ -z "$(grep -v '^0x2$' "$runtime/flag-env.log")" ] \
+   && [ "$(wc -l < "$runtime/flag-env.log")" -eq 2 ]; then
+    pass invisible_flag_fantgpu_injected
+else
+    fail invisible_flag_fantgpu_injected "rc=$rc log=[$(cat "$runtime/flag-env.log")] out=$(grep 'fixture_dmabuf_invisible_read' "$O" | tail -1)"
+fi
+# x2 innogpu 显式注入 0x10000000（覆盖继承值 0x2——不得"什么都不设"依赖探针缺省）
+: > "$runtime/flag-env.log"
+O="$runtime/flag-inn.out"
+env $GOOD FAKE_READ_ENV_LOG=$runtime/flag-env.log INNOGPU_PDP_INVISIBLE_FLAG=0x2 \
+    bash "$SCRIPT" --size 7646720 --iterations 3 --vblank-samples 10 --lineage innogpu > "$O" 2>&1; rc=$?
+if [ "$rc" -eq 0 ] \
+   && grep -q 'fixture_dmabuf_invisible_read=PASS reason=.*invisible_flag=0x10000000' "$O" \
+   && [ -z "$(grep -v '^0x10000000$' "$runtime/flag-env.log")" ] \
+   && [ "$(wc -l < "$runtime/flag-env.log")" -eq 2 ]; then
+    pass invisible_flag_innogpu_injected
+else
+    fail invisible_flag_innogpu_injected "rc=$rc log=[$(cat "$runtime/flag-env.log")]"
+fi
+# x3 探针上报错误 invisible_flag → 聚合 fail-closed（不得静默吞掉）
+O="$runtime/flag-mismatch.out"
+env $GOOD FAKE_READ_FLAG=0x00000004 \
+    bash "$SCRIPT" --size 7646720 --iterations 3 --vblank-samples 10 --lineage fantgpu > "$O" 2>&1; rc=$?
+if [ "$rc" -eq 1 ] && grep -q 'invisible_flag_mismatch' "$O"; then
+    pass invisible_flag_mismatch_rejected
+else
+    fail invisible_flag_mismatch_rejected "rc=$rc out=$(grep 'fixture_dmabuf_invisible_read' "$O" | tail -1)"
+fi
+
+# ================= XI. 真探针 env 解析矩阵（-Wall -Wextra -Werror）=================
+PROBE_C_SRC="$ROOT/tools/probe-pdp-invisible-read.c"
+if gcc -O2 -Wall -Wextra -Werror -o "$runtime/probe-inv-real" "$PROBE_C_SRC" \
+       2>"$runtime/probe-werror.err"; then
+    pass probe_builds_with_werror
+else
+    fail probe_builds_with_werror "$(head -2 "$runtime/probe-werror.err" | tr '\n' ';')"
+fi
+inv_case() { # <label> <want-rc> <env-value|UNSET>
+    local label="$1" want="$2" val="$3" rc
+    if [ "$val" == "UNSET" ]; then
+        env -u INNOGPU_PDP_INVISIBLE_FLAG "$runtime/probe-inv-real" "$runtime/absent-dev" >/dev/null 2>&1; rc=$?
+    else
+        env INNOGPU_PDP_INVISIBLE_FLAG="$val" "$runtime/probe-inv-real" "$runtime/absent-dev" >/dev/null 2>&1; rc=$?
+    fi
+    if [ "$rc" -eq "$want" ]; then pass "$label"; else fail "$label" "rc=$rc want=$want val=[$val]"; fi
+}
+# 合法值（解析先于 open：坏设备路径 → rc=1 证明解析通过）
+inv_case probe_flag_hex_f 1 0x2
+inv_case probe_flag_hex_o 1 0x10000000
+inv_case probe_flag_decimal 1 2
+inv_case probe_flag_unset_default 1 UNSET
+# 非法值 → rc=2（空/0x 截断/负数/尾随/溢出/零/前导空白）
+inv_case probe_flag_empty 2 ""
+inv_case probe_flag_0x_only 2 "0x"
+inv_case probe_flag_negative 2 "-1"
+inv_case probe_flag_trailing 2 "2x"
+inv_case probe_flag_overflow 2 "0x100000000"
+inv_case probe_flag_zero 2 "0"
+inv_case probe_flag_leading_space 2 " 2"
 
 printf 'tests_total=%d tests_passed=%d tests_failed=%d tests_skipped=0\n' "$t" "$passed" "$failed"
 [ "$failed" -eq 0 ]

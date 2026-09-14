@@ -44,7 +44,17 @@ struct drm_pdp_gem_inv_get {
 
 #define PDP_GEM_CPU_PREP_READ (1U << 0)
 #define PDP_GEM_CPU_PREP_WRITE (1U << 1)
-#define PDP_GEM_INVISIBLE (1U << 28)
+#define PDP_GEM_INVISIBLE (1U << 28)   /* O 血统 ABI 缺省值（历史口径） */
+
+/*
+ * INVISIBLE flag 血统参数化（2026-09-14 真机停批后三方定案）：
+ * O 血统 PDP_GEM_INVISIBLE = 1U<<28；F 血统 DBM_GEM_INVISIBLE = FANT_BIT(1) = 0x2
+ * （vendor/fantgpu .../fantdpu_drm_gem.h）。env INNOGPU_PDP_INVISIBLE_FLAG 严格
+ * 解析为无符号 32 位（0x 十六进制或十进制；空值/非法字符/负数/溢出/尾随字符
+ * 一律 rc=2）；未设置时保持 O 口径缺省。聚合脚本按 --lineage 强制注入并覆盖
+ * 继承值。实际生效值写入输出头 invisible_flag=0x........ 供证据审计。
+ */
+#define INVISIBLE_FLAG_ENV "INNOGPU_PDP_INVISIBLE_FLAG"
 #define DRM_IOCTL_PDP_GEM_CREATE \
 	DRM_IOWR(DRM_COMMAND_BASE + 0x20, struct drm_pdp_gem_create)
 #define DRM_IOCTL_PDP_GEM_MMAP \
@@ -111,6 +121,31 @@ static int parse_u64(const char *value, uint64_t limit, uint64_t *result)
 	if (errno || !end || *end != '\0' || !parsed || parsed > limit)
 		return -1;
 	*result = parsed;
+	return 0;
+}
+
+/* 严格解析 env INNOGPU_PDP_INVISIBLE_FLAG（无符号 32 位，0x 或十进制）；
+ * 空值/非法字符/负数/溢出/尾随字符一律失败（调用方 rc=2）；未设置时保持
+ * O 口径缺省 1U<<28。 */
+static int resolve_invisible_flag(uint32_t *flag)
+{
+	const char *env = getenv(INVISIBLE_FLAG_ENV);
+	uint64_t parsed;
+
+	if (!env) {
+		*flag = PDP_GEM_INVISIBLE;
+		return 0;
+	}
+	/* strtoull 会跳过前导空白并接受 '+'/'-'；严格模式先拒绝非数字首字符 */
+	if (env[0] < '0' || env[0] > '9' ||
+	    parse_u64(env, 0xFFFFFFFFULL, &parsed)) {
+		fprintf(stderr,
+			"invalid %s: '%s' (expect unsigned 32-bit 0x hex or decimal; "
+			"empty/invalid/negative/overflow/trailing rejected)\n",
+			INVISIBLE_FLAG_ENV, env);
+		return -1;
+	}
+	*flag = (uint32_t)parsed;
 	return 0;
 }
 
@@ -253,7 +288,8 @@ int main(int argc, char **argv)
 	uint64_t requested_size = 7646720;
 	uint64_t iterations_u64 = 3;
 	uint64_t page_stride_u64 = 1;
-	struct drm_pdp_gem_create create = {.flags = PDP_GEM_INVISIBLE};
+	uint32_t invisible_flag = 0;
+	struct drm_pdp_gem_create create = {0};
 	struct drm_pdp_gem_mmap map = {0};
 	struct drm_pdp_gem_inv_get inv = {0};
 	struct drm_gem_close gem_close = {0};
@@ -281,6 +317,13 @@ int main(int argc, char **argv)
 			access);
 		return 2;
 	}
+	if (resolve_invisible_flag(&invisible_flag)) {
+		fprintf(stderr,
+			"usage: %s [render-device] [size-bytes] [iterations] [read|write] [page-stride]\n",
+			argv[0]);
+		return 2;
+	}
+	create.flags = invisible_flag;
 
 	page_size = sysconf(_SC_PAGESIZE);
 	if (page_size <= 0) {
@@ -320,9 +363,10 @@ int main(int argc, char **argv)
 
 	printf("device=%s handle=%u requested_size=%" PRIu64
 	       " map_size=%zu pages=%zu offset=0x%" PRIx64 " iterations=%" PRIu64
-	       " access=%s page_stride=%" PRIu64 "\n", device, create.handle,
-	       requested_size, map_size, map_size / (size_t)page_size, map.offset,
-	       iterations_u64, access, page_stride_u64);
+	       " access=%s page_stride=%" PRIu64 " invisible_flag=0x%08x\n", device,
+	       create.handle, requested_size, map_size,
+	       map_size / (size_t)page_size, map.offset, iterations_u64, access,
+	       page_stride_u64, (unsigned int)invisible_flag);
 
 	for (unsigned int iteration = 1; iteration <= iterations_u64; iteration++) {
 		if (exercise_mapping(fd, create.handle, map.offset, map_size,

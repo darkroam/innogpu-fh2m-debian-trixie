@@ -1,0 +1,62 @@
+R5 static investigation report
+date=2026-09-14
+stage=static
+machine_action=none
+real_machine_action=none
+source_root=/usr/src/fantgpu-fh2m-kernel-2.2
+source_tree_rows=507
+source_tree_hash=c44ce7850134c1455c0935519fc6cb08a81b505804150c59dde1338e1369bd3f
+source_tree_identity=O_stage 14-chain final tree; hash matches approved i2 tree
+repository_build_tree=not_used (build/r16-fantgpu-deb is stale and lacks 030-028/compat_kernel6.h content)
+
+--- source and object boundary ---
+object_path=/usr/src/fantgpu-fh2m-kernel-2.2/fantgpu/fantgpu.o_shipped
+object_size=6903704
+object_sha256=bc2af0729b3eb1b3f25fe7487b4ffa808cb91cbd71ac3a9faa75fb284e4eb1e2
+module_composition=approximately 121 source compilation units plus Kbuild COPY/link of fantgpu.o_shipped
+source_visible=fantgpu/fantgpu_pci_drv.c; fantgpu/hal_dma.c; fantgpu/hal.h; fantsrvkm/ft_drm.c; fantsrvkm/pdp0_crtc.c; fantsrvkm/fantdpu_drm_pm.c
+precompiled_symbols=hal_power_sleep; hal_power_wakeup; hal_check_reg_accessiable; hal_pdp_restore_default_cfg
+source_symbols=fantgpu_device_suspend; fantgpu_pmops_suspend; fh2m_hal_dma_suspend
+
+--- PCI suspend call path ---
+fantgpu/fantgpu_pci_drv.c:1836=fantgpu_device_suspend
+fantgpu/fantgpu_pci_drv.c:1849=fh2m_hal_dma_suspend(pdev_rsrc), return value not checked by caller
+fantgpu/fantgpu_pci_drv.c:1852=hal_power_sleep(pdev_rsrc), return value not checked by caller
+fantgpu/fantgpu_pci_drv.c:1854-1855=suspend-only atomic_set(pvr_resume_count, 0)
+fantgpu/fantgpu_pci_drv.c:1857=hal_check_reg_accessiable(pdev_rsrc), void declaration
+fantgpu/fantgpu_pci_drv.c:1864=disable_irq(pdev->irq)
+fantgpu/fantgpu_pci_drv.c:1867=hal_pdp_restore_default_cfg(dev), return value not checked by caller
+fantgpu/fantgpu_pci_drv.c:1869-1870=pci_save_state and pci_disable_device
+fantgpu/fantgpu_pci_drv.c:1961-1964=fantgpu_pmops_suspend delegates to fantgpu_device_suspend(dev, true)
+fantgpu/hal_dma.c:1332=fh2m_hal_dma_suspend source implementation; releases DMA channels and returns int
+fantgpu/hal.h:1492=hal_check_reg_accessiable declaration
+fantgpu/hal.h:1554-1555=hal_power_sleep/hal_power_wakeup declarations return int
+fantgpu/hal.h:1566=hal_pdp_restore_default_cfg declaration returns int
+
+--- 030-028 resume counter and ordering ---
+fantgpu/hal.h:1388=atomic_t pvr_resume_count
+fantgpu/fantgpu_pci_drv.c:1854-1855=counter reset before PCI suspend work
+fantgpu/fantgpu_pci_drv.c:1951-1956=S3 resume defers hal_power_wakeup when is_suspend; non-S3 path calls it
+fantsrvkm/ft_drm.c:141=ft_pm_resume
+fantsrvkm/ft_drm.c:155-165=PVRSRVDeviceResume then ResumeDVFS; errors return before counter increment
+fantsrvkm/ft_drm.c:170-172=platform data, resource, device count and index validation
+fantsrvkm/ft_drm.c:174-178=atomic increment; last child calls hal_power_wakeup; over-count returns -EOVERFLOW
+finding_030_028=counter and delayed parent temperature-work wakeup logic are present in the approved installed tree
+review_focus=duplicate/missing child callbacks, concurrent work, resumed>dev_nums, and rollback after visible errors
+
+--- DRM suspend path ---
+fantsrvkm/fantdpu_drm_pm.c:270-285=fantdpu_drm_suspend backs up CRTC state, calls fantdpu_drm_hibernation, then GEM backup
+fantsrvkm/fantdpu_drm_pm.c:133-157=fantdpu_drm_hibernation disables KMS polling/framebuffer helper and calls drm_atomic_helper_suspend
+fantsrvkm/fantdpu_drm_pm.c:288-304=fantdpu_drm_resume recovers GEM, calls DRM wakeup, then wakes each CRTC
+drm_boundary=source-visible call structure can be reviewed; HAL/internal waits remain outside source evidence
+
+--- 030 mapping correction ---
+030-026=pdp0_crtc.c (inactive CRTC/vblank guard)
+030-026-lifecycle=ft_drm.c (DVFS/PVR suspend-resume lifecycle)
+
+--- conclusion ---
+static_status=PASS_WITH_BOUNDARY
+static_proves=approved installed source identity, visible callback order, 030-028 counter placement, and source/object symbol ownership
+static_does_not_prove=completion, timeout, or internal wait behavior of precompiled hal_power_sleep, hal_power_wakeup, hal_check_reg_accessiable, or hal_pdp_restore_default_cfg
+runtime_required=bound+headless experiment remains the next authorized candidate; stage B/C/D remain separately gated by dsh
+r5_validation_status=FAIL

@@ -15,7 +15,7 @@
 | `probe-pdp-invisible-read.c` | 最小 PDP GEM 探针 | 创建单个 invisible GEM；READ 模式测量逐页读取和 munmap，WRITE 模式逐页写入、解除映射并以 READ mapping 验证回写；支持可选 page stride 测量稀疏访问；不提交 GPU 工作、不 modeset |
 | `probe-surfaceless-gles2.c` | 最小 C 探针 | 验证 surfaceless EGL/GLES2 初始化和基本绘制，用于区分 Xorg/DDX 与核心 EGL 路径故障 |
 | `probe-x11-egl-gles2.c` | 最小 C 探针 | 连接测试 X server 并验证 X11 EGL/GLES2 context，用于隔离 DDX/窗口系统路径 |
-| `trace-loader.c` | 诊断 shim | 通过 `LD_PRELOAD` 记录 vendor loader 选择、失败 ioctl，以及 PDP GEM 分配位置和 CPU_PREP/CPU_FINI 的 handle/flags；只用于受控诊断，不得进入发布包 |
+| `trace-loader.c` | 诊断 shim（**O-only**） | 通过 `LD_PRELOAD` 记录 vendor loader 选择、失败 ioctl，以及 PDP GEM 分配位置和 CPU_PREP/CPU_FINI 的 handle/flags；**硬编码 O 血统 PDP_GEM_INVISIBLE=1<<28 ABI——F 血统为 0x2（FANT_BIT(1)），本工具当前不参与 F 路径/不用于 F 诊断**（如后续用于 F，须先按 `INNOGPU_PDP_INVISIBLE_FLAG` 模式参数化）；只用于受控诊断，不得进入发布包 |
 | `probe-vulkan-devices.c` | 枚举+执行探针 | **枚举**（默认）：dlopen Vulkan loader，枚举实例版本/扩展、物理设备与队列族，不创建设备；**执行**（`exec [timeout_ms]`）：创建 instance→选 GPU 设备（拒绝 CPU-only）→device/queue→空 command buffer+fence 提交并限时等待→逆序释放。退出码 0=PASS 2=loader 3=无 GPU/初始化 4=device/queue 5=submit/wait；loader 路径可用 `PROBE_VULKAN_LOADER` 覆盖（测试注入）。无需 Vulkan 头文件 |
 | `probe-opencl-devices.c` | 枚举+执行探针 | **枚举**（默认）：dlopen OpenCL ICD loader，枚举 platform/device 及关键能力，不创建 context；**执行**（`exec [elements]`）：选 GPU 设备（拒绝 CPU 平台）→context/queue→两 buffer→add kernel 编译运行→阻塞读回→逐元素校验→逆序释放。退出码 0=PASS 2=loader 3=无 GPU 4=context/queue/buffer 5=build 6=run 7=verify；loader 路径可用 `PROBE_OPENCL_LOADER` 覆盖。无需 OpenCL 头文件 |
 | `probe-vaapi.c` | 最小 C 探针 | 打开 DRM render 节点并 dlopen libva，枚举 VA-API 驱动、profile 与 entrypoint；不创建 surface/context、不编解码，无需 libva 头文件 |

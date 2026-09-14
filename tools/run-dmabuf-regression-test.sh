@@ -17,6 +17,7 @@
 #   bash tools/run-dmabuf-regression-test.sh [--render-device NODE] [--card-device NODE]
 #       [--size BYTES] [--iterations N] [--vblank-samples N] [--timeout SEC]
 #       [--read-munmap-limit-ms MS] [--lineage innogpu|fantgpu] [--status-file FILE]
+# --lineage 同时强制注入 INNOGPU_PDP_INVISIBLE_FLAG（innogpu=0x10000000 / fantgpu=0x2）
 #
 # --lineage / --status-file 是非夹具血统参数（F6）：不得与下方夹具钩子混淆；
 # 生产运行直接使用（fantgpu 血统默认状态路径 /proc/driver/fantgpu/gpu00/status）。
@@ -105,6 +106,16 @@ case "$LINEAGE" in
     *) echo "--lineage must be innogpu or fantgpu" >&2; exit 2 ;;
 esac
 MOD_NAME="$LINEAGE"
+# INVISIBLE flag 血统注入（2026-09-14 三方定案）：O 血统 PDP_GEM_INVISIBLE=1<<28；
+# F 血统 DBM_GEM_INVISIBLE=FANT_BIT(1)=0x2。**强制覆盖**继承的
+# INNOGPU_PDP_INVISIBLE_FLAG（不得依赖探针缺省，防外部环境污染）。
+if [[ "$LINEAGE" == "fantgpu" ]]; then
+    INVISIBLE_FLAG=0x2
+else
+    INVISIBLE_FLAG=0x10000000
+fi
+export INNOGPU_PDP_INVISIBLE_FLAG="$INVISIBLE_FLAG"
+INVISIBLE_FLAG_HEX="$(printf '0x%08x' "$((INVISIBLE_FLAG))")"
 if [[ -n "$STATUS_FILE_ARG" ]]; then
     STATUS_FILE="$STATUS_FILE_ARG"
 elif [[ -z "$STATUS_FILE" ]]; then
@@ -457,7 +468,7 @@ parse_invisible() {
     header="$(grep -c '^device=' "$out")"
     [[ "$header" -eq 1 ]] || { echo "err:header_missing_or_duplicate"; return 1; }
     # 全字段严格：device/requested_size/map_size/pages/offset/iterations/access/page_stride
-    local head_re="^device=([^ ]+) handle=[0-9]+ requested_size=([0-9]+) map_size=([0-9]+) pages=([0-9]+) offset=0x[0-9a-f]+ iterations=([0-9]+) access=([a-z]+) page_stride=([0-9]+)$"
+    local head_re="^device=([^ ]+) handle=[0-9]+ requested_size=([0-9]+) map_size=([0-9]+) pages=([0-9]+) offset=0x[0-9a-f]+ iterations=([0-9]+) access=([a-z]+) page_stride=([0-9]+) invisible_flag=(0x[0-9a-f]{8})$"
     local hline; hline="$(grep '^device=' "$out")"
     [[ "$hline" =~ $head_re ]] || { echo "err:bad_header"; return 1; }
     [[ "${BASH_REMATCH[1]}" == "$NODE_RENDER" ]] || { echo "err:header_device_mismatch"; return 1; }
@@ -466,6 +477,7 @@ parse_invisible() {
     [[ "$hdr_iter" == "$exp" ]] || { echo "err:iteration_mismatch ref=$exp got=$hdr_iter"; return 1; }
     [[ "${BASH_REMATCH[6]}" == "$acc" ]] || { echo "err:access_mismatch"; return 1; }
     [[ "${BASH_REMATCH[7]}" == "1" ]] || { echo "err:page_stride_mismatch"; return 1; }
+    [[ "${BASH_REMATCH[8]}" == "$INVISIBLE_FLAG_HEX" ]] || { echo "err:invisible_flag_mismatch got=${BASH_REMATCH[8]} expect=$INVISIBLE_FLAG_HEX"; return 1; }
     [[ "$hdr_pages" -gt 0 ]] || { echo "err:bad_pages"; return 1; }
     [[ "$hdr_msize" -ge "$SIZE" ]] || { echo "err:bad_map_size"; return 1; }
     while IFS= read -r line; do
@@ -523,7 +535,7 @@ invisible_read() {
     maxms="$(awk -F'system_ms=' '/phase=read_munmap/{v=$2+0; if (v>m) m=v} END{printf "%.3f", m}' "$out")"
     [[ -n "$maxms" ]] || { record_fail invisible_read missing_read_munmap_timing 1; return; }
     if awk -v m="$maxms" -v l="$MUNMAP_LIMIT_MS" 'BEGIN { exit !(m <= l) }'; then
-        record_pass invisible_read "iterations=$ITERATIONS-size=$SIZE-max_read_munmap_ms=$maxms-limit_ms=$MUNMAP_LIMIT_MS"
+        record_pass invisible_read "iterations=$ITERATIONS-size=$SIZE-max_read_munmap_ms=$maxms-limit_ms=$MUNMAP_LIMIT_MS-invisible_flag=$INVISIBLE_FLAG_HEX"
     else
         record_fail invisible_read "read_munmap_exceeds_limit max=$maxms limit=$MUNMAP_LIMIT_MS" 1
     fi
@@ -538,7 +550,7 @@ write_readback() {
     local perr pages
     perr="$(parse_invisible "$out" "$ITERATIONS" write 1)" || { record_fail write_readback "$perr" 1; return; }
     pages="$(sed -n 's/^device=.* pages=\([0-9][0-9]*\).*/\1/p' "$out" | head -1)"
-    record_pass write_readback "iterations=$ITERATIONS-size=$SIZE-verify=$ITERATIONS-pages=${pages:-?}"
+    record_pass write_readback "iterations=$ITERATIONS-size=$SIZE-verify=$ITERATIONS-pages=${pages:-?}-invisible_flag=$INVISIBLE_FLAG_HEX"
 }
 
 # ---- 4. vblank（topology → active/inactive）----

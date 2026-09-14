@@ -72,19 +72,32 @@ if [[ "${FAKE_VAINFO_VENDOR_ONLY:-0}" == 1 ]]; then
   echo "vainfo: Driver version: Fantasy GPU display driver"
   exit 0
 fi
-if [[ "${FAKE_VAINFO_FH2M_ELSEWHERE:-0}" == 1 ]]; then
-  echo "vainfo: VA-API version 1.22"
-  echo "vainfo: Driver version: Fantasy GPU display driver"
-  echo "vainfo: Note: fh2m backend (non-identity line)"
-  echo "vainfo: Supported profile and entrypoints:"
-  echo "      VAProfileH264Main               : VAEntrypointVLD"
-  echo "      VAProfileHEVCMain               : VAEntrypointVLD"
-  exit 0
-fi
-if [[ "${FAKE_VAINFO_FH2M:-0}" == 1 ]]; then
-  echo "vainfo: VA-API version 1.22"
-  echo "vainfo: Driver version: fh2m"
-  echo "vainfo: Supported profile and entrypoints:"
+# ---- F 血统模板（2026-09-14 真机实测口径：loader 路径 + open 确认 + 身份行）----
+is_f=0
+for h in "${FAKE_VAINFO_FANT:-0}" "${FAKE_VAINFO_FH2M:-0}" \
+         "${FAKE_VAINFO_FH2M_ELSEWHERE:-0}" "${FAKE_VAINFO_FANTASTIC:-0}" \
+         "${FAKE_VAINFO_NO_LOADER_PATH:-0}" "${FAKE_VAINFO_NO_OPEN_RET:-0}" \
+         "${FAKE_VAINFO_UNRELATED_ID:-0}" "${FAKE_VAINFO_INNOSILICON_ID:-0}"; do
+  [[ "$h" == 1 ]] && is_f=1
+done
+if [[ "$is_f" == 1 ]]; then
+  identity="vainfo: Driver version: FANT-silicon Driver v1.0.0"
+  [[ "${FAKE_VAINFO_FH2M:-0}" == 1 ]] && identity="vainfo: Driver version: fh2m"
+  [[ "${FAKE_VAINFO_FH2M_ELSEWHERE:-0}" == 1 ]] && identity="vainfo: Driver version: Generic VA driver"
+  [[ "${FAKE_VAINFO_FANTASTIC:-0}" == 1 ]] && identity="vainfo: Driver version: FANTASTIC Driver v2"
+  [[ "${FAKE_VAINFO_UNRELATED_ID:-0}" == 1 ]] && identity="vainfo: Driver version: SomeUnrelated Driver v9"
+  [[ "${FAKE_VAINFO_INNOSILICON_ID:-0}" == 1 ]] && identity="vainfo: Driver version: Innosilicon VA driver"
+  echo "libva info: VA-API version 1.22.0"
+  [[ "${FAKE_VAINFO_NO_LOADER_PATH:-0}" == 1 ]] || \
+    echo "libva info: Trying to open /usr/lib/x86_64-linux-gnu/dri/fh2m_drv_video.so"
+  echo "libva info: Found init function __vaDriverInit_1_0"
+  [[ "${FAKE_VAINFO_NO_OPEN_RET:-0}" == 1 ]] || \
+    echo "libva info: va_openDriver() returns 0"
+  echo "Trying display: drm"
+  echo "fant libva backend driver version 1:1:0"
+  echo "vainfo: VA-API version: 1.22 (libva 2.22.0)"
+  echo "$identity"
+  echo "vainfo: Supported profile and entrypoints"
   [[ "${FAKE_VAINFO_NO_H264:-0}" == 1 ]] || echo "      VAProfileH264Main               : VAEntrypointVLD"
   echo "      VAProfileHEVCMain               : VAEntrypointVLD"
   exit 0
@@ -162,6 +175,18 @@ run_rc() {
     if [ "$rc" -eq "$want" ]; then pass "$label"; else fail "$label" "rc=$rc want=$want out=$(echo "$out" | tail -1)"; fi
 }
 
+run_rc_reason() { # <label> <want-rc> <want-reason> <envspec> <args...>
+    local label="$1" want="$2" wreason="$3" envspec="$4"; shift 4
+    local out rc
+    out="$(env $envspec bash "$SCRIPT" "$@" 2>&1)"
+    rc=$?
+    if [ "$rc" -eq "$want" ] && grep -qF "reason=$wreason" <<<"$out"; then
+        pass "$label"
+    else
+        fail "$label" "rc=$rc want=$want/$wreason out=$(echo "$out" | tail -1)"
+    fi
+}
+
 OK="FFMPEG_BIN=$runtime/bin/ffmpeg VAINFO_BIN=$runtime/bin/vainfo INNOGPU_VAAPI_FIXTURE_MODE=1"
 GOOD="$OK INNOGPU_VAAPI_SKIP_DEVICE_CHECKS=1 FAKE_SYSFS_ROOT=$runtime/sysfs FAKE_REF_FRAMEMD5=$runtime/ref.md5 FAKE_HW_FRAMEMD5=$runtime/hw.md5 INNOGPU_VAAPI_STATUS_FILE=$runtime/status-ok"
 
@@ -192,12 +217,30 @@ run_rc pci_mismatch        3 "$OK INNOGPU_VAAPI_SKIP_DEVICE_CHECKS=1 FAKE_SYSFS_
 run_rc vainfo_not_inno     3 "$OK INNOGPU_VAAPI_SKIP_DEVICE_CHECKS=1 FAKE_SYSFS_ROOT=$runtime/sysfs FAKE_VAINFO_INTEL=1" --codec all --device /dev/dri/renderD128
 run_rc vainfo_no_h264_profile 3 "$GOOD FAKE_VAINFO_NO_H264=1" --codec h264 --device /dev/dri/renderD128
 run_rc vainfo_hevc_ok      0 "$GOOD FAKE_VAINFO_NO_H264=1" --codec hevc --device /dev/dri/renderD128
-# ---- F7 lineage（dsh 返工批 R-2）：身份门按血统分派 + 独立 --status-file ----
+# ---- F7 lineage（2026-09-14 三方定案修订：三证据身份门 = loader 路径 +
+# va_openDriver 确认 + 身份行 fant/fh2m 独立 token；8 项负向/正向用例）----
+F_ENV="$OK INNOGPU_VAAPI_SKIP_DEVICE_CHECKS=1 FAKE_SYSFS_ROOT=$runtime/sysfs INNOGPU_LINEAGE=fantgpu"
 run_rc f7_illegal_lineage         2 "$OK INNOGPU_LINEAGE=bogus" --codec h264
+# 正向：FANT-silicon 身份行（真机实测口径）→ 全解码链 rc=0
+run_rc f7_fant_silicon_identity_pass 0 "$GOOD INNOGPU_LINEAGE=fantgpu FAKE_VAINFO_FANT=1" --codec h264 --device /dev/dri/renderD128
+# 正向：fh2m 兼容身份行 → rc=0
 run_rc f7_fh2m_identity_pass      0 "$GOOD INNOGPU_LINEAGE=fantgpu FAKE_VAINFO_FH2M=1" --codec h264 --device /dev/dri/renderD128
-run_rc f7_o_identity_rejected_for_f 3 "$OK INNOGPU_VAAPI_SKIP_DEVICE_CHECKS=1 FAKE_SYSFS_ROOT=$runtime/sysfs INNOGPU_LINEAGE=fantgpu" --codec all --device /dev/dri/renderD128
-run_rc f7_vendor_label_alone_rejected 3 "$OK INNOGPU_VAAPI_SKIP_DEVICE_CHECKS=1 FAKE_SYSFS_ROOT=$runtime/sysfs INNOGPU_LINEAGE=fantgpu FAKE_VAINFO_VENDOR_ONLY=1" --codec all --device /dev/dri/renderD128
-run_rc f7_fh2m_elsewhere_not_identity 3 "$OK INNOGPU_VAAPI_SKIP_DEVICE_CHECKS=1 FAKE_SYSFS_ROOT=$runtime/sysfs INNOGPU_LINEAGE=fantgpu FAKE_VAINFO_FH2M_ELSEWHERE=1" --codec all --device /dev/dri/renderD128
+# 负向 1：FANT 只出现在非身份行（banner），身份行无 token → 拒绝
+run_rc_reason f7_fant_only_non_identity_rejected 3 vainfo_identity_not_fant_fh2m "$F_ENV FAKE_VAINFO_FH2M_ELSEWHERE=1" --codec all --device /dev/dri/renderD128
+# 负向 2：FANTASTIC 更长标识符（token 边界不命中）→ 拒绝
+run_rc_reason f7_fantastic_longer_identifier_rejected 3 vainfo_identity_not_fant_fh2m "$F_ENV FAKE_VAINFO_FANTASTIC=1" --codec all --device /dev/dri/renderD128
+# 负向 3：缺 loader 路径 → 拒绝（分项 reason）
+run_rc_reason f7_loader_path_missing_rejected 3 vainfo_loader_path_missing "$F_ENV FAKE_VAINFO_NO_LOADER_PATH=1" --codec all --device /dev/dri/renderD128
+# 负向 4：缺 va_openDriver() returns 0 → 拒绝（分项 reason）
+run_rc_reason f7_open_return_missing_rejected 3 vainfo_open_not_confirmed "$F_ENV FAKE_VAINFO_NO_OPEN_RET=1" --codec all --device /dev/dri/renderD128
+# 负向 5：loader/open 成功但身份行无关串 → 拒绝
+run_rc_reason f7_unrelated_identity_rejected 3 vainfo_identity_not_fant_fh2m "$F_ENV FAKE_VAINFO_UNRELATED_ID=1" --codec all --device /dev/dri/renderD128
+# 负向 6：厂商标签 innosilicon 作身份行（loader/open 全成功）→ 仍拒绝
+run_rc_reason f7_innosilicon_identity_alone_rejected 3 vainfo_identity_not_fant_fh2m "$F_ENV FAKE_VAINFO_INNOSILICON_ID=1" --codec all --device /dev/dri/renderD128
+# 负向 7：O 血统输出（无 loader 路径/无 open 行）在 F 血统下 → 拒绝
+run_rc f7_o_identity_rejected_for_f 3 "$F_ENV" --codec all --device /dev/dri/renderD128
+# 负向 8：仅厂商标签（无 loader/open）→ 拒绝
+run_rc f7_vendor_label_alone_rejected 3 "$F_ENV FAKE_VAINFO_VENDOR_ONLY=1" --codec all --device /dev/dri/renderD128
 run_rc f7_status_file_missing_value 2 "$OK" --codec h264 --status-file
 run_rc f7_status_file_cli_overrides_env 0 "$GOOD INNOGPU_VAAPI_STATUS_FILE=/nonexistent/status" --codec h264 --device /dev/dri/renderD128 --status-file "$runtime/status-ok"
 run_rc f7_status_file_cli_priority_over_env 1 "$GOOD" --codec h264 --device /dev/dri/renderD128 --status-file /nonexistent/status
@@ -353,8 +396,12 @@ if grep -Fq 'LINEAGE="${INNOGPU_LINEAGE:-innogpu}"' "$SCRIPT" \
    && grep -Fq 'INNOGPU_LINEAGE must be innogpu or fantgpu' "$SCRIPT" \
    && grep -Fq 'STATUS_FILE="/proc/driver/fantgpu/gpu00/status"' "$SCRIPT" \
    && grep -Fq 'STATUS_FILE="/proc/driver/innogpu/gpu00/status"' "$SCRIPT" \
-   && grep -Fq 'vainfo_identity_not_fh2m' "$SCRIPT" \
-   && grep -Fq '(^|[^[:alnum:]_])fh2m([^[:alnum:]_]|$)' "$SCRIPT" \
+   && grep -Fq 'vainfo_loader_path_missing' "$SCRIPT" \
+   && grep -Fq 'vainfo_open_not_confirmed' "$SCRIPT" \
+   && grep -Fq 'vainfo_identity_not_fant_fh2m' "$SCRIPT" \
+   && grep -Fq '/dri/fh2m_drv_video.so' "$SCRIPT" \
+   && grep -Fq 'va_openDriver() returns 0' "$SCRIPT" \
+   && grep -Fq '(^|[^[:alnum:]_])(fant|fh2m)([^[:alnum:]_]|$)' "$SCRIPT" \
    && grep -Fq 'VAINFO_DRIVER_LINE' "$SCRIPT" \
    && grep -Fq "grep -iE 'Driver version:'" "$SCRIPT" \
    && grep -Fq 'STATUS_FILE_CLI="$2"; shift 2' "$SCRIPT" \
