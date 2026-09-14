@@ -112,6 +112,9 @@ docs/planning/evidence/o-stage/o-stage-snapshot.tar.zst.sha256
 docs/planning/evidence/o-stage/o-stage.manifest.tsv
 docs/planning/evidence/o-stage/o-stage.manifest.tsv.sha256
 docs/planning/evidence/o-stage/o4-f0.genesis.json
+docs/planning/evidence/o-stage/runtime-5.0.0-i2/c3-firmware-abort.txt
+docs/planning/evidence/o-stage/runtime-5.0.0-i2/install-rollback.txt
+docs/planning/evidence/o-stage/runtime-5.0.0-i2/preinstall-state.txt
 docs/planning/fantgpu-base-update-evaluation.md
 docs/planning/history.md
 docs/planning/o-stage-integration-plan.md

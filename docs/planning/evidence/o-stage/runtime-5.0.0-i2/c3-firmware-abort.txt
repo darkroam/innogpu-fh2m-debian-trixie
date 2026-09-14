@@ -1,0 +1,29 @@
+abort_reason=device_not_active
+package_version=5.0.0-i2
+package_deb_sha256=dd42ebe53a68893486187de8b79be18b11330f6317ffe39689bf6a200002f4f4
+modinfo_firmware_declared=fantgpu/fh2m/fh2m.sh,fantgpu/fh2m/fh2m.fw
+firmware_present=2/2
+firmware_missing_paths=none
+dmesg_window_start=unavailable
+dmesg_window_end=unavailable
+dmesg_firmware_lines=unavailable
+device_status=Driver Status: OK / Firmware Status: OK (compute-side srvkm only)
+executed_r_items=none
+operator=dsh-ssh-supervised
+ts=2026-09-14T07:53:45+08:00
+
+# ---- 补充证据（追加段，不属于固定字段）----
+# drm_sysfs_class=/sys/class/drm empty (no card*)
+# dev_dri=/dev/dri absent
+# xorg_error=open /dev/dri/card0: No such file or directory -> no screens found -> dwm 无法进入登录
+# firmware_files=4/4 present under /lib/firmware/fantgpu/fh2m/ (fh2m.fw fh2m.sh fh2c.fw fh2c.sh)
+# module_params: firmware_en=1 s_hdmi_nums=3 s_dp_nums=1 s_vga_nums=1 s_dpu_match=141 DriverMode=0x7fffffff
+#
+# 根因状态（dsh 终审裁决）：device_not_active 已闭合（sysfs/devfs 事实）。
+# 具体根因 = 静态支持的候选根因，待特权 dmesg 实锤后方可定案：
+#   候选：F 厂商驱动显示管线为 component master 架构，子设备平台设备由预编译
+#   HAL 按 hwinfo/ODM 板级匹配创建；本板（通用 PCIe Fantasy II-M）不命中厂商
+#   ODM 表 → master 在 DRM 注册前 -EPROBE_DEFER 永久推迟（源码静态位置：
+#   fantgpu_drm.c component 匹配为空 → match==NULL → ret=-EPROBE_DEFER，
+#   drm_dev_register 之前）。O 血统对应位置 innogpu_drm.c:1071/:1146。
+# 未获特权 dmesg 前，以上不得表述为已实锤根因。

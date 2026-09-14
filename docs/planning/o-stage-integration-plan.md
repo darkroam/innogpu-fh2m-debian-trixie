@@ -78,7 +78,7 @@
 4. **patch-000 no-transform 声明**（已实现）：builder 5.0.0-i1 分支无任何 o_shipped 字节变换步骤（PLL 语义风险 UNVERIFIED 登记）；
 5. **不安装契约**（已实现）：builder 仅构建；安装/回退由验证矩阵阶段手动执行；
 6. **保护区边界**：STAGE_ROOT/BUILD_LOG/OUT_DEB 可注入（5.0.0-i1 实跑注入 /tmp，build/ 保护区零写入；4.0.x-iN 默认保持历史行为）；
-7. **待裁决项（如实记录）**：check-release-package.sh 的门禁适配**已闭合（2026-09-12，C3-a 批 3）**——包名白名单/版本正则按血统配对（C1-①）+ required/forbidden 载荷断言按血统分派（C1-②）+ builder release 审计门禁对两血统无条件调用；fantgpu 模块 modprobe options 已三方定案（2026-09-13 dsh 终裁修订，`docs/planning/evidence/o-stage/c2-ruling.md`）：decision=write-options、firmware_en=1——options 文件由包内确定性 payload 承载（builder 组装期写 `etc/modprobe.d/fantgpu.conf`，dpkg 管理、postinst 不写），两血统运行时 firmware_en 均须为 1（O 真机实测 = 1；O 分支保持 postinst 直写历史口径）；
+7. **定案项（如实记录）**：check-release-package.sh 的门禁适配**已闭合（2026-09-12，C3-a 批 3）**——包名白名单/版本正则按血统配对（C1-①）+ required/forbidden 载荷断言按血统分派（C1-②）+ builder release 审计门禁对两血统无条件调用；fantgpu 模块 modprobe options 已三方定案（2026-09-13 dsh 终裁修订，`docs/planning/evidence/o-stage/c2-ruling.md`）：decision=write-options、firmware_en=1——options 文件由包内确定性 payload 承载（builder 组装期写 `etc/modprobe.d/fantgpu.conf`，dpkg 管理、postinst 不写），两血统运行时 firmware_en 均须为 1（O 真机实测 = 1；O 分支保持 postinst 直写历史口径）；
 8. **双 clean-build 字节一致证据**：5.0.0-i1 双 clean-build（build-A/B）SHA-256 比对，证据落 docs/planning/evidence/o-stage/（`build-5.0.0-i1.sha256`）；**5.0.0-i2（C3-a 重构建）证据 `build-5.0.0-i2.sha256` 与 i1 并存不覆盖**。
 
 ## 四、验证计划（阶段三验证矩阵清单）

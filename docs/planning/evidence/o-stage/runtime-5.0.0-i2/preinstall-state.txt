@@ -1,0 +1,40 @@
+# 安装前状态快照（回退目标 = 当前状态）
+# operator=dsh-qoder-supervised ts=20260914-010658 host=<redacted>
+kernel=6.12.101+deb13-amd64
+--- dpkg 状态 ---
+innogpu-fh2m		unknown ok not-installed
+innogpu-fh2m-kernel-dkms		unknown ok not-installed
+innogpu-fh2m-trixie	4.0.2-i3	install ok installed
+innogpu-kernel-dkms		unknown ok not-installed
+--- dkms 状态 ---
+innogpu-kernel/2.2, 6.12.101+deb13-amd64, x86_64: installed
+--- 已加载模块 ---
+innogpu              6991872  100
+drm_display_helper    274432  1 innogpu
+drm_kms_helper        253952  2 drm_display_helper,innogpu
+i2c_algo_bit           16384  1 innogpu
+snd_pcm               188416  5 snd_hda_intel,snd_usb_audio,snd_hda_codec,snd_hda_core,innogpu
+snd                   151552  19 snd_hda_codec_generic,snd_seq,snd_hda_codec_conexant,snd_seq_device,snd_hwdep,snd_hda_intel,snd_usb_audio,snd_usbmidi_lib,snd_hda_codec,snd_timer,snd_pcm,snd_rawmidi,innogpu
+drm                   774144  48 i2c_hid,drm_kms_helper,drm_display_helper,innogpu
+--- innogpu proc 状态 ---
+Driver Status:   OK
+
+Device ID: 0:128
+Firmware Status: OK
+Server Errors:   0
+HWR Event Count: 0
+CRR Event Count: 0
+SLR Event Count: 0
+WGP Error Count: 0
+TRP Error Count: 0
+FWF Event Count: 0
+APM Event Count: 0
+GPU Utilisation: -
+--- firmware_en 实测 ---
+1
+--- PCI ---
+0000:02:00.0 VGA compatible controller [0300]: Beijing Fantasy Technology Co., Ltd. Fantasy II-M [1ec8:9810]
+--- modprobe.d ---
+-rw-r--r--   1 root root    30  9月 9日 12:15 innogpu.conf
+--- X 会话 ---
+DISPLAY=:0

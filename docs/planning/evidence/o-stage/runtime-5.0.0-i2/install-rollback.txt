@@ -1,0 +1,22 @@
+# install/rollback 5.0.0-i2 往返记录（validation-plan §1.4）
+# 步骤2 受监督安装：operator=dsh ts=20260914-011118
+deb_sha256_verified=dd42ebe53a68893486187de8b79be18b11330f6317ffe39689bf6a200002f4f4
+dpkg_action=install fantgpu-fh2m-trixie 5.0.0-i2 (conflicts auto-remove innogpu-fh2m-trixie 4.0.2-i3)
+--- 安装后（重启前）验证 ---
+fantgpu-fh2m-trixie	5.0.0-i2	install ok installed
+innogpu-fh2m-trixie	4.0.2-i3	install ok config-files
+fantgpu-fh2m-kernel/2.2, 6.12.101+deb13-amd64, x86_64: installed
+--- 包内 options 文件 ---
+-rw-r--r-- 1 root root 30  9月 8日 00:00 /etc/modprobe.d/fantgpu.conf
+options fantgpu firmware_en=1
+--- 旧 innogpu conf ---
+-rw-r--r-- 1 root root 30  9月 9日 12:15 /etc/modprobe.d/innogpu.conf
+--- 当前已加载模块（重启前仍为 innogpu）---
+innogpu              6991872  105
+drm_display_helper    274432  1 innogpu
+drm_kms_helper        253952  2 drm_display_helper,innogpu
+--- 内核模块文件 ---
+总计 1988
+drwxr-xr-x 2 root root    4096  9月14日 01:10 .
+drwxr-xr-x 3 root root    4096  9月14日 01:10 ..
+-rw-r--r-- 1 root root 2025576  9月14日 01:10 fantgpu.ko.xz
