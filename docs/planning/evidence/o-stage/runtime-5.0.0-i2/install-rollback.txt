@@ -20,3 +20,15 @@ drm_kms_helper        253952  2 drm_display_helper,innogpu
 drwxr-xr-x 2 root root    4096  9月14日 01:10 .
 drwxr-xr-x 3 root root    4096  9月14日 01:10 ..
 -rw-r--r-- 1 root root 2025576  9月14日 01:10 fantgpu.ko.xz
+
+--- 停批后回退（用户授权，2026-09-14）---
+rollback_source=build/innogpu-fh2m-trixie_4.0.2-i3.deb
+rollback_deb_sha256=177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662
+rollback_sha256_verification=PASS
+remove_fantgpu_fh2m_trixie=PASS (dpkg --remove；package state: deinstall ok config-files)
+install_innogpu_fh2m_trixie=PASS (dpkg -i; package state: install ok installed)
+reboot=PASS (required reboot completed)
+verify_after_reboot=PASS (scripts/verify-install-status.sh --require-reboot 4.0.2-i3)
+runtime_after_reboot=Driver/Firmware OK; innogpu loaded; DKMS installed; card0/renderD128/fb0 present; X display reachable; GL accelerated; DRI3 present
+firmware_en=1
+rollback_roundtrip=PASS (5.0.0-i2 stopped before R items; restored 4.0.2-i3)

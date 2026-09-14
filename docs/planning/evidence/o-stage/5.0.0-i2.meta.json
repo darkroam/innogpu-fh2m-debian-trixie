@@ -1,11 +1,11 @@
 {
   "schema_version": "1.0",
-  "id": "5.0.0-i1",
+  "id": "5.0.0-i2",
   "lineage": "fantgpu",
-  "version": "5.0.0-i1",
-  "tag": "fantgpu-5.0.0-i1",
+  "version": "5.0.0-i2",
+  "tag": "fantgpu-5.0.0-i2",
   "source_date_epoch": 1788796800,
-  "o_stage_tree_hash": "937e37107f692712e6fba9b5eb93a48dd6bb034f138e5e51a2bb9c2beaa0d652",
+  "o_stage_tree_hash": "c44ce7850134c1455c0935519fc6cb08a81b505804150c59dde1338e1369bd3f",
   "tree_hash_definition": "SHA-256 of o-stage.manifest.tsv canonical sorted bytes (O-4 contract)",
   "input": {
     "f0_snapshot_sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e",
@@ -102,6 +102,13 @@
       "patch_sha256": "534e23419758ab1590f05726209b1dff5cde9d6f723c2a89d1ac21dd26331fad",
       "before_tree_hash": "0620ba91f53e00b22f9bdaaf0f56a82909679d35dc69669e7fefcf896e0cb034",
       "after_tree_hash": "937e37107f692712e6fba9b5eb93a48dd6bb034f138e5e51a2bb9c2beaa0d652"
+    },
+    {
+      "id": "030-030",
+      "patch": "patches/030-030.patch",
+      "patch_sha256": "5808e489397b71df3c89a5f472d1474f2f5e1af1933f2f3b927485e8c87dff9d",
+      "before_tree_hash": "937e37107f692712e6fba9b5eb93a48dd6bb034f138e5e51a2bb9c2beaa0d652",
+      "after_tree_hash": "c44ce7850134c1455c0935519fc6cb08a81b505804150c59dde1338e1369bd3f"
     }
   ],
   "unverified": [
@@ -116,21 +123,21 @@
   ],
   "snapshot_artifacts": {
     "o-stage-snapshot.tar.zst": {
-      "sha256": "468ccf3dea095310ad0544af1c8a8d1a7b1899d59338bb61052054f2749aed85",
-      "byte_count": 10966476
+      "sha256": "ecf6b5f59c40744907c1e27cf8094ac29a950d4c2262787998597c64f812af30",
+      "byte_count": 10966562
     },
     "o-stage-snapshot.tar.zst.sha256": {
-      "sha256": "6754c02fdd8bd2e1aa7b4c31ac1163f8fea185c90177bb7548de9aa7be1bfe19"
+      "sha256": "bdf44acd91309fc302939c1d6477fcac1bbf1174411da4ae297cfc19bc75ed28"
     },
     "o-stage.manifest.tsv": {
-      "sha256": "937e37107f692712e6fba9b5eb93a48dd6bb034f138e5e51a2bb9c2beaa0d652"
+      "sha256": "c44ce7850134c1455c0935519fc6cb08a81b505804150c59dde1338e1369bd3f"
     },
     "o-stage.manifest.tsv.sha256": {
-      "sha256": "f1bf5427f076d38073d4a4e5b16961f2127e3891006c6d2b0d2ddeb61f18cfea"
+      "sha256": "86438cf4b59e30999924871f1efbb0ece758dbf383125025496f4eef86035a79"
     }
   },
   "validation_results": {
-    "path": "docs/planning/evidence/o-stage/5.0.0-i1-validation-results.json",
+    "path": "docs/planning/evidence/o-stage/5.0.0-i2-validation-results.json",
     "schema": "validation-results-1.0"
   },
   "epoch_mtime": "@1640995200",

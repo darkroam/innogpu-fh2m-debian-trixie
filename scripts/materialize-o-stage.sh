@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# scripts/materialize-o-stage.sh — 阶段三 O_stage 源树物化（F0 + 13 条 030-NNN → o-stage 快照）
+# scripts/materialize-o-stage.sh — 阶段三 O_stage 源树物化（F0 + 14 条 030-NNN → o-stage 快照）
 #
 # 契约：docs/planning/o-stage-integration-plan.md §一（dsh 终审通过）。
-#   - 前置校验（tar 1.35 / zstd 1.5.7 / f0 快照 SHA / 13 条 patch SHA）
+#   - 前置校验（tar 1.35 / zstd 1.5.7 / f0 快照 SHA / 14 条 patch SHA）
 #   - 解包 F0 → 树 hash 校验（O-4 锁定 7219d817…）
-#   - 13 条 030-NNN 按链序 -p1 --fuzz=0 应用，每链点校验 after_tree_hash
-#   - 最终树 hash == 030-029.meta.json after_tree_hash（= 937e3710…）
+#   - 14 条 030-NNN 按链序 -p1 --fuzz=0 应用，每链点校验 after_tree_hash
+#   - 最终树 hash == 030-030.meta.json after_tree_hash（= c44ce785…）
 #   - 五件同代事务产物（生成顺序：manifest → manifest.sha256 → tar →
 #     tar.sha256 → meta.json（引用四文件 SHA）；提交顺序 = 产物名固定序；
 #     每步 rename 后目录 fsync；journal + 恢复；禁止混代；fail-closed 统一 5）
@@ -17,7 +17,8 @@
 # docs/planning/evidence/o-stage，阶段三证据/产物写入目录）与 /tmp 工作目录；
 # 绝不写任何保护区路径（debs/vendor/build/third_party 及 drivers/baselines）。
 #
-# 用法：scripts/materialize-o-stage.sh（无参数；不接受任何参数）
+# 用法：scripts/materialize-o-stage.sh（无参数；不接受任何参数；版本族经
+# OSTAGE_VERSION/OSTAGE_TAG/OSTAGE_META_NAME/OSTAGE_VALIDATION_RESULTS 注入，缺省 5.0.0-i2 代）
 # 测试注入（仅 tests 使用，生产零影响）：OSTAGE_INPUT_DIR / OSTAGE_PATCH_DIR /
 # OSTAGE_OUT_DIR / OSTAGE_WORK_DIR / OSTAGE_EXPECT_F0_SHA / OSTAGE_EXPECT_F0_TREE /
 # OSTAGE_EXPECT_FINAL_TREE / OSTAGE_FAIL_INJECT
@@ -38,7 +39,7 @@ export LC_ALL
 # ---- 锁定常量（可被测试注入覆盖） ----
 F0_SNAPSHOT_SHA_DEFAULT="65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e"
 F0_TREE_HASH_DEFAULT="7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb"
-FINAL_TREE_HASH_DEFAULT="937e37107f692712e6fba9b5eb93a48dd6bb034f138e5e51a2bb9c2beaa0d652"
+FINAL_TREE_HASH_DEFAULT="c44ce7850134c1455c0935519fc6cb08a81b505804150c59dde1338e1369bd3f"
 EXPECT_F0_SHA="${OSTAGE_EXPECT_F0_SHA:-$F0_SNAPSHOT_SHA_DEFAULT}"
 EXPECT_F0_TREE="${OSTAGE_EXPECT_F0_TREE:-$F0_TREE_HASH_DEFAULT}"
 EXPECT_FINAL_TREE="${OSTAGE_EXPECT_FINAL_TREE:-$FINAL_TREE_HASH_DEFAULT}"
@@ -47,12 +48,14 @@ EXPECT_FINAL_TREE="${OSTAGE_EXPECT_FINAL_TREE:-$FINAL_TREE_HASH_DEFAULT}"
 TAR_REQUIRED="1.35"
 ZSTD_REQUIRED="1.5.7"
 EPOCH_MTIME="1640995200"
-# ---- 5.0.0-i1 provenance（dsh 批准） ----
-VERSION="5.0.0-i1"
-TAG="fantgpu-5.0.0-i1"
-SOURCE_DATE_EPOCH="1788796800"
-VALIDATION_RESULTS="docs/planning/evidence/o-stage/5.0.0-i1-validation-results.json"
+# ---- 版本/provenance（参数化；默认 5.0.0-i2 代——030-030 入链后的 O_stage 代。
+# 2026-09-14 dsh 返工裁决：旧 i1 名产物随过渡说明退役，本代即 i2） ----
+VERSION="${OSTAGE_VERSION:-5.0.0-i2}"
+TAG="${OSTAGE_TAG:-fantgpu-5.0.0-i2}"
+SOURCE_DATE_EPOCH="${OSTAGE_SOURCE_DATE_EPOCH:-1788796800}"
+VALIDATION_RESULTS="${OSTAGE_VALIDATION_RESULTS:-docs/planning/evidence/o-stage/5.0.0-i2-validation-results.json}"
 VALIDATION_SCHEMA="validation-results-1.0"
+META_NAME="${OSTAGE_META_NAME:-5.0.0-i2.meta.json}"
 
 # ---- 路径 ----
 IN_DIR="${OSTAGE_INPUT_DIR:-$ROOT/docs/planning/evidence/o-stage}"
@@ -68,11 +71,11 @@ P_TAR="o-stage-snapshot.tar.zst"
 P_TAR_SHA="o-stage-snapshot.tar.zst.sha256"
 P_MANIFEST="o-stage.manifest.tsv"
 P_MANIFEST_SHA="o-stage.manifest.tsv.sha256"
-P_META="5.0.0-i1.meta.json"
+P_META="$META_NAME"
 LOCK_FILE="$OUT_DIR/.materialize.lock"
 JOURNAL="$OUT_DIR/.materialize.journal"
 
-# ---- 13 条 030-NNN 链（显式清单，禁止 glob） ----
+# ---- 14 条 030-NNN 链（显式清单，禁止 glob） ----
 CHAIN=(
   "030-001|patches/030-001.patch"
   "030-002|patches/030-002.patch"
@@ -87,6 +90,7 @@ CHAIN=(
   "030-026-lifecycle|patches/030-026-lifecycle.patch"
   "030-028|patches/030-028.patch"
   "030-029|patches/030-029.patch"
+  "030-030|patches/030-030.patch"
 )
 
 die() { echo "materialize=FAIL: $*" >&2; exit 1; }
@@ -205,13 +209,17 @@ spec.loader.exec_module(o4)
 
 EPOCH_MTIME = "1640995200"
 TAR_REQUIRED, ZSTD_REQUIRED = "1.35", "1.5.7"
-VERSION, TAG, SDE = "5.0.0-i1", "fantgpu-5.0.0-i1", "1788796800"
-VAL_RES = "docs/planning/evidence/o-stage/5.0.0-i1-validation-results.json"
+VERSION = os.environ.get("OSTAGE_VERSION") or "5.0.0-i2"
+TAG = os.environ.get("OSTAGE_TAG") or "fantgpu-5.0.0-i2"
+SDE = os.environ.get("OSTAGE_SOURCE_DATE_EPOCH") or "1788796800"
+VAL_RES = (os.environ.get("OSTAGE_VALIDATION_RESULTS")
+           or "docs/planning/evidence/o-stage/5.0.0-i2-validation-results.json")
 VAL_SCHEMA = "validation-results-1.0"
+META_NAME = os.environ.get("OSTAGE_META_NAME") or "5.0.0-i2.meta.json"
 
 NAMES = ["o-stage-snapshot.tar.zst", "o-stage-snapshot.tar.zst.sha256",
          "o-stage.manifest.tsv", "o-stage.manifest.tsv.sha256",
-         "5.0.0-i1.meta.json"]
+         META_NAME]
 dest = {n: os.path.join(out_dir, n) for n in NAMES}
 txn = {n: dest[n] + ".txn.tmp" for n in NAMES}
 bak = {n: dest[n] + ".bak.tmp" for n in NAMES}
@@ -254,7 +262,7 @@ def artifacts_self_consistent():
     # 以 dest meta.json 的四文件 SHA 交叉验证五件自洽（提交循环完成但
     # journal 未更新的状态判定依据）
     try:
-        with open(dest["5.0.0-i1.meta.json"], "r", encoding="utf-8") as fh:
+        with open(dest[META_NAME], "r", encoding="utf-8") as fh:
             m = json.load(fh)
         art = m["snapshot_artifacts"]
         return (sha256_file(dest["o-stage-snapshot.tar.zst"])
@@ -370,7 +378,7 @@ try:
     chain = json.load(open(chain_file, encoding="utf-8"))
     meta = {
         "schema_version": "1.0",
-        "id": "5.0.0-i1",
+        "id": VERSION,
         "lineage": "fantgpu",
         "version": VERSION,
         "tag": TAG,
@@ -404,7 +412,7 @@ try:
         "snapshot_tool_versions":
             {"tar_required": TAR_REQUIRED, "zstd_required": ZSTD_REQUIRED},
     }
-    with open(txn["5.0.0-i1.meta.json"], "w", encoding="utf-8") as fh:
+    with open(txn[META_NAME], "w", encoding="utf-8") as fh:
         json.dump(meta, fh, indent=2, ensure_ascii=False)
         fh.write("\n")
         fsync_fd(fh)
@@ -545,7 +553,7 @@ if [[ "$f0_sha" != "$side_sha" || "$f0_sha" != "$EXPECT_F0_SHA" ]]; then
     die "F0 snapshot SHA mismatch: actual=$f0_sha sidecar=$side_sha expect=$EXPECT_F0_SHA"
 fi
 
-# 13 条 patch + SHA 校验（与 meta.json apply.patch_sha256 一致）
+# 14 条 patch + SHA 校验（与 meta.json apply.patch_sha256 一致）
 for entry in "${CHAIN[@]}"; do
     id="${entry%%|*}"
     pf="${entry#*|}"
@@ -581,7 +589,7 @@ if [[ "$got_tree" != "$EXPECT_F0_TREE" ]]; then
     die "F0 tree hash mismatch: actual=$got_tree expect=$EXPECT_F0_TREE"
 fi
 
-# 13 条链序应用 + 每链点 after_tree_hash 校验
+# 14 条链序应用 + 每链点 after_tree_hash 校验
 chain_json="$(mktemp "${TMPDIR:-/tmp}/ostage-chain.XXXXXX.json")"
 python3 - "$chain_json" <<'PY'
 import json, sys
@@ -621,7 +629,7 @@ done
 
 # 最终树 hash（= 链尾 meta after + 文档锁定值）
 got_final="$(tree_hash "$TREE")"
-last_after="$(meta_field "$PATCH_DIR/030-029.meta.json" "apply.after_tree_hash")"
+last_after="$(meta_field "$PATCH_DIR/030-030.meta.json" "apply.after_tree_hash")"
 if [[ "$got_final" != "$last_after" || "$got_final" != "$EXPECT_FINAL_TREE" ]]; then
     die "final tree hash mismatch: actual=$got_final last_after=$last_after expect=$EXPECT_FINAL_TREE"
 fi
@@ -629,6 +637,10 @@ fi
 # 五件同代事务提交
 OSTAGE_EXPECT_F0_SHA="$EXPECT_F0_SHA" \
 OSTAGE_EXPECT_F0_TREE="$EXPECT_F0_TREE" \
+OSTAGE_VERSION="$VERSION" OSTAGE_TAG="$TAG" \
+OSTAGE_SOURCE_DATE_EPOCH="$SOURCE_DATE_EPOCH" \
+OSTAGE_VALIDATION_RESULTS="$VALIDATION_RESULTS" \
+OSTAGE_META_NAME="$META_NAME" \
 commit_artifacts "$TREE" "$chain_json"
 
 rm -f -- "$chain_json"

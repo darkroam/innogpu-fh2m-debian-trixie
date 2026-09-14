@@ -23,7 +23,7 @@ case "$VERSION" in
         exit 1
         ;;
 esac
-# 血统：5.0.0-iN = fantgpu 血统（O_stage 物化源树，030 链 13 项，patch-000
+# 血统：5.0.0-iN = fantgpu 血统（O_stage 物化源树，030 链 14 项，patch-000
 # no-transform；i2 起含 F 血统 userspace/固件载荷）；其余 = innogpu/Deepin 血统。
 FANT_LINEAGE=0
 [[ "$VERSION" == 5.0.0-i* ]] && FANT_LINEAGE=1
@@ -121,17 +121,20 @@ trap 'rm -rf "$STAGE"' EXIT
 mkdir -p "$STAGE/source" "$STAGE/package"
 
 if [[ "$FANT_LINEAGE" == 1 ]]; then
-    # fantgpu 血统：DKMS 源 = O_stage 物化快照解包（030 链 13 项已含、patch-000
-    # no-transform、o_shipped 对象原样）；校验快照 SHA（meta 锁定值 + sidecar
-    # 内容）与解包树 hash（O-4 契约）——不可变 provenance 三方一致（codex P1）
+    # fantgpu 血统：DKMS 源 = O_stage 物化快照解包（030 链 14 项已含——
+    # 030-030 hwinfo 音频安全回退随链入树、patch-000 no-transform、o_shipped
+    # 对象原样）；校验快照 SHA（meta 锁定值 + sidecar 内容）与解包树 hash
+    # （O-4 契约）——不可变 provenance 三方一致（codex P1）。包内 DKMS 源树
+    # 与锁定 o_stage_tree_hash 同一代，无 post-trace 打补丁（dsh 返工裁决：
+    # 印证门禁恢复——补丁后状态必须被锁定证据覆盖）。
     OSTAGE_DIR="$ROOT/docs/planning/evidence/o-stage"
     OSTAGE_SNAP="$OSTAGE_DIR/o-stage-snapshot.tar.zst"
     [[ -f "$OSTAGE_SNAP" ]] || { echo "staging_ostage_snapshot=FAIL"; exit 1; }
-    OSTAGE_TREE_HASH="937e37107f692712e6fba9b5eb93a48dd6bb034f138e5e51a2bb9c2beaa0d652"
+    OSTAGE_TREE_HASH="c44ce7850134c1455c0935519fc6cb08a81b505804150c59dde1338e1369bd3f"
     snap_sha="$(sha256sum "$OSTAGE_SNAP" | awk '{print $1}')"
     side_sha="$(awk '{print $1}' "$OSTAGE_DIR/o-stage-snapshot.tar.zst.sha256")"
     # meta 锁定四值（不可变 provenance；快照与 sidecar 同时被替换时以 meta 兜底）
-    meta_sha="$(python3 - "$OSTAGE_DIR/5.0.0-i1.meta.json" <<'PY'
+    meta_sha="$(python3 - "$OSTAGE_DIR/5.0.0-i2.meta.json" <<'PY'
 import json, sys
 m = json.load(open(sys.argv[1], encoding="utf-8"))
 print(m["snapshot_artifacts"]["o-stage-snapshot.tar.zst"]["sha256"])
@@ -160,7 +163,7 @@ PY
     mv "$STAGE/source/o-stage" "$STAGE/source.tree"
     rm -rf "$STAGE/source"
     mv "$STAGE/source.tree" "$STAGE/source"
-    APPLIED_SOURCE_FIXES="o-stage-materialized-030-chain-13 (patch-000 no-transform)"
+    APPLIED_SOURCE_FIXES="o-stage-materialized-030-chain-14 (incl. 030-030 hwinfo audio fallback; patch-000 no-transform)"
     echo "staging_deterministic_transform=PASS (no-transform: fantgpu objects used as-is)"
 else
     cp -r drivers/. "$STAGE/source/"
@@ -210,8 +213,9 @@ if [[ "$FANT_LINEAGE" == 1 ]]; then
     [[ -d "$P/usr/src/o-stage" && "$(ls -A "$P/usr/src" | wc -l)" == 1 ]] || {
         echo "builder_ostage_prefix=FAIL"; exit 1; }
     mv "$P/usr/src/o-stage" "$P/usr/src/$DKMS_SRC_NAME"
-    # no-transform：树自带 fant*.o_shipped 原样进入 DKMS 源（不跑 patch-gpupll）
-    # 无 apply_reviewed_source_fixes（030 链已在 materialize 阶段应用）
+    # no-transform：树自带 fant*.o_shipped 原样进入 DKMS 源（不跑 patch-gpupll）。
+    # F wrapper 防护在 O_stage payload trace 校验完成后应用，避免把明确登记的
+    # F-only 适配误报为 O_stage provenance 漂移。
 else
     SHARE_DIR="innogpu-fh2m-trixie"
     CMD_PREFIX="innogpu-"
@@ -341,7 +345,7 @@ if [[ "$FANT_LINEAGE" == 1 ]]; then
     DKMS_VER="2.2"
     KERNEL_MOD="fantgpu"
     PKG_CONFLICTS="innogpu-fh2m, innogpu-fh2m-kernel-dkms, innogpu-kernel-dkms, innogpu-fh2m-trixie"
-    DESC_BODY=$(printf ' fantgpu lineage: O_stage materialized source tree (030 chain of 13,\n patch-000 no-transform), coherent fantgpu (F) userspace payload (binary-manifest-fantgpu.json locked; build-time DDX/UCM/wayland selection).')
+    DESC_BODY=$(printf ' fantgpu lineage: O_stage materialized source tree (030 chain of 14,\n patch-000 no-transform), coherent fantgpu (F) userspace payload (binary-manifest-fantgpu.json locked; build-time DDX/UCM/wayland selection).')
 else
     PKG_NAME="innogpu-fh2m-trixie"
     PKG_DESC="Innosilicon Fantasy II-M driver (migrated source tree, version $VERSION)"

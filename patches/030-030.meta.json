@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0",
+  "id": "030-030",
+  "ledger_ref": {
+    "item": "030",
+    "neutral_record": "F-ONLY-001",
+    "mapping": "docs/planning/030-mapping-table.md（F-only 新增项；无 D 侧台账来源）",
+    "description": "fantgpu-hwinfo-audio-fallback（hwinfo 缺失时音频 HAL 安全回退）"
+  },
+  "deepin_patch": {
+    "path": "patches/030-030.patch",
+    "sha256": "5808e489397b71df3c89a5f472d1474f2f5e1af1933f2f3b927485e8c87dff9d",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "docs/planning/evidence/o-stage/f0-snapshot.tar.zst",
+      "sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e"
+    },
+    "tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+    "chain_base": {
+      "id": "030-029",
+      "after_tree_hash": "937e37107f692712e6fba9b5eb93a48dd6bb034f138e5e51a2bb9c2beaa0d652"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "f-only-fix",
+      "summary": "真机停批（2026-09-14）后新增：5.0.0-i2 步骤 3 中止证据显示 hwinfo_g0m.bin 可选板级输入缺失、DP/HDMI/VGA 跳过 hwinfo，音频 component bind 进入 fh2m_hal_os_release_match 发生 NULL pointer dereference。本补丁在 fantsrvkm/fantaudio_drv.c init_os_name 入口增加守卫：hwinfo 未完成（!fh2m_hal_get_hwinfo_finished_status(chip->parent)）时直接采用安全默认 dma_pointer_mode=DMA_POINTER_NORMAL 并返回，不进入 HAL OS matcher。不伪造固件、不改变 F0 或前序 030 链语义、不改 hwinfo 语义——仅在新 i2 O_stage 快照中补上缺失可选输入的确定行为。"
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "F-only 补丁（无 D 侧台账映射）；目标文件 fantsrvkm/fantaudio_drv.c 为 vendor 源（F0 同口径），新增 6 行为本项目编写的安全回退代码；未引入第三方文件或 notice；正式 tools/audit-licenses.py 结果待批次验证。"
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "030-001, 030-002, 030-006, 030-009, 030-007, 030-023, 030-025, 030-024, 030-026, 030-027, 030-026-lifecycle, 030-028, 030-029 applied",
+      "summary": "链基 = 030-029 after_tree_hash 937e3710…（O_stage 树）；目标文件 fantsrvkm/fantaudio_drv.c 与全部前置项不重叠。"
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "f-only-fix",
+      "summary": "无 D 侧来源（本补丁由真机停批证据直接驱动，不属于 030 迁移项）；直接作用于 O_stage 树 F 源码，命名/接口与 F 树一致（fh2m_hal_get_hwinfo_finished_status 为 F HAL 既有接口）。无 hunk 被基线吸收、无伪造改动。"
+    }
+  },
+  "apply": {
+    "before_tree_hash": "937e37107f692712e6fba9b5eb93a48dd6bb034f138e5e51a2bb9c2beaa0d652",
+    "after_tree_hash": "c44ce7850134c1455c0935519fc6cb08a81b505804150c59dde1338e1369bd3f",
+    "patch_sha256": "5808e489397b71df3c89a5f472d1474f2f5e1af1933f2f3b927485e8c87dff9d",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <CHAIN_BASE> < patches/030-030.patch",
+    "result": "1 file changed (fantsrvkm/fantaudio_drv.c); no .orig/.rej; fresh replay tree hash == after_tree_hash"
+  },
+  "rollback": {
+    "command": "remove O_stage and re-extract chain base (F0 snapshot + 030-001..030-029, 13 条); do not reverse-edit F0",
+    "target": "chain base tree hash 937e37107f692712e6fba9b5eb93a48dd6bb034f138e5e51a2bb9c2beaa0d652"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "fresh chain-base replay: -p1, --fuzz=0, rc=0",
+        "no .orig/.rej artifacts",
+        "replay tree hash c44ce7850134c1455c0935519fc6cb08a81b505804150c59dde1338e1369bd3f == after_tree_hash",
+        "apply_level -p1 按补丁实际 diff 头（diff -ruN a/… b/… 单层前缀）实测测定"
+      ]
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "新包受监督安装后：scripts/check-fantgpu-runtime-health.sh PASS（Driver/Firmware OK + /sys/class/drm/card* + /dev/dri/card* + 特权 dmesg 无固件请求失败/Oops）+ DRM 注册 + 显示桌面可达；hwinfo 缺失场景下音频 bind 无 NULL deref"
+    }
+  }
+}

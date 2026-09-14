@@ -12,9 +12,9 @@
 
 | 范围 | 入口与用例 | 小计 |
 | --- | --- | --- |
-| unit | manifest 9 + license 50 + version 12 + extractor 7 + results parser 19 + exec probes 12 + VA-API 56 + DMA-BUF 147 + DRI repair 34 + collab 26 + suspend/resume 60 + suspend failure finalize 15 + p2-normalize 6 + r16-gate 13 + r16-build-bc-map 10 + r16-classify 10 | 16 个入口 / 486 项 |
+| unit | manifest 9 + license 50 + version 12 + extractor 7 + results parser 19 + exec probes 12 + VA-API 56 + DMA-BUF 147 + DRI repair 34 + collab 26 + suspend/resume 60 + suspend failure finalize 15 + p2-normalize 6 + r16-gate 13 + r16-build-bc-map 10 + r16-classify 10 + F runtime health 7 | 17 个入口 / 493 项 |
 | 其他 CI/沙箱 | fbterm 1 + package 11 + Picom install 3 + Picom session 3 + xdisplay 5 | 5 个入口 / 23 项 |
-| **合计** | 不含需真实设备/root/副作用授权的 runtime 项 | **21 个入口 / 509 项** |
+| **合计** | 不含需真实设备/root/副作用授权的 runtime 项 | **22 个入口 / 515 项** |
 
 | 测试 | 位置 | 断言 | 权限/环境 | 修改系统 |
 | --- | --- | --- | --- | --- |
@@ -28,6 +28,8 @@
 | runtime 结果解析 | tests/unit/run-results-parser-tests.sh | 严格解析、授权、重复/粘连/缺失输入、`#` 注释跳过 | 无设备，隔离 baseline | 否 |
 | Vulkan/OpenCL 探针失败路径 | tests/unit/run-exec-probes-tests.sh | 编译、loader/设备失败、格式与清理 | gcc，无设备可跑 | 否 |
 | VA-API 解码控制流 | tests/unit/run-vaapi-decode-tests.sh | 参数/工具/设备/身份/输入/参考/硬解/超时（rc=124 与 rc=137 忽略 TERM→SIGKILL 忙循环 fixture 均归类超时，退出码 5）/真实 framemd5 格式负例/聚合/硬解参数断言/状态门禁严格解析/mktemp/TERM 清理/无残留；fixture 模式独立命名空间 fixture_*，不产出权威 PASS | 无设备（fake ffmpeg/vainfo/sysfs/status），隔离 baseline | 否 |
+| F runtime health | tests/unit/run-fantgpu-runtime-health-tests.sh | 7 个合成用例：正常通过、DRM sysfs/devfs card 缺失、必需固件请求失败、可选 `hwinfo_g0m.bin` 缺失允许、kernel fault、dmesg 缺失、status 缺失；所有阻断路径 fail-closed | 无设备（fake dmesg/status/sysfs/devfs） | 否 |
+| F builder contract | tests/unit/run-builder-fantgpu-gates-tests.sh | F-only fallback 同时进入编译树/包内 DKMS 树、guard 顺序、O_stage 快照 `patch --dry-run` 可重放且无 fuzz | shell/patch/tar/zstd，无设备 | 否 |
 | DRI repair 服务生命周期 | tests/unit/run-dri-repair-tests.sh | helper 三态判定（absent/owned/foreign；外国普通文件/符号链接拒绝覆盖）与 unit `ExecStart` 一致（包 `/usr/sbin` vs 源码 fallback `/usr/local/sbin` 区分）、**PATH 注入反例（任意同名程序不得被持久化）**、失败回滚**只删本次新建**（已有有效安装在重装失败后保留）、`enable/start` 失败传播、幂等安装/卸载、**package-absent 只清 DRI 自有路径**（不触碰 userspace/modules-load）、**版本不匹配零副作用**、**精确所有权**（只删除规范化目标等于本仓库 `scripts/repair-dri-nodes.sh` 的符号链接；同名外国仓库链接/普通文件保留）、**测试根安全（空//相对路径 fail closed）**、包 helper 分支正例、无硬编码目标用户名/无 root `$HOME` 回退静态反例 | 无 root/systemd//dev（fake systemctl + 测试根前缀钩子，默认关闭） | 否 |
 | DMA-BUF 回归聚合 | tests/unit/run-dmabuf-regression-tests.sh | 参数/设备发现与身份/self-import（含 create_size 与 CLOEXEC 严格断言）/READ 逐轮唯一性解析/性能门槛/WRITE verify/topology 多 CRTC/vblank（active 逐样本校验：顺序 + delta/kernel_delta 数值自洽 + uint32 回绕 + summary 指标与样本重算交叉验证 + 每 CRTC 独立证据；inactive 全 CRTC 守卫：success=0 时指标全零）/状态门禁（增减均拒）/内核日志门禁（独立状态机：新严重行 FAIL/rc1；post 不可用/截断/重排/插入/无重叠 UNVERIFIED/rc3；正常环形轮转只查重叠后新增行）/mktemp/超时/TERM 清理/汇总 + 真实 C 探针契约测试（含生产构建 fixture 钩子编译剔除门禁与正常路径 fd_leak=unknown）；fixture 模式独立命名空间 fixture_dmabuf_*，零权威 dmabuf_* 行 | 无设备（fake sysfs/dev/探针 + 真实探针 FIFO 路径），隔离 baseline | 否 |
 | collab 结构 | tests/unit/run-collab-structure-tests.sh | 目录命名/编号唯一/request+report 模板齐全/INDEX 与目录按编号精确双向一一对应（R01 不误配 R010、重复行、孤立行、孤立目录、日期与主题一致）/状态白名单/根目录散放文件/根目录或内部符号链接/嵌套目录/仅 Markdown/INDEX 与隐藏 Markdown 的大小写无关隐私扫描（两侧共用 tools/private-data-patterns.txt）/缺 INDEX/collab 目录缺失视为通过 | python3，无设备 | 否 |
@@ -44,7 +46,10 @@
 `check-deb-dkms-build.sh`（integration 离线编译，需本机内核头）。
 
 **盘点结论**：unit、fixture、static、integration 和 runtime 五层均已有入口；当前规模见顶部唯一
-套件汇总。主要缺口是完整 DKMS integration 依赖本机 headers，以及 runtime 能力仍缺真机证据。
+套件汇总。此次 5.0.0 中止暴露的历史缺口是：manifest/payload 审计只检查声明与静态文件，不能覆盖
+预编译 `.o_shipped` 的动态 `request_firmware()` 请求或 HAL component bind；计算侧
+`Driver/Firmware: OK` 也不能证明 DRM card 已注册。现在新增的 runtime health 门禁能在 R 项前阻断
+这些症状，但仍不能替代真实硬件验证；完整 DKMS integration 也仍依赖本机 headers。
 
 ## 二、分层定义与映射
 

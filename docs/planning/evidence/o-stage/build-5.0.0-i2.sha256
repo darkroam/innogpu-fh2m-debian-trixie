@@ -1,3 +1,3 @@
-dd42ebe53a68893486187de8b79be18b11330f6317ffe39689bf6a200002f4f4  build-A fantgpu-fh2m-trixie_5.0.0-i2.deb
-dd42ebe53a68893486187de8b79be18b11330f6317ffe39689bf6a200002f4f4  build-B fantgpu-fh2m-trixie_5.0.0-i2.deb
-445c0cdd7c0f9717a8c092cf3aee95a6da225dd2fe1aace249b19dc5966815b4  DEBIAN/md5sums build-A==build-B (562 rows)
+86e7f12a7e8b3fbcced36a7cc1d0ab5c7306c12523dde5c3d66ae9bb7ea8b075  build-A fantgpu-fh2m-trixie_5.0.0-i2.deb
+86e7f12a7e8b3fbcced36a7cc1d0ab5c7306c12523dde5c3d66ae9bb7ea8b075  build-B fantgpu-fh2m-trixie_5.0.0-i2.deb
+1159c3b8dc860cf9bfbb7d99199410253bedc031a5eb91af979f395e441ab20a  DEBIAN/md5sums build-A==build-B (562 rows)

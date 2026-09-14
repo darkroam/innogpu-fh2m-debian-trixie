@@ -1,0 +1,16 @@
+diff -ruN a/fantsrvkm/fantaudio_drv.c b/fantsrvkm/fantaudio_drv.c
+--- a/fantsrvkm/fantaudio_drv.c	2022-01-01 08:00:00.000000000 +0800
++++ b/fantsrvkm/fantaudio_drv.c	2026-09-14 00:00:00.000000000 +0800
+@@ -77,6 +77,12 @@
+ 
+ static void init_os_name(struct audio_chip_t *chip)
+ {
++	/* Missing optional hwinfo must not enter the HAL OS matcher. */
++	if (!fh2m_hal_get_hwinfo_finished_status(chip->parent)) {
++		chip->dma_pointer_mode = DMA_POINTER_NORMAL;
++		return;
++	}
++
+     if(fh2m_hal_os_release_match("NFSDesktop", "5.0")) {
+ 		chip->dma_pointer_mode = DMA_POINTER_DMAIRQ;
+ 	} else if(fh2m_hal_os_release_match("SeewoOs", "*") || fh2m_hal_os_release_match("SeewoOS", "*")) {

@@ -136,8 +136,9 @@ else
     bad t12 "trace assertions missing"
 fi
 
-# t13 静态契约：5.0.0-i1.meta.json 引用保持不变
-if grep -Fq '"$OSTAGE_DIR/5.0.0-i1.meta.json"' "$BUILDER"; then
+# t13 静态契约：O_stage meta 引用已切换至 i2 代（030-030 入链后锁定新树 hash）
+if grep -Fq '"$OSTAGE_DIR/5.0.0-i2.meta.json"' "$BUILDER" \
+   && grep -Fq 'OSTAGE_TREE_HASH="c44ce7850134c1455c0935519fc6cb08a81b505804150c59dde1338e1369bd3f"' "$BUILDER"; then
     ok t13
 else
     bad t13 "meta.json reference changed"
@@ -149,6 +150,50 @@ if grep -Fq 'scripts/check-release-package.sh "$OUT_DEB" || { echo "builder_pack
     ok t14
 else
     bad t14 "gate call not restored or skip line remains"
+fi
+
+# t15 印证门禁恢复（dsh 返工裁决）：builder 不得在任何 post-trace 位置打
+# 补丁——F 包内 DKMS 源 = 14 链 O_stage 快照本身（030-030 已随链入树），
+# 补丁后状态由锁定 o_stage_tree_hash 覆盖；无 apply_fantgpu_runtime_fixes、
+# 无顶层非法补丁名引用。
+if grep -Fq 'APPLIED_SOURCE_FIXES="o-stage-materialized-030-chain-14' "$BUILDER" \
+   && ! grep -Fq 'apply_fantgpu_runtime_fixes' "$BUILDER" \
+   && ! grep -Fq 'fantgpu-hwinfo-audio-fallback.patch' "$BUILDER"; then
+    ok t15
+else
+    bad t15 "post-trace patching not removed or 14-chain wiring missing"
+fi
+
+# t16 fallback semantics：先检查 hwinfo，再进入 HAL OS matcher；缺失 hwinfo
+# 时必须选择 NORMAL 模式并立即返回，不能只检查存在性而仍调用危险路径。
+guard_line=$(grep -nF 'if (!fh2m_hal_get_hwinfo_finished_status(chip->parent))' \
+    "$ROOT/patches/030-030.patch" | cut -d: -f1 || true)
+normal_line=$(grep -nF 'chip->dma_pointer_mode = DMA_POINTER_NORMAL;' \
+    "$ROOT/patches/030-030.patch" | head -1 | cut -d: -f1 || true)
+return_line=$(grep -nF $'+\t\treturn;' "$ROOT/patches/030-030.patch" |
+    head -1 | cut -d: -f1 || true)
+matcher_line=$(grep -nF 'fh2m_hal_os_release_match' \
+    "$ROOT/patches/030-030.patch" | head -1 | cut -d: -f1 || true)
+if [[ "$guard_line" =~ ^[0-9]+$ && "$normal_line" =~ ^[0-9]+$ &&
+      "$return_line" =~ ^[0-9]+$ && "$matcher_line" =~ ^[0-9]+$ &&
+      "$guard_line" -lt "$normal_line" && "$normal_line" -lt "$return_line" &&
+      "$return_line" -lt "$matcher_line" ]]; then
+    ok t16
+else
+    bad t16 "fallback guard/normal-return/matcher ordering is not fail-safe"
+fi
+
+# t17 入链印证：锁定的 O_stage 快照必须已含 030-030——reverse dry-run 成功
+# 证明补丁已随链入树且可干净反转（正向 dry-run 必然失败：已应用）。
+PATCH_TREE="$TMP/patch-tree"
+mkdir -p "$PATCH_TREE"
+if tar --use-compress-program=zstd -xf \
+       "$ROOT/docs/planning/evidence/o-stage/o-stage-snapshot.tar.zst" -C "$PATCH_TREE" \
+   && patch --batch --forward --fuzz=0 --no-backup-if-mismatch --dry-run -R -s \
+       -d "$PATCH_TREE/o-stage" -p1 < "$ROOT/patches/030-030.patch"; then
+    ok t17
+else
+    bad t17 "030-030 not present in locked O_stage snapshot (reverse dry-run failed)"
 fi
 
 echo "PASS=$PASS FAIL=$FAILN"

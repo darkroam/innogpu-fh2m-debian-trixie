@@ -73,6 +73,7 @@ bash tests/unit/run-materialize-fantgpu-payload-tests.sh
 bash tests/unit/run-builder-fantgpu-gates-tests.sh
 bash tests/unit/run-check-release-package-tests.sh
 bash tests/unit/run-fantgpu-helper-transform-tests.sh
+bash tests/unit/run-fantgpu-runtime-health-tests.sh
 ```
 
 - manifest 测试用 `tools/validate-binary-manifest.py` 对真实清单与 `tests/fixtures/` 下的恶意
@@ -87,6 +88,9 @@ bash tests/unit/run-fantgpu-helper-transform-tests.sh
   变更动作、固定对象/内核/版本与已加载模块 BTF ABI 失败关闭、primary FB/GEM/scanout 关联、
   shadow/config-valid 时序、HAL 参数语义、entry/return 停止边界及 connector/format 快照；不读取本地载荷、不构建或安装驱动、
   不挂起主机；
+- `run-fantgpu-runtime-health-tests.sh` 用合成 dmesg/status/sysfs/devfs 根验证 F 真机前置门禁的
+  fail-closed 行为：无 card、固件请求失败、kernel fault 和无 dmesg 均拒绝。它不模拟预编译 HAL
+  的真实 bind，也不替代安装后的生产探针和人工特权日志采集；这些限制必须在计划书中明确记录；
 - suspend 失败收尾 fixture 验证只有失败证据、回退和重启三个 round ID 绑定标记都为 PASS 时，
   才删除指定 active 指针并保留证据；缺失/错配标记、路径穿越、符号链接根/文件和重复 finalize
   全部失败关闭；active 指针只接受规范化小写 round ID，绝对路径和大写 ID 均拒绝，不需要 root 或真实挂起；

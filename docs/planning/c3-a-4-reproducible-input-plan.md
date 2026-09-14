@@ -1,10 +1,10 @@
-# C3-a ④ 可复现输入实施设计（builder F 载荷纳入）——起草稿 v12（已交付）
+# C3-a ④ 可复现输入实施设计（builder F 载荷纳入）——停批修订 v13（2026-09-14）
 
 - 日期：2026-09-12
-- 状态：**已交付（2026-09-12 批 3 完成）**。设计经 dsh 终审通过（2026-09-11，437f363/1e324a2 已提交）；实现分三批落地、每批独立 codex 初审 + dsh 终审：批 1 落库/restore/manifest/工具（17956b4）、批 2 builder 改造 + M1-M6 物化 + C1-①（346a23a）、批 3 重构建 5.0.0-i2 双构建字节一致证据 + C1-② + builder release 门禁恢复（本批）。原「设计稿」状态（先方案，不动 builder/manifest/保护区；实现待 codex 初审 + dsh 放行）已失效。**前置已闭合**：③ 完整性（工具 `tools/r16-f-payload-integrity.py` + 三件证据 + 单测 54 项，dsh 终审通过，0eaff0e/b5d11ec 已提交）；① 来源、② 授权由 dsh 定档。v2 修正：codex 初审 3 P1（三集合建模、materialization 规则、md5sums 确定性）+ 1 建议（可复现输入口径收紧）。v3 修正：codex re-review 2 P1（restore 事务化 + DEBIAN/ 排除、M6 闭合 + postinst 行为固定）。v4 修正：codex re-review#2 2 P1（sw-fant-gl 生命周期矛盾裁决、restore journal 状态机）。v5 修正：codex re-review#3 1 P1（状态写入失败窗口——写前状态 + 存在性/内容复核）。v6 修正：codex re-review#4 2 P1（恢复分支幂等 + journal 字段路径安全约束）。v7 修正：codex re-review#5 4 P1 + 1 P2（逐状态存在性真值表、并发排他锁、mode 锁定、builder 改造清单补全、fsync 保证范围收窄）。v8 修正：codex re-review#6 1 P1 + 2 P2 + 1 契约（真值表矛盾修正、锁生命周期 O_NOFOLLOW+永不删除、PKG_DESC 版本串参数化、M2 来源判定改内容 hash+物化 trace）。v9 修正：codex re-review#7 1 P1 + 2 P2（真值表收紧为仅可产生组合、S_INPUT 隐含集合弃单值 set、materialize-trace 可执行契约、postinst 文案消歧）。v10 修正：codex re-review#8 2 P1（moving_new(pre=F) 正向组合修正为 (0,1,0)、trace 计数三分拆分 + 分源 SHA 校验）。v11 修正：codex re-review#9 1 P1（trace 四列 + kind 类型语义、目录不入 trace 由计数/mode/subtree hash 单独断言、sidecar 弃用 materialized_files 旧字段）。v12 修正：codex re-review#10 1 P1（O_stage regular 文件 mode 来源定稿 = 锁定快照承载，trace 对 ostage-kernel 行仅校验 SHA）。
+- 状态：**停批修订（2026-09-14）**。F 载荷的静态完整性审计和可复现输入机制已完成；此前 i2 构建因真机步骤 3 `device_not_active` 中止。新增 **`patches/030-030.patch`（双轨落档 + meta）** 已完成 materialize 14 链重放（i2 代五件产物 + `5.0.0-i2.meta.json`）、编译和双构建（`86e7f12a…`），但尚未完成安装后的 runtime health 与显示验证，故本计划不能视为 C3-a 运行时闭合或放行依据。
 - 依据：`5.0.0-i2-validation-plan.md` §三 C3-a 第 ④ 项 +「③ 对 ④ 的传导」（两项强制）+「C3-a 的 builder 改造点清单」（8 点）+ §二「C3 若选 a/b 的版本与 provenance 传导」+ dsh 2026-09-11 放行「④ qoder 可开工（技术项）」。
 - **不变式（全设计约束，违反任一即 FAIL）**：
-  1. materialize 五件产物与 `5.0.0-i1.meta.json` **不变**（O_stage 树 hash `937e3710…` 不变，本设计不动内核源树）；
+  1. materialize 五件产物已按 **i2 代** 重生成（`5.0.0-i2.meta.json`、O_stage 树 hash `c44ce785…`、14 条链——2026-09-14 返工：030-030 hwinfo 音频安全回退入链；旧 i1 名 meta 退役）；
   2. F 载荷**字节不入 git**（② 定档「仅自用、不分发」；`/vendor/`（.gitignore:26）、`/build/`（:27）、`/debs/*`（:9-10）既有本地保存策略维持）——**清单（含逐文件 SHA-256）入 git，载荷本地保存**，与 O 血统 `binary-manifest.json` + `vendor/` 同构；
   3. 双构建字节一致在 F 载荷下仍成立（构建输入逐文件 SHA 锁定 + 构建期确定性，含 md5sums 字节）；
   4. 保护区零写入：本设计**实现阶段**对 `vendor/` 的落库写入属保护区写入，需 dsh 单独授权（已授权并执行，见 §七 已裁决项 1）；其余保护区（debs/build/third_party/drivers/baselines/patches）维持只读；
@@ -112,7 +112,7 @@ F manifest（`binary-manifest-fantgpu.json`，git 追踪）顶层 schema 同 O�
 | 10 | `:24-25` FANT_LINEAGE 判定精确写死 `== 5.0.0-i1` | 改 `[[ "$VERSION" == 5.0.0-i* ]]`（5.0.0-iN 系列统一 fantgpu 血统；其余仍 innogpu） |
 | 11 | `:102-105` 输入预检无条件检查 O manifest + O vendor | **按血统分支**：F 分支只要求 `binary-manifest-fantgpu.json` + `vendor/fantgpu/` 输入预检（§〇，含 SHA+mode+链接目标+严格双射），**不要求** O manifest/O vendor 就位；O 分支保持现状 |
 | 12 | F 分支 DESC_BODY 文案「coherent Deepin userspace payload」+ **PKG_DESC（builder `:283`）写死「fantgpu lineage 5.0.0-i1, O_stage materialized tree」** | DESC_BODY 改「coherent fantgpu (F) userspace payload（binary-manifest-fantgpu.json 锁定；构建期预选 DDX/UCM/wayland）」；**PKG_DESC 版本串参数化 `fantgpu lineage $VERSION, O_stage materialized tree`**（不得写死 i1/i2）；新增断言：构建后 control 的 Description 必须含 `$VERSION`（builder 单测覆盖 i2 场景） |
-| 13 | `5.0.0-i1.meta.json` 引用 | **保持不变**（materialize 五件不变 → OSTAGE_SNAP/meta 路径与文件名固定，i2 继续使用同一物化产物与同一 meta；不新增 `5.0.0-i2.meta.json`） |
+| 13 | meta 引用 | **已切换至 `5.0.0-i2.meta.json`**（2026-09-14 返工：030-030 入链 → i2 代五件重生成；builder OSTAGE meta/树 hash 引用同步；旧 i1 名 meta 随过渡说明退役） |
 
 另：`:415` `release-audit gate pending adaptation` 跳过行，在 **C1-② 同批**移除（§六 时序）。
 
@@ -175,8 +175,8 @@ F manifest（`binary-manifest-fantgpu.json`，git 追踪）顶层 schema 同 O�
 
 - **版本**：载荷实质变化 → **`5.0.0-i2`（已定案并交付，见 §七 已裁决项 2）**。builder 版本分支同 5.0.0-i1 逻辑；
 - **双构建字节一致**：clean 双跑（build-A/B）→ SHA 一致 + `fantgpu.ko` vermagic PASS + **DEBIAN/md5sums 逐字节一致** → 新证据 `build-5.0.0-i2.sha256`，与 `build-5.0.0-i1.sha256` **并存不覆盖**；
-- **materialize 五件产物与 `5.0.0-i1.meta.json` 不变**（本设计不动内核源树；`o_stage_tree_hash 937e3710…` 不变）→ 无需重跑 materialize、无需参数化 `materialize-o-stage.sh`；
-- **validation-results 的包 provenance**：真机批实际安装的 `package_version=5.0.0-i2` + `package_deb_sha256=dd42ebe53a68893486187de8b79be18b11330f6317ffe39689bf6a200002f4f4`（2026-09-13/14 C2 定案回路重构建双构建实测——write-options=1 入包内确定性 payload `etc/modprobe.d/fantgpu.conf`（dpkg 管理、postinst 不写）；批 3 初版 SHA `45205dc7…` 已被本重构建替代）+ build 证据引用 `build-5.0.0-i2.sha256`；`materialize_meta_sha256` 保持绑定现有 meta 不变；
+- **〔2026-09-14 例外情形修订〕**：030-030 入链改动内核源树 → 已参数化 `materialize-o-stage.sh` 并重跑 → **i2 代五件产物 + `5.0.0-i2.meta.json`**（树 hash `c44ce785…`、14 条链）；旧 i1 名 meta 随过渡说明退役；
+- **validation-results 的包 provenance**：下一次真机批实际安装的 `package_version=5.0.0-i2` + `package_deb_sha256` 必须绑定新 build 证据 `build-5.0.0-i2.sha256`；当前 fallback 双构建候选 SHA 为 `86e7f12a7e8b3fbcced36a7cc1d0ab5c7306c12523dde5c3d66ae9bb7ea8b075`，但尚未安装、验证或签发。旧 SHA `dd42ebe5…` 对应已中止候选，仅保留在停批证据中；`materialize_meta_sha256` 保持绑定现有 meta 不变；
 - **文档同步**：`o-stage-integration-plan.md:77` 载荷边界改为「F 血统 userspace 载荷 + 固件（`binary-manifest-fantgpu.json` 锁定；构建期预选 DDX/UCM/wayland）」；`5.0.0-i2-validation-plan.md` ④ 状态更新。
 
 ## 六、测试、门禁与提交批时序
@@ -186,6 +186,7 @@ F manifest（`binary-manifest-fantgpu.json`，git 追踪）顶层 schema 同 O�
   - `validate-binary-manifest-fantgpu.py` 单测：SHA 漂移检出、**mode 漂移检出**（chmod 不改 SHA 但必须 fail）、链接目标漂移检出、O 血统 loader 文件名禁则、载荷缺失检出（fail-closed 预检路径）；
   - `gen-package-md5sums.py` 单测：双跑字节一致、LC_ALL=C 排序锁定、symlink/DEBIAN 排除、相对路径规范化；
   - builder F 分支扩展单测（fake root）：fh2m 键名族断言（`dri/fh2m_dri.so`、`lib/firmware/fantgpu/fh2m/*`、`fantgpu-fh2m-trixie` share、`fantgpu-*` 命令、ld.so.conf `fantgpu-fh2m`）、M3-M5 预选（单 ABI/单 UCM 布局/wayland 默认 off）、**S_LOCKED 零进入 $P**（`usr/src/fantgpu-fh2m-kernel-2.2/**`、死暂存 UCM、`sw-fant-gl`/`sw-fant-gl.service`）、`$P/opt` 为空、**计数三分断言**（`f_materialized_entries`/`ostage_materialized_entries`/`trace_entries` == 期望 + 目录计数 `f_dir_entries=87`/`ostage_dir_entries=16` + 目录 mode 0755）、**落位 mode == 来源清单**（F 来源，含变换物化；O_stage 来源仅 SHA + 快照承载 mode）、**materialize-trace 契约**（四列、行数==trace_entries、fantgpu-* regular 行 SHA+mode 与 F manifest 一致、ostage-kernel 行仅 SHA 与 o-stage.manifest.tsv 一致、symlink 行 target 一致、目录零入 trace、locked-reference 来源出现 → FAIL、builder 生成物不入 trace）、md5sums 行数 == 实际载荷常规文件数、postinst 无任何安装期载荷选择/路径选择分支（静态审查）、**F 分支不要求 O manifest/O vendor 就位（仅 F 输入）**、**5.0.0-i2 版本 allowlist/血统判定/epoch 门**（负向：未审核版本拒绝）、**PKG_DESC 含 $VERSION**；
+  - F runtime fallback 单测：从锁定 O_stage 快照以 `patch --fuzz=0 --no-backup-if-mismatch` dry-run，确认无 `.orig/.rej`；同时锁定编译树与包内 DKMS 树的双应用，以及 hwinfo 检查 → `DMA_POINTER_NORMAL` → return → HAL OS matcher 的顺序；
   - `restore` 子命令单测（journal 写前状态机全场景，故障注入）：deb SHA 预检失败拒绝且旧代原样；解包树含额外路径（含 DEBIAN/ 未剔除模拟）拒绝且旧代原样；SHA 漂移拒绝且旧代原样；**逐状态真值表全组合**（每个 state×pre_existing×(C,T,O) 组合的可产生合法/不可产生非法判定——含 **moving_new(pre=F) 正向 (0,1,0) 锁定**、moving_new(pre=F) 的 O=1、moved_old(0,1,0)（txn 被外部删除）、committed 的 T=1/C=0、pre=F 出现 moving_old/moved_old、C/T/O 为 symlink 等非法组合一律 fail-closed 保留现场）；**双进程竞争**（A 慢解包 + B 并发 restore → B 阻塞或 rc≠0，绝不删除 A 的 txn；锁串行化）；**锁生命周期**（锁文件为 symlink → O_NOFOLLOW fail-closed；前一次 restore 完成后再次 restore 成功（锁文件复用、永不删除））；**journal.moving_old 写入失败**（文件未动，旧代零改动）；**journal.moved_old 写入失败**（old-mv 已成功 → 恢复走 moving_old+old 存在分支，无孤立）；**journal.moving_new 写入失败**（新代未动 → 按 moved_old/staged 恢复）；**journal.committed 写入失败**（new-mv 已成功 → 恢复走 moving_new+新代存在分支，无混代歧义）；**首次落库第二次 mv 失败**（moving_new + pre_existing=false）→ 无当前代、零残留、可重跑；**两 mv 之间中断** → 旧代恢复；**旧代恢复完成但 journal 删除失败**（moved_old + `.old` 缺失 + `vendor/fantgpu` 存在）→ 下次启动幂等清理，不误判损坏（codex re-review#4 P1-1）；**新代就位但 old 清理失败**（committed + old 残留）→ 下次启动清理；**journal 字段安全**（journal 为 symlink / `txn`·`old` 字段格式非法（路径逃逸、非工具生成名）/ 被引用目录为 symlink / 字段篡改 / 同名额外残留）→ 一律 fail-closed die 保留现场（codex re-review#4 P1-2）；**多个 .old / 无 journal 出现 .old** → fail-closed die；**多个 txn / journal=staged 残留** → 安全清理；**内容复核失败**（拟保留目录 SHA/mode 漂移）→ fail-closed die 保留现场；**mode 漂移**（chmod 不改 SHA）→ 检出 fail；成功落库后 manifest 校验通过；
 - **门禁**：check-docs / validate-collab / r16-gate / git diff --check + 上述新单测 + 双构建证据；C1-①（包名白名单/版本正则/helper 路径参数化）与 ④ 同批；**C1-②（required 载荷断言按 F 路径）与 builder `:415` 门禁恢复调用在 ④ 落地 + 重构建之后同批交付**（避免长期已知红门禁，validation-plan §三 C1 时序）——**〔2026-09-12 批 3 已交付：check-release-package.sh 按血统分派 required/forbidden（含权威私有库与类型/链接有效性断言），builder 门禁无条件调用〕**；
 - **提交批建议**（各批独立 codex 初审 + dsh 终审）：
@@ -196,7 +197,7 @@ F manifest（`binary-manifest-fantgpu.json`，git 追踪）顶层 schema 同 O�
 ## 七、已裁决项（定案记录；2026-09-11/12 全部闭合）
 
 1. **落库位置与保护区授权**（§一）：**已定案 A**——`vendor/fantgpu/` 落库 + restore 事务化流程，dsh 授权一次性执行（批 1 已执行，17956b4）。
-2. **版本号**：**已定案 `5.0.0-i2`**（批 3 双构建使用；deb SHA `dd42ebe5…`，证据 `build-5.0.0-i2.sha256`）。
+2. **版本号**：**已定案 `5.0.0-i2`**；fallback 适配后的新候选 SHA `86e7f12a…`，证据 `build-5.0.0-i2.sha256`；真机放行前仍须完成 runtime health 和显示验证。
 3. **构建期预选默认值**：**已定案** `F_XORG_ABI=1.21` / `F_UCM_LAYOUT=ucm2` / `F_WAYLAND_COMPAT=off`（批 2 实现，build 输出 preset 行确认）。
 4. **share 目录/命令名血统参数化**（§三 6/7）：**已实现（批 2）**——builder F 分支按 `SHARE_DIR=fantgpu-fh2m-trixie`/`CMD_PREFIX=fantgpu-` 落位（validation-plan 权威映射表曾标注的「builder 未分支」状态已消除）；C1-① 按**改后实际内容**断言并已交付（批 2/3）。
 
@@ -206,5 +207,5 @@ F manifest（`binary-manifest-fantgpu.json`，git 追踪）顶层 schema 同 O�
 
 - 未获 dsh 授权前：不写 `vendor/`、不动 `binary-manifest.json`、不改 builder〔**2026-09-11/12 已获 dsh 授权并执行，本项禁止动作解除**〕；
 - 不重跑 materialize、不碰五件产物与 meta（**仍禁止**：批 3 未重跑、五件产物与 meta 零改动）；
-- 不交付 C1-②、不恢复 `:415` 门禁调用（时序见 §六）〔**2026-09-12 批 3 已交付，本项禁止动作解除**〕、不设 F7 默认身份串（**仍禁止**）；
+- 不交付 C1-②、不恢复 `:415` 门禁调用（时序见 §六）〔**2026-09-12 批 3 已交付，本项禁止动作解除**〕、不再禁止 F7 默认身份串（当前已按 F 血统定案为精确 `fh2m`，见主计划）；不安装、不重启、不放行真机批。
 - 不放行真机批；不 commit/push/tag（dsh 执行）。
