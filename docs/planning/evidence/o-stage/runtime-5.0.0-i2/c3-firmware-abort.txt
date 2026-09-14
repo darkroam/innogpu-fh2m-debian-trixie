@@ -19,11 +19,11 @@ ts=2026-09-14T07:53:45+08:00
 # firmware_files=4/4 present under /lib/firmware/fantgpu/fh2m/ (fh2m.fw fh2m.sh fh2c.fw fh2c.sh)
 # module_params: firmware_en=1 s_hdmi_nums=3 s_dp_nums=1 s_vga_nums=1 s_dpu_match=141 DriverMode=0x7fffffff
 #
-# 根因状态（dsh 终审裁决）：device_not_active 已闭合（sysfs/devfs 事实）。
-# 具体根因 = 静态支持的候选根因，待特权 dmesg 实锤后方可定案：
-#   候选：F 厂商驱动显示管线为 component master 架构，子设备平台设备由预编译
-#   HAL 按 hwinfo/ODM 板级匹配创建；本板（通用 PCIe Fantasy II-M）不命中厂商
-#   ODM 表 → master 在 DRM 注册前 -EPROBE_DEFER 永久推迟（源码静态位置：
-#   fantgpu_drm.c component 匹配为空 → match==NULL → ret=-EPROBE_DEFER，
-#   drm_dev_register 之前）。O 血统对应位置 innogpu_drm.c:1071/:1146。
-# 未获特权 dmesg 前，以上不得表述为已实锤根因。
+# 根因状态（后验 dmesg）：device_not_active 已闭合（sysfs/devfs 事实）。
+#   fantgpu/hwinfo_g0m.bin 请求失败 (-2) 三次；随后 hwinfo register no pass，
+#   DP/HDMI/VGA 均因无法获取 hwinfo version 而 skip hwinfo；component bind 阶段
+#   fh2m_hal_os_release_match 触发 NULL pointer dereference，调用链进入
+#   fantgpu_drm_component_bind。日志出现 bound fant-gpu，但未出现 EPROBE_DEFER。
+#   因此本次失败根因归为缺失 hwinfo_g0m.bin 导致的 HAL bind/Oops；原先的
+#   “match == NULL 永久 EPROBE_DEFER”候选被本次日志排除。
+#   dmesg-full.txt 为事后全量副本，加载前窗口起点不可追溯；原始副本不入库。
