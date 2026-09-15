@@ -46,6 +46,8 @@ mkdir -p "$TMP/bl/class/backlight/intel_backlight" \
          "$TMP/bl/devices/fake/drm/card0/not-connector" \
          "$TMP/bl/devices/fake2/drm/card0/card1-eDP-1" \
          "$TMP/bl/devices/fake3/drm/card0/card0-eDP-1/sub"
+mkdir -p "$TMP/sys/class/drm/card0-eDP-1"
+printf '1920x1200\n1920x1080\n' > "$TMP/sys/class/drm/card0-eDP-1/modes"
 ln -sfn ../../../devices/pci0000:00/0000:00:02.0/drm/card0/card0-eDP-1 \
     "$TMP/bl/class/backlight/intel_backlight/device"
 ln -sfn ../../../platform/fake-led \
@@ -74,11 +76,11 @@ run_fixture() {  # run_fixture [backlight-root]
 # t01 connector/mode/DDCCI 契约段逐行断言（R7-R9 证据格式）
 run_fixture
 if [ "$RC" -eq 0 ] \
-   && grep -Fxq '  fixture_connector 51 eDP-1 status=connected modes=2' "$TMP/fx.out" \
+   && grep -Fxq '  fixture_connector 51 eDP-1 status=connected modes=2 source=ioctl' "$TMP/fx.out" \
    && grep -Fxq '  fixture_1920x1200@60' "$TMP/fx.out" \
    && grep -Fxq '  fixture_1920x1200@48' "$TMP/fx.out" \
    && grep -Fxq '  fixture_connector 51 ddcci-props=none' "$TMP/fx.out" \
-   && grep -Fxq '  fixture_connector 52 HDMI-A-1 status=disconnected modes=0' "$TMP/fx.out" \
+   && grep -Fxq '  fixture_connector 52 HDMI-A-1 status=disconnected modes=0 source=ioctl' "$TMP/fx.out" \
    && grep -Fxq '  fixture_connector 52 ddcci-props=none' "$TMP/fx.out" \
    && grep -Fxq 'fixture_topology_collect=complete' "$TMP/fx.out"; then
     ok t01
@@ -139,6 +141,7 @@ RC6=$?
 set -e
 if [ "$RC6" -eq 1 ] \
    && grep -Fq 'fixture_connector 51 eDP-1 status=connected modes=unavailable' "$TMP/fail.out" \
+   && grep -Fq 'source=unavailable' "$TMP/fail.out" \
    && grep -Fq 'fixture_connector 51 ddcci-props=unavailable' "$TMP/fail.out" \
    && grep -Fq 'fixture_topology_collect=partial' "$TMP/fail.out"; then
     ok t06
@@ -228,6 +231,86 @@ if [ "$RC12" -eq 0 ] \
     ok t12
 else
     bad t12 "rc=$RC12 out=[$(tail -3 "$TMP/ce.out" | tr '\n' ';')]"
+fi
+
+# t13 payload 失败时使用对应 connector 的 sysfs modes；sysfs 不提供刷新率，
+# 因此必须明确 source=sysfs 和 @unknown，不得伪造 ioctl/刷新率数据。
+set +e
+INNOGPU_DMABUF_TOPOLOGY_FIXTURE=1 \
+INNOGPU_DMABUF_TOPOLOGY_FIXTURE_SYSFS_FALLBACK=1 \
+INNOGPU_DMABUF_TOPOLOGY_SYSFS_ROOT="$TMP/sys/class/drm" \
+    "$TMP/probe-fx" > "$TMP/sysfs.out" 2> "$TMP/sysfs.err"
+RC13=$?
+set -e
+if [ "$RC13" -eq 0 ] \
+   && grep -Fxq '  fixture_connector 51 eDP-1 status=connected modes=2 source=sysfs' "$TMP/sysfs.out" \
+   && grep -Fxq '  fixture_1920x1200@unknown' "$TMP/sysfs.out" \
+   && grep -Fxq '  fixture_1920x1080@unknown' "$TMP/sysfs.out" \
+   && grep -Fxq 'fixture_topology_collect=complete' "$TMP/sysfs.out"; then
+    ok t13
+else
+    bad t13 "rc=$RC13 out=[$(tail -6 "$TMP/sysfs.out" | tr '\n' ';')]"
+fi
+
+# t14 payload 与 sysfs 同时失败：必须保持 unavailable/partial/rc=1，不能
+# 把失败回退伪装成 modes=0 或 source=ioctl。
+set +e
+INNOGPU_DMABUF_TOPOLOGY_FIXTURE=1 \
+INNOGPU_DMABUF_TOPOLOGY_FIXTURE_SYSFS_FALLBACK=1 \
+INNOGPU_DMABUF_TOPOLOGY_SYSFS_ROOT="$TMP/missing-sysfs" \
+    "$TMP/probe-fx" > "$TMP/sysfs-fail.out" 2> "$TMP/sysfs-fail.err"
+RC14=$?
+set -e
+if [ "$RC14" -eq 1 ] \
+   && grep -Fxq '  fixture_connector 51 eDP-1 status=connected modes=unavailable source=unavailable' "$TMP/sysfs-fail.out" \
+   && grep -Fq 'fixture_topology_collect=partial' "$TMP/sysfs-fail.out"; then
+    ok t14
+else
+    bad t14 "rc=$RC14 out=[$(tail -5 "$TMP/sysfs-fail.out" | tr '\n' ';')]"
+fi
+
+# t15 malformed sysfs content is not a usable fallback and must fail closed.
+printf '1920x1200\nnot-a-mode\n' > "$TMP/sys/class/drm/card0-eDP-1/modes"
+set +e
+INNOGPU_DMABUF_TOPOLOGY_FIXTURE=1 \
+INNOGPU_DMABUF_TOPOLOGY_FIXTURE_SYSFS_FALLBACK=1 \
+INNOGPU_DMABUF_TOPOLOGY_SYSFS_ROOT="$TMP/sys/class/drm" \
+    "$TMP/probe-fx" > "$TMP/sysfs-bad.out" 2> "$TMP/sysfs-bad.err"
+RC15=$?
+set -e
+if [ "$RC15" -eq 1 ] \
+   && grep -Fq 'modes=unavailable source=unavailable' "$TMP/sysfs-bad.out" \
+   && grep -Fq 'fixture_topology_collect=partial' "$TMP/sysfs-bad.out"; then
+    ok t15
+else
+    bad t15 "rc=$RC15 out=[$(tail -5 "$TMP/sysfs-bad.out" | tr '\n' ';')]"
+fi
+
+# t16 锁定 sysfs_count == reported_modes 守卫：多一行和空文件都必须
+# fail-closed，不能把部分/空 modes 集合标成可用回退。
+printf '1920x1200\n1920x1080\n1280x720\n' > "$TMP/sys/class/drm/card0-eDP-1/modes"
+set +e
+INNOGPU_DMABUF_TOPOLOGY_FIXTURE=1 \
+INNOGPU_DMABUF_TOPOLOGY_FIXTURE_SYSFS_FALLBACK=1 \
+INNOGPU_DMABUF_TOPOLOGY_SYSFS_ROOT="$TMP/sys/class/drm" \
+    "$TMP/probe-fx" > "$TMP/sysfs-count.out" 2> "$TMP/sysfs-count.err"
+RC16_COUNT=$?
+: > "$TMP/sys/class/drm/card0-eDP-1/modes"
+INNOGPU_DMABUF_TOPOLOGY_FIXTURE=1 \
+INNOGPU_DMABUF_TOPOLOGY_FIXTURE_SYSFS_FALLBACK=1 \
+INNOGPU_DMABUF_TOPOLOGY_SYSFS_ROOT="$TMP/sys/class/drm" \
+    "$TMP/probe-fx" > "$TMP/sysfs-empty.out" 2> "$TMP/sysfs-empty.err"
+RC16_EMPTY=$?
+set -e
+if [ "$RC16_COUNT" -eq 1 ] \
+   && grep -Fxq '  fixture_connector 51 eDP-1 status=connected modes=unavailable source=unavailable' "$TMP/sysfs-count.out" \
+   && grep -Fxq 'fixture_topology_collect=partial' "$TMP/sysfs-count.out" \
+   && [ "$RC16_EMPTY" -eq 1 ] \
+   && grep -Fxq '  fixture_connector 51 eDP-1 status=connected modes=unavailable source=unavailable' "$TMP/sysfs-empty.out" \
+   && grep -Fxq 'fixture_topology_collect=partial' "$TMP/sysfs-empty.out"; then
+    ok t16
+else
+    bad t16 "count_rc=$RC16_COUNT count=[$(tail -5 "$TMP/sysfs-count.out" | tr '\n' ';')] empty_rc=$RC16_EMPTY empty=[$(tail -5 "$TMP/sysfs-empty.out" | tr '\n' ';')]"
 fi
 
 echo "PASS=$PASS FAIL=$FAILN"

@@ -56,6 +56,7 @@ bash tests/unit/run-results-parser-tests.sh
 bash tests/unit/run-exec-probes-tests.sh
 bash tests/unit/run-vaapi-decode-tests.sh
 bash tests/unit/run-dmabuf-regression-tests.sh
+bash tests/unit/run-drm-topology-tests.sh
 bash tests/unit/run-dri-repair-tests.sh
 bash tests/unit/run-collab-structure-tests.sh
 bash tests/unit/run-suspend-resume-tests.sh

@@ -32,3 +32,161 @@ verify_after_reboot=PASS (scripts/verify-install-status.sh --require-reboot 4.0.
 runtime_after_reboot=Driver/Firmware OK; innogpu loaded; DKMS installed; card0/renderD128/fb0 present; X display reachable; GL accelerated; DRI3 present
 firmware_en=1
 rollback_roundtrip=PASS (5.0.0-i2 stopped before R items; restored 4.0.2-i3)
+
+--- 030-030 入链批（7776c02）后真机批 · 步骤 1（2026-09-14）---
+candidate_deb=/tmp/fantgpu-fh2m-trixie_5.0.0-i2.deb
+candidate_deb_sha256=86e7f12a7e8b3fbcced36a7cc1d0ab5c7306c12523dde5c3d66ae9bb7ea8b075
+sha_verification=PASS (与 dsh 终审批准值逐字节一致；builder_overall=PASS，来源 = 已提交树 7776c02)
+step1_ts=2026-09-14T15:23:06+08:00
+next=受监督安装（操作者）→ 重启 → 首步 runtime health gate
+
+--- 步骤 2a 受监督安装（2026-09-14，030-030 批）---
+operator=dsh ts=2026-09-14T15:24:55+08:00 (reboot 前窗口起点)
+sha_verified=86e7f12a7e8b3fbcced36a7cc1d0ab5c7306c12523dde5c3d66ae9bb7ea8b075 PASS
+dpkg_action=install fantgpu-fh2m-trixie 5.0.0-i2 (conflicts auto-remove innogpu-fh2m-trixie 4.0.2-i3)
+--- 安装后（重启前）验证 ---
+fantgpu-fh2m-trixie	5.0.0-i2	install ok installed
+innogpu-fh2m-trixie	4.0.2-i3	install ok config-files
+fantgpu-fh2m-kernel/2.2, 6.12.101+deb13-amd64, x86_64: installed
+--- 包内 options 文件 ---
+options fantgpu firmware_en=1
+--- 内核模块文件 ---
+总计 1988
+drwxr-xr-x 2 root root    4096  9月14日 15:24 .
+drwxr-xr-x 3 root root    4096  9月14日 15:24 ..
+-rw-r--r-- 1 root root 2027424  9月14日 15:24 fantgpu.ko.xz
+
+--- 步骤 2b/3：重启 + 硬前置健康门禁（2026-09-14）---
+reboot=PASS (operator=dsh)
+dmesg_full=captured 94128 bytes (15:28)
+fantgpu_module=loaded (7118848, refcount 110) firmware_en=1
+drm_nodes=/sys/class/drm/{card0,card0-eDP-1,card0-HDMI-A-1,card0-HDMI-A-2,renderD128} + /dev/dri/{card0,renderD128}
+xorg=running (pid 2274 :0 vt1)
+health_gate_ts=2026-09-14T15:37:45+08:00
+health_out: fantgpu_runtime_health=PASS drm_sysfs_card=yes drm_dev_card=yes firmware_requests=required_clean optional_hwinfo_g0m=missing_allowed kernel_faults=clean
+
+--- 步骤 3 指纹采集（R5 参数注入值，2026-09-14）---
+INNOGPU_EXPECT_KERNEL=6.12.101+deb13-amd64
+INNOGPU_EXPECT_VERSION=5.0.0-i2
+INNOGPU_EXPECT_OBJECT_SHA=d0c83970afa9d5ae22dee889f83b371b9614ef57a088adc7cbcbd4f3c48d71f7
+INNOGPU_EXPECT_MODULE_BUILD_ID=2bba3d06c7dbecc121439b67db891ac2f0c92ea5
+
+--- 步骤 4 状态（2026-09-14）---
+R1=完成 20 PASS/0 FAIL/11 SKIP/4 UNVERIFIED；与 O 基线逐项对比唯一差异 runtime_dmabuf_source_fix_present PASS→UNVERIFIED（F 血统结构性 N/A——该检查针对 O 树 runtime 补丁，F 修复在锁定快照内）→ r1-capability-baseline.txt
+R2=PASS（生产构建探针 rc=0；fb0=fh2mdrmfb 1920x1080；write_readback/restore/bounds 全 PASS）→ r2-fbdev-mmap.txt
+R4=停批于身份门（fail-closed rc=3 reason=vainfo_identity_not_fh2m）——实测 Driver version 行 = "FANT-silicon Driver v1.0.0" 不含精确 fh2m token；正向身份证据充分（libva 打开 /usr/lib/x86_64-linux-gnu/dri/fh2m_drv_video.so + va_openDriver 0 + "fant libva backend driver version 1:1:0"）→ r4-vainfo.txt / r4-identity-gate-empirical.txt；待三方裁决身份判据修订（计划书 F7 行预设：如有出入按 fail-closed 修正后重新定案）
+R3+R6/R7-R9/R5/U1-U2=未执行（停批待裁决）
+R4=重跑 PASS（三证据身份门修订后 --codec all rc=0；h264+hevc 30 帧 hash 全匹配）→ r4-decode-all.txt / r4-identity-gate-ruling-and-rerun.txt
+next=R3+R6 聚合（sudo 操作者执行 --iterations 5 --lineage fantgpu）
+defect_fixed=run-dmabuf-regression-test.sh 执行位缺失（仓库记录 100644，计划书命令直接调用）→ chmod 755 + 暂存（F6 单测经 bash 调用未暴露；本轮真机监督执行暴露）
+
+--- R3+R6 停批诊断（2026-09-14）---
+aggregate_rc=1 subitem_failures=2（invisible_read/write_readback probe_failed_rc=1）；其余全过（self_import PASS / vblank active+inactive PASS / status ok / kernel_log clean）→ dmabuf-aggregate.txt
+reproduce: /tmp/probe-inv /dev/dri/renderD128 7646720 5 read|write → rc=1 "driver did not allocate an invisible GEM"
+root_cause=探针 PDP_GEM_INVISIBLE=(1U<<28)（O 血统 ABI） vs F 驱动 DBM_GEM_INVISIBLE=FANT_BIT(1)=0x2（fantdpu_drm_gem.h:74）→ flag 位失配 → visible 分配（fantdpu_drm_drv.c:238 visible=!((flags&DBM_GEM_INVISIBLE)>>1)）→ INV_GET isInv=!mem_manager->visible=0（fantdpu_drm_gem.c:2942）→ 探针判定失败
+classification=非驱动缺陷、非 030 链回归；F-lineage 工具 ABI 参数化缺口（同类先例：vainfo 身份门）
+proposed_fix=探针 env 参数化 INNOGPU_PDP_INVISIBLE_FLAG（默认 0x10000000 保持 O 口径；fantgpu=0x2），聚合脚本按 --lineage 注入 + 单测（含错误 flag 负向）；待三方裁决后实现
+
+--- R3+R6 flag ABI 修复批（2026-09-14，codex 初审通过规格）---
+probe=INNOGPU_PDP_INVISIBLE_FLAG 严格 u32 解析（0x/十进制；空/非法/负/溢出/尾随/零 rc=2；缺省 1<<28 O 口径）；输出头记录 invisible_flag=0x........
+aggregate=按 --lineage 强制注入并覆盖继承值（fantgpu=0x2 / innogpu=0x10000000）；parse_invisible 严格校验头部 flag==注入值（err:invisible_flag_mismatch）；权威 reason 追加 -invisible_flag=0x........
+tests=tests_total=169 tests_passed=169（新增 15：注入×3/错flag拒绝/Werror构建/解析矩阵×11）；trace-loader.c 标注 O-only
+next=单次重跑覆盖 dmabuf-aggregate.txt
+
+--- R7-R9 停批诊断（2026-09-14）---
+topology_full_rc=1 topology_collect=partial：HDMI-A-2（connected, 61 modes）第二段 GETCONNECTOR（modes payload）errno=14 EFAULT；计数段正常（count_modes=61 count_props=5）
+classification=厂商驱动家族已知类限制（带 payload GETCONNECTOR EFAULT——O 血统既有同类先例，聚合侧 CRTC_ONLY 即因此设）；非 030 链回归、非驱动崩溃（kernel_faults=clean）
+R7_evidence=ddcci-props=none×3 + backlight 关联表空（均在 partial 输出中——按契约 partial 不得作 R7-R9 证据）
+R8_R9_需_modes_枚举=被 EFAULT 阻断（ioctl 路径）；sysfs 补充证据：card0-HDMI-A-2/modes 61 条可读、无 2880x1800/无 2560x 模式 → r8-sysfs-modes.txt
+proposed_fix（待三方裁决）= F5 探针 modes 拉取增加 sysfs 回退（/sys/class/drm/<card>-<conn>/modes，标注 source=sysfs|ioctl，fail-closed：sysfs 亦不可读则仍 unavailable）+ 单测；或裁定以 sysfs 补充证据+限制注记闭合 R8/R9
+
+--- R7-R9 判定（2026-09-14，方案 A sysfs 回退后全量运行）---
+topology_run=rc=0 topology_collect=complete（r7-r9-topology.txt）
+R7=**n-a**：全部 3 connector ddcci-props=none + backlight 关联表为空（无 DDCCI 面板条目）——实机无 DDCCI 面板（§四状态机，证据=本节完整运行）
+R8=**unverified**：分辨率集合证据成立（61 modes，source=sysfs，无 2880x1800 模式）；刷新率维度无 ioctl 证据（sysfs 不提供，@unknown）——按裁决「刷新率相关仍须记为未验证」，除非取得带刷新率的 ioctl 或其他独立证据
+R9=**unverified**（观察项口径）：分辨率集合中无 2560x* 模式（2560 base-vs-base 无法观察；limit_array 未命中语义无输入）
+证据引用=r7-r9-topology.txt（source=sysfs 61 modes @unknown）+ r8-sysfs-modes.txt
+
+--- R5 suspend 停批（2026-09-14）---
+timeline=17:42:44 r5 pre 观察器尝试（**命令引号缺陷失败**：env 变量折行 → INNOGPU_LINEAGE 被污染 → 校验拒绝，无有效基线快照）；17:43:11 sudo systemctl suspend（boot -2 最后一行日志）→ 未能唤醒 → 操作者冷重启（boot -1/-0）
+current_state=boot 0 桌面已恢复（Xorg+card0+renderD128，fantgpu 加载，firmware_en=1）
+mem_sleep=deep；rtc0(wakeup=enabled) 可作确定性唤醒源；/usr/sbin/rtcwake 就位
+H1（待证）=无有效唤醒事件（键鼠/USB 未触发）——需 boot -2 内核日志区分 H2（驱动挂起/恢复挂死）
+pending_operator=（a）特权 journalctl -b -2 内核日志尾+全量、pstore、（b）挂起时机器物理表现（风扇/LED）与唤醒尝试方式、（c）rtcwake 干臂验证
+new_method_proposal=rtcwake -m deep -s 60（RTC 自动唤醒，不依赖键鼠；干臂验证后执行）
+
+--- R5 suspend 失败阶段分析（2026-09-14，证据后）---
+kernel_b2_tail=PM: suspend entry (deep) + Filesystems sync: 0.002s 后日志终止（journald 冻结特性；H1/H2 均会止于此，不能单独定 H2）
+no_driver_hang_msgs=未见任何驱动挂起告警; pstore=空（无崩溃记录）
+rtcwake_dryarm=PASS（systime==rtctime 1789379937；alarm 09:59:58 布防+撤销成功）→ RTC 确定性唤醒源可用
+verdict_phase1=倾向 H1（挂起成功/no valid wake event）；H2 未实据；决定性实验=rtcwake 实挂 + pm_debug_messages=1
+
+--- R5 执行缺陷修正（2026-09-14 第 2 轮）---
+defect1=长命令折行两次（env dump/非 sudo 运行）→ 预置封装 /tmp/r5-run.sh（短命令 sudo /tmp/r5-run.sh）；defect2=rtcwake 本版模式名为 mem（--list-modes: freeze mem disk off no on disable show），deep 非法；defect3=操作者终端“没反应”= 前台 sudo dmesg -w（18:01:35 起持续跟随；Ctrl-C 即可，机器健康 up 16min）
+pm_debug_messages=1 已设置（18:01:15）
+
+--- R5 suspend attempt-2 停批（2026-09-14，H2 确证）---
+bootmap=（防歧义）前文的“boot -2”为采集时编号：= 当前口径 boot -3（install 后首会话 15:26:50→17:43:11）；attempt-1 挂起发生于该 boot 末（17:43:11 systemctl suspend）；boot -2（17:46:46→17:47:09，23s）为冷重启过渡；attempt-2 会话 = 当前 boot -1（17:47:41→18:06:51 挂起）；boot 0 = 18:11:24 现运行
+attempt1=17:43:11 sudo systemctl suspend → 不醒 → 冷重启；内核磁盘日志止于 17:43:12 “PM: suspend entry (deep) + Filesystems sync: 0.002 seconds”（journald 冻结截断；H1/H2 不可单证）
+attempt2=18:06:29 rtcwake -m mem -s 120 -n -v 干臂 OK（rtcwake-run.txt）；18:06:51 sudo /usr/sbin/rtcwake -m mem -s 120 -v 实挂（alarm 10:08:52 UTC = +120s，布防正确）→ 无自动唤醒、SSH 不可达、操作者实听**风扇从未停转** → 断电重启（boot 0 健康：fantgpu 加载 7118848、firmware_en=1、DRM 正常）
+h2_confirmed=风扇未停 ⇔ 平台从未进入 S3 → 挂起死锁于 entry 早期（freeze→device-suspend 窗口内；用户态已冻结：journald 停写、SSH 断、RTC alarm 对未入睡系统无效）；悬挂 >2min 无自动返回 ⇒ 排除 freezer 超时中止路径（该路径 ~20-30s 返回）
+journal_b1=磁盘日志最后一条 = 18:06:51 sudo[251080] rtcwake session opened（永不 closed）；无任何 PM/驱动挂起行刷盘（journald 在 freeze 前窗口 <1s）
+ring_b1=内存环随断电丢失；dmesg-live.txt = 18:06:52 环快照（boot -1 [0..1151.09s]，末条 = 定期 edid stub）——PM entry 行未及落盘/入文件
+pstore=空（死锁非 panic，无 ramoops 记录；attempt-1 时已核）
+o_precedent=4.0.2-i3（O 血统，本机）run-suspend-resume-tests.sh=PASS (60/60) + probe-suspend-resume-state.sh=PASS（r08_observer）→ 同机同平台 O 侧 suspend 正常；首责假设 F 侧挂起路径（待 pm_test 梯度 + 二分归因，不预判）
+f_pm_path=fantgpu_pci_drv.c:1954 fantgpu_pmops_suspend → fantgpu_device_suspend(dev,true)：fh2m_hal_dma_suspend → hal_power_sleep → hal_check_reg_accessiable → disable_irq → hal_pdp_restore_default_cfg → pci_save_state/pci_disable_device → D3hot；acpi_pcie_wait_secs=0（排除人为延迟假象）；fantgpu.ko 为单件模块（含 DRM 侧 pm 回调 fantdpu_drm_pm.c）
+verdict=R5=FAIL（H2 确证、两连败）；U1/U2 未执行；批冻结待三方裁决
+next_operator=（a）特权采集 attempt-2 残留证据：sudo journalctl -b -1 -k --no-pager、-b -1 tail、pstore；（b）裁决后：pm_test 梯度（freezer→devices→platform，pm_test_delay 5s 自动回弹）定位挂起阶段 + fantgpu 卸载/解绑二分；（c）留装调试 vs 回退 4.0.2-i3 之裁决
+
+--- R5 pm_test 阶梯结果（attempt-3，2026-09-14）---
+执行=qoder（按操作者授权执行；qoder CLI 会话 98a6933e / run PID 16822；工具调用证据=CLI segment 事件日志 tool_call_id=call_00_9zeBG88D9A7W7cXHrBMM1632, tool.shell.started 18:35:52）
+r5_pm_test_freezer=pass
+r5_pm_test_devices=hang
+r5_pm_test_platform=not_run
+r5_pm_bound_vs_unbound=not_run（二分未执行；条件已满足）
+r5_pm_root_cause=device_suspend_candidate
+r5_validation_status=FAIL
+freezer_detail=18:35:34→18:35:39 自动回弹（pm_test_delay 5s，RC=0）；内核序列 PM suspend entry→Filesystems sync 0.003s→Freezing ×2（0.001s）→Waiting 5s→PM suspend exit；证据 r5-pm-freezer-run.txt / r5-pm-freezer-dmesg.txt / boot -1 journal（sudo[319781]）
+devices_detail=18:35:52 发起（sudo[322824]，PWD=仓库根）→ 内核 "PM: suspend entry (deep)" 后磁盘日志终止（journald 冻结特性，非挂点证据）→ 命令永不返回（r5-pm-devices-run.txt 仅起始时间戳；无 devices-dmesg 文件；tool.shell.started 后无任何完成事件）→ 操作者 ≈22:17 断电重启；挂死时长 ≈3h42m
+devices判定=hang（非 pass；口径：pm_test 成功返回≠真实 S3 成功——本项无返回=死锁；pm_test 下系统不入 S3，风扇不停属正常，判别=命令不返回+系统无响应）
+阶段归因=freezer 独立通过 → 排除 freezer 阶段；挂点位于 device-suspend 窗口（用户态已冻结、未达 platform）；按裁决口径记录为"设备 suspend 阶段阻塞"，F 驱动首要候选（同机 O 血统 4.0.2-i3 suspend 测试 60/60 PASS 先例）
+来源更正=qoder 初次排查时因挂死断电导致会话恢复丢失该工具调用的转录记录，一度误判"非本会话触发"；经 CLI segment 日志（tool_call_id 上引）+ boot -1 journal（sudo[322824]）双重确证为 qoder 授权执行（description="Run pm_test devices level (predicted hang point)"），在此更正
+现场状态=boot 0（22:18:07）健康：fantgpu 7118848 refs、fant-drv 绑定 0000:02:00.0、gpu00 Driver/Firmware OK、pm_test=[none]、pm_debug_messages=0、pstore 空、无 journal/lock 残留（r5-pm-pre.txt 为阶梯前置状态）
+next=（待放行）fantgpu 二分：停 display-manager → 核验无 X/DRM 占用 → 解绑 fant-drv → 单次 pm_test=devices（r5-pm-devices-unbound-run.txt 落盘）→ 无论结果受监督重启；执行前提=操作者在场待命断电（本次 3h42m 挂死时长教训）
+
+--- R5 fantgpu 二分结果（attempt-4，2026-09-14）---
+执行=无人值守（systemd-run unit r5-bisect.service，root/system.slice，独立于桌面会话；脚本 /tmp/r5-bisect.sh；全过程日志 r5-bisect-log.txt、前置状态 r5-bisect-pre.txt）
+适配说明=本机无 display-manager 服务（实为 startx→dwm 直启）；以 loginctl terminate-session 2 替代"stop display-manager"（目标同为释放 DRM 占用）；qoder CLI 本体位于该会话内，执行期按时下线（预期，不影响脚本取证）
+r5_pm_bound_vs_unbound=pass（解绑后单次 devices 级返回）
+时间线=22:28:53 启动（90s 宽限）；22:30:23 终止桌面会话；22:30:57 X/picom/portal 全清（DRM 释放）；22:30:58 解绑 0000:02:00.0 rc=0（驱动链接消失）；22:30:58 发起 pm_test=devices（unbound）；22:31:04 返回 RC=0（全程 6s）；unit 22:31:04 Deactivated successfully（exit 0）
+unbound_dmesg=完整干净周期：suspend of devices complete 124.433ms → Waiting 5s → resume of devices complete 339.338ms → PM suspend exit（对比绑定态 18:35:52：死锁无返回、无 dmesg 捕获）→ r5-pm-devices-unbound-dmesg.txt / r5-pm-devices-unbound-run.txt
+恢复=操作者以电源键触发干净关机（journal 22:35:37 poweroff.target 完成，非硬断电）；boot 0 22:36:00 恢复：fant-drv 绑定、fantgpu 载入、pm_test=[none]
+判定=fantgpu 设备路径高度相关（方案口径：绑定态挂死 + 解绑态通过）；属关联性证据（对比中绑定与桌面/DRM 客户端两变量同时变化）
+待确认（建议）=bound+headless 对照：停桌面但保持 fantgpu 绑定，单次 devices 级——挂死则绑定即充分、归因闭合；通过则纳入 X/DRM 客户端交互维度
+误解澄清=操作者报告"超过 2 分钟没有反应"系解绑后屏幕无信号（预期 headless），非挂死；机器 22:31:04→22:35:37 持续存活（干净关机响应=实证）
+r5_pm_root_cause=device_suspend_candidate（收窄：fantgpu 设备路径高度相关）
+r5_validation_status=FAIL（维持；U1/U2 未执行；不建 validation-results）
+工作状态=按操作者指示暂停，转入三方裁决
+next（待裁决）=（a）bound+headless 确认对照；（b）F 挂起路径代码审查（fantgpu_device_suspend → hal_pdp_restore_default_cfg / fh2m_hal_dma_suspend / hal_power_sleep；fantdpu_drm_pm.c）；（c）headless 判定协议补充（以 SSH/电源键响应为准，不以屏幕为准）
+
+--- R5 bound+headless 对照（阶段 B，attempt-5，2026-09-15）---
+执行=dsh 已明示放行、操作者在场；systemd-run unit r5-bound-headless.service（root/system.slice）独立记录；仅终止 tty1 的 startx→dwm 会话，fantgpu 全程保持绑定；未 unbind、未改模块参数、未重载模块、未执行真实 S3
+前置=boot_id c2917208-9dc3-4eb2-864d-584f3fb70c00；pm_test=[none]；pm_debug_messages=0；PCI driver=/sys/bus/pci/drivers/fant-drv；card0/renderD128/fb0 齐全；selected_session=2（Name=ok, TTY=tty1）
+headless_confirmation=10:37:32 终止 session 2；Xorg/startx/dwm/picom/xdg-desktop-portal DRM 客户端清空；10:37:35 trigger 前 PCI 仍绑定且 DRM 节点齐全（root systemd/logind 对 card0 的管理持有不算桌面客户端）
+devices_attempt=10:37:36 写入 pm_test=devices 后执行 mem；r5-bound-headless-run.txt 停在发起时间，无 pm_state_rc、无 cleanup_rc、无返回后 dmesg；服务未返回
+operator_observation=SSH 随测试失联；超过 2 分钟仍未恢复；风扇持续运转；键盘灯亮；短按电源键无 poweroff 响应；最终长按电源键冷启动
+observer_note=r5-bound-headless-observe.txt 未创建（SSH 在 observer 启动前失联），不得补造；hang 由独立 service 截断点、>120s、SSH 不可达、软关机无响应和冷启动共同判定
+previous_boot=特权内核 journal 已补采（151919 bytes）：无 PM complete/resume、hung-task、panic 或正常关机；最后持久化内核行 = [10533.608211] [drm] fb_helper_is_unbound；pstore_files_present=0
+last_kernel_line_boundary=fantdpu_drm_fb.c:220 的 fant_fbdev_check_var() 在 drm_dev->master 非空时打印后立即返回 -EINVAL；仅作为最后可见关联事件，不是阻塞点实锤，不能据此定位具体 HAL 函数
+recovery=boot_id 11cc05c9-bda3-4aa0-8e9a-deb78e06a114；pm_test=[none]；pm_debug_messages=0；fant-drv 已绑定；card0/renderD128/fb0 齐全
+r5_investigation_stage=bound_headless
+r5_pm_test_freezer=pass
+r5_pm_test_devices=hang
+r5_pm_test_platform=not_run
+r5_gpu_binding=bound
+r5_desktop_clients=stopped
+r5_survival_basis=none
+r5_root_cause=device_suspend_candidate（高可信首要候选：headless+unbound 6s PASS，而 headless+bound HANG；具体源码/HAL 等待点仍 unresolved）
+r5_validation_status=FAIL
+evidence_archive=.runtime-archive/runtime-5.0.0-i2/r5-bound-headless-{pre,release,run,post-reboot,journal-kernel,pstore}.txt；目录由根 .gitignore 排除，SHA-256/字节数见 raw-evidence-archive-summary.txt
+stop_condition=阶段 B HANG 已触发；不重复 pm_test，不推进阶段 C/D，不执行 U1/U2，不创建 validation-results，不签发、不打 tag；后续代码修复/可观测性方案须重新经 qoder 初审与 dsh 终审

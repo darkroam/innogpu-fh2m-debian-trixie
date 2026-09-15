@@ -582,7 +582,10 @@ parse_topology() { # <out> -> prints "active=<i,...> inactive=<i,...>"; 严格�
                 ;;
             "  type="* | "  id="*) : ;;
             "  connector "*) : ;;                # F5 connector 契约行
-            "  "[0-9]*x[0-9]*@[0-9]*) : ;;        # F5 mode 行
+            "  "[0-9]*x[0-9]*@*)
+                local top_mode_re='^  [0-9]+x[0-9]+@(unknown|[0-9]+)$'
+                [[ "$line" =~ $top_mode_re ]] || { echo "err:bad_mode_line"; return 1; }
+                ;;                                      # F5 mode 行
             "  "*" -> "*) : ;;                   # F5 backlight 关联行
             "topology_collect="*)
                 local coll_re='^topology_collect=(complete|partial)$'

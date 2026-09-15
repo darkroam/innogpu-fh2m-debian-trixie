@@ -1,6 +1,6 @@
 # R5 suspend 故障调查方案（5.0.0-i2）
 
-- 状态：**codex 修订稿，已吸收 qoder 初审并落实 dsh 终裁；阶段 A 已获只读放行，阶段 B/C/D 仍须逐阶段明示放行；真机阶段继续冻结**
+- 状态：**阶段 A/B 已完成；阶段 B 在 bound+headless 条件下硬挂，阶段 C 按终裁跳过，阶段 D 仅放行修复候选设计；任何实现和真机复测仍须另行终审**
 - 日期：2026-09-14
 - 适用对象：已安装并运行 `5.0.0-i2` 的同一台真机
 - 当前结论：`R5=FAIL`；`U1/U2`、`validation-results.json`、签发和 tag 继续冻结
@@ -17,8 +17,9 @@
 3. `pm_test=devices` 在 `fantgpu` 绑定、桌面运行时挂起；该尝试没有返回。
 4. 停止桌面并解绑 `0000:02:00.0` 后，`pm_test=devices` 在约 6 秒内返回 `RC=0`，dmesg 有完整的 devices suspend/resume 周期。
 5. 当前系统已恢复：`fantgpu` 绑定、Driver/Firmware OK、`pm_test=none`、`pm_debug_messages=0`。
+6. 2026-09-15 的 bound+headless 单变量对照仍在 `pm_test=devices` 硬挂：命令未返回、SSH 断连、超过 120 秒、风扇持续转动、键盘灯亮且电源键软关机无响应，最终冷断电恢复。与同条件 unbound 约 6 秒通过的对照结合，`fantgpu` 设备绑定 suspend 路径成为高可信候选根因；具体阻塞函数仍未定位。
 
-权威证据目录为 `docs/planning/evidence/o-stage/runtime-5.0.0-i2/`。其中 32 个未跟踪原始运行产物已按 dsh 终裁移至仓库外归档 `~/innogpu-runtime-archive/runtime-5.0.0-i2/`；Git 仅保留 `raw-evidence-archive-summary.txt`（每个原始文件一行，含 SHA-256、字节数、脱敏规则和归档路径）以及 `c3-firmware-abort.txt`、`preinstall-state.txt`、`install-rollback.txt` 等结构化审计记录。
+权威证据目录为 `docs/planning/evidence/o-stage/runtime-5.0.0-i2/`。原始运行产物保存在仓库根目录下、由 `.gitignore` 整体排除的本机归档 `.runtime-archive/runtime-5.0.0-i2/`；Git 仅保留 `raw-evidence-archive-summary.txt`（每个原始文件一行，含 SHA-256、字节数、脱敏规则和项目内归档路径）以及 `c3-firmware-abort.txt`、`preinstall-state.txt`、`install-rollback.txt` 等结构化审计记录。
 
 ### 1.2 对既有二分的复核
 
@@ -27,7 +28,7 @@
 - 绑定态：桌面/X/DRM 客户端存在，设备绑定；
 - 解绑态：桌面会话终止、设备解绑，系统为 headless。
 
-因此解绑态通过可能来自设备解绑，也可能来自释放 X/DRM 客户端后的交互变化。解绑操作本身也破坏了继续观察原显示会话的条件。下一项实验必须保持设备绑定，只去除桌面/DRM 用户态变量。
+该混杂变量已由 2026-09-15 的 bound+headless 实验消除：保持设备绑定、只移除桌面/DRM 用户态后仍发生同类硬挂。因此设备绑定路径已是高可信候选，阶段 C 客户端矩阵不再有足够信息增益，按 dsh 终裁跳过。该结果仍不能把某一个 HAL 调用写成已定位根因。
 
 `pm_test` 结果也不能等同于真实 S3：它用于定位内核 suspend 流程阶段，不能证明平台实际断电或唤醒成功。已有真实 suspend 两次失败足以维持 R5=FAIL。
 
@@ -74,7 +75,7 @@ qoder 初审时先复核：
 
 静态阶段输出一份审查记录，至少包含安装树 hash、`source_path:line`、符号归属（源码/预编译）、调用顺序、可见等待点、已知超时/无超时点和“可由该证据证明的范围”。若无法取得安装树或 hash 不匹配，阶段 A 输出 `UNVERIFIED`，不得退回审查过期 `build/` 树来补结论。
 
-### 阶段 B：bound + headless 对照（首选真机实验）
+### 阶段 B：bound + headless 对照（已执行并失败）
 
 目的：保持 `fantgpu` PCI 设备绑定，只移除桌面和 DRM 用户态客户端，消除上一轮二分的混杂变量。
 
@@ -93,9 +94,11 @@ qoder 初审时先复核：
 - bound + headless 仍挂死：设备绑定路径是充分的高可信候选，优先进入设备回调代码审查和日志/trace 设计；仍称“候选根因”，除非后续证据能闭合具体函数。
 - bound + headless 通过：不能归因设备独立挂死，转入 X/DRM 客户端与设备 suspend 的交互矩阵；此前 unbound 通过不再被当作单变量证据。
 
-### 阶段 C：若 B 通过，最小化的客户端交互对照
+实测采用第一条解释规则：bound + headless 硬挂，且需要冷断电恢复。故不再重复阶段 B、不进入更深 `pm_test` 级别，也不执行真实 `mem`；结果和恢复状态见 `install-rollback.txt` 及本机 ignored 原始归档。
 
-只在 B 成功且状态恢复后执行，由 dsh 终审是否需要：
+### 阶段 C：客户端交互对照（已跳过）
+
+该阶段只在 B 成功时成立。由于 B 已硬挂，dsh 终裁跳过本阶段，以下矩阵保留为方法记录，不授权执行：
 
 1. bound + headless（基线复核，不重复超过一次）；
 2. bound + X server、无桌面客户端；
@@ -103,13 +106,15 @@ qoder 初审时先复核：
 
 每次只改变一个客户端层，使用同一 `pm_test=devices` 入口；不执行真实 `mem`，不在该阶段引入 unbind。若某层挂死，立即停止矩阵，避免重复制造不可恢复现场。
 
-### 阶段 D：代码/运行时收敛
+### 阶段 D：代码/运行时收敛（仅设计获准）
 
 根据 B/C 结果选择最小下一步：
 
 - 若 headless 仍挂死：围绕 PCI PM 回调和 HAL 调用顺序做静态修复候选，优先增加可观测的阶段标记/超时或错误返回处理；任何修复必须单独形成 patch、单测/静态门禁、双构建和新 SHA，不能直接修改已安装 `.ko`。
 - 若仅桌面态挂死：围绕 `fantdpu_drm_pm.c` 的 DRM suspend、GEM/CRTC backup 和用户态 DRM master 生命周期做交互调查，不能先改 PCI HAL。
 - 若静态无法区分：停止扩大真机风险，保留 `R5=FAIL`，等待可获取的 F HAL 源码、带阶段日志的新构建或 netconsole/第二台机器等更强证据。
+
+本轮采用第一条路径。具体候选、边界、构建传导和复测硬前置由 `docs/planning/r5-suspend-stage-d-design.md` 定义。当前批准只允许设计和只读审查，不等于批准创建补丁、构建、安装或复测。
 
 ### 阶段 E：永久测试补强（调查结论后，不阻塞本轮诊断）
 
@@ -160,22 +165,17 @@ sudo dmesg --color=never | tail -200
 
 ## 5. 证据与判定
 
-每个实验单独落盘，文件名包含阶段和条件，例如：
+每个实验单独落盘，文件名包含阶段和条件。`r5-static-review.txt` 等脱敏审查摘要可进入 Git；`r5-bound-headless-pre.txt`、`r5-bound-headless-run.txt`、`r5-bound-headless-dmesg.txt` 等原始运行采集必须写入项目内本机归档 `.runtime-archive/runtime-5.0.0-i2/`，该目录由 `.gitignore` 整体排除，不得加入 Git。摘要文件按 `raw-evidence-archive-summary.txt` 的一行一文件格式追加。
 
-- `r5-bound-headless-pre.txt`
-- `r5-bound-headless-run.txt`
-- `r5-bound-headless-dmesg.txt`
-- `r5-static-review.txt`
+每个原始文件必须保存 stdout、stderr、RC、开始/结束时间、当前 boot ID、内核、包版本、设备绑定状态、`pm_test` 前后值和 dmesg 采集主体。不得覆盖历史文件；重试必须使用新文件名并在 `install-rollback.txt` 追加索引。迁移/写摘要遵循“先复制、双向 hash 校验、归档、写摘要、check-docs”顺序。
 
-文件必须保存 stdout、stderr、RC、开始/结束时间、当前 boot ID、内核、包版本、设备绑定状态、`pm_test` 前后值和 dmesg 采集主体。不得覆盖历史文件；重试必须使用新文件名并在 `install-rollback.txt` 追加索引。
+原始特权 dmesg/journal 可能包含主机名、用户路径、设备标识或网络信息，属于本机取证副本，不得未经脱敏直接纳入发布提交。P1-1 最初采用仓库外归档；2026-09-15 经用户修订为项目内、Git 忽略的本机归档，隐私边界和摘要审计要求不变：
 
-原始特权 dmesg/journal 可能包含主机名、用户路径、设备标识或网络信息，属于本机取证副本，不得未经脱敏直接纳入发布提交。该 P1-1 机制已由 dsh 终裁采纳 **(a)**；(b)/(c) 仅作为被否决的备选记录：
+- 原始证据保存在 `.runtime-archive/`，该目录必须由根 `.gitignore` 排除；禁止 `git add -f`。
+- Git 只保留脱敏摘要、原始文件大小、SHA-256、脱敏规则和项目相对归档路径。
+- 迁移前后必须核对完整文件集及 hash；禁止删除或改写唯一原件。
 
-- **推荐 (a)**：原始证据移出仓库归档；Git 只保留脱敏摘要、原始文件大小和 SHA-256、脱敏规则；迁移前先复制并核 hash，禁止删除或改写唯一原件。
-- **(b)**：评审并修改 `check-docs.sh` 扫描范围或登记式白名单，明确记录规则变更，不得静默放宽隐私门禁。
-- **(c)**：由 dsh 指定其他可审计机制。
-
-迁移已按“复制、双向 hash 校验、归档、写摘要、隐私门禁复核”完成；原始唯一证据保留在上述仓库外归档，禁止改写。进入 Git 的证据必须可追溯且通过隐私审计。
+迁移按“迁移前 hash 清单、移动、迁移后 hash 比对、写摘要、Git ignore 检查、隐私门禁复核”执行；原始唯一证据保留在上述项目内本机归档，禁止改写。进入 Git 的证据必须可追溯且通过隐私审计。
 
 每项结果使用以下字段：
 
@@ -204,8 +204,8 @@ r5_validation_status=FAIL
 
 1. codex 起草并完成本地静态自检；
 2. qoder 初审：核对证据边界、实验变量、安全协议，并提出 P1/P2 修订；
-3. dsh 终审：已采纳 P1-1 `(a)`，已批准阶段 A 只读调查；阶段 B/C/D 仍须按阶段明示批准；
+3. dsh 终审：已采纳原始证据归档规则的后续用户修订；阶段 A/B 已结束，阶段 C 已跳过，阶段 D 当前只批准设计；实现、安装和唯一一次复测仍须分别明示批准；
 4. 仅在对应阶段 dsh 明示批准且用户现场在场后，由用户在本地物理控制台监督执行；
 5. codex 负责结果整理和后续实现建议，qoder 初审，dsh 终审提交。
 
-阶段 A 只读审查已获 dsh 放行，`r5-static-review.txt` 仍不能授权或替代阶段 B。阶段 B 及以后必须取得对应的 dsh 明示放行，并由用户现场监督；无论调查结果如何，`R5=FAIL`、`U1/U2`、`validation-results.json`、签发和 tag 均保持冻结。
+阶段 A/B 结果只用于形成阶段 D 设计，不能自行授权实现或复测。后续任何真机动作必须取得 dsh 明示放行并由用户现场监督；无论调查结果如何，`R5=FAIL`、`U1/U2`、`validation-results.json`、签发和 tag 均保持冻结。

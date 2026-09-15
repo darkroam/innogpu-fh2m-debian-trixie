@@ -29,6 +29,13 @@ static int crtc_index(const struct drm_mode_card_res *resources,
  * 不得把「未采集到」伪装成真实的 modes=0 / ddcci-props=none。 */
 static int collect_failed = 0;
 
+struct topology_mode {
+	uint32_t hdisplay;
+	uint32_t vdisplay;
+	uint32_t vrefresh;
+	int refresh_known;
+};
+
 static const char *connection_name(uint32_t connection)
 {
 	switch (connection) {
@@ -70,6 +77,103 @@ static const char *connector_type_name(uint32_t type)
 	}
 }
 
+/* The connector `modes` sysfs attribute carries dimensions only.  Preserve
+ * that limitation instead of inventing a refresh rate for the fallback. */
+static const char *topology_sysfs_root(void)
+{
+#ifdef INNOGPU_DMABUF_FIXTURE_HOOKS
+	const char *root = getenv("INNOGPU_DMABUF_TOPOLOGY_SYSFS_ROOT");
+	if (root && *root)
+		return root;
+#endif
+	return "/sys/class/drm";
+}
+
+static int read_sysfs_modes(const char *device,
+				    uint32_t connector_type,
+				    uint32_t connector_type_id,
+				    struct topology_mode **out_modes,
+				    uint32_t *out_count)
+{
+	const char *base = strrchr(device, '/');
+	const char *card = base ? base + 1 : device;
+	const char *type = connector_type_name(connector_type);
+	char path[PATH_MAX];
+	FILE *file;
+	struct topology_mode *modes = NULL;
+	uint32_t count = 0;
+	char *line = NULL;
+	size_t capacity = 0;
+	ssize_t length;
+
+	if (!*card || strchr(card, '/') || strncmp(card, "card", 4) != 0)
+		return -1;
+	if (snprintf(path, sizeof(path), "%s/%s-%s-%u/modes",
+		     topology_sysfs_root(), card, type, connector_type_id) >=
+	    (int)sizeof(path))
+		return -1;
+	file = fopen(path, "r");
+	if (!file)
+		return -1;
+	while ((length = getline(&line, &capacity, file)) >= 0) {
+		char *p = line;
+		char *end;
+		unsigned long hdisplay;
+		unsigned long vdisplay;
+		struct topology_mode mode;
+
+		while (length > 0 && (p[length - 1] == '\n' || p[length - 1] == '\r' ||
+				      p[length - 1] == ' ' || p[length - 1] == '\t'))
+			p[--length] = '\0';
+		if (!*p || *p < '0' || *p > '9') {
+			free(line);
+			free(modes);
+			fclose(file);
+			return -1;
+		}
+		errno = 0;
+		hdisplay = strtoul(p, &end, 10);
+		if (errno || end == p || *end != 'x' || hdisplay > UINT32_MAX)
+			goto malformed;
+		p = end + 1;
+		if (*p < '0' || *p > '9')
+			goto malformed;
+		errno = 0;
+		vdisplay = strtoul(p, &end, 10);
+		if (errno || end == p || *end != '\0' || vdisplay > UINT32_MAX)
+			goto malformed;
+		mode.hdisplay = (uint32_t)hdisplay;
+		mode.vdisplay = (uint32_t)vdisplay;
+		mode.vrefresh = 0;
+		mode.refresh_known = 0;
+		if (count == UINT32_MAX)
+			goto malformed;
+		struct topology_mode *grown = realloc(modes,
+						 (size_t)(count + 1) * sizeof(*modes));
+		if (!grown)
+			goto malformed;
+		modes = grown;
+		modes[count++] = mode;
+		continue;
+
+malformed:
+		free(line);
+		free(modes);
+		fclose(file);
+		return -1;
+	}
+	free(line);
+	if (ferror(file)) {
+		free(modes);
+		fclose(file);
+		return -1;
+	}
+	fclose(file);
+	*out_modes = modes;
+	*out_count = count;
+	return 0;
+}
+
 /* CRTC 行输出契约（真实 ioctl 路径与 fixture 契约测试共用）：
  * 三态 mode 名选择——inactive -> "-"；active 且 mode 名称非空 -> 原值；
  * active 且 mode 名称为空 -> 稳定占位 "<unnamed>"（空名称绝不产生空字段）。 */
@@ -106,6 +210,10 @@ static void print_crtc_line(uint32_t index, const struct drm_mode_crtc *crtc)
  * （raw ioctl，无 libdrm 链接依赖，与仓库其余 C 探针构建口径一致） */
 static void print_connector_props(int fd, uint32_t connector_id, const char *ns)
 {
+	if (fd < 0) {
+		printf("  %sconnector %u ddcci-props=none\n", ns, connector_id);
+		return;
+	}
 	struct drm_mode_obj_get_properties props = {0};
 	props.obj_id = connector_id;
 	props.obj_type = DRM_MODE_OBJECT_CONNECTOR;
@@ -176,21 +284,28 @@ static void print_connector_props(int fd, uint32_t connector_id, const char *ns)
  * modes 采集失败 → 契约行 modes=unavailable（不伪装 0）。 */
 static void print_connector_contract(int fd,
 				     const struct drm_mode_get_connector *connector,
-				     struct drm_mode_modeinfo *modes,
-				     const char *ns, int modes_ok)
+				     const struct topology_mode *modes,
+				     const char *ns, int modes_ok,
+				     const char *source)
 {
 	const char *cname = connector_type_name(connector->connector_type);
 	if (modes_ok) {
-		printf("  %sconnector %u %s-%u status=%s modes=%u\n",
+		printf("  %sconnector %u %s-%u status=%s modes=%u source=%s\n",
 		       ns, connector->connector_id, cname, connector->connector_type_id,
-		       connection_name(connector->connection), connector->count_modes);
+		       connection_name(connector->connection), connector->count_modes,
+		       source);
 		for (uint32_t i = 0; i < connector->count_modes; i++)
-			printf("  %s%ux%u@%u\n", ns,
-			       modes[i].hdisplay, modes[i].vdisplay, modes[i].vrefresh);
+			if (modes[i].refresh_known)
+				printf("  %s%ux%u@%u\n", ns,
+				       modes[i].hdisplay, modes[i].vdisplay,
+				       modes[i].vrefresh);
+			else
+				printf("  %s%ux%u@unknown\n", ns,
+				       modes[i].hdisplay, modes[i].vdisplay);
 	} else {
-		printf("  %sconnector %u %s-%u status=%s modes=unavailable\n",
+		printf("  %sconnector %u %s-%u status=%s modes=unavailable source=%s\n",
 		       ns, connector->connector_id, cname, connector->connector_type_id,
-		       connection_name(connector->connection));
+		       connection_name(connector->connection), source);
 	}
 	print_connector_props(fd, connector->connector_id, ns);
 }
@@ -286,7 +401,7 @@ static int fixture_topology_contract(void)
 		printf("%sdevice=fixture crtcs=0 connectors=1 encoders=0\n", ns);
 		printf("CRTCs:\n");
 		printf("Connectors:\n");
-		printf("  %sconnector 51 eDP-1 status=connected modes=unavailable\n", ns);
+		printf("  %sconnector 51 eDP-1 status=connected modes=unavailable source=unavailable\n", ns);
 		printf("  %sconnector 51 ddcci-props=unavailable (props query failed: fixture)\n", ns);
 		printf("Backlight:\n");
 		printf("%stopology_collect=partial\n", ns);
@@ -332,11 +447,43 @@ static int fixture_topology_contract(void)
 	 * HDMI-A-1（0 modes）——输出函数直接驱动（print_connector_contract 的
 	 * mode/props 部分在夹具侧用契约行替换，props 查询需要真实 fd）。 */
 	printf("Connectors:\n");
-	printf("  %sconnector 51 eDP-1 status=connected modes=2\n", ns);
-	printf("  %s1920x1200@60\n", ns);
-	printf("  %s1920x1200@48\n", ns);
-	printf("  %sconnector 51 ddcci-props=none\n", ns);
-	printf("  %sconnector 52 HDMI-A-1 status=disconnected modes=0\n", ns);
+	if (getenv("INNOGPU_DMABUF_TOPOLOGY_FIXTURE_SYSFS_FALLBACK")) {
+		struct drm_mode_get_connector connector = {
+			.connector_id = 51,
+			.connector_type = DRM_MODE_CONNECTOR_eDP,
+			.connector_type_id = 1,
+			.connection = 1,
+			.count_modes = 2,
+		};
+		struct topology_mode *modes = NULL;
+		uint32_t count = 0;
+		int modes_ok = read_sysfs_modes("/dev/dri/card0",
+						connector.connector_type,
+						connector.connector_type_id,
+						&modes, &count) == 0 && count == connector.count_modes;
+		if (!modes_ok) {
+			free(modes);
+			modes = NULL;
+			collect_failed = 1;
+		}
+		print_connector_contract(-1, &connector, modes, ns, modes_ok,
+					 modes_ok ? "sysfs" : "unavailable");
+		free(modes);
+	} else {
+		struct drm_mode_get_connector connector = {
+			.connector_id = 51,
+			.connector_type = DRM_MODE_CONNECTOR_eDP,
+			.connector_type_id = 1,
+			.connection = 1,
+			.count_modes = 2,
+		};
+		struct topology_mode modes[2] = {
+			{1920, 1200, 60, 1},
+			{1920, 1200, 48, 1},
+		};
+		print_connector_contract(-1, &connector, modes, ns, 1, "ioctl");
+	}
+	printf("  %sconnector 52 HDMI-A-1 status=disconnected modes=0 source=ioctl\n", ns);
 	printf("  %sconnector 52 ddcci-props=none\n", ns);
 
 	printf("Backlight:\n");
@@ -446,7 +593,7 @@ int main(int argc, char **argv)
 				collect_failed = 1;
 				printf("  id=%u error=%s\n", connector_ids[i],
 				       strerror(errno));
-				printf("  connector %u unavailable (GETCONNECTOR failed: %s)\n",
+				printf("  connector %u unavailable source=unavailable (GETCONNECTOR failed: %s)\n",
 				       connector_ids[i], strerror(errno));
 				continue;
 			}
@@ -469,41 +616,64 @@ int main(int argc, char **argv)
 			       connector.mm_width, connector.mm_height, connector.count_modes,
 			       connector.encoder_id, encoder_crtc, index);
 
-			/* F5 契约段：connector 契约行 + mode 枚举 + DDCCI props */
-			struct drm_mode_modeinfo *modes = NULL;
-			uint32_t count_modes = connector.count_modes;
+			/* F5 契约段：connector + mode 枚举 + DDCCI props。某些
+			 * vendor ABI 对 payload GETCONNECTOR 返回 EFAULT；sysfs
+			 * modes 是该字段的只读内核回退，但不提供刷新率。 */
+			struct drm_mode_get_connector first = connector;
+			struct topology_mode *modes = NULL;
+			uint32_t reported_modes = connector.count_modes;
+			uint32_t count_modes = reported_modes;
 			int modes_ok = 0;
-			if (count_modes) {
-				modes = calloc(count_modes, sizeof(*modes));
-				if (modes) {
-					connector.modes_ptr = (uintptr_t)modes;
+			const char *source = "unavailable";
+			if (reported_modes == 0) {
+				modes_ok = 1;   /* 真实 0 modes 是合法采集结果 */
+				source = "ioctl";
+			} else {
+				struct drm_mode_modeinfo *ioctl_modes =
+					calloc(reported_modes, sizeof(*ioctl_modes));
+				if (ioctl_modes) {
+					connector.modes_ptr = (uintptr_t)ioctl_modes;
 					connector.count_props = 0;
 					connector.props_ptr = 0;
 					connector.prop_values_ptr = 0;
-					if (ioctl(fd, DRM_IOCTL_MODE_GETCONNECTOR, &connector)) {
+					if (!ioctl(fd, DRM_IOCTL_MODE_GETCONNECTOR, &connector)) {
+						modes = calloc(reported_modes, sizeof(*modes));
+						if (modes) {
+							for (uint32_t j = 0; j < reported_modes; j++) {
+								modes[j].hdisplay = ioctl_modes[j].hdisplay;
+								modes[j].vdisplay = ioctl_modes[j].vdisplay;
+								modes[j].vrefresh = ioctl_modes[j].vrefresh;
+								modes[j].refresh_known = 1;
+							}
+							modes_ok = 1;
+							source = "ioctl";
+						}
+					}
+					free(ioctl_modes);
+				}
+				if (!modes_ok) {
+					uint32_t sysfs_count = 0;
+					if (read_sysfs_modes(device, first.connector_type,
+								first.connector_type_id, &modes,
+								&sysfs_count) == 0 &&
+						    sysfs_count == reported_modes) {
+						count_modes = sysfs_count;
+						modes_ok = 1;
+						source = "sysfs";
+					} else {
 						free(modes);
 						modes = NULL;
 						count_modes = 0;
-					} else {
-						modes_ok = 1;
 					}
-				} else {
-					count_modes = 0;
 				}
-			} else {
-				modes_ok = 1;   /* 真实 0 modes 是合法采集结果 */
 			}
 			if (!modes_ok)
 				collect_failed = 1;
 			{
-				struct drm_mode_get_connector contract = {
-					.connector_id = connector_ids[i],
-					.connector_type = connector.connector_type,
-					.connector_type_id = connector.connector_type_id,
-					.connection = connector.connection,
-					.count_modes = count_modes,
-				};
-				print_connector_contract(fd, &contract, modes, "", modes_ok);
+				struct drm_mode_get_connector contract = first;
+				contract.count_modes = count_modes;
+				print_connector_contract(fd, &contract, modes, "", modes_ok,
+							 source);
 			}
 			free(modes);
 		}
