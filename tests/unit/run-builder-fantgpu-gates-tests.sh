@@ -2,7 +2,7 @@
 # tests/unit/run-builder-fantgpu-gates-tests.sh — builder F 分支早期门禁与静态契约单测
 #
 # 依据 docs/planning/c3-a-4-reproducible-input-plan.md §三（改造点 9-13）与
-# §四（postinst/md5sums/trace）：版本 allowlist 5.0.0-i2、血统判定 5.0.0-i*、
+# §四（postinst/md5sums/trace）：当前版本 5.0.0-i3、血统判定 5.0.0-i*、
 # 输入预检分支、PKG_DESC $VERSION 参数化、share/命令前缀血统参数化、
 # ld.so.conf fantgpu-fh2m、postinst fh2m_dri.so + 设备门。
 # 只测可运行早期门禁与静态契约（不编译内核：KERNELDIR 注入不存在路径使
@@ -44,24 +44,24 @@ else
     bad t01 "rc=$RC"
 fi
 
-# t02 5.0.0-i2 通过 allowlist + epoch 门 → 死在 kernel headers（证明版本/血统被接受）
-run_builder VERSION=5.0.0-i2 SOURCE_DATE_EPOCH=1788796800
+# t02 5.0.0-i3 通过 allowlist + epoch 门 → 死在 kernel headers（证明版本/血统被接受）
+run_builder VERSION=5.0.0-i3 SOURCE_DATE_EPOCH=1788796800
 if [ "$RC" -eq 1 ] && grep -Fq "staging_kernel_headers=FAIL" "$TMP/b.out"; then
     ok t02
 else
     bad t02 "rc=$RC"
 fi
 
-# t03 5.0.0-i1 回归：同样路径
+# t03 归档代禁止借用当前 i3 快照重构建
 run_builder VERSION=5.0.0-i1 SOURCE_DATE_EPOCH=1788796800
-if [ "$RC" -eq 1 ] && grep -Fq "staging_kernel_headers=FAIL" "$TMP/b.out"; then
+if [ "$RC" -eq 1 ] && grep -Fq "staging_ostage_generation=FAIL" "$TMP/b.out"; then
     ok t03
 else
     bad t03 "rc=$RC"
 fi
 
 # t04 epoch 错误 → builder_repro=FAIL
-run_builder VERSION=5.0.0-i2 SOURCE_DATE_EPOCH=1111111111
+run_builder VERSION=5.0.0-i3 SOURCE_DATE_EPOCH=1111111111
 if [ "$RC" -eq 1 ] && grep -Fq "builder_repro=FAIL" "$TMP/b.out"; then
     ok t04
 else
@@ -129,16 +129,17 @@ fi
 
 # t12 静态契约：materialize-trace 契约（物化 + 逐行 verify + ostage 清单）
 if grep -Fq 'builder_materialize_trace=PASS' "$BUILDER" \
-   && grep -Fq -- '--verify-trace' "$BUILDER" \
-   && grep -Fq -- '--ostage-manifest' "$BUILDER"; then
+	&& grep -Fq -- '--verify-trace' "$BUILDER" \
+	&& [[ "$(grep -Fc -- '--ostage-manifest "$OSTAGE_DIR/o-stage.manifest.tsv"' "$BUILDER")" -eq 2 ]]; then
     ok t12
 else
     bad t12 "trace assertions missing"
 fi
 
-# t13 静态契约：O_stage meta 引用已切换至 i2 代（030-030 入链后锁定新树 hash）
-if grep -Fq '"$OSTAGE_DIR/5.0.0-i2.meta.json"' "$BUILDER" \
-   && grep -Fq 'OSTAGE_TREE_HASH="c44ce7850134c1455c0935519fc6cb08a81b505804150c59dde1338e1369bd3f"' "$BUILDER"; then
+# t13 静态契约：O_stage meta 引用 i3 隔离代（030-031 入链后锁定新树 hash）
+if grep -Fq 'OSTAGE_DIR="$ROOT/docs/planning/evidence/o-stage/5.0.0-i3"' "$BUILDER" \
+   && grep -Fq '"$OSTAGE_DIR/5.0.0-i3.meta.json"' "$BUILDER" \
+   && grep -Fq 'OSTAGE_TREE_HASH="acfe80d1cff9437f8d4a77ee71640d1a4c0698614656f8312cdf662d8366361c"' "$BUILDER"; then
     ok t13
 else
     bad t13 "meta.json reference changed"
@@ -153,15 +154,15 @@ else
 fi
 
 # t15 印证门禁恢复（dsh 返工裁决）：builder 不得在任何 post-trace 位置打
-# 补丁——F 包内 DKMS 源 = 14 链 O_stage 快照本身（030-030 已随链入树），
+# 补丁——F 包内 DKMS 源 = 15 链 O_stage 快照本身（030-031 已随链入树），
 # 补丁后状态由锁定 o_stage_tree_hash 覆盖；无 apply_fantgpu_runtime_fixes、
 # 无顶层非法补丁名引用。
-if grep -Fq 'APPLIED_SOURCE_FIXES="o-stage-materialized-030-chain-14' "$BUILDER" \
+if grep -Fq 'APPLIED_SOURCE_FIXES="o-stage-materialized-030-chain-15' "$BUILDER" \
    && ! grep -Fq 'apply_fantgpu_runtime_fixes' "$BUILDER" \
    && ! grep -Fq 'fantgpu-hwinfo-audio-fallback.patch' "$BUILDER"; then
     ok t15
 else
-    bad t15 "post-trace patching not removed or 14-chain wiring missing"
+    bad t15 "post-trace patching not removed or 15-chain wiring missing"
 fi
 
 # t16 fallback semantics：先检查 hwinfo，再进入 HAL OS matcher；缺失 hwinfo
@@ -183,17 +184,17 @@ else
     bad t16 "fallback guard/normal-return/matcher ordering is not fail-safe"
 fi
 
-# t17 入链印证：锁定的 O_stage 快照必须已含 030-030——reverse dry-run 成功
+# t17 入链印证：锁定的 O_stage 快照必须已含 030-031——reverse dry-run 成功
 # 证明补丁已随链入树且可干净反转（正向 dry-run 必然失败：已应用）。
 PATCH_TREE="$TMP/patch-tree"
 mkdir -p "$PATCH_TREE"
 if tar --use-compress-program=zstd -xf \
-       "$ROOT/docs/planning/evidence/o-stage/o-stage-snapshot.tar.zst" -C "$PATCH_TREE" \
+       "$ROOT/docs/planning/evidence/o-stage/5.0.0-i3/o-stage-snapshot.tar.zst" -C "$PATCH_TREE" \
    && patch --batch --forward --fuzz=0 --no-backup-if-mismatch --dry-run -R -s \
-       -d "$PATCH_TREE/o-stage" -p1 < "$ROOT/patches/030-030.patch"; then
+       -d "$PATCH_TREE/o-stage" -p1 < "$ROOT/patches/030-031.patch"; then
     ok t17
 else
-    bad t17 "030-030 not present in locked O_stage snapshot (reverse dry-run failed)"
+    bad t17 "030-031 not present in locked O_stage snapshot (reverse dry-run failed)"
 fi
 
 echo "PASS=$PASS FAIL=$FAILN"

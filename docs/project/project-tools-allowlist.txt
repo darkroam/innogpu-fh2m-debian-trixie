@@ -96,8 +96,14 @@ docs/planning/evidence/d-stage-audit.symlink.tsv.sha256
 docs/planning/evidence/d-stage-audit.tsv
 docs/planning/evidence/d-stage-audit.tsv.sha256
 docs/planning/evidence/o-stage/5.0.0-i2.meta.json
+docs/planning/evidence/o-stage/5.0.0-i3/5.0.0-i3.meta.json
+docs/planning/evidence/o-stage/5.0.0-i3/o-stage-snapshot.tar.zst
+docs/planning/evidence/o-stage/5.0.0-i3/o-stage-snapshot.tar.zst.sha256
+docs/planning/evidence/o-stage/5.0.0-i3/o-stage.manifest.tsv
+docs/planning/evidence/o-stage/5.0.0-i3/o-stage.manifest.tsv.sha256
 docs/planning/evidence/o-stage/build-5.0.0-i1.sha256
 docs/planning/evidence/o-stage/build-5.0.0-i2.sha256
+docs/planning/evidence/o-stage/build-5.0.0-i3.sha256
 docs/planning/evidence/o-stage/c2-module-params.txt
 docs/planning/evidence/o-stage/c2-ruling.md
 docs/planning/evidence/o-stage/f-payload-integrity.json
@@ -243,6 +249,7 @@ tests/picom/run-session-tests.sh
 tests/runtime/README.md
 tests/runtime/run-capability-baseline.sh
 tests/unit/d-stage-audit-fault-tests.py
+tests/unit/run-030-031-pm-marker-tests.sh
 tests/unit/run-030-meta-tests.sh
 tests/unit/run-builder-fantgpu-gates-tests.sh
 tests/unit/run-capability-baseline-tests.sh

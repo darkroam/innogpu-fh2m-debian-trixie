@@ -1,0 +1,836 @@
+diff -ruN -x '*.o' -x '*.cmd' a/fantgpu/fantgpu_pci_drv.c b/fantgpu/fantgpu_pci_drv.c
+--- a/fantgpu/fantgpu_pci_drv.c	2026-09-15 15:22:41.501783876 +0800
++++ b/fantgpu/fantgpu_pci_drv.c	2026-09-15 15:45:42.822887634 +0800
+@@ -72,6 +72,36 @@
+ #endif
+ #include "kernel_compatibility.h"
+ 
++static int fantgpu_pm_propagate(int ret)
++{
++	return ret < 0 ? ret : ret ? -EIO : 0;
++}
++
++static void fantgpu_pm_marker(struct device *dev, const char *stage,
++		const char *event, int rc, const char *mode, const char *reason,
++		int propagated, bool propagated_valid)
++{
++	if (propagated_valid)
++		dev_notice(dev, "fantgpu_pm_stage=%s event=%s rc=%d mode=%s reason=%s propagated=%d\n",
++			stage, event, rc, mode, reason, propagated);
++	else
++		dev_notice(dev, "fantgpu_pm_stage=%s event=%s rc=%d mode=%s reason=%s propagated=na\n",
++			stage, event, rc, mode, reason);
++}
++
++static int fantgpu_pm_callback_result(struct device *dev, const char *mode,
++		int ret)
++{
++	int propagated = fantgpu_pm_propagate(ret);
++
++	if (ret)
++		fantgpu_pm_marker(dev, "pci_callback", "fail", ret, mode, "none",
++			propagated, true);
++	else
++		fantgpu_pm_marker(dev, "pci_callback", "done", ret, mode, "none", 0, true);
++	return propagated;
++}
++
+ #ifdef CONFIG_DRM_FANT_SMMU
+ #include "fantsmmu_drv.h"
+ #endif
+@@ -1838,68 +1868,150 @@
+ 	struct pci_dev *pdev = to_pci_dev(dev);
+ 	struct dev_rsrc* pdev_rsrc = NULL;
+ 	chip_type_e chip_type;
++	const char *mode = suspend ? "suspend" : "freeze";
++	int ret;
++	int propagated;
++
++	fantgpu_pm_marker(dev, "device_suspend", "enter", 0, mode, "none", 0, false);
+ 
+ 	pdev_rsrc = fh2m_fant_rsrc_devres_find(&pdev->dev);
+ 	if (!pdev_rsrc) {
+-        pcie_error(&pdev->dev, "[fantgpu_pci_drv][%s:%d] dev_rsrc is NULL\n", __func__, __LINE__);
+-        return -1;
+-    }
++	        pcie_error(&pdev->dev, "[fantgpu_pci_drv][%s:%d] dev_rsrc is NULL\n", __func__, __LINE__);
++		fantgpu_pm_marker(dev, "device_suspend", "fail", -1, mode, "none", -1, true);
++	        return -1;
++	    }
+ 
+ 	/* dma channel should be released before pcie suspend */
+-	fh2m_hal_dma_suspend(pdev_rsrc);
++	fantgpu_pm_marker(dev, "dma_suspend", "enter", 0, mode, "none", 0, false);
++	ret = fh2m_hal_dma_suspend(pdev_rsrc);
++	propagated = fantgpu_pm_propagate(ret);
++	if (ret) {
++		fantgpu_pm_marker(dev, "dma_suspend", "fail", ret, mode, "none", propagated, true);
++		return propagated;
++	}
++	fantgpu_pm_marker(dev, "dma_suspend", "done", ret, mode, "none", 0, true);
+ 
+ 	/*cancle and stop high temperature monitor work*/
+-	hal_power_sleep(pdev_rsrc);
++	fantgpu_pm_marker(dev, "power_sleep", "enter", 0, mode, "none", 0, false);
++	ret = hal_power_sleep(pdev_rsrc);
++	propagated = fantgpu_pm_propagate(ret);
++	if (ret) {
++		fantgpu_pm_marker(dev, "power_sleep", "fail", ret, mode, "none", propagated, true);
++		return propagated;
++	}
++	fantgpu_pm_marker(dev, "power_sleep", "done", ret, mode, "none", 0, true);
+ 
+-	if (suspend)
++	if (suspend) {
+ 		atomic_set(&pdev_rsrc->pvr_resume_count, 0);
++		fantgpu_pm_marker(dev, "resume_counter_reset", "done", 0, mode, "none", 0, true);
++	} else {
++		fantgpu_pm_marker(dev, "resume_counter_reset", "skip", 0, mode,
++			"condition_false", 0, false);
++	}
+ 
++	fantgpu_pm_marker(dev, "reg_access_check", "enter", 0, mode, "none", 0, false);
+ 	hal_check_reg_accessiable(pdev_rsrc);
++	fantgpu_pm_marker(dev, "reg_access_check", "done", 0, mode, "none", 0, true);
+ 
+ 	/*
+ 	 * Note:
+ 	 * neede use enable_irq/disable_irq
+ 	 * the kernel Oops when use pci_disable_msi/pci_enable_msi at interrupt MSI mode
+ 	 */
++	fantgpu_pm_marker(dev, "disable_irq", "enter", 0, mode, "none", 0, false);
+ 	disable_irq(pdev->irq);
++	fantgpu_pm_marker(dev, "disable_irq", "done", 0, mode, "none", 0, true);
+ 
+ 	if (suspend) {
+-		hal_pdp_restore_default_cfg(dev);
++		fantgpu_pm_marker(dev, "pdp_restore", "enter", 0, mode, "none", 0, false);
++		ret = hal_pdp_restore_default_cfg(dev);
++		if (ret) {
++			/* Existing ordering continues because rollback is not proven safe. */
++			fantgpu_pm_marker(dev, "pdp_restore", "fail", ret, mode, "none", 0, true);
++		} else {
++			fantgpu_pm_marker(dev, "pdp_restore", "done", ret, mode, "none", 0, true);
++		}
++
++		fantgpu_pm_marker(dev, "pci_save_state", "enter", 0, mode, "none", 0, false);
++		ret = pci_save_state(pdev);
++		if (ret) {
++			/* Preserve the vendor path until IRQ/power rollback is proven. */
++			fantgpu_pm_marker(dev, "pci_save_state", "fail", ret, mode, "none", 0, true);
++		} else {
++			fantgpu_pm_marker(dev, "pci_save_state", "done", ret, mode, "none", 0, true);
++		}
+ 
+-		pci_save_state(pdev);
++		fantgpu_pm_marker(dev, "pci_disable_device", "enter", 0, mode, "none", 0, false);
+ 		pci_disable_device(pdev);
++		fantgpu_pm_marker(dev, "pci_disable_device", "done", 0, mode, "none", 0, true);
+ 
+ 		/*
+ 		 * Note:
+ 		 * workaround that g0 card pcie link failed 0x2088 when s3 stability test on phytium d2000/8 and loongson
+ 		 * 3a5000/7a1000 cpu platform. there is a hardware bug that g0 card's pcie power state changed from d0 to d3.
+ 		 * */
++		fantgpu_pm_marker(dev, "get_chip_type", "enter", 0, mode, "none", 0, false);
+ 		chip_type = fh2m_hal_get_chiptype(dev);
++		(void)chip_type;
++		fantgpu_pm_marker(dev, "get_chip_type", "done", 0, mode, "none", 0, true);
+ #if !defined(CONFIG_ARM64) && !defined(CONFIG_LOONGARCH) && !defined(CONFIG_MIPS)
+ 		/*
+ 		 * Note:
+ 		 * Workaround bug22382: some models of hygon laptops may encounter "AER: PCIe Bus Error UnsupReq" during reboot.
+ 		 * */
+ 		if ((system_state != SYSTEM_POWER_OFF) && (system_state != SYSTEM_RESTART) && (system_state != SYSTEM_HALT)){
+-			pci_set_power_state(pdev, PCI_D3hot);
++			fantgpu_pm_marker(dev, "pci_set_d3hot", "enter", 0, mode, "none", 0, false);
++			ret = pci_set_power_state(pdev, PCI_D3hot);
++			if (ret) {
++				/* Device is disabled here; do not invent an unproven rollback. */
++				fantgpu_pm_marker(dev, "pci_set_d3hot", "fail", ret, mode, "none", 0, true);
++			} else {
++				fantgpu_pm_marker(dev, "pci_set_d3hot", "done", ret, mode, "none", 0, true);
++			}
++		} else {
++			fantgpu_pm_marker(dev, "pci_set_d3hot", "skip", 0, mode,
++				"condition_false", 0, false);
+ 		}
++#else
++		fantgpu_pm_marker(dev, "pci_set_d3hot", "skip", 0, mode,
++			"condition_false", 0, false);
+ #endif
+ 
+ 	}
++	else {
++		fantgpu_pm_marker(dev, "pdp_restore", "skip", 0, mode,
++			"condition_false", 0, false);
++		fantgpu_pm_marker(dev, "pci_save_state", "skip", 0, mode,
++			"condition_false", 0, false);
++		fantgpu_pm_marker(dev, "pci_disable_device", "skip", 0, mode,
++			"condition_false", 0, false);
++		fantgpu_pm_marker(dev, "get_chip_type", "skip", 0, mode,
++			"condition_false", 0, false);
++		fantgpu_pm_marker(dev, "pci_set_d3hot", "skip", 0, mode,
++			"condition_false", 0, false);
++	}
+ 
+ 	pcie_info(&pdev->dev, "suspend: %s:%d. save/disable pci and disable irq:%d\n", __func__, __LINE__, pdev->irq);
+ 
++	fantgpu_pm_marker(dev, "cfgspace_dump", "enter", 0, mode, "none", 0, false);
+ 	fantgpu_pci_dump_cfgspace_regs(pdev, acpi_debug_mask);
++	fantgpu_pm_marker(dev, "cfgspace_dump", "done", 0, mode, "none", 0, true);
+ 
+ 
+ 	if (acpi_pcie_wait_secs < 0 || acpi_pcie_wait_secs > 600)
+ 		acpi_pcie_wait_secs = 0;
+ 
+ 	if (acpi_pcie_wait_secs > 0) {
++		fantgpu_pm_marker(dev, "debug_delay", "enter", 0, mode, "none", 0, false);
+ 		pcie_notice(&pdev->dev,"ACPI PCIe shutdown debug delay: %d seconds\n",acpi_pcie_wait_secs);
+ 		fh2m_fant_msleep(acpi_pcie_wait_secs * 1000);
++		fantgpu_pm_marker(dev, "debug_delay", "done", 0, mode, "none", 0, true);
++	} else {
++		fantgpu_pm_marker(dev, "debug_delay", "skip", 0, mode,
++			"condition_false", 0, false);
+ 	}
+ 
++	fantgpu_pm_marker(dev, "device_suspend_complete", "done", 0, mode, "none", 0, true);
+ 
+ 	return 0;
+ }
+@@ -1907,91 +2019,169 @@
+ static int fantgpu_device_resume(struct device *dev, bool resume, bool is_suspend)
+ {
+ 	int ret;
++	int propagated;
+ 	struct pci_dev *pdev = to_pci_dev(dev);
+ 	struct dev_rsrc* pdev_rsrc = NULL;
++	const char *mode = is_suspend ? "suspend" : "freeze";
++
++	fantgpu_pm_marker(dev, "device_resume", "enter", 0, mode, "none", 0, false);
+ 
+ 	pdev_rsrc = fh2m_fant_rsrc_devres_find(&pdev->dev);
+ 	if (!pdev_rsrc) {
+         pcie_error(&pdev->dev, "[fantgpu_pci_drv][%s:%d] dev_rsrc is NULL\n", __func__, __LINE__);
++		fantgpu_pm_marker(dev, "device_resume", "fail", -1, mode, "none", -1, true);
+         return -1;
+     }
+ 
+ 	if (resume) {
+-		pci_set_power_state(pdev, PCI_D0);
++		fantgpu_pm_marker(dev, "pci_set_d0", "enter", 0, mode, "none", 0, false);
++		ret = pci_set_power_state(pdev, PCI_D0);
++		propagated = fantgpu_pm_propagate(ret);
++		if (ret) {
++			fantgpu_pm_marker(dev, "pci_set_d0", "fail", ret, mode, "none", propagated, true);
++			return propagated;
++		}
++		fantgpu_pm_marker(dev, "pci_set_d0", "done", ret, mode, "none", 0, true);
++
++		fantgpu_pm_marker(dev, "pci_restore_state", "enter", 0, mode, "none", 0, false);
+ 		pci_restore_state(pdev);
++		fantgpu_pm_marker(dev, "pci_restore_state", "done", 0, mode, "none", 0, true);
++
++		fantgpu_pm_marker(dev, "pci_enable_device", "enter", 0, mode, "none", 0, false);
+ 		ret = pci_enable_device(pdev);
++		propagated = fantgpu_pm_propagate(ret);
+ 		if (ret) {
++			fantgpu_pm_marker(dev, "pci_enable_device", "fail", ret, mode, "none", propagated, true);
+ 			pcie_error(&pdev->dev, "enable device fail\n");
++			return propagated;
+ 		}
++		fantgpu_pm_marker(dev, "pci_enable_device", "done", ret, mode, "none", 0, true);
+ 
+ 		if (pdev_rsrc->chip.has_resize && pdev_rsrc->chip.is_support_resize) {
++			fantgpu_pm_marker(dev, "resize_resume", "enter", 0, mode, "none", 0, false);
+ 			ret = fantgpu_resize_resume(pdev_rsrc);
++			propagated = fantgpu_pm_propagate(ret);
+ 			if(ret) {
++				fantgpu_pm_marker(dev, "resize_resume", "fail", ret, mode, "none", propagated, true);
+ 				pcie_error(&pdev->dev, "resize resume fail\n");
++				return propagated;
+ 			}
++			fantgpu_pm_marker(dev, "resize_resume", "done", ret, mode, "none", 0, true);
++		} else {
++			fantgpu_pm_marker(dev, "resize_resume", "skip", 0, mode,
++				"condition_false", 0, false);
+ 		}
++	} else {
++		fantgpu_pm_marker(dev, "pci_set_d0", "skip", 0, mode,
++			"condition_false", 0, false);
++		fantgpu_pm_marker(dev, "pci_restore_state", "skip", 0, mode,
++			"condition_false", 0, false);
++		fantgpu_pm_marker(dev, "pci_enable_device", "skip", 0, mode,
++			"condition_false", 0, false);
++		fantgpu_pm_marker(dev, "resize_resume", "skip", 0, mode,
++			"condition_false", 0, false);
+ 	}
+ 
++	fantgpu_pm_marker(dev, "hal_pci_irq_resume", "enter", 0, mode, "none", 0, false);
+ 	hal_pci_irq_resume(pdev_rsrc);
++	fantgpu_pm_marker(dev, "hal_pci_irq_resume", "done", 0, mode, "none", 0, true);
+ 
+ 	/*
+ 	 * Note:
+ 	 * neede use enable_irq/disable_irq
+ 	 * the kernel Oops when use pci_disable_msi/pci_enable_msi at interrupt MSI mode
+ 	 */
++	fantgpu_pm_marker(dev, "enable_irq", "enter", 0, mode, "none", 0, false);
+ 	enable_irq(pdev->irq);
++	fantgpu_pm_marker(dev, "enable_irq", "done", 0, mode, "none", 0, true);
+ 
+ 	pcie_info(&pdev->dev, "resume: %s:%d. restore/enable pci and enable irq:%d\n", __func__, __LINE__, pdev->irq);
+ 
+-	if (pdev_rsrc->chip.pm_resume)
++	if (pdev_rsrc->chip.pm_resume) {
++		fantgpu_pm_marker(dev, "pm_resume", "enter", 0, mode, "none", 0, false);
+ 		pdev_rsrc->chip.pm_resume(pdev_rsrc, is_suspend);
+-	else
++		fantgpu_pm_marker(dev, "pm_resume", "done", 0, mode, "none", 0, true);
++	} else {
++		fantgpu_pm_marker(dev, "pm_resume", "skip", 0, mode,
++			"condition_false", 0, false);
+ 		pcie_info(&pdev->dev, "pm_resume callback is NULL\n");
++	}
+ 
+ 	/*
+ 	 * S3 restarts this work after every PVR child has resumed. Keep the
+ 	 * existing hibernation behavior, whose child callbacks are different.
+ 	 */
+-	if (!is_suspend)
++	if (!is_suspend) {
++		fantgpu_pm_marker(dev, "hal_power_wakeup", "enter", 0, mode, "none", 0, false);
+ 		hal_power_wakeup(pdev_rsrc);
++		fantgpu_pm_marker(dev, "hal_power_wakeup", "done", 0, mode, "none", 0, true);
++	} else {
++		fantgpu_pm_marker(dev, "hal_power_wakeup", "skip", 0, mode,
++			"condition_false", 0, false);
++	}
+ 
++	fantgpu_pm_marker(dev, "device_resume_complete", "done", 0, mode, "none", 0, true);
+ 	return 0;
+ }
+ 
+ static int fantgpu_pmops_suspend(struct device *dev)
+ {
++	int ret;
++
+ 	pcie_info(dev, "%s:%d\n", __func__, __LINE__);
+-	return fantgpu_device_suspend(dev, true);
++	fantgpu_pm_marker(dev, "pci_callback", "enter", 0, "suspend", "none", 0, false);
++	ret = fantgpu_device_suspend(dev, true);
++	return fantgpu_pm_callback_result(dev, "suspend", ret);
+ }
+ 
+ static int fantgpu_pmops_resume(struct device *dev)
+ {
++	int ret;
++
+ 	pcie_info(dev, "%s:%d\n", __func__, __LINE__);
+-	return fantgpu_device_resume(dev, true, true);
++	fantgpu_pm_marker(dev, "pci_callback", "enter", 0, "suspend", "none", 0, false);
++	ret = fantgpu_device_resume(dev, true, true);
++	return fantgpu_pm_callback_result(dev, "suspend", ret);
+ }
+ 
+ static int fantgpu_pmops_freeze(struct device *dev)
+ {
++	int ret;
++
+ 	pcie_info(dev, "%s:%d\n", __func__, __LINE__);
+-	return fantgpu_device_suspend(dev, false);
++	fantgpu_pm_marker(dev, "pci_callback", "enter", 0, "freeze", "none", 0, false);
++	ret = fantgpu_device_suspend(dev, false);
++	return fantgpu_pm_callback_result(dev, "freeze", ret);
+ }
+ 
+ static int fantgpu_pmops_thaw(struct device *dev)
+ {
++	int ret;
++
+ 	pcie_info(dev, "%s:%d\n", __func__, __LINE__);
+-	return fantgpu_device_resume(dev, true, false);
++	fantgpu_pm_marker(dev, "pci_callback", "enter", 0, "freeze", "none", 0, false);
++	ret = fantgpu_device_resume(dev, true, false);
++	return fantgpu_pm_callback_result(dev, "freeze", ret);
+ }
+ 
+ static int fantgpu_pmops_poweroff(struct device *dev)
+ {
++	int ret;
++
+ 	pcie_info(dev, "%s:%d\n", __func__, __LINE__);
+-	return fantgpu_device_suspend(dev, true);
++	fantgpu_pm_marker(dev, "pci_callback", "enter", 0, "suspend", "none", 0, false);
++	ret = fantgpu_device_suspend(dev, true);
++	return fantgpu_pm_callback_result(dev, "suspend", ret);
+ }
+ 
+ static int fantgpu_pmops_restore(struct device *dev)
+ {
++	int ret;
++
+ 	pcie_info(dev, "%s:%d\n", __func__, __LINE__);
+-	return fantgpu_device_resume(dev, true, false);
++	fantgpu_pm_marker(dev, "pci_callback", "enter", 0, "freeze", "none", 0, false);
++	ret = fantgpu_device_resume(dev, true, false);
++	return fantgpu_pm_callback_result(dev, "freeze", ret);
+ }
+ 
+ static const struct dev_pm_ops fantgpu_pci_pm_ops = {
+@@ -2105,4 +2295,3 @@
+ MODULE_LICENSE("Dual MIT/GPL");
+ MODULE_DEVICE_TABLE(pci, s_fant_pci_tbl);
+ MODULE_VERSION(DRIVER_VERSION);
+-
+diff -ruN -x '*.o' -x '*.cmd' a/fantsrvkm/fantdpu_drm_pm.c b/fantsrvkm/fantdpu_drm_pm.c
+--- a/fantsrvkm/fantdpu_drm_pm.c	2026-09-15 15:22:41.505783835 +0800
++++ b/fantsrvkm/fantdpu_drm_pm.c	2026-09-15 15:45:42.822887634 +0800
+@@ -45,6 +45,35 @@
+ #include "fant_misc.h"
+ #include "fantgpu_drm.h"
+ 
++static int fantdpu_pm_propagate(int ret)
++{
++	return ret < 0 ? ret : ret ? -EIO : 0;
++}
++
++static void fantdpu_pm_marker(struct device *dev, const char *stage,
++		const char *event, int rc, const char *mode, const char *reason,
++		int propagated, bool propagated_valid)
++{
++	if (propagated_valid)
++		dev_notice(dev, "fantgpu_pm_stage=%s event=%s rc=%d mode=%s reason=%s propagated=%d\n",
++			stage, event, rc, mode, reason, propagated);
++	else
++		dev_notice(dev, "fantgpu_pm_stage=%s event=%s rc=%d mode=%s reason=%s propagated=na\n",
++			stage, event, rc, mode, reason);
++}
++
++static void fantdpu_pm_indexed_marker(struct device *dev, const char *stage,
++		const char *event, int rc, int propagated, bool propagated_valid,
++		unsigned int index)
++{
++	if (propagated_valid)
++		dev_notice(dev, "fantgpu_pm_stage=%s event=%s rc=%d mode=suspend reason=none propagated=%d index=%u\n",
++			stage, event, rc, propagated, index);
++	else
++		dev_notice(dev, "fantgpu_pm_stage=%s event=%s rc=%d mode=suspend reason=none propagated=na index=%u\n",
++			stage, event, rc, index);
++}
++
+ static int fantdpu_get_logo_status(struct drm_device *drm_dev,
+ 		struct fantdpu_drm_private *dev_priv)
+ {
+@@ -135,12 +164,17 @@
+ 	struct drm_device *drm_dev = dev_get_drvdata(dev);
+ 	struct fantdpu_drm_private *dev_priv = NULL;
+ 	struct fant_fbdev *fbdev = NULL;
++	int ret;
++	int propagated;
++
++	fantdpu_pm_marker(dev, "drm_hibernation", "enter", 0, "suspend", "none", 0, false);
+ 
+ 	if (drm_dev)
+ 		dev_priv = fantgpu_drm_to_display_private(drm_dev);
+ 
+ 	if (!dev_priv) {
+ 		fant_drm_err(dev, "dev priv is NULL\n");
++		fantdpu_pm_marker(dev, "drm_hibernation", "fail", -EINVAL, "suspend", "none", -EINVAL, true);
+ 		return -EINVAL;
+ 	}
+ 	fbdev = dev_priv->fbdev;
+@@ -153,6 +187,7 @@
+ 	if (drm_dev->switch_power_state == DRM_SWITCH_POWER_OFF &&
+ 		dev_priv->pm_state) {
+ 		fh2m_fantdpu_err(dev, "drm has performed a screen shutdown\n");
++		fantdpu_pm_marker(dev, "drm_hibernation", "done", 0, "suspend", "none", 0, true);
+ 		return 0;
+ 	}
+ 
+@@ -161,16 +196,23 @@
+ 	drm_kms_helper_poll_disable(drm_dev);
+ 	drm_fb_helper_set_suspend_unlocked(&fbdev->helper, true);
+ 
++	fantdpu_pm_marker(dev, "drm_atomic_suspend", "enter", 0, "suspend", "none", 0, false);
+ 	dev_priv->pm_state = drm_atomic_helper_suspend(drm_dev);
+ 	if (IS_ERR_OR_NULL(dev_priv->pm_state)) {
+ 		drm_fb_helper_set_suspend_unlocked(&fbdev->helper, false);
+ 		drm_kms_helper_poll_enable(drm_dev);
+ 		fant_drm_err(dev, "dpu_pm_suspend Empty pointer2");
+-		return PTR_ERR(dev_priv->pm_state);
++		ret = dev_priv->pm_state ? PTR_ERR(dev_priv->pm_state) : -EINVAL;
++		propagated = fantdpu_pm_propagate(ret);
++		fantdpu_pm_marker(dev, "drm_atomic_suspend", "fail", ret, "suspend", "none", propagated, true);
++		fantdpu_pm_marker(dev, "drm_hibernation", "fail", ret, "suspend", "none", propagated, true);
++		return propagated;
+ 	}
++	fantdpu_pm_marker(dev, "drm_atomic_suspend", "done", 0, "suspend", "none", 0, true);
+ 
+ 	drm_dev->switch_power_state = DRM_SWITCH_POWER_OFF;
+ 
++	fantdpu_pm_marker(dev, "drm_hibernation", "done", 0, "suspend", "none", 0, true);
+ 	return 0;
+ }
+ 
+@@ -180,14 +222,21 @@
+ 	struct fantdpu_drm_private *dev_priv = NULL;
+ 	struct fant_fbdev *fbdev = NULL;
+ 	int ret = 0;
++	int propagated;
++
++	fantdpu_pm_marker(dev, "drm_wakeup", "enter", 0, "suspend", "none", 0, false);
+ 
+ 	if (drm_dev)
+ 		dev_priv = fantgpu_drm_to_display_private(drm_dev);
+ 	else
++	{
++		fantdpu_pm_marker(dev, "drm_wakeup", "fail", -EINVAL, "suspend", "none", -EINVAL, true);
+ 		return -EINVAL;
++	}
+ 
+ 	if (!dev_priv) {
+ 		fant_drm_err(drm_dev->dev, "dev priv is NULL");
++		fantdpu_pm_marker(dev, "drm_wakeup", "fail", -EINVAL, "suspend", "none", -EINVAL, true);
+ 		return -EINVAL;
+ 	}
+ 	fbdev = dev_priv->fbdev;
+@@ -195,6 +244,7 @@
+ 	if (drm_dev->switch_power_state == DRM_SWITCH_POWER_ON &&
+ 		!dev_priv->pm_state) {
+ 		fh2m_fantdpu_err(dev, "drm has performed an open screen operaion\n");
++		fantdpu_pm_marker(dev, "drm_wakeup", "done", 0, "suspend", "none", 0, true);
+ 		return 0;
+ 	}
+ 
+@@ -206,6 +256,8 @@
+ 		ret = drm_atomic_helper_resume(drm_dev, dev_priv->pm_state);
+ 		if (ret) {
+ 			fant_drm_err(dev, "fantdpu_drm wake failed");
++			propagated = fantdpu_pm_propagate(ret);
++			fantdpu_pm_marker(dev, "drm_wakeup", "fail", ret, "suspend", "none", propagated, true);
+ 		}
+ 	}
+ 	dev_priv->pm_state = NULL;
+@@ -213,7 +265,9 @@
+ 	drm_fb_helper_set_suspend_unlocked(&fbdev->helper, false);
+ 	drm_kms_helper_poll_enable(drm_dev);
+ 
+-	return ret;
++	if (!ret)
++		fantdpu_pm_marker(dev, "drm_wakeup", "done", ret, "suspend", "none", 0, true);
++	return fantdpu_pm_propagate(ret);
+ }
+ 
+ static void fantdpu_drm_gem_backup(struct device *dev)
+@@ -272,16 +326,32 @@
+ 	int ret = 0;
+ 	struct drm_device *drm_dev = dev_get_drvdata(dev);
+ 	struct drm_crtc *crtc = NULL;
++	unsigned int index = 0;
++
++	fantdpu_pm_marker(dev, "drm_suspend", "enter", 0, "suspend", "none", 0, false);
+ 
+ 	fant_drm_info(dev, "drm suspend...");
+ 
+ 	drm_for_each_crtc(crtc, drm_dev) {
++		fantdpu_pm_indexed_marker(dev, "drm_crtc_backup", "enter", 0, 0,
++			false, index);
+ 		fantdpu_pdp0_backup(crtc);
++		fantdpu_pm_indexed_marker(dev, "drm_crtc_backup", "done", 0, 0,
++			true, index);
++		index++;
+ 	}
+ 
+ 	ret = fantdpu_drm_hibernation(dev);
++	fantdpu_pm_marker(dev, "drm_gem_backup", "enter", 0, "suspend", "none", 0, false);
+ 	fantdpu_drm_gem_backup(dev);
++	fantdpu_pm_marker(dev, "drm_gem_backup", "done", 0, "suspend", "none", 0, true);
+ 
++	if (ret) {
++		fantdpu_pm_marker(dev, "drm_suspend", "fail", ret, "suspend", "none",
++			fantdpu_pm_propagate(ret), true);
++		return fantdpu_pm_propagate(ret);
++	}
++	fantdpu_pm_marker(dev, "drm_suspend", "done", 0, "suspend", "none", 0, true);
+ 	return ret;
+ }
+ 
+@@ -290,17 +360,34 @@
+ 	int ret = 0;
+ 	struct drm_device *drm_dev = dev_get_drvdata(dev);
+ 	struct drm_crtc *crtc = NULL;
++	unsigned int index = 0;
++
++	fantdpu_pm_marker(dev, "drm_resume", "enter", 0, "suspend", "none", 0, false);
+ 
+ 	fant_drm_info(dev, "drm resume...");
+ 
++	fantdpu_pm_marker(dev, "drm_gem_recover", "enter", 0, "suspend", "none", 0, false);
+ 	fantdpu_drm_gem_recover(dev);
++	fantdpu_pm_marker(dev, "drm_gem_recover", "done", 0, "suspend", "none", 0, true);
+ 	ret = fantdpu_drm_wakeup(dev);
+ 
+ 	drm_for_each_crtc(crtc, drm_dev) {
++		fantdpu_pm_indexed_marker(dev, "drm_crtc_restore", "enter", 0, 0,
++			false, index);
+ 		fantdpu_pdp0_wakeup(crtc);
++		fantdpu_pm_indexed_marker(dev, "drm_crtc_restore", "done", 0, 0,
++			true, index);
++		index++;
+ 	}
+ 
+-	return ret;
++	if (ret) {
++		fantdpu_pm_marker(dev, "drm_resume", "fail", ret, "suspend", "none",
++			fantdpu_pm_propagate(ret), true);
++		return fantdpu_pm_propagate(ret);
++	}
++	fantdpu_pm_marker(dev, "drm_resume", "done", ret, "suspend", "none", 0, true);
++	fantdpu_pm_marker(dev, "drm_resume_complete", "done", 0, "suspend", "none", 0, true);
++	return 0;
+ }
+ 
+ /*
+diff -ruN -x '*.o' -x '*.cmd' a/fantsrvkm/ft_drm.c b/fantsrvkm/ft_drm.c
+--- a/fantsrvkm/ft_drm.c	2026-09-15 15:22:41.505783835 +0800
++++ b/fantsrvkm/ft_drm.c	2026-09-15 15:45:42.822887634 +0800
+@@ -93,6 +93,41 @@
+  */
+ static DEFINE_MUTEX(g_device_mutex);
+ 
++static int ft_pm_propagate(int ret)
++{
++	return ret < 0 ? ret : ret ? -EIO : 0;
++}
++
++static void ft_pm_marker(struct device *dev, const char *stage,
++		const char *event, int rc, int propagated, bool propagated_valid,
++		int index)
++{
++	if (propagated_valid)
++		dev_notice(dev, "fantgpu_pm_stage=%s event=%s rc=%d mode=suspend reason=none propagated=%d index=%d\n",
++			stage, event, rc, propagated, index);
++	else
++		dev_notice(dev, "fantgpu_pm_stage=%s event=%s rc=%d mode=suspend reason=none propagated=na index=%d\n",
++			stage, event, rc, index);
++}
++
++static void ft_pm_skip_marker(struct device *dev, const char *stage, int index)
++{
++	dev_notice(dev, "fantgpu_pm_stage=%s event=skip rc=0 mode=suspend reason=condition_false propagated=na index=%d\n",
++		stage, index);
++}
++
++static void ft_pm_counter_marker(struct device *dev, const char *event, int rc,
++		int propagated, bool propagated_valid, int index, int resumed,
++		int dev_nums)
++{
++	if (propagated_valid)
++		dev_notice(dev, "fantgpu_pm_stage=pvr_resume_counter_inc event=%s rc=%d mode=suspend reason=none propagated=%d index=%d resumed=%d dev_nums=%d\n",
++			event, rc, propagated, index, resumed, dev_nums);
++	else
++		dev_notice(dev, "fantgpu_pm_stage=pvr_resume_counter_inc event=%s rc=%d mode=suspend reason=none propagated=na index=%d resumed=%d dev_nums=%d\n",
++			event, rc, index, resumed, dev_nums);
++}
++
+ /* Executed before sleep/suspend-to-RAM/S3. During this phase the content
+  * of the video memory is preserved (copied to system RAM). This step is
+  * necessary because the device can be powered off and the content of the
+@@ -101,38 +136,89 @@
+ static int ft_pm_suspend(struct device *dev)
+ {
+ 	struct drm_device *ddev = fantgpu_get_drm_from_pdev(dev);
++	plat_data_t *pdata = fh2m_fant_dev_get_platdata(dev);
++	int index = pdata ? pdata->dev_idx : -1;
+ #if defined(SUPPORT_LINUX_DVFS) && (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
+ 	struct ft_drm_private *priv = ddev->dev_private;
+ 	PVRSRV_ERROR dvfs_err;
+ 	PVRSRV_ERROR rollback_err;
+-	int err;
+ #endif
++	int err;
+ 
+ 	DRM_DEBUG_DRIVER("device %p\n", dev);
++	ft_pm_marker(dev, "ft_suspend", "enter", 0, 0, false, index);
++	ft_pm_marker(dev, "pvr_suspend", "enter", 0, 0, false, index);
+ 
+ #if defined(SUPPORT_LINUX_DVFS) && (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
++	ft_pm_marker(dev, "dvfs_suspend", "enter", 0, 0, false, index);
+ 	dvfs_err = SuspendDVFS(priv->dev_node);
+ 	if (dvfs_err != PVRSRV_OK) {
++		err = OSPVRSRVToNativeError(dvfs_err);
++		ft_pm_marker(dev, "dvfs_suspend", "fail", dvfs_err,
++			ft_pm_propagate(err), true, index);
+ 		/* SuspendDVFS may have incremented devfreq's suspend count. */
++		ft_pm_marker(dev, "dvfs_suspend_rollback", "enter", 0, 0,
++			false, index);
+ 		rollback_err = ResumeDVFS(priv->dev_node);
+-		if (rollback_err != PVRSRV_OK)
++		if (rollback_err != PVRSRV_OK) {
+ 			DRM_ERROR("failed to roll back DVFS suspend (%d)\n",
+ 				  rollback_err);
+-		return OSPVRSRVToNativeError(dvfs_err);
++			ft_pm_marker(dev, "dvfs_suspend_rollback", "fail",
++				rollback_err, 0, true, index);
++		} else {
++			ft_pm_marker(dev, "dvfs_suspend_rollback", "done",
++				rollback_err, 0, true, index);
++		}
++		ft_pm_marker(dev, "pvr_suspend", "fail", err,
++			ft_pm_propagate(err), true, index);
++		ft_pm_marker(dev, "ft_suspend", "fail", err,
++			ft_pm_propagate(err), true, index);
++		return ft_pm_propagate(err);
+ 	}
++	ft_pm_marker(dev, "dvfs_suspend", "done", dvfs_err, 0, true, index);
+ 
++	ft_pm_marker(dev, "pvr_device_suspend", "enter", 0, 0, false, index);
+ 	err = PVRSRVDeviceSuspend(ddev);
+ 	if (err) {
++		ft_pm_marker(dev, "pvr_device_suspend", "fail", err,
++			ft_pm_propagate(err), true, index);
++		ft_pm_marker(dev, "dvfs_suspend_rollback", "enter", 0, 0,
++			false, index);
+ 		rollback_err = ResumeDVFS(priv->dev_node);
+-		if (rollback_err != PVRSRV_OK)
++		if (rollback_err != PVRSRV_OK) {
+ 			DRM_ERROR("failed to restore DVFS after PVR suspend failure (%d)\n",
+ 				  rollback_err);
++			ft_pm_marker(dev, "dvfs_suspend_rollback", "fail",
++				rollback_err, 0, true, index);
++		} else {
++			ft_pm_marker(dev, "dvfs_suspend_rollback", "done",
++				rollback_err, 0, true, index);
++		}
++		ft_pm_marker(dev, "pvr_suspend", "fail", err,
++			ft_pm_propagate(err), true, index);
++		ft_pm_marker(dev, "ft_suspend", "fail", err,
++			ft_pm_propagate(err), true, index);
++		return ft_pm_propagate(err);
+ 	}
+-
+-	return err;
++	ft_pm_marker(dev, "pvr_device_suspend", "done", err, 0, true, index);
+ #else
+-	return PVRSRVDeviceSuspend(ddev);
++	ft_pm_skip_marker(dev, "dvfs_suspend", index);
++	ft_pm_marker(dev, "pvr_device_suspend", "enter", 0, 0, false, index);
++	err = PVRSRVDeviceSuspend(ddev);
++	if (err) {
++		ft_pm_marker(dev, "pvr_device_suspend", "fail", err,
++			ft_pm_propagate(err), true, index);
++		ft_pm_marker(dev, "pvr_suspend", "fail", err,
++			ft_pm_propagate(err), true, index);
++		ft_pm_marker(dev, "ft_suspend", "fail", err,
++			ft_pm_propagate(err), true, index);
++		return ft_pm_propagate(err);
++	}
++	ft_pm_marker(dev, "pvr_device_suspend", "done", err, 0, true, index);
+ #endif
++	ft_pm_marker(dev, "pvr_suspend", "done", 0, 0, true, index);
++	ft_pm_marker(dev, "ft_suspend", "done", 0, 0, true, index);
++	return 0;
+ }
+ 
+ /* Executed after the system is woken up from sleep/suspend-to-RAM/S3. This
+@@ -142,6 +228,7 @@
+ {
+ 	struct drm_device *ddev = fantgpu_get_drm_from_pdev(dev);
+ 	plat_data_t *pdata = fh2m_fant_dev_get_platdata(dev);
++	int index = pdata ? pdata->dev_idx : -1;
+ #if defined(SUPPORT_LINUX_DVFS) && (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
+ 	struct ft_drm_private *priv = ddev->dev_private;
+ 	PVRSRV_ERROR dvfs_err;
+@@ -150,33 +237,83 @@
+ 	int err;
+ 
+ 	DRM_DEBUG_DRIVER("device %p\n", dev);
++	ft_pm_marker(dev, "ft_resume", "enter", 0, 0, false, index);
+ 
+ #if defined(SUPPORT_LINUX_DVFS) && (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
++	ft_pm_marker(dev, "pvr_device_resume", "enter", 0, 0, false, index);
+ 	err = PVRSRVDeviceResume(ddev);
+-	if (err)
+-		return err;
++	if (err) {
++		ft_pm_marker(dev, "pvr_device_resume", "fail", err,
++			ft_pm_propagate(err), true, index);
++		ft_pm_marker(dev, "ft_resume", "fail", err,
++			ft_pm_propagate(err), true, index);
++		return ft_pm_propagate(err);
++	}
++	ft_pm_marker(dev, "pvr_device_resume", "done", err, 0, true, index);
+ 
++	ft_pm_marker(dev, "dvfs_resume", "enter", 0, 0, false, index);
+ 	dvfs_err = ResumeDVFS(priv->dev_node);
+ 	err = OSPVRSRVToNativeError(dvfs_err);
+ #else
++	ft_pm_marker(dev, "pvr_device_resume", "enter", 0, 0, false, index);
+ 	err = PVRSRVDeviceResume(ddev);
++	if (!err)
++		ft_pm_marker(dev, "pvr_device_resume", "done", err, 0, true, index);
++	ft_pm_skip_marker(dev, "dvfs_resume", index);
++#endif
++	if (err) {
++#if defined(SUPPORT_LINUX_DVFS) && (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
++		ft_pm_marker(dev, "dvfs_resume", "fail", dvfs_err,
++			ft_pm_propagate(err), true, index);
++#else
++		ft_pm_marker(dev, "pvr_device_resume", "fail", err,
++			ft_pm_propagate(err), true, index);
++#endif
++		ft_pm_marker(dev, "ft_resume", "fail", err,
++			ft_pm_propagate(err), true, index);
++		return ft_pm_propagate(err);
++	}
++#if defined(SUPPORT_LINUX_DVFS) && (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
++	ft_pm_marker(dev, "dvfs_resume", "done", dvfs_err, 0, true, index);
+ #endif
+-	if (err)
+-		return err;
+ 
+ #if defined(NO_HARDWARE)
++	ft_pm_skip_marker(dev, "pvr_resume_counter_inc", index);
++	ft_pm_skip_marker(dev, "pvr_power_wakeup", index);
++	ft_pm_marker(dev, "ft_resume_complete", "done", 0, 0, true, index);
+ 	return 0;
+ #else
+ 	if (!pdata || !pdata->pdev_rsrc || pdata->dev_nums <= 0 ||
+-	    pdata->dev_idx >= (unsigned int)pdata->dev_nums)
++	    pdata->dev_idx >= (unsigned int)pdata->dev_nums) {
++		ft_pm_counter_marker(dev, "fail", -ENODEV, -ENODEV, true,
++			index, -1, pdata ? pdata->dev_nums : -1);
++		ft_pm_marker(dev, "ft_resume", "fail", -ENODEV, -ENODEV,
++			true, index);
+ 		return -ENODEV;
++	}
+ 
++	ft_pm_counter_marker(dev, "enter", 0, 0, false, index,
++		atomic_read(&pdata->pdev_rsrc->pvr_resume_count), pdata->dev_nums);
+ 	resumed = atomic_inc_return(&pdata->pdev_rsrc->pvr_resume_count);
+-	if (resumed == pdata->dev_nums)
+-		hal_power_wakeup(pdata->pdev_rsrc);
+-	else if (resumed > pdata->dev_nums)
++	if (resumed > pdata->dev_nums) {
++		ft_pm_counter_marker(dev, "fail", -EOVERFLOW, -EOVERFLOW, true,
++			index, resumed, pdata->dev_nums);
++		ft_pm_skip_marker(dev, "pvr_power_wakeup", index);
++		ft_pm_marker(dev, "ft_resume", "fail", -EOVERFLOW, -EOVERFLOW,
++			true, index);
+ 		return -EOVERFLOW;
++	}
++	ft_pm_counter_marker(dev, "done", 0, 0, true, index, resumed,
++		pdata->dev_nums);
++	if (resumed == pdata->dev_nums) {
++		ft_pm_marker(dev, "pvr_power_wakeup", "enter", 0, 0, false, index);
++		hal_power_wakeup(pdata->pdev_rsrc);
++		ft_pm_marker(dev, "pvr_power_wakeup", "done", 0, 0, true, index);
++	} else {
++		ft_pm_skip_marker(dev, "pvr_power_wakeup", index);
++	}
+ 
++	ft_pm_marker(dev, "ft_resume_complete", "done", 0, 0, true, index);
+ 	return 0;
+ #endif
+ }

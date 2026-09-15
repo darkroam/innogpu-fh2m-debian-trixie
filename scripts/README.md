@@ -28,7 +28,7 @@
 | `generate-binary-manifest.py`（tools/） | 清单生成 | 从 Deepin deb 确定性生成 `binary-manifest.json`（校验 deb SHA、覆盖全部黑盒文件与符号链接、kind/role/license 分类） |
 | `compare-oracle-candidates.sh` | oracle 对比 | 新架构候选包 vs patched-27：对比 control（除 Version/Description/Installed-Size）、文件清单、载荷哈希、DKMS 源码、黑盒对象、maintainer 脚本（版本归一）、版本排序与 module_symbols（调用 compare-module-symbols.sh）；构建产物（.o.cmd/.o/.ko/modules.order/Module.symvers/.mod）统一按 ARTIFACT_RE 排除；输出机器可读 PASS/FAIL |
 | `compare-module-symbols.sh` | 只读符号对比 | 离线构建候选与 patched-27 两包 DKMS 源码（同一内核头），逐 .ko 对比 vermagic/depends/导出符号/导入符号；构建于 `$ROOT/.build/`，不安装不重启；module_symbols=PASS/FAIL/UNCOMPARABLE |
-| `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`（epoch `1788796800`）；5.0.0-iN F 分支直接消费 14 链 i2 代 O_stage 快照（`030-030` hwinfo 音频安全回退随链入树、无 post-trace 打补丁），避免缺失可选 hwinfo 时进入不安全 HAL OS matcher。该 F 适配尚未经过 5.0.0 真机验证，真机批保持冻结。补丁以 `--fuzz=0 --no-backup-if-mismatch` 应用，编译树、包内 DKMS 树及完整 payload 均拒绝 `.orig/.rej`，`.o.cmd` 也不得入包 |
+| `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`（epoch `1788796800`）；当前 5.0.0-i3 F 分支直接消费独立代目录中的 15 链 O_stage 快照（含 `030-030` 音频回退与 `030-031` PM 分层 marker，无 post-trace 打补丁）。i1/i2 是归档代，builder 拒绝借用当前快照重构建旧版本。R5 仍为 FAIL，真机复测保持冻结。补丁以 `--fuzz=0 --no-backup-if-mismatch` 应用，编译树、包内 DKMS 树及完整 payload 均拒绝 `.orig/.rej`，`.o.cmd` 也不得入包 |
 | `build-patched17-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝把 patched-17 作为后续构建父版本 |
 | `build-patched18-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝重建历史混合载荷 patched-18 |
 | `build-patched19-deepin-coherent.sh` | legacy 护栏（保留） | 明确拒绝用当前辅助载荷复用 patched-19 版本号 |
@@ -117,9 +117,9 @@ runtime 统计、manifest 原包 SHA、过期状态断言和 Markdown 表格结�
 配方（显式补丁文件名清单，builder 序 + suspend 组）重放补丁到 `/tmp/r16-d-stage/`，补丁失败或
 `.orig/.rej` 残留 fail-closed；只写 `/tmp/r16-d-stage/`，不修改仓库任何路径，不安装不 modeset。
 `materialize-o-stage.sh` 是阶段三 O_stage 物化入口：只读 `docs/planning/evidence/o-stage/f0-snapshot.tar.zst`
-与 `patches/030-*`，按 14 条 030-NNN 链序（-p1 --fuzz=0，每链点 after_tree_hash 校验，最终树 hash
-c44ce785…）物化 O_stage 源树，并以五件同代事务产物（o-stage-snapshot.tar.zst + 双 sidecar +
-5.0.0-i2.meta.json 不可变 provenance；版本族经 OSTAGE_* 注入，缺省 5.0.0-i2 代）写入 `docs/planning/evidence/o-stage/`（阶段三证据/产物目录；
+与 `patches/030-*`，按 15 条 030-NNN 链序（-p1 --fuzz=0，每链点 after_tree_hash 校验，最终树 hash
+acfe80d1…）物化 O_stage 源树，并以五件同代事务产物（o-stage-snapshot.tar.zst + 双 sidecar +
+5.0.0-i3.meta.json 不可变 provenance；版本族经 OSTAGE_* 注入，缺省 5.0.0-i3 代）写入 `docs/planning/evidence/o-stage/5.0.0-i3/`；顶层 i2 五件保持失败档案锚点不覆盖（阶段三证据/产物目录；
 O-4 F0 输入只读）；tar 1.35/zstd 1.5.7 精确版本锁（不匹配 exit 7）、输出目录 realpath 边界（越界
 exit 78）、排他锁（占用 exit 6）、journal+fsync+恢复、禁止混代；故障注入钩子 `OSTAGE_FAIL_INJECT`
 （仅测试）。契约 = `docs/planning/o-stage-integration-plan.md` §一；回归测试：
@@ -127,7 +127,7 @@ exit 78）、排他锁（占用 exit 6）、journal+fsync+恢复、禁止混代�
 工具版本锁/事务故障注入（commit 与 staged_done）/恢复/幂等/链点 fail-closed/回滚失败
 rolling_back 保留现场/人工裁决后恢复/committed 写入失败自洽恢复/未知与损坏 journal
 fail-closed/恢复清理失败 fail-closed）+ `tests/unit/run-030-meta-tests.sh`
-（14 条 meta 链点校验）。
+（15 条 meta 链点校验）+ `tests/unit/run-030-031-pm-marker-tests.sh`（15 项 F PM marker 静态契约）。
 `check-release-package.sh` 只解包读取指定 deb，核对版本、关键载荷、禁止文件和设备接入脚本，
 不会安装包。发布包边界的可重复 fixture 见 `tests/package/run-boundary-tests.sh`。
 `verify-install-status.sh --require-reboot VERSION` 用于运行验收：除常规状态外，它要求包元数据早于当前

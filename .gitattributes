@@ -1,1 +1,2 @@
 *.patch -whitespace
+docs/planning/evidence/o-stage/5.0.0-i3/o-stage.manifest.tsv -whitespace

@@ -1,6 +1,6 @@
 # R5 suspend 阶段 D 设计（030-031 候选）
 
-- 状态：**dsh 终审修订稿，待 qoder spot 初审；未实现、未构建、未授权真机复测**
+- 状态：**dsh 终审设计已实现为 030-031/i3 候选；静态与双构建已闭合，未授权安装或真机复测**
 - 日期：2026-09-15
 - 基线：`5.0.0-i2`，O_stage 14 链尾 `c44ce7850134c1455c0935519fc6cb08a81b505804150c59dde1338e1369bd3f`
 - 结论边界：`R5=FAIL`；本设计首先提供可观测性和错误传播硬化，不宣称已经修复硬挂
@@ -205,3 +205,11 @@ qoder 初审按 findings 优先，至少回答：
 7. PASS 边界是否保持为真实 `mem` + 全恢复门，而非 marker 或 pm_test 单项通过。
 
 qoder 只做只读初审，不创建补丁、不构建/安装、不执行 pm_test。输出 `通过`、`修订后通过` 或 `返工`；P1/P2/P3 必须附文件/行号与理由。
+
+## 8. 实现批结果（2026-09-15，待 qoder 初审）
+
+- `030-031` 只改 `fantgpu_pci_drv.c`、`fantdpu_drm_pm.c`、`ft_drm.c`；patch SHA `a06b6993…`，before `c44ce785…`，after `acfe80d1…`。
+- PCI 层的 `fh2m_hal_dma_suspend()`、`hal_power_sleep()` 失败会停止后续 suspend 并按“负值原样、正值 -EIO”返回。前者的已知失败入口在副作用前；后者仍明确标记 `rollback_unproven`，不得把错误返回描述为设备已恢复可用。
+- `hal_pdp_restore_default_cfg()`、`pci_save_state()`、`pci_set_power_state(PCI_D3hot)` 在原实现中返回值被忽略；本轮保存并输出 fail marker，但因 IRQ/power/PCI 半状态缺少已证明回滚，保持原有继续执行控制流，fail 行写 `propagated=0`。这三支是“检测但不传播”，不是伪造成功。
+- resume 侧原实现忽略 `pci_set_power_state(PCI_D0)` 的返回值，且 `pci_enable_device()`、`fantgpu_resize_resume()` 失败后只记录错误并继续。本候选保存这三项返回值并在失败时停止后续 resume，连同 DRM/PVR/DVFS 的既有错误返回统一按负值原样、正值 `-EIO` 传播；void HAL/IRQ 调用仅做紧邻边界 marker。该 fail-fast 行为是本轮有意的返回值硬化，仍须由初审逐分支确认。
+- i3 五件隔离在 `docs/planning/evidence/o-stage/5.0.0-i3/`，未覆盖 i2 失败锚点；双构建 deb SHA `f2e821f2…`，562 行 md5sums 字节一致。该结果不改变 `R5=FAIL`、runtime pending 或复测硬前置。

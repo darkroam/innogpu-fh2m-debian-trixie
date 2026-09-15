@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "id": "030-031",
+  "ledger_ref": {
+    "item": "030",
+    "neutral_record": "F-ONLY-002",
+    "mapping": "docs/planning/r5-suspend-stage-d-design.md（F-only 诊断项；无 D 侧台账来源）",
+    "description": "fantgpu suspend/resume 分层 marker 与返回值规范化"
+  },
+  "deepin_patch": {
+    "path": "patches/030-031.patch",
+    "sha256": "a06b699395f055dfcbd835f92db401270bebeaa1a020f1e53d326fb9b8f82b47",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "docs/planning/evidence/o-stage/f0-snapshot.tar.zst",
+      "sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e"
+    },
+    "tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+    "chain_base": {
+      "id": "030-030",
+      "after_tree_hash": "c44ce7850134c1455c0935519fc6cb08a81b505804150c59dde1338e1369bd3f"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "f-only-diagnostic-hardening",
+      "summary": "R5 在同机 headless 条件下形成绑定态 pm_test=devices 硬挂、解绑态约 6 秒通过的单变量对照。本补丁按阶段 D 设计在 DRM、FT/PVR/DVFS 与 PCI PM 路径加入 dev_notice 分层 marker、稳定子设备索引、resume 计数状态和 enter/done/fail/skip 事件；保存此前被忽略的 int 返回值，负值（含 -1）原样透传、正值规范化为 -EIO。DMA/power sleep 失败停止后续 suspend；PDP restore、PCI save 和 D3 失败因安全回滚未证明而保持既有继续执行行为，并以 propagated=0 如实记录。补丁不改变 HAL 调用顺序，不增加 timeout 或运行时跳过开关，不宣称已修复硬挂。"
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "F-only 补丁；三个目标文件沿用各自 vendor Dual MIT/GPLv2 口径，新增代码由本项目编写；未引入第三方文件、二进制或 notice，正式 tools/audit-licenses.py 结果待实现批验证。"
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "030-001, 030-002, 030-006, 030-009, 030-007, 030-023, 030-025, 030-024, 030-026, 030-027, 030-026-lifecycle, 030-028, 030-029, 030-030 applied",
+      "summary": "链基为 030-030 after_tree_hash c44ce785…；插桩建立在 030-024 DVFS 门禁、030-026/030-026-lifecycle PM 编排和 030-028 pvr_resume_count 聚合语义之上。"
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "f-only-diagnostic-hardening",
+      "summary": "无 D 侧来源；直接作用于 O_stage F 源码的 fantgpu_pci_drv.c、fantdpu_drm_pm.c、ft_drm.c。闭源 fantgpu.o_shipped 未改，HAL 内部完成状态不由静态 fixture 模拟。"
+    }
+  },
+  "apply": {
+    "before_tree_hash": "c44ce7850134c1455c0935519fc6cb08a81b505804150c59dde1338e1369bd3f",
+    "after_tree_hash": "acfe80d1cff9437f8d4a77ee71640d1a4c0698614656f8312cdf662d8366361c",
+    "patch_sha256": "a06b699395f055dfcbd835f92db401270bebeaa1a020f1e53d326fb9b8f82b47",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <CHAIN_BASE> < patches/030-031.patch",
+    "result": "3 files changed (fantgpu/fantgpu_pci_drv.c, fantsrvkm/fantdpu_drm_pm.c, fantsrvkm/ft_drm.c); no .orig/.rej; fresh replay tree hash == after_tree_hash"
+  },
+  "rollback": {
+    "command": "remove O_stage and re-extract chain base (F0 snapshot + 030-001..030-030, 14 条); do not reverse-edit F0",
+    "target": "chain base tree hash c44ce7850134c1455c0935519fc6cb08a81b505804150c59dde1338e1369bd3f"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "fresh chain-base replay: -p1, --fuzz=0, rc=0",
+        "no .orig/.rej artifacts",
+        "replay tree hash acfe80d1cff9437f8d4a77ee71640d1a4c0698614656f8312cdf662d8366361c == after_tree_hash",
+        "full module compile for 6.12.101+deb13-amd64: rc=0",
+        "patch scope is exactly three reviewed F source files"
+      ]
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "5.0.0-i3 受监督安装后先核对 package/module/build/provenance 与 runtime health；具备已演练带外 marker 通道并核验 no_console_suspend ignore_loglevel 后，仅执行一次 bound+headless pm_test=devices。该定位门通过不等于真实 mem R5 PASS。"
+    }
+  }
+}

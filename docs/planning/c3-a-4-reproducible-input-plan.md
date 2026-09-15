@@ -1,7 +1,7 @@
 # C3-a ④ 可复现输入实施设计（builder F 载荷纳入）——停批修订 v13（2026-09-14）
 
 - 日期：2026-09-12
-- 状态：**停批修订（2026-09-14）**。F 载荷的静态完整性审计和可复现输入机制已完成；此前 i2 构建因真机步骤 3 `device_not_active` 中止。新增 **`patches/030-030.patch`（双轨落档 + meta）** 已完成 materialize 14 链重放（i2 代五件产物 + `5.0.0-i2.meta.json`）、编译和双构建（`86e7f12a…`），但尚未完成安装后的 runtime health 与显示验证，故本计划不能视为 C3-a 运行时闭合或放行依据。
+- 状态：**R5 停批，阶段 D i3 静态实现（2026-09-15）**。i2 已完成 R1-R4，但 bound+headless `pm_test=devices` 与桌面态真实 suspend 均硬挂，`R5=FAIL`。030-031 PM 分层 marker/返回值硬化已形成 15 链 i3 隔离快照并双构建为 `f2e821f2…`；i3 未安装、未复测，不创建 validation-results、不签发、不打 tag。
 - 依据：`5.0.0-i2-validation-plan.md` §三 C3-a 第 ④ 项 +「③ 对 ④ 的传导」（两项强制）+「C3-a 的 builder 改造点清单」（8 点）+ §二「C3 若选 a/b 的版本与 provenance 传导」+ dsh 2026-09-11 放行「④ qoder 可开工（技术项）」。
 - **不变式（全设计约束，违反任一即 FAIL）**：
   1. materialize 五件产物已按 **i2 代** 重生成（`5.0.0-i2.meta.json`、O_stage 树 hash `c44ce785…`、14 条链——2026-09-14 返工：030-030 hwinfo 音频安全回退入链；旧 i1 名 meta 退役）；
@@ -9,6 +9,14 @@
   3. 双构建字节一致在 F 载荷下仍成立（构建输入逐文件 SHA 锁定 + 构建期确定性，含 md5sums 字节）；
   4. 保护区零写入：本设计**实现阶段**对 `vendor/` 的落库写入属保护区写入，需 dsh 单独授权（已授权并执行，见 §七 已裁决项 1）；其余保护区（debs/build/third_party/drivers/baselines/patches）维持只读；
   5. C3-a 落地前不得放行真机批、不得交付 C1-②、不得为 F7 设默认身份串（validation-plan §三 禁止动作）。
+
+## 2026-09-15 R5 阶段 D 传导
+
+- `patches/030-031.patch` + meta 以 i2 链尾 `c44ce785…` 为 before，fresh replay 后树 hash 为 `acfe80d1…`；范围仅含 PCI、DRM、FT/PVR 三个 PM 源文件。
+- `scripts/materialize-o-stage.sh` 当前链为 15 项，i3 五件写入 `docs/planning/evidence/o-stage/5.0.0-i3/`；顶层 i2 五件及 `build-5.0.0-i2.sha256` 保持失败档案字节不变。
+- builder 只允许当前 i3 候选消费 i3 隔离快照；i1/i2 归档代不得借用当前快照重构建。包内 DKMS 树 hash、i3 meta、snapshot sidecar 与 trace manifest 四者必须一致。
+- build A/B deb SHA 均为 `f2e821f25a59bc2b3053388599655c7572be247f3275715d8925499d98f13b35`，`DEBIAN/md5sums` 562 行字节一致；该事实仅闭合静态可复现构建，不改变 `R5=FAIL`。
+- 唯一复测仍受 `r5-suspend-stage-d-design.md` 硬前置约束：新包/模块/provenance 身份、runtime health、`no_console_suspend ignore_loglevel`、已演练带外 marker 通道、用户现场监督及 30 秒单次窗口全部满足后，才可由 dsh 明示放行。
 
 ## 〇、「可复现输入」口径（codex 建议收紧，显式声明）
 

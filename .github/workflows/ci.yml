@@ -35,6 +35,7 @@ jobs:
           bash tests/unit/run-collab-structure-tests.sh
           bash tests/unit/run-suspend-resume-tests.sh
           bash tests/unit/run-suspend-failure-finalize-tests.sh
+          bash tests/unit/run-030-031-pm-marker-tests.sh
           bash tests/unit/run-builder-fantgpu-gates-tests.sh
           bash tests/unit/run-check-release-package-tests.sh
           bash tests/unit/run-validate-fantgpu-manifest-tests.sh
