@@ -125,6 +125,7 @@ docs/planning/phase4-device-validation.md
 docs/planning/phase5-retirement-design.md
 docs/planning/picom-integration.md
 docs/planning/r5-suspend-investigation-plan.md
+docs/planning/r5-suspend-stage-d-design.md
 docs/planning/release-review-2026-08-20.md
 docs/planning/reverse-engineering-assessment.md
 docs/planning/source-tree-migration.md
