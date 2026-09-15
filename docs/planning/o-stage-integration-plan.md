@@ -1,7 +1,7 @@
 # O_stage 构建集成方案（5.0.0-i3 F 分支）——R5 停批修订
 
 - 日期：2026-09-10
-- 状态：**i3 静态实现与双构建已完成，R5 仍为 FAIL**（030-031 已进入 15 链，i3 五件隔离产物树 hash `acfe80d1…`，双构建候选 SHA `f2e821f2…`；030-031 仅提供 PM 分层观测和返回值硬化，不宣称修复 suspend 硬挂；不安装、不重启、不创建 validation-results、不签发、不打 tag）
+- 状态：**i3 已安装并完成唯一受监督定位运行，`pm_test=devices` 再次硬挂，R5 仍为 FAIL**（030-031 已进入 15 链，树 hash `acfe80d1…`，候选 SHA `f2e821f2…`；冷启动后 Driver/Firmware 与 DRM 恢复，但驱动 marker 未持久化，`stage_attribution=UNVERIFIED`；不创建 validation-results、不签发、不打 tag）
 - 放行依据：dsh 放行规格（已记 report.md）；约束不变（保护区零写入、debs/F0 只读、builder 不安装不重启）
 - 前置事实：i2 的 14 链与 `86e7f12a…` 包是已安装并触发 R5 硬挂的失败档案锚点，保持不覆盖；i3 在其上追加 030-031，15 链树 hash = `acfe80d1cff9437f8d4a77ee71640d1a4c0698614656f8312cdf662d8366361c`（= 030-031 after_tree_hash）。
 
@@ -95,7 +95,7 @@
 | 运行时 | DDCCI panel 显式逻辑（029）+ 2880x1800 刷新率（006）+ 2560 base-vs-base 观察（006 登记） | probe-drm-topology.c + 实机面板 |
 | 运行时 | **UNVERIFIED 登记 1**：025-display 唤醒显示观察（i4-only 假设不迁移，观察 F0 维持 i3 语义的行为） | probe-suspend-resume-state.sh 扩展观察项 |
 | 运行时 | **UNVERIFIED 登记 2**：patch-000 G0M GPU PLL 双重初始化症状观察（no-transform 操作结论，语义未闭合） | 阶段三矩阵观察项 |
-| 安装/回退 | 5.0.0-i3 受监督安装 + 已批准 4.0.2-i3 回退 | 当前未授权；按阶段 D 唯一复测门执行 |
+| 安装/回退 | 5.0.0-i3 受监督安装 + 已批准 4.0.2-i3 回退 | i3 已安装并在唯一 `pm_test=devices` 中硬挂；当前恢复后留装，回退未执行、待 dsh 裁决 |
 | 门禁汇总 | check-docs rc=0 + validate-collab rc=0 + r16-gate rc=0 | 每批提交后实跑并记录 |
 
 ## 五、产物落点

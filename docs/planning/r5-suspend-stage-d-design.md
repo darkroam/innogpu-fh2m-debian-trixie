@@ -1,6 +1,6 @@
 # R5 suspend 阶段 D 设计（030-031 候选）
 
-- 状态：**dsh 终审设计已实现为 030-031/i3 候选；静态与双构建已闭合，未授权安装或真机复测**
+- 状态：**030-031/i3 唯一受监督复测已执行并再次硬挂；阶段 marker 未持久化，具体挂点仍未闭合**
 - 日期：2026-09-15
 - 基线：`5.0.0-i2`，O_stage 14 链尾 `c44ce7850134c1455c0935519fc6cb08a81b505804150c59dde1338e1369bd3f`
 - 结论边界：`R5=FAIL`；本设计首先提供可观测性和错误传播硬化，不宣称已经修复硬挂
@@ -159,7 +159,7 @@ ft_resume_complete
 
 ## 5. 唯一复测门
 
-本设计不授权复测。新包安装后的再次实验最多一次，且以下条件全部满足后才可由 dsh 明示放行：
+本节原为复测放行门；dsh 后续已明示放行，唯一一次实验于 2026-09-15 执行。以下条件保留为审计依据：
 
 1. 新包 SHA、DKMS 模块对象 SHA、build ID 和 15 链 provenance 均核对一致，runtime health gate 通过。
 2. 已有经实测可在目标 suspend 区间保存 marker 的带外通道。首选串口/独立硬件控制台；netconsole 只有在接收端、网卡 suspend 顺序和丢包边界完成演练后才可采用。当前 pstore 为空，不能作为已满足条件。
@@ -213,3 +213,13 @@ qoder 只做只读初审，不创建补丁、不构建/安装、不执行 pm_tes
 - `hal_pdp_restore_default_cfg()`、`pci_save_state()`、`pci_set_power_state(PCI_D3hot)` 在原实现中返回值被忽略；本轮保存并输出 fail marker，但因 IRQ/power/PCI 半状态缺少已证明回滚，保持原有继续执行控制流，fail 行写 `propagated=0`。这三支是“检测但不传播”，不是伪造成功。
 - resume 侧原实现忽略 `pci_set_power_state(PCI_D0)` 的返回值，且 `pci_enable_device()`、`fantgpu_resize_resume()` 失败后只记录错误并继续。本候选保存这三项返回值并在失败时停止后续 resume，连同 DRM/PVR/DVFS 的既有错误返回统一按负值原样、正值 `-EIO` 传播；void HAL/IRQ 调用仅做紧邻边界 marker。该 fail-fast 行为是本轮有意的返回值硬化，仍须由初审逐分支确认。
 - i3 五件隔离在 `docs/planning/evidence/o-stage/5.0.0-i3/`，未覆盖 i2 失败锚点；双构建 deb SHA `f2e821f2…`，562 行 md5sums 字节一致。该结果不改变 `R5=FAIL`、runtime pending 或复测硬前置。
+
+## 9. 唯一复测结果（2026-09-15）
+
+候选 deb SHA、15 链树 hash、DKMS 模块、vermagic、Driver/Firmware、DRM 节点和 runtime health 均在实验前通过。启动命令行包含 `no_console_suspend ignore_loglevel`，`console_suspend=N`；停止 `startx/dwm` 后保持 `fantgpu` 与 PCI 设备绑定，控制台自检行可见。
+
+单次 `pm_test=devices` 触发后命令未返回、SSH 不可达，最终由操作者冷启动恢复，结果为 `HANG`。恢复后 `pm_test=none`、`pm_debug_messages=0`、Driver/Firmware OK、PCI/DRM 节点恢复；不允许重复实验。原始证据保存在 ignored 目录 `.runtime-archive/runtime-5.0.0-i3/`，Git 摘要见 `docs/planning/evidence/o-stage/runtime-5.0.0-i3/`。
+
+阶段归因未闭合：持久日志只有 `control_selftest`、`control_trigger` 两条控制 marker，驱动 marker 为 0 条；pstore 为空，最后持久内核事件为 VPU prepare-suspend。操作者未能在快速滚动后拍下控制台最后行。用户态日志进程在 device suspend 前已被冻结，GPU 控制台又不是独立于被测 DRM 设备的通道，因此本次“控制台自检可见”不足以满足 §5.2 的可靠带外保存要求。应将本轮观测门记为 `FAIL`、`stage_attribution=UNVERIFIED`，不得套用 7 条决策树猜测 HAL 挂点。
+
+后续任何定位运行必须重新裁决，并先演练真正独立且可保存目标区间 marker 的串口或 netconsole 接收端。不得再以本机 GPU 屏幕、journald、`dmesg -w` 或空 pstore 作为单一持久证据通道。`R5=FAIL`、U1/U2、validation-results、签发和 tag 继续冻结。

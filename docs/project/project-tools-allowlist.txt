@@ -123,6 +123,8 @@ docs/planning/evidence/o-stage/runtime-5.0.0-i2/install-rollback.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i2/preinstall-state.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i2/r5-static-review.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i2/raw-evidence-archive-summary.txt
+docs/planning/evidence/o-stage/runtime-5.0.0-i3/r5-marker-result.txt
+docs/planning/evidence/o-stage/runtime-5.0.0-i3/raw-evidence-archive-summary.txt
 docs/planning/fantgpu-base-update-evaluation.md
 docs/planning/history.md
 docs/planning/o-stage-integration-plan.md
