@@ -1,0 +1,14 @@
+package_version=5.0.0-i4
+target_kernel=6.12.101+deb13-amd64
+result=FAIL_BOOT_KERNEL_OOPS
+probe_executed=no
+rip=fixup_pcie_init+0xe/0x40[fantgpu]
+cr2=0x2a9
+call_path=fantgpu_pci_driver_init
+root_cause=030-032 inserted pm_probe state into dev_rsrc shared with precompiled fantgpu.o_shipped, shifting fixed field offsets
+test_gap=no source or compiled ABI invariant existed for structures shared with shipped objects
+correction=030-033 restores the i3 dev_rsrc layout and moves probe state to an independent per-device devres allocation
+next_candidate=5.0.0-i5
+next_deb_sha256=6e491677f90e480936f0092d169cfce969d4a7db2a6e247460b2b15fe27d4320
+validation_status=FAIL
+freeze=R5,U1,U2,validation-results,signing,tag

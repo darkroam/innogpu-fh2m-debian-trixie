@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "id": "030-033",
+  "ledger_ref": {
+    "item": "030",
+    "neutral_record": "F-ONLY-004",
+    "mapping": "5.0.0-i4 boot Oops correction: preserve the shipped-object dev_rsrc ABI",
+    "description": "move the PM probe state out of the shared dev_rsrc layout"
+  },
+  "deepin_patch": {
+    "path": "patches/030-033.patch",
+    "sha256": "e247a31e31cfc2aab7cec72af0bd372fe41c1eb3ab5c30620b9a57d363705913",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "docs/planning/evidence/o-stage/f0-snapshot.tar.zst",
+      "sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e"
+    },
+    "tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+    "chain_base": {
+      "id": "030-032",
+      "after_tree_hash": "43f63f3fd5a9305734b9749cdfe773bc303726b06bf9f94fc1b55347738e9213"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "f-only-abi-correction",
+      "summary": "5.0.0-i4 inserted pm_probe into struct dev_rsrc, which is also consumed by the precompiled fantgpu.o_shipped at fixed offsets. Booting 6.12.101 then faulted in fixup_pcie_init. This correction restores the i3 dev_rsrc layout exactly and keeps the same per-device probe state in a separate devres allocation with the existing PM/remove/debugfs serialization."
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "F-only correction in the same two vendor Dual MIT/GPLv2 source files; no binary or third-party content changed."
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "030-001 through 030-032 applied",
+      "summary": "Applies only after the 030-032 diagnostic probe and preserves its command, permission, lifecycle and one-shot behavior."
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "f-only-abi-correction",
+      "summary": "No D-side source. fantgpu.o_shipped remains byte-identical; the correction removes the source/binary layout disagreement instead of modifying the shipped object."
+    }
+  },
+  "apply": {
+    "before_tree_hash": "43f63f3fd5a9305734b9749cdfe773bc303726b06bf9f94fc1b55347738e9213",
+    "after_tree_hash": "4be9ba7509258726b95bd41137da1280868c91c835aa57d4150fd6ba76913300",
+    "patch_sha256": "e247a31e31cfc2aab7cec72af0bd372fe41c1eb3ab5c30620b9a57d363705913",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <CHAIN_BASE> < patches/030-033.patch",
+    "result": "2 files changed (fantgpu/fantgpu_pci_drv.c, fantgpu/hal.h); no .orig/.rej; fresh replay tree hash == after_tree_hash"
+  },
+  "rollback": {
+    "command": "remove O_stage and re-extract chain base (F0 snapshot + 030-001..030-032, 16 entries); do not reverse-edit F0",
+    "target": "chain base tree hash 43f63f3fd5a9305734b9749cdfe773bc303726b06bf9f94fc1b55347738e9213"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "fresh 030-032 replay: -p1, --fuzz=0, rc=0",
+        "post-patch struct dev_rsrc source is byte-identical to the i3 locked snapshot",
+        "i3 and corrected modules have identical pahole dev_rsrc output: size 140536, 115 members",
+        "full module compile for 6.12.101+deb13-amd64: rc=0",
+        "patch scope is exactly fantgpu/fantgpu_pci_drv.c and fantgpu/hal.h"
+      ]
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "Install 5.0.0-i5 while running the safe kernel, then boot 6.12.101 once and require a normal fantgpu probe plus Driver/Firmware/DRM health before either debugfs diagnostic command is permitted."
+    }
+  }
+}

@@ -62,6 +62,7 @@ bash tests/unit/run-collab-structure-tests.sh
 bash tests/unit/run-suspend-resume-tests.sh
 bash tests/unit/run-suspend-failure-finalize-tests.sh
 bash tests/unit/run-030-032-pm-probe-tests.sh
+bash tests/unit/run-030-033-shipped-abi-tests.sh
 bash tests/unit/run-fantgpu-pm-probe-removal-tests.sh
 bash tests/unit/run-p2-normalize-tests.sh
 bash tests/unit/run-r16-gate-tests.sh
@@ -100,6 +101,9 @@ bash tests/unit/run-fantgpu-runtime-health-tests.sh
 - 030-032 PM 探针静态测试严格回放 i3 锁定快照，覆盖 root/CAP 门、两个精确命令、单 boot
   不重入、sleep/wakeup 与返回值顺序、debugfs 文件引用、PM/remove/probe 同锁、全部 PM 回调及
   shutdown 串行、固定状态 schema、禁止 DMA/PDP 任意调用和禁止异步 timeout；不加载模块或触发 PM；
+- 030-033 shipped-object ABI 测试从 i4 快照严格应用修正，要求补丁范围仅为两个 F 源文件、
+  `dev_rsrc` 与 i3 锁定快照逐字一致、probe 状态只存在于独立 devres；真实构建另由 builder 的
+  `pahole` 门检查模块内结构大小和关键字段偏移；
 - PM 探针发布移除 fixture 门禁覆盖发布源码、snapshot/manifest、builder 树、DKMS 树、模块字符串与
   deb 解包载荷；任一层残留诊断符号、确认 token 或状态字段即失败关闭；
 - 许可证审计测试覆盖当前逐文件 inventory 一致性、发布门禁保持 BLOCKED、确定性重建、

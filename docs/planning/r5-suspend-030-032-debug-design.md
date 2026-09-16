@@ -1,7 +1,7 @@
 # R5 suspend 030-032 诊断设计
 
 - 日期：2026-09-16
-- 状态：**030-032 实现、16 链 i4 物化与双构建已完成，待 qoder 初审与 dsh 终审；未安装、未执行真机探针**
+- 状态：**i4 在 6.12.101 模块初始化阶段 Oops，探针未执行；030-033/i5 ABI 修正已通过首次启动健康门，正式批待初审/终审**
 - 候选：`030-032`，仅用于 `5.0.0-i4` 诊断包，不是发布修复
 - 基线：`5.0.0-i3` / 15 链树 `acfe80d1cff9437f8d4a77ee71640d1a4c0698614656f8312cdf662d8366361c`
 - 冻结：`R5=FAIL`，U1/U2、validation-results、签发和 tag 不变
@@ -128,3 +128,12 @@ qoder 只读初审应优先确认：
 - 16 链 i4 五件隔离在 `docs/planning/evidence/o-stage/5.0.0-i4/`；snapshot SHA 为 `e80fadcb…`，i2/i3 失败锚点未覆盖。
 - 双构建 deb SHA 均为 `8a77ac9fb08d880858b0fbe44923abaad68ccbed58e6d544eaec431f35d559d0`；`DEBIAN/md5sums` SHA 为 `3011fe20…`，562 行字节一致。
 - 静态探针契约 16/16、发布移除门禁 8/8 已通过；实现批仍不改变 `R5=FAIL`，真机探针须在本批初审/终审后另行明示放行。
+
+## 10. i4 启动失败与 030-033 修正（2026-09-16）
+
+- i4 在 `6.12.101+deb13-amd64` 启动时发生内核 Oops：RIP=`fixup_pcie_init+0xe/0x40 [fantgpu]`，CR2=`0x2a9`，调用链进入 `fantgpu_pci_driver_init`；因此两个 debugfs 探针均未触发。
+- 根因是 030-032 把 `struct fantgpu_pm_probe_state` 嵌入共享 `struct dev_rsrc`。预编译 `fantgpu.o_shipped` 按 i3 固定偏移访问该结构，新增成员移动了后续字段，导致初始化阶段非法解引用。
+- 测试缺口：原 16 项测试验证了接口、权限、顺序和生命周期，却没有验证“与 shipped object 共享的结构不得改变大小/字段偏移”。仅编译成功不足以证明源对象 ABI 一致。
+- 030-033 恢复 i3 的 `dev_rsrc` 定义，把 probe 状态改为每 PCI 设备独立 devres；debugfs、PM 回调、shutdown 与 remove 继续共享同一 mutex。新测试比较 i3/i5 结构定义，builder 还对实际 `.ko` 执行 BTF 大小与偏移检查。
+- 5.0.0-i5 17 链树为 `4be9ba75…`，snapshot SHA=`1b49ecc4…`；两次 `6.12.101` 定向构建 deb SHA 均为 `6e491677f90e480936f0092d169cfce969d4a7db2a6e247460b2b15fe27d4320`。
+- 恢复顺序：终审后在当前安全内核安装 i5，再只启动一次 `6.12.101` 并执行普通模块/Driver/Firmware/DRM 健康门。该门通过后，才重新申请 `reg-read` 与下一 boot 的 `monitor-cycle`；`R5=FAIL` 不变。

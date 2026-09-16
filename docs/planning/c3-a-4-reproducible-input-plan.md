@@ -1,7 +1,7 @@
 # C3-a ④ 可复现输入实施设计（builder F 载荷纳入）——停批修订 v13（2026-09-14）
 
 - 日期：2026-09-12
-- 状态：**R5 停批，阶段 D i4 诊断实现（2026-09-16）**。i3 的 bound+headless `pm_test=devices` 硬挂且 marker 未持久化，`R5=FAIL`。030-032 root-only debugfs PM 探针已形成 16 链 i4 隔离快照并双构建为 `8a77ac9f…`；i4 未安装、未执行探针，不创建 validation-results、不签发、不打 tag。
+- 状态：**R5 停批，i4 启动 ABI 回归已由 030-033/i5 修正（2026-09-16）**。i4 在 `6.12.101` 启动时 Oops，未执行探针；17 链 i5 已双构建并完成首次启动健康验证，debugfs 探针尚未执行。不创建 validation-results、不签发、不打 tag。
 - 依据：`5.0.0-i2-validation-plan.md` §三 C3-a 第 ④ 项 +「③ 对 ④ 的传导」（两项强制）+「C3-a 的 builder 改造点清单」（8 点）+ §二「C3 若选 a/b 的版本与 provenance 传导」+ dsh 2026-09-11 放行「④ qoder 可开工（技术项）」。
 - **不变式（全设计约束，违反任一即 FAIL）**：
   1. materialize 五件产物已按 **i2 代** 重生成（`5.0.0-i2.meta.json`、O_stage 树 hash `c44ce785…`、14 条链——2026-09-14 返工：030-030 hwinfo 音频安全回退入链；旧 i1 名 meta 退役）；
@@ -26,6 +26,14 @@
 - build A/B deb SHA 均为 `8a77ac9fb08d880858b0fbe44923abaad68ccbed58e6d544eaec431f35d559d0`，`DEBIAN/md5sums` 562 行字节一致；Description 已锁定 16 链。修订前文案仍写 15 链的 `1fddf05b…` 已作废且未进入正式证据。
 - 030-032 仅用于诊断；发布候选须完全反向移除，并由 `check-fantgpu-pm-probe-removed.sh` 在源码、snapshot/manifest、builder、DKMS、模块和 deb 解包层逐层证明无诊断 token/symbol。
 - 真机探针仍冻结：实现批须经 qoder 初审与 dsh 终审后，另行明示放行；每个新 boot 只运行一个探针，挂死轮次预期可能只能硬断电恢复。
+
+## 2026-09-16 030-033 shipped-object ABI 修正
+
+- i4 启动 `6.12.101+deb13-amd64` 时在 `fixup_pcie_init` Oops。030-032 在共享 `struct dev_rsrc` 中插入 `pm_probe`，使闭源 `fantgpu.o_shipped` 使用的固定偏移失效；此前测试只验证探针语义和编译成功，没有锁定共享结构 ABI。
+- `patches/030-033.patch` 恢复 i3 的 `dev_rsrc` 布局，把每卡 probe 状态移到 `fantgpu_pci_drv.c` 的独立 devres；不使用 PCI drvdata，不改闭源对象，不改变探针命令与互斥语义。before=`43f63f3f…`，after=`4be9ba75…`。
+- 新门禁同时比较 i3/i5 的结构源码，并在真实 `6.12.101` 模块编译后用 BTF 检查 `dev_rsrc` 大小 `140536`、成员数 `115` 和受影响字段偏移。可复现 i5 构建产物执行 `pahole -C dev_rsrc fantgpu.ko`，将 stdout 原始字节（含空白与换行）直接交给 `sha256sum`，得到 `b827bfec55cae2d2c30d8b2d506605f6d995beaf03439566ab6323f5c0e117ec`；i3 原始模块的 dump 已无法再生，因此不再声称 i3/i5 dump 哈希相同，i3 等价性由结构源码逐字比较与 i5 BTF 大小/成员/偏移门共同证明。
+- 17 链 i5 五件位于独立 `5.0.0-i5/`；snapshot SHA=`1b49ecc4…`。build A/B deb SHA 均为 `6e491677f90e480936f0092d169cfce969d4a7db2a6e247460b2b15fe27d4320`，562 行 `md5sums` SHA=`93a83058…`。
+- i4 及其 `8a77ac9f…` 包保持失败锚点。i5 已在 `6.12.101` 完成首次正常启动与模块健康验证（Driver/Firmware、DRM、硬件 GL、DRI3 均通过，i4 Oops 未复现）；`reg-read` 与 `monitor-cycle` 均未执行，仍须另行受监督放行。
 
 ## 〇、「可复现输入」口径（codex 建议收紧，显式声明）
 

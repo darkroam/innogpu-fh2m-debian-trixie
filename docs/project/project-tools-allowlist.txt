@@ -106,10 +106,16 @@ docs/planning/evidence/o-stage/5.0.0-i4/o-stage-snapshot.tar.zst
 docs/planning/evidence/o-stage/5.0.0-i4/o-stage-snapshot.tar.zst.sha256
 docs/planning/evidence/o-stage/5.0.0-i4/o-stage.manifest.tsv
 docs/planning/evidence/o-stage/5.0.0-i4/o-stage.manifest.tsv.sha256
+docs/planning/evidence/o-stage/5.0.0-i5/5.0.0-i5.meta.json
+docs/planning/evidence/o-stage/5.0.0-i5/o-stage-snapshot.tar.zst
+docs/planning/evidence/o-stage/5.0.0-i5/o-stage-snapshot.tar.zst.sha256
+docs/planning/evidence/o-stage/5.0.0-i5/o-stage.manifest.tsv
+docs/planning/evidence/o-stage/5.0.0-i5/o-stage.manifest.tsv.sha256
 docs/planning/evidence/o-stage/build-5.0.0-i1.sha256
 docs/planning/evidence/o-stage/build-5.0.0-i2.sha256
 docs/planning/evidence/o-stage/build-5.0.0-i3.sha256
 docs/planning/evidence/o-stage/build-5.0.0-i4.sha256
+docs/planning/evidence/o-stage/build-5.0.0-i5.sha256
 docs/planning/evidence/o-stage/c2-module-params.txt
 docs/planning/evidence/o-stage/c2-ruling.md
 docs/planning/evidence/o-stage/f-payload-integrity.json
@@ -133,6 +139,8 @@ docs/planning/evidence/o-stage/runtime-5.0.0-i3/r5-hal-o-vs-f-reverse-notes.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i3/r5-marker-result.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i3/r5-pstore-efi-check.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i3/raw-evidence-archive-summary.txt
+docs/planning/evidence/o-stage/runtime-5.0.0-i4/boot-failure-summary.txt
+docs/planning/evidence/o-stage/runtime-5.0.0-i5/raw-evidence-archive-summary.txt
 docs/planning/fantgpu-base-update-evaluation.md
 docs/planning/history.md
 docs/planning/o-stage-integration-plan.md
@@ -263,6 +271,7 @@ tests/runtime/run-capability-baseline.sh
 tests/unit/d-stage-audit-fault-tests.py
 tests/unit/run-030-031-pm-marker-tests.sh
 tests/unit/run-030-032-pm-probe-tests.sh
+tests/unit/run-030-033-shipped-abi-tests.sh
 tests/unit/run-030-meta-tests.sh
 tests/unit/run-builder-fantgpu-gates-tests.sh
 tests/unit/run-capability-baseline-tests.sh

@@ -19,13 +19,13 @@ case "$VERSION" in
 	5.0.0-i1) EXPECTED_SOURCE_DATE_EPOCH=1788796800 ;;  # dsh 批准：沿用 4.0.2-i3 审核 epoch
 	5.0.0-i2) EXPECTED_SOURCE_DATE_EPOCH=1788796800 ;;  # dsh 批准：沿用审核 epoch
 	5.0.0-i3) EXPECTED_SOURCE_DATE_EPOCH=1788796800 ;;  # R5 阶段 D 诊断候选
-	5.0.0-i4) EXPECTED_SOURCE_DATE_EPOCH=1788796800 ;;  # R5 debugfs PM 探针诊断候选
+	5.0.0-i5) EXPECTED_SOURCE_DATE_EPOCH=1789516800 ;;  # R5 probe ABI correction for 6.12.101
     *)
         echo "builder_version_review=FAIL unreviewed package version: $VERSION" >&2
         exit 1
         ;;
 esac
-# 血统：5.0.0-iN = fantgpu 血统（O_stage 物化源树；i4 为 030 链 16 项，
+# 血统：5.0.0-iN = fantgpu 血统（O_stage 物化源树；i5 为 030 链 17 项，
 # patch-000 no-transform）；其余 = innogpu/Deepin 血统。
 FANT_LINEAGE=0
 [[ "$VERSION" == 5.0.0-i* ]] && FANT_LINEAGE=1
@@ -45,7 +45,7 @@ KERNEL="${KERNELDIR_VER:-$(uname -r)}"
 KERNELDIR="${KERNELDIR:-/lib/modules/$KERNEL/build}"
 # 默认输出名按血统（codex P1：5.0.0-i1 不得沿用 innogpu 名）
 if [[ "$FANT_LINEAGE" == 1 ]]; then
-	[[ "$VERSION" == "5.0.0-i4" ]] || {
+	[[ "$VERSION" == "5.0.0-i5" ]] || {
 		echo "staging_ostage_generation=FAIL archived generation is not rebuildable from the current snapshot: $VERSION"
 		exit 1
 	}
@@ -127,20 +127,20 @@ trap 'rm -rf "$STAGE"' EXIT
 mkdir -p "$STAGE/source" "$STAGE/package"
 
 if [[ "$FANT_LINEAGE" == 1 ]]; then
-	# fantgpu 血统：DKMS 源 = O_stage 物化快照解包（030 链 16 项已含——
-	# 030-030 音频回退、030-031 PM marker 与 030-032 探针随链入树，patch-000 no-transform、o_shipped
+	# fantgpu 血统：DKMS 源 = O_stage 物化快照解包（030 链 17 项已含——
+	# 030-030 音频回退、030-031 PM marker、030-032 探针与 030-033 ABI 修正随链入树，patch-000 no-transform、o_shipped
     # 对象原样）；校验快照 SHA（meta 锁定值 + sidecar 内容）与解包树 hash
     # （O-4 契约）——不可变 provenance 三方一致（codex P1）。包内 DKMS 源树
     # 与锁定 o_stage_tree_hash 同一代，无 post-trace 打补丁（dsh 返工裁决：
     # 印证门禁恢复——补丁后状态必须被锁定证据覆盖）。
-	OSTAGE_DIR="$ROOT/docs/planning/evidence/o-stage/5.0.0-i4"
+	OSTAGE_DIR="$ROOT/docs/planning/evidence/o-stage/5.0.0-i5"
     OSTAGE_SNAP="$OSTAGE_DIR/o-stage-snapshot.tar.zst"
     [[ -f "$OSTAGE_SNAP" ]] || { echo "staging_ostage_snapshot=FAIL"; exit 1; }
-	OSTAGE_TREE_HASH="43f63f3fd5a9305734b9749cdfe773bc303726b06bf9f94fc1b55347738e9213"
+	OSTAGE_TREE_HASH="4be9ba7509258726b95bd41137da1280868c91c835aa57d4150fd6ba76913300"
     snap_sha="$(sha256sum "$OSTAGE_SNAP" | awk '{print $1}')"
     side_sha="$(awk '{print $1}' "$OSTAGE_DIR/o-stage-snapshot.tar.zst.sha256")"
     # meta 锁定四值（不可变 provenance；快照与 sidecar 同时被替换时以 meta 兜底）
-	meta_sha="$(python3 - "$OSTAGE_DIR/5.0.0-i4.meta.json" <<'PY'
+	meta_sha="$(python3 - "$OSTAGE_DIR/5.0.0-i5.meta.json" <<'PY'
 import json, sys
 m = json.load(open(sys.argv[1], encoding="utf-8"))
 print(m["snapshot_artifacts"]["o-stage-snapshot.tar.zst"]["sha256"])
@@ -169,7 +169,7 @@ PY
     mv "$STAGE/source/o-stage" "$STAGE/source.tree"
     rm -rf "$STAGE/source"
     mv "$STAGE/source.tree" "$STAGE/source"
-	APPLIED_SOURCE_FIXES="o-stage-materialized-030-chain-16 (incl. 030-030 audio fallback, 030-031 PM markers, and 030-032 PM probe; patch-000 no-transform)"
+	APPLIED_SOURCE_FIXES="o-stage-materialized-030-chain-17 (incl. 030-030 audio fallback, 030-031 PM markers, 030-032 PM probe, and 030-033 shipped-object ABI correction; patch-000 no-transform)"
     echo "staging_deterministic_transform=PASS (no-transform: fantgpu objects used as-is)"
 else
     cp -r drivers/. "$STAGE/source/"
@@ -202,6 +202,34 @@ else
         echo "staging_module_vermagic=FAIL"; exit 1; }
 fi
 echo "staging_module_vermagic=PASS ($VERMAGIC)"
+if [[ "$FANT_LINEAGE" == 1 ]]; then
+    command -v pahole >/dev/null || { echo "builder_shipped_abi=FAIL pahole missing"; exit 1; }
+    pahole -C dev_rsrc fantgpu.ko > "$STAGE/dev_rsrc.pahole" || {
+        echo "builder_shipped_abi=FAIL dev_rsrc BTF missing"; exit 1; }
+    python3 - "$STAGE/dev_rsrc.pahole" <<'PY' || {
+import re, sys
+text = open(sys.argv[1], encoding="utf-8").read()
+summary = re.search(r"/\* size: (\d+),.*members: (\d+) \*/", text)
+expected = {
+    "debugfs_dir": 136616,
+    "debugfs_hwdir": 136624,
+    "debugfs_name": 136632,
+    "syspll_debugfs": 136640,
+    "test_temp_debugfs": 136648,
+    "hdmi_dev": 136656,
+    "pvr_resume_count": 140528,
+}
+if not summary or tuple(map(int, summary.groups())) != (140536, 115):
+    raise SystemExit("dev_rsrc size/member count drift")
+for field, offset in expected.items():
+    match = re.search(rf"^.*\b{field}(?:\[[^]]+\])?;\s*/\*\s*(\d+)", text, re.M)
+    if not match or int(match.group(1)) != offset:
+        raise SystemExit(f"dev_rsrc offset drift: {field}")
+PY
+        echo "builder_shipped_abi=FAIL dev_rsrc layout differs from i3"; exit 1;
+    }
+    echo "builder_shipped_abi=PASS size=140536 members=115"
+fi
 cd "$ROOT"
 
 # 4) 包装配
@@ -351,7 +379,7 @@ if [[ "$FANT_LINEAGE" == 1 ]]; then
     DKMS_VER="2.2"
     KERNEL_MOD="fantgpu"
     PKG_CONFLICTS="innogpu-fh2m, innogpu-fh2m-kernel-dkms, innogpu-kernel-dkms, innogpu-fh2m-trixie"
-	DESC_BODY=$(printf ' fantgpu lineage: O_stage materialized source tree (030 chain of 16,\n patch-000 no-transform), coherent fantgpu (F) userspace payload (binary-manifest-fantgpu.json locked; build-time DDX/UCM/wayland selection).')
+	DESC_BODY=$(printf ' fantgpu lineage: O_stage materialized source tree (030 chain of 17,\n patch-000 no-transform), coherent fantgpu (F) userspace payload (binary-manifest-fantgpu.json locked; build-time DDX/UCM/wayland selection).')
 else
     PKG_NAME="innogpu-fh2m-trixie"
     PKG_DESC="Innosilicon Fantasy II-M driver (migrated source tree, version $VERSION)"

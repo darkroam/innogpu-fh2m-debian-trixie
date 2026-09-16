@@ -1,0 +1,19 @@
+# file sha256 bytes redaction archive
+i5-101-dev_rsrc.pahole.txt b827bfec55cae2d2c30d8b2d506605f6d995beaf03439566ab6323f5c0e117ec 11126 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i5/i5-101-dev_rsrc.pahole.txt
+i5-107-build-failure.log 9e749dafe900253bd28dbbd06f79725a0fa99f6f82188915814f3d80e02b4c1f 12930 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i5/i5-107-build-failure.log
+i5-execution-summary.txt 34351e3c36fff65e05a297284b7981211752f032ff2b972e8c2303a55d2f7835 2346 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i5/i5-execution-summary.txt
+i5-first-boot-dmesg.txt af568bf36801655599deb9582e9d77e7c195defca6e7894e72dead9c2cde6853 97635 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i5/i5-first-boot-dmesg.txt
+i5-first-boot-health.txt 20cc6934670a5b510f059809f581f63033558a30734e28328f2f406d16a461c9 153 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i5/i5-first-boot-health.txt
+i5-first-boot-install-status.txt 58460b6ce13237b6d815a748c6a35b347fbc4b5df89bdea3fca25b0c68f53d8e 2324 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i5/i5-first-boot-install-status.txt
+i5-first-boot-status.txt 7189c5e7c15afe0bf0b65d64622ee672d69fdfdb2d5cc6648632779c213593e3 229 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i5/i5-first-boot-status.txt
+i5-install-post.txt 05968a082b41efcbf754da0bbc93e9c9b37855b24fae300557e57dddf01bf251 1040 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i5/i5-install-post.txt
+i5-install-pre.txt 95da03bbb32fd58f76d3ff3aa24fec75a7dda3ef18fd142a436f967c14fca489 754 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i5/i5-install-pre.txt
+i5-install.log 5113a17c21713606e782d59396ddd614b56109ae56f0cf3c7b2118c7a4cc6055 1438 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i5/i5-install.log
+i5-postinst-original.txt 1874638558368dc0b569b2d759846a7f8ea517917cd41cfd230c82231a9dac40 2463 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i5/i5-postinst-original.txt
+i5-postinst-target-override.txt 024fd51eced77e404ab66e853a2c54c0b8b8da5709a4a43b3d3a9df9e8c0334f 2490 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i5/i5-postinst-target-override.txt
+i5-recovery-configure.log bf527b9de441f1a44a61baae74e14d417e901ba96054dfb305289d0c36499090 787 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i5/i5-recovery-configure.log
+
+# result=PASS_FIRST_BOOT_HEALTH; probe_executed=no; r5_validation_status=FAIL
+# postinst_current_kernel_only=release_blocker; local_target_override=diagnostic_only
+# udev_node_replay=recorded_nonblocking; think_lmi_warning=recorded_nonblocking
+# freeze=R5,U1,U2,validation-results,signing,tag

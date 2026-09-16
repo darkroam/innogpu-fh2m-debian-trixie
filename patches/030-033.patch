@@ -1,0 +1,454 @@
+diff --git a/fantgpu/fantgpu_pci_drv.c b/fantgpu/fantgpu_pci_drv.c
+index df6e7f6..4d73a4e 100644
+--- a/fantgpu/fantgpu_pci_drv.c
++++ b/fantgpu/fantgpu_pci_drv.c
+@@ -55,6 +55,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ #include <linux/kprobes.h>
+ #include <linux/acpi.h>
+ #include <linux/capability.h>
++#include <linux/mutex.h>
+ #include "fant_plat_dev.h"
+ #include "fant_misc.h"
+ #include "fant_timer.h"
+@@ -104,6 +105,23 @@ static int fantgpu_pm_callback_result(struct device *dev, const char *mode,
+ }
+ 
+ #define FANTGPU_PM_PROBE_CONFIRM "confirm=R5_I4_DIAGNOSTIC"
++#define FANTGPU_PM_PROBE_TEXT_LEN 24
++
++struct fantgpu_pm_probe_state {
++	struct mutex lock;
++	struct dentry *dentry;
++	struct dev_rsrc *pdev_rsrc;
++	bool pm_transition;
++	bool removing;
++	bool used;
++	bool running;
++	int raw_rc;
++	int normalized_rc;
++	char probe[FANTGPU_PM_PROBE_TEXT_LEN];
++	char state[FANTGPU_PM_PROBE_TEXT_LEN];
++	char entered_step[FANTGPU_PM_PROBE_TEXT_LEN];
++	char completed_step[FANTGPU_PM_PROBE_TEXT_LEN];
++};
+ 
+ static void fantgpu_pm_probe_set_text(char *dest, const char *value)
+ {
+@@ -119,12 +137,32 @@ static void fantgpu_pm_probe_marker(struct dev_rsrc *pdev_rsrc,
+ 		probe, step, event, raw_rc, normalized_rc);
+ }
+ 
+-static void fantgpu_pm_probe_init(struct dev_rsrc *pdev_rsrc)
++static void fantgpu_pm_probe_devres_release(struct device *dev, void *res)
+ {
+-	struct fantgpu_pm_probe_state *probe = &pdev_rsrc->pm_probe;
++	struct fantgpu_pm_probe_state *probe = res;
++
++	(void)dev;
++	mutex_destroy(&probe->lock);
++}
++
++static struct fantgpu_pm_probe_state *fantgpu_pm_probe_find(struct device *dev)
++{
++	return devres_find(dev, fantgpu_pm_probe_devres_release, NULL, NULL);
++}
++
++static struct fantgpu_pm_probe_state *fantgpu_pm_probe_init(struct device *dev,
++		struct dev_rsrc *pdev_rsrc)
++{
++	struct fantgpu_pm_probe_state *probe;
++
++	probe = devres_alloc(fantgpu_pm_probe_devres_release, sizeof(*probe),
++		GFP_KERNEL);
++	if (!probe)
++		return NULL;
+ 
+ 	mutex_init(&probe->lock);
+ 	probe->dentry = NULL;
++	probe->pdev_rsrc = pdev_rsrc;
+ 	probe->pm_transition = false;
+ 	probe->removing = false;
+ 	probe->used = false;
+@@ -135,18 +173,20 @@ static void fantgpu_pm_probe_init(struct dev_rsrc *pdev_rsrc)
+ 	fantgpu_pm_probe_set_text(probe->state, "idle");
+ 	fantgpu_pm_probe_set_text(probe->entered_step, "none");
+ 	fantgpu_pm_probe_set_text(probe->completed_step, "none");
++	devres_add(dev, probe);
++	return probe;
+ }
+ 
+ static int fantgpu_pm_probe_file_get(struct file *file,
+-		struct dev_rsrc **pdev_rsrc)
++		struct fantgpu_pm_probe_state **probe)
+ {
+ 	int ret;
+ 
+ 	ret = debugfs_file_get(file->f_path.dentry);
+ 	if (ret)
+ 		return ret;
+-	*pdev_rsrc = file->private_data;
+-	if (!*pdev_rsrc) {
++	*probe = file->private_data;
++	if (!*probe || !(*probe)->pdev_rsrc) {
+ 		debugfs_file_put(file->f_path.dentry);
+ 		return -ENODEV;
+ 	}
+@@ -157,15 +197,13 @@ static ssize_t fantgpu_pm_probe_read(struct file *file, char __user *buf,
+ 		size_t count, loff_t *ppos)
+ {
+ 	struct fantgpu_pm_probe_state *probe;
+-	struct dev_rsrc *pdev_rsrc;
+ 	char status[256];
+ 	ssize_t ret;
+ 	int len;
+ 
+-	ret = fantgpu_pm_probe_file_get(file, &pdev_rsrc);
++	ret = fantgpu_pm_probe_file_get(file, &probe);
+ 	if (ret)
+ 		return ret;
+-	probe = &pdev_rsrc->pm_probe;
+ 	mutex_lock(&probe->lock);
+ 	len = scnprintf(status, sizeof(status),
+ 		"probe=%s\nstate=%s\nraw_rc=%d\nnormalized_rc=%d\n"
+@@ -215,10 +253,10 @@ static ssize_t fantgpu_pm_probe_write(struct file *file,
+ 		return -EINVAL;
+ 	}
+ 
+-	ret = fantgpu_pm_probe_file_get(file, &pdev_rsrc);
++	ret = fantgpu_pm_probe_file_get(file, &probe);
+ 	if (ret)
+ 		return ret;
+-	probe = &pdev_rsrc->pm_probe;
++	pdev_rsrc = probe->pdev_rsrc;
+ 	ret = mutex_lock_interruptible(&probe->lock);
+ 	if (ret)
+ 		goto out_put;
+@@ -286,10 +324,8 @@ static const struct file_operations fantgpu_pm_probe_fops = {
+ 	.llseek = default_llseek,
+ };
+ 
+-static void fantgpu_pm_probe_quiesce(struct dev_rsrc *pdev_rsrc)
++static void fantgpu_pm_probe_quiesce(struct fantgpu_pm_probe_state *probe)
+ {
+-	struct fantgpu_pm_probe_state *probe = &pdev_rsrc->pm_probe;
+-
+ 	WRITE_ONCE(probe->removing, true);
+ 	if (probe->dentry) {
+ 		debugfs_remove(probe->dentry);
+@@ -298,34 +334,34 @@ static void fantgpu_pm_probe_quiesce(struct dev_rsrc *pdev_rsrc)
+ 	mutex_lock(&probe->lock);
+ }
+ 
+-static void fantgpu_pm_probe_release(struct dev_rsrc *pdev_rsrc)
++static void fantgpu_pm_probe_release(struct fantgpu_pm_probe_state *probe)
+ {
+-	mutex_unlock(&pdev_rsrc->pm_probe.lock);
+-	mutex_destroy(&pdev_rsrc->pm_probe.lock);
++	mutex_unlock(&probe->lock);
+ }
+ 
+ static int fantgpu_pm_transition_begin(struct device *dev,
+-		struct dev_rsrc **pdev_rsrc)
++		struct fantgpu_pm_probe_state **probe_out)
+ {
+ 	struct fantgpu_pm_probe_state *probe;
+ 
+-	*pdev_rsrc = fh2m_fant_rsrc_devres_find(dev);
+-	if (!*pdev_rsrc)
++	probe = fantgpu_pm_probe_find(dev);
++	if (!probe)
+ 		return -ENODEV;
+-	probe = &(*pdev_rsrc)->pm_probe;
+ 	mutex_lock(&probe->lock);
+-	if (READ_ONCE(probe->removing)) {
++	if (READ_ONCE(probe->removing) ||
++		fh2m_fant_rsrc_devres_find(dev) != probe->pdev_rsrc) {
+ 		mutex_unlock(&probe->lock);
+ 		return -ENODEV;
+ 	}
+ 	probe->pm_transition = true;
++	*probe_out = probe;
+ 	return 0;
+ }
+ 
+-static void fantgpu_pm_transition_end(struct dev_rsrc *pdev_rsrc)
++static void fantgpu_pm_transition_end(struct fantgpu_pm_probe_state *probe)
+ {
+-	pdev_rsrc->pm_probe.pm_transition = false;
+-	mutex_unlock(&pdev_rsrc->pm_probe.lock);
++	probe->pm_transition = false;
++	mutex_unlock(&probe->lock);
+ }
+ 
+ #ifdef CONFIG_DRM_FANT_SMMU
+@@ -1464,8 +1500,11 @@ static int dev_rsrc_init(struct dev_rsrc* pdev_rsrc, struct pci_dev* pdev)
+ {
+ 	int err = 0;
+ 	char temp_str[128];
++	struct fantgpu_pm_probe_state *probe = fantgpu_pm_probe_find(&pdev->dev);
+ 	struct power_custom_hwinfo_t *powerinfo = &pdev_rsrc->pwrinfo;
+ 	ACPI_DATA_T *bios_acpi_data = &pdev_rsrc->chip.acpi_data;
++	if (!probe)
++		return -ENODEV;
+ 
+ 	snprintf(temp_str, sizeof(temp_str), "%s%d", FANT_GPU_DEBUGFS_NAME, pdev_rsrc->pcie_func_idx);
+ 
+@@ -1482,10 +1521,10 @@ static int dev_rsrc_init(struct dev_rsrc* pdev_rsrc, struct pci_dev* pdev)
+ 		pdev_rsrc->debugfs_dir = NULL;
+ 		return -1;
+ 	}
+-	pdev_rsrc->pm_probe.dentry = debugfs_create_file("pm_probe", 0600,
+-		pdev_rsrc->debugfs_dir, pdev_rsrc, &fantgpu_pm_probe_fops);
+-	if (IS_ERR_OR_NULL(pdev_rsrc->pm_probe.dentry)) {
+-		pdev_rsrc->pm_probe.dentry = NULL;
++	probe->dentry = debugfs_create_file("pm_probe", 0600,
++		pdev_rsrc->debugfs_dir, probe, &fantgpu_pm_probe_fops);
++	if (IS_ERR_OR_NULL(probe->dentry)) {
++		probe->dentry = NULL;
+ 		fh2m_fant_debugfs_or_procfs_remove_dir(pdev_rsrc->debugfs_hwdir);
+ 		pdev_rsrc->debugfs_hwdir = NULL;
+ 		fh2m_fant_debugfs_or_procfs_remove_dir(pdev_rsrc->debugfs_dir);
+@@ -1847,6 +1886,7 @@ static void fantgpu_pcie_link_speed(struct dev_rsrc* pdev_rsrc)
+ static int fantgpu_pci_probe(struct pci_dev *pdev, const struct pci_device_id *id) {
+ 
+ 	struct dev_rsrc* pdev_rsrc;
++	struct fantgpu_pm_probe_state *probe;
+ 	int err=0, idx=0;
+ 	ktime_t time;
+ 
+@@ -1886,6 +1926,13 @@ static int fantgpu_pci_probe(struct pci_dev *pdev, const struct pci_device_id *i
+ 	devres_add(&pdev->dev, pdev_rsrc);
+ 
+ 	pdev_rsrc->pcie_func_idx = idx;
++	pdev_rsrc->pdev = pdev;
++	pdev_rsrc->dev = &pdev->dev;
++	probe = fantgpu_pm_probe_init(&pdev->dev, pdev_rsrc);
++	if (!probe) {
++		err = -ENOMEM;
++		goto err_release;
++	}
+ 
+ 	hal_module_loadtime_init(&pdev->dev, ktime_to_us(time));
+ 	fh2m_hal_display_interface_info_init(&pdev->dev);
+@@ -1898,9 +1945,6 @@ static int fantgpu_pci_probe(struct pci_dev *pdev, const struct pci_device_id *i
+ 		goto err_release;
+ 	}
+ 
+-	pdev_rsrc->pdev = pdev;
+-	pdev_rsrc->dev = &pdev->dev;
+-	fantgpu_pm_probe_init(pdev_rsrc);
+ 	pdev_rsrc->chip_type = (id->driver_data)&FANT_ASIC_MASK;
+ 	if(CHIP_TYPE_MAX == pdev_rsrc->chip_type) {
+ 		pcie_warn(&pdev->dev, "Unknown chip type!!!");
+@@ -1994,10 +2038,10 @@ static int fantgpu_pci_probe(struct pci_dev *pdev, const struct pci_device_id *i
+ 	return err;
+ 
+ err_dev_cleanup:
+-	fantgpu_pm_probe_quiesce(pdev_rsrc);
++	fantgpu_pm_probe_quiesce(probe);
+ 	dev_rsrc_deinit(pdev);
+ 	fh2m_fantgpu_pci_disable(&pdev->dev);
+-	fantgpu_pm_probe_release(pdev_rsrc);
++	fantgpu_pm_probe_release(probe);
+ 
+ err_release:
+ #if	defined(CONFIG_NUMA) && defined(__FANT_CONTAINER__)
+@@ -2014,12 +2058,13 @@ err_release:
+ static void fantgpu_pci_remove(struct pci_dev* pdev) {
+ 
+ 	struct dev_rsrc* pdev_rsrc = fh2m_fant_rsrc_devres_find(&pdev->dev);
++	struct fantgpu_pm_probe_state *probe = fantgpu_pm_probe_find(&pdev->dev);
+ 
+-	if(!pdev_rsrc) {
+-		pcie_error(&pdev->dev, "[%s:%d] dev_rsrc is NULL\n", __func__, __LINE__);
++	if(!pdev_rsrc || !probe) {
++		pcie_error(&pdev->dev, "[%s:%d] dev_rsrc or pm_probe is NULL\n", __func__, __LINE__);
+ 		return;
+ 	}
+-	fantgpu_pm_probe_quiesce(pdev_rsrc);
++	fantgpu_pm_probe_quiesce(probe);
+ 
+ 	hal_devices_unregister(pdev_rsrc);
+ 
+@@ -2044,7 +2089,7 @@ static void fantgpu_pci_remove(struct pci_dev* pdev) {
+ 
+ 	ida_simple_remove(&pcie_func_ida, pdev_rsrc->pcie_func_idx);
+ 	pcie_info(&pdev->dev, "fantgpu_pci_remove");
+-	fantgpu_pm_probe_release(pdev_rsrc);
++	fantgpu_pm_probe_release(probe);
+ }
+ 
+ static struct pci_device_id s_fant_pci_tbl[] = {
+@@ -2368,90 +2413,90 @@ static int fantgpu_device_resume(struct device *dev, bool resume, bool is_suspen
+ static int fantgpu_pmops_suspend(struct device *dev)
+ {
+ 	int ret;
+-	struct dev_rsrc *pdev_rsrc;
++	struct fantgpu_pm_probe_state *probe;
+ 
+-	ret = fantgpu_pm_transition_begin(dev, &pdev_rsrc);
++	ret = fantgpu_pm_transition_begin(dev, &probe);
+ 	if (ret)
+ 		return fantgpu_pm_callback_result(dev, "suspend", ret);
+ 	pcie_info(dev, "%s:%d\n", __func__, __LINE__);
+ 	fantgpu_pm_marker(dev, "pci_callback", "enter", 0, "suspend", "none", 0, false);
+ 	ret = fantgpu_device_suspend(dev, true);
+-	fantgpu_pm_transition_end(pdev_rsrc);
++	fantgpu_pm_transition_end(probe);
+ 	return fantgpu_pm_callback_result(dev, "suspend", ret);
+ }
+ 
+ static int fantgpu_pmops_resume(struct device *dev)
+ {
+ 	int ret;
+-	struct dev_rsrc *pdev_rsrc;
++	struct fantgpu_pm_probe_state *probe;
+ 
+-	ret = fantgpu_pm_transition_begin(dev, &pdev_rsrc);
++	ret = fantgpu_pm_transition_begin(dev, &probe);
+ 	if (ret)
+ 		return fantgpu_pm_callback_result(dev, "suspend", ret);
+ 	pcie_info(dev, "%s:%d\n", __func__, __LINE__);
+ 	fantgpu_pm_marker(dev, "pci_callback", "enter", 0, "suspend", "none", 0, false);
+ 	ret = fantgpu_device_resume(dev, true, true);
+-	fantgpu_pm_transition_end(pdev_rsrc);
++	fantgpu_pm_transition_end(probe);
+ 	return fantgpu_pm_callback_result(dev, "suspend", ret);
+ }
+ 
+ static int fantgpu_pmops_freeze(struct device *dev)
+ {
+ 	int ret;
+-	struct dev_rsrc *pdev_rsrc;
++	struct fantgpu_pm_probe_state *probe;
+ 
+-	ret = fantgpu_pm_transition_begin(dev, &pdev_rsrc);
++	ret = fantgpu_pm_transition_begin(dev, &probe);
+ 	if (ret)
+ 		return fantgpu_pm_callback_result(dev, "freeze", ret);
+ 	pcie_info(dev, "%s:%d\n", __func__, __LINE__);
+ 	fantgpu_pm_marker(dev, "pci_callback", "enter", 0, "freeze", "none", 0, false);
+ 	ret = fantgpu_device_suspend(dev, false);
+-	fantgpu_pm_transition_end(pdev_rsrc);
++	fantgpu_pm_transition_end(probe);
+ 	return fantgpu_pm_callback_result(dev, "freeze", ret);
+ }
+ 
+ static int fantgpu_pmops_thaw(struct device *dev)
+ {
+ 	int ret;
+-	struct dev_rsrc *pdev_rsrc;
++	struct fantgpu_pm_probe_state *probe;
+ 
+-	ret = fantgpu_pm_transition_begin(dev, &pdev_rsrc);
++	ret = fantgpu_pm_transition_begin(dev, &probe);
+ 	if (ret)
+ 		return fantgpu_pm_callback_result(dev, "freeze", ret);
+ 	pcie_info(dev, "%s:%d\n", __func__, __LINE__);
+ 	fantgpu_pm_marker(dev, "pci_callback", "enter", 0, "freeze", "none", 0, false);
+ 	ret = fantgpu_device_resume(dev, true, false);
+-	fantgpu_pm_transition_end(pdev_rsrc);
++	fantgpu_pm_transition_end(probe);
+ 	return fantgpu_pm_callback_result(dev, "freeze", ret);
+ }
+ 
+ static int fantgpu_pmops_poweroff(struct device *dev)
+ {
+ 	int ret;
+-	struct dev_rsrc *pdev_rsrc;
++	struct fantgpu_pm_probe_state *probe;
+ 
+-	ret = fantgpu_pm_transition_begin(dev, &pdev_rsrc);
++	ret = fantgpu_pm_transition_begin(dev, &probe);
+ 	if (ret)
+ 		return fantgpu_pm_callback_result(dev, "suspend", ret);
+ 	pcie_info(dev, "%s:%d\n", __func__, __LINE__);
+ 	fantgpu_pm_marker(dev, "pci_callback", "enter", 0, "suspend", "none", 0, false);
+ 	ret = fantgpu_device_suspend(dev, true);
+-	fantgpu_pm_transition_end(pdev_rsrc);
++	fantgpu_pm_transition_end(probe);
+ 	return fantgpu_pm_callback_result(dev, "suspend", ret);
+ }
+ 
+ static int fantgpu_pmops_restore(struct device *dev)
+ {
+ 	int ret;
+-	struct dev_rsrc *pdev_rsrc;
++	struct fantgpu_pm_probe_state *probe;
+ 
+-	ret = fantgpu_pm_transition_begin(dev, &pdev_rsrc);
++	ret = fantgpu_pm_transition_begin(dev, &probe);
+ 	if (ret)
+ 		return fantgpu_pm_callback_result(dev, "freeze", ret);
+ 	pcie_info(dev, "%s:%d\n", __func__, __LINE__);
+ 	fantgpu_pm_marker(dev, "pci_callback", "enter", 0, "freeze", "none", 0, false);
+ 	ret = fantgpu_device_resume(dev, true, false);
+-	fantgpu_pm_transition_end(pdev_rsrc);
++	fantgpu_pm_transition_end(probe);
+ 	return fantgpu_pm_callback_result(dev, "freeze", ret);
+ }
+ 
+@@ -2466,12 +2511,12 @@ static const struct dev_pm_ops fantgpu_pci_pm_ops = {
+ 
+ static void fantgpu_pci_shutdown(struct pci_dev *pdev)
+ {
+-	struct dev_rsrc *pdev_rsrc;
++	struct fantgpu_pm_probe_state *probe;
+ 
+-	if (fantgpu_pm_transition_begin(&pdev->dev, &pdev_rsrc))
++	if (fantgpu_pm_transition_begin(&pdev->dev, &probe))
+ 		return;
+ 	fantgpu_device_suspend(&pdev->dev, true);
+-	fantgpu_pm_transition_end(pdev_rsrc);
++	fantgpu_pm_transition_end(probe);
+ }
+ 
+ static struct pci_driver s_fant_pci_driver = {
+diff --git a/fantgpu/hal.h b/fantgpu/hal.h
+index 387ba0b..415a6c9 100644
+--- a/fantgpu/hal.h
++++ b/fantgpu/hal.h
+@@ -44,7 +44,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ #ifndef __HAL_H__
+ #define __HAL_H__
+ #include <linux/errno.h>
+-#include <linux/mutex.h>
+ #include "hal_interface.h"
+ 
+ #include "fant_interrupt.h"
+@@ -1232,22 +1231,6 @@ struct vpuinfo_s {
+ 	atomic64_t vpu_mem_free;
+ };
+ 
+-#define FANTGPU_PM_PROBE_TEXT_LEN 24
+-struct fantgpu_pm_probe_state {
+-	struct mutex lock;
+-	struct dentry *dentry;
+-	bool pm_transition;
+-	bool removing;
+-	bool used;
+-	bool running;
+-	int raw_rc;
+-	int normalized_rc;
+-	char probe[FANTGPU_PM_PROBE_TEXT_LEN];
+-	char state[FANTGPU_PM_PROBE_TEXT_LEN];
+-	char entered_step[FANTGPU_PM_PROBE_TEXT_LEN];
+-	char completed_step[FANTGPU_PM_PROBE_TEXT_LEN];
+-};
+-
+ #define RELEASE_VERSION false
+ #define DEBUG_VERSION true
+ struct dev_rsrc {
+@@ -1285,7 +1268,6 @@ struct dev_rsrc {
+ 	fant_dentry* debugfs_name;	// debugfs文件名
+ 	fant_dentry* syspll_debugfs;	// debugfs syspll
+ 	fant_dentry* test_temp_debugfs;	// debugfs test_temp_debugfs
+-	struct fantgpu_pm_probe_state pm_probe;
+ 
+ 	fant_platform_device* hdmi_dev[HAL_MAX_HDMI_NUMS];// hdmi平台设备
+ 	fant_platform_device* dp_dev[HAL_MAX_DP_NUMS];	// dp平台设备
+@@ -1604,4 +1586,3 @@ void g3_pal_chip_deinit(struct dev_rsrc* pdev_rsrc);
+ void g3_soc_chip_init(struct dev_rsrc *pdev_rsrc);
+ void g3_soc_chip_deinit(struct dev_rsrc *pdev_rsrc);
+ #endif // __HAL_H__
+-
