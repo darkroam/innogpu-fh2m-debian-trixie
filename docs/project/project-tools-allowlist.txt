@@ -157,6 +157,7 @@ docs/planning/picom-integration.md
 docs/planning/r5-suspend-030-032-debug-design.md
 docs/planning/r5-suspend-investigation-plan.md
 docs/planning/r5-suspend-stage-d-design.md
+docs/planning/r5-watchdog-local-capture-design.md
 docs/planning/release-review-2026-08-20.md
 docs/planning/reverse-engineering-assessment.md
 docs/planning/source-tree-migration.md
