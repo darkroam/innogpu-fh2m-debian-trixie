@@ -1,0 +1,63 @@
+R5 O-vs-F HAL reverse-analysis notes
+date=2026-09-16
+scope=behavioral comparison only; no decompiled vendor code is tracked
+
+--- inputs ---
+fant_object=fantgpu.o_shipped
+fant_sha256=bc2af0729b3eb1b3f25fe7487b4ffa808cb91cbd71ac3a9faa75fb284e4eb1e2
+fant_bytes=6903704
+installed_fantgpu_ko_xz_sha256=3e6538c1d951f63817894ee97849d0dd212eec2d62bcf32e428f286cd3933b69
+inno_object=innogpu.o_shipped
+inno_sha256=8c214493aa1589eebc336cb595b846138b37d75be9d13e3f39951694a77f396f
+inno_bytes=6680336
+object_format=ELF64_x86_64_relocatable_with_DWARF_not_stripped
+tools=GNU_objdump_2.44; Ghidra_12.1.3_headless
+ghidra_release_sha256=93a5d11a9ad510622acaaf908c556a7b9b764d338e78a7567f3689bf5081fd54
+
+--- function comparison ---
+hal_power_sleep_F_bytes=63
+hal_power_sleep_O_bytes=63
+hal_power_sleep_result=CONTROL_FLOW_EQUIVALENT
+hal_power_sleep_behavior=null-check monitor delayed-work and workqueue; synchronously cancel delayed-work; flush workqueue; return 0
+hal_power_sleep_wait_boundary=cancel_delayed_work_sync_or_flush_workqueue
+
+hal_power_wakeup_F_bytes=47
+hal_power_wakeup_O_bytes=47
+hal_power_wakeup_result=CONTROL_FLOW_EQUIVALENT
+hal_power_wakeup_behavior=null-check monitor delayed-work and workqueue; final substantive call queues dwork with delay 0; return 0
+hal_power_wakeup_recovery_scope=after_hal_power_sleep_returns_normally_requeues_monitor_cycle
+hal_power_wakeup_reboot_requirement=not_required_for_successful_monitor_cycle_probe_subject_to_runtime_health_gate
+
+hal_check_reg_accessiable_F_bytes=80
+hal_check_reg_accessiable_O_bytes=45
+hal_check_reg_accessiable_result=SEMANTICALLY_EQUIVALENT_WITH_F_STACK_PROTECTOR
+hal_check_reg_accessiable_behavior=one fh2m_hal_reg_read32 of REG_M_SYS/REG_ENTITY0001; no retry or polling loop
+
+hal_pdp_restore_default_cfg_F_bytes=74
+hal_pdp_restore_default_cfg_O_bytes=74
+hal_pdp_restore_default_cfg_result=CONTROL_FLOW_EQUIVALENT
+hal_pdp_restore_default_cfg_behavior=find device resource; call chip restore callback when present; otherwise return 0
+
+hal_temperature_monitor_work_F_bytes=818
+hal_temperature_monitor_work_O_bytes=818
+hal_temperature_monitor_work_result=CONTROL_FLOW_EQUIVALENT
+hal_temperature_monitor_work_behavior=read temperature and PLL; lock monitor mutex; optionally change PLL or invoke overheat callback; unlock; requeue its own delayed-work
+
+--- conclusion ---
+changed_wait_loop_in_three_F_wrappers=not_found
+firmware_handshake_in_three_F_wrappers=not_found
+strongest_static_candidate=hal_power_sleep_waiting_for_monitor_delayed_work_or_workqueue_to_drain
+candidate_confidence=SUPPORTED_NOT_PROVEN
+030_028_relation=changes S3 monitor-work restart ownership and timing after resume; does not alter the shipped monitor worker or hal_power_sleep implementation
+dma_suspend_compiled_call=hal_dma_chan_release_callback
+dma_suspend_runtime_behavior=release_callback_walks_DMA_channel_pools_and_releases_idle_channels_then_fh2m_hal_dma_suspend_returns_0
+standalone_pdp_restore_safety=unproven_due_to_original_power_and_irq_preconditions
+
+--- ignored raw outputs ---
+fant_decompile_sha256=3d7ba0af527fa0bdd854ada78ce1ee030773c9e720e50aa7dccdd337a14b32a0
+inno_decompile_sha256=b3ca50df5b162fa64d5d54aae020a07c8cb973c282fe3801e062720a0b0f4e85
+raw_location=.runtime-archive/runtime-5.0.0-i3/reverse/
+
+This evidence excludes an F-only loop in the three named wrapper functions. It
+does not prove which caller, worker, lock, callback, or other device caused the
+observed system-wide hang. Runtime attribution remains UNVERIFIED.

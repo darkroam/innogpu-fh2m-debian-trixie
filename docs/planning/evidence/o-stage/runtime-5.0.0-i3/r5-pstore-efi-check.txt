@@ -1,0 +1,36 @@
+schema_version=r5-pstore-efi-check-1.0
+date=2026-09-15
+kernel=6.12.101+deb13-amd64
+config_source=/boot/config-6.12.101+deb13-amd64
+config_pstore=y
+config_pstore_console=not_set
+config_pstore_pmsg=not_set
+config_pstore_ftrace=not_set
+config_pstore_ram=m
+config_efi_vars_pstore=m
+config_pstore_efi=not_present_for_this_kernel
+efi_boot=yes
+efivarfs=mounted
+pstore_mount=mounted
+pstore_backend=efi_pstore
+efi_pstore_loaded=yes
+efi_pstore_disabled=no
+efi_pstore_record_size=1024
+pstore_kmsg_bytes=10240
+efi_backend_registered=yes
+post_hang_pstore_files=0
+pstore_console_marker_capability=UNAVAILABLE
+pstore_console_marker_reason=CONFIG_PSTORE_CONSOLE_is_not_set
+hard_hang_capture=UNAVAILABLE_without_console_frontend_or_panic
+runtime_configuration_possible=no
+kernel_rebuild_required_for_pstore_console=yes
+configuration_action=none
+repeat_pm_test=forbidden
+r5_validation_status=FAIL
+
+# Evidence boundary
+# The EFI backend is registered and can store supported crash records, but this
+# kernel has no pstore console frontend. Ordinary fantgpu dev_notice markers are
+# therefore not routed to EFI pstore. The prior cold restart produced an empty
+# /sys/fs/pstore. Enabling module parameters cannot add a frontend omitted at
+# kernel build time, so no EFI variables or boot configuration were changed.
