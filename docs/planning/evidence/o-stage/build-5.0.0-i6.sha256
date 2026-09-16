@@ -1,0 +1,3 @@
+0d7a269d74794e81ddf4412b5aff3f5581752773fcfc7b7843b4407b54d8ad49  build-A fantgpu-fh2m-trixie_5.0.0-i6.deb
+0d7a269d74794e81ddf4412b5aff3f5581752773fcfc7b7843b4407b54d8ad49  build-B fantgpu-fh2m-trixie_5.0.0-i6.deb
+3a372b42f607efaf738d9c5e45936b775faa0a159cfdadaf68f0da094148e6b4  DEBIAN/md5sums build-A==build-B (562 rows)

@@ -1,0 +1,267 @@
+diff --git a/fantgpu/fantgpu_pci_drv.c b/fantgpu/fantgpu_pci_drv.c
+index 4d73a4e..4de47ac 100644
+--- a/fantgpu/fantgpu_pci_drv.c
++++ b/fantgpu/fantgpu_pci_drv.c
+@@ -107,6 +107,24 @@ static int fantgpu_pm_callback_result(struct device *dev, const char *mode,
+ #define FANTGPU_PM_PROBE_CONFIRM "confirm=R5_I4_DIAGNOSTIC"
+ #define FANTGPU_PM_PROBE_TEXT_LEN 24
+ 
++enum fantgpu_pm_stop_stage {
++	FANTGPU_PM_STOP_NONE,
++	FANTGPU_PM_STOP_PCI_ENTRY,
++	FANTGPU_PM_STOP_PRE_POWER_SLEEP,
++};
++
++static const char *fantgpu_pm_stop_name(enum fantgpu_pm_stop_stage stage)
++{
++	switch (stage) {
++	case FANTGPU_PM_STOP_PCI_ENTRY:
++		return "pci-entry";
++	case FANTGPU_PM_STOP_PRE_POWER_SLEEP:
++		return "pre-power-sleep";
++	default:
++		return "none";
++	}
++}
++
+ struct fantgpu_pm_probe_state {
+ 	struct mutex lock;
+ 	struct dentry *dentry;
+@@ -115,6 +133,8 @@ struct fantgpu_pm_probe_state {
+ 	bool removing;
+ 	bool used;
+ 	bool running;
++	enum fantgpu_pm_stop_stage stop_stage;
++	bool stop_consumed;
+ 	int raw_rc;
+ 	int normalized_rc;
+ 	char probe[FANTGPU_PM_PROBE_TEXT_LEN];
+@@ -167,6 +187,8 @@ static struct fantgpu_pm_probe_state *fantgpu_pm_probe_init(struct device *dev,
+ 	probe->removing = false;
+ 	probe->used = false;
+ 	probe->running = false;
++	probe->stop_stage = FANTGPU_PM_STOP_NONE;
++	probe->stop_consumed = false;
+ 	probe->raw_rc = 0;
+ 	probe->normalized_rc = 0;
+ 	fantgpu_pm_probe_set_text(probe->probe, "none");
+@@ -207,9 +229,10 @@ static ssize_t fantgpu_pm_probe_read(struct file *file, char __user *buf,
+ 	mutex_lock(&probe->lock);
+ 	len = scnprintf(status, sizeof(status),
+ 		"probe=%s\nstate=%s\nraw_rc=%d\nnormalized_rc=%d\n"
+-		"entered_step=%s\ncompleted_step=%s\n",
++		"entered_step=%s\ncompleted_step=%s\nstop_stage=%s\n",
+ 		probe->probe, probe->state, probe->raw_rc, probe->normalized_rc,
+-		probe->entered_step, probe->completed_step);
++		probe->entered_step, probe->completed_step,
++		fantgpu_pm_stop_name(probe->stop_stage));
+ 	mutex_unlock(&probe->lock);
+ 	ret = simple_read_from_buffer(buf, count, ppos, status, len);
+ 	debugfs_file_put(file->f_path.dentry);
+@@ -222,6 +245,7 @@ static ssize_t fantgpu_pm_probe_write(struct file *file,
+ 	struct fantgpu_pm_probe_state *probe;
+ 	struct dev_rsrc *pdev_rsrc;
+ 	const char *probe_name;
++	enum fantgpu_pm_stop_stage stop_stage = FANTGPU_PM_STOP_NONE;
+ 	char command[64];
+ 	bool monitor_cycle;
+ 	int sleep_rc = 0;
+@@ -230,6 +254,7 @@ static ssize_t fantgpu_pm_probe_write(struct file *file,
+ 	int normalized_rc;
+ 	ssize_t ret;
+ 	size_t command_len = count;
++	bool stop_rearm = false;
+ 
+ 	if (!capable(CAP_SYS_ADMIN))
+ 		return -EPERM;
+@@ -237,6 +262,8 @@ static ssize_t fantgpu_pm_probe_write(struct file *file,
+ 		return -EINVAL;
+ 	if (copy_from_user(command, buf, count))
+ 		return -EFAULT;
++	if (memchr(command, '\0', count))
++		return -EINVAL;
+ 	command[count] = '\0';
+ 	if (command_len && command[command_len - 1] == '\n')
+ 		command[--command_len] = '\0';
+@@ -249,6 +276,14 @@ static ssize_t fantgpu_pm_probe_write(struct file *file,
+ 	} else if (!strcmp(command, "run monitor-cycle " FANTGPU_PM_PROBE_CONFIRM)) {
+ 		probe_name = "monitor-cycle";
+ 		monitor_cycle = true;
++	} else if (!strcmp(command, "arm pci-entry confirm=R5_I6_STOP_STAGE")) {
++		probe_name = "stop-stage";
++		monitor_cycle = false;
++		stop_stage = FANTGPU_PM_STOP_PCI_ENTRY;
++	} else if (!strcmp(command, "arm pre-power-sleep confirm=R5_I6_STOP_STAGE")) {
++		probe_name = "stop-stage";
++		monitor_cycle = false;
++		stop_stage = FANTGPU_PM_STOP_PRE_POWER_SLEEP;
+ 	} else {
+ 		return -EINVAL;
+ 	}
+@@ -260,8 +295,12 @@ static ssize_t fantgpu_pm_probe_write(struct file *file,
+ 	ret = mutex_lock_interruptible(&probe->lock);
+ 	if (ret)
+ 		goto out_put;
++	stop_rearm = stop_stage != FANTGPU_PM_STOP_NONE && probe->used &&
++		probe->stop_stage != FANTGPU_PM_STOP_NONE &&
++		probe->stop_consumed && !probe->running &&
++		!strcmp(probe->state, "stopped");
+ 	if (READ_ONCE(probe->removing) || system_state != SYSTEM_RUNNING ||
+-		probe->pm_transition || probe->used ||
++		probe->pm_transition || (probe->used && !stop_rearm) ||
+ 		fh2m_fant_rsrc_devres_find(pdev_rsrc->dev) != pdev_rsrc) {
+ 		ret = -EBUSY;
+ 		goto out_unlock;
+@@ -275,6 +314,26 @@ static ssize_t fantgpu_pm_probe_write(struct file *file,
+ 	fantgpu_pm_probe_set_text(probe->completed_step, "none");
+ 	probe->raw_rc = 0;
+ 	probe->normalized_rc = 0;
++	if (stop_stage != FANTGPU_PM_STOP_NONE) {
++		/* This variant releases active channels; no rollback is proven. */
++		if (stop_stage == FANTGPU_PM_STOP_PRE_POWER_SLEEP &&
++			!fh2m_hal_dma_idle_release_only()) {
++			probe->running = false;
++			fantgpu_pm_probe_set_text(probe->state, "failed");
++			probe->raw_rc = probe->normalized_rc = -EOPNOTSUPP;
++			ret = -EOPNOTSUPP;
++			goto out_unlock;
++		}
++		probe->stop_stage = stop_stage;
++		probe->stop_consumed = false;
++		probe->used = true;
++		probe->running = false;
++		fantgpu_pm_probe_set_text(probe->state, "armed");
++		fantgpu_pm_probe_marker(pdev_rsrc, "stop-stage",
++			fantgpu_pm_stop_name(stop_stage), "armed", 0, 0);
++		ret = count;
++		goto out_unlock;
++	}
+ 
+ 	if (!monitor_cycle) {
+ 		fantgpu_pm_probe_set_text(probe->entered_step, "reg-read");
+@@ -2149,7 +2208,8 @@ static struct pci_device_id s_fant_pci_tbl[] = {
+ 	{},
+ };
+ 
+-static int fantgpu_device_suspend(struct device *dev, bool suspend)
++static int fantgpu_device_suspend(struct device *dev, bool suspend,
++		enum fantgpu_pm_stop_stage stop_stage)
+ {
+ 	struct pci_dev *pdev = to_pci_dev(dev);
+ 	struct dev_rsrc* pdev_rsrc = NULL;
+@@ -2176,6 +2236,10 @@ static int fantgpu_device_suspend(struct device *dev, bool suspend)
+ 		return propagated;
+ 	}
+ 	fantgpu_pm_marker(dev, "dma_suspend", "done", ret, mode, "none", 0, true);
++	if (stop_stage == FANTGPU_PM_STOP_PRE_POWER_SLEEP) {
++		/* Idle DMA channels are reacquired on demand; no power/IRQ state changed. */
++		return -ECANCELED;
++	}
+ 
+ 	/*cancle and stop high temperature monitor work*/
+ 	fantgpu_pm_marker(dev, "power_sleep", "enter", 0, mode, "none", 0, false);
+@@ -2418,9 +2482,39 @@ static int fantgpu_pmops_suspend(struct device *dev)
+ 	ret = fantgpu_pm_transition_begin(dev, &probe);
+ 	if (ret)
+ 		return fantgpu_pm_callback_result(dev, "suspend", ret);
++	if (probe->stop_stage != FANTGPU_PM_STOP_NONE && probe->stop_consumed) {
++		fantgpu_pm_transition_end(probe);
++		return fantgpu_pm_callback_result(dev, "suspend", -EPERM);
++	}
+ 	pcie_info(dev, "%s:%d\n", __func__, __LINE__);
+ 	fantgpu_pm_marker(dev, "pci_callback", "enter", 0, "suspend", "none", 0, false);
+-	ret = fantgpu_device_suspend(dev, true);
++	if (probe->stop_stage != FANTGPU_PM_STOP_NONE) {
++		probe->stop_consumed = true;
++		probe->running = true;
++		fantgpu_pm_probe_set_text(probe->state, "running");
++		fantgpu_pm_probe_set_text(probe->entered_step,
++			fantgpu_pm_stop_name(probe->stop_stage));
++	}
++	if (probe->stop_stage == FANTGPU_PM_STOP_PCI_ENTRY)
++		ret = -ECANCELED;
++	else
++		ret = fantgpu_device_suspend(dev, true, probe->stop_stage);
++	if (probe->stop_stage != FANTGPU_PM_STOP_NONE) {
++		probe->raw_rc = ret;
++		probe->normalized_rc = fantgpu_pm_propagate(ret);
++		probe->running = false;
++		fantgpu_pm_probe_set_text(probe->state,
++			ret == -ECANCELED ? "stopped" : "failed");
++		if (ret == -ECANCELED)
++			fantgpu_pm_probe_set_text(probe->completed_step,
++				fantgpu_pm_stop_name(probe->stop_stage));
++		/* The parent failed suspend: PM core resumes the already-suspended children. */
++		atomic_set(&probe->pdev_rsrc->pvr_resume_count, 0);
++		fantgpu_pm_probe_marker(probe->pdev_rsrc, "stop-stage",
++			fantgpu_pm_stop_name(probe->stop_stage),
++			ret == -ECANCELED ? "stopped" : "fail", ret,
++			probe->normalized_rc);
++	}
+ 	fantgpu_pm_transition_end(probe);
+ 	return fantgpu_pm_callback_result(dev, "suspend", ret);
+ }
+@@ -2450,7 +2544,7 @@ static int fantgpu_pmops_freeze(struct device *dev)
+ 		return fantgpu_pm_callback_result(dev, "freeze", ret);
+ 	pcie_info(dev, "%s:%d\n", __func__, __LINE__);
+ 	fantgpu_pm_marker(dev, "pci_callback", "enter", 0, "freeze", "none", 0, false);
+-	ret = fantgpu_device_suspend(dev, false);
++	ret = fantgpu_device_suspend(dev, false, FANTGPU_PM_STOP_NONE);
+ 	fantgpu_pm_transition_end(probe);
+ 	return fantgpu_pm_callback_result(dev, "freeze", ret);
+ }
+@@ -2480,7 +2574,7 @@ static int fantgpu_pmops_poweroff(struct device *dev)
+ 		return fantgpu_pm_callback_result(dev, "suspend", ret);
+ 	pcie_info(dev, "%s:%d\n", __func__, __LINE__);
+ 	fantgpu_pm_marker(dev, "pci_callback", "enter", 0, "suspend", "none", 0, false);
+-	ret = fantgpu_device_suspend(dev, true);
++	ret = fantgpu_device_suspend(dev, true, FANTGPU_PM_STOP_NONE);
+ 	fantgpu_pm_transition_end(probe);
+ 	return fantgpu_pm_callback_result(dev, "suspend", ret);
+ }
+@@ -2515,7 +2609,7 @@ static void fantgpu_pci_shutdown(struct pci_dev *pdev)
+ 
+ 	if (fantgpu_pm_transition_begin(&pdev->dev, &probe))
+ 		return;
+-	fantgpu_device_suspend(&pdev->dev, true);
++	fantgpu_device_suspend(&pdev->dev, true, FANTGPU_PM_STOP_NONE);
+ 	fantgpu_pm_transition_end(probe);
+ }
+ 
+diff --git a/fantgpu/hal_dma.c b/fantgpu/hal_dma.c
+index f7b6f49..b5655dc 100644
+--- a/fantgpu/hal_dma.c
++++ b/fantgpu/hal_dma.c
+@@ -1329,6 +1329,15 @@ e0:
+ 	return ret;
+ }
+ 
++bool fh2m_hal_dma_idle_release_only(void)
++{
++#ifdef ENABLE_DMA_INTERNAL_MANAGER_CHAN
++	return false;
++#else
++	return true;
++#endif
++}
++
+ int fh2m_hal_dma_suspend(struct dev_rsrc* pdev_rsrc)
+ {
+ 	int ret = 0;
+@@ -1409,4 +1418,3 @@ void fh2m_hal_dma_deinit(struct dev_rsrc* pdev_rsrc)
+ 
+ 	hal_dma_chan_pool_deinit(pdev_rsrc);
+ }
+-
+diff --git a/fantgpu/hal_interface.h b/fantgpu/hal_interface.h
+index cda4cc9..69697e7 100644
+--- a/fantgpu/hal_interface.h
++++ b/fantgpu/hal_interface.h
+@@ -1841,6 +1841,7 @@ void fh2m_hal_dma_deinit(struct dev_rsrc *pdev_rsrc);
+ int fh2m_hal_dma_init(struct dev_rsrc *pdev_rsrc);
+ int fh2m_hal_dma_resume(struct dev_rsrc *pdev_rsrc);
+ int fh2m_hal_dma_suspend(struct dev_rsrc *pdev_rsrc);
++bool fh2m_hal_dma_idle_release_only(void);
+ 
+ int hal_init_sys_bar(struct dev_rsrc *pdev_rsrc);
+ void hal_deinit_sys_bar(struct dev_rsrc *pdev_rsrc);

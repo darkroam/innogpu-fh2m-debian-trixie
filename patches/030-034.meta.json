@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "id": "030-034",
+  "ledger_ref": {
+    "item": "030",
+    "neutral_record": "F-ONLY-005",
+    "mapping": "docs/planning/r5-suspend-030-032-debug-design.md section 4",
+    "description": "diagnostic stop-stage at PCI entry and before power sleep"
+  },
+  "deepin_patch": {
+    "path": "patches/030-034.patch",
+    "sha256": "eb03244c91a036118f06f6bd2e0e6d2c53112bab3e72f76b2d9e37177ed53842",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "docs/planning/evidence/o-stage/f0-snapshot.tar.zst",
+      "sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e"
+    },
+    "tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+    "chain_base": {
+      "id": "030-033",
+      "after_tree_hash": "4be9ba7509258726b95bd41137da1280868c91c835aa57d4150fd6ba76913300"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "f-only-diagnostic-stop-stage",
+      "summary": "Exact root-only arm commands reuse the independent devres probe state and PM/remove mutex. pci-entry aborts before the device suspend sequence. pre-power-sleep executes the original DMA suspend, then aborts before any power/IRQ/PCI change, and is rejected for the active-channel-release DMA variant. Both return -ECANCELED, reset the PVR resume counter before PM core unwinds the already-suspended children, and preserve a consumed checkpoint until explicit re-arm. Only a successfully stopped checkpoint can re-arm; failed/armed states and ordinary HAL probes remain fail-closed. No R5 fix or runtime recovery is claimed."
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "Three existing vendor Dual MIT/GPLv2 source files; original diagnostic code only. No new dependency, binary transformation or third-party code. Mechanical license audit does not unblock driver-source or release licensing."
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "030-033 applied after the 17-entry chain",
+      "summary": "Requires the 030-031 markers, 030-028 PVR counter and 030-033 independent devres state. Original reg-read/monitor-cycle confirmation token remains unchanged."
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "f-only-diagnostic-stop-stage",
+      "summary": "No D-side source. Shared hal.h is byte-identical to i5; struct dev_rsrc remains byte-identical to i3. All shipped objects are unchanged. The DMA build-variant query is source-visible and adds no shared layout field. Diagnostic removal must reverse 030-034, 030-033 and 030-032 in that order before the existing seven-layer publication gate."
+    }
+  },
+  "apply": {
+    "before_tree_hash": "4be9ba7509258726b95bd41137da1280868c91c835aa57d4150fd6ba76913300",
+    "after_tree_hash": "5f6a5347c7e217ba3f7c5b71fdcad520148e0bc71231ab95fb023655865d11da",
+    "patch_sha256": "eb03244c91a036118f06f6bd2e0e6d2c53112bab3e72f76b2d9e37177ed53842",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <CHAIN_BASE> < patches/030-034.patch",
+    "result": "Three files; strict dry-run and fresh replay pass; canonical manifest after hash matches; no .orig/.rej."
+  },
+  "rollback": {
+    "command": "Re-extract the locked i5 17-entry snapshot; never edit F0 or archived i5 artifacts",
+    "target": "4be9ba7509258726b95bd41137da1280868c91c835aa57d4150fd6ba76913300"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "strict dry-run and fresh i5 replay; exact three-file scope; no patch artifacts",
+        "17 checks including compiled actual write/PCI callback, both DMA build variants, and reverse 034/033/032 to the i3 locked tree with no diagnostic source tokens",
+        "two full offline 6.12.101+deb13-amd64 builds pass with BTF dev_rsrc size 140536/member count 115/offset gate; identical deb bytes",
+        "hal.h byte-identical to i5; no shared structure insertion",
+        "no power-sleep/disable-IRQ/PCI/D3/configspace/PDP post-state checkpoints"
+      ]
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "After qoder/dsh review, supervised i6 healthy boot: bound+headless pm_test=devices only, pci-entry then pre-power-sleep. Persist each round and confirm full child recovery, Driver/Firmware/PCI/DRM health and pm_test=none/pm_debug_messages=0 before re-arm. Thirty seconds without return or any recovery fault stops the batch. R5 remains FAIL."
+    }
+  }
+}

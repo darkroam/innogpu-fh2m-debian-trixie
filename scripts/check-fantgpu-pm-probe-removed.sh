@@ -13,7 +13,7 @@ BUILDER_TREE=$4
 DKMS_TREE=$5
 MODULE=$6
 DEB=$7
-PATTERN='fantgpu_pm_probe|R5_I4_DIAGNOSTIC|probe=pm_probe|entered_step|completed_step'
+PATTERN='fantgpu_pm_probe|R5_I4_DIAGNOSTIC|probe=pm_probe|entered_step|completed_step|fantgpu_pm_stop|FANTGPU_PM_STOP|R5_I6_STOP_STAGE|fh2m_hal_dma_idle_release_only'
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 

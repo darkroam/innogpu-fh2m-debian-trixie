@@ -1,4 +1,15 @@
-# O_stage 构建集成方案（5.0.0-i5 F 诊断分支）——R5 停批修订
+# O_stage 构建集成方案（5.0.0-i6 F 诊断分支）——R5 停批修订
+
+## 当前代：030-034/i6（2026-09-16，待初审/终审）
+
+- i5 两个正常态探针均返回并健康恢复；R5 仍 FAIL，转 stop-stage 诊断。实现边界及恢复证明见 [030-032 设计 §11](r5-suspend-030-032-debug-design.md)。
+- 当前 materialize/builder 使用 18 条显式链，链尾 `030-034`，树 hash `5f6a5347c7e217ba3f7c5b71fdcad520148e0bc71231ab95fb023655865d11da`；固定 epoch `1789516800`，仅构建 `5.0.0-i6`，不安装、不重启。
+- 五件写入 `docs/planning/evidence/o-stage/5.0.0-i6/`：snapshot、两件 sidecar、manifest、`5.0.0-i6.meta.json`；前代五件与 build SHA 保持不变。i5 17 链仍是失败/探针证据锚点，不能使用新快照重构建。
+- ABI 门保持：i6 `hal.h` 逐字等于 i5，`dev_rsrc` 定义等于 i3；真实 `.ko` 经过 BTF/pahole 大小/成员/偏移检查。发布必须逆序移除 034/033/032 并实跑七层门禁。
+- 构建证据另立 `build-5.0.0-i6.sha256`；初审/终审批准后仍须独立放行监督测试。`5.0.0-i6-validation-results.json` 不创建、`fantgpu-5.0.0-i6` 不打 tag，U1/U2 与签发冻结；构建可复现不解除许可证 release BLOCKED。
+- 双构建完成：deb SHA 均为 `0d7a269d74794e81ddf4412b5aff3f5581752773fcfc7b7843b4407b54d8ad49`，562 行 md5sums SHA 均为 `3a372b42…`；两轮真实模块 BTF 门通过。候选与原始构建日志仅保存在 ignored `.runtime-archive/runtime-5.0.0-i6/build/`，不进入 Git、不安装。
+
+## i5 归档设计（以下保留当代审计原文）
 
 - 日期：2026-09-16
 - 状态：**i4 启动 Oops 已定位，030-033/i5 ABI 修正、双构建与首次启动健康验证完成，待 qoder 正式初审/dsh 终审；R5 仍为 FAIL**（17 链树 hash `4be9ba75…`，候选 SHA `6e491677…`；debugfs 探针未执行；不创建 validation-results、不签发、不打 tag）

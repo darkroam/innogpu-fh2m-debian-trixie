@@ -38,6 +38,7 @@ jobs:
           bash tests/unit/run-030-031-pm-marker-tests.sh
           bash tests/unit/run-030-032-pm-probe-tests.sh
           bash tests/unit/run-030-033-shipped-abi-tests.sh
+          bash tests/unit/run-030-034-stop-stage-tests.sh
           bash tests/unit/run-fantgpu-pm-probe-removal-tests.sh
           bash tests/unit/run-builder-fantgpu-gates-tests.sh
           bash tests/unit/run-check-release-package-tests.sh

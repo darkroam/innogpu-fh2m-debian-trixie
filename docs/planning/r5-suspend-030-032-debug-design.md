@@ -137,3 +137,35 @@ qoder 只读初审应优先确认：
 - 030-033 恢复 i3 的 `dev_rsrc` 定义，把 probe 状态改为每 PCI 设备独立 devres；debugfs、PM 回调、shutdown 与 remove 继续共享同一 mutex。新测试比较 i3/i5 结构定义，builder 还对实际 `.ko` 执行 BTF 大小与偏移检查。
 - 5.0.0-i5 17 链树为 `4be9ba75…`，snapshot SHA=`1b49ecc4…`；两次 `6.12.101` 定向构建 deb SHA 均为 `6e491677f90e480936f0092d169cfce969d4a7db2a6e247460b2b15fe27d4320`。
 - 恢复顺序：终审后在当前安全内核安装 i5，再只启动一次 `6.12.101` 并执行普通模块/Driver/Firmware/DRM 健康门。该门通过后，才重新申请 `reg-read` 与下一 boot 的 `monitor-cycle`；`R5=FAIL` 不变。
+
+## 11. i5 探针结果与 030-034/i6 实现边界（2026-09-16）
+
+dsh 已确认 i5 的 `reg-read=returned rc=0` 和 `monitor-cycle=returned rc=0 completed_step=power_wakeup`，探针后健康门通过。只证明三个 wrapper 正常态独立调用未复现；R5 仍 FAIL，怀疑面转为 PM 状态/排序依赖。以下是获批 stop-stage 的实现批，未经本批初审/终审不安装、不执行 PM。
+
+接口复用 `pm_probe` 独立 devres、root capability 门、debugfs 引用和原 PM/remove/shutdown mutex；不修改共享 `hal.h` 或 `dev_rsrc`，不改变 shipped object。仅接受两个新增固定命令：
+
+```text
+arm pci-entry confirm=R5_I6_STOP_STAGE
+arm pre-power-sleep confirm=R5_I6_STOP_STAGE
+```
+
+| 检查点 | 已执行的本卡 PCI suspend 动作 | 返回与恢复论证 |
+| --- | --- | --- |
+| `pci-entry` | 仅进入 PCI PM 回调，未调用 device suspend | `-ECANCELED`；无本卡 power/IRQ/PCI 改动，无需本卡逆序恢复；将 030-028 计数清零，PM core 恢复此前已挂起的子设备 |
+| `pre-power-sleep` | 原顺序完成 `fh2m_hal_dma_suspend()`，未调用 `hal_power_sleep()` | `-ECANCELED`；仅允许默认 idle-release 分支：release callback 在 channel mutex 内只释放 task count 为零的通道，request 路径在同锁内按需重新获取；没有 power/IRQ/PCI/monitor sleep 状态需要逆序恢复；计数清零后由 PM core 恢复子设备 |
+
+`ENABLE_DMA_INTERNAL_MANAGER_CHAN` 分支释放 active channel、清空 task count，无法证明安全恢复，因此 `pre-power-sleep` arm 返回 `-EOPNOTSUPP`，不进入 PM。不调用空实现的 DMA resume 伪造恢复。不实现 power sleep 后、disable IRQ 后或任何 PDP/PCI/D3/configspace 检查点：probe 的正常态 wakeup 成功不足以证明这些 PM 半状态的完整回滚。未做 PCI save 就不 restore；未 disable IRQ 就不 enable；不调用 resize_resume 充当回滚。
+
+每次 arm 只允许一个 PCI suspend callback；消费后再次 suspend 返回 `-EPERM`，不能无 arm 意外推进到真实 suspend。成功 stop 状态可通过固定 arm 命令显式开启下一轮；仍 armed、running、failed、removing、PM transition 或普通探针重入均拒绝。每轮上一结果先落盘+sync，确认系统 PM 命令已返回、完整子设备恢复链与 runtime health 后才能 re-arm。驱动 mutex 只覆盖本卡回调，不证明全系统 PM 已结束；用户态不得在其它 PM 发起者存在时 arm，该残余跨设备竞态不能被 `SYSTEM_RUNNING` 检查消除。
+
+执行预案（待 dsh 本批终审后另行放行）：headless + 保持绑定；只运行 `pm_test=devices`，先 `pci-entry` 后 `pre-power-sleep`。每轮由 systemd-run 独立记录 boot ID、checkpoint、起止、debugfs state、PM command RC 和恢复 marker；发起前与完成后 sync，使用 ignored `.runtime-archive/runtime-5.0.0-i6/`、新文件名前缀 `r5-stop-i6-*`，不覆盖旧证据。30 秒无返回为判定窗口，不是内核取消机制；挂死仅按监督协议硬断电，恢复后采集，禁止立即重复。结束核验 `pm_test=none`、`pm_debug_messages=0` 与 Driver/Firmware/PCI/DRM 健康。
+
+PM 命令的 RC 不能单独定义 stop 成功：必须同时有指定 checkpoint 的 `state=stopped raw_rc=-125 normalized_rc=-125`、对应 stop marker、PM core 退出及完整子设备恢复/健康。两轮都安全返回只把已运行的 prefix 排除为本轮挂点，不能宣称 power_sleep 为确定根因，也不能提升 R5。到达检查点之前挂死只能判 prefix/子设备排序候选；已有 armed 记录但没有 completed 字段只能判 `HANG_OR_FORCED_RECOVERY`，不能伪造具体函数归因。任何非预期 errno、恢复错误或健康失败立即停批。
+
+18 链形成独立 i6 五件与 meta；before=`4be9ba75…`，after=`5f6a5347…`。版本 `5.0.0-i6`，epoch 沿用 i5 的 `1789516800`；i2-i5 产物及包 SHA 不覆盖，i5 不再借新快照重构建。单测编译实际 write/PCI 回调（stub 不代表真实 PM core/HAL）、锁定两个 checkpoint 顺序/errno、DMA build-variant、re-arm 与生命周期；实际构建仍须经过 BTF/pahole ABI 门和双构建字节一致。
+
+发布移除须按依赖逆序撤销 `030-034`、`030-033`、`030-032`，然后对源码、snapshot/manifest、builder/DKMS、模块与 deb 七层实跑移除门；新门同时拒绝 stop-stage token、enum/helper 和 DMA variant query。R5、U1/U2、validation-results、签发和 tag 始终冻结。
+
+实现批双构建已完成（离线 `6.12.101+deb13-amd64`，epoch `1789516800`）：两 deb 逐字节一致，SHA=`0d7a269d74794e81ddf4412b5aff3f5581752773fcfc7b7843b4407b54d8ad49`；562 行 md5sums 同源一致，SHA=`3a372b42…`。两轮 BTF 大小/成员/偏移门、vermagic、载荷 trace 与包边界门均通过。五件 snapshot SHA=`a0828049…`；完整构建摘要见 [i6 SHA 证据](evidence/o-stage/build-5.0.0-i6.sha256)。检查点/ABI 的静态与 stub 证明仍不替代真实恢复；本批提交决定为送 qoder 初审，再由 dsh 终审执行提交，不签发。
+
+初审重点：17 项 stop-stage 测试（含真实 034→033→032 撤销回 i3）、19 项 builder 门与 12 项发布移除夹具；尤其审查默认 DMA channel idle 释放/按需获取论证、PM core 子设备恢复与 030-028 计数重置、成功 stop 才允许 re-arm 的窄门及跨设备 PM 残余竞态。没有 power sleep/IRQ/PCI 半状态检查点的安全证明，禁止在本批追加。

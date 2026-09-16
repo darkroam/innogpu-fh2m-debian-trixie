@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# tests/unit/run-030-meta-tests.sh — 17 条 030-NNN meta.json 静态契约校验
+# tests/unit/run-030-meta-tests.sh — 18 条 030-NNN meta.json 静态契约校验
 #
 # 职责（docs/planning/o-stage-integration-plan.md §四）：
 #   1) 每条 030-*.meta.json 为合法 JSON、schema_version == "1.0"；
 #   2) deepin_patch.sha256 == 对应来源 patch 磁盘 SHA-256；apply.patch_sha256
 #      == 对应 030-NNN.patch 磁盘 SHA-256；
 #   3) 链点哈希衔接：首条 before == F0 树 hash 7219d817…；每条 before ==
-#      前一条 after；链尾 after == 4be9ba75…（O_stage 树 hash，030-033 入链）；
+#      前一条 after；链尾 after == 5f6a5347…（O_stage 树 hash，030-034 入链）；
 #   4) status == "draft"、license/runtime 如实 pending（本批不冒充 PASS）。
 #
 # 只读 patches/；零写入。退出码：0=全过；1=任一校验失败。
@@ -19,7 +19,7 @@ LC_ALL=C
 export LC_ALL
 
 F0_TREE="7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb"
-FINAL_TREE="4be9ba7509258726b95bd41137da1280868c91c835aa57d4150fd6ba76913300"
+FINAL_TREE="5f6a5347c7e217ba3f7c5b71fdcad520148e0bc71231ab95fb023655865d11da"
 
 CHAIN=(
   "030-001|patches/001-kernel-6.12-compat.patch"
@@ -39,6 +39,7 @@ CHAIN=(
   "030-031|patches/030-031.patch"
   "030-032|patches/030-032.patch"
   "030-033|patches/030-033.patch"
+  "030-034|patches/030-034.patch"
 )
 
 fail() { echo "FAIL: $*" >&2; FAILED=1; }
@@ -100,7 +101,7 @@ done
 [[ "$prev_after" == "$FINAL_TREE" ]] || fail "chain tail after=$prev_after != O_stage tree $FINAL_TREE"
 
 if [[ "$FAILED" == 0 ]]; then
-    echo "PASS: 17 meta files verified (chain $F0_TREE -> $FINAL_TREE)"
+    echo "PASS: 18 meta files verified (chain $F0_TREE -> $FINAL_TREE)"
     exit 0
 fi
 echo "FAILED" >&2

@@ -63,6 +63,7 @@ bash tests/unit/run-suspend-resume-tests.sh
 bash tests/unit/run-suspend-failure-finalize-tests.sh
 bash tests/unit/run-030-032-pm-probe-tests.sh
 bash tests/unit/run-030-033-shipped-abi-tests.sh
+bash tests/unit/run-030-034-stop-stage-tests.sh
 bash tests/unit/run-fantgpu-pm-probe-removal-tests.sh
 bash tests/unit/run-p2-normalize-tests.sh
 bash tests/unit/run-r16-gate-tests.sh
@@ -104,6 +105,10 @@ bash tests/unit/run-fantgpu-runtime-health-tests.sh
 - 030-033 shipped-object ABI 测试从 i4 快照严格应用修正，要求补丁范围仅为两个 F 源文件、
   `dev_rsrc` 与 i3 锁定快照逐字一致、probe 状态只存在于独立 devres；真实构建另由 builder 的
   `pahole` 门检查模块内结构大小和关键字段偏移；
+- 030-034 stop-stage 测试从 i5 快照严格应用诊断补丁，锁定 checkpoint 顺序、退出 errno、
+  idle DMA 释放/按需重新获取和 active-channel variant 拒绝；编译实际 write/PCI 回调验证
+  成功 stop 才能 re-arm、普通探针不重入与 PM/remove 拒绝。stub 不代表真实子设备恢复，
+  不进入 PM；真实恢复仍须监督测试及完整健康门；
 - PM 探针发布移除 fixture 门禁覆盖发布源码、snapshot/manifest、builder 树、DKMS 树、模块字符串与
   deb 解包载荷；任一层残留诊断符号、确认 token 或状态字段即失败关闭；
 - 许可证审计测试覆盖当前逐文件 inventory 一致性、发布门禁保持 BLOCKED、确定性重建、

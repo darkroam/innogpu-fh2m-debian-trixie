@@ -92,7 +92,7 @@ tar --sort=name --mtime=@1640995200 --owner=0 --group=0 --numeric-owner \
 FAKE_F0_SHA="$(sha256sum "$FAKE/f0-snapshot.tar.zst" | awk '{print $1}')"
 printf '%s  %s\n' "$FAKE_F0_SHA" "f0-snapshot.tar.zst" > "$FAKE/f0-snapshot.tar.zst.sha256"
 
-# 假 chain 文件在 materialize 内由真实 17 条链驱动，假输入用例仅覆盖
+# 假 chain 文件在 materialize 内由真实 18 条链驱动，假输入用例仅覆盖
 # 校验层（路径/版本/SHA）；链点与事务用例用真实输入跑（t06-t10，长用例）。
 
 env_base=(
@@ -156,7 +156,7 @@ rc=$?
 set -e
 n_left=0
 for f in o-stage-snapshot.tar.zst o-stage-snapshot.tar.zst.sha256 \
-         o-stage.manifest.tsv o-stage.manifest.tsv.sha256 5.0.0-i5.meta.json; do
+         o-stage.manifest.tsv o-stage.manifest.tsv.sha256 5.0.0-i6.meta.json; do
     [[ -e "$REAL_OUT/$f" ]] && n_left=$((n_left + 1))
 done
 n_txn="$(find "$REAL_OUT" -name '*.txn.tmp' | wc -l)"
@@ -173,14 +173,14 @@ env OSTAGE_OUT_DIR="$REAL_OUT" OSTAGE_WORK_DIR="$REAL_WORK" \
 rc1=$?
 set -e
 [[ "$rc1" == 0 ]] && ok "t07 recovery rerun rc=0" || { bad "t07" "rc=$rc1"; sed -n '1,3p' "$TMP/run1.log" >&2; }
-sha256sum "$REAL_OUT/o-stage-snapshot.tar.zst" "$REAL_OUT/5.0.0-i5.meta.json" > "$TMP/run1.sha"
+sha256sum "$REAL_OUT/o-stage-snapshot.tar.zst" "$REAL_OUT/5.0.0-i6.meta.json" > "$TMP/run1.sha"
 set +e
 env OSTAGE_OUT_DIR="$REAL_OUT" OSTAGE_WORK_DIR="$REAL_WORK" \
     timeout 570 "$MATERIALIZE" > "$TMP/run2.log" 2>&1
 rc2=$?
 set -e
 [[ "$rc2" == 0 ]] && ok "t08 idempotent rerun rc=0" || bad "t08" "rc=$rc2"
-sha256sum "$REAL_OUT/o-stage-snapshot.tar.zst" "$REAL_OUT/5.0.0-i5.meta.json" > "$TMP/run2.sha"
+sha256sum "$REAL_OUT/o-stage-snapshot.tar.zst" "$REAL_OUT/5.0.0-i6.meta.json" > "$TMP/run2.sha"
 diff -q "$TMP/run1.sha" "$TMP/run2.sha" >/dev/null && ok "t09 idempotent byte-identical" \
     || bad "t09" "artifact bytes differ across runs"
 
@@ -240,7 +240,7 @@ set -e
 # t14 提交循环完成但 committed 写入失败（五件新代 + bak 保留 + journal=staged）
 # → 自洽判定应自动完成提交收尾并续跑 rc=0
 for f in o-stage-snapshot.tar.zst o-stage-snapshot.tar.zst.sha256 \
-         o-stage.manifest.tsv o-stage.manifest.tsv.sha256 5.0.0-i5.meta.json; do
+         o-stage.manifest.tsv o-stage.manifest.tsv.sha256 5.0.0-i6.meta.json; do
     cp -p "$REAL_OUT/$f" "$REAL_OUT/$f.bak.tmp"
 done
 printf 'staged\n' > "$REAL_OUT/.materialize.journal"

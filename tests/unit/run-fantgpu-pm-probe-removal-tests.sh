@@ -68,5 +68,11 @@ printf 'completed_step\n' >> "$TMP/deb_bad/pkg/usr/src/fantgpu/driver.c"
 dpkg-deb --build --root-owner-group "$TMP/deb_bad/pkg" "$TMP/deb_bad/fixture.deb" >/dev/null
 run_check "$TMP/deb_bad" && bad t_deb accepted_diagnostic_token || ok t_deb
 
+for token in fantgpu_pm_stop FANTGPU_PM_STOP R5_I6_STOP_STAGE fh2m_hal_dma_idle_release_only; do
+    cp -a "$TMP/clean" "$TMP/stop_$token"
+    printf '%s\n' "$token" >> "$TMP/stop_$token/fantgpu.ko"
+    run_check "$TMP/stop_$token" && bad "t_$token" accepted_stop_stage_token || ok "t_$token"
+done
+
 echo "PASS=$PASS FAIL=$FAIL"
 [[ "$FAIL" -eq 0 ]]

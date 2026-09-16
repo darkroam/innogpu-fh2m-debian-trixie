@@ -2,7 +2,7 @@
 # tests/unit/run-builder-fantgpu-gates-tests.sh — builder F 分支早期门禁与静态契约单测
 #
 # 依据 docs/planning/c3-a-4-reproducible-input-plan.md §三（改造点 9-13）与
-# §四（postinst/md5sums/trace）：当前版本 5.0.0-i5、血统判定 5.0.0-i*、
+# §四（postinst/md5sums/trace）：当前版本 5.0.0-i6、血统判定 5.0.0-i*、
 # 输入预检分支、PKG_DESC $VERSION 参数化、share/命令前缀血统参数化、
 # ld.so.conf fantgpu-fh2m、postinst fh2m_dri.so + 设备门。
 # 只测可运行早期门禁与静态契约（不编译内核：KERNELDIR 注入不存在路径使
@@ -44,15 +44,15 @@ else
     bad t01 "rc=$RC"
 fi
 
-# t02 5.0.0-i5 通过 allowlist + epoch 门 → 死在 kernel headers（证明版本/血统被接受）
-run_builder VERSION=5.0.0-i5 SOURCE_DATE_EPOCH=1789516800
+# t02 5.0.0-i6 通过 allowlist + epoch 门 → 死在 kernel headers（证明版本/血统被接受）
+run_builder VERSION=5.0.0-i6 SOURCE_DATE_EPOCH=1789516800
 if [ "$RC" -eq 1 ] && grep -Fq "staging_kernel_headers=FAIL" "$TMP/b.out"; then
     ok t02
 else
     bad t02 "rc=$RC"
 fi
 
-# t03 归档代禁止借用当前 i5 快照重构建
+# t03 归档代禁止借用当前 i6 快照重构建
 run_builder VERSION=5.0.0-i3 SOURCE_DATE_EPOCH=1788796800
 if [ "$RC" -eq 1 ] && grep -Fq "staging_ostage_generation=FAIL" "$TMP/b.out"; then
     ok t03
@@ -61,7 +61,7 @@ else
 fi
 
 # t04 epoch 错误 → builder_repro=FAIL
-run_builder VERSION=5.0.0-i5 SOURCE_DATE_EPOCH=1111111111
+run_builder VERSION=5.0.0-i6 SOURCE_DATE_EPOCH=1111111111
 if [ "$RC" -eq 1 ] && grep -Fq "builder_repro=FAIL" "$TMP/b.out"; then
     ok t04
 else
@@ -77,7 +77,7 @@ fi
 
 # t06 静态契约：PKG_DESC 版本串参数化（无硬编码 5.0.0-i1 文案）
 if grep -Fq 'PKG_DESC="Innosilicon Fantasy II-M driver (fantgpu lineage $VERSION, O_stage materialized tree)"' "$BUILDER" \
-   && grep -Fq 'O_stage materialized source tree (030 chain of 17,' "$BUILDER" \
+   && grep -Fq 'O_stage materialized source tree (030 chain of 18,' "$BUILDER" \
    && ! grep -Fq 'fantgpu lineage 5.0.0-i1' "$BUILDER"; then
     ok t06
 else
@@ -137,10 +137,10 @@ else
     bad t12 "trace assertions missing"
 fi
 
-# t13 静态契约：O_stage meta 引用 i5 隔离代（030-033 入链后锁定新树 hash）
-if grep -Fq 'OSTAGE_DIR="$ROOT/docs/planning/evidence/o-stage/5.0.0-i5"' "$BUILDER" \
-   && grep -Fq '"$OSTAGE_DIR/5.0.0-i5.meta.json"' "$BUILDER" \
-   && grep -Fq 'OSTAGE_TREE_HASH="4be9ba7509258726b95bd41137da1280868c91c835aa57d4150fd6ba76913300"' "$BUILDER"; then
+# t13 静态契约：O_stage meta 引用 i6 隔离代（030-034 入链后锁定新树 hash）
+if grep -Fq 'OSTAGE_DIR="$ROOT/docs/planning/evidence/o-stage/5.0.0-i6"' "$BUILDER" \
+   && grep -Fq '"$OSTAGE_DIR/5.0.0-i6.meta.json"' "$BUILDER" \
+   && grep -Fq 'OSTAGE_TREE_HASH="5f6a5347c7e217ba3f7c5b71fdcad520148e0bc71231ab95fb023655865d11da"' "$BUILDER"; then
     ok t13
 else
     bad t13 "meta.json reference changed"
@@ -155,10 +155,10 @@ else
 fi
 
 # t15 印证门禁恢复（dsh 返工裁决）：builder 不得在任何 post-trace 位置打
-# 补丁——F 包内 DKMS 源 = 17 链 O_stage 快照本身（030-033 已随链入树），
+# 补丁——F 包内 DKMS 源 = 18 链 O_stage 快照本身（030-034 已随链入树），
 # 补丁后状态由锁定 o_stage_tree_hash 覆盖；无 apply_fantgpu_runtime_fixes、
 # 无顶层非法补丁名引用。
-if grep -Fq 'APPLIED_SOURCE_FIXES="o-stage-materialized-030-chain-17' "$BUILDER" \
+if grep -Fq 'APPLIED_SOURCE_FIXES="o-stage-materialized-030-chain-18' "$BUILDER" \
    && ! grep -Fq 'apply_fantgpu_runtime_fixes' "$BUILDER" \
    && ! grep -Fq 'fantgpu-hwinfo-audio-fallback.patch' "$BUILDER"; then
     ok t15
@@ -185,17 +185,17 @@ else
     bad t16 "fallback guard/normal-return/matcher ordering is not fail-safe"
 fi
 
-# t17 入链印证：锁定的 O_stage 快照必须已含 030-033——reverse dry-run 成功
+# t17 入链印证：锁定的 O_stage 快照必须已含 030-034——reverse dry-run 成功
 # 证明补丁已随链入树且可干净反转（正向 dry-run 必然失败：已应用）。
 PATCH_TREE="$TMP/patch-tree"
 mkdir -p "$PATCH_TREE"
 if tar --use-compress-program=zstd -xf \
-       "$ROOT/docs/planning/evidence/o-stage/5.0.0-i5/o-stage-snapshot.tar.zst" -C "$PATCH_TREE" \
+       "$ROOT/docs/planning/evidence/o-stage/5.0.0-i6/o-stage-snapshot.tar.zst" -C "$PATCH_TREE" \
    && patch --batch --forward --fuzz=0 --no-backup-if-mismatch --dry-run -R -s \
-       -d "$PATCH_TREE/o-stage" -p1 < "$ROOT/patches/030-033.patch"; then
+       -d "$PATCH_TREE/o-stage" -p1 < "$ROOT/patches/030-034.patch"; then
     ok t17
 else
-    bad t17 "030-033 not present in locked O_stage snapshot (reverse dry-run failed)"
+    bad t17 "030-034 not present in locked O_stage snapshot (reverse dry-run failed)"
 fi
 
 # t18 编译后必须按 i3 基线检查 shipped object 共享结构的实际 BTF 布局。
@@ -205,6 +205,13 @@ if grep -Fq 'builder_shipped_abi=PASS size=140536 members=115' "$BUILDER" \
     ok t18
 else
     bad t18 "compiled dev_rsrc ABI gate missing"
+fi
+
+run_builder VERSION=5.0.0-i5 SOURCE_DATE_EPOCH=1789516800
+if [ "$RC" -eq 1 ] && grep -Fq "staging_ostage_generation=FAIL" "$TMP/b.out"; then
+    ok t19_archived_i5
+else
+    bad t19_archived_i5 "rc=$RC"
 fi
 
 echo "PASS=$PASS FAIL=$FAILN"
