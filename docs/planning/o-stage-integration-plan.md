@@ -1,22 +1,22 @@
-# O_stage 构建集成方案（5.0.0-i3 F 分支）——R5 停批修订
+# O_stage 构建集成方案（5.0.0-i4 F 诊断分支）——R5 停批修订
 
-- 日期：2026-09-10
-- 状态：**i3 已安装并完成唯一受监督定位运行，`pm_test=devices` 再次硬挂，R5 仍为 FAIL**（030-031 已进入 15 链，树 hash `acfe80d1…`，候选 SHA `f2e821f2…`；冷启动后 Driver/Firmware 与 DRM 恢复，但驱动 marker 未持久化，`stage_attribution=UNVERIFIED`；不创建 validation-results、不签发、不打 tag）
+- 日期：2026-09-16
+- 状态：**i4 诊断实现与双构建完成，待 qoder 初审/dsh 终审；R5 仍为 FAIL**（030-032 已进入 16 链，树 hash `43f63f3f…`，候选 SHA `8a77ac9f…`；尚未安装或执行 debugfs 探针；不创建 validation-results、不签发、不打 tag）
 - 放行依据：dsh 放行规格（已记 report.md）；约束不变（保护区零写入、debs/F0 只读、builder 不安装不重启）
-- 前置事实：i2 的 14 链与 `86e7f12a…` 包是已安装并触发 R5 硬挂的失败档案锚点，保持不覆盖；i3 在其上追加 030-031，15 链树 hash = `acfe80d1cff9437f8d4a77ee71640d1a4c0698614656f8312cdf662d8366361c`（= 030-031 after_tree_hash）。
+- 前置事实：i2 的 14 链与 `86e7f12a…` 包、i3 的 15 链与 `f2e821f2…` 包均为失败档案锚点，保持不覆盖；i3 当前仍安装且其唯一 bound+headless `pm_test=devices` 硬挂。i4 在 i3 树上追加 030-032，16 链树 hash = `43f63f3fd5a9305734b9749cdfe773bc303726b06bf9f94fc1b55347738e9213`。
 
 ## 一、materialize-o-stage.sh 设计（编排物化）
 
-**目标**：从 O-4 只读输入可复现地物化 O_stage 源树快照，作为 5.0.0-i3 F builder 的 DKMS 源根，同时保持 i2 五件失败档案字节不变。
+**目标**：从 O-4 只读输入可复现地物化 O_stage 源树快照，作为 5.0.0-i4 F builder 的 DKMS 源根，同时保持 i2/i3 五件失败档案字节不变。
 
 **流程**（脚本化，每步校验、fail-closed）：
 
-1. 前置校验：tar 1.35 / zstd 1.5.7（工具版本锁定，同 O-4 先例）；输入 `docs/planning/evidence/o-stage/f0-snapshot.tar.zst` SHA == `65fa17ec…`；15 条 `patches/030-*.patch` 的 SHA 与各自 meta.json 的 `apply.patch_sha256` 一致；
+1. 前置校验：tar 1.35 / zstd 1.5.7（工具版本锁定，同 O-4 先例）；输入 `docs/planning/evidence/o-stage/f0-snapshot.tar.zst` SHA == `65fa17ec…`；16 条 `patches/030-*.patch` 的 SHA 与各自 meta.json 的 `apply.patch_sha256` 一致；
 2. 解包 F0 快照至事务工作目录（排他锁 + .txn 目录模式，同 O-4 事务先例），校验解包树 hash == `7219d817…`（O-4 锁定值）；
-3. 按链序应用 15 条 030-NNN（`patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1`）：
-   001 → 002 → 006 → 009 → 007 → 023 → 025 → 024 → 026 → 027 → 026-lifecycle → 028 → 029 → 030 → 031；
+3. 按链序应用 16 条 030-NNN（`patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1`）：
+   001 → 002 → 006 → 009 → 007 → 023 → 025 → 024 → 026 → 027 → 026-lifecycle → 028 → 029 → 030 → 031 → 032；
    每条应用后校验树 hash == 该条 meta.json 的 `apply.after_tree_hash`（逐链点校验，链基 = 前一条 after）；
-4. 最终校验：树 hash == `acfe80d1…`；
+4. 最终校验：树 hash == `43f63f3f…`；
 5. 快照产物（可执行形式，等价于 O-4 `tools/o4-f0-lock-gen.py:235` 的参数数组）：
    ```
    tar --sort=name --mtime=@1640995200 --owner=0 --group=0 --numeric-owner \
@@ -28,16 +28,16 @@
 6. 记录产物（**materialize 事务产物 = 五件同代**，与提交语义一致）：
    - `o-stage-snapshot.tar.zst` + `.sha256`
    - `o-stage.manifest.tsv` + `.sha256`
-   - `5.0.0-i3.meta.json`：**当前代 provenance**（版本串/tag、SOURCE_DATE_EPOCH、O_stage 树 hash `acfe80d1…`、15 条链及四文件 SHA）；五件写入独立目录 `docs/planning/evidence/o-stage/5.0.0-i3/`。顶层 i2 五件不被该事务覆盖。
+   - `5.0.0-i4.meta.json`：**当前代 provenance**（版本串/tag、SOURCE_DATE_EPOCH、O_stage 树 hash `43f63f3f…`、16 条链及四文件 SHA）；五件写入独立目录 `docs/planning/evidence/o-stage/5.0.0-i4/`。i2/i3 五件不被该事务覆盖。
 
 **meta.json 生命周期（消除同代冲突）**：
 
-- materialize 阶段：`5.0.0-i3/5.0.0-i3.meta.json` 作为 provenance 在事务内生成，全部字段在 materialize 时已知（含快照四文件 SHA），随五件同代产物统一提交；此后不可变（任何字段变更 = 新的受控事务 + 全套产物重生成/重校验）；
-- 验证阶段：`docs/planning/evidence/o-stage/5.0.0-i3-validation-results.json` 仍冻结且不存在；只有受监督定位、真实 suspend/resume 和恢复门全部闭合后才能创建并填充；
+- materialize 阶段：`5.0.0-i4/5.0.0-i4.meta.json` 作为 provenance 在事务内生成，全部字段在 materialize 时已知（含快照四文件 SHA），随五件同代产物统一提交；此后不可变（任何字段变更 = 新的受控事务 + 全套产物重生成/重校验）；
+- 验证阶段：`docs/planning/evidence/o-stage/5.0.0-i4-validation-results.json` 仍冻结且不存在；只有受监督定位、真实 suspend/resume 和恢复门全部闭合后才能创建并填充；
 - 两者绑定关系（**单向绑定，validation 锚定 immutable meta**）：
   - meta.json 固定记录 validation-results 文件路径与 schema（meta 只引用文件名，不引用其哈希——validation 后生成，其哈希在 materialize 时不可知）；
-  - validation-results 记录 `materialize_meta_sha256`（= i3 meta 的 SHA-256，验证阶段校验一致后方可填充结论）；
-  - validation-results 自身完整性由最终 Git commit / annotated tag（fantgpu-5.0.0-i3）或独立 validation sidecar 锚定——不做互引 SHA-256。
+  - validation-results 记录 `materialize_meta_sha256`（= i4 meta 的 SHA-256，验证阶段校验一致后方可填充结论）；
+  - validation-results 自身完整性由最终 Git commit / annotated tag（fantgpu-5.0.0-i4）或独立 validation sidecar 锚定——不做互引 SHA-256。
 
 **fail-closed**：链中任一 patch 失败（rc≠0 / .orig/.rej / 链点 hash 不符）→ 清理事务目录、不产任何快照产物、非零退出。
 
@@ -54,39 +54,39 @@
 
 - 输出目录 canonical path 校验（realpath + commonpath 边界），symlink/path escape 拒绝（O-4 `check_out_dir` 口径）；
 - 排他锁在任何输出变更前取得（O-4 `flock` 口径）；
-- 所有 i3 产物（**五件完整：tar + 快照 sidecar + manifest + manifest sidecar + 5.0.0-i3.meta.json**）先写入同一事务目录并完成内部校验；i2 与 i3 由目录隔离；
+- 所有 i4 产物（**五件完整：tar + 快照 sidecar + manifest + manifest sidecar + 5.0.0-i4.meta.json**）先写入同一事务目录并完成内部校验；i2、i3 与 i4 由目录隔离；
 - 提交点：全部校验通过后按序原子替换到最终位置；journal 记录状态机（staged/committed/rolling_back），每步 fsync（文件 + 目录）；
 - 失败/中断：原有完整产物保持不变；恢复入口按 journal 状态幂等续跑（O-4 `recover_interrupted` 口径）；幂等重跑规则 = 相同输入重跑产出字节一致的产物；
 - **禁止混代**：任何状态下不允许新 tar + 旧 manifest（或反向）共存于最终位置——产物对（tar+sha256+manifest+sha256+meta）要么全部同代、要么全部保持旧代。
 
 **快照参数先例**：tar 1.35 / zstd 1.5.7 / @1640995200 / --sort=name / owner·group 0 / transform 前缀 `o-stage`——与 O-4（前缀 f0）与 D_stage 先例完全同构，仅前缀不同。
 
-## 二、版本与 epoch 定稿（2026-09-15 阶段 D：新候选 i3；i2 保持 R5 失败锚点）
+## 二、版本与 epoch 定稿（2026-09-16 阶段 D：新候选 i4；i2/i3 保持 R5 失败锚点）
 
 | 字段 | 定稿值 | 理由 |
 | --- | --- | --- |
-| 版本串 | `5.0.0-i3` | 030-031 改变源树，必须新代；i2 不复用、不覆盖 |
-| tag 名 | `fantgpu-5.0.0-i3`（仅前向保留，当前禁止创建） | 签发仍须 R5 与完整验证闭合、三方一致及用户批准 |
+| 版本串 | `5.0.0-i4` | 030-032 改变源树，必须新代；i2/i3 不复用、不覆盖 |
+| tag 名 | `fantgpu-5.0.0-i4`（仅前向保留，当前禁止创建） | 签发仍须 R5 与完整验证闭合、三方一致及用户批准 |
 | SOURCE_DATE_EPOCH | **`1788796800`**（dsh 批准：沿用 4.0.2-i3 审核值，= 2026-09-07 16:00 UTC） | ① epoch 仅决定字节确定性，与版本比较无关（升级序由版本串保证）；② 沿用已审核值零新增审核面；③ 与 4.0.2-i3 同 epoch 使双血统产物比对时**排除 mtime/epoch 造成的时间差异**（版本/包名/构建配置/工具链/载荷本身的差异仍会体现在字节中） |
 | 包内 mtime | 全部文件 `touch -h -d @1788796800`（同 4.0.2-i3 规则） | 确定性；与 SOURCE_DATE_EPOCH 一致 |
 
-## 三、builder 集成（5.0.0-i3 F 分支静态完成；真机验证冻结）
+## 三、builder 集成（5.0.0-i4 F 分支静态完成；真机验证冻结）
 
-1. **DKMS 源 O_stage**：i3 分支只消费 `5.0.0-i3/` 五件，校验快照 SHA、i3 meta 与树 hash `acfe80d1…`；15 链已在 materialize 阶段应用，builder 不做 post-trace 补丁；
+1. **DKMS 源 O_stage**：i4 分支只消费 `5.0.0-i4/` 五件，校验快照 SHA、i4 meta 与树 hash `43f63f3f…`；16 链已在 materialize 阶段应用，builder 不做 post-trace 补丁；
 2. **vermagic**：双构建均校验 `fantgpu.ko` 的 vermagic 前缀匹配当前内核；
-3. **载荷边界**：包名、DKMS 名、模块名与 F userspace/固件边界不变；包内源树为 15 链 i3 快照，含 030-030 与 030-031；闭源对象保持 no-transform；
-4. **归档代防串代**：builder 明确拒绝用当前 i3 快照构建 5.0.0-i1/i2；
+3. **载荷边界**：包名、DKMS 名、模块名与 F userspace/固件边界不变；包内源树为 16 链 i4 快照，含 030-030、030-031 与 030-032；闭源对象保持 no-transform；
+4. **归档代防串代**：builder 明确拒绝用当前 i4 快照构建 5.0.0-i1/i2/i3；
 5. **不安装契约**（已实现）：builder 仅构建；安装/回退由验证矩阵阶段手动执行；
-6. **保护区边界**：STAGE_ROOT/BUILD_LOG/OUT_DEB 可注入；本轮真机证据落 `runtime-5.0.0-i2/`，不创建 validation-results、不打 tag；
+6. **保护区边界**：STAGE_ROOT/BUILD_LOG/OUT_DEB 可注入；未来 i4 真机原始证据只落 ignored `.runtime-archive/runtime-5.0.0-i4/`，Git 仅保留脱敏摘要；不创建 validation-results、不打 tag；
 7. **定案项（如实记录）**：check-release-package.sh 的静态门禁已闭合；C2 options 文件由包内确定性 payload 承载。上述静态门禁不等于 F 显示运行时闭合；2026-09-14 中止记录已证明必须增加 runtime health gate。
-8. **双 clean-build 字节一致证据**：`build-5.0.0-i3.sha256` 记录 A/B deb SHA `f2e821f2…` 与 562 行 md5sums 一致；这只证明构建可复现，不改变 `R5=FAIL`。
+8. **双 clean-build 字节一致证据**：`build-5.0.0-i4.sha256` 记录 A/B deb SHA `8a77ac9f…` 与 562 行 md5sums 一致；首次构建因 Description 仍写 15 链产生的 `1fddf05b…` 已作废且未入证据；这只证明构建可复现，不改变 `R5=FAIL`。
 
 ## 四、验证计划（阶段三验证矩阵清单）
 
 | 维度 | 验证项 | fixture / 工具 |
 | --- | --- | --- |
 | 静态 | materialize-o-stage.sh 单测（路径边界 / fail-closed / 链点校验 / 幂等 / 事务恢复） | `tests/unit/run-o-stage-materialize-tests.sh`（19 用例全过；与 O-4 测试同构） |
-| 静态 | 15 条 030-NNN meta + 030-031 marker 契约 | `run-030-meta-tests.sh` + `run-030-031-pm-marker-tests.sh`；fixture 不模拟闭源 HAL 完成 |
+| 静态 | 16 条 030-NNN meta + 030-031 marker + 030-032 probe 契约 | `run-030-meta-tests.sh` + `run-030-031-pm-marker-tests.sh` + `run-030-032-pm-probe-tests.sh`；发布移除由 `run-fantgpu-pm-probe-removal-tests.sh` 覆盖产物层；fixture 不模拟闭源 HAL 完成 |
 | 静态 | O_stage 编译通过 | gcc/clang 编译门禁（DKMS 构建即覆盖） |
 | 运行时 | DRM device open / fbdev mmap / DMA-BUF self-import / VA-API 解码 | run-capability-baseline.sh + run-dmabuf-regression-test.sh + run-vaapi-decode-test.sh |
 | 运行时前置 | F 显示健康门禁：特权 dmesg、固件请求、DRM card 注册、kernel fault | `scripts/check-fantgpu-runtime-health.sh`；合成 fixture 只验证 fail-closed 控制流，不证明预编译 HAL bind 或真实硬件可用 |
@@ -95,20 +95,20 @@
 | 运行时 | DDCCI panel 显式逻辑（029）+ 2880x1800 刷新率（006）+ 2560 base-vs-base 观察（006 登记） | probe-drm-topology.c + 实机面板 |
 | 运行时 | **UNVERIFIED 登记 1**：025-display 唤醒显示观察（i4-only 假设不迁移，观察 F0 维持 i3 语义的行为） | probe-suspend-resume-state.sh 扩展观察项 |
 | 运行时 | **UNVERIFIED 登记 2**：patch-000 G0M GPU PLL 双重初始化症状观察（no-transform 操作结论，语义未闭合） | 阶段三矩阵观察项 |
-| 安装/回退 | 5.0.0-i3 受监督安装 + 已批准 4.0.2-i3 回退 | i3 已安装并在唯一 `pm_test=devices` 中硬挂；当前恢复后留装，回退未执行、待 dsh 裁决 |
+| 安装/回退 | 5.0.0-i4 受监督安装 + 已批准 4.0.2-i3 回退 | i4 尚未安装；i3 已安装并在唯一 `pm_test=devices` 中硬挂，当前恢复后留装；探针执行须另行放行 |
 | 门禁汇总 | check-docs rc=0 + validate-collab rc=0 + r16-gate rc=0 | 每批提交后实跑并记录 |
 
 ## 五、产物落点
 
-- 目录性质：顶层 F0 与 i2 五件只读；i3 五件只写 `docs/planning/evidence/o-stage/5.0.0-i3/`，以目录隔离防止覆盖失败档案。
+- 目录性质：顶层 F0 与 i2/i3 五件只读；i4 五件只写 `docs/planning/evidence/o-stage/5.0.0-i4/`，以目录隔离防止覆盖失败档案。
 - 产物清单：
   - **materialize 事务产物（五件同代提交、禁止混代、meta 不可变）**：
-    - `docs/planning/evidence/o-stage/5.0.0-i3/o-stage-snapshot.tar.zst` + `.sha256`
-    - `docs/planning/evidence/o-stage/5.0.0-i3/o-stage.manifest.tsv` + `.sha256`
-    - `docs/planning/evidence/o-stage/5.0.0-i3/5.0.0-i3.meta.json`
+    - `docs/planning/evidence/o-stage/5.0.0-i4/o-stage-snapshot.tar.zst` + `.sha256`
+    - `docs/planning/evidence/o-stage/5.0.0-i4/o-stage.manifest.tsv` + `.sha256`
+    - `docs/planning/evidence/o-stage/5.0.0-i4/5.0.0-i4.meta.json`
   - **验证结论文件（独立于同代产物集）**：
-    - `docs/planning/evidence/o-stage/5.0.0-i3-validation-results.json`：当前不得创建；获批验证且全项闭合后才允许写入，并单向绑定 i3 meta。
+    - `docs/planning/evidence/o-stage/5.0.0-i4-validation-results.json`：当前不得创建；获批验证且全项闭合后才允许写入，并单向绑定 i4 meta。
 
 ## 六、签发链
 
-O_stage 构建集成 → R5 真实 suspend/resume 与阶段三验证矩阵全 PASS → 三方一致 + dsh 终审 + 用户批准 → 才可签发 annotated tag `fantgpu-5.0.0-i3`。当前链停在静态构建完成，后续全部冻结。
+O_stage 构建集成 → R5 真实 suspend/resume 与阶段三验证矩阵全 PASS → 三方一致 + dsh 终审 + 用户批准 → 才可签发 annotated tag `fantgpu-5.0.0-i4`。当前链停在诊断实现待初审，运行时仍冻结。

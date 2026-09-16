@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "id": "030-032",
+  "ledger_ref": {
+    "item": "030",
+    "neutral_record": "F-ONLY-003",
+    "mapping": "docs/planning/r5-suspend-030-032-debug-design.md（F-only 诊断项；无 D 侧台账来源）",
+    "description": "fantgpu root-only debugfs PM 探针与 PM/remove 生命周期串行"
+  },
+  "deepin_patch": {
+    "path": "patches/030-032.patch",
+    "sha256": "5adc9b7bb3aaa21b0fb8d0fa988b0c681af030948a1e50efaaceeed39dd68354",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "docs/planning/evidence/o-stage/f0-snapshot.tar.zst",
+      "sha256": "65fa17ec56925241a33b2daf6eacdd93699f8d3764aaeecf47d9888c40a6da9e"
+    },
+    "tree_hash": "7219d817c412fcf87a5341f1604e03bb24b7b6670cf51d0f2c8814e5fe72c0cb",
+    "chain_base": {
+      "id": "030-031",
+      "after_tree_hash": "acfe80d1cff9437f8d4a77ee71640d1a4c0698614656f8312cdf662d8366361c"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "f-only-diagnostic-probe",
+      "summary": "仅在 5.0.0-i4 诊断构建中增加 root-only debugfs pm_probe。接口只接受带确认 token 的 reg-read 与 monitor-cycle 两个固定命令，每 boot 只运行一次；monitor-cycle 严格执行 hal_power_sleep 后 hal_power_wakeup，并记录原始值与负值原样/正值转 -EIO 的规范值。探针、全部 PCI PM 回调、shutdown 与 remove 使用同一每卡 mutex；remove 先关闭入口，再等待在飞调用后释放资源。未暴露 DMA/PDP 任意调用、未增加异步 timeout、未宣称修复 R5。"
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "F-only 诊断补丁；两个目标文件沿用 vendor Dual MIT/GPLv2 口径，新增代码由本项目编写；未引入第三方文件、二进制或 notice，正式 tools/audit-licenses.py 结果待实现批验证。"
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "030-001 through 030-031 applied",
+      "summary": "链基为 030-031 after_tree_hash acfe80d1...；依赖 030-031 的 PM marker/返回值规范及 030-028 monitor work 编排。"
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "f-only-diagnostic-probe",
+      "summary": "无 D 侧来源；直接作用于 O_stage F 源码 fantgpu/fantgpu_pci_drv.c 与 fantgpu/hal.h。闭源 fantgpu.o_shipped 未改；探针仅调用已有 HAL wrapper。"
+    }
+  },
+  "apply": {
+    "before_tree_hash": "acfe80d1cff9437f8d4a77ee71640d1a4c0698614656f8312cdf662d8366361c",
+    "after_tree_hash": "43f63f3fd5a9305734b9749cdfe773bc303726b06bf9f94fc1b55347738e9213",
+    "patch_sha256": "5adc9b7bb3aaa21b0fb8d0fa988b0c681af030948a1e50efaaceeed39dd68354",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <CHAIN_BASE> < patches/030-032.patch",
+    "result": "2 files changed (fantgpu/fantgpu_pci_drv.c, fantgpu/hal.h); no .orig/.rej; fresh replay tree hash == after_tree_hash"
+  },
+  "rollback": {
+    "command": "remove O_stage and re-extract chain base (F0 snapshot + 030-001..030-031, 15 entries); do not reverse-edit F0",
+    "target": "chain base tree hash acfe80d1cff9437f8d4a77ee71640d1a4c0698614656f8312cdf662d8366361c"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "fresh chain-base replay: -p1, --fuzz=0, rc=0",
+        "no .orig/.rej artifacts",
+        "replay tree hash 43f63f3fd5a9305734b9749cdfe773bc303726b06bf9f94fc1b55347738e9213 == after_tree_hash",
+        "full module compile for 6.12.101+deb13-amd64: rc=0",
+        "patch scope is exactly two reviewed F source files"
+      ]
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "5.0.0-i4 受监督安装后，每个新 boot 最多执行一个探针：先 reg-read；新启动并复核健康后再 monitor-cycle。任一 30 秒不返回或健康异常即停批，探针结果不提升 R5。"
+    }
+  }
+}

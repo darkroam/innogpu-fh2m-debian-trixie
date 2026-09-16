@@ -61,6 +61,8 @@ bash tests/unit/run-dri-repair-tests.sh
 bash tests/unit/run-collab-structure-tests.sh
 bash tests/unit/run-suspend-resume-tests.sh
 bash tests/unit/run-suspend-failure-finalize-tests.sh
+bash tests/unit/run-030-032-pm-probe-tests.sh
+bash tests/unit/run-fantgpu-pm-probe-removal-tests.sh
 bash tests/unit/run-p2-normalize-tests.sh
 bash tests/unit/run-r16-gate-tests.sh
 bash tests/unit/run-r16-build-bc-map-tests.sh
@@ -95,6 +97,11 @@ bash tests/unit/run-fantgpu-runtime-health-tests.sh
 - suspend 失败收尾 fixture 验证只有失败证据、回退和重启三个 round ID 绑定标记都为 PASS 时，
   才删除指定 active 指针并保留证据；缺失/错配标记、路径穿越、符号链接根/文件和重复 finalize
   全部失败关闭；active 指针只接受规范化小写 round ID，绝对路径和大写 ID 均拒绝，不需要 root 或真实挂起；
+- 030-032 PM 探针静态测试严格回放 i3 锁定快照，覆盖 root/CAP 门、两个精确命令、单 boot
+  不重入、sleep/wakeup 与返回值顺序、debugfs 文件引用、PM/remove/probe 同锁、全部 PM 回调及
+  shutdown 串行、固定状态 schema、禁止 DMA/PDP 任意调用和禁止异步 timeout；不加载模块或触发 PM；
+- PM 探针发布移除 fixture 门禁覆盖发布源码、snapshot/manifest、builder 树、DKMS 树、模块字符串与
+  deb 解包载荷；任一层残留诊断符号、确认 token 或状态字段即失败关闭；
 - 许可证审计测试覆盖当前逐文件 inventory 一致性、发布门禁保持 BLOCKED、确定性重建、
   陈旧 inventory、许可证文本缺失、confidential 集合漂移、残缺 Dual MIT/GPL 头、manifest license
   缺失、无证据 SPDX 值、项目 README 声明文字隔离和 `MODULE_LICENSE` 元数据集合漂移；不修改

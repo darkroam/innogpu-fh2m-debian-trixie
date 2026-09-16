@@ -1,7 +1,7 @@
 # C3-a ④ 可复现输入实施设计（builder F 载荷纳入）——停批修订 v13（2026-09-14）
 
 - 日期：2026-09-12
-- 状态：**R5 停批，阶段 D i3 静态实现（2026-09-15）**。i2 已完成 R1-R4，但 bound+headless `pm_test=devices` 与桌面态真实 suspend 均硬挂，`R5=FAIL`。030-031 PM 分层 marker/返回值硬化已形成 15 链 i3 隔离快照并双构建为 `f2e821f2…`；i3 未安装、未复测，不创建 validation-results、不签发、不打 tag。
+- 状态：**R5 停批，阶段 D i4 诊断实现（2026-09-16）**。i3 的 bound+headless `pm_test=devices` 硬挂且 marker 未持久化，`R5=FAIL`。030-032 root-only debugfs PM 探针已形成 16 链 i4 隔离快照并双构建为 `8a77ac9f…`；i4 未安装、未执行探针，不创建 validation-results、不签发、不打 tag。
 - 依据：`5.0.0-i2-validation-plan.md` §三 C3-a 第 ④ 项 +「③ 对 ④ 的传导」（两项强制）+「C3-a 的 builder 改造点清单」（8 点）+ §二「C3 若选 a/b 的版本与 provenance 传导」+ dsh 2026-09-11 放行「④ qoder 可开工（技术项）」。
 - **不变式（全设计约束，违反任一即 FAIL）**：
   1. materialize 五件产物已按 **i2 代** 重生成（`5.0.0-i2.meta.json`、O_stage 树 hash `c44ce785…`、14 条链——2026-09-14 返工：030-030 hwinfo 音频安全回退入链；旧 i1 名 meta 退役）；
@@ -13,10 +13,19 @@
 ## 2026-09-15 R5 阶段 D 传导
 
 - `patches/030-031.patch` + meta 以 i2 链尾 `c44ce785…` 为 before，fresh replay 后树 hash 为 `acfe80d1…`；范围仅含 PCI、DRM、FT/PVR 三个 PM 源文件。
-- `scripts/materialize-o-stage.sh` 当前链为 15 项，i3 五件写入 `docs/planning/evidence/o-stage/5.0.0-i3/`；顶层 i2 五件及 `build-5.0.0-i2.sha256` 保持失败档案字节不变。
-- builder 只允许当前 i3 候选消费 i3 隔离快照；i1/i2 归档代不得借用当前快照重构建。包内 DKMS 树 hash、i3 meta、snapshot sidecar 与 trace manifest 四者必须一致。
+- 该轮 `scripts/materialize-o-stage.sh` 链为 15 项，i3 五件写入 `docs/planning/evidence/o-stage/5.0.0-i3/`；顶层 i2 五件及 `build-5.0.0-i2.sha256` 保持失败档案字节不变。
+- 该轮 builder 只允许 i3 候选消费 i3 隔离快照；i1/i2 归档代不得借用当代快照重构建。包内 DKMS 树 hash、i3 meta、snapshot sidecar 与 trace manifest 四者必须一致。
 - build A/B deb SHA 均为 `f2e821f25a59bc2b3053388599655c7572be247f3275715d8925499d98f13b35`，`DEBIAN/md5sums` 562 行字节一致；该事实仅闭合静态可复现构建，不改变 `R5=FAIL`。
-- 唯一复测仍受 `r5-suspend-stage-d-design.md` 硬前置约束：新包/模块/provenance 身份、runtime health、`no_console_suspend ignore_loglevel`、已演练带外 marker 通道、用户现场监督及 30 秒单次窗口全部满足后，才可由 dsh 明示放行。
+- 该轮唯一复测受 `r5-suspend-stage-d-design.md` 硬前置约束：新包/模块/provenance 身份、runtime health、`no_console_suspend ignore_loglevel`、已演练带外 marker 通道、用户现场监督及 30 秒单次窗口全部满足后，才可由 dsh 明示放行。
+
+## 2026-09-16 R5 030-032 诊断传导
+
+- `patches/030-032.patch` + meta 以 i3 链尾 `acfe80d1…` 为 before，fresh replay 后树 hash 为 `43f63f3f…`；范围仅含 `fantgpu_pci_drv.c` 与 `hal.h`。
+- `scripts/materialize-o-stage.sh` 当前链为 16 项，i4 五件写入 `docs/planning/evidence/o-stage/5.0.0-i4/`；i2/i3 五件和既有构建证据保持失败档案字节不变。
+- builder 只允许当前 i4 候选消费 i4 隔离快照；i1/i2/i3 归档代不得借用当前快照重构建。包内 DKMS 树 hash、i4 meta、snapshot sidecar 与 trace manifest 四者必须一致。
+- build A/B deb SHA 均为 `8a77ac9fb08d880858b0fbe44923abaad68ccbed58e6d544eaec431f35d559d0`，`DEBIAN/md5sums` 562 行字节一致；Description 已锁定 16 链。修订前文案仍写 15 链的 `1fddf05b…` 已作废且未进入正式证据。
+- 030-032 仅用于诊断；发布候选须完全反向移除，并由 `check-fantgpu-pm-probe-removed.sh` 在源码、snapshot/manifest、builder、DKMS、模块和 deb 解包层逐层证明无诊断 token/symbol。
+- 真机探针仍冻结：实现批须经 qoder 初审与 dsh 终审后，另行明示放行；每个新 boot 只运行一个探针，挂死轮次预期可能只能硬断电恢复。
 
 ## 〇、「可复现输入」口径（codex 建议收紧，显式声明）
 

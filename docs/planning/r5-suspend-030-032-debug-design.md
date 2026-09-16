@@ -1,7 +1,7 @@
 # R5 suspend 030-032 诊断设计
 
 - 日期：2026-09-16
-- 状态：**已按 dsh 三线终裁修订，待 qoder spot 与 dsh 提交终审；未实现、未构建、未执行真机探针**
+- 状态：**030-032 实现、16 链 i4 物化与双构建已完成，待 qoder 初审与 dsh 终审；未安装、未执行真机探针**
 - 候选：`030-032`，仅用于 `5.0.0-i4` 诊断包，不是发布修复
 - 基线：`5.0.0-i3` / 15 链树 `acfe80d1cff9437f8d4a77ee71640d1a4c0698614656f8312cdf662d8366361c`
 - 冻结：`R5=FAIL`，U1/U2、validation-results、签发和 tag 不变
@@ -121,3 +121,10 @@ qoder 只读初审应优先确认：
 6. O/F 反编译结论是否避免把同构 wrapper 误写成已证明根因。
 
 初审输出 `通过`、`修订后通过` 或 `返工`，P1/P2/P3 均附文件行号。qoder 不修改工作树、不构建、不安装、不触发 debugfs 或 PM。
+
+## 9. 实现批结果（2026-09-16）
+
+- `patches/030-032.patch` 只改 `fantgpu_pci_drv.c` 与 `hal.h`；patch SHA 为 `5adc9b7b…`，before 为 `acfe80d1…`，fresh replay after 为 `43f63f3f…`。
+- 16 链 i4 五件隔离在 `docs/planning/evidence/o-stage/5.0.0-i4/`；snapshot SHA 为 `e80fadcb…`，i2/i3 失败锚点未覆盖。
+- 双构建 deb SHA 均为 `8a77ac9fb08d880858b0fbe44923abaad68ccbed58e6d544eaec431f35d559d0`；`DEBIAN/md5sums` SHA 为 `3011fe20…`，562 行字节一致。
+- 静态探针契约 16/16、发布移除门禁 8/8 已通过；实现批仍不改变 `R5=FAIL`，真机探针须在本批初审/终审后另行明示放行。
