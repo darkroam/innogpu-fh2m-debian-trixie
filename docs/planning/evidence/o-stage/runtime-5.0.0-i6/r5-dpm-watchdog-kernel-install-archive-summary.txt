@@ -1,0 +1,22 @@
+# file sha256 bytes redaction archive
+backups/grub.cfg.after unreadable 13628 redacted-reason=root-owned-mode-600-user-ok-unreadable-bytes-from-stat-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/backups/grub.cfg.after
+backups/grub.cfg.before unreadable 12203 redacted-reason=root-owned-mode-600-user-ok-unreadable-bytes-from-stat-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/backups/grub.cfg.before
+backups/grub.default.after e116e605090e5d5033a3086d76a27f589a21b8b265d0d23b465d58825b175d06 1582 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/backups/grub.default.after
+backups/grub.default.before 05cb537cd0fd37b853179ed80bc3d1b61ee18f092627a5ad41d347931b0a9808 1569 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/backups/grub.default.before
+backups/grubenv.after 25a37ede12cc5301684673979aef843974c4bad44438375f5787bcec9500d5a4 1024 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/backups/grubenv.after
+backups/grubenv.before dd50ceda434a6da4be3f5da9ce431b23fe4c271125f0602a96cfdb2852c13ea6 1024 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/backups/grubenv.before
+control/00-install-no-reboot.sh 93d61226a47996ca66c2e8812dbf16c78677818df8d0a44901a81364ee20161a 9780 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/control/00-install-no-reboot.sh
+dkms.after.txt 7725ad3015a9eb514c13668941c67f92aa6262106e660ce1c4b245745498535b 125 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/dkms.after.txt
+dkms.before.txt 39d6d498d8a11b0f3d5f9175ddd8931815d1d0c0b93a83576755af7592c0717e 65 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/dkms.before.txt
+dkms-target.txt 0cddef7a063577c4d787fedb05714c929e159c749236288f5bbf4912a1db51b7 60 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/dkms-target.txt
+grubenv.after.txt bac76c24ab3cd98d0d016dcd83c02a12e19240d945b101232fa27cd2c1d43b84 280 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/grubenv.after.txt
+grubenv.before.txt fe047a4d3840e832f56c6e114984ede69db021cefbf26ccfb9446e5697d05018 111 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/grubenv.before.txt
+grub-ids.txt 347a20b87f0e54091e2300ae2c820a6e9015ebaec6c7ff755a7724c3d568b932 279 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/grub-ids.txt
+initramfs-list.txt d30b08f0582d0efffe09071b9042f0ef3684deea48f23b4e7dd3a2404414fdbf 90252 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/initramfs-list.txt
+install.log 63e36749f2639828da6a462642ab5bd0a4620ebb9c953bb24c655520f5a58ea7 5254 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/install.log
+install-pre.txt ee59dfcc5749515fcdfe17c3167c21f7aa82cea96a6ccb600d4abfadbd24a060 447 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/install-pre.txt
+install-result.txt b82f020539e1e6a201a0a07f13b74b0fc4bd591b9c2251cbdf8d75778a1f02a0 686 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/install-result.txt
+kernel-files.after.txt 47468f837312d3daed406b06c294e53d4134c7d76672e994b68d44ebb9d5f089 393 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/kernel-files.after.txt
+kernel-files.before.txt 9215af91168eb4f084225e10c98ccbc64979679980511f7c0bd9bb69e900facb 209 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/kernel-files.before.txt
+packages.after.txt f52f619dbd3af510b59206eb55062019e4b110fea034419171e0fef92cc4070b 79299 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/packages.after.txt
+packages.before.txt 9a0618fbe8b8df2c4c9e2a8dfee1003dd2e147408cd7117e761e2b7d15f7832c 79197 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install/packages.before.txt
