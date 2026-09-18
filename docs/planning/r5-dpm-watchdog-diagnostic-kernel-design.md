@@ -277,6 +277,8 @@ echo mem > /sys/power/state
 
 ## 9. 判定
 
+运行时收集器只保存原始证据并输出 `r5_dpm_watchdog_capture=UNCLASSIFIED`；不得在恢复现场用脆弱的文本启发式自动升级结论。qoder/dsh 复核 pstore、测试 boot journal、触发返回证据和恢复模式后，按下表落正式四分支判定。`systemd-run` 非零且执行边界不明时记 `FAILED_OR_UNVERIFIED`，不得当作 `NOT_REPRODUCED`。
+
 | 结果 | 判定 | 归因上限 |
 |---|---|---|
 | pstore 含 `DPM device timeout`、设备名和可读 stack | `DPM_WATCHDOG_CAPTURE=LOCATED` | 该设备处理区间为高可信候选；最高 vendor frame 为候选挂点 |
@@ -299,7 +301,8 @@ r5_dpm_timeout_device=<name-or-UNAVAILABLE>
 r5_detector_reported_task=<comm/pid-or-UNAVAILABLE>
 r5_pstore_stack_top=<symbol-or-UNAVAILABLE>
 r5_highest_vendor_frame=<symbol-or-UNAVAILABLE>
-r5_dpm_watchdog_capture=LOCATED|PARTIAL|NOT_REPRODUCED|OUTSIDE_COVERAGE|NOT_RUN
+r5_dpm_watchdog_capture=UNCLASSIFIED  # 运行时原始收集结果
+r5_dpm_watchdog_capture_reviewed=LOCATED|PARTIAL|NOT_REPRODUCED|OUTSIDE_COVERAGE|NOT_RUN
 r5_root_cause=<candidate-or-unresolved>
 r5_validation_status=FAIL
 ```
