@@ -147,6 +147,8 @@ docs/planning/evidence/o-stage/runtime-5.0.0-i3/r5-pstore-efi-check.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i3/raw-evidence-archive-summary.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i4/boot-failure-summary.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i5/raw-evidence-archive-summary.txt
+docs/planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-archive-summary.txt
+docs/planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-build-result.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i6/watchdog-round-1-archive-summary.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i6/watchdog-round-1-result.txt
 docs/planning/fantgpu-base-update-evaluation.md
