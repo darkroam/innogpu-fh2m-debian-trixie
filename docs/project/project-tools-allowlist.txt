@@ -153,6 +153,8 @@ docs/planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-archive-s
 docs/planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-build-result.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install-archive-summary.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-watchdog-kernel-install-result.txt
+docs/planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-watchdog-step7-archive-summary.txt
+docs/planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-watchdog-step7-result.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i6/watchdog-round-1-archive-summary.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i6/watchdog-round-1-result.txt
 docs/planning/fantgpu-base-update-evaluation.md
