@@ -1,0 +1,7 @@
+# file sha256 bytes redaction archive
+control/10-health.sh aa5a6ca1ce58f62c8429d2d0947c6146d5e0a564e858d02dd2bf71b866ef8405 4188 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-firstboot/control/10-health.sh
+dmesg.txt 2361440803d5dc2fd5189d47e0e70293adb63fd635afb7465834a79c4dd7cf39 92178 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-firstboot/dmesg.txt
+grubenv-firstboot.txt b37da73fb2a5cebc6c8378d4fd6e04252bf9023975f423692ffb4941a798f4fa 155 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-firstboot/grubenv-firstboot.txt
+health-result.txt 32e95b70b81e46e3d88cfda5128dd1cf74601bfc2c6915b3b65c5bb4a3380f04 384 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-firstboot/health-result.txt
+health.log 9274b48f99726f064088dba39429d146d75041d6496e62e6dd5ff88d49a75dfc 1667 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-firstboot/health.log
+runtime-health.txt 20cc6934670a5b510f059809f581f63033558a30734e28328f2f406d16a461c9 153 not-redacted-raw-archive-only .runtime-archive/runtime-5.0.0-i6/r5-dpm-watchdog-firstboot/runtime-health.txt
