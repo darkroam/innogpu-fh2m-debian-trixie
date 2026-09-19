@@ -169,6 +169,8 @@ docs/planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-kernel-a
 docs/planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-kernel-build-result.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-kernel-install-archive-summary.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-kernel-install-result.txt
+docs/planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-archive-summary.txt
+docs/planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-result.txt
 docs/planning/r5-dpm-watchdog-diagnostic-kernel-design.md
 docs/planning/r5-suspend-030-032-debug-design.md
 docs/planning/r5-suspend-investigation-plan.md
