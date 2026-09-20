@@ -31,4 +31,4 @@
 | `4.0.2-i1` | R11 失败候选：patch-024 + patch-026-suspend-resume-dvfs-lifecycle | epoch 1788624000；deep 时温度 work 提前触发 PowerLock/POWERED_OFF，只供历史复现，禁止安装或交付 |
 | `4.0.2-i2` | R12 候选：i1 + patch-028-suspend-resume-hal-temp-monitor-delay | epoch 1788710400；不含 display 025；仅静态/离线验证，尚未安装或真机 deep 验收 |
 | `4.0.2-i3` | 当前正式交付：i2 + patch-029-suspend-resume-ddcci-panel | epoch 1788796800；继承 patch-024/026/028，不含 display 025；R14 当前设备 6/6 deep 通过；DDCCI 不注册 backlight device，`hwinfo_g0m.bin` 仍缺失 |
-| `基线代际` | 三个基线 deb 的代际划分（文档迭代 R2 术语）：代一 = 原厂 fantgpu 3.3.3.42-patched-27 时代；代二 = deepin 4.0.2-i3；代三 = fantgpu 5.0.0-iN（030-NNN 链）。与 `baselines/`（运行结果目录）同词异物，不得混用 |
+| `基线代际` | 三个基线 deb 的代际划分（文档迭代 R2 术语）：代一 = 原厂 fantgpu 3.3.3.42-patched-27 时代；代二 = deepin 4.0.2-i3；代三 = fantgpu 5.0.0-iN（030-NNN 链） | 与 `baselines/`（运行结果目录）同词异物，不得混用 |
