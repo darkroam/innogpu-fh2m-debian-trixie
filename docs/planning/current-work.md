@@ -3,6 +3,23 @@
 本文件是未完成工作的唯一权威清单。当前运行结论见
 [`status.md`](../project/status.md)，已完成工作与时序记录见 [`todo.md`](todo.md)。
 
+## R5 悬案与 fantgpu 5.0.0 主线（当前最高优先级）
+
+- [ ] **R5 挂起根因定位**：fantgpu 绑定下 `pm_test=devices` 硬挂；两轮诊断内核（r5dpm1/r5dpm2）
+  复核判定 `OUTSIDE_COVERAGE`，根因未定位。冻结：禁止重跑任何 pm_test/watchdog；下一方向待用户
+  选择（停批冻结 / 本地扩展轮——dpm_prepare 前置段 instrumentation 或 O-vs-F 继续反编译 / 带外
+  通道）。证据链：
+  [r5 调查计划](r5-suspend-investigation-plan.md)、
+  [步骤 8 结果](../planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-result.txt)。
+- [ ] **发布阻断（fantgpu 5.0.0-iN 线）**：① `postinst_current_kernel_only=release_blocker`（postinst
+  只构建当前运行内核）；② `validation-results.json` 未签；③ tag `fantgpu-5.0.0-iN` 未打；
+  ④ R5=FAIL 未解除。许可发布边界（1C/BLOCKED）不变。
+- [ ] 诊断内核处置：r5dpm1/r5dpm2 包保留待 dsh 决定是否卸载；GRUB 已恢复原配置（默认解析
+  6.12.107+deb13，既有行为；改默认须另立变更）。
+- [ ] **R17 文档优化迭代（进行中）**：第 1 轮 collab 叙事批已整体闭合；本文件与本批对齐为其
+  剩余项之一；incidents 三类提升（i4 Oops/dev_rsrc ABI、脚本缺陷重蹈、越界产物）待做；
+  随后第 2 轮三基线代际文档结构。
+
 ## 许可证与研发验证
 
 - [ ] **发布阻断：权利链人工审查**。3 个 `Strictly Confidential` 文件与 70 个无许可文件已从公开
@@ -38,7 +55,9 @@
   让 DDCCI 回退模式创建 panel 但不注册 backlight device。R13 阶段 2 通过，R14 随后完成
   D1-D6 共 6/6 deep 正式矩阵（接电/电池、无外屏/外屏），当前设备正式交付 `4.0.2-i3`。
   P3 回传建议为“已修复，待 dotfiles 复核”；display 025 仍为独立 UNVERIFIED 实验，不进入
-  i1/i2/i3。DDCCI 无亮度控制，`hwinfo_g0m.bin` 仍缺失。见
+  i1/i2/i3。DDCCI 无亮度控制，`hwinfo_g0m.bin` 仍缺失。
+  **2026-09-20 对齐注**：R16 起主线已切至 fantgpu 血缘（5.0.0-iN，当前 i6 诊断线）；本条
+  deepin 血缘结论作为历史与回退基线保留，4.0.2-i3 现为回滚卡（SHA `177133ee…`）。见
   [`026-suspend-resume-dvfs-lifecycle.md`](../patches/026-suspend-resume-dvfs-lifecycle.md)、
   [`028-suspend-resume-hal-temp-monitor-delay.md`](../patches/028-suspend-resume-hal-temp-monitor-delay.md)、
   [`029-suspend-resume-ddcci-panel.md`](../patches/029-suspend-resume-ddcci-panel.md) 和

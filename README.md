@@ -5,7 +5,8 @@
 本项目自有工作采用 GPL-3.0-or-later；fork 上游 MIT 内容与导入源码/厂商载荷按各自声明处理，
 当前再分发边界见[许可证与再分发边界](docs/project/licensing.md)（唯一权威文档）。
 
-> 最后更新：2026-09-03 —— 当前驱动包和正式交付版本为 `4.0.2-i3`（patch-024 + patch-026 +
+> 最后更新：2026-09-20 —— 当前主线为 fantgpu 5.0.0-iN（i6 诊断线，R5=FAIL 悬案中，见
+> [status.md](docs/project/status.md)）。历史（2026-09-03 记录）：当前驱动包和正式交付版本为 `4.0.2-i3`（patch-024 + patch-026 +
 > patch-028 + patch-029）；R14 在当前设备完成 6/6 deep 验收。patch-025-display 继续保持
 > UNVERIFIED，不进入 i3；DDCCI 不提供亮度控制，`hwinfo_g0m.bin` 仍缺失。
 
@@ -16,7 +17,7 @@
 | 发行版 / 内核 | Debian Trixie (13)，kernel `6.12.101+deb13-amd64` |
 | CPU 平台 | Hygon x86_64 |
 | GPU | Innosilicon Fantasy II-M，PCI `1ec8:9810`，2 GiB VRAM（PowerVR DDK V119 RTM 谱系） |
-| 当前驱动包 | `4.0.2-i3`：固定 epoch `1788796800`，SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；R14 接电/电池、无外屏/外屏 6/6 deep 通过 |
+| 回退基线（历史交付） | `4.0.2-i3`：固定 epoch `1788796800`，SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；R14 接电/电池、无外屏/外屏 6/6 deep 通过；R16 起主线为 fantgpu 5.0.0-iN |
 | 最近失败候选 | `4.0.2-i1`：patch-024 + patch-026；R11 deep 恢复时温度 work 在 PVR 上电前触发 PowerLock/POWERED_OFF，已回退，仅供历史复现 |
 | 当前 suspend 交付 | `4.0.2-i3`：i2 + patch-029 DDCCI panel 创建恢复（继承 024/026/028），不含 display 025；DDCCI 无 backlight device，`hwinfo_g0m.bin` 缺失不阻断当前矩阵 |
 | 已验证能力 | Vulkan 1.3.264 枚举及队列提交 / OpenCL 3.0 枚举及 kernel 读回 / GL 4.3 core + GLES 3.2 / VA-API H.264 Main + HEVC Main 实际硬解（30 帧 320x240 NV12 输出校验）/ DMA-BUF 同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 / DRM+fbdev / 桌面硬件 GL / HDA 与 PipeWire 枚举 |

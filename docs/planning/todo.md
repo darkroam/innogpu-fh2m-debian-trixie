@@ -174,3 +174,10 @@ Picom patch、配置和安装流程已按 `picom-integration.md` 完成吸纳。
   通过（CRTC 1 vblank 正常、CRTC 0/2 立即 EINVAL）。
 - [x] 落地内核接口修复（三）：foreign DMA-BUF 生命周期（patch-027 / patched-27）已实机验证
   通过（DRI3/PRIME 自导入回归正常；foreign 路径待第二设备）。
+
+## 2026-09-20 · R17 文档迭代第 1 轮对齐
+
+- R17 文档优化迭代启动：四轮流程入规约 §十二（三方合并版 12.1-12.7）；
+  第 1 轮 collab 叙事批整体闭合（R01-R15 28 件 + R16 四切片 261 事件）；
+  本批对齐：status.md 当前基线/未解决项更新至 fantgpu 5.0.0 主线与 R5=FAIL 悬案，
+  current-work.md 增「R5 悬案与 fantgpu 5.0.0 主线」节，本条登记。

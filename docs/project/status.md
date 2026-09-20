@@ -1,6 +1,6 @@
 # 当前状态与问题清单
 
-最后更新：2026-09-03
+最后更新：2026-09-20
 
 本文件是项目当前运行状态的唯一摘要。历史过程、补丁细节和故障推导分别见
 [阶段补丁](../patches/README.md) 与 [事故和经验](../incidents/README.md)。
@@ -9,9 +9,12 @@
 
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
-| 当前运行驱动 | `4.0.2-i3` 已安装并重启至 `6.12.101+deb13-amd64`；R14 接电/电池、无外屏/外屏 6/6 deep 正式矩阵通过，包 SHA-256 为 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662` | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
-| 最近失败候选 | `4.0.2-i1`（patch-024 + lifecycle 026）：R11 deep 恢复时独立温度 work 在 PVR 上电前触发 PowerLock POWERED_OFF，画面未恢复；已回退 `4.0.0-i1`，只保留历史复现入口 | [patch-026-lifecycle](../patches/026-suspend-resume-dvfs-lifecycle.md)、[patch-028](../patches/028-suspend-resume-hal-temp-monitor-delay.md) |
-| 当前正式交付 | `4.0.2-i3` = patch-024 + patch-026 + patch-028 + patch-029，epoch `1788796800`；不含 UNVERIFIED 的 display 025。DDCCI 不注册 backlight device，`hwinfo_g0m.bin` 仍缺失 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
+| 当前运行驱动 | **fantgpu 5.0.0-i6（诊断线，非交付）**，运行于 `6.12.101+deb13-amd64`；fantgpu 3.3.8.126 F0 源 + 030-NNN 补丁链（18 项，030-001..034）；R5 挂起调查中（见下） | [030 映射表](../planning/030-mapping-table.md)、[patch-provenance](../planning/patch-provenance.md) |
+| 回退基线 | `4.0.2-i3`（deepin 血缘最终交付）：R14 6/6 deep 矩阵通过；包 SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；回滚卡命令见 maintenance-policy | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
+| 当前主线目标 | `5.0.0-iN`（tag `fantgpu-5.0.0-iN` **未打**）；发布阻断：`postinst_current_kernel_only=release_blocker`、`validation-results` 未签、R5=FAIL 未解除 | [030 映射表](../planning/030-mapping-table.md) |
+| 历史当前态（2026-09-03 记录） | `4.0.2-i3` 已安装并重启至 `6.12.101+deb13-amd64`；R16 迁移后降为回退基线 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
+| R5 挂起悬案 | `pm_test=devices` 绑定 fantgpu 硬挂；两轮诊断内核（r5dpm1/r5dpm2）复核判定 `OUTSIDE_COVERAGE`（DPM 机制无动态正样）；`r5_root_cause=unresolved`；**禁止重跑** | [r5 调查计划](../planning/r5-suspend-investigation-plan.md)、[r5dpm2 设计](../planning/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
+| 诊断内核 | `6.12.101-r5dpm1`/`6.12.101-r5dpm2` 已安装并保留（卸载待 dsh 定）；GRUB 已恢复原配置（默认启动解析 6.12.107+deb13，既有行为） | [步骤 8 证据](../planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-result.txt) |
 | 稳定图形历史基线 | 历史记录：`3.3.3.42-patched-21` 已安装、重启并完成本机 PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收；不是当前运行包 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | 历史运行基线 | `3.3.3.42-patched-20` 曾完成运行验收，但 deb 含收敛前辅助载荷，仅保留为历史证据 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
 | 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |
@@ -52,6 +55,15 @@
 | deb 构建不可复现（目录 mtime 未归一化） | release 审阅修复构建器（整树 mtime 归一化）；p25/26/27 重建为可复现 SHA | [release 审阅](../planning/release-review-2026-08-20.md) |
 
 ## 当前未解决或需要后续处理
+
+- **R5 挂起悬案（最高优先，未解决）**：fantgpu 绑定下 `pm_test=devices` 硬挂；已排除自旋类与
+  四可达设备回调阶段（两轮诊断内核全静默）；候选收敛 pre-DPM 段/等待区/timer 不可达；
+  `r5_dpm_watchdog_capture_reviewed=OUTSIDE_COVERAGE`、`r5_root_cause=unresolved`。冻结：
+  R5=FAIL、禁止重跑、U1/U2 未执行、validation-results 未签、tag `fantgpu-5.0.0-iN` 未打。
+  下一阶段方向待用户选（停批冻结 / 本地扩展轮 / 带外通道）。
+- **R17 文档优化迭代（进行中）**：第 1 轮 collab 叙事批已整体闭合（R01-R15 + R16 四切片）；
+  剩余：docs/planning 与实现对齐（本条即其一）、incidents 三类提升；随后第 2 轮三基线代际
+  文档结构。规约 §十二为权威流程。
 
 - **suspend/resume P1（本机已修复，保留范围边界）**：`4.0.0-i1` 的 deep S3 resume 已复现 PreClock 在 PVR 电源域 OFF 时取锁失败；
   patch-024 / `4.0.1-i1` 随后完成了有效 s2idle entry/exit，且没有 3900372/PowerLock/PVR 计数增长，
