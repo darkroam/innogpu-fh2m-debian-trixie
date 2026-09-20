@@ -5,12 +5,12 @@
 驱动回退顺序固定为：
 
 ```text
-失败候选回退：4.0.1-i1 -> 4.0.0-i1 -> patched-27
-当前链：4.0.0-i1 -> patched-27 -> patched-26 -> patched-25 -> patched-24 -> patched-23 -> patched-22
+当前主线回退（2026-09-20 对齐）：5.0.0-iN（诊断）故障 -> 回滚卡 4.0.2-i3（SHA `177133ee…`）
+-> 4.0.0-i1 -> patched-27 -> patched-26 -> patched-25 -> patched-24 -> patched-23 -> patched-22
 历史链：patched-22 -> patched-21 -> patched-17 -> patched-8
 ```
 
-当前设备运行 `4.0.0-i1`；**首选回退 = patched-27**（见下节）。patched-17 是深层保守回退点，
+当前设备运行 `5.0.0-i6`（诊断线）；**首选回退 = 4.0.2-i3（回滚卡）**，再深为 patched-27（见下节）。patched-17 是深层保守回退点，
 patched-8 只在 patched-17 仍不能启动时使用。执行任何升级前都应把 `patched-27`、`patched-17`、
 `patched-8` 三个 deb 放入 `debs/`，并保留 SSH 或真实 TTY 恢复通道。
 
