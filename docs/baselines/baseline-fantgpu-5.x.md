@@ -17,7 +17,7 @@
 | 目标提交日期（+08:00） | 2026-09-16 17:43:39 | Git commit |
 | tag / tag 创建日期 | fantgpu 5.0.0-iN 未打 tag / 不适用 | meta 中 `tag` 是预留名称，不证明 tag 存在 |
 | 载体 | F0 + 030 链物化为 O_stage，i6 meta 实列 18 项 | [i6 meta](../planning/evidence/o-stage/5.0.0-i6/5.0.0-i6.meta.json) |
-| ABI 边界 | F 同源用户态、固件与 shipped objects；不得复用 Deepin 私有 ABI 假设 | [O_stage 方案](../planning/o-stage-integration-plan.md)、[i4 ABI 事故](../incidents/r5-i4-oops-dev-rsrc-abi.md) |
+| ABI 边界 | F 同源用户态、固件与 shipped objects；不得复用 Deepin 私有 ABI 假设 | [O_stage 方案](../design/o-stage-integration-plan.md)、[i4 ABI 事故](../incidents/r5-i4-oops-dev-rsrc-abi.md) |
 | 代表 deb | `fantgpu-fh2m-trixie_5.0.0-i6.deb`，A/B 本地实物 SHA 均与已提交记录一致 | [构建摘要](../planning/evidence/o-stage/build-5.0.0-i6.sha256)；下述归档路径 |
 | 回滚物 | `build/innogpu-fh2m-trixie_4.0.2-i3.deb`，SHA-256 前缀 `177133eebda6` | [代二完整身份](baseline-deepin-4.x.md)、[恢复规程](../user/recovery.md) |
 

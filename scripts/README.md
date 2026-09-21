@@ -127,7 +127,7 @@ runtime 统计、manifest 原包 SHA、过期状态断言和 Markdown 表格结�
 5.0.0-i6.meta.json 不可变 provenance；版本族经 OSTAGE_* 注入，缺省 5.0.0-i6 代）写入 `docs/planning/evidence/o-stage/5.0.0-i6/`；i2/i3/i4/i5 五件保持失败档案锚点不覆盖（阶段三证据/产物目录；
 O-4 F0 输入只读）；tar 1.35/zstd 1.5.7 精确版本锁（不匹配 exit 7）、输出目录 realpath 边界（越界
 exit 78）、排他锁（占用 exit 6）、journal+fsync+恢复、禁止混代；故障注入钩子 `OSTAGE_FAIL_INJECT`
-（仅测试）。契约 = `docs/planning/o-stage-integration-plan.md` §一；回归测试：
+（仅测试）。契约 = `docs/design/o-stage-integration-plan.md` §一；回归测试：
 `tests/unit/run-o-stage-materialize-tests.sh`（19 用例：路径越界/symlink 拒绝/SHA 不符/坏输入/
 工具版本锁/事务故障注入（commit 与 staged_done）/恢复/幂等/链点 fail-closed/回滚失败
 rolling_back 保留现场/人工裁决后恢复/committed 写入失败自洽恢复/未知与损坏 journal

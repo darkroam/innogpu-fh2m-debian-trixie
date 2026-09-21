@@ -1,7 +1,7 @@
 path	sha256	content_class	observed_declaration	normalized_spdx	license_references	module_license_metadata	copyright_notices
 drivers/Kbuild	d5a5496a25bc85f7e9f91d7d3c042695e508c4e473cae5473347cd15b784f749	unclassified	no mechanically recognized declaration	NOASSERTION	-	-	-
 drivers/Makefile	9e35f6f8dfaac015210b1704daca6cda1b8ff27e07c20e41109bd79b597bb68d	dual-mit-gpl	Dual MIT/GPLv2	MIT OR GPL-2.0-only	GPL-COPYING,MIT-COPYING	-	Copyright     Copyright (c) Innosilicon Technology Ltd. All Rights Reserved
-drivers/README.md	c850d83690490d8bd17ef25b25ee536985078625db0bfe93bd1456d75cf4a58c	project-doc	project-owned; root LICENSE scope (original layer)	GPL-3.0-or-later	LICENSE	-	-
+drivers/README.md	3f051746fcbb5ce8d646853c5af06fe57f5c63d20feadb2271978cd6e106ea5e	project-doc	project-owned; root LICENSE scope (original layer)	GPL-3.0-or-later	LICENSE	-	-
 drivers/cfg_detect.sh	b8872bbd5559db5f5ad778063ea0f3541949e1d55bc0cf208206d6c2e2727f57	unclassified	no mechanically recognized declaration	NOASSERTION	-	-	-
 drivers/dkms.conf	d0ffebdc012f7a1ad37c9494225dbbbdef5fcaa4cf0cda074f0d2b3f04ee9002	unclassified	no mechanically recognized declaration	NOASSERTION	-	-	-
 drivers/dkms.post_remove	1e11bbf92451141d08d849dbbe88fa15679418dba59368e12107bebba19756b0	unclassified	no mechanically recognized declaration	NOASSERTION	-	-	-

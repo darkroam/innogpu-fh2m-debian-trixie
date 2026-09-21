@@ -9,11 +9,11 @@
 
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
-| 当前运行驱动 | **fantgpu 5.0.0-i6（诊断线，非交付）**，运行于 `6.12.101+deb13-amd64`；fantgpu 3.3.8.126 F0 源 + 030-NNN 补丁链（18 项，030-001..034）；R5 挂起调查中（见下） | [030 映射表](../planning/030-mapping-table.md)、[patch-provenance](../planning/patch-provenance.md) |
+| 当前运行驱动 | **fantgpu 5.0.0-i6（诊断线，非交付）**，运行于 `6.12.101+deb13-amd64`；fantgpu 3.3.8.126 F0 源 + 030-NNN 补丁链（18 项，030-001..034）；R5 挂起调查中（见下） | [030 映射表](../planning/030-mapping-table.md)、[patch-provenance](../design/patch-provenance.md) |
 | 回退基线 | `4.0.2-i3`（deepin 血缘最终交付）：R14 6/6 deep 矩阵通过；包 SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；回滚卡命令见 maintenance-policy | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | 当前主线目标 | `5.0.0-iN`（tag `fantgpu-5.0.0-iN` **未打**）；发布阻断：`postinst_current_kernel_only=release_blocker`、`validation-results` 未签、R5=FAIL 未解除 | [030 映射表](../planning/030-mapping-table.md) |
 | 历史当前态（2026-09-03 记录） | `4.0.2-i3` 已安装并重启至 `6.12.101+deb13-amd64`；R16 迁移后降为回退基线 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
-| R5 挂起悬案 | `pm_test=devices` 绑定 fantgpu 硬挂；两轮诊断内核（r5dpm1/r5dpm2）复核判定 `OUTSIDE_COVERAGE`（DPM 机制无动态正样）；`r5_root_cause=unresolved`；**禁止重跑** | [r5 调查计划](../planning/r5-suspend-investigation-plan.md)、[r5dpm2 设计](../planning/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
+| R5 挂起悬案 | `pm_test=devices` 绑定 fantgpu 硬挂；两轮诊断内核（r5dpm1/r5dpm2）复核判定 `OUTSIDE_COVERAGE`（DPM 机制无动态正样）；`r5_root_cause=unresolved`；**禁止重跑** | [r5 调查计划](../design/r5-suspend-investigation-plan.md)、[r5dpm2 设计](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
 | 诊断内核 | `6.12.101-r5dpm1`/`6.12.101-r5dpm2` 已安装并保留（卸载待 dsh 定）；GRUB 已恢复原配置（默认启动解析 6.12.107+deb13，既有行为） | [步骤 8 证据](../planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-result.txt) |
 | 稳定图形历史基线 | 历史记录：`3.3.3.42-patched-21` 已安装、重启并完成本机 PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收；不是当前运行包 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | 历史运行基线 | `3.3.3.42-patched-20` 曾完成运行验收，但 deb 含收敛前辅助载荷，仅保留为历史证据 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |

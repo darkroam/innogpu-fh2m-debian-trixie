@@ -2,7 +2,7 @@
 
 ## 当前代：030-034/i6（2026-09-16，待初审/终审）
 
-- i5 两个正常态探针均返回并健康恢复；R5 仍 FAIL，转 stop-stage 诊断。实现边界及恢复证明见 [030-032 设计 §11](r5-suspend-030-032-debug-design.md)。
+- i5 两个正常态探针均返回并健康恢复；R5 仍 FAIL，转 stop-stage 诊断。实现边界及恢复证明见 [030-032 设计 §11](../planning/r5-suspend-030-032-debug-design.md)。
 - 当前 materialize/builder 使用 18 条显式链，链尾 `030-034`，树 hash `5f6a5347c7e217ba3f7c5b71fdcad520148e0bc71231ab95fb023655865d11da`；固定 epoch `1789516800`，仅构建 `5.0.0-i6`，不安装、不重启。
 - 五件写入 `docs/planning/evidence/o-stage/5.0.0-i6/`：snapshot、两件 sidecar、manifest、`5.0.0-i6.meta.json`；前代五件与 build SHA 保持不变。i5 17 链仍是失败/探针证据锚点，不能使用新快照重构建。
 - ABI 门保持：i6 `hal.h` 逐字等于 i5，`dev_rsrc` 定义等于 i3；真实 `.ko` 经过 BTF/pahole 大小/成员/偏移检查。发布必须逆序移除 034/033/032 并实跑七层门禁。

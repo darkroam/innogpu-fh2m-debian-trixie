@@ -9,7 +9,7 @@
   复核判定 `OUTSIDE_COVERAGE`，根因未定位。冻结：禁止重跑任何 pm_test/watchdog；下一方向待用户
   选择（停批冻结 / 本地扩展轮——dpm_prepare 前置段 instrumentation 或 O-vs-F 继续反编译 / 带外
   通道）。证据链：
-  [r5 调查计划](r5-suspend-investigation-plan.md)、
+  [r5 调查计划](../design/r5-suspend-investigation-plan.md)、
   [步骤 8 结果](../planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-result.txt)。
 - [ ] **发布阻断（fantgpu 5.0.0-iN 线）**：① `postinst_current_kernel_only=release_blocker`（postinst
   只构建当前运行内核）；② `validation-results.json` 未签；③ tag `fantgpu-5.0.0-iN` 未打；

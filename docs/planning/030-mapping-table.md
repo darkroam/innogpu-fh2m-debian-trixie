@@ -181,7 +181,7 @@ F0 内容、不预判阶段三决策**）：
 
 ### 三.3 来源 patch SHA-256 与顺序（2026-09-08 sha256sum 实测复核）
 
-SHA-256 来源：`docs/planning/patch-provenance.md` 记录值（9 项启用 +
+SHA-256 来源：`docs/design/patch-provenance.md` 记录值（9 项启用 +
 4 项关闭）+ 工具 SHA（patch-000）。19 项来源文件（含 5 项此前 TBD）
 均已由 sha256sum 实测，记录值与磁盘内容一致。顺序约束来源：
 patch-provenance 启用集合（patched-27 开关集合）+
@@ -364,7 +364,7 @@ O-1 视为**全闭合**（阶段一即可进入终审）**当且仅当**：
 ## 七、配套记录（v12）
 
 - `docs/planning/030-patch-rederivation-design.md`（v13 框架本体，三阶段方案 + 分阶段门槛 + tar.zst 可复现规范详 §五.3 + 显式 Git tag 流程详 §五.4 + tar/zstd 精确版本锁定详 §5.3 约束表 + reconcile 4 字段校验详 §5.3 reconcile 命令 + 持久化事务目录 + 结构化 journal 协议详 §5.3 + `--reference-manifest` CLI 解析详 §5.3）
-- `docs/planning/030-d-stage-audit.md`（O-2 v13：D → D_stage 完整性审计 +
+- `docs/design/030-d-stage-audit.md`（O-2 v13：D → D_stage 完整性审计 +
   tree-manifest `SRC_ROOT` 显式 export + 9 类 symlink 互斥 + F0 完全隔离
   + 9 文件输出 = 8 稳定证据 + 1 运行时 genesis.json + tar.zst 可复现规范
   + validate-then-replace + TSV 字段编码 + manifest schema 显式两路径检查

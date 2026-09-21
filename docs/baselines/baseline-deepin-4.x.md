@@ -17,7 +17,7 @@
 | tag 与目标提交 | `deepin-4.0.2-i3` → `b30c8071e595` | annotated tag；不可移动 |
 | 目标提交日期（+08:00） | 2026-09-09 12:41:23 | Git commit |
 | tag 创建日期（+08:00） | 2026-09-09 12:48:17 | Git taggerdate；与目标提交日期分列 |
-| 载体 | Deepin 202504 源码树、manifest 黑盒载荷及迁移补丁；终点组合为 024/026-lifecycle/028/029 | [provenance](../planning/patch-provenance.md)、[patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
+| 载体 | Deepin 202504 源码树、manifest 黑盒载荷及迁移补丁；终点组合为 024/026-lifecycle/028/029 | [provenance](../design/patch-provenance.md)、[patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | ABI 边界 | 用户态、固件与 shipped objects 保持 Deepin 同源；源码迁移不等于闭源核心源码化 | [迁移设计](../planning/source-tree-migration.md) |
 | 代表 deb / 回滚卡 | `build/innogpu-fh2m-trixie_4.0.2-i3.deb`，本轮实物 SHA 与记录一致 | tag 说明；[维护策略](../project/maintenance-policy.md) |
 | 再下一层回退 | `4.0.0-i1`，随后为 patched-27；具体操作以 [recovery](../user/recovery.md) 为准 | 不执行本页引用的历史命令 |

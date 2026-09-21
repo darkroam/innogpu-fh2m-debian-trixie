@@ -35,10 +35,19 @@
 [`tools/README.md`](../tools/README.md) 记录构建期变换与诊断探针；
 [`tests/README.md`](../tests/README.md) 记录本仓库可重复测试边界。
 
+设计与计划按主题查阅：[R5 调查方案](design/r5-suspend-investigation-plan.md)、
+[本机 watchdog 抓现场](design/r5-watchdog-local-capture-design.md)、
+[r5dpm1 诊断内核](design/r5-dpm-watchdog-diagnostic-kernel-design.md)、
+[r5dpm2 诊断内核](design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md)；
+[O_stage 集成](design/o-stage-integration-plan.md)、[可复现输入](design/c3-a-4-reproducible-input-plan.md)、
+[5.0.0-i2 验证计划](design/5.0.0-i2-validation-plan.md)；
+[030 关闭项裁决](design/030-closed-items-decision.md)、[D_stage 审计契约](design/030-d-stage-audit.md)、
+[补丁溯源](design/patch-provenance.md)。设计页保留各自记录时点的边界，不授予执行许可。
+
 ## 基线代际阅读入口
 
 R17 第 2 轮草稿，待 qoder/dsh 审查。按本代工作与前代差异阅读；补丁、事故、设计和证据
-仍保留原路径与权威范围。三代名称描述维护阶段，不是 Git 祖先链，也不指 `baselines/` 运行结果目录。
+保留各自权威范围，路径按导航查阅。三代名称描述维护阶段，不是 Git 祖先链，也不指 `baselines/` 运行结果目录。
 
 | 代际 | 阅读页 | 当前角色与边界 |
 | --- | --- | --- |
@@ -58,6 +67,7 @@ R17 第 2 轮草稿，待 qoder/dsh 审查。按本代工作与前代差异阅�
 | `baselines/` | 三篇基线代际阅读页 | 代际历史与差异；不同于仓库根 `baselines/` 运行结果 |
 | `patches/` | 与代码补丁一一对应的阶段说明 | 补丁设计与验证 |
 | `incidents/` | 已定位事故和经验积累 | 失败过程与诊断边界 |
+| `design/` | 设计、集成方案、验证计划与配套契约 | 设计及其历史裁决；当前状态和执行放行另行确认 |
 | `investigations/` | 调查、评估、能力普查与历史接入记录 | 保留各文档的事实、计划与验证边界 |
 | `state/` | 挂起项 | 暂不推进事项及其恢复条件；当前结论仍由 `project/status.md` 管理 |
 | `planning/` | 当前待办、已完成时序、设计及冻结证据 | 迁移进行中；工具或冻结引用绑定的文件保留原位，`current-work.md` 管待办、`todo.md` 管已完记录 |
