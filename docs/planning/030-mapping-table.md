@@ -3,7 +3,7 @@
 > 创建日期：2026-09-05（v5: 2026-09-05 dsh 三阶段返工指令后；v6: 2026-09-05 codex v5 初审 P1 #2 + P2 #6 闭环后；v7: 2026-09-05 codex v6 初审 P1 #1 + P1 #2 + P2 #6 配套修订后；v8: 2026-09-05 codex v7 初审 8 findings 闭环后（F-only 整体后移阶段三 O-4 / O-2 配套修订 / 9 类 symlink 闭合 / tar.zst 可复现规范）；v9: 2026-09-05 codex v8 初审 6 P1 + 2 P2 闭环后配套标签同步（O-1 主体 v8 决策无变化）；v10: 2026-09-05 codex v9 初审 5 P1 + 3 P2 闭环后配套标签同步（O-1 主体 v9 决策无变化）；v11: 2026-09-05 codex v10 初审 4 P1 + 1 P2 闭环后配套标签同步（O-1 主体 v10 决策无变化）；**v12: 2026-09-05 codex v11 初审 2 P1 + 2 P2 闭环后配套标签同步（O-1 主体 v11 决策无变化；per codex v12 P2 #5 要求 v11 残痕统一为 v12，§五 当前状态 v8 → v12，§七 配套记录 v11 → v12）；v13-v24 未修改（codex v12 初审 4 P1 + 1 P2 / codex v13 初审 2 P1 + 2 P2 / codex v14 初审 2 P1 + 2 P2 / codex v15 初审 2 P1 + 1 P2 / codex v16 初审 2 P1 + 1 P2 / codex v17 初审 2 P1 + 2 P2 / codex v18 初审 2 P1 + 1 P2 / codex v19 初审 1 P1 + 1 P2 / codex v20 初审 3 P1 / codex v21 初审 1 P1 / codex v22 初审 1 P1 / codex v23 初审 1 P1 + 1 P2 全部集中在 O-2 snapshot 协议与审计文档，与 O-1 表本体无直接关系）；**2026-09-07 阶段一开工：§三 19 行追溯 BC 反查填实（per-file-classification.tsv 24 canon 命中 + 未匹配参照登记，新增 §三.1/§三.2；版本保持 v12，O-1 全闭合时升版）**）
 > 起草：qoder
 > 状态：**v12 保持 v11 O-1 主体决策；F-only 3 行保持 excluded-deferred（per codex v7 P1 #1）；v12 仅做配套标签同步（O-1 实质内容未变；codex v9/v10/v11/v12 全部 finding 集中在 O-2 工具 / 框架，与 O-1 表本体无直接关系）**
-> 上游：`fantgpu-base-update-evaluation.md` line 349-371（19 Patch 表）+ line 60-69（P3c 子表）+ line 25-50（P3a/P3b 子表）+ line 351-371（语义项列）
+> 上游：`docs/investigations/fantgpu-base-update-evaluation.md` line 349-371（19 Patch 表）+ line 60-69（P3c 子表）+ line 25-50（P3a/P3b 子表）+ line 351-371（语义项列）
 > 下游：`docs/planning/030-patch-rederivation-design.md` §四 / 阶段一产物
 > **本表所有数值均自 P5 eval ledger 原文反查得到，未估算；TBD 字段均显式标注待哪一步闭合，避免越权。**
 > **v6 重大修订**（per codex v5 P1 #2 + P2 #6）：
@@ -13,7 +13,7 @@
 
 ## 一、19 项台账来源（P5 原文不可变 · 三列分离）
 
-来源：`fantgpu-base-update-evaluation.md` line 349-371 补丁清单（P5 终审定稿）。
+来源：`docs/investigations/fantgpu-base-update-evaluation.md` line 349-371 补丁清单（P5 终审定稿）。
 
 **v6 三列分离（per codex P2 #6）**：
 
@@ -90,7 +90,7 @@
   `no-op` / `pure-rename` / `invalid`），**不包含**任何 F0 决策字段；
 - **阶段三 F0 决策**列：阶段三 O-3 + O-4 闭合后才填入（`absorb` / `adapt` /
   `rewrite` / `base-retain` / `no-030`），**当前全部 TBD**；
-- **追溯 BC**：`fantgpu-base-update-evaluation.md` line 470-492 的 23 BC 标签
+- **追溯 BC**：`docs/investigations/fantgpu-base-update-evaluation.md` line 470-492 的 23 BC 标签
   （仅用于追溯 D 端文件归属，**不涉及 F0**）；
 - **追溯 per-file 证据**：P5 BC 矩阵的 per-file 列表 +
   `tools/r16-classify.py` 输出 8 字段；

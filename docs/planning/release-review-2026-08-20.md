@@ -37,7 +37,7 @@
 | 1 | tag 指向提交与文档/版本/SHA 一致 | 通过：25/26/27 tag 指向各自合并提交；SHA 已更新为可复现值 |
 | 2 | check-release-package / check-docs / shell 语法 / 包边界测试 | 通过：三包 PASS_RELEASE_PACKAGE_BOUNDARIES；check-docs PASS；全部脚本 bash -n 通过；7 项包边界 fixture 通过 |
 | 3 | 原包来源、补丁开关、DKMS 构建、固件/用户态完整性、可复现证据 | 通过：Deepin 202504 原包基线；wrapper 固定开关与 epoch；check-deb-dkms-build 三包 PASS（vermagic 匹配）；可复现性本次修复并验证 |
-| 4 | 当前设备运行验证、跨硬件限制、已知问题、默认安装策略写入文档 | 通过：当前运行 patched-27（README/status/architecture 已同步）；跨硬件矩阵未完成（suspended.md）；已知问题在 status.md |
+| 4 | 当前设备运行验证、跨硬件限制、已知问题、默认安装策略写入文档 | 通过：当前运行 patched-27（README/status/architecture 已同步）；跨硬件矩阵未完成（[suspended.md](../state/suspended.md)）；已知问题在 status.md |
 | 5 | patched-17 回退包可用、回退路径演练 | 通过：回退包在 debs/；2026-08-17 已完成 p23 到 p17 到 p23 演练；当前链 patched-27 到 patched-17 到 patched-8 |
 | 6 | release 附件只上传允许的 deb/哈希/说明 | 通过：上传清单 = 三个可复现 deb + debs/README.md；不含 patched-20 或忽略目录内容 |
 
@@ -53,6 +53,6 @@
 
 ## 遗留事项（不阻断本次发布）
 
-- 跨硬件实机矩阵（扩展坞/多屏/无盖桌面/其他机型）仍未完成，见 suspended.md。
+- 跨硬件实机矩阵（扩展坞/多屏/无盖桌面/其他机型）仍未完成，见 [suspended.md](../state/suspended.md)。
 - 电源/合盖矩阵仍待完成。
 - patched-25/26/27 为增量正确性修复；后续优化候选（invisible READ 预取等）不受影响。

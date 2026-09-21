@@ -3,9 +3,10 @@
 本代以 fantgpu `3.3.8.126` F0 源重新推导 030-NNN 链，当前为 `5.0.0-i6` 诊断线。
 构建可复现和首启健康均不等于发布验收；`R5=FAIL`，根因仍未定位。
 
+本目录 docs/baselines/ 与仓库根 baselines/（运行结果归档）同词异物、互不相关。
 本页为 R17 第 2 轮草稿，待 qoder 初审、dsh 终审。代际事实基准为本机
-`collab/R17-2026-09-19-文档优化迭代/report.md#L359-L380 @ 3e356aba9b5d`（§21）。
-当前结论见 [status](status.md)，前代见 [deepin 4.0.x](baseline-deepin-4.x.md)。
+`collab/R17-2026-09-19-文档优化迭代/report.md#L359-L380 @ b5816b7c5a41`（§21）。
+当前结论见 [status](../project/status.md)，前代见 [deepin 4.0.x](baseline-deepin-4.x.md)。
 
 ## 身份与事实
 
@@ -36,7 +37,7 @@
 先建立 F0、Deepin 基线与编排树身份，再逐项重新裁决补丁语义，形成可按顺序重放的
 030 patch/meta 链。版本物化保留独立快照、manifest 和构建证据，不覆盖失败前代。
 源码语义采用“直接修改 + patch 记录”双轨，见 [030 映射表](../planning/030-mapping-table.md)
-和 [双轨规约](multiagent-collab.md#十一双轨变更纪律两条腿)。
+和 [双轨规约](../project/multiagent-collab.md#十一双轨变更纪律两条腿)。
 
 链的编号不是数量：i6 是 18 个显式条目，链尾为 030-034，含独立的 030-026-lifecycle。
 i4 因探针状态改变共享 `dev_rsrc` 布局而首启 Oops；030-033/i5 改用独立 devres 并增加

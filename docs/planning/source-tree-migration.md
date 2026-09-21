@@ -253,4 +253,4 @@ manifest 哈希与来源包不一致、新旧源码树无法解释地不同、�
 
 - 监督分支 `migration/supervised-source-tree` @ `bd76e91` 中的
   `docs/planning/migration-supervision.md`：监督指南（阶段门槛与暂停条件优先；不在 `main`）。
-- [ddk-v119-mapping.md](ddk-v119-mapping.md)、[release-review-2026-08-20.md](release-review-2026-08-20.md)。
+- [ddk-v119-mapping.md](../investigations/ddk-v119-mapping.md)、[release-review-2026-08-20.md](release-review-2026-08-20.md)。

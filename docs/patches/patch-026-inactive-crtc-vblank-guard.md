@@ -11,7 +11,7 @@
 - 位置：`innosrvkm/pdp0_crtc.c` `pdp0_crtc_enable_vblank()`（第 1114 行）。
 - 现状：真实显示路径（非 nulldisp）直接 `atomic_set(vblank_enable, 1)` 并返回 0，不检查
   CRTC 是否活动、是否有有效 mode。
-- 实测（见 [webkit-dmabuf 调查](../planning/webkit-dmabuf-investigation.md)）：本机 CRTC 1
+- 实测（见 [webkit-dmabuf 调查](../investigations/webkit-dmabuf-investigation.md)）：本机 CRTC 1
   的 vblank 正常（约 15.7–17.7ms 周期），CRTC 0/2 在 300ms 内不返回、CRTC 3 返回 `EINVAL`。
   若用户态（如 GTK 的 vblank monitor 匹配错误）请求未活动 CRTC，会成功创建 monitor 后
   永久阻塞在第一次 relative wait。
@@ -47,5 +47,5 @@
 ## 参考
 
 - 内核 `include/drm/drm_vblank.h` / `drm_crtc.h`：`enable_vblank` 契约。
-- [webkit-dmabuf-investigation.md](../planning/webkit-dmabuf-investigation.md) 静态审计第 2 项
+- [webkit-dmabuf-investigation.md](../investigations/webkit-dmabuf-investigation.md) 静态审计第 2 项
   与"DRM vblank"一节。

@@ -67,7 +67,7 @@
 
 ### WebKit DMA-BUF 调查
 
-- [x] 按 [`webkit-dmabuf-investigation.md`](webkit-dmabuf-investigation.md) 区分 DRM vblank、
+- [x] 按 [`webkit-dmabuf-investigation.md`](../investigations/webkit-dmabuf-investigation.md) 区分 DRM vblank、
   GEM/PRIME 隐式同步和预编译 GBM/EGL 用户态问题。
 - [x] 完成不 modeset 的 vblank、KMS 拓扑和私有 CPU_PREP 路径探测。
 - [x] 用独立 PDP 探针确认 invisible READ mapping 的 `munmap` 无条件逐页回写缺陷。
@@ -149,23 +149,23 @@ patched-17 回退演练已完成。任一验证失败先进入恢复路径和事
 
 显示引擎代码、配置和内部测试已收敛回 dotconfig 维护。本项目当前只保留 Innogpu 设备钩子、会话
 接入和安装边界测试；后续 xdisplay 功能不再在本仓库重复实现。跨项目实机矩阵记录在
-`suspended.md`。
+[`suspended.md`](../state/suspended.md)。
 
-Picom patch、配置和安装流程已按 `picom-integration.md` 完成吸纳。升级上游 Picom 时需要重新
+Picom patch、配置和安装流程已按 [`picom-integration.md`](../investigations/picom-integration.md) 完成吸纳。升级上游 Picom 时需要重新
 审查固定基线 patch。
 
 ## 逆向工程与能力挖掘
 
-状态：评估与能力普查已落档（[reverse-engineering-assessment.md](reverse-engineering-assessment.md)、
-[capability-survey.md](capability-survey.md)）；未完成项已迁入 [当前待办](current-work.md)。
+状态：评估与能力普查已落档（[reverse-engineering-assessment.md](../investigations/reverse-engineering-assessment.md)、
+[capability-survey.md](../investigations/capability-survey.md)）；未完成项已迁入 [当前待办](current-work.md)。
 
 - [x] 能力面普查（静态部分）：RGX 特性表 dump（90 宏）、BVNC 35.V.1632.23、G0M_SOC 变体确认、
-  Vulkan 128 唯一扩展/OpenCL 3.0/VA-API codec/IFBC 静态证据，已落档 [capability-survey.md](capability-survey.md)。
+  Vulkan 128 唯一扩展/OpenCL 3.0/VA-API codec/IFBC 静态证据，已落档 [capability-survey.md](../investigations/capability-survey.md)。
 - [x] 能力面普查（运行时枚举与图形执行）：Vulkan 1.3.264 / OpenCL 3.0 / GLX 4.3 已确认，
   Vulkan/OpenCL 最小执行 PASS；VA-API H264/HEVC profile/entrypoint 已枚举且 H.264 Main/HEVC Main 实际
   解码验证 PASS（30 帧 320x240 NV12 framemd5 输出校验），结果见
-  [capability-survey.md](capability-survey.md)和 [test-strategy.md](../project/test-strategy.md)。
-- [x] 建立 DDK V119 ↔ 开源参照对照表：[ddk-v119-mapping.md](ddk-v119-mapping.md)。
+  [capability-survey.md](../investigations/capability-survey.md)和 [test-strategy.md](../project/test-strategy.md)。
+- [x] 建立 DDK V119 ↔ 开源参照对照表：[ddk-v119-mapping.md](../investigations/ddk-v119-mapping.md)。
   （注：2019 开源 DDK 与 Fuchsia KM 当前不可得，对照基于主线 drm/imagination + Mesa pvr；
   组件映射、UAPI/特性/用户态对比已落档，同谱系源码获取后可按节升级逐函数对照。）
 - [x] 落地内核接口修复（一）：`dma_resv_usage_rw` 转换修复（patch-025 / patched-25）已实机验证

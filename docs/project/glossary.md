@@ -31,4 +31,4 @@
 | `4.0.2-i1` | R11 失败候选：patch-024 + patch-026-suspend-resume-dvfs-lifecycle | epoch 1788624000；deep 时温度 work 提前触发 PowerLock/POWERED_OFF，只供历史复现，禁止安装或交付 |
 | `4.0.2-i2` | R12 候选：i1 + patch-028-suspend-resume-hal-temp-monitor-delay | epoch 1788710400；不含 display 025；仅静态/离线验证，尚未安装或真机 deep 验收 |
 | `4.0.2-i3` | Deepin 历史交付与当前回退基线：i2 + patch-029-suspend-resume-ddcci-panel | epoch 1788796800；继承 patch-024/026/028，不含 display 025；R14 当前设备 6/6 deep 通过；DDCCI 不注册 backlight device，`hwinfo_g0m.bin` 仍缺失；不代表 fantgpu 验收 |
-| `基线代际` | 代一 = [legacy patched 阶段](baseline-legacy-patched.md)（3.3.3.42-patched-N；原包解包+补丁叠加，p27 已属 Deepin）；代二 = [deepin 4.0.x 源码树迁移线](baseline-deepin-4.x.md)；代三 = [fantgpu 5.0.0-iN（当前诊断线）](baseline-fantgpu-5.x.md) | 与 `baselines/`（运行结果目录）区分；代际不是 Git 祖先链（0.5 非 p27 祖先），也不表示发布验收 |
+| `基线代际` | 代一 = [legacy patched 阶段](../baselines/baseline-legacy-patched.md)（3.3.3.42-patched-N；原包解包+补丁叠加，p27 已属 Deepin）；代二 = [deepin 4.0.x 源码树迁移线](../baselines/baseline-deepin-4.x.md)；代三 = [fantgpu 5.0.0-iN（当前诊断线）](../baselines/baseline-fantgpu-5.x.md) | 与 `baselines/`（运行结果目录）区分；代际不是 Git 祖先链（0.5 非 p27 祖先），也不表示发布验收 |

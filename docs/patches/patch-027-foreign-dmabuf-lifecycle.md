@@ -72,4 +72,4 @@
 - 内核 `include/linux/dma-buf.h`：`dma_buf_attach()` 返回 ERR_PTR 语义。
 - 内核 `drivers/gpu/drm/drm_prime.c`：`drm_gem_prime_import_dev()` 的标准
   ops 检查与 attach 错误处理模式。
-- [webkit-dmabuf-investigation.md](../planning/webkit-dmabuf-investigation.md) 静态审计第 3、4 项。
+- [webkit-dmabuf-investigation.md](../investigations/webkit-dmabuf-investigation.md) 静态审计第 3、4 项。

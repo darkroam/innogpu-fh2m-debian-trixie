@@ -225,5 +225,5 @@
 
 ## 证据索引
 
-`tests/README.md`、`scripts/check-docs.sh`、`docs/planning/capability-survey.md`、
+`tests/README.md`、`scripts/check-docs.sh`、`docs/investigations/capability-survey.md`、
 `docs/planning/phase4-device-validation.md`。

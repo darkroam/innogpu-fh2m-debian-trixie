@@ -26,7 +26,7 @@
 
 - **不是性能修复**：WebKit DMA-BUF 调查中"模拟正确 READ reservation usage"的受控 A/B
   （42.47% 对 42.80% CPU）显示本修复对该路径 CPU 无直接改善，见
-  [webkit-dmabuf-investigation.md](../planning/webkit-dmabuf-investigation.md)。
+  [webkit-dmabuf-investigation.md](../investigations/webkit-dmabuf-investigation.md)。
 - 本修复是**正确性修复**：使 CPU 访问前等待语义与 dma_resv 契约一致，消除与 GPU
   并发访问的潜在竞态；后续若有 fence 生命周期问题可在此基础上定位。
 
@@ -69,4 +69,4 @@
 ## 参考
 
 - 内核 `include/linux/dma-resv.h`：`enum dma_resv_usage` 与 `dma_resv_usage_rw()` 定义。
-- [webkit-dmabuf-investigation.md](../planning/webkit-dmabuf-investigation.md) 静态审计第 2 项。
+- [webkit-dmabuf-investigation.md](../investigations/webkit-dmabuf-investigation.md) 静态审计第 2 项。

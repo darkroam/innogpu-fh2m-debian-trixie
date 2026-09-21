@@ -4,9 +4,10 @@
 最终冻结为 `4.0.2-i3`。它是当前 fantgpu 诊断线的回退基线，历史 Deepin 验收不能
 外推为 fantgpu 5.0.0-iN 已通过。
 
+本目录 docs/baselines/ 与仓库根 baselines/（运行结果归档）同词异物、互不相关。
 本页为 R17 第 2 轮草稿，待 qoder 初审、dsh 终审。代际事实基准为本机
-`collab/R17-2026-09-19-文档优化迭代/report.md#L359-L380 @ 3e356aba9b5d`（§21）。
-当前状态见 [status](status.md)，前代见 [legacy patched 阶段](baseline-legacy-patched.md)。
+`collab/R17-2026-09-19-文档优化迭代/report.md#L359-L380 @ b5816b7c5a41`（§21）。
+当前状态见 [status](../project/status.md)，前代见 [legacy patched 阶段](baseline-legacy-patched.md)。
 
 ## 身份与事实
 
@@ -18,7 +19,7 @@
 | tag 创建日期（+08:00） | 2026-09-09 12:48:17 | Git taggerdate；与目标提交日期分列 |
 | 载体 | Deepin 202504 源码树、manifest 黑盒载荷及迁移补丁；终点组合为 024/026-lifecycle/028/029 | [provenance](../planning/patch-provenance.md)、[patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | ABI 边界 | 用户态、固件与 shipped objects 保持 Deepin 同源；源码迁移不等于闭源核心源码化 | [迁移设计](../planning/source-tree-migration.md) |
-| 代表 deb / 回滚卡 | `build/innogpu-fh2m-trixie_4.0.2-i3.deb`，本轮实物 SHA 与记录一致 | tag 说明；[维护策略](maintenance-policy.md) |
+| 代表 deb / 回滚卡 | `build/innogpu-fh2m-trixie_4.0.2-i3.deb`，本轮实物 SHA 与记录一致 | tag 说明；[维护策略](../project/maintenance-policy.md) |
 | 再下一层回退 | `4.0.0-i1`，随后为 patched-27；具体操作以 [recovery](../user/recovery.md) 为准 | 不执行本页引用的历史命令 |
 
 代表 deb 的完整 SHA-256：
@@ -56,7 +57,7 @@ PowerLock 时序竞态、s2idle 红屏及独立温度 work 过早启动；不能
 
 下一代 [fantgpu 5.0.0-iN](baseline-fantgpu-5.x.md) 更换为 F0 源与 030 重推链。
 迁移设计中“取消 patch”的历史表述不废止后来确立的
-[双轨变更纪律](multiagent-collab.md#十一双轨变更纪律两条腿)。
+[双轨变更纪律](../project/multiagent-collab.md#十一双轨变更纪律两条腿)。
 
 ## 溯源与验证边界
 

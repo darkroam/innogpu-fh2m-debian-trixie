@@ -87,4 +87,4 @@ Picom 存在但 GLX 初始化失败时不自动掩盖错误，应先检查日志
 - Picom 补丁不加入 innogpu DKMS deb；两者必须分别安装和回退。
 
 安装、验证和恢复见 `../user/picom-install.md`，实施记录见
-`../planning/picom-integration.md`。
+[`picom-integration.md`](../investigations/picom-integration.md)。

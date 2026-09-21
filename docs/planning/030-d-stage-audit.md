@@ -3,7 +3,7 @@
 > 创建日期：2026-09-05（v5: 2026-09-05 dsh 三阶段返工指令后；v6: 2026-09-05 codex v5 初审 P1 #3 + P2 #5 闭环后；v7: 2026-09-05 codex v6 初审 P1 #2 + P1 #3 + P1 #4 + P1 #5 + P2 #6 闭环后；v8: 2026-09-05 codex v7 初审 P1 #1 + P1 #2 + P1 #3 + P1 #4 + P1 #5 + P1 #6 + P1 #7 + P2 #8 闭环后；v9: 2026-09-05 codex v8 初审 6 P1 + 2 P2 闭环后；v10: 2026-09-05 codex v9 初审 5 P1 + 3 P2 闭环后；v11: 2026-09-05 codex v10 初审 4 P1 + 1 P2 闭环后；v12: 2026-09-05 codex v11 初审 2 P1 + 2 P2 闭环后；v13: 2026-09-05 codex v12 初审 4 P1 + 1 P2 闭环后；v14: 2026-09-05 codex v13 初审 2 P1 + 2 P2 闭环后；v15: 2026-09-05 codex v14 初审 2 P1 + 2 P2 闭环后；v16: 2026-09-05 codex v15 初审 2 P1 + 1 P2 闭环后；v17: 2026-09-05 codex v16 初审 2 P1 + 1 P2 闭环后；v18: 2026-09-05 codex v17 初审 2 P1 + 2 P2 闭环后；v19: 2026-09-06 codex v18 初审 2 P1 + 1 P2 闭环后；v20: 2026-09-06 codex v19 初审 1 P1 + 1 P2 闭环后；v21: 2026-09-06 codex v20 初审 3 P1 闭环后；v22: 2026-09-06 codex v21 初审 1 P1 闭环后；**v23: 2026-09-06 codex v22 初审 1 P1 闭环后**；v24: 2026-09-06 codex v23 初审 1 P1 + 1 P2 闭环后）
 > 起草：qoder
 > 状态：**v24 已修复 v23 一项问题（per codex v23 P1 #1）：回滚 fsync 失败退出码契约冲突——两处伪代码将逐次还原后的 fsync_dir 失败定义为 exit 9，与 §五 Python 契约"所有 fsync_file/fsync_dir 失败均 exit 5"冲突，且错误码表 snapshot 5 未覆盖回滚段 fsync 失败；v24 统一为 exit 5（journal 保持 rolling_back，下次启动重入收敛），伪代码 / 错误码表（snapshot 5 扩展）/ 退出码测试说明同步；并新增 power_loss_rollback_restore_fsync_window 故障场景（回滚还原 mv 后、任一目录 fsync 未完成时断电 → 三态契约：一致事实可重入 / 旧文件双存在 / 均缺失 → 三者事实校验 exit 9 保留证据，fail-closed；per codex v23 P2 #2）；故障注入 29 场景（+1）+ genesis schema 2.4 / fault_injection_tests 13.0**
-> 上游：`fantgpu-base-update-evaluation.md`（P5 评估产出）
+> 上游：`docs/investigations/fantgpu-base-update-evaluation.md`（P5 评估产出）
 > 下游：`docs/planning/030-patch-rederivation-design.md` §四.5 / §八 / §〇.1
 > 配套：`docs/planning/030-mapping-table.md`（O-1 v12）
 > **本文件为阶段一 O-2 方法论定稿 + 生成脚本占位 + 工具链规范 + tree-manifest
