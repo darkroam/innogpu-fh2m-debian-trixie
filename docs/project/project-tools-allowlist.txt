@@ -10,6 +10,9 @@ LICENSES/LGPL-2.1-only.txt
 LICENSES/MIT.txt
 LICENSES/MPL-2.0.txt
 LICENSES/README.md
+docs/baselines/baseline-deepin-4.x.md
+docs/baselines/baseline-fantgpu-5.x.md
+docs/baselines/baseline-legacy-patched.md
 README.md
 THIRD_PARTY_NOTICES.md
 baselines/README.md
@@ -186,9 +189,7 @@ docs/planning/suspended.md
 docs/planning/todo.md
 docs/planning/webkit-dmabuf-investigation.md
 docs/project/architecture.md
-docs/project/baseline-deepin-4.x.md
-docs/project/baseline-fantgpu-5.x.md
-docs/project/baseline-legacy-patched.md
+
 docs/project/audio-management.md
 docs/project/code-analysis.md
 docs/project/compositor-management.md
