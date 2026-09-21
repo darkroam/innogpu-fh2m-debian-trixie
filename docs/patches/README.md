@@ -2,9 +2,20 @@
 
 每个补丁文件只描述一个可独立审查的变更。源码 diff 位于仓库 `patches/`；stage-000 因目标是厂商
 预编译对象，使用 `tools/patch-gpupll-object.py` 执行严格字节契约。本目录记录各阶段的目的、应用
-条件、验证证据和回退边界。构建入口只允许以 Deepin 202504 完整原包为载荷基线。
+条件、验证证据和回退边界。Deepin 与 fantgpu 分线使用各自锁定来源，不得混配；
+当前版本角色与执行冻结见 [status](../project/status.md)。
 
-**分类说明（`patches/` 目录内两类内容）**：
+## fantgpu 030 链
+
+`5.0.0-i6` 的 O_stage 已含 030 链 18 项，编号非连续，不能把 `030-001..034` 当作 34 项。
+逐项对应以 [030 映射表](../planning/030-mapping-table.md)、
+[O_stage 设计](../design/o-stage-integration-plan.md) 和
+[i6 meta](../planning/evidence/o-stage/5.0.0-i6/5.0.0-i6.meta.json) 为准。
+030-032 探针破坏 shipped ABI、030-033 改用独立 devres 的经过见
+[i4 Oops 事故](../incidents/r5-i4-oops-dev-rsrc-abi.md)。ABI 修正不解除 R5=FAIL；
+OUTSIDE_COVERAGE、禁止重跑、U1/U2 未执行、validation-results 未签、未打 tag 均保持。
+
+**以下分类为 Deepin 补丁与组件的历史记录，计数不含 030 链**：
 
 - `patches/*.patch`（18 个源码 diff：001–009、023–029，以及显示恢复候选
   `025-suspend-resume-display.patch` 和 lifecycle 候选
@@ -56,7 +67,7 @@ patched-24 不增加新的设备行为补丁；它沿用 patched-23 的补丁集
 
 ## 构建顺序
 
-**当前新架构（运行/交付 `4.0.2-i3`；`4.0.0-i1` 为首层回退；`4.0.2-i1` 已失败）**：
+**Deepin 源码树线（历史交付、当前回退 `4.0.2-i3`；`4.0.0-i1` 为其首层回退；`4.0.2-i1` 已失败）**：
 
 ```text
 Deepin 202504 原 deb
@@ -122,7 +133,7 @@ patched-19/20 的固定 wrapper 已改为拒绝执行，因为当前源码的辅
   deep 恢复时温度 work 仍提前触发 PowerLock/POWERED_OFF，保留历史复现入口但不得安装或交付。
 - `4.0.2-i2`：R12 历史静态/离线候选，固定 epoch `1788710400`；在 i1 上增加 patch-028，
   不含 UNVERIFIED 的 display 025。不得作为当前安装候选，deep 必须另获批准。
-- `4.0.2-i3`：当前正式交付版本，固定 epoch `1788796800`，SHA-256
+- `4.0.2-i3`：Deepin 历史交付、当前回退基线，固定 epoch `1788796800`，SHA-256
   `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；在 i2 上增加
   patch-029，让 DDCCI 回退模式创建 panel 但不注册 backlight device；不含 display 025。
   R14 已完成接电/电池、无外屏/外屏 6/6 deep，结论仅覆盖当前设备与该矩阵。

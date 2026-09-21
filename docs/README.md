@@ -46,7 +46,7 @@
 
 ## 基线代际阅读入口
 
-R17 第 2 轮草稿，待 qoder/dsh 审查。按本代工作与前代差异阅读；补丁、事故、设计和证据
+三篇于 R17 第 2 轮完成审查并提交（1bf294a），R18 批 1 迁入本目录。按本代工作与前代差异阅读；补丁、事故、设计和证据
 保留各自权威范围，路径按导航查阅。三代名称描述维护阶段，不是 Git 祖先链，也不指 `baselines/` 运行结果目录。
 
 | 代际 | 阅读页 | 当前角色与边界 |
@@ -73,6 +73,17 @@ R17 第 2 轮草稿，待 qoder/dsh 审查。按本代工作与前代差异阅�
 | `planning/` | 当前待办、已完成时序、设计及冻结证据 | 迁移进行中；工具或冻结引用绑定的文件保留原位，`current-work.md` 管待办、`todo.md` 管已完记录 |
 | `user/` | 安装、验证、显示使用、Picom 和恢复 | 面向操作者的步骤 |
 | `archive/` | 不再变化但仍需追溯的旧记录 | 历史只读材料 |
+
+状态与时序的分工：[status](project/status.md) 管当前结论，
+[current-work](planning/current-work.md) 管待办，[suspended](state/suspended.md) 管暂停条件，
+[todo](planning/todo.md) 是已完成事项索引，[history](planning/history.md) 解释关键演进及其证据。
+current-work/todo/history 等六篇仍受工具路径绑定；四篇 meta 引用目标和 evidence 冻结区留在
+planning。解除工具绑定、叙事提升至 history/、D4 归档分别另批，目录迁移不代表运行问题闭合。
+archive 现有 [2026-07-08 清理记录](archive/cleanup-20260708.md) 仅代表当时状态；
+[Phase 4 验证](planning/phase4-device-validation.md) 与 [release 审阅](planning/release-review-2026-08-20.md)
+仍在原位，归档候选不等于已经归档。
+R18 的 D4 归档条件为：无当前入口职责、有替代或已结案且台账可追溯、不在冻结区且不被冻结指针引用、
+旧路径留跳转且原文保全、单独审批不与迁移混批。未满足前只登记候选。
 
 根目录下 `docs/new-device-install.md` 与 `docs/cleanup-20260708.md` 是为旧链接保留的 compatibility
 stub；权威内容分别位于 `docs/user/` 和 `docs/archive/`，不得在 stub 中复制或维护第二份正文。

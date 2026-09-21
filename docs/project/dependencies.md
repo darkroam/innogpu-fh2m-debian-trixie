@@ -1,6 +1,11 @@
 # 依赖与外部文件
 
-## Release 文件
+## 本地驱动包与来源
+
+当前 fantgpu `5.0.0-i6` 为诊断线，使用 F0 + 030 链 O_stage 和
+[`binary-manifest-fantgpu.json`](../../binary-manifest-fantgpu.json) 锁定的同源载荷；
+来源、物化及门槛见 [O_stage 设计](../design/o-stage-integration-plan.md) 与 [当前状态](status.md)。
+下表是 Deepin 线回退包与历史候选，不表示公开 Release 或 fantgpu 安装授权。
 
 以下 `.deb` 不进入 git，下载或构建后放在 `debs/`：
 
@@ -25,7 +30,7 @@
 | `build/innogpu-fh2m-trixie_4.0.1-i4.deb`（R06 B） | patch-024 + patch-025-suspend-resume-display；固定 epoch 1788451200；SHA `085e06844607a9973a6d5e3c1e3c4ec986a1cdf6903e6a9169b68285e39969a7`；严格对照准备通过，尚未安装 |
 | `build/innogpu-fh2m-trixie_4.0.2-i1.deb`（R11 失败候选） | patch-024 + patch-026 DVFS/PVR 生命周期同步；固定 epoch 1788624000；双构建 SHA `e115bdcd…`；deep 时温度 work 提前触发 PowerLock/POWERED_OFF，只供历史复现，禁止安装或交付 |
 | `build/innogpu-fh2m-trixie_4.0.2-i2.deb`（R12 历史候选） | i1 + patch-028 温度 work 恢复时序门禁；固定 epoch 1788710400；不含 display 025；仅静态/离线验证，尚未安装 |
-| `build/innogpu-fh2m-trixie_4.0.2-i3.deb`（当前正式交付） | i2 + patch-029 DDCCI panel 创建恢复（继承 patch-024/026/028）；固定 epoch 1788796800；SHA `177133ee…`；R14 6/6 deep 通过；不含 display 025，DDCCI 无 backlight device，`hwinfo_g0m.bin` 仍缺失 |
+| `build/innogpu-fh2m-trixie_4.0.2-i3.deb`（Deepin 历史交付、当前回退基线） | i2 + patch-029 DDCCI panel 创建恢复（继承 patch-024/026/028）；固定 epoch 1788796800；SHA `177133ee…`；R14 6/6 deep 通过；不含 display 025，DDCCI 无 backlight device，`hwinfo_g0m.bin` 仍缺失 |
 | `debs/innogpu-fh2m_20250421190503-debug_amd64.deb` | Deepin 202504 DKMS/GL/DDX 来源；SHA-256 `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2` |
 
 新架构提取器默认只读取 `debs/innogpu-fh2m_20250421190503-debug_amd64.deb`，其他位置必须通过
@@ -33,7 +38,7 @@
 `prepare-deepin-userspace-root.sh` 仍保留仓库根旧路径的兼容查找；后者将 Deepin deb 解包到被 Git
 忽略的 `third_party/innogpu-fh2m-deepin-202504/root/`。不得依赖该 legacy 回退构建新架构包。
 
-Deepin 202504 原包是后续版本唯一的来源基线。当前构建器使用 `drivers/` 中已转换的历史源码提交，
+Deepin 202504 原包是 Deepin 分支的来源基线。该分支构建使用 `drivers/` 中已转换的历史源码提交，
 `4.0.1-i1`/`i2` 是历史实验候选；R06 的 i3/i4 和失败的 R11 `4.0.2-i1` 保留作复现。当前
 `4.0.2-i3` 在 patch-024 后应用 patch-026 生命周期同步、patch-028 温度 work 恢复时序门禁和
 patch-029 DDCCI panel 创建恢复，

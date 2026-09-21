@@ -320,3 +320,18 @@ r5_validation_status=FAIL
 7. 唯一一次 `pm_test=devices` 再由 dsh 明示放行，用户在场监督。
 
 设计、构建或启动通过都不等于 R5 通过，也不解除任何冻结项。
+
+---
+
+## 附录 · 2026-09-21 修订注（R18 文档迭代补记，dsh 裁定 E51）
+
+本节为文档迭代期的**追加补记**，上文 §3 原文（「三项」及其行文）保持历史审查版本不动。
+
+- 差异事实：§3 的文字为「只允许三项语义差异（LOCALVERSION / DPM_WATCHDOG /
+  DPM_WATCHDOG_TIMEOUT）」，而实际构建结果（r5-dpm-watchdog-kernel-build-result.txt）
+  的 config_delta 另含签署两行规范化（MODULE_SIG_ALL=y + MODULE_SIG_KEY=certs/
+  r5-signing-key.pem），当时经 dsh P2-1 裁定接受（olddefconfig 不可避免默认 + 固定 key
+  为 A/B 字节一致前提；R5 语义影响零）。
+- 处置口径：r5dpm2 设计已按「三项 + 签署两行规范化」表述（8a667f6fe30c，L237 起
+  「已规范化基线」）；本文件因当时处于冻结期未改，现在非冻结周期以追加注补记，
+  不改历史正文、不改历史哈希锚（115368769d53 仍为审查版本身份）。

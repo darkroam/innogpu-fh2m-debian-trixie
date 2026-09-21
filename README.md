@@ -19,7 +19,7 @@
 | GPU | Innosilicon Fantasy II-M，PCI `1ec8:9810`，2 GiB VRAM（PowerVR DDK V119 RTM 谱系） |
 | 回退基线（历史交付） | `4.0.2-i3`：固定 epoch `1788796800`，SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；R14 接电/电池、无外屏/外屏 6/6 deep 通过；R16 起主线为 fantgpu 5.0.0-iN |
 | 最近失败候选 | `4.0.2-i1`：patch-024 + patch-026；R11 deep 恢复时温度 work 在 PVR 上电前触发 PowerLock/POWERED_OFF，已回退，仅供历史复现 |
-| 当前 suspend 交付 | `4.0.2-i3`：i2 + patch-029 DDCCI panel 创建恢复（继承 024/026/028），不含 display 025；DDCCI 无 backlight device，`hwinfo_g0m.bin` 缺失不阻断当前矩阵 |
+| Deepin suspend 历史交付 | `4.0.2-i3`：i2 + patch-029 DDCCI panel 创建恢复（继承 024/026/028），不含 display 025；DDCCI 无 backlight device，`hwinfo_g0m.bin` 缺失不阻断 R14 矩阵 |
 | 已验证能力 | Vulkan 1.3.264 枚举及队列提交 / OpenCL 3.0 枚举及 kernel 读回 / GL 4.3 core + GLES 3.2 / VA-API H.264 Main + HEVC Main 实际硬解（30 帧 320x240 NV12 输出校验）/ DMA-BUF 同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 / DRM+fbdev / 桌面硬件 GL / HDA 与 PipeWire 枚举 |
 
 ## 版本演进
@@ -28,7 +28,8 @@
 2. **适配本设备**：DPU/fbdev/connector/背光/GEM 系列修复（patched-8 → patched-27），本机稳定运行。
 3. **迁移 Deepin**：以 Deepin 202504 完整原包为唯一技术基线，统一用户态/固件/DDX 载荷，消除 ABI 混配。
 4. **完全重构**：取消历史补丁叠加模式 → `drivers/` 仓库内维护的导入源码树 + manifest 管理黑盒，新构建器从 `4.0.0-i1` 基线演进并保持可复现构建。
-5. **suspend/resume 正式交付（当前）**：R10 证明 patch-024 存在 TOCTOU；R11 的 i1 增加 devfreq/PVR 生命周期同步后，仍因独立温度 work 提前启动而失败；R12 的 i2 用 patch-028 等待 PVR 子设备恢复成功；R13 的 i3 让 DDCCI 回退模式创建 panel 以恢复 GPIO callback；R14 完成 6/6 deep 正式矩阵，display 025 保持独立实验状态。
+5. **Deepin suspend/resume 历史交付**：R10 证明 patch-024 存在 TOCTOU；R11 的 i1 增加 devfreq/PVR 生命周期同步后，仍因独立温度 work 提前启动而失败；R12 的 i2 用 patch-028 等待 PVR 子设备恢复成功；R13 的 i3 让 DDCCI 回退模式创建 panel 以恢复 GPIO callback；R14 完成 6/6 deep 正式矩阵，display 025 保持独立实验状态。
+6. **fantgpu 诊断线（当前）**：F0 + 030 链物化至 `5.0.0-i6`；R5=FAIL、OUTSIDE_COVERAGE、根因未定位，禁止重跑；运行状态与执行门槛见 [status](docs/project/status.md)。
 
 ## 主要修复的问题
 

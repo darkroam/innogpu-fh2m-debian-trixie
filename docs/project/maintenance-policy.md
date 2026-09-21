@@ -10,9 +10,10 @@
 
 ### 基线与载荷
 
-- 后续驱动候选必须从 `debs/` 中的 Deepin 202504 原包整体重建。**当前新架构（4.0.x-iN）**以
-  `drivers/` 源码树为基线构建；新增行为修复必须经独立补丁审查、升号，并由
-  `scripts/build-innogpu-driver.sh` 确定性应用到编译树和包内 DKMS 源码。legacy
+- 驱动候选按血缘使用固定来源：Deepin `4.0.x-iN` 使用 Deepin 202504 原包与 `drivers/`；
+  fantgpu `5.0.0-iN` 使用 F0 + [O_stage](../design/o-stage-integration-plan.md) 与
+  `binary-manifest-fantgpu.json`。新增行为修复必须经独立补丁审查、升号，经对应物化/构建流程
+  保证编译树与包内 DKMS 源码一致；fantgpu 构建器消费已锁定的 O_stage，不在快照外补丁。legacy
   patched 系构建（`build-deepin-coherent.sh`）保留作 p27 oracle 与版本护栏。DRI、GBM、GLAPI、
   GLVND、Xorg DDX、固件和 maintainer scripts 一律不得从历史 patched 包拼接。
 - `patched-8` 仅是历史回滚物，`patched-17/18/19` 是回退、故障或候选证据，不是后续实现父版本；
@@ -21,13 +22,17 @@
   即使内核补丁不变也必须提升包版本，并重新建立对应的包边界和运行证据。
 - release wrapper 必须固定经过审阅的 `SOURCE_DATE_EPOCH`；同一源码、输入 deb、版本和开关重复构建
   必须生成逐字一致的包。哈希不一致时先定位构建环境或时间戳来源，禁止选择其中一个直接发布。
+- 当前诊断与回退角色见 [status](status.md)：`4.0.2-i3` 回滚卡不变，r5dpm1/r5dpm2 包保留待 dsh
+  裁定；OUTSIDE_COVERAGE、R5=FAIL、禁止重跑、U1/U2、validation-results、签发与 tag 冻结不因文档更新解除。
 - 补丁/变换边界：已迁入 `drivers/` 的历史内核补丁在 `patches/` 保留作溯源与回退复现，不再
   重复叠加；新行为修复以独立补丁进入升号候选，验证通过后再决定是否迁入源码树。当前维护的
   第三方组件补丁与配置在 `components/`（picom、fbterm）；无法表示为源码 diff 的厂商对象变换使用
   `tools/` 下的严格确定性工具；设计、开关、验证和回退写入对应的 `docs/patches/patch-*.md`。
   不得通过复制 `.so`、固件或 `.ko` 绕过构建失败。
-- 黑盒载荷边界：`.o_shipped`、用户态库、固件等第三方二进制**不入库**，由 `binary-manifest.json`
-  唯一清单管理，`scripts/extract-vendor-binaries.sh` 从 Deepin 原包幂等重建到被忽略的 `vendor/`；
+- 黑盒载荷边界：`.o_shipped`、用户态库、固件等第三方二进制**不入库**；Deepin 线由
+  `binary-manifest.json` 管理并经 `scripts/extract-vendor-binaries.sh` 提取，fantgpu 线由
+  `binary-manifest-fantgpu.json` 管理，构建器校验 `vendor/fantgpu/` 后用
+  `tools/materialize-fantgpu-payload.py` 物化包载荷；两线固定来源、清单和载荷不得混用；
   清单中的 `vendor-binary` 是来源分类，不是许可证名称（见 [licensing.md](licensing.md)）。
 - 许可证发布门禁：`drivers/` 含 `Strictly Confidential` 与多种许可证声明；在
   [source-license-audit.md](source-license-audit.md) 的 BLOCKED 状态关闭前，不得发布新的源码归档、
@@ -73,7 +78,7 @@
 
 每次行为修改必须按以下顺序执行：
 
-1. 先更新 `docs/project/` 或 `docs/planning/`，写明现状、目标、风险、验证和回退。
+1. 先更新对应 `docs/design/` 设计及当前权威文档，写明现状、目标、风险、验证和回退；保留原位的设计按导航定位。
 2. 修改代码、补丁、安装脚本或模板。
 3. 执行与风险相称的静态、fixture、运行时和实机验证。
 4. 再次复核文档，只把已经通过的行为标记为“当前生效”；失败和未验证项进入 TODO 或 suspended。
@@ -81,21 +86,18 @@
 
 ## 文档职责
 
-- 根 `README.md` 是唯一入口，只保存当前结论、快速开始和文档导航。
-- `project/` 描述当前架构、运行关系和维护边界。
-- `planning/` 描述计划、实施历史、挂起条件和迁移状态。
-- `user/` 提供自洽的安装、验证、使用和恢复步骤。
-- `archive/` 只保存不再变化的历史材料。
-- `baselines/` 保存精简历史证据，不代替当前运行检查。
+根 `README.md` 是项目入口，目录职责和保留原位清单以 [docs/README](../README.md) 为准。
+仓库根 `baselines/` 保存运行结果，`docs/baselines/` 保存基线代际叙述，两者不可混称。
+归档按文档导航所列 D4 条件单独审批，不因目录整理改动冻结证据或失效旧指针。
 
 同一事实只设一个权威文档。其他文档使用链接，不复制大段内容。目标设计必须显式标注“未实施”，
 不能和当前行为混写。
 
 ## 代码边界
 
-- Deepin 202504 原包是驱动源码、用户态 ABI 和打包载荷的唯一技术基线；`patched-8` 仅是历史
-  回滚物，`patched-17/18` 仅是结果和故障证据，均不得作为后续实现父版本。
-- DRI、GBM、GLAPI、GLVND 和 DDX 必须按同一 Deepin 发布整体部署，禁止从历史包局部恢复 `.so`。
+- 源码和载荷按上文「基线与载荷」分线取用；`patched-8` 仅是历史回滚物，`patched-17/18`
+  仅是结果和故障证据，均不得作为后续实现父版本。
+- DRI、GBM、GLAPI、GLVND 和 DDX 必须按同一来源发布整体部署，禁止从历史包局部恢复 `.so`。
 - 通用显示代码不得硬编码外屏名称、数量、固定外屏模式或本机绝对路径。
 - 本机内屏识别和 modeline 恢复必须保持为明确设备钩子。
 - xdisplay 行为修改和状态机测试在 dotconfig 完成；本仓库只测试 Innogpu 接入不覆盖引擎且保持幂等。
@@ -159,10 +161,11 @@
   `~/.local/bin/hygon-hda-audio-user-apply`。该路径是现有兼容接口，新服务不得照抄；若迁移到
   `~/.local/lib/<项目>/`，必须同步 unit、卸载清单和回退步骤。当前实现没有对所有被覆盖路径做备份，
   未运行 `systemd-analyze verify`，且用户服务管理失败被忽略；它只满足目录所有权部分，不是完整合规示例。
-- `install-dri-node-repair-service.sh` 的包内 helper 路径 `/usr/sbin/innogpu-repair-dri-nodes` 与 unit
-  一致；但从源码树直接安装的 fallback 当前写入 `/usr/local/sbin/`，unit 仍固定 `/usr/sbin/`，且启动
-  失败会被忽略、卸载器未清理 helper 链接。该 fallback 不能视为已验证安装路径；修复脚本前只记录为
-  已知实现缺口，不通过文档命令绕过。
+- `install-dri-node-repair-service.sh` 曾存在 fallback helper 与 unit 路径不一致、启动失败被忽略、
+  卸载遗留链接三项缺陷。现实现按包内 `/usr/sbin/` 或源码 fallback `/usr/local/sbin/` 选择
+  helper，`ExecStart=$helper`，enable/start 失败退出并回滚；`uninstall-innogpu.sh` 只移除确属
+  本项目的 fallback 链接。修复记录见 [status](status.md)，离线边界见
+  [test-strategy](test-strategy.md)；这不证明所有 systemd 规范或 fantgpu 服务路径均已验收。
 - 当前 deb 从 vendor manifest 导入 `/lib/systemd/system/sw-inno-gl.service` 与 `/usr/sbin/sw-inno-gl`，
   但 control 未声明 `systemd` 依赖，maintainer scripts 也不 enable/start 该单元。它是既有包载荷，
   不是本节规范的合规示例；后续版本必须先决定其保留和生命周期策略，并补包边界测试。
@@ -183,7 +186,10 @@
 
 `docs/planning/history.md`、`docs/incidents/`、`docs/archive/` 和历史 baseline 只保存时点事实。发现其中
 与当前态不同，应链接当前权威或增加新时点记录，不能重写旧结论。`scripts/check-docs.sh` 是必要护栏，
-但当前链接/隐私扫描范围不是全部 tracked Markdown；发布前仍需从 `git ls-files '*.md'` 做全仓复核。
+其链接扫描覆盖 `git ls-files '*.md'` 列出的 tracked Markdown，隐私扫描还覆盖指定目录下的
+ignored/untracked 内容，并校验本机 `collab/` 结构与隐私；untracked 新文档不在 tracked
+链接扫描内，提交时须重跑。机械检查不能证明文字事实、
+历史与当前语义或执行授权，仍需人工复核。
 
 ## 提交前检查
 

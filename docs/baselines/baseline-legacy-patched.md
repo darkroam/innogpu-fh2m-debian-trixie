@@ -4,7 +4,7 @@
 发生过载荷更换，不能把全部 patched 版本统称为原厂 fantgpu 血缘。
 
 本目录 docs/baselines/ 与仓库根 baselines/（运行结果归档）同词异物、互不相关。
-本页为 R17 第 2 轮草稿，待 qoder 初审、dsh 终审。代际事实基准为本机
+本页已在 R17 第 2 轮经 qoder 初审、dsh 终审并提交（1bf294a）。代际事实基准为本机
 `collab/R17-2026-09-19-文档优化迭代/report.md#L359-L380 @ b5816b7c5a41`（§21）。
 当前安装和发布结论以 [status](../project/status.md) 为准；历史文档中的命令不构成执行授权。
 

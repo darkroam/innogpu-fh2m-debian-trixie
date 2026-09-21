@@ -149,7 +149,8 @@
 - **跳过机制**：每轮开始时由用户声明 qoder 状态（"qoder在"/"qoder不在"），dsh 记录
   于 request.md/report.md；未声明时默认跳过（流程与无 qoder 时一致）。跳过仅对本轮
   生效，下一轮可随时恢复。
-- **纪律**：qoder 遵守三层边界与只读纪律（仅可写当前轮次 qoder-notes.md）；其建议
+- **纪律**：qoder 遵守三层边界与只读纪律（意见仅写当前轮次由其负责的 qoder-notes.md
+  或 qoder-notes-<id>.md；持锁时按 §二追加共享流水）；其建议
   为顾问性质，最终由 dsh 裁定、用户拍板。
 - **署名规则**：轮次内各方意见必须标注作者（qoder 内容在 qoder-notes*.md、codex
   内容在 codex-report.md、dsh 裁定在 dsh-rulings.md，交叉反馈注明"codex 反馈"/

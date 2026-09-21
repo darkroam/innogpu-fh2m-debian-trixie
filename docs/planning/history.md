@@ -1,5 +1,9 @@
 # 实施历史
 
+本页记录关键演进的原因、结果和证据；已完成事项索引见 [todo](todo.md)，
+待办见 [current-work](current-work.md)，当前结论见 [status](../project/status.md)。
+历史段落中的“当前”仅指该段记录时点，历史命令不构成执行授权。
+
 ## 2026-08-26 DMA-BUF 真机回归与 runtime 证据封存
 
 - 以 root 权限在 `1ec8:9810` 真机执行 `tools/run-dmabuf-regression-test.sh`：同设备 PRIME
@@ -136,3 +140,32 @@
   Picom 在扩展缺失时编译最小 shader，失败仍阻止 GLX，成功才继续。
 - Picom release/debugoptimized 构建、单元测试和真实 `DISPLAY=:0` GLX 启动验证通过；运行日志
   只出现兼容 warning。该特例仍由 Picom 用户态 patch 所有，未加入 DKMS deb。
+
+## 2026-09-03 至 2026-09-19 R16 基座切换与 R5 悬案
+
+- 基座评估区分 Deepin、编排树与 fantgpu F0，完成重新推导的 030 链；i6 的
+  18 项链及物化身份见 [代三事实页](../baselines/baseline-fantgpu-5.x.md) 和
+  [030 映射表](030-mapping-table.md)。030-034/i6 实现锚为 `26dded5`。
+- i4 的共享 dev_rsrc ABI 事故、脚本闸门重蹈和设计期越界产物分别提升为
+  [ABI 事故](../incidents/r5-i4-oops-dev-rsrc-abi.md)、[脚本事故](../incidents/script-gate-defect-recurrence.md)、
+  [越界产物事故](../incidents/design-phase-out-of-bounds-patch.md)，错误过程保留。
+- 两轮诊断内核后仍为 `OUTSIDE_COVERAGE`、`R5=FAIL`、root cause unresolved；
+  [步骤 8 证据](evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-result.txt)
+  区分未覆盖区与 timer 不可达，不能以静默排除全部回调体挂死。`c3105ec` 收档的是
+  GRUB 配置及默认启动行为恢复，未解除禁止重跑、U1/U2、validation-results、签发或 tag 冻结。
+
+## 2026-09-19 至 2026-09-21 R17 文档迭代闭合
+
+- 本机 R01-R16 叙事及错误资产核对、当前文档对齐、三类 incidents 提升、三篇基线代际文档、
+  二次审查和收尾完成；三代际页由 `1bf294a` 提交，收尾提交为 `ad0159f`。
+  本机原始记录与快照不入 Git，公开入口见 [文档导航](../README.md)。
+- R2-F1 保留原误判并补记：只检查 build/ 不能推导本机无实物；patched-27 在 debs/ 的补证
+  已由 qoder/dsh 核验。身份与验证边界见 [代一事实页](../baselines/baseline-legacy-patched.md)。
+- 文档轮闭合只证明该轮交付及审查完成，不改变 R5、许可与发布阻断。
+
+## 2026-09-21 R18 结构迁移前三批
+
+- 代际页进入 baselines/，六篇调查进入 investigations/，挂起页进入 state/，十篇设计进入
+  design/；批 1-3 提交为 `87192a7`、`6caf5b7`、`e406af8`。完整导航见 [文档入口](../README.md)。
+- 批 1 曾只提交迁移，链接修正留在工作树；批 2 收齐修正。教训是被审提交、工作树与暂存区
+  必须分别核验。冻结证据和脚本注释保留原文；后续内容对齐尚待终审，不记为本轮整体闭合。

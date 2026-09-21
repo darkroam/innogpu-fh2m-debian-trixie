@@ -10,7 +10,7 @@
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
 | 当前运行驱动 | **fantgpu 5.0.0-i6（诊断线，非交付）**，运行于 `6.12.101+deb13-amd64`；fantgpu 3.3.8.126 F0 源 + 030-NNN 补丁链（18 项，030-001..034）；R5 挂起调查中（见下） | [030 映射表](../planning/030-mapping-table.md)、[patch-provenance](../design/patch-provenance.md) |
-| 回退基线 | `4.0.2-i3`（deepin 血缘最终交付）：R14 6/6 deep 矩阵通过；包 SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；回滚卡命令见 maintenance-policy | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
+| 回退基线 | `4.0.2-i3`（deepin 血缘最终交付）：R14 6/6 deep 矩阵通过；包 SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；回滚卡见 r5dpm2 设计 §8，执行须另行授权 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md)、[回滚卡](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
 | 当前主线目标 | `5.0.0-iN`（tag `fantgpu-5.0.0-iN` **未打**）；发布阻断：`postinst_current_kernel_only=release_blocker`、`validation-results` 未签、R5=FAIL 未解除 | [030 映射表](../planning/030-mapping-table.md) |
 | 历史当前态（2026-09-03 记录） | `4.0.2-i3` 已安装并重启至 `6.12.101+deb13-amd64`；R16 迁移后降为回退基线 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | R5 挂起悬案 | `pm_test=devices` 绑定 fantgpu 硬挂；两轮诊断内核（r5dpm1/r5dpm2）复核判定 `OUTSIDE_COVERAGE`（DPM 机制无动态正样）；`r5_root_cause=unresolved`；**禁止重跑** | [r5 调查计划](../design/r5-suspend-investigation-plan.md)、[r5dpm2 设计](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
@@ -19,21 +19,24 @@
 | 历史运行基线 | `3.3.3.42-patched-20` 曾完成运行验收，但 deb 含收敛前辅助载荷，仅保留为历史证据 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
 | 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |
 | 历史运行验收 | p21 完整图形验收通过；p22 完成 connector 分类和开盖桌面烟测，但电源/合盖/拔屏矩阵未完成 | [`patch-009` 验收](../patches/patch-009-local-internal-edp-connector.md) |
-| 源码/用户态基线 | Deepin 202504 完整原包，不混用历史 patched 包 | `scripts/build-innogpu-driver.sh`（新架构）；`build-deepin-coherent.sh` 为 legacy p27 oracle |
-| 源码树迁移 | 阶段 0–4 完成；当前构建器产出并已交付 4.0.2-i3，4.0.0-i1 保留为首层回退；阶段 5 第一步完成，第二步待条件满足 + 监督批准 | [phase5-retirement-design](../planning/phase5-retirement-design.md) |
+| 源码/用户态基线 | 当前 fantgpu 线使用 F0 + O_stage 与 `binary-manifest-fantgpu.json`；Deepin 回退线使用 Deepin 202504 完整原包与 `binary-manifest.json`；禁止跨线混配 | [架构](architecture.md)、[O_stage](../design/o-stage-integration-plan.md) |
+| Deepin 源码树迁移 | 阶段 0–4 完成；该线已交付 4.0.2-i3，4.0.0-i1 保留为其首层回退；阶段 5 第一步完成，第二步待条件满足 + 监督批准；不代表 fantgpu 验收 | [phase5-retirement-design](../planning/phase5-retirement-design.md) |
 | 固件与 PVR | `4.0.2-i3` R14 每轮 PVR 八项计数均为 0 且不增长；`hwinfo_g0m.bin` 缺失为已知厂商载荷边界 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | DRM/fbdev | `4.0.2-i3` R14 内屏及外屏恢复通过；`card0`、`renderD128`、`fb0` 基线继续可用 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
-| Xorg/GLX | 当前桌面和隔离 Xorg 的硬件加速验收通过 | [Phase 4 验收](../planning/phase4-device-validation.md) |
+| Xorg/GLX 历史验收 | Deepin `4.0.0-i1` 桌面和隔离 Xorg 的硬件加速验收通过；不外推到 fantgpu i6 | [Phase 4 验收](../planning/phase4-device-validation.md) |
 | 真实 VT | 普通用户 fbterm 可绘制和退出；禁用 YPan 后长输出、清屏及跨会话显示正常 | [`fbterm YPan 记录`](../incidents/fbterm-ypan-rendering.md) |
 | 显示管理 | dotconfig 维护 xdisplay 2.0.0；本项目只维护设备钩子和会话接入 | [`display-management.md`](display-management.md) |
 | Picom | patched v13 进程和 GLX 配置正在使用；最新 runtime 尚未独立确认实际 backend，保持 UNVERIFIED | [compositor-management.md](compositor-management.md)、[runtime 摘要](../../baselines/latest-runtime-baseline.txt) |
 | 音频 | HDA/HDMI 声卡与 PipeWire 默认 sink 枚举正常，`aplay` 命令完成；最新受控听感确认仍为 UNVERIFIED | [audio-management.md](audio-management.md)、[runtime 摘要](../../baselines/latest-runtime-baseline.txt) |
-| 能力验证工具 | `tests/runtime/run-capability-baseline.sh`（12 能力域、35 项、枚举/执行分离）；沙箱基线 15 PASS / 19 SKIP / 1 UNVERIFIED，合并真机证据后的权威摘要为 22 PASS / 9 SKIP / 4 UNVERIFIED | [runtime 摘要](../../baselines/latest-runtime-baseline.txt)、[tests/runtime/README](../../tests/runtime/README.md)、[test-strategy](test-strategy.md) |
+| 能力验证工具 | `tests/runtime/run-capability-baseline.sh`（12 能力域、35 项、枚举/执行分离）；历史沙箱基线 15 PASS / 19 SKIP / 1 UNVERIFIED，Deepin `4.0.0-i1` 合并真机证据摘要为 22 PASS / 9 SKIP / 4 UNVERIFIED；不是 fantgpu i6 结果 | [runtime 摘要](../../baselines/latest-runtime-baseline.txt)、[tests/runtime/README](../../tests/runtime/README.md)、[test-strategy](test-strategy.md) |
 | 维护协作 | dsh 负责监督/审查，codex 负责实现；每 5–6 轮或重大调整后执行两阶段文档梳理；`collab/` 仅本机保存、不进 Git | [多 Agent 协作规约](multiagent-collab.md) |
 | Vulkan/OpenCL 执行 | 探针 exec 模式 + 真机验证通过（2026-08-24）：Vulkan queue+fence submit+wait、OpenCL add kernel+读回逐元素校验均在 Fantasy II-M 上执行成功；`runtime_vulkan_execution`/`runtime_opencl_execution`=PASS（证据 `baselines/runtime-results-20260824.txt`）；离线失败路径已有 fixture | [probe-vulkan-devices.c](../../tools/probe-vulkan-devices.c)、[probe-opencl-devices.c](../../tools/probe-opencl-devices.c)、[test-strategy](test-strategy.md) |
 | VA-API 实际解码 | `tools/run-vaapi-decode-test.sh --codec all` 真机执行（2026-08-24）：H.264 Main 与 HEVC Main 强制 VA-API 硬解，各 30 帧 320x240 NV12 framemd5 与软件参考逐帧 hash 一致，Driver/Firmware 状态门禁通过；`runtime_vaapi_decode`=PASS（证据 `baselines/runtime-results-20260824.txt`）；能力边界仅 Main/Main 8-bit 4:2:0 | [run-vaapi-decode-test.sh](../../tools/run-vaapi-decode-test.sh)、[test-strategy](test-strategy.md) |
 | DMA-BUF 回归工具 | `tools/run-dmabuf-regression-test.sh` 已实现（2026-08-24）：同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 + 状态门禁聚合，配套离线 fixture；**真机 PASS（2026-08-26 root 权限运行，证据已封存）**：self-import/READ/WRITE/vblank/状态门禁/内核日志全部通过；能力边界不变：仅同设备 PRIME self-import，foreign/cross-device、GBM、V4L2、长期压力与并发仍 UNVERIFIED | [run-dmabuf-regression-test.sh](../../tools/run-dmabuf-regression-test.sh)、[test-strategy](test-strategy.md)、[webkit 调查](../investigations/webkit-dmabuf-investigation.md) |
 | 发布边界 | 三层许可模型（原创层 GPL-3.0-or-later / 上游 MIT / drivers/ 逐文件）；`project-tools` 为**候选制品**（机械门禁 CLEARED，当前不作为发布目标；**失败关闭分类**——已批准原创前缀 + 显式映射，未知路径拒绝，无默认 GPL；排除 patches/、debs/、collab/（本机私有目录，不跟踪）、drivers/、vendor/、build/、third_party/；**路径绑定 NOTICE 门禁**，components/ 许可材料已封存：picom 补丁为文件级 MPL-2.0、`picom.conf` 为原创 GPLv3、fbterm 1.7-5 (C) 2008 dragchan GPL-2.0-only）；`driver-source` 排除 confidential ×3 与无许可 ×70 后非完整驱动（BLOCKED，不假 PASS）；**GitHub 主分支仍公开分发阻断路径，仓库级发布未闭环**；二进制 deb 与 vendor 载荷不作为当前发布目标；patched-1.deb 为上游历史非阻断；本地 debs/ 与 vendor/ 不参与发布；**发布决策 1C（见 licensing.md §4.1 权威记录）：当前不创建 Release/tag/附件，main 为研究开发仓库、不作为发布目标，BLOCKED 不变；不做 Release 不消除 main 公开跟踪 73 个阻断路径的风险** | [licensing.md](licensing.md)（唯一权威文档）、[source-license-audit.md](source-license-audit.md) |
+
+以上引用 Phase 4、2026-08 runtime、patched 或 `4.0.x` 的验收均保留其原版本边界；
+`latest-*` 文件名不表示已验证当前 fantgpu。当前待办见 [current-work](../planning/current-work.md)。
 
 ## 已解决问题
 
@@ -56,16 +59,16 @@
 
 ## 当前未解决或需要后续处理
 
-- **R5 挂起悬案（最高优先，未解决）**：fantgpu 绑定下 `pm_test=devices` 硬挂；已排除自旋类与
-  四可达设备回调阶段（两轮诊断内核全静默）；候选收敛 pre-DPM 段/等待区/timer 不可达；
+- **R5 挂起悬案（最高优先，未解决）**：fantgpu 绑定下 `pm_test=devices` 硬挂；自旋类探测器与
+  两轮 DPM watchdog 均全静默，四可达回调体挂死降为低概率；机制无动态正样，timer 不可达或
+  尚未进入 DPM 时仍不能排除回调路径。候选为 pre-DPM 段/等待区/timer 不可达；
   `r5_dpm_watchdog_capture_reviewed=OUTSIDE_COVERAGE`、`r5_root_cause=unresolved`。冻结：
   R5=FAIL、禁止重跑、U1/U2 未执行、validation-results 未签、tag `fantgpu-5.0.0-iN` 未打。
   下一阶段方向待用户选（停批冻结 / 本地扩展轮 / 带外通道）。
-- **R17 文档优化迭代（进行中）**：第 1 轮内容对齐已闭合（R01-R15 + R16 四切片、
-  docs 对齐、incidents 三类提升）。第 2 轮三基线代际草稿待 qoder/dsh 审查：
-  [legacy patched 阶段](../baselines/baseline-legacy-patched.md)、[deepin 4.0.x 源码树迁移线](../baselines/baseline-deepin-4.x.md)、
-  [fantgpu 5.0.0-iN 当前诊断线](../baselines/baseline-fantgpu-5.x.md)。规约 §十二为权威流程；
-  patched-27 的 `debs/` 实物补证与 §21「本机无实物」差异待 dsh 补记，未替换原裁定。
+- **R18 文档结构迭代（进行中）**：R17 四轮已闭合，三篇[基线代际文档](../README.md)已审定；
+  patched-27 的 `debs/` 实物补证已由 dsh 在 R17 §21.1 补记，原先「本机无实物」记录保留为错误资产。
+  R18 批 1–3 已提交，批 4 进行内容对齐；进度与另批边界见
+  [current-work](../planning/current-work.md)，闭合历史见 [history](../planning/history.md)。
 
 - **suspend/resume P1（本机已修复，保留范围边界）**：`4.0.0-i1` 的 deep S3 resume 已复现 PreClock 在 PVR 电源域 OFF 时取锁失败；
   patch-024 / `4.0.1-i1` 随后完成了有效 s2idle entry/exit，且没有 3900372/PowerLock/PVR 计数增长，
@@ -146,8 +149,9 @@
 ## 发布判断
 
 patched-20、patched-21 和 patched-22 均为历史候选或验收证据，不是当前安装入口。p20 不得推广，
-p21/p22 的电源、合盖、拔屏和跨硬件限制仍按历史记录保留。当前本地安装判断以 `4.0.2-i3`、
-R14 正式矩阵、`4.0.0-i1`/`patched-27` 回退链及 Phase 5 状态为准；公开发布仍被许可证审计阻断。
+p21/p22 的电源、合盖、拔屏和跨硬件限制仍按历史记录保留。当前 fantgpu `5.0.0-i6` 是诊断线，
+不是新设备默认入口。Deepin 回退判断以 `4.0.2-i3`、R14 正式矩阵、
+`4.0.0-i1`/`patched-27` 回退链及 Phase 5 状态为准；公开发布仍被许可证审计阻断。
 `patched-17`/`patched-8` 仅作深层回退。
 
 **发布决策 1C（当前状态，2026-08-28）**：

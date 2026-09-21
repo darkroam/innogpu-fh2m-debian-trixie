@@ -16,10 +16,9 @@
   ④ R5=FAIL 未解除。许可发布边界（1C/BLOCKED）不变。
 - [ ] 诊断内核处置：r5dpm1/r5dpm2 包保留待 dsh 决定是否卸载；GRUB 已恢复原配置（默认解析
   6.12.107+deb13，既有行为；改默认须另立变更）。
-- [ ] **R17 文档优化迭代（第 4 轮收尾中）**：第 1 轮内容对齐（collab 叙事批 R01-R16 +
-  docs 对齐 + incidents 三类提升）已闭合；第 2 轮三基线代际文档已提交（1bf294a，
-  含 R2-F1 更正：patched-27 deb 在 `debs/` 实物一致 f384159751fe）；第 3 轮二次
-  对齐已闭合（复审台账 round3-review-ledger.md）；第 4 轮收尾进行中（跳回台账为空）。
+- [ ] **R18 文档结构迭代**：R17 四轮已闭合，记录见 [实施历史](history.md#2026-09-19-至-2026-09-21-r17-文档迭代闭合)。
+  R18 批 1-3 已提交（87192a7/6caf5b7/e406af8）；批 4 做内容对齐，完成后须终审。
+  工具适配后的 state/history 迁移、D2 叙事提升和 D4 归档均另批；运行冻结不随文档进度解除。
 
 ## 许可证与研发验证
 
@@ -76,7 +75,8 @@
   DMA/PCIe DMA 同设备名冲突；AMD-Vi、microcode、SRSO、ACPI `_DOD/_DOS` 另列为平台/BIOS
   侧事项。详见 [启动报错归因记录](../incidents/boot-errors-attribution-20260903.md)。
 - [ ] runtime 剩余真实能力证据：modeset/热插拔/合盖、Picom GLX backend、
-  音频听感确认；当前权威汇总 22 PASS / 9 SKIP / 4 UNVERIFIED。
+  音频听感确认；现有 Deepin 4.0.0-i1 历史汇总为 22 PASS / 9 SKIP / 4 UNVERIFIED，
+  不代表 fantgpu 5.0.0-i6 已取得同样能力结论。
 - [ ] VA-API 未测 profile（H.264 High/Constrained Baseline、HEVC Main10）、编码能力和多屏矩阵继续
   按独立能力项补证据。
 - [ ] 构建失败用例补齐（headers 缺失、helper 缺失、SOURCE_DATE_EPOCH 缺失）为 fixture。

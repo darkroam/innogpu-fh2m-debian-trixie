@@ -8,6 +8,10 @@
 
 ## 本功能包含
 
+本页命令与默认清单仅针对 Deepin 202504。fantgpu 线使用独立
+[`binary-manifest-fantgpu.json`](../../binary-manifest-fantgpu.json) 和
+[O_stage 物化方案](../design/o-stage-integration-plan.md)，不得直接套用本页默认参数。
+
 - 工具：`scripts/extract-vendor-binaries.sh`（本地提取，仅读取用户本地原包）、
   `tools/generate-binary-manifest.py`、`tools/validate-binary-manifest.py`；
 - 清单：`binary-manifest.json`（来源分类与哈希；`vendor-binary` 是来源分类，不是许可证）；

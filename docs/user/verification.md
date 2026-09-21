@@ -2,8 +2,11 @@
 
 ## 驱动、DKMS 与节点
 
-当前设备已部署并重启至 `4.0.0-i1`（内核 `6.12.101+deb13-amd64`），已完成 Phase 4 驱动、DKMS、DRM/fbdev、桌面和回退验证；patched-21、p24 等内容仅是历史验收证据。
-本文仍是后续
+本文的 `innogpu` 命令与 Phase 4/patched 验收记录适用于 Deepin 线：历史上 `4.0.0-i1`
+（内核 `6.12.101+deb13-amd64`）已完成驱动、DKMS、DRM/fbdev、桌面和回退验证。
+当前 fantgpu 诊断线以 [status](../project/status.md) 和已审定的
+[R5 设计](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) 为准，历史命令不构成执行授权。
+以下 Deepin 流程用于后续
 重新部署、内核或用户态升级、以及新硬件组合的操作流程：安装但尚未重启时，不得将 `/proc` 或 Xorg
 结果写为新包证据。
 
@@ -19,15 +22,15 @@ ls -l /dev/dri /dev/fb0
 `card0`、`renderD128` 和 `fb0`；版本不匹配时不能用当前模块结果证明新包通过。
 
 历史 p23 重启后已确认 PVR/固件为 OK、内置面板暴露为 DRM `eDP-1`、外接 HDMI 断开且 xdisplay
-开盖单屏状态正常；invisible GEM READ `munmap` 已显著下降，WRITE 读回验证通过。当前 4.0.0-i1
+开盖单屏状态正常；invisible GEM READ `munmap` 已显著下降，WRITE 读回验证通过。历史 4.0.0-i1
 继承该行为基线（经 patched-27）。这不替代完整的
 电池合盖、外屏热插拔、外部电源矩阵和 Clash Verge 应用 A/B。
 
-## 当前能力证据
+## Deepin 历史能力证据
 
-35 项 runtime 能力的当前权威摘要为
+Deepin `4.0.0-i1` 的 35 项 runtime 能力摘要为
 [`baselines/latest-runtime-baseline.txt`](../../baselines/latest-runtime-baseline.txt)：22 PASS / 9 SKIP /
-4 UNVERIFIED，overall 为 UNVERIFIED。VA-API H.264 Main + HEVC Main 实际解码与 DMA-BUF 同设备
+4 UNVERIFIED，overall 为 UNVERIFIED；不代表 fantgpu i6 验收。VA-API H.264 Main + HEVC Main 实际解码与 DMA-BUF 同设备
 PRIME self-import 回归的真机证据已合并；后者不证明 foreign、跨设备、GBM 或 V4L2 导入。
 日常验证先读取摘要；需重新采集或运行有副作用探针时，按
 [`tests/runtime/README.md`](../../tests/runtime/README.md) 的授权、root、超时和证据合并规则执行。

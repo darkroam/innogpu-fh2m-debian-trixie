@@ -4,6 +4,10 @@
 > 版本基线、参考模型、证据与约束。结论等级：`CONFIRMED`（源码/脚本/清单）、`OBSERVED`（实机/
 > 日志）、`INFERRED`（机制推断）、`UNVERIFIED`（未证实）。不把黑盒观察当作源码事实。
 
+范围补记（R18）：以下是 Deepin `4.0.0-i1` 时点的技术栈记录，脚本数与“当前”均指当时，
+不作为今日构建器或 fantgpu 线的实现声明。现行分线构建见 [architecture](architecture.md)，
+版本角色见 [status](status.md)，当前入口计数见 [test-strategy](test-strategy.md)。
+
 ## 一、实际技术栈（CONFIRMED，来自代码/构建脚本）
 
 | 层 | 组件 | 使用方式 | 证据 |

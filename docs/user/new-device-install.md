@@ -23,11 +23,11 @@
 
 patched-18/19 是问题定位和 coherent 构建演进记录，不是安装推荐版本。
 
-## 构建当前交付包
+## 构建 Deepin 回退包
 
 新架构包不随 Git 提供。clone 本仓库后，从有权提供该内容的来源取得 Deepin 原包并放入 `debs/`；
 本项目当前不提供该第三方原包或载荷的公开下载。构建器会按 `binary-manifest.json` 校验完整
-SHA-256。当前交付版本使用固定审核 epoch `1788796800`（2026-09-08 00:00 +0800）：
+SHA-256。Deepin `4.0.2-i3` 使用固定审核 epoch `1788796800`（2026-09-08 00:00 +0800）：
 
 ```text
 debs/innogpu-fh2m_20250421190503-debug_amd64.deb
@@ -46,7 +46,7 @@ SOURCE_DATE_EPOCH=1788796800 bash scripts/build-innogpu-driver.sh
 > 新 clone 上 `vendor/` 为空（不入库）：必须先 `extract-vendor-binaries.sh` 重建黑盒载荷，
 > 构建器的 `--check-only` 门禁才会通过。
 
-构建后必须核对正式交付制品：
+构建后必须核对该历史交付制品；安装、重启和实机验收另按授权执行：
 
 ```sh
 echo '177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662  build/innogpu-fh2m-trixie_4.0.2-i3.deb' | sha256sum -c -
@@ -151,7 +151,7 @@ patched-20 仅保留运行证据，不提供重新部署或回退到该版本的
 `4.0.1-i1` 已判定为失败候选；`4.0.1-i2` 是 R05 历史候选；R06 i3/i4 因果验证按停止条件
 中止，R10 又在 i3 上复现 deep PowerLock TOCTOU。R11 i1 在同步 DVFS 后仍因温度 work 提前
 启动而失败。`4.0.2-i2` 是历史静态/离线候选；`4.0.2-i3` 已安装并通过 R14 6/6 deep
-正式矩阵，现为当前交付版本。后续任何行为变化仍须升新迭代号。
+正式矩阵，现为 Deepin 回退基线。后续任何行为变化仍须升新迭代号。
 不得以任何 patched deb
 作为源码或载荷基线，也不得从不同版本挑选 DRI、GBM、GLAPI、DDX 或固件拼装。新包还必须通过：
 
@@ -161,7 +161,7 @@ scripts/check-release-package.sh build/<new-package>.deb
 
 `4.0.1-i1` 已完成离线构建、安装与 s2idle 验收，但因红屏失败；`4.0.1-i2` 已完成一次
 s2idle 可见恢复；`4.0.1-i3` 和 `4.0.2-i1` 均在 deep 失败，i4 未安装；`4.0.2-i2` 尚未真机
-验收。当前 HEAD 的交付入口是 `4.0.2-i3`，但新设备必须独立验证，不能把本机 R14 结果外推为
+验收。当前 HEAD 保留 Deepin `4.0.2-i3` 构建入口，但新设备必须独立验证，不能把本机 R14 结果外推为
 跨硬件保证。4.0.0-i1 是首层回退包且有 deep 已知故障，patched-17 仅作为深层回退保留。
 
 patched-21 已完成当前设备的构建、包边界、部署、重启和运行验收。精确输入、补丁矩阵、清洁载荷边界

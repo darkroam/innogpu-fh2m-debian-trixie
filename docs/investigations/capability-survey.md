@@ -2,6 +2,10 @@
 
 ## 状态
 
+本文记录 2026-08 的 Deepin 能力调查；[runtime 摘要](../../baselines/latest-runtime-baseline.txt)
+归属 `4.0.0-i1`，不证明当前 fantgpu `5.0.0-i6` 的能力。当前结论见
+[status](../project/status.md)，本页历史探针命令不构成新的执行授权。
+
 - 本记录对应 [reverse-engineering-assessment.md](reverse-engineering-assessment.md) 的"能力挖掘任务"
   P0/P1 项。**静态分析与运行时枚举已执行**：静态部分在本容器内完成；运行时部分由真实会话运行
   `scripts/run-capability-survey.sh` 完成（vulkaninfo/clinfo/vainfo/drm_info 权威工具 + 最小探针

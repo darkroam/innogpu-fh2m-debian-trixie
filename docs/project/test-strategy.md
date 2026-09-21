@@ -4,11 +4,19 @@
 > 回归验证"。本策略定义分层、能力域、输出规范、风险与执行顺序。约束：不安装驱动、不切换模块、
 > 不重启；runtime 域仅实机授权后执行。
 
-## 一、现有测试盘点（CONFIRMED，2026-09-05 核对）
+## 一、现有测试盘点
 
-### 当前 CI/沙箱套件汇总（2026-09-05）
+### 当前入口盘点（2026-09-21，只读静态核对）
 
-数量以各 runner 的运行时汇总行为机械事实；本表是文档中唯一的当前计数汇总。
+以 [.github/workflows/ci.yml](../../.github/workflows/ci.yml) 的显式 runner 路径和
+Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
+`tests/unit/run-*-tests.sh` 共 40 个，其中 17 个未列入该 CI。入口存在不表示本轮执行通过，
+也不表示其余 17 个适合 CI。本轮未重跑各套件，当前用例总数为 UNVERIFIED。
+
+### 历史 CI/沙箱汇总（2026-09-05 原录）
+
+下表保留历史数字，不再作为当前计数。原录小计 `493 + 23 = 516` 与总计 `515` 不一致；
+此处只披露算术差异，不能由静态相加追认当时实际通过数。运行用例数仍须对应 runner 回包证明。
 
 | 范围 | 入口与用例 | 小计 |
 | --- | --- | --- |
@@ -45,8 +53,8 @@
 `compare-oracle-candidates.sh` + `compare-module-symbols.sh`（integration oracle）、
 `check-deb-dkms-build.sh`（integration 离线编译，需本机内核头）。
 
-**盘点结论**：unit、fixture、static、integration 和 runtime 五层均已有入口；当前规模见顶部唯一
-套件汇总。此次 5.0.0 中止暴露的历史缺口是：manifest/payload 审计只检查声明与静态文件，不能覆盖
+**盘点结论**：unit、fixture、static、integration 和 runtime 五层均已有入口；当前入口数与历史
+用例数见上方分列记录。此次 5.0.0 中止暴露的历史缺口是：manifest/payload 审计只检查声明与静态文件，不能覆盖
 预编译 `.o_shipped` 的动态 `request_firmware()` 请求或 HAL component bind；计算侧
 `Driver/Firmware: OK` 也不能证明 DRM card 已注册。现在新增的 runtime health 门禁能在 R 项前阻断
 这些症状，但仍不能替代真实硬件验证；完整 DKMS integration 也仍依赖本机 headers。
@@ -62,6 +70,9 @@
 | runtime | 真机 DRM/fbdev/Xorg/GL/音频/Picom/显示/回退 | 35 项能力基线 + Phase 4 A1-A12 | 4 项仍为 UNVERIFIED |
 
 ## 三、显卡标准能力域（12 项，枚举 vs 实际执行必须分开）
+
+下列能力结论及第四、九节 runtime 回包归属 Deepin 历史验收，35 项摘要明确标识
+`4.0.0-i1`；不外推到 fantgpu `5.0.0-i6`。当前诊断线的边界以 [status](status.md) 为准。
 
 | # | 能力域 | 枚举测试（离线/只读可跑） | 实际执行（需真机+授权） | 当前结论 |
 | --- | --- | --- | --- | --- |
@@ -109,7 +120,7 @@
 - 有副作用测试必须显式参数确认；临时文件必须 `mktemp` + `trap` 清理。
 - 离线/沙箱结果与真机结果**分开保存**（`baselines/` 紧凑标记 + 版本化审计日志）。
 
-当前 CI/沙箱规模见本文顶部唯一套件汇总，本节不复制易过时数量。
+当前入口盘点与历史用例汇总见第一节，本节不复制数量。
 
 ## 六、覆盖清单（本策略要求逐项落实）
 

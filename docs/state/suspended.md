@@ -2,6 +2,13 @@
 
 以下事项未完成前不得在当前状态摘要中声明为已支持；恢复时须先补设计、测试和回退步骤。
 
+本页只记录暂停事项和恢复条件，任务状态统一回到 [当前待办](../planning/current-work.md)，
+运行结论统一回到 [status](../project/status.md)，不另建第二份任务进度表。
+
+- [ ] **R5 下一方向待选**：依 [R5 当前待办](../planning/current-work.md#r5-悬案与-fantgpu-500-主线当前最高优先级)
+  选择后，须完成对应设计审查及独立执行放行才能恢复；当前 `OUTSIDE_COVERAGE`、`R5=FAIL`、
+  禁止重跑、U1/U2 未执行、validation-results 未签、签发冻结、未打 tag 均不变。
+
 - [ ] xdisplay 适配器、manual marker、多外屏布局和自定义配置由 dotconfig 维护；本项目仅在 Innogpu
   设备环境变化时复核兼容环境变量和恢复钩子。
 - [ ] 多外屏、无盖桌面、不同扩展坞和不同外屏的预接冷启动仍需要跨项目实机矩阵，结果分别回写
