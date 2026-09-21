@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tests/unit/run-030-meta-tests.sh — 18 条 030-NNN meta.json 静态契约校验
 #
-# 职责（docs/planning/o-stage-integration-plan.md §四）：
+# 职责（docs/design/o-stage-integration-plan.md §四）：
 #   1) 每条 030-*.meta.json 为合法 JSON、schema_version == "1.0"；
 #   2) deepin_patch.sha256 == 对应来源 patch 磁盘 SHA-256；apply.patch_sha256
 #      == 对应 030-NNN.patch 磁盘 SHA-256；

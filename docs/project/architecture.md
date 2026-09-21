@@ -54,7 +54,7 @@ PCI 0000:06:00.6 [1d94:14c9]
 
 `innogpu-fh2m-trixie 4.0.0-i1` 是已完成基线验收、适配 Debian 6.12.101+ 的历史回退版本，并完成驱动、
 DKMS、DRM/fbdev 与 A1–A12 实机验收的版本（迁移源码树 + manifest 黑盒载荷，见
-[source-tree-migration.md](../planning/source-tree-migration.md)）；`patched-27` 转为保留的回退基线；
+[source-tree-migration.md](../design/source-tree-migration.md)）；`patched-27` 转为保留的回退基线；
 `patched-21` 是历史完整图形验收基线，`patched-17` 是深层回退包；它们不再是新设备默认入口。p25/p26/p27 分别增加 dma_resv usage 语义、未活动 CRTC vblank 守卫和 foreign DMA-BUF 生命周期修复，均已通过本机实机验收（见 [patch-025](../patches/patch-025-dma-resv-usage-rw.md)、[patch-026](../patches/patch-026-inactive-crtc-vblank-guard.md)、[patch-027](../patches/patch-027-foreign-dmabuf-lifecycle.md)）。p20 deb 是所有权收敛前的历史运行证据，包内辅助
 脚本不能代表当前源码，禁止重新部署或发布；运行时验收与 release 载荷合规是两个独立结论。
 Deepin 回退版本 `4.0.2-i3` 直接维护 `drivers/` 源码，并从固定 Deepin 202504 原包按 manifest 提取完整
@@ -152,7 +152,7 @@ dotconfig 的手动入口 displayselect
 `restore-dp1-mode-x11.sh` 注入本设备的非标准内屏候选与模式恢复动作；
 `install-xdisplay-user.sh` 只安装这些接入文件，不复制或覆盖 dotconfig 的显示引擎。当前契约见
 [`display-management.md`](display-management.md)，历史吸纳记录见
-[`../planning/display-integration.md`](../planning/display-integration.md)。
+[`../history/display-integration.md`](../history/display-integration.md)。
 
 ## 音频
 

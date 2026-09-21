@@ -33,7 +33,7 @@ dotconfig 负责设计和验证。相关行为发生变化时，应在 dotconfig
 
 本项目删除了曾经吸纳的 `scripts/xdisplay.sh`、`scripts/displayselect` 和引擎 fixture，避免两个仓库
 分别维护同一状态机。历史吸纳过程仍可在
-[`planning/display-integration.md`](../planning/display-integration.md) 中追溯，但不再代表当前所有权。
+[`planning/display-integration.md`](../history/display-integration.md) 中追溯，但不再代表当前所有权。
 
 ## 运行关系
 

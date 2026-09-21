@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tests/unit/run-validate-fantgpu-manifest-tests.sh — tools/validate-binary-manifest-fantgpu.py 单元验证
 #
-# 依据 docs/planning/c3-a-4-reproducible-input-plan.md §二：SHA/mode/链接
+# 依据 docs/design/c3-a-4-reproducible-input-plan.md §二：SHA/mode/链接
 # 目标漂移检出、O 血统 loader 文件名禁则、载荷缺失检出（fail-closed 预检）。
 # 全合成夹具（FPI_VAL_FIXTURE=1 放宽全局 660/deb SHA 检查——与 ③ 工具
 # --baseline 同口径，生产运行必须缺省）。

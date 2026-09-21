@@ -21,11 +21,11 @@
 按需查阅：[依赖与外部文件](project/dependencies.md)、[显示接入使用](user/display-guide.md)、
 [许可证与再分发边界](project/licensing.md)（唯一权威文档）、[驱动源码许可证审计](project/source-license-audit.md)、
 [project-tools 允许清单](project/project-tools-allowlist.txt)、[driver-source 允许清单](project/driver-source-allowlist.txt)、
-[当前待办](planning/current-work.md)、[已完成工作与时序](planning/todo.md)、[实施历史](planning/history.md)、
+[当前待办](state/current-work.md)、[已完成工作与时序](history/todo.md)、[实施历史](history/history.md)、
 [逆向工程与能力挖掘评估](investigations/reverse-engineering-assessment.md)、
 [FH2M 能力普查记录](investigations/capability-survey.md)、[release 审阅记录](planning/release-review-2026-08-20.md)、
-[DDK V119 对照表](investigations/ddk-v119-mapping.md)、[源码树迁移](planning/source-tree-migration.md)、
-[Phase 4 实机验证](planning/phase4-device-validation.md) 与 [Phase 5 退役设计](planning/phase5-retirement-design.md)。
+[DDK V119 对照表](investigations/ddk-v119-mapping.md)、[源码树迁移](design/source-tree-migration.md)、
+[Phase 4 实机验证](planning/phase4-device-validation.md) 与 [Phase 5 退役设计](design/phase5-retirement-design.md)。
 
 调查与评估另见 [WebKit DMA-BUF](investigations/webkit-dmabuf-investigation.md)、
 [Picom 接入记录](investigations/picom-integration.md)、[fantgpu 基座评估](investigations/fantgpu-base-update-evaluation.md)；
@@ -69,16 +69,19 @@
 | `incidents/` | 已定位事故和经验积累 | 失败过程与诊断边界 |
 | `design/` | 设计、集成方案、验证计划与配套契约 | 设计及其历史裁决；当前状态和执行放行另行确认 |
 | `investigations/` | 调查、评估、能力普查与历史接入记录 | 保留各文档的事实、计划与验证边界 |
-| `state/` | 挂起项 | 暂不推进事项及其恢复条件；当前结论仍由 `project/status.md` 管理 |
-| `planning/` | 当前待办、已完成时序、设计及冻结证据 | 迁移进行中；工具或冻结引用绑定的文件保留原位，`current-work.md` 管待办、`todo.md` 管已完记录 |
+| `state/` | 当前待办与挂起项 | 未完成事项及恢复条件；当前结论仍由 `project/status.md` 管理 |
+| `history/` | 已完成时序、实施历史与显示接入历史 | 记录当时的原因、结果与证据；不授予执行许可 |
+| `planning/` | 四篇 meta 绑定文档、两篇归档候选及冻结证据 | 原路径保留；冻结引用与证据不随目录整理迁移 |
 | `user/` | 安装、验证、显示使用、Picom 和恢复 | 面向操作者的步骤 |
 | `archive/` | 不再变化但仍需追溯的旧记录 | 历史只读材料 |
 
 状态与时序的分工：[status](project/status.md) 管当前结论，
-[current-work](planning/current-work.md) 管待办，[suspended](state/suspended.md) 管暂停条件，
-[todo](planning/todo.md) 是已完成事项索引，[history](planning/history.md) 解释关键演进及其证据。
-current-work/todo/history 等六篇仍受工具路径绑定；四篇 meta 引用目标和 evidence 冻结区留在
-planning。解除工具绑定、叙事提升至 history/、D4 归档分别另批，目录迁移不代表运行问题闭合。
+[current-work](state/current-work.md) 管待办，[suspended](state/suspended.md) 管暂停条件，
+[todo](history/todo.md) 是已完成事项索引，[history](history/history.md) 解释关键演进及其证据。
+工具适配批将 current-work 归入 state，todo/history 与 [显示接入历史](history/display-integration.md)
+归入 history，两篇源码迁移/退役设计归入 design；检查脚本跟随新路径，原有检查继续有效。
+planning 保留四篇 meta 引用目标和 evidence 冻结区；D2 叙事提升、D4 归档继续另批，
+目录迁移不代表运行问题闭合。
 archive 现有 [2026-07-08 清理记录](archive/cleanup-20260708.md) 仅代表当时状态；
 [Phase 4 验证](planning/phase4-device-validation.md) 与 [release 审阅](planning/release-review-2026-08-20.md)
 仍在原位，归档候选不等于已经归档。

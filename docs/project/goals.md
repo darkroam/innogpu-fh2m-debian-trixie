@@ -3,7 +3,7 @@
 ## 状态
 
 本文件是项目的**整体目标与工作路线**的唯一权威入口：说明"我们为什么做、要达成什么、按什么顺序
-做"。具体任务状态由 [current-work.md](../planning/current-work.md) 跟踪；当前运行状态以
+做"。具体任务状态由 [current-work.md](../state/current-work.md) 跟踪；当前运行状态以
 [status.md](status.md) 为唯一摘要；两者都不在本文件重复维护。
 
 ## 整体目标
@@ -16,14 +16,14 @@
 3. **架构升级（重构架构、取消 patch、直接纳入代码）**：从"厂商黑盒 + 补丁叠加"（patch 文件 +
    wrapper 开关）重构为"**Git 管理的导入驱动源码树 + 清单管理二进制**"——取消 patch 文件模式，内核驱动源码
    直接纳入仓库以提交迭代；黑盒二进制（.o_shipped/.so/固件）由 manifest 清单管理、幂等提取。
-   代码可迭代、可测试、可复现（设计见 [source-tree-migration.md](../planning/source-tree-migration.md)）；
+   代码可迭代、可测试、可复现（设计见 [source-tree-migration.md](../design/source-tree-migration.md)）；
 4. **持续优化**：针对实测热点与正确性缺陷持续修复，并把每项成果沉淀为可追溯的源码、探针与文档。
 
 ## 子目标与状态
 
 下表及后续「已完成阶段」「迁移阶段状态」保留 Deepin 迁移时点的结果；不代表当前 fantgpu
 已通过相同验收。当前 i6 诊断线仍为 R5=FAIL、OUTSIDE_COVERAGE，具体结论见 [status](status.md)，
-跨阶段演进见 [history](../planning/history.md)。
+跨阶段演进见 [history](../history/history.md)。
 
 | 子目标 | 状态 | 证据 / 入口 |
 | --- | --- | --- |
@@ -33,10 +33,10 @@
 | DDK 谱系对照表 | 达成（组件 / UAPI / 特性 / 用户态映射） | [ddk-v119-mapping.md](../investigations/ddk-v119-mapping.md) |
 | 内核正确性修复 | 3/3 达成（dma_resv usage / vblank 守卫 / foreign DMA-BUF） | patch-025/026/027 |
 | 构建可复现 | 达成（目录 mtime 归一化修复，三包逐字一致） | [release 审阅](../planning/release-review-2026-08-20.md) |
-| 源码树迁移 | **阶段 0–4 完成**（设计冻结 ✅、drivers/ 导入 + 9 补丁转提交 + parity ✅、manifest + 幂等提取 + staging 内核编译 ✅、新构建器 4.0.0-i1 并行验证 ✅、实机候选验证 + p27 回退演练 ✅——设备已运行 4.0.0-i1）；阶段 5 第一步（标记 deprecated + 文档同步）完成，第二步（移入 legacy/）待条件满足 + 监督批准 | [source-tree-migration.md](../planning/source-tree-migration.md)、[phase5-retirement-design.md](../planning/phase5-retirement-design.md) |
+| 源码树迁移 | **阶段 0–4 完成**（设计冻结 ✅、drivers/ 导入 + 9 补丁转提交 + parity ✅、manifest + 幂等提取 + staging 内核编译 ✅、新构建器 4.0.0-i1 并行验证 ✅、实机候选验证 + p27 回退演练 ✅——设备已运行 4.0.0-i1）；阶段 5 第一步（标记 deprecated + 文档同步）完成，第二步（移入 legacy/）待条件满足 + 监督批准 | [source-tree-migration.md](../design/source-tree-migration.md)、[phase5-retirement-design.md](../design/phase5-retirement-design.md) |
 | 性能优化（预取等） | 未开始 | [评估候选 4](../investigations/reverse-engineering-assessment.md) |
-| 能力深挖（codec 编码 / DVFS / CORE_ID） | 未开始 | [current-work.md](../planning/current-work.md) |
-| 许可证与跨硬件验证 | 整仓发布 BLOCKED；跨硬件/电源矩阵作为研发验证待做 | [source-license-audit.md](source-license-audit.md)、[current-work.md](../planning/current-work.md) |
+| 能力深挖（codec 编码 / DVFS / CORE_ID） | 未开始 | [current-work.md](../state/current-work.md) |
+| 许可证与跨硬件验证 | 整仓发布 BLOCKED；跨硬件/电源矩阵作为研发验证待做 | [source-license-audit.md](source-license-audit.md)、[current-work.md](../state/current-work.md) |
 
 ## 工作路线
 
@@ -66,12 +66,12 @@
 | 4 实机候选验证 | A1-A12、p27 回退演练、最终重装 | ✅ 完成，设备运行 4.0.0-i1 |
 | 5 旧流程退役 | Step 1 标记 deprecated；Step 2 仅评估旧 wrapper 路径 | Step 1 ✅；Step 2 的发布周期前置在 1C 下未激活 |
 
-详细设计见 [source-tree-migration.md](../planning/source-tree-migration.md)。
+详细设计见 [source-tree-migration.md](../design/source-tree-migration.md)。
 
 ### 当前工作入口
 
-具体未完成任务只在 [当前待办](../planning/current-work.md) 维护；本文件不复制可快速变化的
-任务列表。已完成工作和时序记录见 [`todo.md`](../planning/todo.md)。发布决策 1C 下，tag、Release
+具体未完成任务只在 [当前待办](../state/current-work.md) 维护；本文件不复制可快速变化的
+任务列表。已完成工作和时序记录见 [`todo.md`](../history/todo.md)。发布决策 1C 下，tag、Release
 和发布附件不是当前任务；跨硬件/电源矩阵仅作研发验证推进。
 
 ## 文档导航
@@ -81,7 +81,7 @@ README.md（入口）
   └─ docs/project/goals.md（本文件：为什么做、做什么、什么顺序）
        ├─ status.md（当前运行状态）
        ├─ architecture.md（代码架构与组件边界）
-       └─ docs/planning/current-work.md（当前任务清单）
+       └─ docs/state/current-work.md（当前任务清单）
             ├─ todo.md（已完成工作与时序）
             ├─ source-tree-migration.md（迁移设计）
             ├─ docs/investigations/reverse-engineering-assessment.md（评估与候选）

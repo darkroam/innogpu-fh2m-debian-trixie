@@ -1,7 +1,7 @@
 # 已完成工作与时序索引
 
 > 本文件保留已完成工作和历史时序，不再作为当前任务清单。未完成工作的唯一权威入口是
-> [当前待办](current-work.md)。历史 release 审阅和已完成条目保持原文。
+> [当前待办](../state/current-work.md)。历史 release 审阅和已完成条目保持原文。
 
 本页只索引已完成事项；关键演进的因果与证据由 [实施历史](history.md) 承载，避免重复长篇叙事。
 
@@ -54,7 +54,7 @@
 - [x] 实际演练 patched-17 回退：安装、重启、验证，再恢复 patched-23；两次重启后的 TTY、Xorg/dwm、
   DRM/fbdev、软件 llvmpipe 和硬件 GL 恢复均通过。
 - [x] 完成 release 审阅主体：tag、哈希、包边界、可复现构建（含目录 mtime 修复）、回退路径和附件边界，
-  见 [release-review-2026-08-20.md](release-review-2026-08-20.md)。
+  见 [release-review-2026-08-20.md](../planning/release-review-2026-08-20.md)。
 - [x] 源码树迁移阶段 0-4（由监督分支 `migration/supervised-source-tree` @ `bd76e91` 中的
   `docs/planning/migration-supervision.md` 管辖；该指南不在 `main`）：
   阶段 0 设计冻结 ✅；阶段 1 drivers/ 导入 + 9 patch 转提交 + parity ✅；阶段 2 binary-manifest.json +
@@ -63,7 +63,7 @@
   阶段 4 实机候选验证 ✅（2026-08-21：A1–A12 全 PASS、p27 回退演练 PASS、设备推进至 4.0.0-i1）。
 - [x] 源码树迁移阶段 5 第一步：旧构建器/wrapper 标记 deprecated + 文档/检查脚本同步（2026-08-21 监督通过）；
   第二步设计（一个发布周期 + 新设备 clone 安装 + 4.0.0-i1→p27 恢复演练后评估移入 legacy/）见
-  [phase5-retirement-design.md](phase5-retirement-design.md)，**未批准不执行**。
+  [phase5-retirement-design.md](../design/phase5-retirement-design.md)，**未批准不执行**。
 
 ## 已完活动记录
 
@@ -159,7 +159,7 @@ Picom patch、配置和安装流程已按 [`picom-integration.md`](../investigat
 ## 逆向工程与能力挖掘
 
 状态：评估与能力普查已落档（[reverse-engineering-assessment.md](../investigations/reverse-engineering-assessment.md)、
-[capability-survey.md](../investigations/capability-survey.md)）；未完成项已迁入 [当前待办](current-work.md)。
+[capability-survey.md](../investigations/capability-survey.md)）；未完成项已迁入 [当前待办](../state/current-work.md)。
 
 - [x] 能力面普查（静态部分）：RGX 特性表 dump（90 宏）、BVNC 35.V.1632.23、G0M_SOC 变体确认、
   Vulkan 128 唯一扩展/OpenCL 3.0/VA-API codec/IFBC 静态证据，已落档 [capability-survey.md](../investigations/capability-survey.md)。
@@ -188,7 +188,10 @@ Picom patch、配置和安装流程已按 [`picom-integration.md`](../investigat
 
 - [x] R17 四轮闭合，三代际页提交 `1bf294a`、收尾提交 `ad0159f`；R2-F1 保留原误判并补证。
   过程与边界见 [R17 历史记录](history.md#2026-09-19-至-2026-09-21-r17-文档迭代闭合)。
-- [x] R18 结构迁移前三批已提交；后续批次仍由 [current-work](current-work.md) 跟踪，
+- [x] R18 结构迁移前三批已提交；后续批次仍由 [current-work](../state/current-work.md) 跟踪，
   不以本文完成标记代替运行验收或下一批放行。
 - [x] R18 批 4 内容对齐与 E51 追加注由 `afae143` 提交，共 25 件；
   [过程与授权边界](history.md#2026-09-21-r18-内容对齐与收尾交接)保留，批 5 终审及另批任务不在本条完成范围内。
+- [x] R18 主体闭合（2026-09-21）：批 5 收档交叉确认通过，收档提交 `0454a1b`、
+  实质研判制度化提交 `97aa83b`；20 篇迁移映射与 19 处 meta 引用口径已补正。
+  前条为历史时点记录；工具适配、D2、D4 进度只在 [current-work](../state/current-work.md) 维护。

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # tools/validate-binary-manifest-fantgpu.py — F 载荷清单校验（预检路径）
 #
-# 依据 = docs/planning/c3-a-4-reproducible-input-plan.md §二（v12）：
+# 依据 = docs/design/c3-a-4-reproducible-input-plan.md §二（v12）：
 # S_INPUT validator——每条 `vendor/fantgpu/<path>` 必须存在且 SHA（常规
 # 文件）/mode/链接目标与 manifest 一致；O 血统 loader 文件名禁则；载荷
 # 缺失 fail-closed（builder 输入预检同源调用）。

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # tools/r16-f-payload-integrity.py — C3-a ③ F 载荷完整性审计（生成 + 复验）
 #
-# 依据 = docs/planning/5.0.0-i2-validation-plan.md §三「C3-a 放行前置」第 ③ 项
+# 依据 = docs/design/5.0.0-i2-validation-plan.md §三「C3-a 放行前置」第 ③ 项
 # （dsh 2026-09-11 裁决：① 来源已闭合、② 授权已定档「仅自用、不分发」、
 # ③④ 交 qoder 技术执行）。本工具只实现 ③：F 载荷逐文件 SHA-256 清单 +
 # 与来源包 DEBIAN/md5sums 交叉校验，证据落 docs/planning/evidence/o-stage/。
@@ -122,7 +122,7 @@ JOURNAL_NAME = "f-payload.commit.journal"
 JOURNAL_STATES = ("backing_up", "committing", "committed", "rolling_back")
 
 # ------------------------------------------------------ restore 落库（④ 批 1）
-# 依据 = docs/planning/c3-a-4-reproducible-input-plan.md §一（v12）：
+# 依据 = docs/design/c3-a-4-reproducible-input-plan.md §一（v12）：
 # 事务化 + 写前状态机 + 排他锁 + 逐状态真值表 fail-closed。
 # 保证范围（设计稿 v12 已收窄）：进程中断与并发进程；不承诺掉电/系统崩溃。
 RESTORE_LOCK_NAME = ".fantgpu-restore.lock"
@@ -223,7 +223,7 @@ FORBIDDEN_O_LOADER_NAMES = (
     "inno_drv_video.so",
 )
 
-# F：docs/planning/fantgpu-base-update-evaluation.md:229-232 记录的 8 位前缀，
+# F：docs/investigations/fantgpu-base-update-evaluation.md:229-232 记录的 8 位前缀，
 # 本轮 sha256sum 独立复算得到完整值并逐值一致。值 = (完整 SHA-256, 文档前缀,
 # 文档行号)。fh2m.sh/fh2c.sh 两血统同值（评估文档记「相同」）。
 EXPECTED_FIRMWARE_SHA256 = {

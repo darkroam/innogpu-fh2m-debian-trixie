@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tests/unit/run-r16-restore-tests.sh — tools/r16-f-payload-integrity.py restore 子命令单元验证
 #
-# 依据 docs/planning/c3-a-4-reproducible-input-plan.md §一（v12）：
+# 依据 docs/design/c3-a-4-reproducible-input-plan.md §一（v12）：
 # 排他锁（O_NOFOLLOW + flock NB + 永不删除）、journal 写前状态机
 # （staged/moving_old/moved_old/moving_new/committed）、逐状态真值表
 # （仅可产生组合；不可产生组合 fail-closed 保留现场）、journal 字段安全、

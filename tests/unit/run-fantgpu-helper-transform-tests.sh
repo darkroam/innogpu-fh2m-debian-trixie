@@ -2,7 +2,7 @@
 # tests/unit/run-fantgpu-helper-transform-tests.sh — tools/transform-fantgpu-helper.sh 与
 # F 包 helper 安装树运行契约单测
 #
-# 依据 docs/planning/c3-a-4-reproducible-input-plan.md §四（codex 初审 P1-2 修复）：
+# 依据 docs/design/c3-a-4-reproducible-input-plan.md §四（codex 初审 P1-2 修复）：
 # F 血统打包时变换 helper 内部**调用链 token**（innogpu-<命令名>、
 # usr/share/innogpu-fh2m-trixie 路径、install-dri-node-repair-service 的模块
 # 条件）；O 血统保持 scripts/ 原始字节（check-release-package cmp 契约）。

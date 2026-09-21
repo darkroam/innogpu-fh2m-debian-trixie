@@ -11,7 +11,7 @@ tests/xdisplay/run-install-tests.sh
 该测试只写入 `/tmp` 下的临时 HOME，验证缺少 dotconfig 引擎时拒绝复制私有副本、设备钩子安装、
 幂等性、已有 watcher 保留和 `xprofile` 符号链接处理；不会启动真实 watcher 或改变显示布局。
 xdisplay 的状态机、布局、适配器、配置和自定义布局测试只在 dotconfig 仓库维护。所有权边界见
-[`docs/planning/display-integration.md`](../docs/planning/display-integration.md)。
+[`docs/history/display-integration.md`](../docs/history/display-integration.md)。
 
 不得提交测试运行产生的锁文件、日志、runtime 目录或本机绝对路径。
 
@@ -59,6 +59,7 @@ bash tests/unit/run-dmabuf-regression-tests.sh
 bash tests/unit/run-drm-topology-tests.sh
 bash tests/unit/run-dri-repair-tests.sh
 bash tests/unit/run-collab-structure-tests.sh
+bash tests/unit/run-check-docs-tests.sh
 bash tests/unit/run-suspend-resume-tests.sh
 bash tests/unit/run-suspend-failure-finalize-tests.sh
 bash tests/unit/run-030-032-pm-probe-tests.sh
@@ -153,6 +154,10 @@ bash tests/unit/run-fantgpu-runtime-health-tests.sh
   坏格式/真实形态：active mode 名称为空时 mode=<unnamed> 占位且仍执行 vblank）、active vblank（timeout/fast return/nonadvancing/样本数/乱序/列标题漂移/重复 header/首样本 delta 非零/delta 与序号差不符/kernel_delta 矛盾/内核时间倒退（含最小精度 16.400→16.399）/sequence uint32 越界/summary 指标与样本重算不符/真实 32 位回绕合法）、inactive vblank 守卫（EINVAL 快速通过/
   timeout/错误 errno/过慢/重复 header 或列标题/坏浮点/字段乱序/success=0 时非零 summary/无 inactive 诚实 SKIP）、内核日志门禁（error/GPU hang/dma_buf timeout 均阻断，严重词表驱动覆盖 failure/failures/warn/WARNING/WARN_ON/lockup/wedged 及单复数进行时，debug/installed/hangcheck benign 保持 clean；日志独立状态机：新严重行 FAIL/rc1、post 不可用或截断/重排/插入/无重叠 UNVERIFIED/rc3（一致性失败优先，正 overlap+一致性失败+严重词仍须 UNVERIFIED）、正常环形轮转与完整追加 clean/PASS（多条追加/多条轮转/多新增含严重行均覆盖）、轮转后新增错误 FAIL/rc1、pre 缺失整体 UNVERIFIED）、状态门禁全部负例与错误计数增长、mktemp/外部超时/TERM
   清理无残留（限定 TMPDIR）、不污染 baseline、汇总恒等式与退出码。
+- 文档迁移门禁测试（无设备，9 项）：`run-check-docs-tests.sh` 在临时 Git 仓库复制工作树
+  （含待收档的新路径），实跑 check-docs；覆盖历史显示引用允许、活动显示引用拒绝、todo
+  活动任务拒绝、runtime 汇总缺失、两篇设计的陈旧断言与三篇文档缺失。仅临时仓库建索引，
+  不暂存源仓库，不生成构建或运行证据。
 - 多 Agent 协作目录结构与隐私测试（无设备）：tools/validate-collab.py 持久化 fixture，覆盖目录命名/
   编号唯一/request+report 模板齐全/INDEX 与目录按编号精确双向一一对应（R01 不误配 R010、重复行、
   孤立行、孤立目录、登记日期/主题与目录一致）/状态白名单/根目录散放文件/根目录或内部符号链接/嵌套目录/仅

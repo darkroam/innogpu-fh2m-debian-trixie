@@ -17,7 +17,7 @@
  * This proves the in-kernel PRIME self-import fast path on the local device. It
  * does NOT exercise foreign import (other exporter drivers), cross-device GTT
  * export, or V4L2/second-GPU paths; those remain UNVERIFIED on this single-GPU
- * machine (see docs/planning/webkit-dmabuf-investigation.md).
+ * machine (see docs/investigations/webkit-dmabuf-investigation.md).
  *
  * Exit codes: 0=all rounds exported/imported/closed cleanly, no fd leak
  *             1=ioctl/execution/verification failure (incl. missing CLOEXEC,

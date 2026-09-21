@@ -1,7 +1,7 @@
 # 实施历史
 
 本页记录关键演进的原因、结果和证据；已完成事项索引见 [todo](todo.md)，
-待办见 [current-work](current-work.md)，当前结论见 [status](../project/status.md)。
+待办见 [current-work](../state/current-work.md)，当前结论见 [status](../project/status.md)。
 历史段落中的“当前”仅指该段记录时点，历史命令不构成执行授权。
 
 ## 2026-08-26 DMA-BUF 真机回归与 runtime 证据封存
@@ -35,7 +35,7 @@
 - patched-25（patch-025 dma_resv usage 语义）、patched-26（patch-026 未活动 CRTC vblank 守卫）、
   patched-27（patch-027 foreign DMA-BUF 生命周期）各自独立分支开发，经离线编译、实机验证后
   fast-forward 合并 main 并打 tag。
-- release 审阅（[release-review-2026-08-20.md](release-review-2026-08-20.md)）发现 **deb 构建
+- release 审阅（[release-review-2026-08-20.md](../planning/release-review-2026-08-20.md)）发现 **deb 构建
   不可复现**：dpkg-deb 保留目录实际 mtime，未应用 SOURCE_DATE_EPOCH。修复构建器（构建前归一化
   整树 mtime），p25/26/27 重建为可复现 SHA 并更新 tag。当时当前运行驱动为 patched-27（Phase 4
   后已推进至 4.0.0-i1，见下方 2026-08-21 条目）。
@@ -46,7 +46,7 @@
   SOURCE_DATE_EPOCH 必填 + 双构建可复现）；Phase 4 实机候选验证完成：B1-B12 基线、A1-A12 初次
   验收全 PASS、p27 回退演练 PASS、重装 4.0.0-i1 并重启，设备最终运行态 = `4.0.0-i1`。
 - 迁移分支整体 fast-forward 合并 main 并推送 origin（当前 main/origin 均为 74b1f04）；Phase 5
-  （旧流程退役）按监督安排分两步设计评审，见 [phase5-retirement-design.md](phase5-retirement-design.md)。
+  （旧流程退役）按监督安排分两步设计评审，见 [phase5-retirement-design.md](../design/phase5-retirement-design.md)。
 - 当前设备运行 `4.0.0-i1`；`patched-27` 转为保留的回退基线；p27/17/8 deb、tag 与 patches/ 永久保留。
 
 ## 2026-08-14 patched-21 候选定义与 release 护栏
@@ -145,12 +145,12 @@
 
 - 基座评估区分 Deepin、编排树与 fantgpu F0，完成重新推导的 030 链；i6 的
   18 项链及物化身份见 [代三事实页](../baselines/baseline-fantgpu-5.x.md) 和
-  [030 映射表](030-mapping-table.md)。030-034/i6 实现锚为 `26dded5`。
+  [030 映射表](../planning/030-mapping-table.md)。030-034/i6 实现锚为 `26dded5`。
 - i4 的共享 dev_rsrc ABI 事故、脚本闸门重蹈和设计期越界产物分别提升为
   [ABI 事故](../incidents/r5-i4-oops-dev-rsrc-abi.md)、[脚本事故](../incidents/script-gate-defect-recurrence.md)、
   [越界产物事故](../incidents/design-phase-out-of-bounds-patch.md)，错误过程保留。
 - 两轮诊断内核后仍为 `OUTSIDE_COVERAGE`、`R5=FAIL`、root cause unresolved；
-  [步骤 8 证据](evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-result.txt)
+  [步骤 8 证据](../planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-result.txt)
   区分未覆盖区与 timer 不可达，不能以静默排除全部回调体挂死。`c3105ec` 收档的是
   GRUB 配置及默认启动行为恢复，未解除禁止重跑、U1/U2、validation-results、签发或 tag 冻结。
 
@@ -179,4 +179,14 @@
   原 322 行及历史哈希身份 `115368769d53` 保留；该哈希不是附录加入后的整文件哈希。
   r5dpm2 原设计已含规范化口径，不属同一缺陷。追加注不追认事前授权，也不解除运行冻结。
 - 批 5 完成小改与台账交付后仍须 dsh 终审，未提前记作主体闭合；工具适配、D2、D4 均另批。
-  当前排程见 [current-work](current-work.md)，旧轮次、历史裁定与原始证据不回写。
+  当前排程见 [current-work](../state/current-work.md)，旧轮次、历史裁定与原始证据不回写。
+
+## 2026-09-21 R18 主体闭合与工具适配接续
+
+- R18 批 5 收档经 qoder 交叉确认，主体闭合。`0454a1b` 收齐五件（批 5 四篇加 E51
+  读者指引一行），`97aa83b` 将实质研判制度化。前节「待终审」保留为交付时点记录。
+- 迁移映射最终为 20 篇（3/6/1/10）；「42 篇」算术误记已补正。全 tracked meta.json
+  原路径引用为 19 处（mapping 15、debug-design 2、stage-d 1、rederivation 1），原文保留。
+- 工具适配触发条件已满足，R19 接续六篇文档迁移与检查脚本同步；D2、D4 单独排队。
+  本条只登记文档工作，OUTSIDE_COVERAGE、R5=FAIL、禁止重跑、U1/U2 未执行、
+  validation-results 未签、签发与 tag 冻结不变。

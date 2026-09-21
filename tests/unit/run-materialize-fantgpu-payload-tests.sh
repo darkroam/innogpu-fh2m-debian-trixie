@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tests/unit/run-materialize-fantgpu-payload-tests.sh — tools/materialize-fantgpu-payload.py 单元验证
 #
-# 依据 docs/planning/c3-a-4-reproducible-input-plan.md §四（M1-M6 + trace 契约）：
+# 依据 docs/design/c3-a-4-reproducible-input-plan.md §四（M1-M6 + trace 契约）：
 # direct/ddx-abi/ucm-ucm2/wayland 预选物化、locked-reference 零复制、
 # $P/opt 为空、trace 四列、计数断言、SHA/mode 漂移 fail-closed、预选负向。
 # 全合成夹具（FPI_MAT_FIXTURE=1），只写 $TMP。

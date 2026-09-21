@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # tools/gen-package-md5sums.py — 构建期按实际安装载荷重生成 DEBIAN/md5sums
 #
-# 依据 = docs/planning/c3-a-4-reproducible-input-plan.md §四 强制项 1
+# 依据 = docs/design/c3-a-4-reproducible-input-plan.md §四 强制项 1
 # （C3-a ④ builder 改造配套工具；F 分支专用，O 分支行为不变）。
 # 上游 F deb 的 DEBIAN/md5sums 是对重定位前暂存布局生成的（95 条路径列
 # 错配，③ 审计已严格定界），builder 改造**必须按实际安装的载荷重生成**，

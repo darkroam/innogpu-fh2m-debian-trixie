@@ -84,8 +84,8 @@ stale_xdisplay_refs="$(
         'scripts/xdisplay\.sh|scripts/displayselect|tests/xdisplay/run-stage[24](-watch|-regression)?-tests\.sh' \
         README.md docs scripts tests baselines \
         --glob '!docs/archive/**' \
-        --glob '!docs/planning/history.md' \
-        --glob '!docs/planning/display-integration.md' \
+        --glob '!docs/history/history.md' \
+        --glob '!docs/history/display-integration.md' \
         --glob '!docs/project/display-management.md' \
         --glob '!scripts/check-docs.sh' 2>/dev/null || true
 )"
@@ -182,7 +182,7 @@ else
     runtime_text="$runtime_passed PASS / $runtime_skipped SKIP / $runtime_unverified UNVERIFIED"
     require_text docs/project/status.md "$runtime_text"
     require_text docs/project/test-strategy.md "$runtime_text"
-    require_text docs/planning/current-work.md "$runtime_text"
+    require_text docs/state/current-work.md "$runtime_text"
 fi
 require_text baselines/latest-runtime-baseline.txt 'runtime_vulkan_execution=PASS'
 require_text baselines/latest-runtime-baseline.txt 'runtime_opencl_execution=PASS'
@@ -212,11 +212,11 @@ require_text docs/project/licensing.md 'license_release_gate=BLOCKED'
 
 stale_current_state="$({
     rg -n '18 PASS.?/? ?9 SKIP.?/? ?8 UNVERIFIED|18/9/8|人工授权项待运行' \
-        README.md drivers/README.md docs/project docs/user docs/planning/source-tree-migration.md \
-        docs/planning/phase5-retirement-design.md tests/runtime/README.md 2>/dev/null || true
+        README.md drivers/README.md docs/project docs/user docs/design/source-tree-migration.md \
+        docs/design/phase5-retirement-design.md tests/runtime/README.md 2>/dev/null || true
     rg -n 'VA-API H264\+HEVC 硬解已实机|VA-API H264\+HEVC 硬解等|当前运行包.*patched-23' \
-        README.md drivers/README.md docs/project docs/user docs/planning/source-tree-migration.md \
-        docs/planning/phase5-retirement-design.md tests/runtime/README.md 2>/dev/null || true
+        README.md drivers/README.md docs/project docs/user docs/design/source-tree-migration.md \
+        docs/design/phase5-retirement-design.md tests/runtime/README.md 2>/dev/null || true
     rg -n '当前设备构建仍由旧流程|binary-manifest\.json.*当前文件尚不存在' \
         README.md drivers/README.md docs/project docs/user 2>/dev/null || true
 } )"
@@ -365,9 +365,12 @@ for path in \
     docs/project/multiagent-collab.md \
     docs/patches/patched-21-release-candidate.md \
     docs/incidents/patched-20-legacy-helper-payload.md \
-    docs/planning/current-work.md \
-    docs/planning/todo.md \
-    docs/planning/history.md \
+    docs/state/current-work.md \
+    docs/history/todo.md \
+    docs/history/history.md \
+    docs/history/display-integration.md \
+    docs/design/source-tree-migration.md \
+    docs/design/phase5-retirement-design.md \
     docs/user/new-device-install.md \
     docs/user/picom-install.md \
     docs/user/verification.md \
@@ -381,8 +384,8 @@ for path in \
     [[ -f "$path" ]] || fail "required document is missing: $path"
 done
 
-if rg -n '^\s*- \[ \]' docs/planning/todo.md >/dev/null; then
-    fail "completed-work timeline contains an active task; move it to docs/planning/current-work.md"
+if rg -n '^\s*- \[ \]' docs/history/todo.md >/dev/null; then
+    fail "completed-work timeline contains an active task; move it to docs/state/current-work.md"
 fi
 
 for path in \

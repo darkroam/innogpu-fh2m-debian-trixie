@@ -8,7 +8,7 @@
 > **当前入口**：新架构构建器 `build-innogpu-driver.sh`（迁移源码树 + 经审查的新修复 + manifest
 > 黑盒载荷，产出 4.0.x-iN）。以下 `build-deepin-coherent.sh`、`build-patchedNN-*.sh` 与历史安装/卸载入口为
 > **legacy（保留）**：永久保留作 p27 oracle、版本护栏、回退包与事故证据；**不作为新工作入口**，
-> 不移动不删除（Phase 5 第二步后再评估，见 `docs/planning/phase5-retirement-design.md`）。
+> 不移动不删除（Phase 5 第二步后再评估，见 `docs/design/phase5-retirement-design.md`）。
 
 | 入口 | 生命周期 | 职责 |
 | --- | --- | --- |

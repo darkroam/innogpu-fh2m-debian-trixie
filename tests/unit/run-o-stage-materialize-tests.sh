@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tests/unit/run-o-stage-materialize-tests.sh — materialize-o-stage.sh 单元验证
 #
-# 职责（docs/planning/o-stage-integration-plan.md §四）：用小型假输入树 +
+# 职责（docs/design/o-stage-integration-plan.md §四）：用小型假输入树 +
 # 假 patch 链验证 路径边界 / fail-closed / 链点校验 / 事务回滚与恢复 /
 # 幂等重跑 / patch SHA 校验。所有用例秒级（假树），不触碰真实 F0/030 输入。
 #

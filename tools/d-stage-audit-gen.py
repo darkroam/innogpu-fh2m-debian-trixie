@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # tools/d-stage-audit-gen.py — O-2 D → D_stage 完整性审计生成器
 #
-# 实现唯一依据 = docs/planning/030-d-stage-audit.md §五 v24 Python 契约
+# 实现唯一依据 = docs/design/030-d-stage-audit.md §五 v24 Python 契约
 # （design §5.3 bash 草案仅为算法伪代码；契约与草案冲突时以本契约为准）。
 #
 # 子命令：

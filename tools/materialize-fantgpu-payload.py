@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # tools/materialize-fantgpu-payload.py — C3-a ④ builder F 载荷物化（M1-M6）
 #
-# 依据 = docs/planning/c3-a-4-reproducible-input-plan.md §四（v12）：
+# 依据 = docs/design/c3-a-4-reproducible-input-plan.md §四（v12）：
 # 读 binary-manifest-fantgpu.json，按 materialize 策略与预选参数
 # （F_XORG_ABI/F_UCM_LAYOUT/F_WAYLAND_COMPAT，默认 1.21/ucm2/off）把
 # vendor/fantgpu/ 物化到包组装根，并产出/校验 machine-checkable 的

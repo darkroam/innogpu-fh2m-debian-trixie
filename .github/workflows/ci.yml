@@ -33,6 +33,7 @@ jobs:
           bash tests/unit/run-drm-topology-tests.sh
           bash tests/unit/run-dri-repair-tests.sh
           bash tests/unit/run-collab-structure-tests.sh
+          bash tests/unit/run-check-docs-tests.sh
           bash tests/unit/run-suspend-resume-tests.sh
           bash tests/unit/run-suspend-failure-finalize-tests.sh
           bash tests/unit/run-030-031-pm-marker-tests.sh

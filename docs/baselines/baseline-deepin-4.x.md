@@ -13,12 +13,12 @@
 
 | 项目 | 已核对事实 | 来源 |
 | --- | --- | --- |
-| 起止事件 | 2026-08-21 源码树迁移至 2026-09-09 `deepin-4.0.2-i3` 冻结 | §21；[迁移设计](../planning/source-tree-migration.md)；tag 说明 |
+| 起止事件 | 2026-08-21 源码树迁移至 2026-09-09 `deepin-4.0.2-i3` 冻结 | §21；[迁移设计](../design/source-tree-migration.md)；tag 说明 |
 | tag 与目标提交 | `deepin-4.0.2-i3` → `b30c8071e595` | annotated tag；不可移动 |
 | 目标提交日期（+08:00） | 2026-09-09 12:41:23 | Git commit |
 | tag 创建日期（+08:00） | 2026-09-09 12:48:17 | Git taggerdate；与目标提交日期分列 |
 | 载体 | Deepin 202504 源码树、manifest 黑盒载荷及迁移补丁；终点组合为 024/026-lifecycle/028/029 | [provenance](../design/patch-provenance.md)、[patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
-| ABI 边界 | 用户态、固件与 shipped objects 保持 Deepin 同源；源码迁移不等于闭源核心源码化 | [迁移设计](../planning/source-tree-migration.md) |
+| ABI 边界 | 用户态、固件与 shipped objects 保持 Deepin 同源；源码迁移不等于闭源核心源码化 | [迁移设计](../design/source-tree-migration.md) |
 | 代表 deb / 回滚卡 | `build/innogpu-fh2m-trixie_4.0.2-i3.deb`，本轮实物 SHA 与记录一致 | tag 说明；[维护策略](../project/maintenance-policy.md) |
 | 再下一层回退 | `4.0.0-i1`，随后为 patched-27；具体操作以 [recovery](../user/recovery.md) 为准 | 不执行本页引用的历史命令 |
 
@@ -34,7 +34,7 @@
 保存本地载荷和产物。迁移将 9 个启用补丁转为源码提交，保留 patch provenance；
 000 继续是确定性二进制变换工具。p27 oracle 对比、模块符号检查和固定 epoch 双构建
 约束迁移等价性，历史补丁与回退包继续保留，详见
-[源码树迁移](../planning/source-tree-migration.md) 和 [Phase 4 验证](../planning/phase4-device-validation.md)。
+[源码树迁移](../design/source-tree-migration.md) 和 [Phase 4 验证](../planning/phase4-device-validation.md)。
 
 后续 suspend/resume 工作形成 024、026-lifecycle、028、029 组合。失败过程包括
 PowerLock 时序竞态、s2idle 红屏及独立温度 work 过早启动；不能用最终结果抹掉中间失败。

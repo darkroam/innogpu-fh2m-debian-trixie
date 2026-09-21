@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # scripts/materialize-o-stage.sh — 阶段三 O_stage 源树物化（F0 + 18 条 030-NNN → o-stage 快照）
 #
-# 契约：docs/planning/o-stage-integration-plan.md §一（dsh 终审通过）。
+# 契约：docs/design/o-stage-integration-plan.md §一（dsh 终审通过）。
 #   - 前置校验（tar 1.35 / zstd 1.5.7 / f0 快照 SHA / 18 条 patch SHA）
 #   - 解包 F0 → 树 hash 校验（O-4 锁定 7219d817…）
 #   - 18 条 030-NNN 按链序 -p1 --fuzz=0 应用，每链点校验 after_tree_hash

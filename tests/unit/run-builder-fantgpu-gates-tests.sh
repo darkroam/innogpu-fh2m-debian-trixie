@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tests/unit/run-builder-fantgpu-gates-tests.sh — builder F 分支早期门禁与静态契约单测
 #
-# 依据 docs/planning/c3-a-4-reproducible-input-plan.md §三（改造点 9-13）与
+# 依据 docs/design/c3-a-4-reproducible-input-plan.md §三（改造点 9-13）与
 # §四（postinst/md5sums/trace）：当前版本 5.0.0-i6、血统判定 5.0.0-i*、
 # 输入预检分支、PKG_DESC $VERSION 参数化、share/命令前缀血统参数化、
 # ld.so.conf fantgpu-fh2m、postinst fh2m_dri.so + 设备门。

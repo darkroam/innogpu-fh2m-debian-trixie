@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tests/unit/run-gen-fantgpu-manifest-tests.sh — tools/gen-fantgpu-manifest.py 单元验证
 #
-# 依据 docs/planning/c3-a-4-reproducible-input-plan.md §二：
+# 依据 docs/design/c3-a-4-reproducible-input-plan.md §二：
 # S_INPUT 与 ③ 清单严格双射（含 mode 逐值）、零多写/漏写、变体组完备
 # （未分类 /opt 条目拒绝）、symlink 条目口径、schema 违规拒绝、sidecar 计数。
 # 正向用例读真实 ③ 证据（只读，不触碰 debs/vendor/build）；负向用临时拷贝。

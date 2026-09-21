@@ -43,10 +43,15 @@ docs/design/5.0.0-i2-validation-plan.md
 docs/design/c3-a-4-reproducible-input-plan.md
 docs/design/o-stage-integration-plan.md
 docs/design/patch-provenance.md
+docs/design/phase5-retirement-design.md
 docs/design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md
 docs/design/r5-dpm-watchdog-diagnostic-kernel-design.md
 docs/design/r5-suspend-investigation-plan.md
 docs/design/r5-watchdog-local-capture-design.md
+docs/design/source-tree-migration.md
+docs/history/display-integration.md
+docs/history/history.md
+docs/history/todo.md
 docs/incidents/README.md
 docs/incidents/boot-errors-attribution-20260903.md
 docs/incidents/design-phase-out-of-bounds-patch.md
@@ -93,8 +98,6 @@ docs/patches/patched-24-kernel-612101.md
 docs/patches/picom/patch-picom-001-explicit-uniform-location.md
 docs/planning/030-mapping-table.md
 docs/planning/030-patch-rederivation-design.md
-docs/planning/current-work.md
-docs/planning/display-integration.md
 docs/planning/evidence/4.0.2-i3/4.0.2-i3.meta.json
 docs/planning/evidence/4.0.2-i3/build-A.sha256
 docs/planning/evidence/4.0.2-i3/build-B.sha256
@@ -179,14 +182,10 @@ docs/planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-watchdog-step7-archive-su
 docs/planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-watchdog-step7-result.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i6/watchdog-round-1-archive-summary.txt
 docs/planning/evidence/o-stage/runtime-5.0.0-i6/watchdog-round-1-result.txt
-docs/planning/history.md
 docs/planning/phase4-device-validation.md
-docs/planning/phase5-retirement-design.md
 docs/planning/r5-suspend-030-032-debug-design.md
 docs/planning/r5-suspend-stage-d-design.md
 docs/planning/release-review-2026-08-20.md
-docs/planning/source-tree-migration.md
-docs/planning/todo.md
 docs/project/architecture.md
 docs/project/audio-management.md
 docs/project/code-analysis.md
@@ -204,6 +203,7 @@ docs/project/source-license-audit.md
 docs/project/source-license-inventory.tsv
 docs/project/status.md
 docs/project/test-strategy.md
+docs/state/current-work.md
 docs/state/suspended.md
 docs/user/display-guide.md
 docs/user/local-extractor.md
@@ -307,6 +307,7 @@ tests/unit/run-030-034-stop-stage-tests.sh
 tests/unit/run-030-meta-tests.sh
 tests/unit/run-builder-fantgpu-gates-tests.sh
 tests/unit/run-capability-baseline-tests.sh
+tests/unit/run-check-docs-tests.sh
 tests/unit/run-check-release-package-tests.sh
 tests/unit/run-collab-structure-tests.sh
 tests/unit/run-d-stage-audit-fault-tests.sh

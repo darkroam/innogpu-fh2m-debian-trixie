@@ -20,7 +20,7 @@
 | 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |
 | 历史运行验收 | p21 完整图形验收通过；p22 完成 connector 分类和开盖桌面烟测，但电源/合盖/拔屏矩阵未完成 | [`patch-009` 验收](../patches/patch-009-local-internal-edp-connector.md) |
 | 源码/用户态基线 | 当前 fantgpu 线使用 F0 + O_stage 与 `binary-manifest-fantgpu.json`；Deepin 回退线使用 Deepin 202504 完整原包与 `binary-manifest.json`；禁止跨线混配 | [架构](architecture.md)、[O_stage](../design/o-stage-integration-plan.md) |
-| Deepin 源码树迁移 | 阶段 0–4 完成；该线已交付 4.0.2-i3，4.0.0-i1 保留为其首层回退；阶段 5 第一步完成，第二步待条件满足 + 监督批准；不代表 fantgpu 验收 | [phase5-retirement-design](../planning/phase5-retirement-design.md) |
+| Deepin 源码树迁移 | 阶段 0–4 完成；该线已交付 4.0.2-i3，4.0.0-i1 保留为其首层回退；阶段 5 第一步完成，第二步待条件满足 + 监督批准；不代表 fantgpu 验收 | [phase5-retirement-design](../design/phase5-retirement-design.md) |
 | 固件与 PVR | `4.0.2-i3` R14 每轮 PVR 八项计数均为 0 且不增长；`hwinfo_g0m.bin` 缺失为已知厂商载荷边界 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | DRM/fbdev | `4.0.2-i3` R14 内屏及外屏恢复通过；`card0`、`renderD128`、`fb0` 基线继续可用 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | Xorg/GLX 历史验收 | Deepin `4.0.0-i1` 桌面和隔离 Xorg 的硬件加速验收通过；不外推到 fantgpu i6 | [Phase 4 验收](../planning/phase4-device-validation.md) |
@@ -36,7 +36,7 @@
 | 发布边界 | 三层许可模型（原创层 GPL-3.0-or-later / 上游 MIT / drivers/ 逐文件）；`project-tools` 为**候选制品**（机械门禁 CLEARED，当前不作为发布目标；**失败关闭分类**——已批准原创前缀 + 显式映射，未知路径拒绝，无默认 GPL；排除 patches/、debs/、collab/（本机私有目录，不跟踪）、drivers/、vendor/、build/、third_party/；**路径绑定 NOTICE 门禁**，components/ 许可材料已封存：picom 补丁为文件级 MPL-2.0、`picom.conf` 为原创 GPLv3、fbterm 1.7-5 (C) 2008 dragchan GPL-2.0-only）；`driver-source` 排除 confidential ×3 与无许可 ×70 后非完整驱动（BLOCKED，不假 PASS）；**GitHub 主分支仍公开分发阻断路径，仓库级发布未闭环**；二进制 deb 与 vendor 载荷不作为当前发布目标；patched-1.deb 为上游历史非阻断；本地 debs/ 与 vendor/ 不参与发布；**发布决策 1C（见 licensing.md §4.1 权威记录）：当前不创建 Release/tag/附件，main 为研究开发仓库、不作为发布目标，BLOCKED 不变；不做 Release 不消除 main 公开跟踪 73 个阻断路径的风险** | [licensing.md](licensing.md)（唯一权威文档）、[source-license-audit.md](source-license-audit.md) |
 
 以上引用 Phase 4、2026-08 runtime、patched 或 `4.0.x` 的验收均保留其原版本边界；
-`latest-*` 文件名不表示已验证当前 fantgpu。当前待办见 [current-work](../planning/current-work.md)。
+`latest-*` 文件名不表示已验证当前 fantgpu。当前待办见 [current-work](../state/current-work.md)。
 
 ## 已解决问题
 
@@ -65,10 +65,10 @@
   `r5_dpm_watchdog_capture_reviewed=OUTSIDE_COVERAGE`、`r5_root_cause=unresolved`。冻结：
   R5=FAIL、禁止重跑、U1/U2 未执行、validation-results 未签、tag `fantgpu-5.0.0-iN` 未打。
   下一阶段方向待用户选（停批冻结 / 本地扩展轮 / 带外通道）。
-- **R18 文档结构迭代（进行中）**：R17 四轮已闭合，三篇[基线代际文档](../README.md)已审定；
+- **R18 文档结构迭代主体已闭合**：R17 四轮已闭合，三篇[基线代际文档](../README.md)已审定；
   patched-27 的 `debs/` 实物补证已由 dsh 在 R17 §21.1 补记，原先「本机无实物」记录保留为错误资产。
-  R18 批 1–4 已提交，批 5 收尾交付待终审；进度与另批边界见
-  [current-work](../planning/current-work.md)，闭合历史见 [history](../planning/history.md)。
+  批 5 收档交叉确认已通过，工具适配另批（R19）已启动；进度与另批边界见
+  [current-work](../state/current-work.md)，闭合历史见 [history](../history/history.md)。
 
 - **suspend/resume P1（本机已修复，保留范围边界）**：`4.0.0-i1` 的 deep S3 resume 已复现 PreClock 在 PVR 电源域 OFF 时取锁失败；
   patch-024 / `4.0.1-i1` 随后完成了有效 s2idle entry/exit，且没有 3900372/PowerLock/PVR 计数增长，
@@ -138,7 +138,7 @@
     只清 DRI 自有路径/幂等安装卸载/不删除非本项目文件 + 无硬编码用户名静态
     反例）。`check-docs.sh` 已覆盖全部 tracked Markdown 和本机 `collab/` 隐私扫描。仍在待办：音频安装器对称卸载与 fixture、构建依赖门禁、
     vendor `sw-inno-gl.service` 生命周期，见 [代码分析](code-analysis.md) 与
-    [当前待办](../planning/current-work.md)。
+    [当前待办](../state/current-work.md)。
 
 ## 证据保留规则
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tools/transform-fantgpu-helper.sh — F 血统 helper 打包变换（stdin → stdout）
 #
-# 依据 docs/planning/c3-a-4-reproducible-input-plan.md §四（share/命令名血统
+# 依据 docs/design/c3-a-4-reproducible-input-plan.md §四（share/命令名血统
 # 参数化，codex 初审 P1-2 修复）：F 包内 helper 内部不得再引用 innogpu-*
 # 命令名或旧 share 路径（否则命令不存在而失败）。只变换**调用链 token**：
 #   1. 命令名 innogpu-disable-incompatible-userspace /

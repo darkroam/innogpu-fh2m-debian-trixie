@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # tools/gen-fantgpu-manifest.py — 生成 F 血统载荷清单 binary-manifest-fantgpu.json
 #
-# 依据 = docs/planning/c3-a-4-reproducible-input-plan.md §二（v12）：
+# 依据 = docs/design/c3-a-4-reproducible-input-plan.md §二（v12）：
 #  - S_INPUT = 所有条目（隐含集合）：F 载荷全部 602 常规文件 + 58 符号链接
 #    （目录不入条目，O 先例同；DEBIAN/ 控制成员不入条目——builder 重生成）
 #  - 条目键 = O schema（kind/license/role/sha256/size/source_path/vendor_path）

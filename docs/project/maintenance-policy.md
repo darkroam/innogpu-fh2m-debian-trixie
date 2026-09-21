@@ -184,7 +184,7 @@
 | patch、`drivers/` 转换提交或外部载荷分类 | `docs/patches/README.md`、对应 patch 文档、`patch-provenance.md` | architecture、manifest、许可证审计；不得擅自关闭 BLOCKED |
 | runtime 真机结论 | `baselines/latest-runtime-baseline.txt`（按授权流程生成）和 `status.md` | test-strategy/goals/todo/能力文档；证据文件只追加经审查结果 |
 
-`docs/planning/history.md`、`docs/incidents/`、`docs/archive/` 和历史 baseline 只保存时点事实。发现其中
+`docs/history/history.md`、`docs/incidents/`、`docs/archive/` 和历史 baseline 只保存时点事实。发现其中
 与当前态不同，应链接当前权威或增加新时点记录，不能重写旧结论。`scripts/check-docs.sh` 是必要护栏，
 其链接扫描覆盖 `git ls-files '*.md'` 列出的 tracked Markdown，隐私扫描还覆盖指定目录下的
 ignored/untracked 内容，并校验本机 `collab/` 结构与隐私；untracked 新文档不在 tracked
