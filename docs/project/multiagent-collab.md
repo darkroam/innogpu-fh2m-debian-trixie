@@ -195,7 +195,7 @@
 
 - 改写任何 collab 轮次前，先把该轮全部原文快照（tar + 逐文件 SHA-256 清单）存入 .runtime-archive/r17-docs/archive-originals/<轮次>/；快照须验证可解包且逐文件 SHA 一致；该区为既有归档之外的新增快照，既有归档仍只读；R17 轮目录只放 Markdown 索引，不嵌套目录。
 - **原文不改写**：request/report/qoder-notes 原样保留；五段式叙事写为新增 narrative.md（阅读版），由 INDEX/首行引导；qoder-notes 永不改写、不并入。
-- **术语**：三基线 deb 统一称「基线代际」（代一/代二/代三），与 baselines/ 目录区分；已进 glossary。
+- **术语**：三基线 deb 统一称「基线代际」，与 baselines/ 运行结果目录区分。定稿名称：代一「legacy patched 阶段（3.3.3.42-patched-N；原包解包+补丁叠加，p27 已属 Deepin）」、代二「deepin 4.0.x 源码树迁移线」、代三「fantgpu 5.0.0-iN（当前诊断线）」；入口见 [glossary](glossary.md)，代际划分不等同于 Git 祖先链。
 
 ### 12.3 错误资产两层制（错误即资产）
 
@@ -221,7 +221,7 @@
 
 ### 12.6 基线事实表（R2 前置）
 
-- 每代记录：起止事件与日期 / tag+commit（或「未打 tag」）/ 代表 deb（路径+SHA）/ 载体与 ABI 特征 / 回滚物指向。实测 tags：0.5（2026-05-28）、patched-17（07-08）、patched-21..27（27=08-20）、deepin-4.0.2-i3（09-09）；无 patched-18/19/20 tag；fantgpu-5.0.0-iN 未打；0.5 与 patched-27 的归属关系须显式查证；回滚 deb 177133ee… 在位。
+- 每代记录：起止事件与日期 / tag+commit（或「未打 tag」）/ 代表 deb（路径+SHA）/ 载体与 ABI 特征 / 回滚物指向。日期分列「目标提交日期 / tag 创建日期」；0.5 目标提交为 2026-05-28，轻量 tag 创建日期不可证；patched-27 目标提交为 2026-08-20，tag 创建于 08-21；deepin-4.0.2-i3 两日期均为 09-09。无 patched-18/19/20 tag；fantgpu-5.0.0-iN 未打；已核实 0.5 非 patched-27 祖先，仅归于同一文档阶段；回滚 deb 177133ee… 在位。不可证项标 UNVERIFIED，路径缺失不得外推为本机实物缺失。
 - **发布与安装状态分开**：5.0.0-i6 是当前诊断线，不得因文档主线化而描述成已验收发布版。
 
 ### 12.7 执行顺序与切片

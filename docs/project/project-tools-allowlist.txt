@@ -186,6 +186,9 @@ docs/planning/suspended.md
 docs/planning/todo.md
 docs/planning/webkit-dmabuf-investigation.md
 docs/project/architecture.md
+docs/project/baseline-deepin-4.x.md
+docs/project/baseline-fantgpu-5.x.md
+docs/project/baseline-legacy-patched.md
 docs/project/audio-management.md
 docs/project/code-analysis.md
 docs/project/compositor-management.md

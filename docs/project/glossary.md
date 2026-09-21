@@ -7,7 +7,7 @@
 | --- | --- | --- |
 | Innogpu / Fantasy II-M / FH2M | 本项目支持的 Innosilicon 图形设备及其驱动、renderer 和 firmware 名称 | 三者描述同一设备栈的不同层，不表示可混用的独立驱动 |
 | patched-N | 在原始驱动包上建立的版本化候选 | 版本号同时标识载荷、补丁集和验收证据；不得复用 |
-| Deepin 202504 原包 | `20250421190503-debug` 的完整上游 deb | 后续候选唯一的 DKMS 源码、用户态 ABI、固件和 DDX 载荷基线 |
+| Deepin 202504 原包 | `20250421190503-debug` 的完整上游 deb | Deepin 线候选的 DKMS 源码、用户态 ABI、固件和 DDX 载荷基线；不指代 fantgpu 5.0.0-iN 的 F0 |
 | coherent | 同一 Deepin 发布的 DKMS、DRI、GBM、GLAPI、GLVND、DDX、固件和安装脚本整体部署 | 禁止从历史 patched 包挑选单个 `.so` 或固件拼装 |
 | DKMS | Dynamic Kernel Module Support，按当前内核编译并安装内核模块的机制 | 包安装成功不等于内存中的旧模块已被替换，仍须重启验证 |
 | DRM / fbdev | 内核的图形设备接口；fbdev 提供 `/dev/fb0` framebuffer | `card0`、`renderD128` 与 `fb0` 是独立验收项 |
@@ -30,5 +30,5 @@
 | `4.0.1-i3` / `4.0.1-i4` | R06 严格 A/B：i3 仅 024，i4 为 024+025 | 共用 epoch 1788451200；A/B 因 cursor 分支未入组停止；R10 后续在 i3 上复现 deep PowerLock TOCTOU，已回退 |
 | `4.0.2-i1` | R11 失败候选：patch-024 + patch-026-suspend-resume-dvfs-lifecycle | epoch 1788624000；deep 时温度 work 提前触发 PowerLock/POWERED_OFF，只供历史复现，禁止安装或交付 |
 | `4.0.2-i2` | R12 候选：i1 + patch-028-suspend-resume-hal-temp-monitor-delay | epoch 1788710400；不含 display 025；仅静态/离线验证，尚未安装或真机 deep 验收 |
-| `4.0.2-i3` | 当前正式交付：i2 + patch-029-suspend-resume-ddcci-panel | epoch 1788796800；继承 patch-024/026/028，不含 display 025；R14 当前设备 6/6 deep 通过；DDCCI 不注册 backlight device，`hwinfo_g0m.bin` 仍缺失 |
-| `基线代际` | 三个基线 deb 的代际划分（文档迭代 R2 术语）：代一 = 原厂 fantgpu 3.3.3.42-patched-27 时代；代二 = deepin 4.0.2-i3；代三 = fantgpu 5.0.0-iN（030-NNN 链） | 与 `baselines/`（运行结果目录）同词异物，不得混用 |
+| `4.0.2-i3` | Deepin 历史交付与当前回退基线：i2 + patch-029-suspend-resume-ddcci-panel | epoch 1788796800；继承 patch-024/026/028，不含 display 025；R14 当前设备 6/6 deep 通过；DDCCI 不注册 backlight device，`hwinfo_g0m.bin` 仍缺失；不代表 fantgpu 验收 |
+| `基线代际` | 代一 = [legacy patched 阶段](baseline-legacy-patched.md)（3.3.3.42-patched-N；原包解包+补丁叠加，p27 已属 Deepin）；代二 = [deepin 4.0.x 源码树迁移线](baseline-deepin-4.x.md)；代三 = [fantgpu 5.0.0-iN（当前诊断线）](baseline-fantgpu-5.x.md) | 与 `baselines/`（运行结果目录）区分；代际不是 Git 祖先链（0.5 非 p27 祖先），也不表示发布验收 |

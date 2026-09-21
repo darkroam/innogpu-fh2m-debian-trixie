@@ -31,6 +31,21 @@
 [`tools/README.md`](../tools/README.md) 记录构建期变换与诊断探针；
 [`tests/README.md`](../tests/README.md) 记录本仓库可重复测试边界。
 
+## 基线代际阅读入口
+
+R17 第 2 轮草稿，待 qoder/dsh 审查。按本代工作与前代差异阅读；补丁、事故、设计和证据
+仍保留原路径与权威范围。三代名称描述维护阶段，不是 Git 祖先链，也不指 `baselines/` 运行结果目录。
+
+| 代际 | 阅读页 | 当前角色与边界 |
+| --- | --- | --- |
+| 代一 | [legacy patched 阶段（3.3.3.42-patched-N）](project/baseline-legacy-patched.md) | 原包解包+补丁叠加；p27 已属 Deepin，0.5 非 p27 祖先 |
+| 代二 | [deepin 4.0.x 源码树迁移线](project/baseline-deepin-4.x.md) | 4.0.2-i3 为 Deepin 冻结终点与当前回滚卡 |
+| 代三 | [fantgpu 5.0.0-iN（当前诊断线）](project/baseline-fantgpu-5.x.md) | F0 + 030 链；R5=FAIL、未签发、未打 tag |
+
+历史页面里的“当前”只指其记录时点；今日结论统一回到 [status](project/status.md)。
+新设备选择和回退步骤仍分别由 [安装指南](user/new-device-install.md)、[恢复规程](user/recovery.md)
+管理，代际页面不授予执行许可。
+
 ## 目录职责
 
 | 目录 | 内容 | 权威范围 |

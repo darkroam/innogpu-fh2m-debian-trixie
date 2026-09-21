@@ -1,6 +1,6 @@
 # 当前状态与问题清单
 
-最后更新：2026-09-20
+最后更新：2026-09-21
 
 本文件是项目当前运行状态的唯一摘要。历史过程、补丁细节和故障推导分别见
 [阶段补丁](../patches/README.md) 与 [事故和经验](../incidents/README.md)。
@@ -61,9 +61,11 @@
   `r5_dpm_watchdog_capture_reviewed=OUTSIDE_COVERAGE`、`r5_root_cause=unresolved`。冻结：
   R5=FAIL、禁止重跑、U1/U2 未执行、validation-results 未签、tag `fantgpu-5.0.0-iN` 未打。
   下一阶段方向待用户选（停批冻结 / 本地扩展轮 / 带外通道）。
-- **R17 文档优化迭代（进行中）**：第 1 轮 collab 叙事批已整体闭合（R01-R15 + R16 四切片）；
-  剩余：docs/planning 与实现对齐（本条即其一）、incidents 三类提升；随后第 2 轮三基线代际
-  文档结构。规约 §十二为权威流程。
+- **R17 文档优化迭代（进行中）**：第 1 轮内容对齐已闭合（R01-R15 + R16 四切片、
+  docs 对齐、incidents 三类提升）。第 2 轮三基线代际草稿待 qoder/dsh 审查：
+  [legacy patched 阶段](baseline-legacy-patched.md)、[deepin 4.0.x 源码树迁移线](baseline-deepin-4.x.md)、
+  [fantgpu 5.0.0-iN 当前诊断线](baseline-fantgpu-5.x.md)。规约 §十二为权威流程；
+  patched-27 的 `debs/` 实物补证与 §21「本机无实物」差异待 dsh 补记，未替换原裁定。
 
 - **suspend/resume P1（本机已修复，保留范围边界）**：`4.0.0-i1` 的 deep S3 resume 已复现 PreClock 在 PVR 电源域 OFF 时取锁失败；
   patch-024 / `4.0.1-i1` 随后完成了有效 s2idle entry/exit，且没有 3900372/PowerLock/PVR 计数增长，
