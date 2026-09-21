@@ -325,7 +325,7 @@ r5_validation_status=FAIL
 
 ## 附录 · 2026-09-21 修订注（R18 文档迭代补记，dsh 裁定 E51）
 
-本节为文档迭代期的**追加补记**，上文 §3 原文（「三项」及其行文）保持历史审查版本不动。
+本节为文档迭代期的**追加补记**，上文 §3 原文（「三项」及其行文）保持历史审查版本不动。**§3 读者应先读本注**（签署两行规范化的差异口径见下）。
 
 - 差异事实：§3 的文字为「只允许三项语义差异（LOCALVERSION / DPM_WATCHDOG /
   DPM_WATCHDOG_TIMEOUT）」，而实际构建结果（r5-dpm-watchdog-kernel-build-result.txt）

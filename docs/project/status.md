@@ -67,7 +67,7 @@
   下一阶段方向待用户选（停批冻结 / 本地扩展轮 / 带外通道）。
 - **R18 文档结构迭代（进行中）**：R17 四轮已闭合，三篇[基线代际文档](../README.md)已审定；
   patched-27 的 `debs/` 实物补证已由 dsh 在 R17 §21.1 补记，原先「本机无实物」记录保留为错误资产。
-  R18 批 1–3 已提交，批 4 进行内容对齐；进度与另批边界见
+  R18 批 1–4 已提交，批 5 收尾交付待终审；进度与另批边界见
   [current-work](../planning/current-work.md)，闭合历史见 [history](../planning/history.md)。
 
 - **suspend/resume P1（本机已修复，保留范围边界）**：`4.0.0-i1` 的 deep S3 resume 已复现 PreClock 在 PVR 电源域 OFF 时取锁失败；
