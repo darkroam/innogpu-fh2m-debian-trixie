@@ -36,6 +36,7 @@ docs/archive/cleanup-20260708.md
 docs/cleanup-20260708.md
 docs/incidents/README.md
 docs/incidents/boot-errors-attribution-20260903.md
+docs/incidents/design-phase-out-of-bounds-patch.md
 docs/incidents/fbterm-ypan-rendering.md
 docs/incidents/patched-17-fbdev-mmap.md
 docs/incidents/patched-18-shader-firmware.md
@@ -43,6 +44,8 @@ docs/incidents/patched-18-userspace-mix.md
 docs/incidents/patched-20-legacy-helper-payload.md
 docs/incidents/patched-20-runtime.md
 docs/incidents/picom-explicit-uniform-location.md
+docs/incidents/r5-i4-oops-dev-rsrc-abi.md
+docs/incidents/script-gate-defect-recurrence.md
 docs/incidents/suspend-resume-deep-reproduction-20260902.md
 docs/incidents/suspend-resume-s2idle-red-screen-20260902.md
 docs/new-device-install.md

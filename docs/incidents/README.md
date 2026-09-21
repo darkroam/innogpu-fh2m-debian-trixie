@@ -17,6 +17,9 @@
 | [suspend/resume deep 再现](suspend-resume-deep-reproduction-20260902.md) | s2idle 测试脚本过早恢复 deep，实际再次触发 S3 PowerLock 时序故障；s2idle 仍未有效测试 |
 | [suspend/resume s2idle 红屏](suspend-resume-s2idle-red-screen-20260902.md) | `4.0.1-i1` 的真实 s2idle 无 PowerLock/PVR 计数增长，但外屏整屏红色；候选失败并回退，deep 未测试 |
 | [2026-09-03 启动报错归因](boot-errors-attribution-20260903.md) | 10 类启动告警均为 pre-existing，`ours=0`；涉及系统/BIOS、厂商 hwinfo 缺失降级和 dmaengine debugfs 冲突 |
+| [5.0.0-i4 Oops / dev_rsrc ABI](r5-i4-oops-dev-rsrc-abi.md) | i4 首启 `fixup_pcie_init` Oops 来自探针状态破坏闭源对象共享的 `dev_rsrc` 固定布局；030-033 建立 ABI 门，R5 仍未定位 |
+| [R5 脚本闸门缺陷重蹈](script-gate-defect-recurrence.md) | TTY 命令替换、sudo PTY 身份和 boot ID 采集缺陷曾进入复核链；修复保留错误资产，不能替代 R5 结论 |
+| [R5 设计期越界 patch](design-phase-out-of-bounds-patch.md) | 设计放行前曾生成 patch，后清除且未入 Git；流程时序被记录，正式产物另行受 §9.4/§9.5 门约束 |
 
 ## 使用规则
 
