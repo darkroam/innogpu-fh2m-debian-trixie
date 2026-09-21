@@ -16,10 +16,10 @@
   ④ R5=FAIL 未解除。许可发布边界（1C/BLOCKED）不变。
 - [ ] 诊断内核处置：r5dpm1/r5dpm2 包保留待 dsh 决定是否卸载；GRUB 已恢复原配置（默认解析
   6.12.107+deb13，既有行为；改默认须另立变更）。
-- [ ] **R17 文档优化迭代（进行中）**：第 1 轮内容对齐（collab 叙事、docs 对齐、三类
-  incidents）已闭合；第 2 轮[三基线代际阅读入口](../README.md#基线代际阅读入口)已起草，
-  待 qoder 初审、dsh 终审及 commit-time allowlist。源表 §21 的 patched-27 实物状态
-  与本轮 `debs/` 实测不符，须由 dsh 补记；第 2 轮未闭合。
+- [ ] **R17 文档优化迭代（第 4 轮收尾中）**：第 1 轮内容对齐（collab 叙事批 R01-R16 +
+  docs 对齐 + incidents 三类提升）已闭合；第 2 轮三基线代际文档已提交（1bf294a，
+  含 R2-F1 更正：patched-27 deb 在 `debs/` 实物一致 f384159751fe）；第 3 轮二次
+  对齐已闭合（复审台账 round3-review-ledger.md）；第 4 轮收尾进行中（跳回台账为空）。
 
 ## 许可证与研发验证
 
