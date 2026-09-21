@@ -51,6 +51,7 @@ docs/design/r5-watchdog-local-capture-design.md
 docs/design/source-tree-migration.md
 docs/history/display-integration.md
 docs/history/history.md
+docs/history/rounds/r01-2026-08-31-docs-sorting.md
 docs/history/todo.md
 docs/incidents/README.md
 docs/incidents/boot-errors-attribution-20260903.md

@@ -4,6 +4,9 @@
 待办见 [current-work](../state/current-work.md)，当前结论见 [status](../project/status.md)。
 历史段落中的“当前”仅指该段记录时点，历史命令不构成执行授权。
 
+轮次阅读版试点：[R01 文档梳理](rounds/r01-2026-08-31-docs-sorting.md)。本文继续维护跨轮次
+演进索引；轮次页解释该轮事件，原文与快照仍本机，不复制至公开正文。
+
 ## 2026-08-26 DMA-BUF 真机回归与 runtime 证据封存
 
 - 以 root 权限在 `1ec8:9810` 真机执行 `tools/run-dmabuf-regression-test.sh`：同设备 PRIME
@@ -190,3 +193,10 @@
 - 工具适配触发条件已满足，R19 接续六篇文档迁移与检查脚本同步；D2、D4 单独排队。
   本条只登记文档工作，OUTSIDE_COVERAGE、R5=FAIL、禁止重跑、U1/U2 未执行、
   validation-results 未签、签发与 tag 冻结不变。
+
+## 2026-09-21 R19 工具适配闭合
+
+- qoder 初审与 dsh 终审收齐 42 件，由 `e656612` 提交；六篇归位、检查脚本适配、
+  9 项文档门禁回归及 allowlist 同步闭合，499 个本地链接有效。
+- 21 行工具注释恢复导航，19 处 meta 冻结引用保持原位。D2 试点转入 R20，
+  D4 等 D2 单独闭合后再筛查；文档工具进度不解除运行冻结。

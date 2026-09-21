@@ -56,6 +56,8 @@
 | 代三 | [fantgpu 5.0.0-iN（当前诊断线）](baselines/baseline-fantgpu-5.x.md) | F0 + 030 链；R5=FAIL、未签发、未打 tag |
 
 历史页面里的“当前”只指其记录时点；今日结论统一回到 [status](project/status.md)。
+轮次阅读版先行试点：[R01 文档梳理](history/rounds/r01-2026-08-31-docs-sorting.md)。
+阅读版提供公开可读的事实与边界；原文和快照仍在本机，不随 Git 分发。
 新设备选择和回退步骤仍分别由 [安装指南](user/new-device-install.md)、[恢复规程](user/recovery.md)
 管理，代际页面不授予执行许可。
 
