@@ -4,8 +4,30 @@
 待办见 [current-work](../state/current-work.md)，当前结论见 [status](../project/status.md)。
 历史段落中的“当前”仅指该段记录时点，历史命令不构成执行授权。
 
-轮次阅读版试点：[R01 文档梳理](rounds/r01-2026-08-31-docs-sorting.md)。本文继续维护跨轮次
-演进索引；轮次页解释该轮事件，原文与快照仍本机，不复制至公开正文。
+## 轮次公开阅读版索引
+
+本页维护跨轮次演进；以下阅读版解释各轮问题、处置和验证边界。
+原文与快照仍在本机，不随 Git 提供。R01 已由 R20 闭合；R02–R16 是 R21 本批交付，
+待 qoder 初审与 dsh 终审。历史验收通过不代表当前 R5 通过。
+
+| 轮次 | 建轮日期 | 主题 |
+|---|---|---|
+| [R01](rounds/r01-2026-08-31-docs-sorting.md) | 2026-08-31 | 文档梳理；R20 已审试点 |
+| [R02](rounds/r02-2026-09-02-suspend-resume-fix.md) | 2026-09-02 | 挂起恢复缺陷修复 |
+| [R03](rounds/r03-2026-09-02-suspend-resume-device-validation.md) | 2026-09-02 | 挂起恢复真机验收 |
+| [R04](rounds/r04-2026-09-02-display-resume-research.md) | 2026-09-02 | 显示恢复研究 |
+| [R05](rounds/r05-2026-09-02-suspend-resume-ab-validation.md) | 2026-09-02 | 真机 A/B 验收 |
+| [R06](rounds/r06-2026-09-02-suspend-resume-controlled-ab.md) | 2026-09-02 | 严格定位 A/B |
+| [R07](rounds/r07-2026-09-02-suspend-observation-design.md) | 2026-09-02 | 观测与触发设计 |
+| [R08](rounds/r08-2026-09-02-primary-framebuffer-dpu-observation.md) | 2026-09-02 | primary FB 与 DPU 观测 |
+| [R09](rounds/r09-2026-09-02-single-s2idle-reproduction.md) | 2026-09-02 | 单次 s2idle 复现 |
+| [R10](rounds/r10-2026-09-02-deep-resume-validation.md) | 2026-09-02 | deep 修复验收 |
+| [R11](rounds/r11-2026-09-02-dvfs-lifecycle-synchronization.md) | 2026-09-02 | patch-026 生命周期同步 |
+| [R12](rounds/r12-2026-09-03-temperature-work-delay.md) | 2026-09-03 | 温度 work 延后 |
+| [R13](rounds/r13-2026-09-03-panel-backlight-recovery.md) | 2026-09-03 | 面板与背光恢复 |
+| [R14](rounds/r14-2026-09-03-deep-validation-matrix.md) | 2026-09-03 | deep 正式验收矩阵 |
+| [R15](rounds/r15-2026-09-03-boot-error-attribution.md) | 2026-09-03 | 启动报错归因 |
+| [R16](rounds/r16-2026-09-03-base-migration-and-r5-investigation.md) | 2026-09-03 | 基座迁移与 R5 悬案 |
 
 ## 2026-08-26 DMA-BUF 真机回归与 runtime 证据封存
 
@@ -194,12 +216,13 @@
   本条只登记文档工作，OUTSIDE_COVERAGE、R5=FAIL、禁止重跑、U1/U2 未执行、
   validation-results 未签、签发与 tag 冻结不变。
 
-## 2026-09-21 R20 D4 归档闭合候选
+## 2026-09-21 R20 D4 归档闭合
 
 - Phase 4 实机验证与 2026-08-20 release 审阅均已结案，仅承担历史证据职责；正文归入
   `docs/archive/`，旧 planning 路径保留兼容跳转。当前状态、目标和恢复入口承接现行结论。
-- 本条是 codex 交付候选记录，待 qoder 初审与 dsh 终审后才将 R20 记为归档批通过；
-  归档不改变当时验证结果、回退链、release BLOCKED 或任何运行冻结。
+- qoder 初审与实质研判通过（本机回执内容 SHA-12 `bf07e51a7495`），dsh 终审由
+  `6370fa2` 收档；本文将此前候选记录更新为闭合。归档不改变当时验证结果、回退链、
+  release BLOCKED 或任何运行冻结。
 
 ## 2026-09-21 R19 工具适配闭合
 
@@ -207,3 +230,11 @@
   9 项文档门禁回归及 allowlist 同步闭合，499 个本地链接有效。
 - 21 行工具注释恢复导航，19 处 meta 冻结引用保持原位。D2 试点转入 R20，
   D4 等 D2 单独闭合后再筛查；文档工具进度不解除运行冻结。
+
+## 2026-09-21 R20 D2 叙事提升试点闭合
+
+- R01 五段式脱敏阅读版经 qoder 初审与实质研判、dsh 终审，由 `841c07a` 收档。
+  来源全值 SHA、编辑差异、本机证据可取得性及公开导航形成后续提升的基准。
+- 试点只放行 R01；R02–R16 由 R21 另批获准提升，仍逐篇隐私复扫并独立接受审查。
+  D2、D4 的文档闭合不解除 OUTSIDE_COVERAGE、R5=FAIL、禁止重跑、U1/U2、
+  validation-results、签发、未打 tag 的冻结边界。

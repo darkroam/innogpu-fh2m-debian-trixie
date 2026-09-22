@@ -56,7 +56,8 @@
 | 代三 | [fantgpu 5.0.0-iN（当前诊断线）](baselines/baseline-fantgpu-5.x.md) | F0 + 030 链；R5=FAIL、未签发、未打 tag |
 
 历史页面里的“当前”只指其记录时点；今日结论统一回到 [status](project/status.md)。
-轮次阅读版先行试点：[R01 文档梳理](history/rounds/r01-2026-08-31-docs-sorting.md)。
+轮次阅读版：[R01–R16 批量索引](history/history.md#轮次公开阅读版索引)。
+R01 试点已审，R02–R16 本批待审；各页区分历史结论与当前冻结状态。
 阅读版提供公开可读的事实与边界；原文和快照仍在本机，不随 Git 分发。
 新设备选择和回退步骤仍分别由 [安装指南](user/new-device-install.md)、[恢复规程](user/recovery.md)
 管理，代际页面不授予执行许可。
@@ -82,8 +83,8 @@
 [todo](history/todo.md) 是已完成事项索引，[history](history/history.md) 解释关键演进及其证据。
 工具适配批将 current-work 归入 state，todo/history 与 [显示接入历史](history/display-integration.md)
 归入 history，两篇源码迁移/退役设计归入 design；检查脚本跟随新路径，原有检查继续有效。
-planning 保留四篇 meta 引用目标和 evidence 冻结区；D2 叙事提升已完成 R01 试点，
-其余轮次仍须逐篇放行；
+planning 保留四篇 meta 引用目标和 evidence 冻结区；R20 的 D2 试点与 D4 归档均已闭合，
+R21 承接 R02–R16 阅读版批量提升，整批放行前仍须逐篇隐私核验和内容审查；
 目录迁移不代表运行问题闭合。
 archive 现有 [2026-07-08 清理记录](archive/cleanup-20260708.md) 仅代表当时状态；
 [Phase 4 验证](archive/phase4-device-validation.md) 与 [release 审阅](archive/release-review-2026-08-20.md)
