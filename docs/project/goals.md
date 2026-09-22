@@ -27,12 +27,12 @@
 
 | 子目标 | 状态 | 证据 / 入口 |
 | --- | --- | --- |
-| 稳定运行基线 | 达成（4.0.0-i1 实机运行；patched-27 为已验证回退基线） | [status.md](status.md)、[Phase 4 验收](../planning/phase4-device-validation.md) |
+| 稳定运行基线 | 达成（4.0.0-i1 实机运行；patched-27 为已验证回退基线） | [status.md](status.md)、[Phase 4 验收](../archive/phase4-device-validation.md) |
 | 能力面普查 | 部分达成（Vulkan/OpenCL 最小执行与 GL 已验证；VA-API H.264 Main + HEVC Main 实际解码、DMA-BUF 同设备 PRIME self-import 回归已验证；其余 profile/编码及跨设备路径待验） | [test-strategy.md](test-strategy.md)、[capability-survey.md](../investigations/capability-survey.md) |
 | 逆向可行性评估 | 达成（四层可行性 + 谱系判定） | [reverse-engineering-assessment.md](../investigations/reverse-engineering-assessment.md) |
 | DDK 谱系对照表 | 达成（组件 / UAPI / 特性 / 用户态映射） | [ddk-v119-mapping.md](../investigations/ddk-v119-mapping.md) |
 | 内核正确性修复 | 3/3 达成（dma_resv usage / vblank 守卫 / foreign DMA-BUF） | patch-025/026/027 |
-| 构建可复现 | 达成（目录 mtime 归一化修复，三包逐字一致） | [release 审阅](../planning/release-review-2026-08-20.md) |
+| 构建可复现 | 达成（目录 mtime 归一化修复，三包逐字一致） | [release 审阅](../archive/release-review-2026-08-20.md) |
 | 源码树迁移 | **阶段 0–4 完成**（设计冻结 ✅、drivers/ 导入 + 9 补丁转提交 + parity ✅、manifest + 幂等提取 + staging 内核编译 ✅、新构建器 4.0.0-i1 并行验证 ✅、实机候选验证 + p27 回退演练 ✅——设备已运行 4.0.0-i1）；阶段 5 第一步（标记 deprecated + 文档同步）完成，第二步（移入 legacy/）待条件满足 + 监督批准 | [source-tree-migration.md](../design/source-tree-migration.md)、[phase5-retirement-design.md](../design/phase5-retirement-design.md) |
 | 性能优化（预取等） | 未开始 | [评估候选 4](../investigations/reverse-engineering-assessment.md) |
 | 能力深挖（codec 编码 / DVFS / CORE_ID） | 未开始 | [current-work.md](../state/current-work.md) |
@@ -87,5 +87,5 @@ README.md（入口）
             ├─ docs/investigations/reverse-engineering-assessment.md（评估与候选）
             ├─ docs/investigations/capability-survey.md（能力面）
             ├─ docs/investigations/ddk-v119-mapping.md（谱系对照）
-            └─ release-review-2026-08-20.md（历史发布审阅）
+            └─ docs/archive/release-review-2026-08-20.md（历史发布审阅）
 ```

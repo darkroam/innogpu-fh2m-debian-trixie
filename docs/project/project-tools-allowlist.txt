@@ -33,6 +33,8 @@ components/picom/001-probe-explicit-uniform-location.patch
 components/picom/picom.conf
 docs/README.md
 docs/archive/cleanup-20260708.md
+docs/archive/phase4-device-validation.md
+docs/archive/release-review-2026-08-20.md
 docs/baselines/baseline-deepin-4.x.md
 docs/baselines/baseline-fantgpu-5.x.md
 docs/baselines/baseline-legacy-patched.md

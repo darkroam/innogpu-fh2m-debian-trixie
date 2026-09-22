@@ -34,7 +34,7 @@
 保存本地载荷和产物。迁移将 9 个启用补丁转为源码提交，保留 patch provenance；
 000 继续是确定性二进制变换工具。p27 oracle 对比、模块符号检查和固定 epoch 双构建
 约束迁移等价性，历史补丁与回退包继续保留，详见
-[源码树迁移](../design/source-tree-migration.md) 和 [Phase 4 验证](../planning/phase4-device-validation.md)。
+[源码树迁移](../design/source-tree-migration.md) 和 [Phase 4 验证](../archive/phase4-device-validation.md)。
 
 后续 suspend/resume 工作形成 024、026-lifecycle、028、029 组合。失败过程包括
 PowerLock 时序竞态、s2idle 红屏及独立温度 work 过早启动；不能用最终结果抹掉中间失败。

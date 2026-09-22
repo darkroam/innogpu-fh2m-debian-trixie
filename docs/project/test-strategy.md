@@ -238,4 +238,4 @@ Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
 ## 证据索引
 
 `tests/README.md`、`scripts/check-docs.sh`、`docs/investigations/capability-survey.md`、
-`docs/planning/phase4-device-validation.md`。
+`docs/archive/phase4-device-validation.md`。

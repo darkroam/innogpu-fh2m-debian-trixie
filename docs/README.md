@@ -23,9 +23,9 @@
 [project-tools 允许清单](project/project-tools-allowlist.txt)、[driver-source 允许清单](project/driver-source-allowlist.txt)、
 [当前待办](state/current-work.md)、[已完成工作与时序](history/todo.md)、[实施历史](history/history.md)、
 [逆向工程与能力挖掘评估](investigations/reverse-engineering-assessment.md)、
-[FH2M 能力普查记录](investigations/capability-survey.md)、[release 审阅记录](planning/release-review-2026-08-20.md)、
+[FH2M 能力普查记录](investigations/capability-survey.md)、[release 审阅记录](archive/release-review-2026-08-20.md)、
 [DDK V119 对照表](investigations/ddk-v119-mapping.md)、[源码树迁移](design/source-tree-migration.md)、
-[Phase 4 实机验证](planning/phase4-device-validation.md) 与 [Phase 5 退役设计](design/phase5-retirement-design.md)。
+[Phase 4 实机验证](archive/phase4-device-validation.md) 与 [Phase 5 退役设计](design/phase5-retirement-design.md)。
 
 调查与评估另见 [WebKit DMA-BUF](investigations/webkit-dmabuf-investigation.md)、
 [Picom 接入记录](investigations/picom-integration.md)、[fantgpu 基座评估](investigations/fantgpu-base-update-evaluation.md)；
@@ -73,7 +73,7 @@
 | `investigations/` | 调查、评估、能力普查与历史接入记录 | 保留各文档的事实、计划与验证边界 |
 | `state/` | 当前待办与挂起项 | 未完成事项及恢复条件；当前结论仍由 `project/status.md` 管理 |
 | `history/` | 已完成时序、实施历史与显示接入历史 | 记录当时的原因、结果与证据；不授予执行许可 |
-| `planning/` | 四篇 meta 绑定文档、两篇归档候选及冻结证据 | 原路径保留；冻结引用与证据不随目录整理迁移 |
+| `planning/` | 四篇 meta 绑定文档及冻结证据 | 冻结引用与证据原路径保留；归档候选保留兼容跳转 |
 | `user/` | 安装、验证、显示使用、Picom 和恢复 | 面向操作者的步骤 |
 | `archive/` | 不再变化但仍需追溯的旧记录 | 历史只读材料 |
 
@@ -82,11 +82,12 @@
 [todo](history/todo.md) 是已完成事项索引，[history](history/history.md) 解释关键演进及其证据。
 工具适配批将 current-work 归入 state，todo/history 与 [显示接入历史](history/display-integration.md)
 归入 history，两篇源码迁移/退役设计归入 design；检查脚本跟随新路径，原有检查继续有效。
-planning 保留四篇 meta 引用目标和 evidence 冻结区；D2 叙事提升、D4 归档继续另批，
+planning 保留四篇 meta 引用目标和 evidence 冻结区；D2 叙事提升已完成 R01 试点，
+其余轮次仍须逐篇放行；
 目录迁移不代表运行问题闭合。
 archive 现有 [2026-07-08 清理记录](archive/cleanup-20260708.md) 仅代表当时状态；
-[Phase 4 验证](planning/phase4-device-validation.md) 与 [release 审阅](planning/release-review-2026-08-20.md)
-仍在原位，归档候选不等于已经归档。
+[Phase 4 验证](archive/phase4-device-validation.md) 与 [release 审阅](archive/release-review-2026-08-20.md)
+已按 D4 归档；旧 planning 路径仅保留兼容跳转页。
 R18 的 D4 归档条件为：无当前入口职责、有替代或已结案且台账可追溯、不在冻结区且不被冻结指针引用、
 旧路径留跳转且原文保全、单独审批不与迁移混批。未满足前只登记候选。
 

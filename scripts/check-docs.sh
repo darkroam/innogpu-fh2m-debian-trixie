@@ -369,6 +369,10 @@ for path in \
     docs/history/todo.md \
     docs/history/history.md \
     docs/history/display-integration.md \
+    docs/archive/phase4-device-validation.md \
+    docs/archive/release-review-2026-08-20.md \
+    docs/planning/phase4-device-validation.md \
+    docs/planning/release-review-2026-08-20.md \
     docs/design/source-tree-migration.md \
     docs/design/phase5-retirement-design.md \
     docs/user/new-device-install.md \

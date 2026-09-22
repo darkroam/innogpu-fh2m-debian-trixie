@@ -137,5 +137,5 @@ patched-19/20 的固定 wrapper 已改为拒绝执行，因为当前源码的辅
   `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；在 i2 上增加
   patch-029，让 DDCCI 回退模式创建 panel 但不注册 backlight device；不含 display 025。
   R14 已完成接电/电池、无外屏/外屏 6/6 deep，结论仅覆盖当前设备与该矩阵。
-- p25/26/27 的 deb 均为可复现构建（[release 审阅](../planning/release-review-2026-08-20.md) 修复
+- p25/26/27 的 deb 均为可复现构建（[release 审阅](../archive/release-review-2026-08-20.md) 修复
   目录 mtime 后重建），SHA 见 [debs/README.md](../../debs/README.md)。

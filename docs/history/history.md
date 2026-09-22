@@ -38,7 +38,7 @@
 - patched-25（patch-025 dma_resv usage 语义）、patched-26（patch-026 未活动 CRTC vblank 守卫）、
   patched-27（patch-027 foreign DMA-BUF 生命周期）各自独立分支开发，经离线编译、实机验证后
   fast-forward 合并 main 并打 tag。
-- release 审阅（[release-review-2026-08-20.md](../planning/release-review-2026-08-20.md)）发现 **deb 构建
+- release 审阅（[release-review-2026-08-20.md](../archive/release-review-2026-08-20.md)）发现 **deb 构建
   不可复现**：dpkg-deb 保留目录实际 mtime，未应用 SOURCE_DATE_EPOCH。修复构建器（构建前归一化
   整树 mtime），p25/26/27 重建为可复现 SHA 并更新 tag。当时当前运行驱动为 patched-27（Phase 4
   后已推进至 4.0.0-i1，见下方 2026-08-21 条目）。
@@ -193,6 +193,13 @@
 - 工具适配触发条件已满足，R19 接续六篇文档迁移与检查脚本同步；D2、D4 单独排队。
   本条只登记文档工作，OUTSIDE_COVERAGE、R5=FAIL、禁止重跑、U1/U2 未执行、
   validation-results 未签、签发与 tag 冻结不变。
+
+## 2026-09-21 R20 D4 归档闭合候选
+
+- Phase 4 实机验证与 2026-08-20 release 审阅均已结案，仅承担历史证据职责；正文归入
+  `docs/archive/`，旧 planning 路径保留兼容跳转。当前状态、目标和恢复入口承接现行结论。
+- 本条是 codex 交付候选记录，待 qoder 初审与 dsh 终审后才将 R20 记为归档批通过；
+  归档不改变当时验证结果、回退链、release BLOCKED 或任何运行冻结。
 
 ## 2026-09-21 R19 工具适配闭合
 

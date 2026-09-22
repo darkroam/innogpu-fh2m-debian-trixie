@@ -73,4 +73,4 @@
 ## 参考
 
 - 监督分支 @ `bd76e91` 中的 `migration-supervision.md` §四阶段 5 门槛（只读；该文件不在 `main`）。
-- [source-tree-migration.md](source-tree-migration.md)、[phase4-device-validation.md](../planning/phase4-device-validation.md)。
+- [source-tree-migration.md](source-tree-migration.md)、[phase4-device-validation.md](../archive/phase4-device-validation.md)。

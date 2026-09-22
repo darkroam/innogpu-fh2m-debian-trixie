@@ -23,7 +23,7 @@
 | Deepin 源码树迁移 | 阶段 0–4 完成；该线已交付 4.0.2-i3，4.0.0-i1 保留为其首层回退；阶段 5 第一步完成，第二步待条件满足 + 监督批准；不代表 fantgpu 验收 | [phase5-retirement-design](../design/phase5-retirement-design.md) |
 | 固件与 PVR | `4.0.2-i3` R14 每轮 PVR 八项计数均为 0 且不增长；`hwinfo_g0m.bin` 缺失为已知厂商载荷边界 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | DRM/fbdev | `4.0.2-i3` R14 内屏及外屏恢复通过；`card0`、`renderD128`、`fb0` 基线继续可用 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
-| Xorg/GLX 历史验收 | Deepin `4.0.0-i1` 桌面和隔离 Xorg 的硬件加速验收通过；不外推到 fantgpu i6 | [Phase 4 验收](../planning/phase4-device-validation.md) |
+| Xorg/GLX 历史验收 | Deepin `4.0.0-i1` 桌面和隔离 Xorg 的硬件加速验收通过；不外推到 fantgpu i6 | [Phase 4 验收](../archive/phase4-device-validation.md) |
 | 真实 VT | 普通用户 fbterm 可绘制和退出；禁用 YPan 后长输出、清屏及跨会话显示正常 | [`fbterm YPan 记录`](../incidents/fbterm-ypan-rendering.md) |
 | 显示管理 | dotconfig 维护 xdisplay 2.0.0；本项目只维护设备钩子和会话接入 | [`display-management.md`](display-management.md) |
 | Picom | patched v13 进程和 GLX 配置正在使用；最新 runtime 尚未独立确认实际 backend，保持 UNVERIFIED | [compositor-management.md](compositor-management.md)、[runtime 摘要](../../baselines/latest-runtime-baseline.txt) |
@@ -55,7 +55,7 @@
 | CPU_PREP 的 dma_resv usage 语义错误（bool 直接当 enum 传） | patch-025 用 `dma_resv_usage_rw()` 修正；patched-25 实机验证（PDP READ/WRITE 回归通过） | `patch-025` |
 | 未活动 CRTC 的 vblank 请求成功返回后永久阻塞 | patch-026 拒绝无活动/无 mode 的 CRTC（返回 EINVAL）；patched-26 实机验证（CRTC 1 正常、CRTC 0/2 立即 EINVAL） | `patch-026` |
 | foreign DMA-BUF 导入类型混淆、attach 错误未处理、GTT export 映射泄漏 | patch-027 增加 ops 检查、IS_ERR 处理与 unmap 配对；patched-27 实机验证（DRI3/PRIME 自导入回归正常） | `patch-027` |
-| deb 构建不可复现（目录 mtime 未归一化） | release 审阅修复构建器（整树 mtime 归一化）；p25/26/27 重建为可复现 SHA | [release 审阅](../planning/release-review-2026-08-20.md) |
+| deb 构建不可复现（目录 mtime 未归一化） | release 审阅修复构建器（整树 mtime 归一化）；p25/26/27 重建为可复现 SHA | [release 审阅](../archive/release-review-2026-08-20.md) |
 
 ## 当前未解决或需要后续处理
 
@@ -68,7 +68,7 @@
 - **R18 文档结构迭代主体已闭合**：R17 四轮已闭合，三篇[基线代际文档](../README.md)已审定；
   patched-27 的 `debs/` 实物补证已由 dsh 在 R17 §21.1 补记，原先「本机无实物」记录保留为错误资产。
   批 5 收档交叉确认已通过，工具适配另批（R19）已由 `e656612` 收档闭合；
-  R20 的 D2 先试点 R01，D4 待 D2 单独闭合。进度与另批边界见
+  R20 的 D2 试点已闭合，D4 两篇历史候选正在按五条件筛查。进度与另批边界见
   [current-work](../state/current-work.md)，闭合历史见 [history](../history/history.md)。
 
 - **suspend/resume P1（本机已修复，保留范围边界）**：`4.0.0-i1` 的 deep S3 resume 已复现 PreClock 在 PVR 电源域 OFF 时取锁失败；

@@ -49,7 +49,7 @@ p27 的 wrapper 调用 Deepin coherent 构建器，要求用户态与固件整�
 [固件遗漏](../incidents/patched-18-shader-firmware.md)。
 [p20 旧载荷事故](../incidents/patched-20-legacy-helper-payload.md) 另说明了为何不能
 只凭运行通过就复用历史包。后续整树 mtime 归一化及双构建记录见
-[2026-08-20 release 审阅](../planning/release-review-2026-08-20.md)。
+[2026-08-20 release 审阅](../archive/release-review-2026-08-20.md)。
 
 ## 与上一代差异
 

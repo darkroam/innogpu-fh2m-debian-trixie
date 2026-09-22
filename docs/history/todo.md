@@ -54,7 +54,7 @@
 - [x] 实际演练 patched-17 回退：安装、重启、验证，再恢复 patched-23；两次重启后的 TTY、Xorg/dwm、
   DRM/fbdev、软件 llvmpipe 和硬件 GL 恢复均通过。
 - [x] 完成 release 审阅主体：tag、哈希、包边界、可复现构建（含目录 mtime 修复）、回退路径和附件边界，
-  见 [release-review-2026-08-20.md](../planning/release-review-2026-08-20.md)。
+  见 [release-review-2026-08-20.md](../archive/release-review-2026-08-20.md)。
 - [x] 源码树迁移阶段 0-4（由监督分支 `migration/supervised-source-tree` @ `bd76e91` 中的
   `docs/planning/migration-supervision.md` 管辖；该指南不在 `main`）：
   阶段 0 设计冻结 ✅；阶段 1 drivers/ 导入 + 9 patch 转提交 + parity ✅；阶段 2 binary-manifest.json +

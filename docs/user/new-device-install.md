@@ -112,7 +112,7 @@ sudo INNOGPU_X_USER="$USER" INNOGPU_X_HOME="$HOME" \
 当前 HEAD 不再构建 `4.0.0-i1`，因为 patch-024/026 已改变源码行为。只有已留存且哈希与 Phase 4 记录
 一致的 4.0.0-i1 包可用于恢复现有基线；它存在已知 deep resume 故障。安装前确认 `patched-27`
 回退包在 `debs/`，并保留真实 TTY/物理电源键恢复通道；按
-[`phase4-device-validation.md`](../planning/phase4-device-validation.md) 先做 B1-B12 基线采集。
+[`phase4-device-validation.md`](../archive/phase4-device-validation.md) 先做 B1-B12 基线采集。
 
 ```sh
 cd "$INNOGPU_ROOT"

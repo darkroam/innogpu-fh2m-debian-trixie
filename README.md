@@ -73,7 +73,7 @@ SOURCE_DATE_EPOCH=1788796800 bash scripts/build-innogpu-driver.sh  # 默认构�
 | 技术栈/参考模型 / 测试策略 | [frameworks-and-references.md](docs/project/frameworks-and-references.md)、[test-strategy.md](docs/project/test-strategy.md) |
 | 新设备安装 / 验证 / 恢复 | [docs/user/new-device-install.md](docs/user/new-device-install.md)、[docs/user/verification.md](docs/user/verification.md)、[docs/user/recovery.md](docs/user/recovery.md) |
 | 补丁与验收 / 事故 | [docs/patches/README.md](docs/patches/README.md)、[docs/incidents/README.md](docs/incidents/README.md) |
-| 源码树迁移与 Phase 4/5 | [source-tree-migration.md](docs/design/source-tree-migration.md)、[phase4](docs/planning/phase4-device-validation.md)、[phase5](docs/design/phase5-retirement-design.md) |
+| 源码树迁移与 Phase 4/5 | [source-tree-migration.md](docs/design/source-tree-migration.md)、[phase4](docs/archive/phase4-device-validation.md)、[phase5](docs/design/phase5-retirement-design.md) |
 | 脚本 / 工具 / 测试入口 | [scripts/README.md](scripts/README.md)、[tools/README.md](tools/README.md)、[tests/README.md](tests/README.md) |
 | 多 Agent 协作 / 定期文档梳理 | [multiagent-collab.md](docs/project/multiagent-collab.md) |
 
