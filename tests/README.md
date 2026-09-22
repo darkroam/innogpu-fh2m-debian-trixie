@@ -18,7 +18,12 @@ xdisplay 的状态机、布局、适配器、配置和自定义布局测试只�
 F maintainer 回归入口：`python3 -B tests/unit/run-fantgpu-maintainer-tests.py --work-dir /tmp/r5-phase2-f-i7-synthetic-<id>`。
 默认使用生产生成器与 synthetic 工具，验证 K 全集、两调用点配置例外、失败传播、旧 prerm/O 保留、
 ABI 文本反例；网络 namespace 必须可用，不编译、不安装宿主。
-`--native-preflight` 配全新 `/tmp/r5-phase2-f-i7-*` 目录，锁定普通输入/8 核/工具并检查隔离与容量；
+默认入口还用真实 OpenSSL 执行与原生 runner 共用的 req 参数：复现默认配置路径缺失、
+拒绝显式配置缺失、验证显式配置下 DER 证书的 subject/SKI/codeSigning。
+仅绑定 OpenSSL 与普通动态库、复制普通 openssl.cnf；独立夹具内生成一次性 key，finally 删除，
+不读取或留存私钥、不挂载宿主 SSL 目录。这是配置回归，不代表 N0 全部依赖闭包或新窗口通过。
+R27 容量裁定后，`--native-preflight` 使用 `~/tmp/r5-phase2-f-i7-20260922-offline-01/preflight/`，
+`--native-run` 使用该批号根（开跑前仅含 preflight，A/B/synthetic 必须全新），锁定普通输入/8 核/工具并检查隔离与容量；
 `tests/unit/fantgpu_native.py` 为同入口真实工具辅助文件，非通用安装器。
 `--native-run --manifest <inputs.json> --reviewed-sha256 <全值>` 只在实现过审与正式窗口放行后使用；
 固定 R27 批号、单窗口 6h、每侧八核、最多 8 CPU，缺条件非零，不降级网络隔离。

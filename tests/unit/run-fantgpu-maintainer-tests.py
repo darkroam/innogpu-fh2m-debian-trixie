@@ -104,12 +104,11 @@ def put(root, path, text):
     return p
 
 
-def mounts(root):
-    # Bind only the two interpreters and their ordinary library dependencies.
+def mounts(root, binaries=("/usr/bin/bash", "/usr/bin/busybox")):
+    # Bind only the requested executables and their ordinary library dependencies.
     args = ["bwrap", "--unshare-user", "--unshare-pid", "--unshare-ipc",
             "--unshare-uts", "--unshare-net", "--die-with-parent", "--new-session", "--clearenv",
             "--bind", str(root), "/", "--chdir", "/"]
-    binaries = ["/usr/bin/bash", "/usr/bin/busybox"]
     paths = set(binaries)
     for binary in binaries:
         out = subprocess.check_output(["ldd", binary], text=True)
@@ -178,14 +177,13 @@ def main():
     ap.add_argument("--reviewed-sha256")
     opts = ap.parse_args()
     work = opts.work_dir.resolve()
-    if not str(work).startswith("/tmp/r5-phase2-") or work.exists():
-        raise SystemExit("work-dir must be a new /tmp/r5-phase2-* directory")
     if not __debug__:
         raise SystemExit("assertions must be enabled; do not use python -O")
     if opts.native_preflight or opts.native_run:
         import fantgpu_native
-        if not str(work).startswith("/tmp/r5-phase2-f-i7-"):
-            raise SystemExit("native work-dir must be a new /tmp/r5-phase2-f-i7-* directory")
+        expected = fantgpu_native.WORK / "preflight" if opts.native_preflight else fantgpu_native.WORK
+        if work != expected or (opts.native_preflight and work.exists()):
+            raise SystemExit("native work-dir must match the approved batch/preflight path")
         if opts.native_preflight:
             fantgpu_native.preflight(work)
         else:
@@ -195,6 +193,9 @@ def main():
         return
     if opts.manifest or opts.reviewed_sha256:
         raise SystemExit("review identity options require --native-run")
+    approved_synthetic = Path.home() / "tmp" / "r5-phase2-f-i7-20260922-offline-01" / "synthetic"
+    if (not str(work).startswith("/tmp/r5-phase2-") and work != approved_synthetic) or work.exists():
+        raise SystemExit("work-dir must be fresh and inside an approved fixture location")
     work.mkdir()
     baseline = subprocess.check_output(["git", "show", BASE + ":scripts/build-innogpu-driver.sh"], cwd=ROOT, text=True)
     old_prerm = re.search(r'cat > "\$P/DEBIAN/prerm" <<\'PEOF\'\n(.*?)\nPEOF', baseline, re.S).group(1) + "\n"
@@ -419,6 +420,42 @@ def main():
     assert native.K == sorted(set(native.K)) and len(native.K) == 8
     cases.append("native-denied-commands-and-strip-syntax")
     print("PASS " + cases[-1])
+    for variant in ["default-path-missing", "explicit-config-missing", "explicit-config"]:
+        root = work / ("native-openssl-" + variant)
+        root.mkdir(mode=0o700)
+        (root / "var/lib/dkms").mkdir(parents=True)
+        put(root, "dev/null", "")
+        if variant != "explicit-config-missing":
+            put(root, "etc/ssl/openssl.cnf", Path("/etc/ssl/openssl.cnf").read_text())
+        assert not (root / "usr/lib/ssl/openssl.cnf").exists()
+        args = mounts(root, ("/usr/bin/openssl",)) + ["--setenv", "PATH", "/usr/bin", "--setenv", "LC_ALL", "C", "--"]
+        argv = native.SIGNING_REQUEST.copy()
+        if variant == "default-path-missing":
+            index = argv.index("-config")
+            del argv[index:index + 2]
+        key = root / "var/lib/dkms/mok.key"
+        cert = root / "var/lib/dkms/mok.pub"
+        try:
+            p = subprocess.run(args + argv, capture_output=True, text=True, timeout=30)
+            put(root, "req.log", p.stdout + p.stderr)
+            print(f"--- {root.name}: rc={p.returncode} ---")
+            assert (p.returncode == 0) == (variant == "explicit-config"), p.stderr
+            if p.returncode:
+                assert "openssl.cnf" in p.stderr and "No such file or directory" in p.stderr
+                assert not key.exists() and not cert.exists()
+            else:
+                assert key.stat().st_mode & 0o777 == 0o600
+                p = subprocess.run(args + ["openssl", "x509", "-inform", "DER", "-in", "/var/lib/dkms/mok.pub",
+                                          "-noout", "-subject", "-ext", "subjectKeyIdentifier,extendedKeyUsage"],
+                                   capture_output=True, text=True, timeout=30)
+                put(root, "certificate.log", p.stdout + p.stderr)
+                assert p.returncode == 0 and "CN=R27 offline test only" in p.stdout.replace(" = ", "=")
+                assert re.search(r"(?:[0-9A-F]{2}:){19}[0-9A-F]{2}", p.stdout)
+                assert "Code Signing" in p.stdout
+        finally:
+            key.unlink(missing_ok=True)  # No private-key reads, logs or retained fixture keys.
+        cases.append(root.name)
+        print("PASS " + cases[-1])
     print(f"RESULT: PASS_FANTGPU_MAINTAINER_FIXTURES cases={len(cases)} real_builds=0 real_installs=0")
 
 

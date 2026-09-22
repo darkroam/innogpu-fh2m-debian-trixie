@@ -21,6 +21,7 @@ K = sorted(["6.12.101+deb13-amd64", "6.12.101-r5dpm1", "6.12.101-r5dpm2",
             "6.12.95+deb13-amd64", "6.12.96+deb13-amd64"])
 EPOCH = "1790035200"
 BATCH = "20260922-offline-01"
+WORK = Path.home() / "tmp" / f"r5-phase2-f-i7-{BATCH}"
 SOURCE = "usr/src/fantgpu-fh2m-kernel-2.2"
 META = "docs/planning/evidence/o-stage/5.0.0-i6"
 META_SHA = "a14250711f4b367cce0aed345da6e89c9921761b1b65aa3d87c5d67769d91321"
@@ -42,6 +43,10 @@ GUARD = '''#!/bin/sh
 echo "FORBIDDEN: $0 $*" >> /evidence/forbidden.log
 exit 97
 '''
+SIGNING_REQUEST = ["openssl", "req", "-config", "/etc/ssl/openssl.cnf", "-new", "-x509", "-nodes", "-days", "30",
+                   "-subj", "/CN=R27 offline test only", "-newkey", "rsa:2048", "-addext", "subjectKeyIdentifier=hash",
+                   "-addext", "extendedKeyUsage=codeSigning", "-keyout", "/var/lib/dkms/mok.key",
+                   "-outform", "DER", "-out", "/var/lib/dkms/mok.pub"]
 STRIP = '''#!/bin/bash
 set -euo pipefail
 [[ $# == 2 && $1 == -g && $2 == *.ko ]] || { echo strip-argv-UNKNOWN >&2; exit 98; }
@@ -283,13 +288,13 @@ def run(work, manifest, reviewed_sha):
     assert sha(manifest) == reviewed_sha, "reviewed input manifest hash mismatch"
     lock = json.loads(manifest.read_text())
     assert inputs() == lock, "reviewed inputs drifted"
-    assert work == Path(f"/tmp/r5-phase2-f-i7-{BATCH}"), "unapproved batch path"
+    assert work == WORK and not work.is_symlink(), "unapproved batch path"
+    assert work.is_dir() and sorted(p.name for p in work.iterdir()) == ["preflight"], "formal root must contain only N0 preflight"
     evidence = ROOT / f".build/r26-f-i7-{BATCH}"
     assert not evidence.exists() and not evidence.is_symlink(), "existing formal evidence"
     assert not (ROOT / ".build").is_symlink(), "evidence parent redirect"
     assert shutil.disk_usage(work.parent).free >= 30 * 1024**3, "need 30 GiB temporary space"
     assert shutil.disk_usage(ROOT).free >= 10 * 1024**3, "need 10 GiB evidence space"
-    work.mkdir(mode=0o700)
     evidence.mkdir(mode=0o700, parents=True)
     shutil.copyfile(manifest, evidence / "inputs.json")
     deadline = time.monotonic() + 6 * 3600
@@ -307,10 +312,7 @@ def run(work, manifest, reviewed_sha):
         common = work / "common"
         setup(common, True)
         ledger = []
-        command(common, lock, ["openssl", "req", "-new", "-x509", "-nodes", "-days", "30",
-                "-subj", "/CN=R27 offline test only", "-newkey", "rsa:2048", "-addext", "subjectKeyIdentifier=hash",
-                "-addext", "extendedKeyUsage=codeSigning", "-keyout", "/var/lib/dkms/mok.key",
-                "-outform", "DER", "-out", "/var/lib/dkms/mok.pub"], ledger, deadline)
+        command(common, lock, SIGNING_REQUEST, ledger, deadline)
         (common / "var/lib/dkms/mok.key").chmod(0o600)
         cert = command(common, lock, ["openssl", "x509", "-inform", "DER", "-in", "/var/lib/dkms/mok.pub",
                        "-noout", "-subject", "-ext", "subjectKeyIdentifier"], ledger, deadline)
