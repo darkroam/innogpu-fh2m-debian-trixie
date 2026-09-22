@@ -20,6 +20,7 @@ case "$VERSION" in
 	5.0.0-i2) EXPECTED_SOURCE_DATE_EPOCH=1788796800 ;;  # dsh 批准：沿用审核 epoch
 	5.0.0-i3) EXPECTED_SOURCE_DATE_EPOCH=1788796800 ;;  # R5 阶段 D 诊断候选
 	5.0.0-i5|5.0.0-i6) EXPECTED_SOURCE_DATE_EPOCH=1789516800 ;;  # i6 diagnostic epoch matches i5
+    5.0.0-i7) EXPECTED_SOURCE_DATE_EPOCH=1790035200 ;;  # R27 packaging candidate; i6 source remains frozen
     *)
         echo "builder_version_review=FAIL unreviewed package version: $VERSION" >&2
         exit 1
@@ -45,7 +46,7 @@ KERNEL="${KERNELDIR_VER:-$(uname -r)}"
 KERNELDIR="${KERNELDIR:-/lib/modules/$KERNEL/build}"
 # 默认输出名按血统（codex P1：5.0.0-i1 不得沿用 innogpu 名）
 if [[ "$FANT_LINEAGE" == 1 ]]; then
-	[[ "$VERSION" == "5.0.0-i6" ]] || {
+	[[ "$VERSION" == "5.0.0-i7" ]] || {
 		echo "staging_ostage_generation=FAIL archived generation is not rebuildable from the current snapshot: $VERSION"
 		exit 1
 	}
@@ -54,11 +55,16 @@ else
     OUT_DEB="${OUT_DEB:-$STAGE_ROOT/innogpu-fh2m-trixie_$VERSION.deb}"
 fi
 [[ -d "$KERNELDIR" ]] || { echo "staging_kernel_headers=FAIL $KERNELDIR"; exit 1; }
-# R25 changes the F maintainer policy. Do not rebuild a frozen i6 identity
-# with new control scripts; a new version/epoch needs separate build approval.
+# R27 approves only i7 packaging, inheriting the exact frozen i6 source.
+# Lock the meta itself: matching a replacement snapshot to replacement metadata
+# is not sufficient to establish the approved source identity.
 if [[ "$FANT_LINEAGE" == 1 ]]; then
-    echo "builder_maintainer_policy=FAIL new F package version and epoch require review"
-    exit 1
+    reviewed_meta="$ROOT/docs/planning/evidence/o-stage/5.0.0-i6/5.0.0-i6.meta.json"
+    [[ -f "$reviewed_meta" && ! -L "$reviewed_meta" ]] || {
+        echo 'builder_maintainer_policy=FAIL missing reviewed source meta'; exit 1; }
+    meta_identity=$(sha256sum "$reviewed_meta")
+    [[ ${meta_identity%% *} == a14250711f4b367cce0aed345da6e89c9921761b1b65aa3d87c5d67769d91321 ]] || {
+        echo 'builder_maintainer_policy=FAIL source meta identity drift'; exit 1; }
 fi
 
 # 0) 版本排序必须高于 p27
@@ -193,6 +199,9 @@ echo "staging_source_fixes=PASS $APPLIED_SOURCE_FIXES"
 # 3) 离线编译
 cd "$STAGE/source"
 jobs=$(nproc); (( jobs > 16 )) && jobs=16
+if [[ "$FANT_LINEAGE" == 1 ]]; then
+    (( jobs <= 8 )) || jobs=8
+fi
 make -j"$jobs" KERNELDIR="$KERNELDIR" > "$BUILD_LOG" 2>&1 || {
     echo "staging_dkms_build=FAIL"; tail -15 "$BUILD_LOG"; exit 1; }
 echo "staging_dkms_build=PASS"
@@ -212,26 +221,7 @@ if [[ "$FANT_LINEAGE" == 1 ]]; then
     command -v pahole >/dev/null || { echo "builder_shipped_abi=FAIL pahole missing"; exit 1; }
     pahole -C dev_rsrc fantgpu.ko > "$STAGE/dev_rsrc.pahole" || {
         echo "builder_shipped_abi=FAIL dev_rsrc BTF missing"; exit 1; }
-    python3 - "$STAGE/dev_rsrc.pahole" <<'PY' || {
-import re, sys
-text = open(sys.argv[1], encoding="utf-8").read()
-summary = re.search(r"/\* size: (\d+),.*members: (\d+) \*/", text)
-expected = {
-    "debugfs_dir": 136616,
-    "debugfs_hwdir": 136624,
-    "debugfs_name": 136632,
-    "syspll_debugfs": 136640,
-    "test_temp_debugfs": 136648,
-    "hdmi_dev": 136656,
-    "pvr_resume_count": 140528,
-}
-if not summary or tuple(map(int, summary.groups())) != (140536, 115):
-    raise SystemExit("dev_rsrc size/member count drift")
-for field, offset in expected.items():
-    match = re.search(rf"^.*\b{field}(?:\[[^]]+\])?;\s*/\*\s*(\d+)", text, re.M)
-    if not match or int(match.group(1)) != offset:
-        raise SystemExit(f"dev_rsrc offset drift: {field}")
-PY
+    python3 "$ROOT/tools/check-fantgpu-shipped-abi.py" "$STAGE/dev_rsrc.pahole" || {
         echo "builder_shipped_abi=FAIL dev_rsrc layout differs from i3"; exit 1;
     }
     echo "builder_shipped_abi=PASS size=140536 members=115"

@@ -20,10 +20,26 @@ source_digest() {
     )
 }
 dkms_policy_guard() {
-    local conf line
+    local conf line digest
+    for conf in /etc/dkms /etc/dkms/framework.conf.d; do
+        [[ ! -L "$conf" && ( ! -e "$conf" || -d "$conf" ) ]] || {
+            echo "ERROR: DKMS configuration directory requires review: $conf" >&2
+            return 1
+        }
+    done
     shopt -s nullglob
     for conf in /etc/dkms/framework.conf /etc/dkms/framework.conf.d/*.conf /etc/dkms/fantgpu-fh2m-kernel*.conf; do
+        [[ ! -L "$conf" ]] || {
+            echo "ERROR: DKMS configuration symlink requires review: $conf" >&2
+            return 1
+        }
         [[ ! -e "$conf" ]] || {
+            [[ -f "$conf" ]] || return 1
+            if [[ "$conf" == /etc/dkms/framework.conf.d/autoinstall_all_kernels.conf ]]; then
+                digest=$(sha256sum "$conf") || return 1
+                # Exactly the reviewed 30 bytes, including its final newline.
+                [[ ${digest%% *} != e362342a516c0507da4407b889d041a1df7e187f4cb8d05c8a039b1a307d2d4b ]] || continue
+            fi
             while IFS= read -r line || [[ -n "$line" ]]; do
                 line=${line%%#*}
                 [[ "$line" =~ ^[[:space:]]*$ ]] || {

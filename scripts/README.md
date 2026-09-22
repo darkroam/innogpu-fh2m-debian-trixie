@@ -28,8 +28,8 @@
 | `generate-binary-manifest.py`（tools/） | 清单生成 | 从 Deepin deb 确定性生成 `binary-manifest.json`（校验 deb SHA、覆盖全部黑盒文件与符号链接、kind/role/license 分类） |
 | `compare-oracle-candidates.sh` | oracle 对比 | 新架构候选包 vs patched-27：对比 control（除 Version/Description/Installed-Size）、文件清单、载荷哈希、DKMS 源码、黑盒对象、maintainer 脚本（版本归一）、版本排序与 module_symbols（调用 compare-module-symbols.sh）；构建产物（.o.cmd/.o/.ko/modules.order/Module.symvers/.mod）统一按 ARTIFACT_RE 排除；输出机器可读 PASS/FAIL |
 | `compare-module-symbols.sh` | 只读符号对比 | 离线构建候选与 patched-27 两包 DKMS 源码（同一内核头），逐 .ko 对比 vermagic/depends/导出符号/导入符号；构建于 `$ROOT/.build/`，不安装不重启；module_symbols=PASS/FAIL/UNCOMPARABLE |
-| `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；F 分支保留 5.0.0-i6 的 18 链 O_stage 配方及 epoch/ABI 门。R25 新 maintainer 策略需要另审版本与 epoch，当前 F 构建提前拒绝，禁止以新策略重构冻结 i6；i1-i5 同样不得借当前快照重构建。R5 与真机探针仍冻结 |
-| `generate-fantgpu-maintainer-scripts.sh` | 构建器共用生成段（R25 离线批） | 所有者为 F 打包入口；只向显式 PACKAGE_ROOT 的 DEBIAN/ 写入 postinst/prerm/postrm，生产与隔离回归共用，不构建、不安装。生成脚本实行多内核 K 全集检查与失败传播；验证限于夹具。回退丢弃未装包的暂存根，已安装包须按另行批准的恢复方案处置 |
+| `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；R27 F 候选只许 `5.0.0-i7` + `SOURCE_DATE_EPOCH=1790035200` + 精确 i6 meta/snapshot/tree 身份；只读继承 18 链，i1-i6/未知版本/错 epoch 拒绝。F 并行度最多 8，共用 ABI 文本门，O 配方保持。正式 A/B 须先审实现；接口存在不代表构建或安装通过，R5 冻结 |
+| `generate-fantgpu-maintainer-scripts.sh` | F 构建器共用生成段 | 只向显式 PACKAGE_ROOT 的 DEBIAN/ 写 postinst/prerm/postrm，生产与回归共用。K 全集检查/失败传播；两调用点共用配置门，仅固定 autoinstall_all_kernels.conf 已审 30 字节 SHA 例外，其它有效配置与目录/文件符号链接拒绝，不 source 配置取值。回退丢弃未装包暂存根，已安装包另行批准恢复 |
 | `build-patched17-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝把 patched-17 作为后续构建父版本 |
 | `build-patched18-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝重建历史混合载荷 patched-18 |
 | `build-patched19-deepin-coherent.sh` | legacy 护栏（保留） | 明确拒绝用当前辅助载荷复用 patched-19 版本号 |

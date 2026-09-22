@@ -319,6 +319,7 @@ tests/picom/run-session-tests.sh
 tests/runtime/README.md
 tests/runtime/run-capability-baseline.sh
 tests/unit/d-stage-audit-fault-tests.py
+tests/unit/fantgpu_native.py
 tests/unit/run-030-031-pm-marker-tests.sh
 tests/unit/run-030-032-pm-probe-tests.sh
 tests/unit/run-030-033-shipped-abi-tests.sh
@@ -365,6 +366,7 @@ tests/xdisplay/run-install-tests.sh
 tools/README.md
 tools/audit-licenses.py
 tools/build-release-archive.py
+tools/check-fantgpu-shipped-abi.py
 tools/d-stage-audit-gen.py
 tools/finalize-suspend-resume-failure.py
 tools/gen-fantgpu-manifest.py

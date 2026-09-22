@@ -6,6 +6,7 @@
 
 | 工具 | 类型 | 用途与边界 |
 | --- | --- | --- |
+| `check-fantgpu-shipped-abi.py` | F 编译 ABI 文本门 | builder 与 R27 strip 前采集共用；只读显式 pahole 文本，拒绝 size/members/七固定偏移缺失、歧义或漂移，不读 live BTF。所有者 F 打包入口；合成正反例在 maintainer 测试，真实逐核编译另审。失败停批保留模块，不修改对象 |
 | `patch-gpupll-object.py` | 构建期对象变换 | 对 Deepin 202504 的 `innogpu.o_shipped` 执行严格单点字节替换；只接受唯一旧序列或已变换状态，其他载荷立即失败 |
 | `probe-egl-gbm.c` | 最小 C 探针 | 在指定用户态库环境中创建 GBM device 和 EGL/GLES2 context，报告 backend、renderer 与基本绘制错误，不修改系统配置 |
 | `probe-drm-topology.c` | 只读 KMS 探针 | 报告 DRM connector 物理尺寸、encoder、底层 CRTC ID/索引和 active mode，用于核对 WebKit 的 monitor 匹配结果；不 modeset。输出契约：active 但内核未提供 mode 名称时 `mode=` 输出稳定占位 `<unnamed>`（如 `mode=<unnamed> refresh=60`），inactive 输出 `mode=-`；空名称绝不产生空字段。**F5 扩展**：新增 connector 契约段（`connector <id> <name> status=<connected|disconnected> modes=<count> source=<ioctl|sysfs>` + 全部 mode 行 `<hdisp>x<vdisp>@<vrefresh>`）；当 GETCONNECTOR modes payload 失败时，按对应 `/sys/class/drm/<card>-<connector>/modes` 只读回退，source 标为 `sysfs`，sysfs 仅提供分辨率时刷新率输出为 `@unknown`；回退失败输出 `modes=unavailable source=unavailable` 并 rc=1。DDCCI 属性段（props 名匹配 `(?i)ddcci` 的 `connector <id> prop <name>=<value>`，全无 → `connector <id> ddcci-props=none`）、backlight 关联表（`<backlight_name> -> <drm_connector_path>`，经 `/sys/class/backlight/<name>/device` symlink 解析；解析失败或目标非 drm → `unresolved`，禁止全局枚举误归因）；输出格式固定（validation-plan §1.2 R7-R9 证据格式）。夹具构建 `-DINNOGPU_DMABUF_FIXTURE_HOOKS` + `INNOGPU_DMABUF_TOPOLOGY_FIXTURE=1`（backlight 根经 `INNOGPU_DMABUF_BACKLIGHT_ROOT` 注入），新段输出 `fixture_` 命名空间；生产构建不定义该宏，环境变量无效 |

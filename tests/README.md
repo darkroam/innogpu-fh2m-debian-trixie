@@ -15,6 +15,17 @@ xdisplay 的状态机、布局、适配器、配置和自定义布局测试只�
 
 不得提交测试运行产生的锁文件、日志、runtime 目录或本机绝对路径。
 
+F maintainer 回归入口：`python3 -B tests/unit/run-fantgpu-maintainer-tests.py --work-dir /tmp/r5-phase2-f-i7-synthetic-<id>`。
+默认使用生产生成器与 synthetic 工具，验证 K 全集、两调用点配置例外、失败传播、旧 prerm/O 保留、
+ABI 文本反例；网络 namespace 必须可用，不编译、不安装宿主。
+`--native-preflight` 配全新 `/tmp/r5-phase2-f-i7-*` 目录，锁定普通输入/8 核/工具并检查隔离与容量；
+`tests/unit/fantgpu_native.py` 为同入口真实工具辅助文件，非通用安装器。
+`--native-run --manifest <inputs.json> --reviewed-sha256 <全值>` 只在实现过审与正式窗口放行后使用；
+固定 R27 批号、单窗口 6h、每侧八核、最多 8 CPU，缺条件非零，不降级网络隔离。
+证据保存 strip 前 ABI、签署后模块与 initrd 字节；synthetic PASS 不代表原生 PASS。
+临时容量预留 30 GiB、持久 10 GiB，不足须先解决；不自动扩容/清理，失败保留私有根。
+真实模式不入自动 CI，不是 R28 宿主安装授权，不能据此重跑 PM。
+
 Picom 用户配置安装器测试：
 
 ```sh

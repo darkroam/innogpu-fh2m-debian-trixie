@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Run generated control scripts in a minimal, rootless bubblewrap filesystem.
 
-No host /boot, /dev, /sys, DKMS or package database is exposed. The network
-namespace is shared but unused. No compiler or package installer runs.
+No host /boot, /dev, /sys, DKMS or package database is exposed. A private
+network namespace is mandatory. Default mode never runs a compiler/installer.
 """
 import argparse
+import importlib.util
 import os
 from pathlib import Path
 import re
@@ -106,7 +107,7 @@ def put(root, path, text):
 def mounts(root):
     # Bind only the two interpreters and their ordinary library dependencies.
     args = ["bwrap", "--unshare-user", "--unshare-pid", "--unshare-ipc",
-            "--unshare-uts", "--die-with-parent", "--new-session", "--clearenv",
+            "--unshare-uts", "--unshare-net", "--die-with-parent", "--new-session", "--clearenv",
             "--bind", str(root), "/", "--chdir", "/"]
     binaries = ["/usr/bin/bash", "/usr/bin/busybox"]
     paths = set(binaries)
@@ -170,10 +171,30 @@ def run(root, args, script="postinst", action="configure"):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--work-dir", required=True, type=Path)
+    mode = ap.add_mutually_exclusive_group()
+    mode.add_argument("--native-preflight", action="store_true")
+    mode.add_argument("--native-run", action="store_true")
+    ap.add_argument("--manifest", type=Path)
+    ap.add_argument("--reviewed-sha256")
     opts = ap.parse_args()
     work = opts.work_dir.resolve()
     if not str(work).startswith("/tmp/r5-phase2-") or work.exists():
         raise SystemExit("work-dir must be a new /tmp/r5-phase2-* directory")
+    if not __debug__:
+        raise SystemExit("assertions must be enabled; do not use python -O")
+    if opts.native_preflight or opts.native_run:
+        import fantgpu_native
+        if not str(work).startswith("/tmp/r5-phase2-f-i7-"):
+            raise SystemExit("native work-dir must be a new /tmp/r5-phase2-f-i7-* directory")
+        if opts.native_preflight:
+            fantgpu_native.preflight(work)
+        else:
+            if not opts.manifest or not re.fullmatch(r"[0-9a-f]{64}", opts.reviewed_sha256 or ""):
+                raise SystemExit("native-run requires reviewed manifest and full SHA-256")
+            fantgpu_native.run(work, opts.manifest, opts.reviewed_sha256)
+        return
+    if opts.manifest or opts.reviewed_sha256:
+        raise SystemExit("review identity options require --native-run")
     work.mkdir()
     baseline = subprocess.check_output(["git", "show", BASE + ":scripts/build-innogpu-driver.sh"], cwd=ROOT, text=True)
     old_prerm = re.search(r'cat > "\$P/DEBIAN/prerm" <<\'PEOF\'\n(.*?)\nPEOF', baseline, re.S).group(1) + "\n"
@@ -247,6 +268,40 @@ def main():
         (reg / "source").symlink_to("/usr/src/elsewhere")
     case("V3-registry-conflict", wrong_source, preflight=True)
     case("V3-dkms-override", lambda r: put(r, "etc/dkms/framework.conf", "modprobe_on_install=true\n"), preflight=True)
+    # Both callers use the production function, including parent-directory checks.
+    fixed = "etc/dkms/framework.conf.d/autoinstall_all_kernels.conf"
+    accepted = 'autoinstall_all_kernels="yes"\n'
+    policies = {
+        "exact": (fixed, accepted),
+        "value": (fixed, accepted.replace("yes", "no")),
+        "newline": (fixed, accepted.rstrip()),
+        "extra": (fixed, accepted + "modprobe_on_install=true\n"),
+        "injection": (fixed, accepted + "x=$(touch /fixture/policy-executed)\n"),
+        "other-path": ("etc/dkms/framework.conf.d/other.conf", accepted),
+        "file-link": (fixed, accepted),
+        "directory-link": (fixed, accepted),
+        "dangling": (fixed, accepted),
+    }
+    for policy, (path, contents) in policies.items():
+        for script, action in [("postinst", "configure"), ("prerm", "upgrade")]:
+            name = f"policy-{policy}-{script}"
+            root = work / name
+            args = make_root(root)
+            config = put(root, path, contents)
+            if policy in ["file-link", "dangling"]:
+                config.unlink()
+                put(root, "fixture/approved.conf", accepted)
+                config.symlink_to("/fixture/approved.conf" if policy == "file-link" else "/absent")
+            elif policy == "directory-link":
+                config.parent.rename(root / "fixture/configs")
+                config.parent.symlink_to("/fixture/configs")
+            p, calls = run(root, args, script, action)
+            assert (p.returncode == 0) == (policy == "exact"), name
+            assert not (root / "fixture/policy-executed").exists(), name
+            if policy != "exact":
+                assert not re.search(r'^dkms (add|build|install|remove) ', calls, re.M), name
+            cases.append(name)
+            print("PASS " + name)
     case("V5-add-error", lambda r: put(r, "fixture/fail", f"dkms add -m {MODULE} -v 2.2"))
     for mode in ["add-noop", "build-noop", "install-no-status", "stale-module", "wrong-name", "wrong-vermagic", "initramfs-noop", "initramfs-missing-module"]:
         case("V5-" + mode, lambda r, m=mode: put(r, "fixture/mode", m))
@@ -329,10 +384,41 @@ def main():
                             "KERNELDIR": str(work), "STAGE_ROOT": str(work / "must-not-exist")},
                        capture_output=True, text=True)
     print(p.stdout, end=""); print(p.stderr, end="")
-    assert p.returncode == 1 and "builder_maintainer_policy=FAIL" in p.stdout
+    assert p.returncode == 1 and "staging_ostage_generation=FAIL" in p.stdout
     assert not (work / "must-not-exist").exists()
     cases.append("V7-frozen-version-rebuild-refused")
     print("PASS V7-frozen-version-rebuild-refused")
+    spec = importlib.util.spec_from_file_location("abi", ROOT / "tools/check-fantgpu-shipped-abi.py")
+    abi = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(abi)
+    layout = "struct dev_rsrc {\n" + "".join(
+        f" int {field}; /* {offset} 8 */\n" for field, offset in abi.OFFSETS.items()) + "/* size: 140536, members: 115 */\n};\n"
+    abi.check(layout)
+    for broken in ["", layout + layout, layout.replace("115", "116"),
+                   layout.replace("140536", "140544"),
+                   *[layout.replace(str(offset), str(offset + 8)) for offset in abi.OFFSETS.values()]]:
+        try:
+            abi.check(broken)
+        except ValueError:
+            continue
+        raise AssertionError("ABI drift accepted")
+    cases.append("ABI-complete-ambiguous-and-every-fixed-offset")
+    print("PASS " + cases[-1])
+    import fantgpu_native as native
+    root = work / "native-guard"
+    args = make_root(root)
+    (root / "evidence").mkdir()
+    for name in native.DENIED:
+        guard = put(root, "usr/bin/" + name, native.GUARD)
+        guard.chmod(0o755)
+        p = subprocess.run(args + ["--", "/bin/bash", str("/usr/bin/" + name)], capture_output=True)
+        assert p.returncode == 97, name
+    records = (root / "evidence/forbidden.log").read_text().splitlines()
+    assert len(records) == len(native.DENIED)
+    subprocess.run(["bash", "-n"], input=native.STRIP, text=True, check=True)
+    assert native.K == sorted(set(native.K)) and len(native.K) == 8
+    cases.append("native-denied-commands-and-strip-syntax")
+    print("PASS " + cases[-1])
     print(f"RESULT: PASS_FANTGPU_MAINTAINER_FIXTURES cases={len(cases)} real_builds=0 real_installs=0")
 
 

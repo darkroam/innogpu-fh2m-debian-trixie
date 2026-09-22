@@ -6,6 +6,12 @@
 
 ## 一、现有测试盘点
 
+R27 补充入口：`tests/unit/run-fantgpu-maintainer-tests.py` 默认跑生产生成器的 synthetic 故障回归，
+含两处 DKMS 配置例外、旧 prerm/O 保留、共享 ABI 文本门；真实模式由 `fantgpu_native.py` 接入，
+`--native-preflight` 只锁普通输入并检查网络隔离/容量，`--native-run` 须先审实现、核对清单全值 SHA，
+再进入一次 6h A/B 八核窗口。正式窗口未执行时不得以合成成绩标原生通过；不加入自动 CI。
+临时根保留全部失败现场，测试证书不构成宿主信任；R28 仍须独立审查，R5 冻结不变。
+
 ### 当前入口盘点（2026-09-21，只读静态核对）
 
 以 [.github/workflows/ci.yml](../../.github/workflows/ci.yml) 的显式 runner 路径和
