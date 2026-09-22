@@ -28,7 +28,8 @@
 | `generate-binary-manifest.py`（tools/） | 清单生成 | 从 Deepin deb 确定性生成 `binary-manifest.json`（校验 deb SHA、覆盖全部黑盒文件与符号链接、kind/role/license 分类） |
 | `compare-oracle-candidates.sh` | oracle 对比 | 新架构候选包 vs patched-27：对比 control（除 Version/Description/Installed-Size）、文件清单、载荷哈希、DKMS 源码、黑盒对象、maintainer 脚本（版本归一）、版本排序与 module_symbols（调用 compare-module-symbols.sh）；构建产物（.o.cmd/.o/.ko/modules.order/Module.symvers/.mod）统一按 ARTIFACT_RE 排除；输出机器可读 PASS/FAIL |
 | `compare-module-symbols.sh` | 只读符号对比 | 离线构建候选与 patched-27 两包 DKMS 源码（同一内核头），逐 .ko 对比 vermagic/depends/导出符号/导入符号；构建于 `$ROOT/.build/`，不安装不重启；module_symbols=PASS/FAIL/UNCOMPARABLE |
-| `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；当前 5.0.0-i6 F 分支直接消费 18 链 O_stage 快照（含 `030-033` ABI 修正与 `030-034` stop-stage），仅接受 epoch `1789516800`，并针对真实 `.ko` 校验 `dev_rsrc` BTF 大小/偏移。i1-i5 是归档代，不得借当前快照重构建。R5 与真机探针仍冻结 |
+| `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；F 分支保留 5.0.0-i6 的 18 链 O_stage 配方及 epoch/ABI 门。R25 新 maintainer 策略需要另审版本与 epoch，当前 F 构建提前拒绝，禁止以新策略重构冻结 i6；i1-i5 同样不得借当前快照重构建。R5 与真机探针仍冻结 |
+| `generate-fantgpu-maintainer-scripts.sh` | 构建器共用生成段（R25 离线批） | 所有者为 F 打包入口；只向显式 PACKAGE_ROOT 的 DEBIAN/ 写入 postinst/prerm/postrm，生产与隔离回归共用，不构建、不安装。生成脚本实行多内核 K 全集检查与失败传播；验证限于夹具。回退丢弃未装包的暂存根，已安装包须按另行批准的恢复方案处置 |
 | `build-patched17-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝把 patched-17 作为后续构建父版本 |
 | `build-patched18-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝重建历史混合载荷 patched-18 |
 | `build-patched19-deepin-coherent.sh` | legacy 护栏（保留） | 明确拒绝用当前辅助载荷复用 patched-19 版本号 |

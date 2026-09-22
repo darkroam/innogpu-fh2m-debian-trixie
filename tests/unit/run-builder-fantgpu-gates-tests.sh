@@ -14,6 +14,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 BUILDER="$ROOT/scripts/build-innogpu-driver.sh"
+F_GENERATOR="$ROOT/scripts/generate-fantgpu-maintainer-scripts.sh"
 cd "$ROOT"
 export LC_ALL=C
 
@@ -88,12 +89,12 @@ fi
 # + C2 生命周期契约（codex re-review P1）：F postinst 不得写 fantgpu.conf（该
 # options 文件由 builder 组装期写入 $P 包内确定性 payload、dpkg 管理），O 分支
 # 保持历史直写口径
-if grep -Fq 'DRI_SO=/usr/lib/x86_64-linux-gnu/dri/fh2m_dri.so' "$BUILDER" \
-   && grep -Fq 'lspci -n -d 1ec8:9810' "$BUILDER" \
-   && grep -Fq 'lspci unavailable; 1ec8:9810 device gate not executed' "$BUILDER" \
+if grep -Fq 'DRI_SO=/usr/lib/x86_64-linux-gnu/dri/fh2m_dri.so' "$F_GENERATOR" \
+   && grep -Fq 'lspci -n -d 1ec8:9810' "$F_GENERATOR" \
+   && grep -Fq 'lspci unavailable; 1ec8:9810 device gate not executed' "$F_GENERATOR" \
    && grep -Fq "'options innogpu firmware_en=1' > /etc/modprobe.d/innogpu.conf" "$BUILDER" \
    && grep -Fq "'options fantgpu firmware_en=1' > \"\$P/etc/modprobe.d/fantgpu.conf\"" "$BUILDER" \
-   && ! grep -Fq "'options fantgpu firmware_en=1' > /etc/modprobe.d/fantgpu.conf" "$BUILDER"; then
+   && ! grep -Fq "'options fantgpu firmware_en=1' > /etc/modprobe.d/fantgpu.conf" "$F_GENERATOR"; then
     ok t07
 else
     bad t07 "postinst F assertions missing"

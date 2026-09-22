@@ -264,6 +264,7 @@ scripts/compare-oracle-candidates.sh
 scripts/disable-incompatible-userspace.sh
 scripts/display-recover-and-diagnose.sh
 scripts/extract-vendor-binaries.sh
+scripts/generate-fantgpu-maintainer-scripts.sh
 scripts/install-deepin-desktop-hwgl-trial.sh
 scripts/install-dri-node-repair-service.sh
 scripts/install-experimental-hwgl.sh
@@ -335,6 +336,7 @@ tests/unit/run-drm-topology-tests.sh
 tests/unit/run-exec-probes-tests.sh
 tests/unit/run-extractor-tests.sh
 tests/unit/run-fantgpu-helper-transform-tests.sh
+tests/unit/run-fantgpu-maintainer-tests.py
 tests/unit/run-fantgpu-pm-probe-removal-tests.sh
 tests/unit/run-fantgpu-runtime-health-tests.sh
 tests/unit/run-fbdev-mmap-tests.sh

@@ -54,6 +54,12 @@ else
     OUT_DEB="${OUT_DEB:-$STAGE_ROOT/innogpu-fh2m-trixie_$VERSION.deb}"
 fi
 [[ -d "$KERNELDIR" ]] || { echo "staging_kernel_headers=FAIL $KERNELDIR"; exit 1; }
+# R25 changes the F maintainer policy. Do not rebuild a frozen i6 identity
+# with new control scripts; a new version/epoch needs separate build approval.
+if [[ "$FANT_LINEAGE" == 1 ]]; then
+    echo "builder_maintainer_policy=FAIL new F package version and epoch require review"
+    exit 1
+fi
 
 # 0) 版本排序必须高于 p27
 dpkg --compare-versions "$VERSION" gt 3.3.3.42-patched-27 || {
@@ -406,6 +412,9 @@ Description: $PKG_DESC
 ${DESC_BODY}
 EOF
 
+if [[ "$FANT_LINEAGE" == 1 ]]; then
+    bash "$ROOT/scripts/generate-fantgpu-maintainer-scripts.sh" "$P" "$VERSION"
+else
 cat > "$P/DEBIAN/postinst" <<EOF
 #!/bin/bash
 set -e
@@ -517,6 +526,7 @@ exit 0
 PEOF
 
 chmod 0755 "$P/DEBIAN/postinst" "$P/DEBIAN/prerm" "$P/DEBIAN/postrm"
+fi
 # F 分支：md5sums 按实际安装载荷重生成（④ 强制项 1；不得继承厂商 95 条路径错配）
 if [[ "$FANT_LINEAGE" == 1 ]]; then
     python3 tools/gen-package-md5sums.py --root "$P" || {
