@@ -2,7 +2,7 @@
 # tests/unit/run-builder-fantgpu-gates-tests.sh — builder F 分支早期门禁与静态契约单测
 #
 # 依据 docs/design/c3-a-4-reproducible-input-plan.md §三（改造点 9-13）与
-# §四（postinst/md5sums/trace）：R27 候选 5.0.0-i7、血统判定 5.0.0-i*、
+# §四（postinst/md5sums/trace）：R27 候选 5.0.0-i8、血统判定 5.0.0-i*、
 # 输入预检分支、PKG_DESC $VERSION 参数化、share/命令前缀血统参数化、
 # ld.so.conf fantgpu-fh2m、postinst fh2m_dri.so + 设备门。
 # 只测可运行早期门禁与静态契约（不编译内核：KERNELDIR 注入不存在路径使
@@ -30,8 +30,6 @@ run_builder() {  # run_builder [env...]（env 值不含空格）；全部注入 
         env "$@" bash "$BUILDER" > "$TMP/b.out" 2> "$TMP/b.err"
     RC=$?
     set -e
-    OUTTEXT="$(cat "$TMP/b.out")"
-    ERRTEXT="$(cat "$TMP/b.err")"
 }
 
 TMP="$(mktemp -d "${TMPDIR:-/tmp}/bfg-tests.XXXXXX")"
@@ -45,8 +43,8 @@ else
     bad t01 "rc=$RC"
 fi
 
-# t02 i7 仅通过版本/epoch门，未通过源身份门，更不代表实际构建通过。
-run_builder VERSION=5.0.0-i7 SOURCE_DATE_EPOCH=1790035200
+# t02 i8 仅通过版本/epoch门，未通过源身份门，更不代表实际构建通过。
+run_builder VERSION=5.0.0-i8 SOURCE_DATE_EPOCH=1790121600
 if [ "$RC" -eq 1 ] && grep -Fq "staging_kernel_headers=FAIL" "$TMP/b.out"; then
     ok t02
 else
@@ -62,7 +60,7 @@ else
 fi
 
 # t04 epoch 错误 → builder_repro=FAIL
-run_builder VERSION=5.0.0-i7 SOURCE_DATE_EPOCH=1111111111
+run_builder VERSION=5.0.0-i8 SOURCE_DATE_EPOCH=1111111111
 if [ "$RC" -eq 1 ] && grep -Fq "builder_repro=FAIL" "$TMP/b.out"; then
     ok t04
 else
@@ -155,10 +153,8 @@ else
     bad t14 "gate call not restored or skip line remains"
 fi
 
-# t15 印证门禁恢复（dsh 返工裁决）：builder 不得在任何 post-trace 位置打
-# 补丁——F 包内 DKMS 源 = 18 链 O_stage 快照本身（030-034 已随链入树），
-# 补丁后状态由锁定 o_stage_tree_hash 覆盖；无 apply_fantgpu_runtime_fixes、
-# 无顶层非法补丁名引用。
+# t15 i8 用户授权仅cfg_detect派生；父树trace与派生整树门分别标明，
+# 不把i6原trace当作修改后证明。下面的实际派生回归补充本静态契约。
 if grep -Fq 'APPLIED_SOURCE_FIXES="o-stage-materialized-030-chain-18' "$BUILDER" \
    && ! grep -Fq 'apply_fantgpu_runtime_fixes' "$BUILDER" \
    && ! grep -Fq 'fantgpu-hwinfo-audio-fallback.patch' "$BUILDER"; then
@@ -216,9 +212,10 @@ else
     bad t19_archived_i5 "rc=$RC"
 fi
 
-for version in 5.0.0-i{1..6}; do
+for version in 5.0.0-i{1..7}; do
     epoch=1788796800
     [[ "$version" != 5.0.0-i5 && "$version" != 5.0.0-i6 ]] || epoch=1789516800
+    [[ "$version" != 5.0.0-i7 ]] || epoch=1790035200
     run_builder VERSION="$version" SOURCE_DATE_EPOCH="$epoch"
     if [[ "$RC" == 1 ]] && ! [[ -d "$TMP/stage" ]]; then
         ok "archived-$version"
@@ -226,7 +223,7 @@ for version in 5.0.0-i{1..6}; do
         bad "archived-$version" "rc=$RC or staging was written"
     fi
 done
-run_builder VERSION=5.0.0-i7 SOURCE_DATE_EPOCH=
+run_builder VERSION=5.0.0-i8 SOURCE_DATE_EPOCH=
 if [[ "$RC" == 1 ]] && grep -Fq builder_repro=FAIL "$TMP/b.out"; then
     ok empty-epoch
 else
@@ -236,7 +233,7 @@ fi
 mkdir -p "$TMP/root/headers" "$TMP/root/docs/planning/evidence/o-stage/5.0.0-i6"
 printf '%s\n' '{}' > "$TMP/root/docs/planning/evidence/o-stage/5.0.0-i6/5.0.0-i6.meta.json"
 set +e
-INNOGPU_ROOT="$TMP/root" VERSION=5.0.0-i7 SOURCE_DATE_EPOCH=1790035200 \
+INNOGPU_ROOT="$TMP/root" VERSION=5.0.0-i8 SOURCE_DATE_EPOCH=1790121600 \
     KERNELDIR="$TMP/root/headers" STAGE_ROOT="$TMP/stage" \
     bash "$BUILDER" > "$TMP/b.out" 2> "$TMP/b.err"
 RC=$?
@@ -245,6 +242,44 @@ if [[ "$RC" == 1 && ! -d "$TMP/stage" ]] && grep -Fq 'source meta identity drift
     ok source-drift
 else
     bad source-drift "rc=$RC"
+fi
+
+if python3 - "$BUILDER" "$ROOT" "$PATCH_TREE/o-stage" "$TMP" <<'PY'
+import hashlib, os, pathlib, subprocess, sys
+builder, repo, tree, tmp = map(pathlib.Path, sys.argv[1:])
+text = builder.read_text()
+func = text[text.index("derive_fantgpu_config_order() {"):text.index("\nAPPLIED_SOURCE_FIXES=")]
+before = (tree / "cfg_detect.sh").read_bytes()
+env = dict(os.environ, ROOT=str(repo))
+def derive():
+    return subprocess.run(["bash", "-ec", func + '\nderive_fantgpu_config_order "$1"', "fixture", str(tree)], env=env, capture_output=True, text=True)
+p = derive()
+assert p.returncode == 0, p.stderr
+after = (tree / "cfg_detect.sh").read_bytes()
+line = after[len(before):]
+assert line == b'LC_ALL=C sort -o "$CFG_FILE_DIR/$CFG_FILE" "$CFG_FILE_DIR/$CFG_FILE"\n'
+assert hashlib.sha256(after).hexdigest() == "f096890ea5662301f6eb805c2a5554aa9d027aebd1b2b8c28d31f84ae7c431ca"
+# Reject second application and unrelated parent drift before mutation.
+assert derive().returncode != 0
+(tree / "cfg_detect.sh").write_bytes(before)
+(tree / "unexpected").write_text("drift\n")
+assert derive().returncode != 0 and (tree / "cfg_detect.sh").read_bytes() == before
+header = tmp / "header.h"
+env.update(CFG_FILE_DIR=str(tmp), CFG_FILE=header.name)
+for content in [b'#define B 2\n#define A 1\n#define A 1\n', b'#define A 1\n#define B 2\n#define A 1\n']:
+    header.write_bytes(content)
+    subprocess.run(["bash", "-c", line.decode()], env=env, check=True)
+    assert header.read_bytes() == b'#define A 1\n#define A 1\n#define B 2\n'
+header.unlink()
+header.mkdir()  # output cannot be replaced; original directory survives.
+p = subprocess.run(["bash", "-c", line.decode()], env=env, capture_output=True)
+assert p.returncode != 0 and header.is_dir()
+print("derived_exact_tree_and_sort_contract=PASS")
+PY
+then
+    ok derived-source-and-sort-contract
+else
+    bad derived-source-and-sort-contract "production derivation/order/failure contract"
 fi
 
 echo "PASS=$PASS FAIL=$FAILN"

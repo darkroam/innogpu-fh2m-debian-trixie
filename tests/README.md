@@ -22,16 +22,18 @@ ABI 文本反例；网络 namespace 必须可用，不编译、不安装宿主�
 拒绝显式配置缺失、验证显式配置下 DER 证书的 subject/SKI/codeSigning。
 仅绑定 OpenSSL 与普通动态库、复制普通 openssl.cnf；独立夹具内生成一次性 key，finally 删除，
 不读取或留存私钥、不挂载宿主 SSL 目录。这是配置回归，不代表 N0 全部依赖闭包或新窗口通过。
-R27 最近窗口使用原批号下全新 `~/tmp/r5-phase2-f-i7-20260922-offline-01/attempt-04/`，
-持久证据为 `.build/r26-f-i7-20260922-offline-01/attempt-04/`；旧失败根及清单原位保留，不迁移覆盖。
-`--native-preflight --work-dir <attempt-04>/preflight` 按批次放行与规约 §四执行；一次完成输入/容量/隔离、
-真实签署（含八核 sign-file 工具夹具）、初始四核 initrd 生成和解包内容验证，最后才落完整 n0.json。
-`--native-run` 使用 attempt-04 根，先校验同一回执/输入/证书/initrd，再进入 N1；缺项、混批、过期、
+R27 当前获准窗口 K=`[6.12.101+deb13-amd64]`，首行及回执明示范围；宿主八核清单仍独立锁定。
+当前i8使用全新 `~/tmp/r5-phase2-f-i7-20260922-offline-01/attempt-08-i8-101/`，
+持久证据为 `.build/r26-f-i7-20260922-offline-01/attempt-08-i8-101/`；沿用批准批号根，旧失败根及清单原位保留。
+`--native-preflight --work-dir <attempt-08-i8-101>/preflight` 按批次放行与规约 §四执行；一次完成输入/容量/隔离、
+真实签署（101 核 sign-file + 普通模块副本的 modinfo 核对）、初始 initrd 生成和解包内容验证，最后才落完整 n0.json。
+`--native-run` 使用 attempt-08-i8-101 根，先校验同一回执/输入/证书/initrd，再进入 N1；缺项、混批、过期、
 旧根或 symlink 均拒绝。A/B 共用 N0 的 key 与初始 initrd，不在 N1 后重复生成；N0 起算总时间盒 6h。
 systemd/systemd-udevd/network 与 /etc/ld.so.conf* 精确入身份清单，复制普通文件和链接，未挂载宿主整目录。
 `tests/unit/fantgpu_native.py` 为同入口真实工具辅助文件，非通用安装器。
 `--native-run --manifest <inputs.json> --reviewed-sha256 <全值>` 只在实现过审与正式窗口放行后使用；
-固定 R27 批号、单窗口 6h、每侧八核、最多 8 CPU，缺条件非零，不降级网络隔离。
+固定 R27 批号、单窗口 6h、每侧获准单核、最多 8 CPU，缺条件非零，不降级网络隔离。
+隔离内 image 清单限定为获准 K，生产 postinst 仍枚举现场全集，未删宿主内核或改生产目标规则。
 证据保存 strip 前 ABI、签署后模块与 initrd 字节；synthetic PASS 不代表原生 PASS。
 解包链接允许包内相对路径（包括生产 helper 的 `../share/`），严格解析后仍须在包内；
 绝对路径、越界、断链、循环均拒绝；合并包时核对目标仍在私有根，再替换已有文件链接，
@@ -41,7 +43,16 @@ systemd/systemd-udevd/network 与 /etc/ld.so.conf* 精确入身份清单，复�
 回归实际运行忽略 strip 失败的隔离调用者，失败调用紧接下一行即写后继标记，无延时掩盖竞争；
 验证 pahole 非零即停止、后继标记未执行；不能仅凭 postinst 的逐核 PASS 宣称 ABI 通过。
 attempt-04 已失败并封存：107 核编译暴露冻结源码的 DRM API 不兼容，两个诊断核的 pahole
-亦非零。收尾失败门修订仅通过隔离回归，未重新跑正式 A/B；已有根拒绝复用，不能视为候选验收通过。
+亦非零。该窗口收尾时失败门修订仅通过隔离回归；后续新窗口不追认旧窗口，已有根拒绝复用。
+attempt-05-101 因检查器误将 SKI 与 modinfo sig_key 比较而失败并保留；后者使用 CMS 证书序列号。
+共用解析器拒绝缺失/奇数位/重复序列号，真实 OpenSSL 回归核验；N0 对已锁定 cryptd.ko 副本
+真实签署并核 signer/sig_key/hash，不编译或加载该模块，不再用文本签署成功替代模块身份验证。
+attempt-06-101 两侧生命周期与整 deb 比较通过，但模块 srcversion/build-id 字节不同，整体仍失败。
+原 cfg_detect 并发生成头文件的顺序不稳定已在独立隔离诊断复现；修改冻结源身份须另行裁定。
+用户随后授权新派生F源：i8仅在cfg_detect全部wait后追加确定排序（不去重、不改宏值），原i6不动。
+builder门禁实际调用生产派生函数，核整树/单文件差异、二次应用/异物拒绝、乱序/重复宏保留/写失败。
+strip前保留生成头、fantgpu.mod/.mod.c与依赖.cmd清单及原件，A/B核对这些证据及完整模块字节。
+07窗口的采集代码依赖/dev/fd而停批保全；现用普通NUL清单供tar读取，新增无/dev/fd真实采集回归，共97项。
 临时容量预留 30 GiB、持久 10 GiB，不足须先解决；不自动扩容/清理，失败保留私有根。
 真实模式不入自动 CI，不是 R28 宿主安装授权，不能据此重跑 PM。
 `--native-n0-test --work-dir ~/tmp/r5-phase2-f-i7-20260922-offline-01/revision-n0-test-20260923-02/preflight`
@@ -60,7 +71,7 @@ R27 依赖修订：构建/生命周期所需命令逐项追踪完整符号链接
 宿主/dev、GPU、磁盘、TTY或sysfs。默认synthetic仍用普通夹具，本项仅适用真实工具模式。
 `--native-build-test --work-dir ~/tmp/r5-phase2-f-i7-20260922-offline-01/revision-build-test-20260923-<id>`
 在全新隔离根调用同一生产 builder（基准核101，最多8 CPU），验证真实编译、ABI与包边界；
-不签署、不安装宿主，purpose=regression，不替代正式A/B八核验收。修订及必要隔离回归按
+不签署、不安装宿主，purpose=regression，不替代对应获准 K 的正式A/B验收。修订及必要隔离回归按
 [批内自主规则](../docs/project/multiagent-collab.md#四codex-主动性实现者权限与义务)集中完成与交付，
 失败现场保留，正式窗口不热修续跑。
 

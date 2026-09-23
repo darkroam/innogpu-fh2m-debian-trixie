@@ -542,7 +542,9 @@ def main():
     records = (root / "evidence/forbidden.log").read_text().splitlines()
     assert len(records) == len(native.DENIED)
     subprocess.run(["bash", "-n"], input=native.STRIP, text=True, check=True)
-    assert native.K == sorted(set(native.K)) and len(native.K) == 8
+    assert native.K == ["6.12.101+deb13-amd64"]
+    assert native.HOST_K == sorted(set(native.HOST_K)) and len(native.HOST_K) == 8
+    assert set(native.K) < set(native.HOST_K)
     cases.append("native-denied-commands-and-strip-syntax")
     root = work / "native-ignored-strip-status"
     args = make_root(root)
@@ -567,6 +569,27 @@ def main():
     assert ledger[-1]["abort"] == "abi-failed" and ledger[-1]["rc"] != 0
     assert time.monotonic() - start < 5 and not (root / "evidence/continued").exists()
     cases.append("native-abi-failure-stops-ignoring-caller")
+    print("PASS " + cases[-1])
+    root = work / "native-dependency-capture"
+    root.mkdir()
+    put(root, "dev/null", "")
+    for name, content in [("fantgpu/kernel_autocfg.h", "#define A 1\n"),
+                          ("fantgpu.mod", "a.o\n"), ("fantgpu.mod.c", "fixture\n"),
+                          (".a.o.cmd", "dependency fixture\n")]:
+        put(root, "build/" + name, content)
+    (root / "evidence").mkdir()
+    args = mounts(root, tuple("/usr/bin/" + name for name in
+                  ["bash", "dirname", "cp", "find", "sort", "xargs", "sha256sum", "tar"]))
+    start_capture = native.STRIP.index('build=$(dirname')
+    capture = native.STRIP[start_capture:native.STRIP.index("\nprintf ", start_capture)]
+    p = subprocess.run(args + ["--", "/usr/bin/bash", "-ec",
+        'export PATH=/usr/bin; set -- -g /build/fantgpu.ko; dest=/evidence; ' + capture], capture_output=True)
+    assert p.returncode == 0, p.stderr
+    assert not (root / "dev/fd").exists()
+    members = subprocess.check_output(["tar", "-tf", str(root / "evidence/dependency-files.tar")], text=True)
+    assert members == ".a.o.cmd\n"
+    assert (root / "evidence/kernel_autocfg.h").read_text() == "#define A 1\n"
+    cases.append("native-dependency-capture-without-dev-fd")
     print("PASS " + cases[-1])
     root = work / "n0-receipt"
     common = root / "preflight/common"
@@ -664,12 +687,22 @@ def main():
             else:
                 assert key.stat().st_mode & 0o777 == 0o600
                 p = subprocess.run(args + ["openssl", "x509", "-inform", "DER", "-in", "/var/lib/dkms/mok.pub",
-                                          "-noout", "-subject", "-ext", "subjectKeyIdentifier,extendedKeyUsage"],
+                                          "-noout", "-subject", "-serial", "-ext", "subjectKeyIdentifier,extendedKeyUsage"],
                                    capture_output=True, text=True, timeout=30)
                 put(root, "certificate.log", p.stdout + p.stderr)
                 assert p.returncode == 0 and "CN=R27 offline test only" in p.stdout.replace(" = ", "=")
                 assert re.search(r"(?:[0-9A-F]{2}:){19}[0-9A-F]{2}", p.stdout)
                 assert "Code Signing" in p.stdout
+                serial = re.search(r"^serial=([0-9A-F]+)$", p.stdout, re.M).group(1)
+                assert native.certificate_sig_key(p.stdout).replace(":", "") == serial.lower()
+                assert native.certificate_sig_key("serial=01AB\nSubject Key Identifier: 11:22\n") == "01:ab"
+                for bad in ["", "serial=A\n", "serial=ZZ\n", "serial=01\nserial=02\n"]:
+                    try:
+                        native.certificate_sig_key(bad)
+                    except AssertionError:
+                        pass
+                    else:
+                        raise AssertionError("invalid certificate serial accepted")
         finally:
             key.unlink(missing_ok=True)  # No private-key reads, logs or retained fixture keys.
         cases.append(root.name)

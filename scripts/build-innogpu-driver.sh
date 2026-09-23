@@ -21,6 +21,7 @@ case "$VERSION" in
 	5.0.0-i3) EXPECTED_SOURCE_DATE_EPOCH=1788796800 ;;  # R5 阶段 D 诊断候选
 	5.0.0-i5|5.0.0-i6) EXPECTED_SOURCE_DATE_EPOCH=1789516800 ;;  # i6 diagnostic epoch matches i5
     5.0.0-i7) EXPECTED_SOURCE_DATE_EPOCH=1790035200 ;;  # R27 packaging candidate; i6 source remains frozen
+    5.0.0-i8) EXPECTED_SOURCE_DATE_EPOCH=1790121600 ;;  # Authorized cfg_detect output-order derivative
     *)
         echo "builder_version_review=FAIL unreviewed package version: $VERSION" >&2
         exit 1
@@ -46,7 +47,7 @@ KERNEL="${KERNELDIR_VER:-$(uname -r)}"
 KERNELDIR="${KERNELDIR:-/lib/modules/$KERNEL/build}"
 # 默认输出名按血统（codex P1：5.0.0-i1 不得沿用 innogpu 名）
 if [[ "$FANT_LINEAGE" == 1 ]]; then
-	[[ "$VERSION" == "5.0.0-i7" ]] || {
+	[[ "$VERSION" == "5.0.0-i8" ]] || {
 		echo "staging_ostage_generation=FAIL archived generation is not rebuildable from the current snapshot: $VERSION"
 		exit 1
 	}
@@ -55,7 +56,7 @@ else
     OUT_DEB="${OUT_DEB:-$STAGE_ROOT/innogpu-fh2m-trixie_$VERSION.deb}"
 fi
 [[ -d "$KERNELDIR" ]] || { echo "staging_kernel_headers=FAIL $KERNELDIR"; exit 1; }
-# R27 approves only i7 packaging, inheriting the exact frozen i6 source.
+# R27 i8 derives one reviewed line from the exact frozen i6 source below.
 # Lock the meta itself: matching a replacement snapshot to replacement metadata
 # is not sufficient to establish the approved source identity.
 if [[ "$FANT_LINEAGE" == 1 ]]; then
@@ -108,6 +109,31 @@ reject_patch_artifacts() {
         echo "builder_patch_artifacts=FAIL scope=$scope path=${artifact#"$tree"/}" >&2
         exit 1
     }
+}
+
+# Same transformation for compile staging and packaged DKMS source. The parent
+# trace stays historical; the final derivative has its own exact whole-tree gate.
+derive_fantgpu_config_order() {
+    python3 - "$ROOT" "$1" <<'PY'
+import hashlib, importlib.util, pathlib, sys
+repo, tree = map(pathlib.Path, sys.argv[1:])
+spec = importlib.util.spec_from_file_location("o4", repo / "tools/o4-f0-lock-gen.py")
+o4 = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(o4)
+def digest():
+    return hashlib.sha256(o4.manifest_text(list(o4.walk_rows(str(tree)))).encode()).hexdigest()
+if digest() != "5f6a5347c7e217ba3f7c5b71fdcad520148e0bc71231ab95fb023655865d11da":
+    sys.exit("builder_derived_source=FAIL parent tree drift")
+path = tree / "cfg_detect.sh"
+before = path.read_bytes()
+if hashlib.sha256(before).hexdigest() != "fb44433928f749cc973de19673327aaae701e93298d5eba31012b674936bb18d":
+    sys.exit("builder_derived_source=FAIL cfg_detect identity")
+path.write_bytes(before + b'LC_ALL=C sort -o "$CFG_FILE_DIR/$CFG_FILE" "$CFG_FILE_DIR/$CFG_FILE"\n')
+derived = digest()
+if derived != "2c1c45c5d4efc606e5c32452e6e02e2d4e1a41d22c5ce59ead8eb42198c130ac":
+    sys.exit("builder_derived_source=FAIL derived tree drift")
+print("builder_derived_source=PASS version=5.0.0-i8 tree=" + derived)
+PY
 }
 
 APPLIED_SOURCE_FIXES="patch-024"
@@ -181,7 +207,9 @@ PY
     mv "$STAGE/source/o-stage" "$STAGE/source.tree"
     rm -rf "$STAGE/source"
     mv "$STAGE/source.tree" "$STAGE/source"
+    derive_fantgpu_config_order "$STAGE/source"
 	APPLIED_SOURCE_FIXES="o-stage-materialized-030-chain-18 (incl. 030-030 audio fallback, 030-031 PM markers, 030-032 PM probe, 030-033 shipped-object ABI correction and 030-034 diagnostic stop-stage; patch-000 no-transform)"
+    APPLIED_SOURCE_FIXES+=" i8-cfg-detect-output-order"
     echo "staging_deterministic_transform=PASS (no-transform: fantgpu objects used as-is)"
 else
     cp -r drivers/. "$STAGE/source/"
@@ -276,6 +304,8 @@ if [[ "$FANT_LINEAGE" == 1 ]]; then
         || { echo "builder_materialize_trace=FAIL"; exit 1; }
     trace_rows="$(wc -l < "$STAGE/materialize-trace.tsv")"
     echo "builder_materialize_trace=PASS trace_entries=$trace_rows"
+    echo "builder_materialize_trace_scope=i6-parent-before-i8-derivation"
+    derive_fantgpu_config_order "$P/usr/src/$DKMS_SRC_NAME"
 else
     while IFS= read -r vp; do
         case "$vp" in
@@ -373,7 +403,6 @@ if [[ "$FANT_LINEAGE" == 1 ]]; then
     PKG_DESC="Innosilicon Fantasy II-M driver (fantgpu lineage $VERSION, O_stage materialized tree)"
     DKMS_MOD="fantgpu-fh2m-kernel"
     DKMS_VER="2.2"
-    KERNEL_MOD="fantgpu"
     PKG_CONFLICTS="innogpu-fh2m, innogpu-fh2m-kernel-dkms, innogpu-kernel-dkms, innogpu-fh2m-trixie"
 	DESC_BODY=$(printf ' fantgpu lineage: O_stage materialized source tree (030 chain of 18,\n patch-000 no-transform), coherent fantgpu (F) userspace payload (binary-manifest-fantgpu.json locked; build-time DDX/UCM/wayland selection).')
 else
@@ -381,7 +410,6 @@ else
     PKG_DESC="Innosilicon Fantasy II-M driver (migrated source tree, version $VERSION)"
     DKMS_MOD="innogpu-kernel"
     DKMS_VER="2.2"
-    KERNEL_MOD="innogpu"
     PKG_CONFLICTS="innogpu-fh2m, innogpu-fh2m-kernel-dkms, innogpu-kernel-dkms"
     DESC_BODY=$(printf ' New-architecture build: drivers/ source tree + manifest-managed black-box\n payload, with the reviewed %s suspend/resume fixes.' "$APPLIED_SOURCE_FIXES")
 fi
