@@ -2,7 +2,7 @@
 # tests/unit/run-builder-fantgpu-gates-tests.sh — builder F 分支早期门禁与静态契约单测
 #
 # 依据 docs/design/c3-a-4-reproducible-input-plan.md §三（改造点 9-13）与
-# §四（postinst/md5sums/trace）：R27 候选 5.0.0-i8、血统判定 5.0.0-i*、
+# §四（postinst/md5sums/trace）：R27 候选 5.0.0-i9、血统判定 5.0.0-i*、
 # 输入预检分支、PKG_DESC $VERSION 参数化、share/命令前缀血统参数化、
 # ld.so.conf fantgpu-fh2m、postinst fh2m_dri.so + 设备门。
 # 只测可运行早期门禁与静态契约（不编译内核：KERNELDIR 注入不存在路径使
@@ -43,8 +43,8 @@ else
     bad t01 "rc=$RC"
 fi
 
-# t02 i8 仅通过版本/epoch门，未通过源身份门，更不代表实际构建通过。
-run_builder VERSION=5.0.0-i8 SOURCE_DATE_EPOCH=1790121600
+# t02 i9 仅通过版本/epoch门，未通过源身份门，更不代表实际构建通过。
+run_builder VERSION=5.0.0-i9 SOURCE_DATE_EPOCH=1790121600
 if [ "$RC" -eq 1 ] && grep -Fq "staging_kernel_headers=FAIL" "$TMP/b.out"; then
     ok t02
 else
@@ -60,7 +60,7 @@ else
 fi
 
 # t04 epoch 错误 → builder_repro=FAIL
-run_builder VERSION=5.0.0-i8 SOURCE_DATE_EPOCH=1111111111
+run_builder VERSION=5.0.0-i9 SOURCE_DATE_EPOCH=1111111111
 if [ "$RC" -eq 1 ] && grep -Fq "builder_repro=FAIL" "$TMP/b.out"; then
     ok t04
 else
@@ -153,7 +153,7 @@ else
     bad t14 "gate call not restored or skip line remains"
 fi
 
-# t15 i8 用户授权仅cfg_detect派生；父树trace与派生整树门分别标明，
+# t15 i9 用户授权cfg_detect顺序与fbdev兼容派生；父树trace与派生整树门分别标明，
 # 不把i6原trace当作修改后证明。下面的实际派生回归补充本静态契约。
 if grep -Fq 'APPLIED_SOURCE_FIXES="o-stage-materialized-030-chain-18' "$BUILDER" \
    && ! grep -Fq 'apply_fantgpu_runtime_fixes' "$BUILDER" \
@@ -199,7 +199,7 @@ fi
 if grep -Fq 'builder_shipped_abi=PASS size=140536 members=115' "$BUILDER" \
    && grep -Fq '"pvr_resume_count": 140528' "$ROOT/tools/check-fantgpu-shipped-abi.py" \
    && grep -Fq 'python3 "$ROOT/tools/check-fantgpu-shipped-abi.py"' "$BUILDER" \
-   && grep -Fq 'pahole -C dev_rsrc fantgpu.ko' "$BUILDER"; then
+   && grep -Fq -- '--module fantgpu.ko' "$BUILDER"; then
     ok t18
 else
     bad t18 "compiled dev_rsrc ABI gate missing"
@@ -212,10 +212,11 @@ else
     bad t19_archived_i5 "rc=$RC"
 fi
 
-for version in 5.0.0-i{1..7}; do
+for version in 5.0.0-i{1..8}; do
     epoch=1788796800
     [[ "$version" != 5.0.0-i5 && "$version" != 5.0.0-i6 ]] || epoch=1789516800
     [[ "$version" != 5.0.0-i7 ]] || epoch=1790035200
+    [[ "$version" != 5.0.0-i8 ]] || epoch=1790121600
     run_builder VERSION="$version" SOURCE_DATE_EPOCH="$epoch"
     if [[ "$RC" == 1 ]] && ! [[ -d "$TMP/stage" ]]; then
         ok "archived-$version"
@@ -223,7 +224,7 @@ for version in 5.0.0-i{1..7}; do
         bad "archived-$version" "rc=$RC or staging was written"
     fi
 done
-run_builder VERSION=5.0.0-i8 SOURCE_DATE_EPOCH=
+run_builder VERSION=5.0.0-i9 SOURCE_DATE_EPOCH=
 if [[ "$RC" == 1 ]] && grep -Fq builder_repro=FAIL "$TMP/b.out"; then
     ok empty-epoch
 else
@@ -233,7 +234,7 @@ fi
 mkdir -p "$TMP/root/headers" "$TMP/root/docs/planning/evidence/o-stage/5.0.0-i6"
 printf '%s\n' '{}' > "$TMP/root/docs/planning/evidence/o-stage/5.0.0-i6/5.0.0-i6.meta.json"
 set +e
-INNOGPU_ROOT="$TMP/root" VERSION=5.0.0-i8 SOURCE_DATE_EPOCH=1790121600 \
+INNOGPU_ROOT="$TMP/root" VERSION=5.0.0-i9 SOURCE_DATE_EPOCH=1790121600 \
     KERNELDIR="$TMP/root/headers" STAGE_ROOT="$TMP/stage" \
     bash "$BUILDER" > "$TMP/b.out" 2> "$TMP/b.err"
 RC=$?
@@ -248,20 +249,24 @@ if python3 - "$BUILDER" "$ROOT" "$PATCH_TREE/o-stage" "$TMP" <<'PY'
 import hashlib, os, pathlib, subprocess, sys
 builder, repo, tree, tmp = map(pathlib.Path, sys.argv[1:])
 text = builder.read_text()
-func = text[text.index("derive_fantgpu_config_order() {"):text.index("\nAPPLIED_SOURCE_FIXES=")]
-before = (tree / "cfg_detect.sh").read_bytes()
+func = text[text.index("derive_fantgpu_source() {"):text.index("\nAPPLIED_SOURCE_FIXES=")]
+names = ["cfg_detect.sh", "test_item.sh", "fantsrvkm/fantdpu_drm_fb.c"]
+originals = {name: (tree / name).read_bytes() for name in names}
+before = originals["cfg_detect.sh"]
 env = dict(os.environ, ROOT=str(repo))
 def derive():
-    return subprocess.run(["bash", "-ec", func + '\nderive_fantgpu_config_order "$1"', "fixture", str(tree)], env=env, capture_output=True, text=True)
+    return subprocess.run(["bash", "-ec", func + '\nderive_fantgpu_source "$1"', "fixture", str(tree)], env=env, capture_output=True, text=True)
 p = derive()
 assert p.returncode == 0, p.stderr
 after = (tree / "cfg_detect.sh").read_bytes()
 line = after[len(before):]
 assert line == b'LC_ALL=C sort -o "$CFG_FILE_DIR/$CFG_FILE" "$CFG_FILE_DIR/$CFG_FILE"\n'
 assert hashlib.sha256(after).hexdigest() == "f096890ea5662301f6eb805c2a5554aa9d027aebd1b2b8c28d31f84ae7c431ca"
+fb_source = (tree / "fantsrvkm/fantdpu_drm_fb.c").read_text()
 # Reject second application and unrelated parent drift before mutation.
 assert derive().returncode != 0
-(tree / "cfg_detect.sh").write_bytes(before)
+for name, data in originals.items():
+    (tree / name).write_bytes(data)
 (tree / "unexpected").write_text("drift\n")
 assert derive().returncode != 0 and (tree / "cfg_detect.sh").read_bytes() == before
 header = tmp / "header.h"
@@ -274,7 +279,44 @@ header.unlink()
 header.mkdir()  # output cannot be replaced; original directory survives.
 p = subprocess.run(["bash", "-c", line.decode()], env=env, capture_output=True)
 assert p.returncode != 0 and header.is_dir()
-print("derived_exact_tree_and_sort_contract=PASS")
+# Execute the production helper/caller fragment, not a copied implementation.
+alloc = fb_source[fb_source.index("static struct fb_info *fant_fbdev_helper_alloc("):fb_source.index("static inline void\nfant_fbdev_helper_fill_info")]
+start = fb_source.index("\tinfo = fant_fbdev_helper_alloc(helper);")
+call = fb_source[start:fb_source.index("\n\tfant_drm_info", start)]
+harness = r'''#include <assert.h>
+#include <errno.h>
+#include <stdint.h>
+#include <stddef.h>
+#define KERNEL_VERSION(a,b,c) (((a)<<16)+((b)<<8)+(c))
+#define DRM_VERSION KERNEL_VERSION(6,12,0)
+#define ERR_PTR(x) ((void *)(intptr_t)(x))
+#define PTR_ERR(x) ((intptr_t)(x))
+#define IS_ERR_OR_NULL(x) (!(x) || (uintptr_t)(x) >= (uintptr_t)-4095)
+struct fb_info {int dummy;};
+struct drm_fb_helper {struct fb_info *info;};
+static int calls;
+#ifdef FANTGPU_DRM_FB_HELPER_ALLOC_INFO_PRESENT
+static struct fb_info *drm_fb_helper_alloc_info(struct drm_fb_helper *h) {calls++; return h->info;}
+#endif
+''' + alloc + "\nstatic int probe(struct drm_fb_helper *helper) {struct fb_info *info; int err;\n" + call + "\nreturn 0; err_unlock_dev: return err; }\n" + r'''
+int main(void) {
+ struct fb_info info; struct drm_fb_helper helper = {&info};
+ assert(probe(&helper) == 0);
+ helper.info = ERR_PTR(-EIO); assert(probe(&helper) == -EIO);
+ helper.info = NULL; assert(probe(&helper) == -ENOMEM);
+#ifdef FANTGPU_DRM_FB_HELPER_ALLOC_INFO_PRESENT
+ assert(calls == 3);
+#else
+ assert(calls == 0);
+#endif
+}
+'''
+source = tmp / "fb-helper.c"; source.write_text(harness)
+for defines in [[], ["-DFANTGPU_DRM_FB_HELPER_ALLOC_INFO_PRESENT"]]:
+    exe = tmp / "fb-helper"
+    subprocess.run(["cc", "-Wall", "-Werror", *defines, str(source), "-o", str(exe)], check=True)
+    subprocess.run([str(exe)], check=True)
+print("derived_exact_tree_sort_and_fb_ownership_contract=PASS")
 PY
 then
     ok derived-source-and-sort-contract

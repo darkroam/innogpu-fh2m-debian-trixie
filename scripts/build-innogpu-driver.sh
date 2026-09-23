@@ -21,7 +21,7 @@ case "$VERSION" in
 	5.0.0-i3) EXPECTED_SOURCE_DATE_EPOCH=1788796800 ;;  # R5 阶段 D 诊断候选
 	5.0.0-i5|5.0.0-i6) EXPECTED_SOURCE_DATE_EPOCH=1789516800 ;;  # i6 diagnostic epoch matches i5
     5.0.0-i7) EXPECTED_SOURCE_DATE_EPOCH=1790035200 ;;  # R27 packaging candidate; i6 source remains frozen
-    5.0.0-i8) EXPECTED_SOURCE_DATE_EPOCH=1790121600 ;;  # Authorized cfg_detect output-order derivative
+    5.0.0-i8|5.0.0-i9) EXPECTED_SOURCE_DATE_EPOCH=1790121600 ;;  # i9: authorized 107 compatibility derivative
     *)
         echo "builder_version_review=FAIL unreviewed package version: $VERSION" >&2
         exit 1
@@ -47,7 +47,7 @@ KERNEL="${KERNELDIR_VER:-$(uname -r)}"
 KERNELDIR="${KERNELDIR:-/lib/modules/$KERNEL/build}"
 # 默认输出名按血统（codex P1：5.0.0-i1 不得沿用 innogpu 名）
 if [[ "$FANT_LINEAGE" == 1 ]]; then
-	[[ "$VERSION" == "5.0.0-i8" ]] || {
+	[[ "$VERSION" == "5.0.0-i9" ]] || {
 		echo "staging_ostage_generation=FAIL archived generation is not rebuildable from the current snapshot: $VERSION"
 		exit 1
 	}
@@ -56,7 +56,7 @@ else
     OUT_DEB="${OUT_DEB:-$STAGE_ROOT/innogpu-fh2m-trixie_$VERSION.deb}"
 fi
 [[ -d "$KERNELDIR" ]] || { echo "staging_kernel_headers=FAIL $KERNELDIR"; exit 1; }
-# R27 i8 derives one reviewed line from the exact frozen i6 source below.
+# R28 i9 keeps i8 config ordering and derives the 107 fbdev compatibility fix.
 # Lock the meta itself: matching a replacement snapshot to replacement metadata
 # is not sufficient to establish the approved source identity.
 if [[ "$FANT_LINEAGE" == 1 ]]; then
@@ -113,7 +113,7 @@ reject_patch_artifacts() {
 
 # Same transformation for compile staging and packaged DKMS source. The parent
 # trace stays historical; the final derivative has its own exact whole-tree gate.
-derive_fantgpu_config_order() {
+derive_fantgpu_source() {
     python3 - "$ROOT" "$1" <<'PY'
 import hashlib, importlib.util, pathlib, sys
 repo, tree = map(pathlib.Path, sys.argv[1:])
@@ -129,10 +129,25 @@ before = path.read_bytes()
 if hashlib.sha256(before).hexdigest() != "fb44433928f749cc973de19673327aaae701e93298d5eba31012b674936bb18d":
     sys.exit("builder_derived_source=FAIL cfg_detect identity")
 path.write_bytes(before + b'LC_ALL=C sort -o "$CFG_FILE_DIR/$CFG_FILE" "$CFG_FILE_DIR/$CFG_FILE"\n')
+# Feature detection handles stable-tree backports without guessing versions.
+path = tree / "test_item.sh"
+path.write_text(path.read_text() + '\nTEST_ITEM:{\n    CODE="#include <drm/drm_fb_helper.h>\n    void fant_testconf_fb_helper_alloc_info(struct drm_fb_helper *helper) {\n        drm_fb_helper_alloc_info(helper);\n    }"\n    DEFINE="FANTGPU_DRM_FB_HELPER_ALLOC_INFO_PRESENT"\n    VAL=""\n    TYPE="success_define"\n    DEBUG="false"\n}\n')
+path = tree / "fantsrvkm/fantdpu_drm_fb.c"
+text = path.read_text()
+old = "\treturn drm_fb_helper_alloc_info(helper);"
+new = '#ifdef FANTGPU_DRM_FB_HELPER_ALLOC_INFO_PRESENT\n\treturn drm_fb_helper_alloc_info(helper);\n#else\n\t/* New DRM allocates this before fb_probe and frees it in helper_fini. */\n\treturn helper->info;\n#endif'
+assert text.count(old) == 1
+text = text.replace(old, new)
+old = "\tif (!info) {\n\t\terr = -ENOMEM;"
+assert text.count(old) == 1
+text = text.replace(old, "\tif (IS_ERR_OR_NULL(info)) {\n\t\terr = info ? PTR_ERR(info) : -ENOMEM;")
+text = text.replace("info->flags = FBINFO_DEFAULT | FBINFO_HWACCEL_DISABLED;",
+                    "info->flags |= FBINFO_DEFAULT | FBINFO_HWACCEL_DISABLED;")
+path.write_text(text)
 derived = digest()
-if derived != "2c1c45c5d4efc606e5c32452e6e02e2d4e1a41d22c5ce59ead8eb42198c130ac":
+if derived != "e4d043bff8ed79b92b52512aad8f8e05ac51113bef2dd4cb4505dd96c510ccb7":
     sys.exit("builder_derived_source=FAIL derived tree drift")
-print("builder_derived_source=PASS version=5.0.0-i8 tree=" + derived)
+print("builder_derived_source=PASS version=5.0.0-i9 tree=" + derived)
 PY
 }
 
@@ -207,9 +222,9 @@ PY
     mv "$STAGE/source/o-stage" "$STAGE/source.tree"
     rm -rf "$STAGE/source"
     mv "$STAGE/source.tree" "$STAGE/source"
-    derive_fantgpu_config_order "$STAGE/source"
+    derive_fantgpu_source "$STAGE/source"
 	APPLIED_SOURCE_FIXES="o-stage-materialized-030-chain-18 (incl. 030-030 audio fallback, 030-031 PM markers, 030-032 PM probe, 030-033 shipped-object ABI correction and 030-034 diagnostic stop-stage; patch-000 no-transform)"
-    APPLIED_SOURCE_FIXES+=" i8-cfg-detect-output-order"
+    APPLIED_SOURCE_FIXES+=" i8-cfg-detect-output-order i9-drm-fb-info-ownership"
     echo "staging_deterministic_transform=PASS (no-transform: fantgpu objects used as-is)"
 else
     cp -r drivers/. "$STAGE/source/"
@@ -247,9 +262,7 @@ fi
 echo "staging_module_vermagic=PASS ($VERMAGIC)"
 if [[ "$FANT_LINEAGE" == 1 ]]; then
     command -v pahole >/dev/null || { echo "builder_shipped_abi=FAIL pahole missing"; exit 1; }
-    pahole -C dev_rsrc fantgpu.ko > "$STAGE/dev_rsrc.pahole" || {
-        echo "builder_shipped_abi=FAIL dev_rsrc BTF missing"; exit 1; }
-    python3 "$ROOT/tools/check-fantgpu-shipped-abi.py" "$STAGE/dev_rsrc.pahole" || {
+    python3 "$ROOT/tools/check-fantgpu-shipped-abi.py" --module fantgpu.ko "$STAGE/dev_rsrc.pahole" || {
         echo "builder_shipped_abi=FAIL dev_rsrc layout differs from i3"; exit 1;
     }
     echo "builder_shipped_abi=PASS size=140536 members=115"
@@ -305,7 +318,7 @@ if [[ "$FANT_LINEAGE" == 1 ]]; then
     trace_rows="$(wc -l < "$STAGE/materialize-trace.tsv")"
     echo "builder_materialize_trace=PASS trace_entries=$trace_rows"
     echo "builder_materialize_trace_scope=i6-parent-before-i8-derivation"
-    derive_fantgpu_config_order "$P/usr/src/$DKMS_SRC_NAME"
+    derive_fantgpu_source "$P/usr/src/$DKMS_SRC_NAME"
 else
     while IFS= read -r vp; do
         case "$vp" in

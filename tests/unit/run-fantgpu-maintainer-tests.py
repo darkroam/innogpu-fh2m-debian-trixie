@@ -422,6 +422,23 @@ def main():
         raise AssertionError("ABI drift accepted")
     cases.append("ABI-complete-ambiguous-and-every-fixed-offset")
     print("PASS " + cases[-1])
+    # Reader returns zero only after the complete DWARF scan and strict layout check.
+    output = work / "reader.pahole"
+    for rc, content, valid in [(0, layout, True), (23, layout, False),
+                               (0, layout + layout, False), (0, "", False),
+                               (0, layout.replace("140536", "140544"), False)]:
+        result = subprocess.CompletedProcess([], rc, content, "fixture stderr")
+        with patch.object(abi.subprocess, "run", return_value=result) as reader:
+            try:
+                abi.read_module(Path("fixture.ko"), output)
+            except (ValueError, subprocess.CalledProcessError):
+                assert not valid
+            else:
+                assert valid and output.read_text() == layout
+            assert reader.call_args.args[0][1:5] == ["-F", "dwarf", "-y", "dev_rsrc"]
+        assert output.with_suffix(".all.pahole").read_text() == content
+    cases.append("ABI-reader-full-scan-rc-and-layout")
+    print("PASS " + cases[-1])
     import fantgpu_native as native
     package = work / "package-links"
     put(package, "usr/share/helper", "fixture\n")
@@ -542,9 +559,9 @@ def main():
     records = (root / "evidence/forbidden.log").read_text().splitlines()
     assert len(records) == len(native.DENIED)
     subprocess.run(["bash", "-n"], input=native.STRIP, text=True, check=True)
-    assert native.K == ["6.12.101+deb13-amd64"]
+    assert native.K == native.HOST_K
     assert native.HOST_K == sorted(set(native.HOST_K)) and len(native.HOST_K) == 8
-    assert set(native.K) < set(native.HOST_K)
+    assert set(native.K) == set(native.HOST_K)
     cases.append("native-denied-commands-and-strip-syntax")
     root = work / "native-ignored-strip-status"
     args = make_root(root)
@@ -553,7 +570,7 @@ def main():
     ko = f"/lib/modules/{KERNELS[0]}/updates/fantgpu.ko"
     put(root, ko.lstrip("/"), "fixture module\n")
     put(root, "fixture/strip", native.STRIP)
-    put(root, "usr/bin/pahole", "#!/bin/bash\nexit 23\n").chmod(0o755)
+    put(root, "usr/bin/python3", "#!/bin/bash\nexit 23\n").chmod(0o755)
     ledger = []
     start = time.monotonic()
     with patch.object(native, "mounts", return_value=args):

@@ -20,13 +20,13 @@ ROOT = Path(__file__).resolve().parents[2]
 HOST_K = sorted(["6.12.101+deb13-amd64", "6.12.101-r5dpm1", "6.12.101-r5dpm2",
             "6.12.107+deb13-amd64", "6.12.63+deb13-amd64", "6.12.90+deb13.1-amd64",
             "6.12.95+deb13-amd64", "6.12.96+deb13-amd64"])
-K = ["6.12.101+deb13-amd64"]  # Approved current-kernel window; host inventory is unchanged.
+K = HOST_K.copy()  # User: repair 107 first; production full-kernel set retained.
 EPOCH = "1790121600"
 BATCH = "20260922-offline-01"
 BATCH_WORK = Path.home() / "tmp" / f"r5-phase2-f-i7-{BATCH}"
-WORK = BATCH_WORK / "attempt-08-i8-101"
+WORK = BATCH_WORK / "attempt-09-i9-all-k"
 N0_TEST_WORK = BATCH_WORK / "revision-n0-test-20260923-02"
-EVIDENCE = ROOT / f".build/r26-f-i7-{BATCH}" / "attempt-08-i8-101"
+EVIDENCE = ROOT / f".build/r26-f-i7-{BATCH}" / "attempt-09-i9-all-k"
 SOURCE = "usr/src/fantgpu-fh2m-kernel-2.2"
 META = "docs/planning/evidence/o-stage/5.0.0-i6"
 META_SHA = "a14250711f4b367cce0aed345da6e89c9921761b1b65aa3d87c5d67769d91321"
@@ -55,10 +55,10 @@ TOOL_COMMANDS = """bash sh awk cc c++ gcc make ld ar as nm objcopy objdump reade
     mkdir mktemp cp mv rm ln install chmod touch du nproc uname dirname basename tee""".split()
 BUILD_SCRIPT = '''#!/bin/bash
 set -euo pipefail
-export VERSION=5.0.0-i8 SOURCE_DATE_EPOCH=1790121600
+export VERSION=5.0.0-i9 SOURCE_DATE_EPOCH=1790121600
 export KERNELDIR_VER=6.12.101+deb13-amd64
 export KERNELDIR=/lib/modules/$KERNELDIR_VER/build
-export STAGE_ROOT=/candidate BUILD_LOG=/evidence/builder.log OUT_DEB=/candidate/i8.deb
+export STAGE_ROOT=/candidate BUILD_LOG=/evidence/builder.log OUT_DEB=/candidate/i9.deb
 bash /repo/scripts/build-innogpu-driver.sh
 '''
 DENIED = "modprobe insmod rmmod systemctl service reboot shutdown halt poweroff update-grub grub-install update-secureboot-policy".split()
@@ -81,8 +81,7 @@ dest=/evidence/abi/$k
 mkdir -p "$dest"
 [[ ! -e $dest/unstripped.ko ]] || { echo repeated-strip >&2; exit 98; }
 cp -- "$2" "$dest/unstripped.ko"
-pahole -C dev_rsrc "$dest/unstripped.ko" > "$dest/dev_rsrc.pahole"
-python3 /repo/tools/check-fantgpu-shipped-abi.py "$dest/dev_rsrc.pahole" > "$dest/check.txt"
+python3 /repo/tools/check-fantgpu-shipped-abi.py --module "$dest/unstripped.ko" "$dest/dev_rsrc.pahole" > "$dest/check.txt"
 build=$(dirname "$2")
 cp "$build/fantgpu/kernel_autocfg.h" "$dest/kernel_autocfg.h"
 cp "$build/fantgpu.mod" "$dest/fantgpu.mod"
@@ -217,7 +216,7 @@ def inputs():
         paths += [Path(f"/lib/modules/{k}/kernel")]
         paths += sorted(Path(f"/lib/modules/{k}").glob("modules.*"))
     return {"head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
-            "kernels": K, "host_kernels": sorted(actual), "version": "5.0.0-i8", "epoch": EPOCH,
+            "kernels": K, "host_kernels": sorted(actual), "version": "5.0.0-i9", "epoch": EPOCH,
             "cpus": sorted(os.sched_getaffinity(0))[:8],
             "headers": list(map(str, headers)), "pseudo_devices": pseudo_devices(), "files": identity(paths)}
 
@@ -402,7 +401,7 @@ def build_test(work):
         write(root, "fixture/build.sh", BUILD_SCRIPT)
         command(root, lock, ["bash", "/fixture/build.sh"], ledger, deadline)
         assert inputs() == lock, "build-test input drift"
-        write(work, "candidate.json", json.dumps({"purpose": "regression", "deb_sha256": sha(root / "candidate/i8.deb")}, indent=2) + "\n")
+        write(work, "candidate.json", json.dumps({"purpose": "regression", "deb_sha256": sha(root / "candidate/i9.deb")}, indent=2) + "\n")
         success = True
     finally:
         write(work, "result.json", json.dumps({"purpose": "regression", "start": start,
@@ -588,7 +587,7 @@ def run(work, manifest, reviewed_sha):
                 signing += ["--ro-bind", str(common / "var/lib/dkms" / name), "/var/lib/dkms/" + name]
             write(root, "fixture/build.sh", BUILD_SCRIPT)
             command(root, lock, ["bash", "/fixture/build.sh"], ledger, deadline)
-            command(root, lock, ["dpkg-deb", "-R", "/candidate/i8.deb", "/package"], ledger, deadline)
+            command(root, lock, ["dpkg-deb", "-R", "/candidate/i9.deb", "/package"], ledger, deadline)
             # Never follow extracted symlinks while copying into the private root.
             # The package boundary gate already ran; also reject root escapes here.
             copy_package(root / "package", root)
@@ -629,7 +628,7 @@ dkms add -m innogpu-kernel -v 2.2
             assert not re.search(r"failed to sign|won't be signed|unsigned module", log, re.I), "signature warning"
             out = evidence / side
             out.mkdir()
-            shutil.copyfile(root / "candidate/i8.deb", out / "i8.deb")
+            shutil.copyfile(root / "candidate/i9.deb", out / "i9.deb")
             for k in K:
                 for module in ["fantgpu", "innogpu"]:
                     sentinel = root / f"usr/lib/modules/{k}/kernel/kylin/{module}"
@@ -663,7 +662,7 @@ sha256sum "$ko" "$found"
                     assert sentinel.with_suffix(".ko").read_bytes() == b"R27 rename-only sentinel: " + module.encode() + b"\n"
                     assert not sentinel.with_suffix(".bak").exists()
             shutil.copytree(root / "evidence", out / "evidence")
-        subprocess.run(["cmp", str(evidence / "A/i8.deb"), str(evidence / "B/i8.deb")], check=True)
+        subprocess.run(["cmp", str(evidence / "A/i9.deb"), str(evidence / "B/i9.deb")], check=True)
         different_initrds = []
         for k in K:
             for name in ["installed-module", "unstripped.ko", "kernel_autocfg.h", "fantgpu.mod", "fantgpu.mod.c", "dependency-files.sha256", "dependency-files.tar"]:
@@ -676,15 +675,15 @@ sha256sum "$ko" "$found"
         write(evidence, "comparison.json", json.dumps({"deb_cmp": 0, "module_cmp": 0,
               "initramfs_differences_require_review": different_initrds}, indent=2) + "\n")
         write(evidence, "candidate-provenance.json", json.dumps({
-            "candidate_version": "5.0.0-i8", "source_date_epoch": EPOCH,
+            "candidate_version": "5.0.0-i9", "source_date_epoch": EPOCH,
             "source_materialization_version": "5.0.0-i6", "source_meta_sha256": META_SHA,
             "snapshot_sha256": sha(ROOT / META / "o-stage-snapshot.tar.zst"),
             "o_stage_tree_hash": "5f6a5347c7e217ba3f7c5b71fdcad520148e0bc71231ab95fb023655865d11da",
-            "derived_tree_hash": "2c1c45c5d4efc606e5c32452e6e02e2d4e1a41d22c5ce59ead8eb42198c130ac",
+            "derived_tree_hash": "e4d043bff8ed79b92b52512aad8f8e05ac51113bef2dd4cb4505dd96c510ccb7",
             "cfg_detect_sha256": "f096890ea5662301f6eb805c2a5554aa9d027aebd1b2b8c28d31f84ae7c431ca",
             "reviewed_inputs_sha256": reviewed_sha, "input_commit": lock["head"], "kernels": K,
             "certificate_sha256": sha(evidence / "test-certificate.der"),
-            "deb_sha256": {s: sha(evidence / s / "i8.deb") for s in ["A", "B"]},
+            "deb_sha256": {s: sha(evidence / s / "i9.deb") for s in ["A", "B"]},
             "old_prerm_blob": BASE + ":scripts/build-innogpu-driver.sh",
             "predecessor_F": f"{len(OLD_MODULES)} locked i6 modules, real isolated DKMS installed state",
             "predecessor_O": "added registration only; not installed O-module removal",

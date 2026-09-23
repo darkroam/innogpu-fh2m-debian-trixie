@@ -8,8 +8,8 @@
 
 R27 补充入口：`tests/unit/run-fantgpu-maintainer-tests.py` 默认跑生产生成器的 synthetic 故障回归，
 含两处 DKMS 配置例外、旧 prerm/O 保留、共享 ABI 文本门；真实模式由 `fantgpu_native.py` 接入，
-当前获准 K=`[6.12.101+deb13-amd64]`；首行/回执明示，宿主八核清单独立锁定，不改变生产目标枚举。
-`--native-preflight` 当前在全新 attempt-08-i8-101 根一次完成隔离/输入/签署/sign-file/初始 initrd 与解包验证，
+R28 用户裁定先修复107，当前获准 K=现场完整8核；首行/回执明示，不改变生产目标枚举。
+`--native-preflight` 当前在全新 attempt-09-i9-all-k 根一次完成隔离/输入/签署/sign-file/初始 initrd 与解包验证，
 成功才落完整回执；`--native-run` 校验回执与实物后才进入 N1，共享同份准备产物，N0 起算 6h。
 正式窗口未执行时不得以合成成绩标原生通过；不加入自动 CI。旧失败现场原位保留，不混入新根。
 临时根保留全部失败现场，测试证书不构成宿主信任；R28 仍须独立审查，R5 冻结不变。
@@ -37,7 +37,7 @@ attempt-06-101 的整 deb 相等不覆盖模块 srcversion/build-id 不同；同
 用户随后批准i8派生（epoch=1790121600）：只追加cfg_detect排序，编译/包内源经同一整树门。
 builder回归实际调用生产函数，验证唯一差异、输入漂移/重入拒绝、重复宏保留/排序失败传播；
 原生strip前保留生成头、模块清单及依赖原件，完整模块与证据A/B对比，原i6与旧窗口不改。
-07因采集进程替换依赖/dev/fd停批；改用普通清单文件，新增共用采集代码无/dev/fd真实回归，当前97项。
+07因采集进程替换依赖/dev/fd停批；改用普通清单文件，新增共用采集代码无/dev/fd真实回归，当时97项。
 
 ### 当前入口盘点（2026-09-21，只读静态核对）
 
@@ -272,3 +272,5 @@ Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
 
 `tests/README.md`、`scripts/check-docs.sh`、`docs/investigations/capability-survey.md`、
 `docs/archive/phase4-device-validation.md`。
+
+R28 i9兼容修订：用户批准先修107。DRM接口按编译探针区分，核心预分配与旧分配路径共享错误检查；派生源码锁独立，原文不改。builder30项含实际派生C片段两分支；maintainer98项含ABI完整DWARF扫描的严格rc与布局反例。ABI仅精确识别既有shipped原布局，禁止忽略pahole错误。正式全K A/B核对deb/模块/initrd，旧失败记录保持。
