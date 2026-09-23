@@ -5,10 +5,15 @@
 
 ## R5 悬案与 fantgpu 5.0.0 主线（当前最高优先级）
 
+- [ ] **当前内核 F/Deepin 能力对齐**（2026-09-23 用户调整优先级）：以
+  `6.12.101+deb13-amd64` 上 Deepin `4.0.2-i3` 已交付能力为对照，先补齐 F 的功能与稳定性
+  差距，核心是 R5 挂起/恢复。Deepin 的 6/6 deep、显示恢复及 PVR 错误判据是对齐目标，
+  不能用 F 构建成功、首启健康或包验收代替。依据见
+  [当前基线](../project/status.md#当前基线)、[Deepin 验收边界](../patches/029-suspend-resume-ddcci-panel.md#当前状态)。
 - [ ] **R5 挂起根因定位**：fantgpu 绑定下 `pm_test=devices` 硬挂；两轮诊断内核（r5dpm1/r5dpm2）
-  复核判定 `OUTSIDE_COVERAGE`，根因未定位。冻结：禁止重跑任何 pm_test/watchdog；下一方向待用户
-  选择（停批冻结 / 本地扩展轮——dpm_prepare 前置段 instrumentation 或 O-vs-F 继续反编译 / 带外
-  通道）。证据链：
+  复核判定 `OUTSIDE_COVERAGE`，根因未定位。冻结：禁止重跑任何 pm_test/watchdog；接续已有
+  pre-DPM 等待图和 O/F 静态增量，优先核对与 Deepin 成功路径的差异及可区分证据，不重复已收档
+  的 wrapper 等价分析或盲加 timer。新的运行调查仍须明确调整相应冻结与观测条件。证据链：
   [r5 调查计划](../design/r5-suspend-investigation-plan.md)、
   [步骤 8 结果](../planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-result.txt)。
 - [ ] **发布阻断（fantgpu 5.0.0-iN 线）**：① `postinst_current_kernel_only=release_blocker`（postinst
@@ -16,6 +21,12 @@
   ④ R5=FAIL 未解除。许可发布边界（1C/BLOCKED）不变。
 - [ ] 诊断内核处置：r5dpm1/r5dpm2 包保留待 dsh 决定是否卸载；GRUB 已恢复原配置（默认解析
   6.12.107+deb13，既有行为；改默认须另立变更）。
+
+**后置事项（同次用户裁定）**：107 兼容修复暂缓，归跨基线、后续各版本的共同适配事项，
+不作为当前 F/Deepin 能力对齐的前置。完整多内核包验收与发布收尾同样后置；R27 八核离线窗口
+的 `FAILED_OR_UNVERIFIED` 原记录保留，不通过删除107或缩小历史矩阵改写为通过。
+当前核的后续证据须单独标明范围；不改变宿主内核清单、默认启动项或生产 postinst 的目标集合。
+冻结不变：OUTSIDE_COVERAGE、R5=FAIL、禁止重跑、U1/U2、validation-results、未打 tag。
 
 **闭合说明（R21 叙事批量提升，非待办）**：R20 的 D2 已由 `841c07a` 闭合，D4 已由 `6370fa2` 闭合；
 见 [D2 记录](../history/history.md#2026-09-21-r20-d2-叙事提升试点闭合)与

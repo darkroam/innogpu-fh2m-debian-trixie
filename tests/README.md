@@ -22,17 +22,26 @@ ABI 文本反例；网络 namespace 必须可用，不编译、不安装宿主�
 拒绝显式配置缺失、验证显式配置下 DER 证书的 subject/SKI/codeSigning。
 仅绑定 OpenSSL 与普通动态库、复制普通 openssl.cnf；独立夹具内生成一次性 key，finally 删除，
 不读取或留存私钥、不挂载宿主 SSL 目录。这是配置回归，不代表 N0 全部依赖闭包或新窗口通过。
-R27 N0 修订使用原批号下全新 `~/tmp/r5-phase2-f-i7-20260922-offline-01/attempt-02/`，
-持久证据为 `.build/r26-f-i7-20260922-offline-01/attempt-02/`；旧失败根及清单原位保留，不迁移覆盖。
-`--native-preflight --work-dir <attempt-02>/preflight` 必须先审实现再放行执行；一次完成输入/容量/隔离、
+R27 最近窗口使用原批号下全新 `~/tmp/r5-phase2-f-i7-20260922-offline-01/attempt-04/`，
+持久证据为 `.build/r26-f-i7-20260922-offline-01/attempt-04/`；旧失败根及清单原位保留，不迁移覆盖。
+`--native-preflight --work-dir <attempt-04>/preflight` 按批次放行与规约 §四执行；一次完成输入/容量/隔离、
 真实签署（含八核 sign-file 工具夹具）、初始四核 initrd 生成和解包内容验证，最后才落完整 n0.json。
-`--native-run` 使用 attempt-02 根，先校验同一回执/输入/证书/initrd，再进入 N1；缺项、混批、过期、
+`--native-run` 使用 attempt-04 根，先校验同一回执/输入/证书/initrd，再进入 N1；缺项、混批、过期、
 旧根或 symlink 均拒绝。A/B 共用 N0 的 key 与初始 initrd，不在 N1 后重复生成；N0 起算总时间盒 6h。
 systemd/systemd-udevd/network 与 /etc/ld.so.conf* 精确入身份清单，复制普通文件和链接，未挂载宿主整目录。
 `tests/unit/fantgpu_native.py` 为同入口真实工具辅助文件，非通用安装器。
 `--native-run --manifest <inputs.json> --reviewed-sha256 <全值>` 只在实现过审与正式窗口放行后使用；
 固定 R27 批号、单窗口 6h、每侧八核、最多 8 CPU，缺条件非零，不降级网络隔离。
 证据保存 strip 前 ABI、签署后模块与 initrd 字节；synthetic PASS 不代表原生 PASS。
+解包链接允许包内相对路径（包括生产 helper 的 `../share/`），严格解析后仍须在包内；
+绝对路径、越界、断链、循环均拒绝；合并包时核对目标仍在私有根，再替换已有文件链接，
+保留 lib→usr/lib 目录布局。默认回归覆盖这些分支及同名链接覆盖。
+真实 DKMS 会忽略 strip 返回码；ABI 包装器失败另写哨兵并挂起自身，保持 DKMS 等待，
+外层执行器每 0.2 秒检查并终止本批进程组，正常执行结束时再次拒绝哨兵。
+回归实际运行忽略 strip 失败的隔离调用者，失败调用紧接下一行即写后继标记，无延时掩盖竞争；
+验证 pahole 非零即停止、后继标记未执行；不能仅凭 postinst 的逐核 PASS 宣称 ABI 通过。
+attempt-04 已失败并封存：107 核编译暴露冻结源码的 DRM API 不兼容，两个诊断核的 pahole
+亦非零。收尾失败门修订仅通过隔离回归，未重新跑正式 A/B；已有根拒绝复用，不能视为候选验收通过。
 临时容量预留 30 GiB、持久 10 GiB，不足须先解决；不自动扩容/清理，失败保留私有根。
 真实模式不入自动 CI，不是 R28 宿主安装授权，不能据此重跑 PM。
 `--native-n0-test --work-dir ~/tmp/r5-phase2-f-i7-20260922-offline-01/revision-n0-test-20260923-02/preflight`

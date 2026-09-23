@@ -423,6 +423,45 @@ def main():
     cases.append("ABI-complete-ambiguous-and-every-fixed-offset")
     print("PASS " + cases[-1])
     import fantgpu_native as native
+    package = work / "package-links"
+    put(package, "usr/share/helper", "fixture\n")
+    (package / "usr/bin").mkdir()
+    link = package / "usr/bin/helper"
+    link.symlink_to("../share/helper")
+    native.check_package_links(package)
+    outside = put(work, "outside-package", "must not be accepted\n")
+    for target in [str(outside), "../../../outside-package", "missing", "helper"]:
+        link.unlink()
+        link.symlink_to(target)
+        try:
+            native.check_package_links(package)
+        except (AssertionError, OSError, RuntimeError):
+            pass
+        else:
+            raise AssertionError("unsafe package link accepted: " + target)
+    cases.append("native-package-relative-links-and-escape-rejection")
+    link.unlink()
+    link.symlink_to("../share/helper")
+    target_root = work / "package-destination"
+    put(target_root, "usr/share/helper", "old content\n")
+    (target_root / "usr/bin").mkdir()
+    (target_root / "usr/bin/helper").symlink_to("../share/helper")
+    (target_root / "usr/lib").mkdir()
+    (target_root / "lib").symlink_to("usr/lib")
+    put(package, "lib/firmware/test", "firmware fixture\n")
+    native.copy_package(package, target_root)
+    assert (target_root / "usr/bin/helper").read_text() == "fixture\n"
+    assert (target_root / "usr/lib/firmware/test").read_text() == "firmware fixture\n"
+    assert (target_root / "lib").is_symlink()
+    (target_root / "lib").unlink()
+    (target_root / "lib").symlink_to(work)
+    try:
+        native.copy_package(package, target_root)
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError("escaped package destination accepted")
+    cases.append("native-package-replaces-links-and-preserves-usrmerge")
     root = work / "tool-chain"
     binary = put(root, "bin/real-tool", "#!/bin/sh\nexit 0\n")
     binary.chmod(0o755)
@@ -505,6 +544,29 @@ def main():
     subprocess.run(["bash", "-n"], input=native.STRIP, text=True, check=True)
     assert native.K == sorted(set(native.K)) and len(native.K) == 8
     cases.append("native-denied-commands-and-strip-syntax")
+    root = work / "native-ignored-strip-status"
+    args = make_root(root)
+    (root / "evidence").mkdir()
+    put(root, "fixture/kernels", KERNELS[0] + "\n")
+    ko = f"/lib/modules/{KERNELS[0]}/updates/fantgpu.ko"
+    put(root, ko.lstrip("/"), "fixture module\n")
+    put(root, "fixture/strip", native.STRIP)
+    put(root, "usr/bin/pahole", "#!/bin/bash\nexit 23\n").chmod(0o755)
+    ledger = []
+    start = time.monotonic()
+    with patch.object(native, "mounts", return_value=args):
+        try:
+            native.command(root, {}, ["/bin/bash", "-c",
+                f"export PATH=/usr/bin; /bin/bash /fixture/strip -g {ko} || true; "
+                "touch /evidence/continued"], ledger, start + 10)
+        except AssertionError:
+            pass
+        else:
+            raise AssertionError("ignored strip failure was accepted")
+    assert (root / "evidence/abi-failed").read_text().strip() == "strip_prepare_rc=23"
+    assert ledger[-1]["abort"] == "abi-failed" and ledger[-1]["rc"] != 0
+    assert time.monotonic() - start < 5 and not (root / "evidence/continued").exists()
+    cases.append("native-abi-failure-stops-ignoring-caller")
     print("PASS " + cases[-1])
     root = work / "n0-receipt"
     common = root / "preflight/common"

@@ -23,9 +23,9 @@ K = sorted(["6.12.101+deb13-amd64", "6.12.101-r5dpm1", "6.12.101-r5dpm2",
 EPOCH = "1790035200"
 BATCH = "20260922-offline-01"
 BATCH_WORK = Path.home() / "tmp" / f"r5-phase2-f-i7-{BATCH}"
-WORK = BATCH_WORK / "attempt-02"
+WORK = BATCH_WORK / "attempt-04"
 N0_TEST_WORK = BATCH_WORK / "revision-n0-test-20260923-02"
-EVIDENCE = ROOT / f".build/r26-f-i7-{BATCH}" / "attempt-02"
+EVIDENCE = ROOT / f".build/r26-f-i7-{BATCH}" / "attempt-04"
 SOURCE = "usr/src/fantgpu-fh2m-kernel-2.2"
 META = "docs/planning/evidence/o-stage/5.0.0-i6"
 META_SHA = "a14250711f4b367cce0aed345da6e89c9921761b1b65aa3d87c5d67769d91321"
@@ -71,6 +71,8 @@ SIGNING_REQUEST = ["openssl", "req", "-config", "/etc/ssl/openssl.cnf", "-new", 
                    "-outform", "DER", "-out", "/var/lib/dkms/mok.pub"]
 STRIP = '''#!/bin/bash
 set -euo pipefail
+# Keep DKMS waiting until the external monitor stops the isolated command.
+trap 'rc=$?; if (( rc != 0 )); then printf "strip_prepare_rc=%s\\n" "$rc" > /evidence/abi-failed; kill -STOP "$$"; fi' EXIT
 [[ $# == 2 && $1 == -g && $2 == *.ko ]] || { echo strip-argv-UNKNOWN >&2; exit 98; }
 k=$(modinfo -F vermagic "$2"); k=${k%% *}
 grep -Fxq "$k" /fixture/kernels || exit 98
@@ -300,17 +302,29 @@ def command(root, lock, argv, ledger, deadline, extra=()):
     with log.open("wb") as stream:
         p = subprocess.Popen(mounts(root, lock) + list(extra) + ["--"] + argv,
                              stdout=stream, stderr=subprocess.STDOUT, start_new_session=True)
-        try:
-            rc = p.wait(timeout=remaining)
-        except subprocess.TimeoutExpired:
-            os.killpg(p.pid, signal.SIGKILL)
-            p.wait()
-            rc = 124
+        abort = None
+        while True:
+            # DKMS ignores strip's status. Enforce the ABI gate independently.
+            failure = next((name for name in ["abi-failed", "forbidden.log"]
+                            if (root / "evidence" / name).exists()), None)
+            remaining = deadline - time.monotonic()
+            if failure or remaining <= 0:
+                abort = failure or "6h window expired"
+                if p.poll() is None:
+                    os.killpg(p.pid, signal.SIGKILL)
+                rc = p.wait()
+                break
+            try:
+                rc = p.wait(timeout=min(0.2, remaining))
+                break
+            except subprocess.TimeoutExpired:
+                pass
     row = {"argv": argv, "start": start, "end": datetime.now(timezone.utc).isoformat(),
-           "rc": rc, "log": str(log.relative_to(root)), "sha256": sha(log)}
+           "rc": rc, "abort": abort, "log": str(log.relative_to(root)), "sha256": sha(log)}
     ledger.append(row)
     write(root, "evidence/commands.json", json.dumps(ledger, indent=2) + "\n")
-    assert rc == 0, row
+    assert rc == 0 and abort is None, row
+    assert not (root / "evidence/abi-failed").exists(), "strip/ABI gate failed"
     assert not (root / "evidence/forbidden.log").exists(), "forbidden command invoked"
     return log.read_text(errors="replace")
 
@@ -490,6 +504,27 @@ def verified_n0(work, manifest, reviewed_sha):
     return state
 
 
+def check_package_links(package):
+    for link in package.rglob("*"):
+        if link.is_symlink():
+            assert not Path(os.readlink(link)).is_absolute(), "absolute package link"
+            assert link.resolve(strict=True).is_relative_to(package), "package link escapes root"
+
+
+def copy_package(package, root):
+    check_package_links(package)
+    for item in package.rglob("*"):
+        dest = root / item.relative_to(package)
+        assert dest.parent.resolve().is_relative_to(root), "package destination escapes root"
+        if item.is_dir() and not item.is_symlink():
+            assert dest.resolve().is_relative_to(root), "package directory escapes root"
+        elif dest.is_symlink():
+            # copytree merges directories but cannot replace existing links.
+            dest.unlink()
+    shutil.copytree(package, root, dirs_exist_ok=True, symlinks=True)
+    root.chmod(0o700)
+
+
 def run(work, manifest, reviewed_sha):
     n0 = verified_n0(work, manifest, reviewed_sha)
     lock = json.loads(manifest.read_text())
@@ -535,11 +570,7 @@ def run(work, manifest, reviewed_sha):
             command(root, lock, ["dpkg-deb", "-R", "/candidate/i7.deb", "/package"], ledger, deadline)
             # Never follow extracted symlinks while copying into the private root.
             # The package boundary gate already ran; also reject root escapes here.
-            for link in (root / "package").rglob("*"):
-                if link.is_symlink():
-                    target = os.readlink(link)
-                    assert not Path(target).is_absolute() and ".." not in Path(target).parts, "package link needs review"
-            shutil.copytree(root / "package", root, dirs_exist_ok=True, symlinks=True)
+            copy_package(root / "package", root)
             for name in DENIED:
                 for prefix in ["usr/bin/", "usr/sbin/"]:
                     assert (root / (prefix + name)).read_text() == GUARD
