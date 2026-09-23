@@ -21,7 +21,10 @@ K = sorted(["6.12.101+deb13-amd64", "6.12.101-r5dpm1", "6.12.101-r5dpm2",
             "6.12.95+deb13-amd64", "6.12.96+deb13-amd64"])
 EPOCH = "1790035200"
 BATCH = "20260922-offline-01"
-WORK = Path.home() / "tmp" / f"r5-phase2-f-i7-{BATCH}"
+BATCH_WORK = Path.home() / "tmp" / f"r5-phase2-f-i7-{BATCH}"
+WORK = BATCH_WORK / "attempt-02"
+N0_TEST_WORK = BATCH_WORK / "revision-n0-test-20260923-02"
+EVIDENCE = ROOT / f".build/r26-f-i7-{BATCH}" / "attempt-02"
 SOURCE = "usr/src/fantgpu-fh2m-kernel-2.2"
 META = "docs/planning/evidence/o-stage/5.0.0-i6"
 META_SHA = "a14250711f4b367cce0aed345da6e89c9921761b1b65aa3d87c5d67769d91321"
@@ -38,6 +41,9 @@ TOOL_INPUTS = ["/usr/bin", "/usr/sbin", "/usr/lib64", "/usr/include",
                "/usr/lib/dpkg", "/usr/share/initramfs-tools", "/usr/share/dpkg",
                "/usr/share/perl5", "/usr/share/perl", "/usr/share/gcc", "/usr/share/misc"]
 TOOL_INPUTS += sorted(map(str, Path("/usr/lib").glob("klibc-*.so")))
+# Copy these exact ordinary dependencies, never the host systemd or /etc tree.
+N0_INPUTS = ["/usr/lib/systemd/systemd", "/usr/lib/systemd/systemd-udevd",
+             "/usr/lib/systemd/network", "/etc/ld.so.conf", "/etc/ld.so.conf.d"]
 DENIED = "modprobe insmod rmmod systemctl service reboot shutdown halt poweroff update-grub grub-install update-secureboot-policy".split()
 GUARD = '''#!/bin/sh
 echo "FORBIDDEN: $0 $*" >> /evidence/forbidden.log
@@ -117,6 +123,14 @@ def inputs():
     assert sorted(actual) == K and current == K[0], "K/current kernel drift"
     paths = [ROOT / p for p in REPO_INPUTS]
     paths += [Path(p) for p in TOOL_INPUTS if Path(p).exists()]
+    assert sorted(map(str, Path("/etc").glob("ld.so.conf*"))) == sorted(N0_INPUTS[-2:]), "ld.so input set changed"
+    for name in N0_INPUTS:
+        path = Path(name)
+        assert path.exists(), f"required N0 dependency missing: {name}"
+        if path.is_symlink():
+            assert name == "/usr/lib/systemd/systemd-udevd" and path.resolve() == Path("/usr/bin/udevadm"), "N0 link target UNKNOWN"
+        paths.append(path)
+    paths.append(Path("/usr/lib/systemd/systemd-udevd").resolve())
     headers = sorted(Path("/usr/src").glob("linux-headers-*")) + sorted(Path("/usr/src").glob("linux-kbuild-*"))
     headers = sorted(set(headers + [p.resolve() for p in headers]))
     paths += headers
@@ -146,16 +160,17 @@ def inputs():
 
 def setup(root, kernel_inputs=False):
     root.mkdir(mode=0o700)
-    for name in ["boot", "sys", "dev", "proc", "tmp", "run", "evidence", "fixture",
+    for name in ["boot", "sys", "dev", "proc", "tmp", "run", "evidence", "fixture", "n0-unpacked", "unpacked",
                  "etc/dkms/framework.conf.d", "etc/initramfs-tools/hooks", "etc/initramfs-tools/scripts",
                  "etc/initramfs-tools/conf.d", "etc/modprobe.d", "usr/bin", "usr/sbin", "usr/src",
                  "usr/lib/modules", "usr/lib/firmware", "var/lib/dkms", "var/lib/dpkg", "var/lib/initramfs-tools"]:
         (root / name).mkdir(parents=True, exist_ok=True)
     for name, target in {"bin": "usr/bin", "sbin": "usr/sbin", "lib": "usr/lib", "lib64": "usr/lib64"}.items():
         (root / name).symlink_to(target)
-    for path in TOOL_INPUTS:
+    for path in [*TOOL_INPUTS, *N0_INPUTS]:
         host = Path(path)
         if not host.exists():
+            assert path not in N0_INPUTS, f"required N0 dependency missing: {path}"
             continue
         dest = root / path.lstrip("/")
         if host.is_dir():
@@ -209,8 +224,8 @@ def mounts(root, lock):
             "--unshare-ipc", "--unshare-uts", "--unshare-net", "--die-with-parent",
             "--new-session", "--clearenv", "--cap-drop", "ALL", "--bind", str(root), "/", "--proc", "/proc", "--chdir", "/repo"]
 
-    for path in TOOL_INPUTS:
-        if Path(path).exists():
+    for path in [*TOOL_INPUTS, "/usr/lib/systemd", "/etc/ld.so.conf", "/etc/ld.so.conf.d"]:
+        if (root / path.lstrip("/")).exists():
             args.extend(["--ro-bind", str(root / path.lstrip("/")), path])
     for path in lock["headers"]:
         args.extend(["--ro-bind", path, path])
@@ -250,17 +265,25 @@ def command(root, lock, argv, ledger, deadline, extra=()):
     return log.read_text(errors="replace")
 
 
-def preflight(work):
+def claim_preflight(work, test_only=False):
+    expected = N0_TEST_WORK if test_only else WORK
+    assert work == expected / "preflight" and work.resolve() == work, "unapproved/redirected N0 path"
+    assert not expected.exists() and not expected.is_symlink(), "N0 attempt already exists; no retry/resume"
+    assert EVIDENCE.resolve() == EVIDENCE and not EVIDENCE.exists(), "formal evidence must be fresh"
+    expected.mkdir(mode=0o700)
     work.mkdir(mode=0o700)
-    lock = inputs()
-    path = write(work, "inputs.json", json.dumps(lock, indent=2) + "\n")
-    space = {"tmp_free": shutil.disk_usage(work).free, "repo_free": shutil.disk_usage(ROOT).free,
-             "tmp_required": 30 * 1024**3, "repo_required": 10 * 1024**3}
-    write(work, "capacity.json", json.dumps(space, indent=2) + "\n")
-    print(f"manifest={path} sha256={sha(path)} formal_window=NOT_RUN", flush=True)
-    assert space["tmp_free"] >= space["tmp_required"] and space["repo_free"] >= space["repo_required"], "CAPACITY=BLOCKED; native tool probe NOT_RUN"
-    root = work / "probe"
-    setup(root)
+
+
+def n0_artifacts(root):
+    names = ["var/lib/dkms/mok.pub", "evidence/commands.json"]
+    names += [f"boot/initrd.img-{k}" for k in K[::2]]
+    return {name: sha(root / name) for name in names}
+
+
+def prepare_n0(root, lock, deadline):
+    """One preparation shared by the formal preflight and its isolated regression."""
+    setup(root, True)
+    ledger = []
     text = (ROOT / "scripts/generate-fantgpu-maintainer-scripts.sh").read_text()
     guard = text[text.index("dkms_policy_guard() {"):text.index("\nidentity=$(source_digest")]
     write(root, "fixture/probe.sh", "#!/bin/bash\nset -euo pipefail\n" + guard + '''
@@ -277,28 +300,113 @@ gcc --version
 modinfo --version
 pahole --version
 python3 --version
-printf 'native_preflight=PASS builds=0 installs=0\\n'
+test -x /usr/lib/systemd/systemd
+test -x /usr/lib/systemd/systemd-udevd
+test -d /usr/lib/systemd/network
+test -f /etc/ld.so.conf
+test -d /etc/ld.so.conf.d
+printf 'isolation_probe=PASS driver_builds=0 installs=0\\n'
 ''')
-    command(root, lock, ["bash", "/fixture/probe.sh"], [], time.monotonic() + 120)
-    assert inputs() == lock, "input drift during preflight"
-    print("native_preflight=PASS")
+    command(root, lock, ["bash", "/fixture/probe.sh"], ledger, deadline)
+    command(root, lock, SIGNING_REQUEST, ledger, deadline)
+    key = root / "var/lib/dkms/mok.key"
+    assert not key.is_symlink() and key.is_file() and key.stat().st_mode & 0o777 == 0o600
+    cert = command(root, lock, ["openssl", "x509", "-inform", "DER", "-in", "/var/lib/dkms/mok.pub",
+                   "-noout", "-subject", "-ext", "subjectKeyIdentifier,extendedKeyUsage"], ledger, deadline)
+    assert "CN=R27 offline test only" in cert.replace(" = ", "=") and "Code Signing" in cert
+    key_id = re.search(r"([0-9A-F]{2}:){19}[0-9A-F]{2}", cert).group(0).lower()
+    # Check each sign-file call without compiling or installing a driver.
+    for k in K:
+        command(root, lock, ["bash", "-ec", f'''
+hash=$(sed -n 's/^CONFIG_MODULE_SIG_HASH="\\(.*\\)"/\\1/p' /boot/config-{k})
+test -n "$hash"
+printf 'N0 sign-file tool fixture\\n' > /tmp/sign-{k}
+/lib/modules/{k}/build/scripts/sign-file "$hash" /var/lib/dkms/mok.key /var/lib/dkms/mok.pub /tmp/sign-{k}
+test "$(stat -c %s /tmp/sign-{k})" -gt 26
+rm /tmp/sign-{k}
+'''], ledger, deadline)
+    # Fixed initial update/create split, reused unchanged by both A and B.
+    for k in K[::2]:
+        command(root, lock, ["update-initramfs", "-c", "-k", k], ledger, deadline)
+        command(root, lock, ["bash", "-ec", f'''
+unmkinitramfs /boot/initrd.img-{k} /n0-unpacked/{k}
+tool=$(find /n0-unpacked/{k} -type f -path '*/usr/bin/udevadm')
+test "$(printf '%s\\n' "$tool" | wc -l)" = 1
+cmp /usr/bin/udevadm "$tool"
+conf=$(find /n0-unpacked/{k} -type f -path '*/etc/ld.so.conf')
+test "$(printf '%s\\n' "$conf" | wc -l)" = 1
+cmp /etc/ld.so.conf "$conf"
+test -z "$(find /n0-unpacked/{k} -name 'fantgpu.ko*')"
+'''], ledger, deadline)
+    return key_id
+
+
+def preflight(work, test_only=False):
+    claim_preflight(work, test_only)
+    start = datetime.now(timezone.utc).isoformat()
+    deadline_unix = time.time() + 6 * 3600
+    deadline = time.monotonic() + 6 * 3600
+    success = False
+    root = work / "common"
+    try:
+        lock = inputs()
+        path = write(work, "inputs.json", json.dumps(lock, indent=2) + "\n")
+        space = {"tmp_free": shutil.disk_usage(work).free, "repo_free": shutil.disk_usage(ROOT).free,
+                 "tmp_required": 30 * 1024**3, "repo_required": 10 * 1024**3}
+        write(work, "capacity.json", json.dumps(space, indent=2) + "\n")
+        same_disk = work.stat().st_dev == ROOT.stat().st_dev
+        assert space["tmp_free"] >= space["tmp_required"] + (space["repo_required"] if same_disk else 0), "N0 capacity BLOCKED"
+        assert space["repo_free"] >= space["repo_required"], "N0 evidence capacity BLOCKED"
+        key_id = prepare_n0(root, lock, deadline)
+        assert inputs() == lock, "input drift during N0"
+        assert time.monotonic() < deadline, "6h N0+N1-N5 window expired"
+        write(work, "n0.json", json.dumps({"status": "PASS", "purpose": "regression" if test_only else "formal",
+              "start": start, "deadline_unix": deadline_unix, "input_sha256": sha(path),
+              "key_id": key_id, "artifacts": n0_artifacts(root)}, indent=2) + "\n")
+        success = True
+    finally:
+        if test_only:
+            (root / "var/lib/dkms/mok.key").unlink(missing_ok=True)
+        write(work, "result.json", json.dumps({"N0": "PASS" if success else "FAILED_OR_UNVERIFIED",
+              "purpose": "regression" if test_only else "formal", "start": start,
+              "end": datetime.now(timezone.utc).isoformat(), "N1_N5": "NOT_RUN"}, indent=2) + "\n")
+    print(f"native_n0=PASS purpose={'regression' if test_only else 'formal'} N1_N5=NOT_RUN")
+
+
+def verified_n0(work, manifest, reviewed_sha):
+    assert work == WORK and work.resolve() == work, "unapproved/redirected batch path"
+    assert sorted(p.name for p in work.iterdir()) == ["preflight"], "fresh attempt must contain only N0"
+    assert manifest == work / "preflight/inputs.json" and sha(manifest) == reviewed_sha, "N0 manifest mismatch"
+    state = json.loads((work / "preflight/n0.json").read_text())
+    assert state["status"] == "PASS" and state["purpose"] == "formal", "complete formal N0 required"
+    assert state["input_sha256"] == reviewed_sha, "N0 input identity mismatch"
+    assert state["deadline_unix"] > time.time(), "N0 window expired"
+    common = work / "preflight/common"
+    assert state["artifacts"] == n0_artifacts(common), "N0 artifacts drifted"
+    key = common / "var/lib/dkms/mok.key"
+    assert not key.is_symlink() and key.is_file() and key.stat().st_mode & 0o777 == 0o600, "N0 key absent/unsafe"
+    return state
 
 
 def run(work, manifest, reviewed_sha):
-    assert sha(manifest) == reviewed_sha, "reviewed input manifest hash mismatch"
+    n0 = verified_n0(work, manifest, reviewed_sha)
     lock = json.loads(manifest.read_text())
     assert inputs() == lock, "reviewed inputs drifted"
-    assert work == WORK and not work.is_symlink(), "unapproved batch path"
-    assert work.is_dir() and sorted(p.name for p in work.iterdir()) == ["preflight"], "formal root must contain only N0 preflight"
-    evidence = ROOT / f".build/r26-f-i7-{BATCH}"
+    evidence = EVIDENCE
     assert not evidence.exists() and not evidence.is_symlink(), "existing formal evidence"
-    assert not (ROOT / ".build").is_symlink(), "evidence parent redirect"
+    assert evidence.resolve() == evidence, "evidence parent redirect"
     assert shutil.disk_usage(work.parent).free >= 30 * 1024**3, "need 30 GiB temporary space"
     assert shutil.disk_usage(ROOT).free >= 10 * 1024**3, "need 10 GiB evidence space"
     evidence.mkdir(mode=0o700, parents=True)
     shutil.copyfile(manifest, evidence / "inputs.json")
-    deadline = time.monotonic() + 6 * 3600
-    start = datetime.now(timezone.utc).isoformat()
+    shutil.copyfile(work / "preflight/n0.json", evidence / "n0.json")
+    common = work / "preflight/common"
+    key_id = n0["key_id"]
+    shutil.copyfile(common / "var/lib/dkms/mok.pub", evidence / "test-certificate.der")
+    initial = {k: n0["artifacts"][f"boot/initrd.img-{k}"] for k in K[::2]}
+    write(evidence, "initial-initramfs.json", json.dumps(initial, indent=2) + "\n")
+    deadline = time.monotonic() + n0["deadline_unix"] - time.time()
+    start = n0["start"]
     success = False
     try:
         for label, argv in [
@@ -309,21 +417,6 @@ def run(work, manifest, reviewed_sha):
             with (evidence / (label + ".log")).open("wb") as stream:
                 subprocess.run(argv, cwd=ROOT, check=True, stdout=stream, stderr=subprocess.STDOUT,
                                timeout=max(1, deadline - time.monotonic()))
-        common = work / "common"
-        setup(common, True)
-        ledger = []
-        command(common, lock, SIGNING_REQUEST, ledger, deadline)
-        (common / "var/lib/dkms/mok.key").chmod(0o600)
-        cert = command(common, lock, ["openssl", "x509", "-inform", "DER", "-in", "/var/lib/dkms/mok.pub",
-                       "-noout", "-subject", "-ext", "subjectKeyIdentifier"], ledger, deadline)
-        key_id = re.search(r"([0-9A-F]{2}:){19}[0-9A-F]{2}", cert).group(0).lower()
-        shutil.copyfile(common / "var/lib/dkms/mok.pub", evidence / "test-certificate.der")
-        # Initial roots contain no driver output. Both sides independently copy
-        # these same ordinary inputs; the update/create split is fixed in advance.
-        for k in K[::2]:
-            command(common, lock, ["update-initramfs", "-c", "-k", k], ledger, deadline)
-        initial = {k: sha(common / f"boot/initrd.img-{k}") for k in K[::2]}
-        write(evidence, "initial-initramfs.json", json.dumps(initial, indent=2) + "\n")
         old = subprocess.check_output(["git", "show", BASE + ":scripts/build-innogpu-driver.sh"], cwd=ROOT, text=True)
         old = re.search(r'cat > "\$P/DEBIAN/prerm" <<\'PEOF\'\n(.*?)\nPEOF', old, re.S).group(1) + "\n"
         for side in ["A", "B"]:
@@ -460,9 +553,9 @@ sha256sum "$ko" "$found"
         success = True
     finally:
         # Preserve failures too; never copy mok.key or hash its contents.
-        for side in ["common", "A", "B"]:
-            if (work / side / "evidence").exists():
-                shutil.copytree(work / side / "evidence", evidence / f"{side}-logs", dirs_exist_ok=True)
+        for side, root in [("common", common), ("A", work / "A"), ("B", work / "B")]:
+            if (root / "evidence").exists():
+                shutil.copytree(root / "evidence", evidence / f"{side}-logs", dirs_exist_ok=True)
         write(evidence, "result.json", json.dumps({"start": start,
               "end": datetime.now(timezone.utc).isoformat(), "offline_result": "PASS" if success else "FAILED_OR_UNVERIFIED",
               "host_install": "NOT_RUN", "R5": "FAIL", "pm_test": "NOT_RUN"}, indent=2) + "\n")

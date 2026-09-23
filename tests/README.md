@@ -22,14 +22,24 @@ ABI 文本反例；网络 namespace 必须可用，不编译、不安装宿主�
 拒绝显式配置缺失、验证显式配置下 DER 证书的 subject/SKI/codeSigning。
 仅绑定 OpenSSL 与普通动态库、复制普通 openssl.cnf；独立夹具内生成一次性 key，finally 删除，
 不读取或留存私钥、不挂载宿主 SSL 目录。这是配置回归，不代表 N0 全部依赖闭包或新窗口通过。
-R27 容量裁定后，`--native-preflight` 使用 `~/tmp/r5-phase2-f-i7-20260922-offline-01/preflight/`，
-`--native-run` 使用该批号根（开跑前仅含 preflight，A/B/synthetic 必须全新），锁定普通输入/8 核/工具并检查隔离与容量；
+R27 N0 修订使用原批号下全新 `~/tmp/r5-phase2-f-i7-20260922-offline-01/attempt-02/`，
+持久证据为 `.build/r26-f-i7-20260922-offline-01/attempt-02/`；旧失败根及清单原位保留，不迁移覆盖。
+`--native-preflight --work-dir <attempt-02>/preflight` 必须先审实现再放行执行；一次完成输入/容量/隔离、
+真实签署（含八核 sign-file 工具夹具）、初始四核 initrd 生成和解包内容验证，最后才落完整 n0.json。
+`--native-run` 使用 attempt-02 根，先校验同一回执/输入/证书/initrd，再进入 N1；缺项、混批、过期、
+旧根或 symlink 均拒绝。A/B 共用 N0 的 key 与初始 initrd，不在 N1 后重复生成；N0 起算总时间盒 6h。
+systemd/systemd-udevd/network 与 /etc/ld.so.conf* 精确入身份清单，复制普通文件和链接，未挂载宿主整目录。
 `tests/unit/fantgpu_native.py` 为同入口真实工具辅助文件，非通用安装器。
 `--native-run --manifest <inputs.json> --reviewed-sha256 <全值>` 只在实现过审与正式窗口放行后使用；
 固定 R27 批号、单窗口 6h、每侧八核、最多 8 CPU，缺条件非零，不降级网络隔离。
 证据保存 strip 前 ABI、签署后模块与 initrd 字节；synthetic PASS 不代表原生 PASS。
 临时容量预留 30 GiB、持久 10 GiB，不足须先解决；不自动扩容/清理，失败保留私有根。
 真实模式不入自动 CI，不是 R28 宿主安装授权，不能据此重跑 PM。
+`--native-n0-test --work-dir ~/tmp/r5-phase2-f-i7-20260922-offline-01/revision-n0-test-20260923-02/preflight`
+是独立修订回归，复用同一个完整 N0 准备函数，不编译驱动、不进入 N1-N5；其 purpose=regression
+回执不能供正式 run 使用，测试私钥 finally 删除，日志/公开证书/初始 initrd 保留，不与正式根混用。
+默认快速回归另覆盖缺失/失败/测试用途/过期/输入漂移/产物漂移回执、旧根与符号链接拒绝、
+准备中途失败不得落 PASS。整组真实 N0 成绩须单列，不能用快速回归绿灯代替。
 
 Picom 用户配置安装器测试：
 

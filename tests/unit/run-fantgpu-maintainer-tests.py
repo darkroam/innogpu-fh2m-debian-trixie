@@ -6,11 +6,15 @@ network namespace is mandatory. Default mode never runs a compiler/installer.
 """
 import argparse
 import importlib.util
+import json
 import os
 from pathlib import Path
 import re
 import shutil
 import subprocess
+import time
+from types import SimpleNamespace
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 GENERATOR = ROOT / "scripts/generate-fantgpu-maintainer-scripts.sh"
@@ -172,20 +176,26 @@ def main():
     ap.add_argument("--work-dir", required=True, type=Path)
     mode = ap.add_mutually_exclusive_group()
     mode.add_argument("--native-preflight", action="store_true")
+    mode.add_argument("--native-n0-test", action="store_true")
     mode.add_argument("--native-run", action="store_true")
     ap.add_argument("--manifest", type=Path)
     ap.add_argument("--reviewed-sha256")
     opts = ap.parse_args()
-    work = opts.work_dir.resolve()
+    work = opts.work_dir.absolute()
+    if work.resolve() != work:
+        raise SystemExit("work-dir must not traverse symlinks or parent aliases")
     if not __debug__:
         raise SystemExit("assertions must be enabled; do not use python -O")
-    if opts.native_preflight or opts.native_run:
+    if opts.native_preflight or opts.native_n0_test or opts.native_run:
         import fantgpu_native
-        expected = fantgpu_native.WORK / "preflight" if opts.native_preflight else fantgpu_native.WORK
+        expected = (fantgpu_native.N0_TEST_WORK / "preflight" if opts.native_n0_test else
+                    fantgpu_native.WORK / "preflight" if opts.native_preflight else fantgpu_native.WORK)
         if work != expected or (opts.native_preflight and work.exists()):
             raise SystemExit("native work-dir must match the approved batch/preflight path")
-        if opts.native_preflight:
-            fantgpu_native.preflight(work)
+        if opts.native_preflight or opts.native_n0_test:
+            if opts.manifest or opts.reviewed_sha256:
+                raise SystemExit("review identity options require --native-run")
+            fantgpu_native.preflight(work, test_only=opts.native_n0_test)
         else:
             if not opts.manifest or not re.fullmatch(r"[0-9a-f]{64}", opts.reviewed_sha256 or ""):
                 raise SystemExit("native-run requires reviewed manifest and full SHA-256")
@@ -193,7 +203,8 @@ def main():
         return
     if opts.manifest or opts.reviewed_sha256:
         raise SystemExit("review identity options require --native-run")
-    approved_synthetic = Path.home() / "tmp" / "r5-phase2-f-i7-20260922-offline-01" / "synthetic"
+    from fantgpu_native import WORK
+    approved_synthetic = WORK / "synthetic"
     if (not str(work).startswith("/tmp/r5-phase2-") and work != approved_synthetic) or work.exists():
         raise SystemExit("work-dir must be fresh and inside an approved fixture location")
     work.mkdir()
@@ -419,6 +430,76 @@ def main():
     subprocess.run(["bash", "-n"], input=native.STRIP, text=True, check=True)
     assert native.K == sorted(set(native.K)) and len(native.K) == 8
     cases.append("native-denied-commands-and-strip-syntax")
+    print("PASS " + cases[-1])
+    root = work / "n0-receipt"
+    common = root / "preflight/common"
+    manifest = put(root, "preflight/inputs.json", "{}\n")
+    for name in ["var/lib/dkms/mok.pub", "evidence/commands.json", *[f"boot/initrd.img-{k}" for k in native.K[::2]]]:
+        put(common, name, "fixture artifact\n")
+    key = put(common, "var/lib/dkms/mok.key", "fixture placeholder, not a private key\n")
+    key.chmod(0o600)
+    good_state = {"status": "PASS", "purpose": "formal", "deadline_unix": time.time() + 600,
+                  "input_sha256": native.sha(manifest), "artifacts": native.n0_artifacts(common)}
+    receipt = put(root, "preflight/n0.json", json.dumps(good_state))
+    with patch.object(native, "WORK", root):
+        assert native.verified_n0(root, manifest, native.sha(manifest)) == good_state
+        for name, change in [("failed", {"status": "FAILED_OR_UNVERIFIED"}), ("test-only", {"purpose": "regression"}),
+                             ("expired", {"deadline_unix": 0}), ("input-mix", {"input_sha256": "0" * 64}),
+                             ("artifact-mix", {"artifacts": {}}), ("missing", None)]:
+            if change is None:
+                receipt.unlink()
+            else:
+                receipt.write_text(json.dumps({**good_state, **change}))
+            # A bad N0 must fail before input rehash or any N1 subprocess.
+            with patch.object(native, "inputs", side_effect=RuntimeError("N1 gate bypassed")):
+                try:
+                    native.run(root, manifest, native.sha(manifest))
+                except (AssertionError, FileNotFoundError):
+                    pass
+                else:
+                    raise AssertionError("invalid N0 accepted: " + name)
+            assert not (root / "A").exists() and not (root / "synthetic").exists()
+            cases.append("native-n0-reject-" + name)
+            print("PASS " + cases[-1])
+    key.unlink()
+    fresh = work / "fresh-attempt"
+    with patch.object(native, "WORK", fresh), patch.object(native, "EVIDENCE", work / "fresh-evidence"):
+        native.claim_preflight(fresh / "preflight")
+        for candidate in [fresh / "preflight", root / "preflight"]:
+            try:
+                native.claim_preflight(candidate)
+            except AssertionError:
+                pass
+            else:
+                raise AssertionError("old attempt reused")
+    alias = work / "alias"
+    alias.symlink_to(root, target_is_directory=True)
+    with patch.object(native, "WORK", alias):
+        try:
+            native.claim_preflight(alias / "preflight")
+        except AssertionError:
+            pass
+        else:
+            raise AssertionError("redirected attempt accepted")
+    cases.append("native-n0-fresh-old-and-symlink-roots")
+    print("PASS " + cases[-1])
+    failed = work / "n0-interrupted"
+    def interrupted_prepare(root, lock, deadline):
+        put(root, "evidence/partial.log", "injected initrd failure\n")
+        raise RuntimeError("injected initrd failure")
+    with patch.object(native, "WORK", failed), patch.object(native, "EVIDENCE", work / "unused-evidence"), \
+         patch.object(native, "inputs", return_value={}), \
+         patch.object(native.shutil, "disk_usage", return_value=SimpleNamespace(free=2**40)), \
+         patch.object(native, "prepare_n0", side_effect=interrupted_prepare):
+        try:
+            native.preflight(failed / "preflight")
+        except RuntimeError as error:
+            assert str(error) == "injected initrd failure"
+        else:
+            raise AssertionError("partial N0 accepted")
+    assert not (failed / "preflight/n0.json").exists()
+    assert json.loads((failed / "preflight/result.json").read_text())["N0"] == "FAILED_OR_UNVERIFIED"
+    cases.append("native-n0-partial-failure-never-green")
     print("PASS " + cases[-1])
     for variant in ["default-path-missing", "explicit-config-missing", "explicit-config"]:
         root = work / ("native-openssl-" + variant)
