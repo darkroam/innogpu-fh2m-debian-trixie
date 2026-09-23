@@ -40,6 +40,20 @@ systemd/systemd-udevd/network 与 /etc/ld.so.conf* 精确入身份清单，复�
 回执不能供正式 run 使用，测试私钥 finally 删除，日志/公开证书/初始 initrd 保留，不与正式根混用。
 默认快速回归另覆盖缺失/失败/测试用途/过期/输入漂移/产物漂移回执、旧根与符号链接拒绝、
 准备中途失败不得落 PASS。整组真实 N0 成绩须单列，不能用快速回归绿灯代替。
+R27 依赖修订：构建/生命周期所需命令逐项追踪完整符号链接链，精确锁定并复制所需
+`/etc/alternatives` 链接与已列工具目标，不复制宿主整个 alternatives 或 /etc；N0 增加
+工具路径与真实 awk/编译器入口检查。默认回归覆盖断链/循环/越界/目标漂移，以及真实 awk
+缺中间链接 rc=127 → 接线后 rc=0；无驱动编译。
+编译器内部工具 `/usr/libexec/gcc` 同样锁定/复制；工具门实际编译并运行最小 C/C++ 程序，
+验证 cc1/链接器调用链，不以 --version 成功代替可编译。
+原生根仅绑定经字符类型及设备号核对的 `/dev/null`(1:3)、`/dev/zero`(1:5) 软件伪设备；
+普通文件不能模拟丢弃/EOF语义，会使并行Kbuild探针误判。禁止其余字符/块设备，未绑定整个
+宿主/dev、GPU、磁盘、TTY或sysfs。默认synthetic仍用普通夹具，本项仅适用真实工具模式。
+`--native-build-test --work-dir ~/tmp/r5-phase2-f-i7-20260922-offline-01/revision-build-test-20260923-<id>`
+在全新隔离根调用同一生产 builder（基准核101，最多8 CPU），验证真实编译、ABI与包边界；
+不签署、不安装宿主，purpose=regression，不替代正式A/B八核验收。修订及必要隔离回归按
+[批内自主规则](../docs/project/multiagent-collab.md#四codex-主动性实现者权限与义务)集中完成与交付，
+失败现场保留，正式窗口不热修续跑。
 
 Picom 用户配置安装器测试：
 

@@ -177,6 +177,7 @@ def main():
     mode = ap.add_mutually_exclusive_group()
     mode.add_argument("--native-preflight", action="store_true")
     mode.add_argument("--native-n0-test", action="store_true")
+    mode.add_argument("--native-build-test", action="store_true")
     mode.add_argument("--native-run", action="store_true")
     ap.add_argument("--manifest", type=Path)
     ap.add_argument("--reviewed-sha256")
@@ -186,13 +187,18 @@ def main():
         raise SystemExit("work-dir must not traverse symlinks or parent aliases")
     if not __debug__:
         raise SystemExit("assertions must be enabled; do not use python -O")
-    if opts.native_preflight or opts.native_n0_test or opts.native_run:
+    if opts.native_preflight or opts.native_n0_test or opts.native_build_test or opts.native_run:
         import fantgpu_native
-        expected = (fantgpu_native.N0_TEST_WORK / "preflight" if opts.native_n0_test else
+        expected = (work if opts.native_build_test else
+                    fantgpu_native.N0_TEST_WORK / "preflight" if opts.native_n0_test else
                     fantgpu_native.WORK / "preflight" if opts.native_preflight else fantgpu_native.WORK)
         if work != expected or (opts.native_preflight and work.exists()):
             raise SystemExit("native work-dir must match the approved batch/preflight path")
-        if opts.native_preflight or opts.native_n0_test:
+        if opts.native_build_test:
+            if opts.manifest or opts.reviewed_sha256:
+                raise SystemExit("review identity options require --native-run")
+            fantgpu_native.build_test(work)
+        elif opts.native_preflight or opts.native_n0_test:
             if opts.manifest or opts.reviewed_sha256:
                 raise SystemExit("review identity options require --native-run")
             fantgpu_native.preflight(work, test_only=opts.native_n0_test)
@@ -417,6 +423,75 @@ def main():
     cases.append("ABI-complete-ambiguous-and-every-fixed-offset")
     print("PASS " + cases[-1])
     import fantgpu_native as native
+    root = work / "tool-chain"
+    binary = put(root, "bin/real-tool", "#!/bin/sh\nexit 0\n")
+    binary.chmod(0o755)
+    alias = root / "bin/tool"
+    middle = root / "bin/alternative"
+    alias.symlink_to("alternative")
+    middle.symlink_to("real-tool")
+    with patch.object(native, "TOOL_INPUTS", [str(root / "bin")]), \
+         patch.object(native, "TOOL_COMMANDS", ["tool"]), \
+         patch.object(native.shutil, "which", return_value=str(alias)):
+        assert native.tool_link_inputs() == sorted([alias, middle, binary])
+        before = native.identity(native.tool_link_inputs())
+        for target in ["missing", "tool", "/sys/forbidden", "../../outside"]:
+            middle.unlink()
+            middle.symlink_to(target)
+            try:
+                native.tool_link_inputs()
+            except AssertionError:
+                pass
+            else:
+                raise AssertionError("unsafe/broken tool chain accepted: " + target)
+        middle.unlink()
+        middle.symlink_to("real-tool")
+        binary.write_text("#!/bin/sh\nexit 1\n")
+        assert native.identity(native.tool_link_inputs()) != before
+    cases.append("native-tool-chain-lock-and-reject")
+    print("PASS " + cases[-1])
+    root = work / "real-awk-chain"
+    root.mkdir()
+    with patch.object(native, "TOOL_COMMANDS", ["awk"]):
+        chain = native.tool_link_inputs()
+    executable = Path("/usr/bin/awk").resolve(strict=True)
+    args = mounts(root, binaries=("/usr/bin/bash", str(executable)))
+    for link in chain:
+        if link.is_symlink() and not link.is_relative_to("/etc/alternatives"):
+            dest = root / link.relative_to("/")
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.symlink_to(os.readlink(link))
+    argv = args + ["--", "/usr/bin/bash", "-ec", "printf 'chain PASS\\n' | /usr/bin/awk '{print $2}'"]
+    negative = subprocess.run(argv, capture_output=True, text=True)
+    assert negative.returncode == 127, negative.stderr
+    for link in chain:
+        if link.is_relative_to("/etc/alternatives"):
+            dest = root / link.relative_to("/")
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(link, dest, follow_symlinks=False)
+    positive = subprocess.run(argv, capture_output=True, text=True)
+    assert positive.returncode == 0 and positive.stdout == "PASS\n", positive.stderr
+    put(root, "regression.log", "negative_rc=127\n" + negative.stderr + "positive_rc=0\n" + positive.stdout)
+    cases.append("native-real-awk-broken-and-repaired-chain")
+    print("PASS " + cases[-1])
+    devices = native.pseudo_devices()
+    assert devices == {"/dev/null": [1, 3], "/dev/zero": [1, 5]}
+    for mode, rdev in [(native.stat.S_IFREG, 0), (native.stat.S_IFCHR, os.makedev(8, 0))]:
+        with patch.object(Path, "lstat", return_value=SimpleNamespace(st_mode=mode, st_rdev=rdev)):
+            try:
+                native.pseudo_devices()
+            except AssertionError:
+                pass
+            else:
+                raise AssertionError("unsafe device identity accepted")
+    for name in devices:
+        put(root, name.lstrip("/"), "")
+        args += ["--dev-bind", name, name]
+    subprocess.run(args + ["--", "/usr/bin/bash", "-ec",
+                   "test -c /dev/null && test -c /dev/zero; printf discarded > /dev/null; "
+                   "test -z \"$(read -r -n 1 byte < /dev/null; printf '%s' \"$byte\")\""], check=True)
+    cases.append("native-software-devices-identity-and-null-eof")
+    print("PASS " + cases[-1])
     root = work / "native-guard"
     args = make_root(root)
     (root / "evidence").mkdir()

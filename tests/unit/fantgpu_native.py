@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 import shutil
 import signal
+import stat
 import subprocess
 import time
 
@@ -35,7 +36,7 @@ REPO_INPUTS = ["scripts", "tools", "drivers", "binary-manifest-fantgpu.json",
                "vendor/fantgpu", META, "tests/unit"]
 # Explicit ordinary tool closure; no /usr/local, host source, modules or keys.
 TOOL_INPUTS = ["/usr/bin", "/usr/sbin", "/usr/lib64", "/usr/include",
-               "/usr/lib/x86_64-linux-gnu", "/usr/lib/gcc", "/usr/lib/bfd-plugins",
+               "/usr/lib/x86_64-linux-gnu", "/usr/lib/gcc", "/usr/libexec/gcc", "/usr/lib/bfd-plugins",
                "/usr/lib/python3.13", "/usr/lib/python3", "/usr/lib/dkms", "/usr/lib/dracut",
                "/usr/lib/udev", "/usr/lib/klibc", "/usr/lib/modprobe.d", "/usr/lib/depmod.d",
                "/usr/lib/dpkg", "/usr/share/initramfs-tools", "/usr/share/dpkg",
@@ -44,6 +45,21 @@ TOOL_INPUTS += sorted(map(str, Path("/usr/lib").glob("klibc-*.so")))
 # Copy these exact ordinary dependencies, never the host systemd or /etc tree.
 N0_INPUTS = ["/usr/lib/systemd/systemd", "/usr/lib/systemd/systemd-udevd",
              "/usr/lib/systemd/network", "/etc/ld.so.conf", "/etc/ld.so.conf.d"]
+# Executables used by the builder, Kbuild and maintainer/initramfs paths.
+# Trace their complete link chains; do not copy unrelated host alternatives.
+TOOL_COMMANDS = """bash sh awk cc c++ gcc make ld ar as nm objcopy objdump readelf strip
+    perl python3 pahole openssl dkms dpkg dpkg-deb dpkg-query tar zstd xz gzip cpio
+    depmod modinfo ldconfig update-initramfs lsinitramfs unmkinitramfs
+    find sort xargs sha256sum md5sum cmp grep sed cut head tail wc tr stat readlink
+    mkdir mktemp cp mv rm ln install chmod touch du nproc uname dirname basename tee""".split()
+BUILD_SCRIPT = '''#!/bin/bash
+set -euo pipefail
+export VERSION=5.0.0-i7 SOURCE_DATE_EPOCH=1790035200
+export KERNELDIR_VER=6.12.101+deb13-amd64
+export KERNELDIR=/lib/modules/$KERNELDIR_VER/build
+export STAGE_ROOT=/candidate BUILD_LOG=/evidence/builder.log OUT_DEB=/candidate/i7.deb
+bash /repo/scripts/build-innogpu-driver.sh
+'''
 DENIED = "modprobe insmod rmmod systemctl service reboot shutdown halt poweroff update-grub grub-install update-secureboot-policy".split()
 GUARD = '''#!/bin/sh
 echo "FORBIDDEN: $0 $*" >> /evidence/forbidden.log
@@ -107,6 +123,35 @@ def identity(paths):
     return rows
 
 
+def tool_link_inputs():
+    paths = set()
+    allowed = [Path(p) for p in TOOL_INPUTS] + [Path("/etc/alternatives")]
+    for name in TOOL_COMMANDS:
+        found = shutil.which(name, path="/usr/sbin:/usr/bin")
+        assert found, f"required tool missing: {name}"
+        path, seen = Path(found), set()
+        while True:
+            assert any(path == p or path.is_relative_to(p) for p in allowed), f"tool target outside copied inputs: {path}"
+            assert path not in seen, f"tool link cycle: {name}"
+            seen.add(path)
+            paths.add(path)
+            if not path.is_symlink():
+                assert path.is_file() and os.access(path, os.X_OK), f"tool target missing/nonexecutable: {path}"
+                break
+            target = os.readlink(path)
+            path = Path(os.path.normpath(target if target.startswith("/") else str(path.parent / target)))
+    return sorted(paths)
+
+
+def pseudo_devices():
+    # Software sinks only: no hardware, terminal, random or host /dev tree.
+    devices = {"/dev/null": [1, 3], "/dev/zero": [1, 5]}
+    for name, numbers in devices.items():
+        info = Path(name).lstat()
+        assert stat.S_ISCHR(info.st_mode) and [os.major(info.st_rdev), os.minor(info.st_rdev)] == numbers
+    return devices
+
+
 def inputs():
     assert sha(ROOT / META / "5.0.0-i6.meta.json") == META_SHA, "source meta drift"
     current = subprocess.check_output(["uname", "-r"], text=True).strip()
@@ -123,6 +168,7 @@ def inputs():
     assert sorted(actual) == K and current == K[0], "K/current kernel drift"
     paths = [ROOT / p for p in REPO_INPUTS]
     paths += [Path(p) for p in TOOL_INPUTS if Path(p).exists()]
+    paths += tool_link_inputs()
     assert sorted(map(str, Path("/etc").glob("ld.so.conf*"))) == sorted(N0_INPUTS[-2:]), "ld.so input set changed"
     for name in N0_INPUTS:
         path = Path(name)
@@ -155,7 +201,7 @@ def inputs():
     return {"head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
             "kernels": K, "version": "5.0.0-i7", "epoch": EPOCH,
             "cpus": sorted(os.sched_getaffinity(0))[:8],
-            "headers": list(map(str, headers)), "files": identity(paths)}
+            "headers": list(map(str, headers)), "pseudo_devices": pseudo_devices(), "files": identity(paths)}
 
 
 def setup(root, kernel_inputs=False):
@@ -167,7 +213,8 @@ def setup(root, kernel_inputs=False):
         (root / name).mkdir(parents=True, exist_ok=True)
     for name, target in {"bin": "usr/bin", "sbin": "usr/sbin", "lib": "usr/lib", "lib64": "usr/lib64"}.items():
         (root / name).symlink_to(target)
-    for path in [*TOOL_INPUTS, *N0_INPUTS]:
+    alternatives = [str(p) for p in tool_link_inputs() if p.is_relative_to("/etc/alternatives")]
+    for path in [*TOOL_INPUTS, *N0_INPUTS, *alternatives]:
         host = Path(path)
         if not host.exists():
             assert path not in N0_INPUTS, f"required N0 dependency missing: {path}"
@@ -180,7 +227,7 @@ def setup(root, kernel_inputs=False):
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(host, dest, follow_symlinks=False)
     for name in ["null", "zero"]:
-        write(root, "dev/" + name, "")  # Ordinary private files, no host devices.
+        write(root, "dev/" + name, "")  # Mountpoints, overlaid by exact software sinks.
     write(root, "etc/passwd", "root:x:0:0:root:/root:/bin/sh\n")
     write(root, "etc/group", "root:x:0:\n")
     shutil.copyfile(Path("/etc/os-release").resolve(), root / "etc/os-release")
@@ -223,8 +270,11 @@ def mounts(root, lock):
     args = ["bwrap", "--unshare-user", "--uid", "0", "--gid", "0", "--unshare-pid",
             "--unshare-ipc", "--unshare-uts", "--unshare-net", "--die-with-parent",
             "--new-session", "--clearenv", "--cap-drop", "ALL", "--bind", str(root), "/", "--proc", "/proc", "--chdir", "/repo"]
+    assert lock["pseudo_devices"] == pseudo_devices(), "software device identity drift"
+    for name in lock["pseudo_devices"]:
+        args.extend(["--dev-bind", name, name])
 
-    for path in [*TOOL_INPUTS, "/usr/lib/systemd", "/etc/ld.so.conf", "/etc/ld.so.conf.d"]:
+    for path in [*TOOL_INPUTS, "/usr/lib/systemd", "/etc/ld.so.conf", "/etc/ld.so.conf.d", "/etc/alternatives"]:
         if (root / path.lstrip("/")).exists():
             args.extend(["--ro-bind", str(root / path.lstrip("/")), path])
     for path in lock["headers"]:
@@ -280,6 +330,57 @@ def n0_artifacts(root):
     return {name: sha(root / name) for name in names}
 
 
+def tool_probe(root, lock, deadline, ledger):
+    script = "set -euo pipefail\nfor name in " + " ".join(TOOL_COMMANDS) + '''; do
+    tool=$(command -v "$name")
+    test -x "$tool"
+    readlink -e "$tool"
+done
+test -c /dev/null && test -c /dev/zero
+test -z "$(find /dev -type b -o -type c ! -name null ! -name zero)"
+printf 'discarded\\n' > /dev/null
+test -z "$(head -c 1 /dev/null)"
+printf 'tool closure\\n' | awk '{if ($2 != "closure") exit 1}'
+cc --version
+c++ --version
+printf 'int main(void) {return 0;}\\n' > /tmp/tool-closure.c
+cc /tmp/tool-closure.c -o /tmp/tool-closure-c
+c++ /tmp/tool-closure.c -o /tmp/tool-closure-cxx
+/tmp/tool-closure-c
+/tmp/tool-closure-cxx
+rm /tmp/tool-closure.c /tmp/tool-closure-c /tmp/tool-closure-cxx
+printf 'native_tool_links=PASS\\n'
+'''
+    command(root, lock, ["bash", "-ec", script], ledger, deadline)
+
+
+def build_test(work):
+    """Development regression of the actual producer, never a formal A/B result."""
+    assert work.parent == BATCH_WORK and re.fullmatch(r"revision-build-test-20260923-[0-9]+", work.name), "unapproved build-test root"
+    assert work.resolve() == work and not work.exists(), "fresh build-test root required"
+    work.mkdir(mode=0o700)
+    start = datetime.now(timezone.utc).isoformat()
+    success = False
+    try:
+        assert shutil.disk_usage(work).free >= 30 * 1024**3, "build-test capacity BLOCKED"
+        lock = inputs()
+        write(work, "inputs.json", json.dumps(lock, indent=2) + "\n")
+        root = work / "root"
+        setup(root, True)
+        ledger, deadline = [], time.monotonic() + 3600
+        tool_probe(root, lock, deadline, ledger)
+        write(root, "fixture/build.sh", BUILD_SCRIPT)
+        command(root, lock, ["bash", "/fixture/build.sh"], ledger, deadline)
+        assert inputs() == lock, "build-test input drift"
+        write(work, "candidate.json", json.dumps({"purpose": "regression", "deb_sha256": sha(root / "candidate/i7.deb")}, indent=2) + "\n")
+        success = True
+    finally:
+        write(work, "result.json", json.dumps({"purpose": "regression", "start": start,
+              "end": datetime.now(timezone.utc).isoformat(), "builder": "PASS" if success else "FAILED_OR_UNVERIFIED",
+              "formal_AB": "NOT_RUN", "host_install": "NOT_RUN"}, indent=2) + "\n")
+    print("native_build_test=PASS purpose=regression formal_AB=NOT_RUN host_install=NOT_RUN")
+
+
 def prepare_n0(root, lock, deadline):
     """One preparation shared by the formal preflight and its isolated regression."""
     setup(root, True)
@@ -290,7 +391,7 @@ def prepare_n0(root, lock, deadline):
 dkms_policy_guard
 [[ $(id -u) == 0 && $(nproc) -le 8 ]]
 [[ ! -e /sys/class && ! -e /dev/dri && ! -e /boot/grub && ! -e /usr/src/fantgpu-fh2m-kernel-2.2 ]]
-[[ -z $(find /dev -type b -o -type c) ]]
+[[ -z $(find /dev -type b -o -type c ! -name null ! -name zero) ]]
 [[ ! -e /sys/kernel/btf/vmlinux && ! -e /sys/firmware/efi/efivars ]]
 [[ -z $(ls -A /var/lib/dkms) ]]
 ! command -v lspci
@@ -308,6 +409,7 @@ test -d /etc/ld.so.conf.d
 printf 'isolation_probe=PASS driver_builds=0 installs=0\\n'
 ''')
     command(root, lock, ["bash", "/fixture/probe.sh"], ledger, deadline)
+    tool_probe(root, lock, deadline, ledger)
     command(root, lock, SIGNING_REQUEST, ledger, deadline)
     key = root / "var/lib/dkms/mok.key"
     assert not key.is_symlink() and key.is_file() and key.stat().st_mode & 0o777 == 0o600
@@ -428,14 +530,7 @@ def run(work, manifest, reviewed_sha):
             signing = []
             for name in ["mok.key", "mok.pub"]:
                 signing += ["--ro-bind", str(common / "var/lib/dkms" / name), "/var/lib/dkms/" + name]
-            write(root, "fixture/build.sh", '''#!/bin/bash
-set -euo pipefail
-export VERSION=5.0.0-i7 SOURCE_DATE_EPOCH=1790035200
-export KERNELDIR_VER=6.12.101+deb13-amd64
-export KERNELDIR=/lib/modules/$KERNELDIR_VER/build
-export STAGE_ROOT=/candidate BUILD_LOG=/evidence/builder.log OUT_DEB=/candidate/i7.deb
-bash /repo/scripts/build-innogpu-driver.sh
-''')
+            write(root, "fixture/build.sh", BUILD_SCRIPT)
             command(root, lock, ["bash", "/fixture/build.sh"], ledger, deadline)
             command(root, lock, ["dpkg-deb", "-R", "/candidate/i7.deb", "/package"], ledger, deadline)
             # Never follow extracted symlinks while copying into the private root.
