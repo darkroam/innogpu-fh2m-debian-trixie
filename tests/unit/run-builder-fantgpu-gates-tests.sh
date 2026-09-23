@@ -2,7 +2,7 @@
 # tests/unit/run-builder-fantgpu-gates-tests.sh — builder F 分支早期门禁与静态契约单测
 #
 # 依据 docs/design/c3-a-4-reproducible-input-plan.md §三（改造点 9-13）与
-# §四（postinst/md5sums/trace）：R27 候选 5.0.0-i9、血统判定 5.0.0-i*、
+# §四（postinst/md5sums/trace）：R29 候选 5.0.0-i10、血统判定 5.0.0-i*、
 # 输入预检分支、PKG_DESC $VERSION 参数化、share/命令前缀血统参数化、
 # ld.so.conf fantgpu-fh2m、postinst fh2m_dri.so + 设备门。
 # 只测可运行早期门禁与静态契约（不编译内核：KERNELDIR 注入不存在路径使
@@ -43,8 +43,8 @@ else
     bad t01 "rc=$RC"
 fi
 
-# t02 i9 仅通过版本/epoch门，未通过源身份门，更不代表实际构建通过。
-run_builder VERSION=5.0.0-i9 SOURCE_DATE_EPOCH=1790121600
+# t02 i10 仅通过版本/epoch门，未通过源身份门，更不代表实际构建通过。
+run_builder VERSION=5.0.0-i10 SOURCE_DATE_EPOCH=1790121600
 if [ "$RC" -eq 1 ] && grep -Fq "staging_kernel_headers=FAIL" "$TMP/b.out"; then
     ok t02
 else
@@ -60,7 +60,7 @@ else
 fi
 
 # t04 epoch 错误 → builder_repro=FAIL
-run_builder VERSION=5.0.0-i9 SOURCE_DATE_EPOCH=1111111111
+run_builder VERSION=5.0.0-i10 SOURCE_DATE_EPOCH=1111111111
 if [ "$RC" -eq 1 ] && grep -Fq "builder_repro=FAIL" "$TMP/b.out"; then
     ok t04
 else
@@ -212,11 +212,11 @@ else
     bad t19_archived_i5 "rc=$RC"
 fi
 
-for version in 5.0.0-i{1..8}; do
+for version in 5.0.0-i{1..9}; do
     epoch=1788796800
     [[ "$version" != 5.0.0-i5 && "$version" != 5.0.0-i6 ]] || epoch=1789516800
     [[ "$version" != 5.0.0-i7 ]] || epoch=1790035200
-    [[ "$version" != 5.0.0-i8 ]] || epoch=1790121600
+    [[ "$version" != 5.0.0-i8 && "$version" != 5.0.0-i9 ]] || epoch=1790121600
     run_builder VERSION="$version" SOURCE_DATE_EPOCH="$epoch"
     if [[ "$RC" == 1 ]] && ! [[ -d "$TMP/stage" ]]; then
         ok "archived-$version"
@@ -224,7 +224,7 @@ for version in 5.0.0-i{1..8}; do
         bad "archived-$version" "rc=$RC or staging was written"
     fi
 done
-run_builder VERSION=5.0.0-i9 SOURCE_DATE_EPOCH=
+run_builder VERSION=5.0.0-i10 SOURCE_DATE_EPOCH=
 if [[ "$RC" == 1 ]] && grep -Fq builder_repro=FAIL "$TMP/b.out"; then
     ok empty-epoch
 else
@@ -234,7 +234,7 @@ fi
 mkdir -p "$TMP/root/headers" "$TMP/root/docs/planning/evidence/o-stage/5.0.0-i6"
 printf '%s\n' '{}' > "$TMP/root/docs/planning/evidence/o-stage/5.0.0-i6/5.0.0-i6.meta.json"
 set +e
-INNOGPU_ROOT="$TMP/root" VERSION=5.0.0-i9 SOURCE_DATE_EPOCH=1790121600 \
+INNOGPU_ROOT="$TMP/root" VERSION=5.0.0-i10 SOURCE_DATE_EPOCH=1790121600 \
     KERNELDIR="$TMP/root/headers" STAGE_ROOT="$TMP/stage" \
     bash "$BUILDER" > "$TMP/b.out" 2> "$TMP/b.err"
 RC=$?
@@ -246,11 +246,12 @@ else
 fi
 
 if python3 - "$BUILDER" "$ROOT" "$PATCH_TREE/o-stage" "$TMP" <<'PY'
-import hashlib, os, pathlib, subprocess, sys
+import hashlib, os, pathlib, resource, subprocess, sys
+resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
 builder, repo, tree, tmp = map(pathlib.Path, sys.argv[1:])
 text = builder.read_text()
 func = text[text.index("derive_fantgpu_source() {"):text.index("\nAPPLIED_SOURCE_FIXES=")]
-names = ["cfg_detect.sh", "test_item.sh", "fantsrvkm/fantdpu_drm_fb.c"]
+names = ["cfg_detect.sh", "test_item.sh", "fantsrvkm/fantdpu_drm_fb.c", "fantpower/fant_input_event.c"]
 originals = {name: (tree / name).read_bytes() for name in names}
 before = originals["cfg_detect.sh"]
 env = dict(os.environ, ROOT=str(repo))
@@ -263,6 +264,7 @@ line = after[len(before):]
 assert line == b'LC_ALL=C sort -o "$CFG_FILE_DIR/$CFG_FILE" "$CFG_FILE_DIR/$CFG_FILE"\n'
 assert hashlib.sha256(after).hexdigest() == "f096890ea5662301f6eb805c2a5554aa9d027aebd1b2b8c28d31f84ae7c431ca"
 fb_source = (tree / "fantsrvkm/fantdpu_drm_fb.c").read_text()
+input_source = (tree / "fantpower/fant_input_event.c").read_text()
 # Reject second application and unrelated parent drift before mutation.
 assert derive().returncode != 0
 for name, data in originals.items():
@@ -316,6 +318,101 @@ for defines in [[], ["-DFANTGPU_DRM_FB_HELPER_ALLOC_INFO_PRESENT"]]:
     exe = tmp / "fb-helper"
     subprocess.run(["cc", "-Wall", "-Werror", *defines, str(source), "-o", str(exe)], check=True)
     subprocess.run([str(exe)], check=True)
+# Run unchanged extracted production connect/disconnect on both buses, including
+# every fallible acquisition. A stack checks reverse unwinding and exact owners.
+def lifecycle(source):
+    return source[source.index("static int fant_input_connect("):source.index("static const struct input_device_id fant_input_ids[]")]
+
+original = originals["fantpower/fant_input_event.c"].decode()
+start, end = original.index("static int fant_input_connect("), original.index("static void fant_input_disconnect(")
+assert original[:start] == input_source[:input_source.index("static int fant_input_connect(")]
+assert original[end:] == input_source[input_source.index("static void fant_input_disconnect("):]
+input_harness = r'''#include <assert.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#define GFP_KERNEL 0
+#define BUS_BLUETOOTH 5
+#define PWRD_DBG_INPUT 1
+#define fantpwr_info(...) ((void)0)
+#define fantpwr_notice(...) ((void)0)
+struct notifier_block { int (*notifier_call)(struct notifier_block *, unsigned long, void *); int priority; };
+struct input_handle_private { struct notifier_block pm_nb; unsigned long sys_stat; };
+struct input_dev { struct { int bustype; } id; };
+struct input_handler { int unused; };
+struct input_device_id { int unused; };
+struct input_handle { struct input_dev *dev; struct input_handler *handler; const char *name; void *private; };
+static int fail, allocs, depth, stack[5], pm_calls;
+static void *owners[2];
+static struct notifier_block *notifier;
+static struct input_handle *registered, *opened;
+static void acquire(int id) { assert(depth < 5); stack[depth++] = id; }
+static void release(int id) { assert(depth > 0 && stack[depth-1] == id); --depth; }
+static void *kzalloc(size_t n, int flags) {
+    (void)flags; ++allocs; assert(allocs <= 2);
+    if (fail == allocs) return NULL;
+    void *p = calloc(1, n); assert(p); owners[allocs-1] = p; acquire(allocs); return p;
+}
+static void kfree(void *p) {
+    assert(p && (p == owners[0] || p == owners[1]));
+    int i = p == owners[0] ? 0 : 1; release(i+1); owners[i] = NULL; free(p);
+}
+static int fant_input_pm_notifier(struct notifier_block *n, unsigned long a, void *d) { (void)n; (void)a; (void)d; return 0; }
+static int register_pm_notifier(struct notifier_block *n) {
+    ++pm_calls; assert(!notifier && n == &((struct input_handle_private *)owners[1])->pm_nb);
+    if (fail == 3) return -EIO; /* contract injection, not evidence of kernel reachability */
+    assert(n->notifier_call == fant_input_pm_notifier && n->priority == 0);
+    notifier = n; acquire(3); return 0;
+}
+static int unregister_pm_notifier(struct notifier_block *n) {
+    assert(n == notifier); release(3); notifier = NULL; return 0;
+}
+static int input_register_handle(struct input_handle *h) {
+    assert(!registered && h == owners[0] && h->private == owners[1]);
+    if (fail == 4) return -EIO;
+    registered = h; acquire(4); return 0;
+}
+static int input_open_device(struct input_handle *h) {
+    assert(h == registered && !opened);
+    if (fail == 5) return -ENODEV;
+    opened = h; acquire(5); return 0;
+}
+static void input_unregister_handle(struct input_handle *h) { assert(h == registered && !opened); release(4); registered = NULL; }
+static void input_close_device(struct input_handle *h) { assert(h == opened); release(5); opened = NULL; }
+static int fh2m_get_pwr_debug_lvl(void) { return 0; }
+#include "input-functions.inc"
+int main(int argc, char **argv) {
+    assert(argc == 3); int bluetooth = atoi(argv[1]); fail = atoi(argv[2]);
+    struct input_dev dev = {{bluetooth ? BUS_BLUETOOTH : 3}};
+    struct input_handler handler = {0}; struct input_device_id id = {0};
+    int expected = fail == 1 || fail == 2 ? -ENOMEM :
+        fail == 4 || (fail == 3 && !bluetooth) ? -EIO : fail == 5 ? -ENODEV : 0;
+    int rc = fant_input_connect(&handler, &dev, &id);
+    assert(rc == expected);
+    if (!rc) {
+        assert(opened && opened->dev == &dev && opened->handler == &handler);
+        assert(((struct input_handle_private *)opened->private)->sys_stat == 0);
+        assert(depth == (bluetooth ? 4 : 5));
+        fant_input_disconnect(opened);
+    }
+    assert(depth == 0 && !owners[0] && !owners[1] && !notifier && !registered && !opened);
+    assert(pm_calls == (!bluetooth && fail != 1 && fail != 2));
+    printf("input_cleanup bus=%s failure=%d connect_rc=%d resources=0 reverse_order=PASS\n", bluetooth ? "bluetooth" : "usb", fail, rc);
+    return 0;
+}
+'''
+source = tmp / "input-lifecycle.c"; source.write_text(input_harness)
+for label, content in [("before", original), ("after", input_source)]:
+    (tmp / "input-functions.inc").write_text(lifecycle(content))
+    exe = tmp / ("input-" + label)
+    subprocess.run(["cc", "-Wall", "-Wextra", "-Werror", "-Wno-unused-parameter", str(source), "-o", str(exe)], check=True)
+    for bluetooth in (0, 1):
+        for failure in range(6):
+            p = subprocess.run([str(exe), str(bluetooth), str(failure)], capture_output=True, text=True)
+            reproduces = label == "before" and (failure in (2, 4, 5) or (failure == 3 and not bluetooth))
+            assert p.returncode == (-6 if reproduces else 0), (label, bluetooth, failure, p.returncode, p.stderr)
+            print(f"input_{label} bus={bluetooth} failure={failure} rc={p.returncode} " + ("EXPECTED_DEFECT" if reproduces else p.stdout.strip()))
+print("input_cleanup_cases=12 passed=12 baseline_defects=7")
 print("derived_exact_tree_sort_and_fb_ownership_contract=PASS")
 PY
 then

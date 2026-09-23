@@ -21,7 +21,7 @@ case "$VERSION" in
 	5.0.0-i3) EXPECTED_SOURCE_DATE_EPOCH=1788796800 ;;  # R5 阶段 D 诊断候选
 	5.0.0-i5|5.0.0-i6) EXPECTED_SOURCE_DATE_EPOCH=1789516800 ;;  # i6 diagnostic epoch matches i5
     5.0.0-i7) EXPECTED_SOURCE_DATE_EPOCH=1790035200 ;;  # R27 packaging candidate; i6 source remains frozen
-    5.0.0-i8|5.0.0-i9) EXPECTED_SOURCE_DATE_EPOCH=1790121600 ;;  # i9: authorized 107 compatibility derivative
+    5.0.0-i8|5.0.0-i9|5.0.0-i10) EXPECTED_SOURCE_DATE_EPOCH=1790121600 ;;  # R29: same audit day, distinct cleanup candidate
     *)
         echo "builder_version_review=FAIL unreviewed package version: $VERSION" >&2
         exit 1
@@ -47,7 +47,7 @@ KERNEL="${KERNELDIR_VER:-$(uname -r)}"
 KERNELDIR="${KERNELDIR:-/lib/modules/$KERNEL/build}"
 # 默认输出名按血统（codex P1：5.0.0-i1 不得沿用 innogpu 名）
 if [[ "$FANT_LINEAGE" == 1 ]]; then
-	[[ "$VERSION" == "5.0.0-i9" ]] || {
+	[[ "$VERSION" == "5.0.0-i10" ]] || {
 		echo "staging_ostage_generation=FAIL archived generation is not rebuildable from the current snapshot: $VERSION"
 		exit 1
 	}
@@ -56,7 +56,7 @@ else
     OUT_DEB="${OUT_DEB:-$STAGE_ROOT/innogpu-fh2m-trixie_$VERSION.deb}"
 fi
 [[ -d "$KERNELDIR" ]] || { echo "staging_kernel_headers=FAIL $KERNELDIR"; exit 1; }
-# R28 i9 keeps i8 config ordering and derives the 107 fbdev compatibility fix.
+# R29 i10 inherits i8/i9 and fixes input-connect failure cleanup in a new copy.
 # Lock the meta itself: matching a replacement snapshot to replacement metadata
 # is not sufficient to establish the approved source identity.
 if [[ "$FANT_LINEAGE" == 1 ]]; then
@@ -144,10 +144,30 @@ text = text.replace(old, "\tif (IS_ERR_OR_NULL(info)) {\n\t\terr = info ? PTR_ER
 text = text.replace("info->flags = FBINFO_DEFAULT | FBINFO_HWACCEL_DISABLED;",
                     "info->flags |= FBINFO_DEFAULT | FBINFO_HWACCEL_DISABLED;")
 path.write_text(text)
+if digest() != "e4d043bff8ed79b92b52512aad8f8e05ac51113bef2dd4cb4505dd96c510ccb7":
+    sys.exit("builder_derived_source=FAIL i9 intermediate tree drift")
+# Each label unwinds only operations that succeeded. Bluetooth never registers
+# a PM notifier; no extra state or shared dev_rsrc layout change is needed.
+path = tree / "fantpower/fant_input_event.c"
+text = path.read_text()
+changes = [
+    ("\tif (!input_handle_priv)\n\t\treturn -ENOMEM;",
+     "\tif (!input_handle_priv) {\n\t\terror = -ENOMEM;\n\t\tgoto err_free_handle;\n\t}"),
+    ("\t\tregister_pm_notifier(&input_handle_priv->pm_nb);",
+     "\t\terror = register_pm_notifier(&input_handle_priv->pm_nb);\n\t\tif (error)\n\t\t\tgoto err_free_private;"),
+    ("\terror = input_register_handle(handle);\n\tif (error)\n\t\tgoto err_free_handle;",
+     "\terror = input_register_handle(handle);\n\tif (error)\n\t\tgoto err_unregister_notifier;"),
+    (" err_free_handle:\n\tkfree(handle);",
+     " err_unregister_notifier:\n\tif (BUS_BLUETOOTH != dev->id.bustype)\n\t\tunregister_pm_notifier(&input_handle_priv->pm_nb);\n err_free_private:\n\tkfree(input_handle_priv);\n err_free_handle:\n\tkfree(handle);"),
+]
+for before, after in changes:
+    assert text.count(before) == 1, "input cleanup source anchor drift"
+    text = text.replace(before, after)
+path.write_text(text)
 derived = digest()
-if derived != "e4d043bff8ed79b92b52512aad8f8e05ac51113bef2dd4cb4505dd96c510ccb7":
+if derived != "c08b2bd426bcceba2853eb0767994875b3080cfaf4d5a1afcff821f3092aa67e":
     sys.exit("builder_derived_source=FAIL derived tree drift")
-print("builder_derived_source=PASS version=5.0.0-i9 tree=" + derived)
+print("builder_derived_source=PASS version=5.0.0-i10 tree=" + derived)
 PY
 }
 
@@ -224,7 +244,7 @@ PY
     mv "$STAGE/source.tree" "$STAGE/source"
     derive_fantgpu_source "$STAGE/source"
 	APPLIED_SOURCE_FIXES="o-stage-materialized-030-chain-18 (incl. 030-030 audio fallback, 030-031 PM markers, 030-032 PM probe, 030-033 shipped-object ABI correction and 030-034 diagnostic stop-stage; patch-000 no-transform)"
-    APPLIED_SOURCE_FIXES+=" i8-cfg-detect-output-order i9-drm-fb-info-ownership"
+    APPLIED_SOURCE_FIXES+=" i8-cfg-detect-output-order i9-drm-fb-info-ownership i10-input-failure-cleanup"
     echo "staging_deterministic_transform=PASS (no-transform: fantgpu objects used as-is)"
 else
     cp -r drivers/. "$STAGE/source/"
@@ -317,7 +337,7 @@ if [[ "$FANT_LINEAGE" == 1 ]]; then
         || { echo "builder_materialize_trace=FAIL"; exit 1; }
     trace_rows="$(wc -l < "$STAGE/materialize-trace.tsv")"
     echo "builder_materialize_trace=PASS trace_entries=$trace_rows"
-    echo "builder_materialize_trace_scope=i6-parent-before-i8-derivation"
+    echo "builder_materialize_trace_scope=i6-parent-before-i10-derivation"
     derive_fantgpu_source "$P/usr/src/$DKMS_SRC_NAME"
 else
     while IFS= read -r vp; do
