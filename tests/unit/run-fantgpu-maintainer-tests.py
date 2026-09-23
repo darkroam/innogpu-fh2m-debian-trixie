@@ -479,6 +479,44 @@ def main():
     else:
         raise AssertionError("escaped package destination accepted")
     cases.append("native-package-replaces-links-and-preserves-usrmerge")
+    # Production predecessor gate: sealed package, matching modules, exact prerm.
+    root = work / "predecessor-identity"
+    deb = put(root, "A/i9.deb", "fixture deb")
+    module = put(root, "A/module", "fixture module")
+    prerm = b"#!/bin/sh\nexit 0\n"
+    data = native.io.BytesIO()
+    with native.tarfile.open(fileobj=data, mode="w") as archive:
+        entry = native.tarfile.TarInfo("./prerm"); entry.size = len(prerm)
+        archive.addfile(entry, native.io.BytesIO(prerm))
+    manifest = put(root, "files.sha256", "".join(
+        f"{native.sha(p)}  {p.relative_to(root)}\n" for p in [deb, module]))
+    def package_query(argv, **kwargs):
+        assert argv[0] == "dpkg-deb"
+        return "5.0.0-i9\n" if "-f" in argv else data.getvalue()
+    with patch.multiple(native, PREDECESSOR=root, PREDECESSOR_DEB=deb,
+                        PREDECESSOR_DEB_SHA=native.sha(deb), OLD_MODULES=[module], K=[KERNELS[0]],
+                        PREDECESSOR_MANIFEST_SHA=native.sha(manifest),
+                        PREDECESSOR_PRERM_SHA=native.hashlib.sha256(prerm).hexdigest()), \
+         patch.object(native.subprocess, "check_output", side_effect=package_query):
+        assert native.predecessor_identity()["modules"] == {KERNELS[0]: native.sha(module)}
+        for path in [deb, module, manifest]:
+            saved = path.read_bytes(); path.write_bytes(saved + b"drift")
+            try:
+                native.predecessor_identity()
+            except AssertionError:
+                pass
+            else:
+                raise AssertionError("predecessor drift accepted")
+            path.write_bytes(saved)
+        with patch.object(native, "PREDECESSOR_PRERM_SHA", "0" * 64):
+            try:
+                native.predecessor_identity()
+            except AssertionError:
+                pass
+            else:
+                raise AssertionError("mixed predecessor prerm accepted")
+    cases.append("native-i9-predecessor-identity-and-drift")
+    print("PASS " + cases[-1])
     root = work / "tool-chain"
     binary = put(root, "bin/real-tool", "#!/bin/sh\nexit 0\n")
     binary.chmod(0o755)
