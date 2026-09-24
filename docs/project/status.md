@@ -9,9 +9,9 @@
 
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
-| 当前运行驱动 | **fantgpu 5.0.0-i9（诊断线，非交付）**，运行于 `6.12.107+deb13-amd64`；R28 八核安装及授权重启后的基础首启已接受，R31 已安装 i10，尚未重启；F0 + 030 链及后续兼容派生不代表 R5 已解决 | [安装裁定与接续](#r28-安装裁定与-r31-接续)、[030 映射表](../planning/030-mapping-table.md)、[patch-provenance](../design/patch-provenance.md) |
+| 当前运行驱动 | **fantgpu 5.0.0-i10（诊断线，非交付）**，运行于 `6.12.107+deb13-amd64`；R31 八核安装已终审；用户另行授权重启后，i10 已加载，基础健康及输入挂接观察通过，首启证据待复核；F0 + 030 链及后续兼容派生不代表 R5 已解决 | [安装裁定与接续](#r28-安装裁定与-r31-接续)、[030 映射表](../planning/030-mapping-table.md)、[patch-provenance](../design/patch-provenance.md) |
 | 回退基线 | `4.0.2-i3`（deepin 血缘最终交付）：R14 6/6 deep 矩阵通过；包 SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；回滚卡见 r5dpm2 设计 §8，执行须另行授权 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md)、[回滚卡](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
-| 当前主线目标 | `5.0.0-iN`（tag `fantgpu-5.0.0-iN` **未打**）；发布阻断：`validation-results` 未签、R5=FAIL 未解除；`postinst_current_kernel_only` 已按 R28 精确 i9 八核安装证据解除，1C 不变 | [安装裁定与接续](#r28-安装裁定与-r31-接续)、[030 映射表](../planning/030-mapping-table.md) |
+| 当前主线目标 | `5.0.0-iN`（tag `fantgpu-5.0.0-iN` **未打**）；发布阻断：`validation-results` 未签、R5=FAIL 未解除；`postinst_current_kernel_only` 已按 R31 裁定解除并覆盖至 i10，1C 不变 | [安装裁定与接续](#r28-安装裁定与-r31-接续)、[030 映射表](../planning/030-mapping-table.md) |
 | 历史当前态（2026-09-03 记录） | `4.0.2-i3` 已安装并重启至 `6.12.101+deb13-amd64`；R16 迁移后降为回退基线 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | R5 挂起悬案 | `pm_test=devices` 绑定 fantgpu 硬挂；两轮诊断内核（r5dpm1/r5dpm2）复核判定 `OUTSIDE_COVERAGE`（DPM 机制无动态正样）；`r5_root_cause=unresolved`；**禁止重跑** | [r5 调查计划](../design/r5-suspend-investigation-plan.md)、[r5dpm2 设计](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
 | 诊断内核 | `6.12.101-r5dpm1`/`6.12.101-r5dpm2` 已安装并保留（卸载待 dsh 定）；GRUB 已恢复原配置（默认启动解析 6.12.107+deb13，既有行为） | [步骤 8 证据](../planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-result.txt) |
@@ -49,10 +49,13 @@
 R30 已由 `78963e12570f` 收档 i10 正式八核 A/B；候选整 deb SHA-256 为
 `527ae5bc2a0a8246e3933f1812bb0f72e2756af07deaca8829b8257e5ae10141`。
 R31 已从实际 i9 的血缘隔离 prerm 升级至 i10：八核 dpkg/postinst rc0，独立只读后验 PASS；
-磁盘包为 i10，当前加载驱动仍承接 i9/107 启动，未重启。安装证据待 qoder/dsh 审查。
+安装批已由 `3419079d6e78` 收档，dsh 裁定①闭合覆盖至 i10。安装时未重启的历史证据保持原样。
 本机证据：`.build/r31-install-evidence/install-i10-20260924-01/postverify/result.json`
 （非 Git、公开检出不可取得）；本批不含重启、首启或 PM。
-安装证据与运行能力分开审查，i10 的输入设备清理修正不能据此解释为 R5 根因修复。
+2026-09-24 用户另行授权重启后，实际进入 i10/107：已加载 srcversion 与磁盘 i10 一致，
+基础健康门通过、八项错误计数0、18/18输入设备挂接 fant_input；未测试输入失败分支或 PM。
+本机首启证据位于 `.build/r31-install-evidence/firstboot-i10-107-20260924-01/`（非 Git），待复核。
+安装、首启与运行能力分开审查，i10 的输入设备清理修正不能据此解释为 R5 根因修复。
 冻结不变：OUTSIDE_COVERAGE、R5=FAIL、禁止重跑、U1/U2、validation-results、未打 tag。
 
 ## 已解决问题
