@@ -1,6 +1,6 @@
 # 当前状态与问题清单
 
-最后更新：2026-09-21
+最后更新：2026-09-24
 
 本文件是项目当前运行状态的唯一摘要。历史过程、补丁细节和故障推导分别见
 [阶段补丁](../patches/README.md) 与 [事故和经验](../incidents/README.md)。
@@ -9,9 +9,9 @@
 
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
-| 当前运行驱动 | **fantgpu 5.0.0-i6（诊断线，非交付）**，运行于 `6.12.101+deb13-amd64`；fantgpu 3.3.8.126 F0 源 + 030-NNN 补丁链（18 项，030-001..034）；R5 挂起调查中（见下） | [030 映射表](../planning/030-mapping-table.md)、[patch-provenance](../design/patch-provenance.md) |
+| 当前运行驱动 | **fantgpu 5.0.0-i9（诊断线，非交付）**，运行于 `6.12.107+deb13-amd64`；R28 八核安装及授权重启后的基础首启已接受，R31 已安装 i10，尚未重启；F0 + 030 链及后续兼容派生不代表 R5 已解决 | [安装裁定与接续](#r28-安装裁定与-r31-接续)、[030 映射表](../planning/030-mapping-table.md)、[patch-provenance](../design/patch-provenance.md) |
 | 回退基线 | `4.0.2-i3`（deepin 血缘最终交付）：R14 6/6 deep 矩阵通过；包 SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；回滚卡见 r5dpm2 设计 §8，执行须另行授权 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md)、[回滚卡](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
-| 当前主线目标 | `5.0.0-iN`（tag `fantgpu-5.0.0-iN` **未打**）；发布阻断：`postinst_current_kernel_only=release_blocker`、`validation-results` 未签、R5=FAIL 未解除 | [030 映射表](../planning/030-mapping-table.md) |
+| 当前主线目标 | `5.0.0-iN`（tag `fantgpu-5.0.0-iN` **未打**）；发布阻断：`validation-results` 未签、R5=FAIL 未解除；`postinst_current_kernel_only` 已按 R28 精确 i9 八核安装证据解除，1C 不变 | [安装裁定与接续](#r28-安装裁定与-r31-接续)、[030 映射表](../planning/030-mapping-table.md) |
 | 历史当前态（2026-09-03 记录） | `4.0.2-i3` 已安装并重启至 `6.12.101+deb13-amd64`；R16 迁移后降为回退基线 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | R5 挂起悬案 | `pm_test=devices` 绑定 fantgpu 硬挂；两轮诊断内核（r5dpm1/r5dpm2）复核判定 `OUTSIDE_COVERAGE`（DPM 机制无动态正样）；`r5_root_cause=unresolved`；**禁止重跑** | [r5 调查计划](../design/r5-suspend-investigation-plan.md)、[r5dpm2 设计](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
 | 诊断内核 | `6.12.101-r5dpm1`/`6.12.101-r5dpm2` 已安装并保留（卸载待 dsh 定）；GRUB 已恢复原配置（默认启动解析 6.12.107+deb13，既有行为） | [步骤 8 证据](../planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-result.txt) |
@@ -37,6 +37,23 @@
 
 以上引用 Phase 4、2026-08 runtime、patched 或 `4.0.x` 的验收均保留其原版本边界；
 `latest-*` 文件名不表示已验证当前 fantgpu。当前待办见 [current-work](../state/current-work.md)。
+
+## R28 安装裁定与 R31 接续
+
+2026-09-23 dsh 终审接受 i9 的真实八核安装及 107 基础首启，裁定
+`release_blocker ①（postinst_current_kernel_only）解除`。唯一范围是该安装缺陷，
+②validation-results 未签、③tag 未打、④R5=FAIL 与 1C 不变。
+裁定原文见本机 `collab/R28-2026-09-23-i8受监督安装批/report.md#L43 @dd8a8c40f8a0`；
+原始安装/首启证据在 `.build/r28-install-evidence/`。两处均非 Git，公开检出不可取得。
+
+R30 已由 `78963e12570f` 收档 i10 正式八核 A/B；候选整 deb SHA-256 为
+`527ae5bc2a0a8246e3933f1812bb0f72e2756af07deaca8829b8257e5ae10141`。
+R31 已从实际 i9 的血缘隔离 prerm 升级至 i10：八核 dpkg/postinst rc0，独立只读后验 PASS；
+磁盘包为 i10，当前加载驱动仍承接 i9/107 启动，未重启。安装证据待 qoder/dsh 审查。
+本机证据：`.build/r31-install-evidence/install-i10-20260924-01/postverify/result.json`
+（非 Git、公开检出不可取得）；本批不含重启、首启或 PM。
+安装证据与运行能力分开审查，i10 的输入设备清理修正不能据此解释为 R5 根因修复。
+冻结不变：OUTSIDE_COVERAGE、R5=FAIL、禁止重跑、U1/U2、validation-results、未打 tag。
 
 ## 已解决问题
 
@@ -64,7 +81,8 @@
   尚未进入 DPM 时仍不能排除回调路径。候选为 pre-DPM 段/等待区/timer 不可达；
   `r5_dpm_watchdog_capture_reviewed=OUTSIDE_COVERAGE`、`r5_root_cause=unresolved`。冻结：
   R5=FAIL、禁止重跑、U1/U2 未执行、validation-results 未签、tag `fantgpu-5.0.0-iN` 未打。
-  下一阶段方向待用户选（停批冻结 / 本地扩展轮 / 带外通道）。
+  用户已授权限时离线工程与包生命周期推进；新运行调查仍须明确调整冻结与观测条件，
+  不把 i9/i10 构建、安装或基础首启外推为 R5 通过。
 - **R18 文档结构迭代主体已闭合**：R17 四轮已闭合，三篇[基线代际文档](../README.md)已审定；
   patched-27 的 `debs/` 实物补证已由 dsh 在 R17 §21.1 补记，原先「本机无实物」记录保留为错误资产。
   批 5 收档交叉确认已通过，工具适配另批（R19）已由 `e656612` 收档闭合；
@@ -150,7 +168,7 @@
 ## 发布判断
 
 patched-20、patched-21 和 patched-22 均为历史候选或验收证据，不是当前安装入口。p20 不得推广，
-p21/p22 的电源、合盖、拔屏和跨硬件限制仍按历史记录保留。当前 fantgpu `5.0.0-i6` 是诊断线，
+p21/p22 的电源、合盖、拔屏和跨硬件限制仍按历史记录保留。当前 fantgpu `5.0.0-iN` 是诊断线，
 不是新设备默认入口。Deepin 回退判断以 `4.0.2-i3`、R14 正式矩阵、
 `4.0.0-i1`/`patched-27` 回退链及 Phase 5 状态为准；公开发布仍被许可证审计阻断。
 `patched-17`/`patched-8` 仅作深层回退。

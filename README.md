@@ -5,7 +5,7 @@
 本项目自有工作采用 GPL-3.0-or-later；fork 上游 MIT 内容与导入源码/厂商载荷按各自声明处理，
 当前再分发边界见[许可证与再分发边界](docs/project/licensing.md)（唯一权威文档）。
 
-> 最后更新：2026-09-21 —— 当前主线为 fantgpu 5.0.0-iN（i6 诊断线，R5=FAIL 悬案中，见
+> 最后更新：2026-09-24 —— 当前主线为 fantgpu 5.0.0-iN（诊断线，R5=FAIL 悬案中，见
 > [status.md](docs/project/status.md)）。历史（2026-09-03 记录）：当前驱动包和正式交付版本为 `4.0.2-i3`（patch-024 + patch-026 +
 > patch-028 + patch-029）；R14 在当前设备完成 6/6 deep 验收。patch-025-display 继续保持
 > UNVERIFIED，不进入 i3；DDCCI 不提供亮度控制，`hwinfo_g0m.bin` 仍缺失。
@@ -14,13 +14,13 @@
 
 | 项 | 值 |
 | --- | --- |
-| 发行版 / 内核 | Debian Trixie (13)，kernel `6.12.101+deb13-amd64` |
+| 发行版 / 内核 | Debian Trixie (13)，当前 kernel `6.12.107+deb13-amd64`（运行状态以 [status](docs/project/status.md) 为准） |
 | CPU 平台 | Hygon x86_64 |
 | GPU | Innosilicon Fantasy II-M，PCI `1ec8:9810`，2 GiB VRAM（PowerVR DDK V119 RTM 谱系） |
 | 回退基线（历史交付） | `4.0.2-i3`：固定 epoch `1788796800`，SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；R14 接电/电池、无外屏/外屏 6/6 deep 通过；R16 起主线为 fantgpu 5.0.0-iN |
 | 最近失败候选 | `4.0.2-i1`：patch-024 + patch-026；R11 deep 恢复时温度 work 在 PVR 上电前触发 PowerLock/POWERED_OFF，已回退，仅供历史复现 |
 | Deepin suspend 历史交付 | `4.0.2-i3`：i2 + patch-029 DDCCI panel 创建恢复（继承 024/026/028），不含 display 025；DDCCI 无 backlight device，`hwinfo_g0m.bin` 缺失不阻断 R14 矩阵 |
-| 已验证能力 | Vulkan 1.3.264 枚举及队列提交 / OpenCL 3.0 枚举及 kernel 读回 / GL 4.3 core + GLES 3.2 / VA-API H.264 Main + HEVC Main 实际硬解（30 帧 320x240 NV12 输出校验）/ DMA-BUF 同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 / DRM+fbdev / 桌面硬件 GL / HDA 与 PipeWire 枚举 |
+| 历史已验证能力（适用版本见 [status](docs/project/status.md)，非 i10 运行验收） | Vulkan 1.3.264 枚举及队列提交 / OpenCL 3.0 枚举及 kernel 读回 / GL 4.3 core + GLES 3.2 / VA-API H.264 Main + HEVC Main 实际硬解（30 帧 320x240 NV12 输出校验）/ DMA-BUF 同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 / DRM+fbdev / 桌面硬件 GL / HDA 与 PipeWire 枚举 |
 
 ## 版本演进
 
@@ -29,7 +29,7 @@
 3. **迁移 Deepin**：以 Deepin 202504 完整原包为唯一技术基线，统一用户态/固件/DDX 载荷，消除 ABI 混配。
 4. **完全重构**：取消历史补丁叠加模式 → `drivers/` 仓库内维护的导入源码树 + manifest 管理黑盒，新构建器从 `4.0.0-i1` 基线演进并保持可复现构建。
 5. **Deepin suspend/resume 历史交付**：R10 证明 patch-024 存在 TOCTOU；R11 的 i1 增加 devfreq/PVR 生命周期同步后，仍因独立温度 work 提前启动而失败；R12 的 i2 用 patch-028 等待 PVR 子设备恢复成功；R13 的 i3 让 DDCCI 回退模式创建 panel 以恢复 GPIO callback；R14 完成 6/6 deep 正式矩阵，display 025 保持独立实验状态。
-6. **fantgpu 诊断线（当前）**：F0 + 030 链物化至 `5.0.0-i6`；R5=FAIL、OUTSIDE_COVERAGE、根因未定位，禁止重跑；运行状态与执行门槛见 [status](docs/project/status.md)。
+6. **fantgpu 诊断线（当前）**：F0 + 030 链由 `5.0.0-i6` 继续派生兼容与生命周期修正；R5=FAIL、OUTSIDE_COVERAGE、根因未定位，禁止重跑；安装版本与当前运行版本分列，见 [status](docs/project/status.md)。
 
 ## 主要修复的问题
 

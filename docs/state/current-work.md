@@ -16,16 +16,21 @@
   的 wrapper 等价分析或盲加 timer。新的运行调查仍须明确调整相应冻结与观测条件。证据链：
   [r5 调查计划](../design/r5-suspend-investigation-plan.md)、
   [步骤 8 结果](../planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-result.txt)。
-- [ ] **发布阻断（fantgpu 5.0.0-iN 线）**：① `postinst_current_kernel_only=release_blocker`（postinst
-  只构建当前运行内核）；② `validation-results.json` 未签；③ tag `fantgpu-5.0.0-iN` 未打；
-  ④ R5=FAIL 未解除。许可发布边界（1C/BLOCKED）不变。
+- [ ] **发布阻断（fantgpu 5.0.0-iN 线）**：② `validation-results.json` 未签；③ tag
+  `fantgpu-5.0.0-iN` 未打；④ R5=FAIL 未解除。① `postinst_current_kernel_only` 已由 dsh
+  在 R28 接受精确 i9 的真实八核安装证据后裁定解除；该裁定不替代 i10 的独立安装审查，
+  也不代表运行能力验收。裁定来源见 [status](../project/status.md#r28-安装裁定与-r31-接续)。
+  许可发布边界（1C/BLOCKED）不变。
 - [ ] 诊断内核处置：r5dpm1/r5dpm2 包保留待 dsh 决定是否卸载；GRUB 已恢复原配置（默认解析
   6.12.107+deb13，既有行为；改默认须另立变更）。
 
-**后置事项（同次用户裁定）**：107 兼容修复暂缓，归跨基线、后续各版本的共同适配事项，
-不作为当前 F/Deepin 能力对齐的前置。完整多内核包验收与发布收尾同样后置；R27 八核离线窗口
-的 `FAILED_OR_UNVERIFIED` 原记录保留，不通过删除107或缩小历史矩阵改写为通过。
-当前核的后续证据须单独标明范围；不改变宿主内核清单、默认启动项或生产 postinst 的目标集合。
+**优先级与接续（2026-09-24）**：此前暂缓的 107 兼容修复，已按用户后续「先修复，然后再继续」
+授权在 i9 完成；R28 的真实八核安装与 107 基础首启已获终审接受。R30 的 i10 八核 A/B
+由 `78963e1` 收档，R31 八核受监督安装及只读后验 PASS，待 qoder/dsh 审查；i10 尚未首启，
+重启须单独授权。F/Deepin 运行能力对齐
+仍为主线，构建/安装/基础首启均不代替 deep、显示恢复与 PVR 判据。
+R27 早期八核窗口的 `FAILED_OR_UNVERIFIED` 原记录保留，不通过删除107或缩小历史矩阵改写为通过；
+各次窗口单列身份与结果，不改变宿主内核清单、默认启动项或生产 postinst 的目标集合。
 冻结不变：OUTSIDE_COVERAGE、R5=FAIL、禁止重跑、U1/U2、validation-results、未打 tag。
 
 **闭合说明（R21 叙事批量提升，非待办）**：R20 的 D2 已由 `841c07a` 闭合，D4 已由 `6370fa2` 闭合；
