@@ -38,7 +38,8 @@
 设计与计划按主题查阅：[R5 调查方案](design/r5-suspend-investigation-plan.md)、
 [本机 watchdog 抓现场](design/r5-watchdog-local-capture-design.md)、
 [r5dpm1 诊断内核](design/r5-dpm-watchdog-diagnostic-kernel-design.md)、
-[r5dpm2 诊断内核](design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md)；
+[r5dpm2 诊断内核](design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md)、
+[VPU契约修正与R5观测实现](design/r5-vpu-and-observation-implementation.md)；
 [O_stage 集成](design/o-stage-integration-plan.md)、[可复现输入](design/c3-a-4-reproducible-input-plan.md)、
 [5.0.0-i2 验证计划](design/5.0.0-i2-validation-plan.md)；
 [030 关闭项裁决](design/030-closed-items-decision.md)、[D_stage 审计契约](design/030-d-stage-audit.md)、

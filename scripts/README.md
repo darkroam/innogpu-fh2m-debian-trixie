@@ -28,7 +28,7 @@
 | `generate-binary-manifest.py`（tools/） | 清单生成 | 从 Deepin deb 确定性生成 `binary-manifest.json`（校验 deb SHA、覆盖全部黑盒文件与符号链接、kind/role/license 分类） |
 | `compare-oracle-candidates.sh` | oracle 对比 | 新架构候选包 vs patched-27：对比 control（除 Version/Description/Installed-Size）、文件清单、载荷哈希、DKMS 源码、黑盒对象、maintainer 脚本（版本归一）、版本排序与 module_symbols（调用 compare-module-symbols.sh）；构建产物（.o.cmd/.o/.ko/modules.order/Module.symvers/.mod）统一按 ARTIFACT_RE 排除；输出机器可读 PASS/FAIL |
 | `compare-module-symbols.sh` | 只读符号对比 | 离线构建候选与 patched-27 两包 DKMS 源码（同一内核头），逐 .ko 对比 vermagic/depends/导出符号/导入符号；构建于 `$ROOT/.build/`，不安装不重启；module_symbols=PASS/FAIL/UNCOMPARABLE |
-| `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；R29 提案仅 `5.0.0-i10` + epoch `1790121600`：只读继承 i6 父树与 i8/i9 派生，增加 input connect 失败逆序清理、蓝牙分支保持。编译/包内源共用派生树门 `c08b2bd426bc`；i1-i9/未知版本/错 epoch 拒绝，全 K 与 ABI 门保持。实施及用户态回归待集中审查，尚无 i10 正式构建/安装/PM 验收 |
+| `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；R33 候选仅 `5.0.0-i11` + epoch `1790208000`：继承已审 i10，仅初始化 VPU timer_suspend 并在 PREPARE/stop 接受0/1成功。编译/包内源共用派生树门 `f0e5490ad2d1`；i1-i10/未知版本/错 epoch 拒绝，ABI 门保持。D/F共享代码问题，不是R5解法；i11尚无正式包A/B或安装验收，i10历史成绩不改 |
 | `generate-fantgpu-maintainer-scripts.sh` | F 构建器共用生成段 | 只向显式 PACKAGE_ROOT 的 DEBIAN/ 写 postinst/prerm/postrm，生产与回归共用。K 全集检查/失败传播；两调用点共用配置门，仅固定 autoinstall_all_kernels.conf 已审 30 字节 SHA 例外，其它有效配置与目录/文件符号链接拒绝，不 source 配置取值。回退丢弃未装包暂存根，已安装包另行批准恢复 |
 | `build-patched17-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝把 patched-17 作为后续构建父版本 |
 | `build-patched18-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝重建历史混合载荷 patched-18 |
@@ -178,3 +178,7 @@ vendor unit/helper 和全部命令链接，不能把 `PASS_RELEASE_PACKAGE_BOUND
 3. 测试原始日志进入忽略路径，Git 只保留精简结果。
 4. 维护规则、隐私和 release 边界见
    [`docs/project/maintenance-policy.md`](../docs/project/maintenance-policy.md)。
+
+R34离线观测实现：`tools/prepare-r5-observation.py`锁定6.12.101输入并向全新副本增加notifier成对边界/prepare进度；
+`tools/r5-observation.py`只生成配置规格或检查普通JSON，不挂载/访问tracefs、不安装或触发PM。
+实现与运行前置见[双立项说明](../docs/design/r5-vpu-and-observation-implementation.md)。

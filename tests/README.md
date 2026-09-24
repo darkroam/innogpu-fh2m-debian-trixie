@@ -282,3 +282,12 @@ R30 正式原生执行器现为 i10/1790121600，attempt-10-i10-all-k 全新根�
 前驱从已验证 attempt-09 提取 i9 包/source/prerm 与八核已签模块，逐项对封存清单核验，
 先运行 i9 prerm（保留 O 注册），再放入 i10。宿主当前107与构建首核101分别锁定，K仍完整八核。
 i9原证据不改写；不重复i9宿主安装/首启，不触发PM。
+
+R33 VPU最小修正回归复用 `bash tests/unit/run-builder-fantgpu-gates-tests.sh`：
+生产派生函数锁定i11树，只改既有timer_suspend初始化、PREPARE/stop接受0/1；
+从派生源抽取原函数编译用户态夹具，非零填充分配/失败/重复通知/最终stop均覆盖。
+不加载模块、不执行PM；callback并发可终止性未由mock证明。
+
+R34离线测试：`python3 -B tests/unit/run-r5-observation-tests.py`，30项覆盖成对/未完成/嵌套notifier、任务迁核、idle按CPU隔离、跨回调错序拒绝、
+prepare重试/进度、丢失计数拒绝、符号缺失/歧义、源漂移及路径拒绝；不加载/探测设备。
+真实编译使用独立观测源码副本，成绩不替代安装、通道正样或PM验收。

@@ -1,12 +1,18 @@
 # 测试体系策略（重构，4.0.0-i1 基线）
 
+R33候选i11/1790208000仅修D/F共享VPU timer初始化与0/1返回契约；派生树`f0e5490ad2d1`。
+`run-builder-fantgpu-gates-tests.sh`增加真实派生函数C回归：非零填充内存、分配失败、
+空/重复PREPARE与POST、suspend/hibernate、stop兄弟路径，返回0/1均成功。
+这些是用户态契约测试；不证明并发rearm/closed callback终止或R5修复。
+i10正式runner与旧A/B证据保持历史身份，不能直接用当前窄门重跑；i11正式包资格另批。
+
 > 2026-08-21 建立，2026-08-31 完成计数权威收敛。目标：后续优化遵循"先写失败测试 → 修改实现 →
 > 回归验证"。本策略定义分层、能力域、输出规范、风险与执行顺序。约束：不安装驱动、不切换模块、
 > 不重启；runtime 域仅实机授权后执行。
 
 ## 一、现有测试盘点
 
-R29 当前实施候选为 i10/1790121600，继承 i9 并只修 input connect 失败清理。
+R29历史实施候选为 i10/1790121600，继承 i9 并只修 input connect 失败清理。
 生产派生函数由编译树与包内源共用；现有 builder 测试直接抽取派生前后 connect/disconnect，
 以 USB/蓝牙 × 正常/两次分配失败/PM 注册拒绝/句柄注册失败/打开失败共12用例检查返回码、
 资源归零、逆序撤销及蓝牙零 PM 注册；原函数7个预期失败保留为反例。任意 PM 注册错误注入
@@ -286,3 +292,10 @@ Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
 `docs/archive/phase4-device-validation.md`。
 
 R28 i9兼容修订：用户批准先修107。DRM接口按编译探针区分，核心预分配与旧分配路径共享错误检查；派生源码锁独立，原文不改。builder30项含实际派生C片段两分支；maintainer98项含ABI完整DWARF扫描的严格rc与布局反例。ABI仅精确识别既有shipped原布局，禁止忽略pahole错误。正式全K A/B核对deb/模块/initrd，旧失败记录保持。
+
+## R34 观测离线边界
+
+`python3 -B tests/unit/run-r5-observation-tests.py`为普通用户态30项检查，
+不访问sysfs/debugfs/tracefs、不触发PM；真实观测事件须经离线内核编译另验。
+[实现说明](../design/r5-vpu-and-observation-implementation.md)区分配置规格、内核事件和未来通道前置；
+本地RAM记录不能替代独立接收，静态/编译通过不解除禁止重跑。

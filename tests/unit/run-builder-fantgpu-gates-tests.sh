@@ -2,7 +2,7 @@
 # tests/unit/run-builder-fantgpu-gates-tests.sh — builder F 分支早期门禁与静态契约单测
 #
 # 依据 docs/design/c3-a-4-reproducible-input-plan.md §三（改造点 9-13）与
-# §四（postinst/md5sums/trace）：R29 候选 5.0.0-i10、血统判定 5.0.0-i*、
+# §四（postinst/md5sums/trace）：R33 候选 5.0.0-i11、血统判定 5.0.0-i*、
 # 输入预检分支、PKG_DESC $VERSION 参数化、share/命令前缀血统参数化、
 # ld.so.conf fantgpu-fh2m、postinst fh2m_dri.so + 设备门。
 # 只测可运行早期门禁与静态契约（不编译内核：KERNELDIR 注入不存在路径使
@@ -43,8 +43,8 @@ else
     bad t01 "rc=$RC"
 fi
 
-# t02 i10 仅通过版本/epoch门，未通过源身份门，更不代表实际构建通过。
-run_builder VERSION=5.0.0-i10 SOURCE_DATE_EPOCH=1790121600
+# t02 i11 仅通过版本/epoch门，未通过源身份门，更不代表实际构建通过。
+run_builder VERSION=5.0.0-i11 SOURCE_DATE_EPOCH=1790208000
 if [ "$RC" -eq 1 ] && grep -Fq "staging_kernel_headers=FAIL" "$TMP/b.out"; then
     ok t02
 else
@@ -60,7 +60,7 @@ else
 fi
 
 # t04 epoch 错误 → builder_repro=FAIL
-run_builder VERSION=5.0.0-i10 SOURCE_DATE_EPOCH=1111111111
+run_builder VERSION=5.0.0-i11 SOURCE_DATE_EPOCH=1111111111
 if [ "$RC" -eq 1 ] && grep -Fq "builder_repro=FAIL" "$TMP/b.out"; then
     ok t04
 else
@@ -212,11 +212,11 @@ else
     bad t19_archived_i5 "rc=$RC"
 fi
 
-for version in 5.0.0-i{1..9}; do
+for version in 5.0.0-i{1..10}; do
     epoch=1788796800
     [[ "$version" != 5.0.0-i5 && "$version" != 5.0.0-i6 ]] || epoch=1789516800
     [[ "$version" != 5.0.0-i7 ]] || epoch=1790035200
-    [[ "$version" != 5.0.0-i8 && "$version" != 5.0.0-i9 ]] || epoch=1790121600
+    [[ "$version" != 5.0.0-i8 && "$version" != 5.0.0-i9 && "$version" != 5.0.0-i10 ]] || epoch=1790121600
     run_builder VERSION="$version" SOURCE_DATE_EPOCH="$epoch"
     if [[ "$RC" == 1 ]] && ! [[ -d "$TMP/stage" ]]; then
         ok "archived-$version"
@@ -224,7 +224,7 @@ for version in 5.0.0-i{1..9}; do
         bad "archived-$version" "rc=$RC or staging was written"
     fi
 done
-run_builder VERSION=5.0.0-i10 SOURCE_DATE_EPOCH=
+run_builder VERSION=5.0.0-i11 SOURCE_DATE_EPOCH=
 if [[ "$RC" == 1 ]] && grep -Fq builder_repro=FAIL "$TMP/b.out"; then
     ok empty-epoch
 else
@@ -234,7 +234,7 @@ fi
 mkdir -p "$TMP/root/headers" "$TMP/root/docs/planning/evidence/o-stage/5.0.0-i6"
 printf '%s\n' '{}' > "$TMP/root/docs/planning/evidence/o-stage/5.0.0-i6/5.0.0-i6.meta.json"
 set +e
-INNOGPU_ROOT="$TMP/root" VERSION=5.0.0-i10 SOURCE_DATE_EPOCH=1790121600 \
+INNOGPU_ROOT="$TMP/root" VERSION=5.0.0-i11 SOURCE_DATE_EPOCH=1790208000 \
     KERNELDIR="$TMP/root/headers" STAGE_ROOT="$TMP/stage" \
     bash "$BUILDER" > "$TMP/b.out" 2> "$TMP/b.err"
 RC=$?
@@ -251,7 +251,7 @@ resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
 builder, repo, tree, tmp = map(pathlib.Path, sys.argv[1:])
 text = builder.read_text()
 func = text[text.index("derive_fantgpu_source() {"):text.index("\nAPPLIED_SOURCE_FIXES=")]
-names = ["cfg_detect.sh", "test_item.sh", "fantsrvkm/fantdpu_drm_fb.c", "fantpower/fant_input_event.c"]
+names = ["cfg_detect.sh", "test_item.sh", "fantsrvkm/fantdpu_drm_fb.c", "fantpower/fant_input_event.c", "fantvpu/fantvpu_drv.c"]
 originals = {name: (tree / name).read_bytes() for name in names}
 before = originals["cfg_detect.sh"]
 env = dict(os.environ, ROOT=str(repo))
@@ -265,6 +265,7 @@ assert line == b'LC_ALL=C sort -o "$CFG_FILE_DIR/$CFG_FILE" "$CFG_FILE_DIR/$CFG_
 assert hashlib.sha256(after).hexdigest() == "f096890ea5662301f6eb805c2a5554aa9d027aebd1b2b8c28d31f84ae7c431ca"
 fb_source = (tree / "fantsrvkm/fantdpu_drm_fb.c").read_text()
 input_source = (tree / "fantpower/fant_input_event.c").read_text()
+vpu_source = (tree / "fantvpu/fantvpu_drv.c").read_text()
 # Reject second application and unrelated parent drift before mutation.
 assert derive().returncode != 0
 for name, data in originals.items():
@@ -413,6 +414,82 @@ for label, content in [("before", original), ("after", input_source)]:
             assert p.returncode == (-6 if reproduces else 0), (label, bluetooth, failure, p.returncode, p.stderr)
             print(f"input_{label} bus={bluetooth} failure={failure} rc={p.returncode} " + ("EXPECTED_DEFECT" if reproduces else p.stdout.strip()))
 print("input_cleanup_cases=12 passed=12 baseline_defects=7")
+# Use the actual derived functions. The timer mock models API 0/1, not scheduling.
+import re
+def vpu_function(text, name):
+    m = re.search(r'^[^\n;{}]*\b'+name+r'\([^;{}]*\)\s*\{[ \t]*\n.*?^\}', text, re.M|re.S)
+    assert m, name
+    return m.group()
+vpu_harness = r'''#include <assert.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stddef.h>
+#include <errno.h>
+#define USE_REFACTOR_LOGIC
+#define KERNEL_VERSION(a,b,c) (((a)<<16)+((b)<<8)+(c))
+#define LINUX_VERSION_CODE KERNEL_VERSION(6,12,101)
+#define PM_HIBERNATION_PREPARE 1
+#define PM_SUSPEND_PREPARE 2
+#define PM_POST_HIBERNATION 3
+#define PM_POST_SUSPEND 4
+#define PM_POST_RESTORE 5
+#define PM_RESTORE_PREPARE 6
+#define NOTIFY_DONE 0
+#define GFP_KERNEL 0
+#define HZ 250
+#define vpu_prinfo(...) ((void)0)
+#define vpu_prerr(...) ((void)0)
+#define vpu_warn(...) ((void)0)
+#define container_of(p,t,m) ((t *)((char *)(p)-offsetof(t,m)))
+struct notifier_block {int dummy;};
+typedef struct {struct notifier_block pm_notifier;} vpu_drv_ctxs;
+struct timer_list {int pending;};
+struct vpu_drv_info;
+typedef struct {struct timer_list timer; unsigned long jiffies; struct vpu_drv_info *drv_info; long last_timestamp; bool timer_suspend;} vpu_timer_t;
+typedef struct vpu_drv_info {vpu_timer_t *workload_timer;} vpu_drv_info;
+static vpu_drv_info *g_vpu_drv_info;
+static unsigned long jiffies;
+static int del_calls, arm_calls, fail_alloc, live, returned;
+static void *kmalloc(size_t n,int flags) {void *p; if(fail_alloc)return NULL; p=malloc(n);assert(p);memset(p,0xa5,n);live++;return p;}
+static void kfree(void *p) {assert(p);free(p);live--;}
+static void timer_setup(struct timer_list *t,void (*fn)(struct timer_list *),int flags) {t->pending=0;}
+static void mod_timer(struct timer_list *t,unsigned long when) {t->pending=1;arm_calls++;}
+static int del_timer_sync(struct timer_list *t) {del_calls++;assert(del_calls<4);t->pending=0;return returned;}
+static void workload_timer_callback(struct timer_list *t) {}
+static long fh2m_fant_clockmonotonic_raw(void) {return 0;}
+static void udelay(int n) {assert(!"unexpected retry for API success");}
+static void msleep(int n) {assert(!"unexpected retry for API success");}
+#include "vpu-functions.inc"
+int main(int argc,char **argv) {
+ vpu_drv_info info={0};vpu_drv_ctxs ctx={0};returned=atoi(argv[1]);g_vpu_drv_info=&info;
+ fail_alloc=1;assert(vpu_start_workload_timer(&info)==-ENOMEM && !info.workload_timer && !live);fail_alloc=0;
+ assert(vpu_notifier(&ctx.pm_notifier,PM_SUSPEND_PREPARE,NULL)==NOTIFY_DONE && del_calls==0);
+ assert(vpu_start_workload_timer(&info)==0 && info.workload_timer->timer_suspend==false && arm_calls==1);
+ assert(vpu_start_workload_timer(&info)==0 && arm_calls==1 && live==1);
+ for(int phase=0;phase<2;phase++) {
+  int prepare=phase?PM_HIBERNATION_PREPARE:PM_SUSPEND_PREPARE;
+  int post=phase?PM_POST_HIBERNATION:PM_POST_SUSPEND;
+  del_calls=0;int arms=arm_calls;
+  assert(vpu_notifier(&ctx.pm_notifier,prepare,NULL)==NOTIFY_DONE);
+  assert(info.workload_timer->timer_suspend==true && del_calls==1);
+  vpu_notifier(&ctx.pm_notifier,prepare,NULL);assert(del_calls==1);
+  vpu_notifier(&ctx.pm_notifier,post,NULL);assert(info.workload_timer->timer_suspend==false && arm_calls==arms+1);
+  vpu_notifier(&ctx.pm_notifier,post,NULL);assert(arm_calls==arms+1);
+ }
+ del_calls=0;vpu_stop_workload_timer(&info);assert(del_calls==1 && !info.workload_timer && live==0);
+ vpu_stop_workload_timer(&info);assert(del_calls==1);
+ return 0;
+}
+'''
+names = ['vpu_notifier','vpu_start_workload_timer','vpu_stop_workload_timer']
+(tmp/'vpu-functions.inc').write_text('\n'.join(vpu_function(vpu_source,n) for n in names))
+(tmp/'vpu-contract.c').write_text(vpu_harness)
+exe=tmp/'vpu-contract'
+subprocess.run(['cc','-Wall','-Wextra','-Werror','-Wno-unused-parameter','-Wno-unused-variable',str(tmp/'vpu-contract.c'),'-o',str(exe)],check=True)
+for ret in (0,1):
+    subprocess.run([str(exe),str(ret)],check=True)
+    print(f'vpu_timer_api_return={ret} initialization_nonzero_memory=PASS prepare_post_stop=PASS')
 print("derived_exact_tree_sort_and_fb_ownership_contract=PASS")
 PY
 then

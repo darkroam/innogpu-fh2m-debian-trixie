@@ -49,6 +49,7 @@ docs/design/phase5-retirement-design.md
 docs/design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md
 docs/design/r5-dpm-watchdog-diagnostic-kernel-design.md
 docs/design/r5-suspend-investigation-plan.md
+docs/design/r5-vpu-and-observation-implementation.md
 docs/design/r5-watchdog-local-capture-design.md
 docs/design/source-tree-migration.md
 docs/history/display-integration.md
@@ -355,6 +356,7 @@ tests/unit/run-r16-classify-tests.sh
 tests/unit/run-r16-f-payload-integrity-tests.sh
 tests/unit/run-r16-gate-tests.sh
 tests/unit/run-r16-restore-tests.sh
+tests/unit/run-r5-observation-tests.py
 tests/unit/run-results-parser-tests.sh
 tests/unit/run-suspend-failure-finalize-tests.sh
 tests/unit/run-suspend-resume-tests.sh
@@ -376,6 +378,7 @@ tools/materialize-fantgpu-payload.py
 tools/o4-f0-lock-gen.py
 tools/p2-normalize-v3.py
 tools/patch-gpupll-object.py
+tools/prepare-r5-observation.py
 tools/private-data-patterns.txt
 tools/probe-dmabuf-self-import.c
 tools/probe-drm-topology.c
@@ -394,6 +397,7 @@ tools/r16-build-bc-map.py
 tools/r16-classify.py
 tools/r16-f-payload-integrity.py
 tools/r16-gate.py
+tools/r5-observation.py
 tools/run-dmabuf-regression-test.sh
 tools/run-vaapi-decode-test.sh
 tools/trace-loader.c

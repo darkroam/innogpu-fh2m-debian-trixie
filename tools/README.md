@@ -6,6 +6,8 @@
 
 | 工具 | 类型 | 用途与边界 |
 | --- | --- | --- |
+| `prepare-r5-observation.py` | R34 离线源码准备 | 校验锁定输入与唯一锚点，在全新独立副本生成 notifier 成对事件和 prepare 进度事件；不复制签名私钥、不改冻结源、不构建或安装。验证见 `tests/unit/run-r5-observation-tests.py` 与[实现说明](../docs/design/r5-vpu-and-observation-implementation.md) |
+| `r5-observation.py` | R34 离线配置与分析 | 从 System.map 生成有界 trace 配置规格，校验规范化记录的身份、配对、进度与丢失计数；只读普通输入文件，不访问 tracefs、不加载探针、不触发 PM。检查结果仅覆盖选定记录，不能判定 R5 根因；验证见同一测试与实现说明 |
 | `check-fantgpu-shipped-abi.py` | F 共享 ABI 门 | 既有文本门检查 size=140536、members=115、尾字段及固定偏移；`--module MODULE OUTPUT` 完整 DWARF 前缀扫描，避开 pahole 1.30 的 `-C` 提前停止错误，返回码仍须0。保留全部布局，仅精确 SHA 匹配的冻结 shipped 114成员原布局另列，其余须唯一通过115成员门；原始输出/错误一并留存。builder 与 strip 前共用，缺失/多义/漂移均拒绝 |
 | `patch-gpupll-object.py` | 构建期对象变换 | 对 Deepin 202504 的 `innogpu.o_shipped` 执行严格单点字节替换；只接受唯一旧序列或已变换状态，其他载荷立即失败 |
 | `probe-egl-gbm.c` | 最小 C 探针 | 在指定用户态库环境中创建 GBM device 和 EGL/GLES2 context，报告 backend、renderer 与基本绘制错误，不修改系统配置 |
