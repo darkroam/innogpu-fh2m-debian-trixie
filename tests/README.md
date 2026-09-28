@@ -292,7 +292,7 @@ R33 VPU最小修正回归复用 `bash tests/unit/run-builder-fantgpu-gates-tests
 从派生源抽取原函数编译用户态夹具，非零填充分配/失败/重复通知/最终stop均覆盖。
 不加载模块、不执行PM；callback并发可终止性未由mock证明。
 
-R34/R36/R41离线测试：`python3 -B tests/unit/run-r5-observation-tests.py`，119项覆盖配置缺失/错误release拒绝、成对/未完成/嵌套notifier、任务迁核、idle按CPU隔离、跨回调错序拒绝、
+R34/R36/R41离线测试：`python3 -B tests/unit/run-r5-observation-tests.py`，150项覆盖配置缺失/错误release拒绝、成对/未完成/嵌套notifier、任务迁核、idle按CPU隔离、跨回调错序拒绝、
 prepare重试/进度、丢失计数拒绝、符号缺失/歧义、源漂移及路径拒绝；不加载/探测设备。
 同名驱动函数保留全部实际ftrace地址；跨模块、重复地址、多个编译变体与缺失控制根拒绝，不能用set去重后宣称唯一。
 传输检查实际编译运行生产C序列化函数（仅替换内核I/O），由Python读取其字节；
@@ -306,3 +306,9 @@ R44新增41项：同一生产check入口与CLI覆盖对象/生命周期/completi
 逐字段错配及缺项、跨CPU完整关联正样、旧PID-only迁核UNKNOWN、同PID复用、重复/重用调用ID、
 错误callback返回、schema混用与超包络；生成器共用同一契约/预算，C数据页门改为1920页/核。
 新配对PASS仅限规范化记录，不代表内核已发射新事件、完整字典或真实内存/吞吐已验收。
+
+R45新增生产C事件声明/赋值生成原始字节，再走同一semantic-wire-check CLI；覆盖format漂移、
+字典缺项、跨CPU接收乱序、六身份冲突、peer冲突、失效标记、重复/缺exit/缺END/丢包。
+生产发射器边界函数以内核primitive计数替身运行，核reinit/complete实际调用不被隐藏，
+并核并发重置、代次/prepare/事件上限拒绝；导出器实例缺事件/过滤拒绝。
+这些是离线语义回归，不是内核并发、全PM路径或allocator运行实测。

@@ -82,7 +82,7 @@ def check_semantic_records(records):
                 event.get('pm_phase') not in semantic_contract()['pm_phases']):
             raise ValueError('semantic schema/operation/phase mismatch')
         allowed = set(PAIR_FIELDS) | {'seq', 'cpu', 'pid', 'schema', 'kind', 'phase',
-                                     'operation', 'pm_phase', 'ret'}
+                                     'operation', 'pm_phase', 'ret', 'peer_id', 'flags'}
         if set(event) - allowed:
             raise ValueError('unknown semantic fields; identity aliases are not silently ignored')
         if any(type(event.get(k)) is not int or not 1 <= event[k] < 2**64 for k in PAIR_FIELDS):
@@ -90,13 +90,18 @@ def check_semantic_records(records):
             continue
         if event['phase'] == 'exit' and type(event.get('ret')) is not int:
             raise ValueError('semantic exit return required')
+        if (type(event.get('peer_id', 0)) is not int or not 0 <= event.get('peer_id', 0) <= 512
+                or type(event.get('flags', 0)) is not int or event.get('flags', 0) != 0):
+            tainted.add((event['task_id'], event['task_generation'], event['call_id']))
+            issues.append(dict(status='UNKNOWN', reason='invalid producer identity/census', record=event))
+            continue
         task = (event['task_id'], event['task_generation'])
         if task in task_pids and task_pids[task] != event['pid']:
             issues.append(dict(status='UNKNOWN', reason='stable task has conflicting PID', record=event))
             continue
         task_pids[task] = event['pid']
         call = (*task, event['call_id'])
-        identity = tuple(event[k] for k in PAIR_FIELDS) + (event['operation'], event['pm_phase'])
+        identity = tuple(event[k] for k in PAIR_FIELDS) + (event['operation'], event['pm_phase'], event.get('peer_id', 0))
         if event['phase'] == 'entry':
             if call in seen:
                 tainted.add(call)
@@ -195,6 +200,128 @@ def check_stream(path, session):
             'raw_sha256':digest,
             'boundary':'raw transport only; event formats, graph/probe counters, exact boot and PM coverage require separate evidence',
             'PM_coverage':'NOT_ASSESSED','R5':'FAIL'}
+
+
+# Exact x86-64 trace layouts emitted by SEMANTIC_EVENTS in the generator.
+# IDs are obtained from saved format files, never guessed from another boot.
+RAW_PAIR = struct.Struct('<6Q4IIi')
+RAW_DICTIONARY = struct.Struct('<Q4I48s24s')
+RAW_LAYOUTS = {
+    'r5_pair': [('common_type',0,2), ('common_flags',2,1), ('common_preempt_count',3,1),
+                ('common_pid',4,4), ('token',8,64), ('exit',72,4), ('ret',76,4)],
+    'r5_dictionary': [('common_type',0,2), ('common_flags',2,1), ('common_preempt_count',3,1),
+                      ('common_pid',4,4), ('life',8,8), ('id',16,4), ('parent',20,4),
+                      ('supplier',24,4), ('kind',28,4), ('name',32,48), ('driver',80,24)],
+}
+
+def semantic_format(path, name):
+    text = path.read_text()
+    if re.findall(r'^name: (\w+)$', text, re.M) != [name]:
+        raise ValueError('wrong semantic event format name')
+    ids = re.findall(r'^ID: (\d+)$', text, re.M)
+    if len(ids) != 1 or not 1 <= int(ids[0]) < 65536:
+        raise ValueError('invalid semantic event ID')
+    fields = []
+    for decl, offset, size in re.findall(r'field:([^;]+);\s*offset:(\d+);\s*size:(\d+);',text):
+        field = decl.strip().split()[-1].split('[')[0]
+        fields.append((field,int(offset),int(size)))
+    if fields != RAW_LAYOUTS[name]:
+        raise ValueError('semantic event layout drift')
+    return int(ids[0])
+
+def semantic_wire_check(path, session, pair_format, dictionary_format):
+    transport = check_stream(path, session)  # strict frame/nonce/order validation
+    if sum(transport['event_types'].values()) > semantic_contract()['max_records']:
+        raise ValueError('raw semantic record envelope exceeded')
+    pair_id = semantic_format(pair_format, 'r5_pair')
+    dictionary_id = semantic_format(dictionary_format, 'r5_dictionary')
+    if pair_id == dictionary_id:
+        raise ValueError('event IDs collide')
+    objects = {}; edges = set(); dictionary_end = None; life = None; events = []
+    def short_name(raw):
+        head, sep, tail = raw.partition(b'\0')
+        if not sep or any(tail) or any(c < 32 or c == 127 for c in head):
+            raise ValueError('dictionary string not bounded/zero padded')
+        return head.decode('utf-8')
+    with path.open('rb') as stream:
+        stream.read(8)
+        while frame := stream.read(FRAME.size):
+            length, _ = FRAME.unpack(frame)
+            data = stream.read(length)
+            _,_,kind,_,_,seq,cpu,_,ts,_,_ = WIRE.unpack_from(data)
+            if kind != 1:
+                continue
+            payload = data[WIRE.size:]
+            event_id,_,_,pid = struct.unpack_from('<HBBi',payload)
+            if event_id == dictionary_id:
+                if len(payload) != 104 or dictionary_end is not None:
+                    raise ValueError('dictionary layout/end boundary')
+                generation,obj,parent,supplier,tag,name,driver = RAW_DICTIONARY.unpack_from(payload,8)
+                if generation != 1 or (life is not None and generation != life):
+                    raise ValueError('dictionary lifecycle changed')
+                life = generation
+                name,driver = short_name(name),short_name(driver)
+                if tag == 0:
+                    if not 1 <= obj <= 512 or obj in objects or supplier or not name or parent > 512:
+                        raise ValueError('invalid/duplicate dictionary object')
+                    objects[obj] = dict(parent=parent,name=name,driver=driver,completion_id=obj)
+                elif tag == 1:
+                    if (parent or name or driver or not 1 <= obj <= 512 or
+                            not 1 <= supplier <= 512 or (obj,supplier) in edges or len(edges) >= 1024):
+                        raise ValueError('invalid/duplicate supplier edge')
+                    edges.add((obj,supplier))
+                elif tag == 2:
+                    if supplier or name != 'END_DICTIONARY' or driver:
+                        raise ValueError('invalid census end')
+                    dictionary_end = (obj,parent)
+                else:
+                    raise ValueError('unknown dictionary kind')
+            elif event_id == pair_id:
+                if len(payload) != 80 or len(events) >= 39936:
+                    raise ValueError('pair layout/envelope')
+                values = RAW_PAIR.unpack_from(payload,8)
+                event = dict(zip(PAIR_FIELDS,values[:6]))
+                peer,op,phase,flags,exit_event,ret = values[6:]
+                if op >= len(PAIR_OPERATIONS) or phase >= 4 or exit_event not in (0,1):
+                    raise ValueError('unknown raw operation/phase')
+                if pid < 0 or event['task_id'] != pid+1 or not 1 <= event['completion_generation'] <= 7:
+                    raise ValueError('raw task/generation mismatch')
+                event.update(seq=seq,cpu=cpu,pid=pid,peer_id=peer,flags=flags,
+                             schema=SEMANTIC_SCHEMA,kind='pm_boundary',
+                             phase='exit' if exit_event else 'entry',operation=PAIR_OPERATIONS[op],
+                             pm_phase=semantic_contract()['pm_phases'][phase])
+                if exit_event:
+                    event['ret']=ret
+                events.append((ts,seq,event))
+            else:
+                # Narrow raw profile: another event must have an explicit decoder.
+                raise ValueError('unknown event in semantic-only profile')
+    dictionary_complete = bool(objects and dictionary_end == (len(objects),len(edges)) and
+        set(objects) == set(range(1,len(objects)+1)) and
+        all(not o['parent'] or o['parent'] in objects for o in objects.values()) and
+        all(a in objects and b in objects for a,b in edges))
+    ordered = []; raw_locations = []
+    # Transport drains CPUs independently. Restore mono timestamp order before
+    # applying the SAME production pairing checker; never pair by receive order.
+    for index,(timestamp,wire_seq,event) in enumerate(sorted(events, key=lambda item:item[:2])):
+        raw_locations.append(dict(seq=index,wire_seq=wire_seq,timestamp=timestamp,cpu=event['cpu']))
+        event['seq'] = index
+        if (event['object_id'] not in objects or event['object_generation'] != life or
+                (event['peer_id'] and event['peer_id'] not in objects)):
+            event['flags'] |= 1
+        ordered.append(event)
+    result = check_semantic_records(ordered)
+    if not transport['transport_complete']:
+        result['coverage'] = 'INCOMPLETE_WITH_LOSS'
+    elif not dictionary_complete or not ordered:
+        result['coverage'] = 'UNKNOWN'
+    result.update(transport=transport,dictionary_complete=dictionary_complete,
+                  objects=objects,supplier_edges=sorted(edges),
+                  raw_locations=raw_locations,
+                  format_sha256={p.name:hashlib.sha256(p.read_bytes()).hexdigest()
+                                 for p in (pair_format,dictionary_format)},
+                  boundary='selected semantic events only; no full PM coverage or root cause; boot identity must match saved formats')
+    return result
 
 ROOTS = (
     'pm_prepare_console', 'suspend_console', 'notifier_call_chain',
@@ -396,16 +523,22 @@ if __name__ == '__main__':
     p = sub.add_parser('check'); p.add_argument('evidence', type=Path)
     p = sub.add_parser('wire-check'); p.add_argument('capture', type=Path)
     p.add_argument('--session', required=True)
+    p = sub.add_parser('semantic-wire-check'); p.add_argument('capture',type=Path)
+    p.add_argument('--session',required=True)
+    p.add_argument('--pair-format',type=Path,required=True)
+    p.add_argument('--dictionary-format',type=Path,required=True)
     args = parser.parse_args()
     if args.mode == 'plan':
         result = plan(args.system_map, args.config)
     elif args.mode == 'check':
         evidence = json.loads(args.evidence.read_text())
         result = check_evidence(evidence)
+    elif args.mode == 'semantic-wire-check':
+        result = semantic_wire_check(args.capture,args.session,args.pair_format,args.dictionary_format)
     else:
         result = check_stream(args.capture, args.session)
     print(json.dumps(result, indent=2))
     if args.mode == 'wire-check' and not result['transport_complete']:
         raise SystemExit(1)
-    if args.mode == 'check' and result['coverage'] not in ('SELECTED_RECORDS_PAIRED', 'SEMANTIC_RECORDS_PAIRED'):
+    if args.mode in ('check','semantic-wire-check') and result['coverage'] not in ('SELECTED_RECORDS_PAIRED', 'SEMANTIC_RECORDS_PAIRED'):
         raise SystemExit(1)

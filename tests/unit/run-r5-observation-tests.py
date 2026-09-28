@@ -265,7 +265,7 @@ int main(void) {
 
     # Run the production drain, mocking only kernel I/O and time. This tests
     # fairness/deadline/overflow, NOT kernel/netpoll/Windows throughput.
-    drain = c[c.index('static void drain('):c.index('static int __init export_init(')]
+    drain = c[c.index('static bool semantic_profile_ok('):c.index('static int __init export_init(')]
     constants = '\n'.join(re.findall(r'^#define (?:PAYLOAD|BURST|CPU_BURST|CPU_BUFFER_BYTES|TOTAL_PAGE_BYTES) .+$',c,re.M))
     adapter = r'''
 #include <stdint.h>
@@ -280,15 +280,23 @@ typedef uint64_t u64;
 struct work_struct { int dummy; };
 struct ring_buffer_event { unsigned char data[128]; } record;
 struct tracer { const char *name; } tracer={"nop"};
-struct trace_array { int pipe_cpumask[1]; int trace_flags; struct tracer *current_trace; } a={{0},0,&tracer},*array=&a;
+struct trace_array { int pipe_cpumask[1]; int trace_flags; struct tracer *current_trace; int buffer_disabled,clock_id; int *tracing_cpumask; } a={{0},0,&tracer,0,5,0},*array=&a;
 struct { unsigned char payload[128]; } packet;
 static int buffer,drain_work,system_unbound_wq,scheduled;
 static unsigned cursor,transport_error,interval_ms=1,nr_cpu_ids=16;
 static u64 lost,oversized,last_stats,now,cost;
 static bool stopping,room=true;
+static int semantic_error;
+static int r5obs2_status(void) { return semantic_error; }
+static int r5obs2_emit_dictionary(void) { return 0; }
 static unsigned pending[16],sent[16],width=64;
 static unsigned previous=99,streak,max_streak;
 static int cpumask_empty(int *p) { return !*p; }
+#define EVENT_FILE_FL_ENABLED 1
+#define EVENT_FILE_FL_WAS_ENABLED 2
+static int *cpu_possible_mask;
+static bool cpumask_equal(int *a,int *b) { return a==b; }
+static struct trace_event_file { unsigned long flags; } files[2]={{1},{1}},*semantic_files[]={&files[0],&files[1]};
 static u64 ktime_get_ns(void) { return now+=100; }
 static int queue_room(void) { return room; }
 static struct ring_buffer_event *ring_buffer_consume(int b,unsigned cpu,u64 *ts,unsigned long *missed) {
@@ -308,7 +316,7 @@ static unsigned msecs_to_jiffies(unsigned n) { return n; }
 static void queue_delayed_work(int q,int *w,unsigned t) { (void)q;(void)w;(void)t;scheduled++; }
 static void reset(void) {
     memset(pending,0,sizeof pending);memset(sent,0,sizeof sent);
-    cursor=transport_error=scheduled=0;now=cost=lost=oversized=last_stats=0;
+    cursor=transport_error=scheduled=semantic_error=0;files[0].flags=files[1].flags=1;now=cost=lost=oversized=last_stats=0;
     stopping=false;room=true;width=64;previous=99;streak=max_streak=0;
 }
 '''
@@ -329,13 +337,16 @@ int main(void) {
     drain(0);assert(sent[1]>0); /* next invocation starts with next CPU */
     reset();pending[0]=1;room=false;drain(0);assert(pending[0]==1 && scheduled==1);
     reset();pending[0]=1;width=129;drain(0);assert(oversized==1 && transport_error && !scheduled);
+    reset();files[0].flags=0;pending[0]=1;drain(0);assert(transport_error && !scheduled && pending[0]);
+    reset();files[1].flags=5;drain(0);assert(transport_error && !scheduled);
+    reset();semantic_error=1;pending[0]=1;drain(0);assert(transport_error && !scheduled && pending[0]);
     reset();tracer.name="function_graph";drain(0);assert(transport_error && !scheduled);
     return 0;
 }
 '''
     source=tmp/'drain.c';exe=tmp/'drain';source.write_text(constants+'\n'+adapter+drain+main)
     subprocess.run(['cc','-std=gnu11','-Wall','-Werror',str(source),'-o',str(exe)],check=True)
-    subprocess.run([str(exe)],check=True);count+=7
+    subprocess.run([str(exe)],check=True);count+=10
 
     # Production upload persistence, no socket or privileged service needed.
     root=tmp/'uploads';root.mkdir()
@@ -376,6 +387,180 @@ int main(void) {
             assert response.status==409;response.read();conn.close();count+=1
         finally:
             server.shutdown();thread.join()
+
+# Compile the production TRACE_EVENT declarations/assignments with only the
+# kernel trace sink replaced by fwrite; test raw C bytes through the real CLI.
+with tempfile.TemporaryDirectory(prefix='r5obs-semantic-') as tmp:
+    tmp=Path(tmp)
+    adapter=r'''
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+#include <assert.h>
+typedef uint64_t u64; typedef uint32_t u32; typedef int32_t s32;
+struct trace_entry { uint16_t type; uint8_t flags,preempt; int32_t pid; };
+static void strscpy(char *d,const char *s,size_t n) { assert(strlen(s)<n);strcpy(d,s); }
+#define TP_PROTO(...) (__VA_ARGS__)
+#define TP_ARGS(...)
+#define TP_STRUCT__entry(...) __VA_ARGS__
+#define __field(type,name) type name;
+#define __field_struct(type,name) type name;
+#define __array(type,name,n) type name[n];
+#define TP_fast_assign(...) __VA_ARGS__
+#define TP_printk(...)
+#define TRACE_EVENT(name,proto,args,fields,assign,print) \
+struct raw_##name { struct trace_entry ent; fields }; \
+static void emit_##name proto { struct raw_##name row={.ent={.type=id_##name,.pid=12}}; \
+struct raw_##name *__entry=&row; assign; fwrite(&row,sizeof(row),1,stdout); }
+enum { id_r5_pair=101,id_r5_dictionary=102 };
+'''
+    header=prepare.SEMANTIC_HEADER.replace('#include <linux/types.h>','')
+    main=r'''
+int main(void) {
+    _Static_assert(sizeof(struct raw_r5_pair)==80,"pair width");
+    _Static_assert(sizeof(struct raw_r5_dictionary)==104,"dictionary width");
+    emit_r5_dictionary(1,2,0,1,0,"child","driver");
+    emit_r5_dictionary(2,0,0,1,0,"parent","bus");
+    emit_r5_dictionary(2,0,0,1,2,"END_DICTIONARY","");
+    struct r5obs2_token t={.object_id=1,.object_generation=1,.completion_generation=2,
+        .task_id=13,.task_generation=500,.call_id=99,.peer_id=2,
+        .operation=R5_WAIT,.pm_phase=R5_RESUME_PHASE};
+    emit_r5_pair(&t,false,0);emit_r5_pair(&t,true,0);
+    return 0;
+}
+'''
+    c=tmp/'events.c';exe=tmp/'events'
+    c.write_text(adapter+header+prepare.SEMANTIC_EVENTS+main)
+    subprocess.run(['cc','-std=gnu11','-Wall','-Werror',str(c),'-o',str(exe)],check=True)
+    raw=subprocess.check_output([str(exe)])
+    assert len(raw)==3*104+2*80;count+=1
+    dictionaries=[raw[i*104:(i+1)*104] for i in range(3)]
+    pair=[raw[312:392],raw[392:472]]
+    formats=[]
+    for name,eid in [('r5_pair',101),('r5_dictionary',102)]:
+        path=tmp/(name+'.format')
+        path.write_text(f'name: {name}\nID: {eid}\n'+''.join(
+            f'field:char {field}; offset:{offset}; size:{size}; signed:0;\n'
+            for field,offset,size in obs.RAW_LAYOUTS[name]))
+        formats.append(path)
+    capture=tmp/'semantic.r5o';session='a'*32
+    def semantic_capture(payloads, complete=True, loss=0):
+        packets=[]
+        def packet(kind,cpu,ts,payload):
+            seq=len(packets)
+            packets.append(obs.WIRE.pack(b'R5O1',1,kind,len(payload),bytes.fromhex(session),
+                                        seq,cpu,12,ts,loss,0)+payload)
+        packet(3,0xffffffff,1,struct.pack('!4I',2,1,2048,128))
+        for cpu,ts,payload in payloads: packet(1,cpu,ts,payload)
+        for cpu in range(2): packet(2,cpu,20,struct.pack('!4Q',0,0,0,0))
+        if complete: packet(4,0xffffffff,21,struct.pack('!QII',0,0,0))
+        capture.write_bytes(b'R5CAP01\n'+b''.join(obs.FRAME.pack(len(p),1)+p for p in packets))
+    base=[(0,i+1,d) for i,d in enumerate(dictionaries)]
+    # Exit is received first from CPU1; mono timestamps restore pair order.
+    rows=base+[(1,10,pair[1]),(0,9,pair[0])]
+    def checked(): return obs.semantic_wire_check(capture,session,*formats)
+    semantic_capture(rows)
+    assert checked()['coverage']=='SEMANTIC_RECORDS_PAIRED';count+=1
+    assert checked()['raw_locations'] == [dict(seq=0,wire_seq=5,timestamp=9,cpu=0),
+                                         dict(seq=1,wire_seq=4,timestamp=10,cpu=1)];count+=1
+    cli=['python3','-B',str(ROOT/'tools/r5-observation.py'),'semantic-wire-check',str(capture),
+         '--session',session,'--pair-format',str(formats[0]),'--dictionary-format',str(formats[1])]
+    assert subprocess.run(cli,capture_output=True).returncode==0;count+=1
+    # Six identity conflicts, bad peer, producer invalidation, duplicate call.
+    for field_index in range(6):
+        broken=bytearray(pair[1]);offset=8+8*field_index
+        struct.pack_into('<Q',broken,offset,struct.unpack_from('<Q',broken,offset)[0]+1)
+        semantic_capture(base+[(0,9,pair[0]),(1,10,bytes(broken))])
+        rc=subprocess.run(cli,capture_output=True).returncode
+        assert rc==1;count+=1
+    for offset,value in ((56,511),(68,1)):
+        broken=bytearray(pair[1]);struct.pack_into('<I',broken,offset,value)
+        semantic_capture(base+[(0,9,pair[0]),(1,10,bytes(broken))])
+        assert checked()['coverage']!='SEMANTIC_RECORDS_PAIRED';count+=1
+    poisoned=bytearray(pair[1]);struct.pack_into('<I',poisoned,68,1)
+    semantic_capture(rows+[(1,11,bytes(poisoned))])
+    assert checked()['coverage']=='UNKNOWN' and checked()['semantic_pairs']==0;count+=1
+    for bad in (base+[(0,9,pair[0])],rows+[(1,11,pair[1])],rows[1:],rows[:2]+rows[3:]):
+        semantic_capture(bad)
+        assert checked()['coverage']!='SEMANTIC_RECORDS_PAIRED';count+=1
+    for complete,loss in ((False,0),(True,1)):
+        semantic_capture(rows,complete,loss)
+        assert checked()['coverage']=='INCOMPLETE_WITH_LOSS';count+=1
+    semantic_capture(rows)
+    formats[0].write_text(formats[0].read_text().replace('offset:72','offset:73'))
+    rejects(checked)
+
+
+# Execute the production boundary/generation helpers with primitive counters.
+# This proves return/complete semantics in the adapter, not kernel concurrency.
+with tempfile.TemporaryDirectory(prefix='r5obs-emitter-') as tmp:
+    tmp=Path(tmp)
+    adapter=r'''
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <assert.h>
+typedef uint64_t u64; typedef uint32_t u32;
+typedef long atomic_t; typedef long atomic64_t;
+#define atomic_read(p) (*(p))
+#define atomic_set(p,v) (*(p)=(v))
+#define atomic_inc_return(p) (++*(p))
+#define atomic64_read atomic_read
+#define atomic64_inc_return atomic_inc_return
+static long atomic_cmpxchg(long *p,long old,long new) { long v=*p;if(v==old)*p=new;return v; }
+#define EXPORT_SYMBOL_GPL(x)
+struct device { struct { int completion; } power; } dev;
+static struct { u64 start_boottime; int pid; } task={100,12},*current=&task;
+#define task_pid_nr(t) ((t)->pid)
+static struct { int event; } pm_transition;
+enum { PM_EVENT_RESUME,PM_EVENT_RECOVER,PM_EVENT_THAW,PM_EVENT_RESTORE };
+static struct { struct device *dev; atomic64_t generation; atomic_t resetting,prepares; } r5_objects[1];
+static unsigned r5_n=1;
+static atomic_t r5_state=2,r5_exported=1,r5_records;
+static atomic64_t r5_lifetime=1,r5_calls;
+static int completed,reinitialized;
+static void complete_all(int *p) { (void)p;completed++; }
+static void reinit_completion(int *p) { (void)p;reinitialized++; }
+'''
+    header=prepare.SEMANTIC_HEADER.replace('#include <linux/types.h>','')
+    trace=r'''
+static struct r5obs2_token saved[32];static unsigned emitted;
+static void trace_r5_pair(const struct r5obs2_token *t,bool exit,int ret) {
+    (void)exit;(void)ret;assert(emitted<32);saved[emitted++]=*t;
+}
+'''
+    emitter=prepare.SEMANTIC_EMITTER
+    changes=emitter[emitter.index('void r5obs2_topology_changed('):emitter.index('/* Called only while census')]
+    helpers=emitter[emitter.index('static struct r5obs2_token r5_begin('):]
+    main=r'''
+int main(void) {
+    r5_objects[0].dev=&dev;r5_objects[0].generation=1;
+    struct r5obs2_token t=r5_begin(&dev,R5_WAIT,R5_RESUME_PHASE,NULL);
+    r5_end(&t,0);assert(emitted==2 && saved[0].call_id==saved[1].call_id);
+    r5_reinit(&dev);assert(reinitialized==1 && emitted==4);
+    assert(saved[2].completion_generation==2 && !saved[3].flags);
+    r5_complete(&dev);assert(completed==1 && emitted==6);
+    t=r5_begin(&dev,R5_WAIT,R5_RESUME_PHASE,NULL);
+    r5_objects[0].generation++;r5_end(&t,0);assert(saved[7].flags==1);
+    r5_objects[0].resetting=1;r5_reinit(&dev);
+    assert(reinitialized==2 && r5_state==3); /* no PM behavior hidden */
+    r5_complete(&dev);assert(completed==2);
+    r5_state=2;r5_objects[0].resetting=0;r5_objects[0].generation=7;
+    r5_reinit(&dev);assert(r5_state==3 && reinitialized==3);
+    r5_state=2;r5_objects[0].prepares=4;
+    t=r5_begin(&dev,R5_PREPARE,R5_PREPARE_PHASE,NULL);assert(!t.object_id && r5_state==3);
+    r5_state=2;r5_records=39936;
+    t=r5_begin(&dev,R5_WAIT,R5_RESUME_PHASE,NULL);assert(!t.object_id && r5_state==3);
+    r5_state=2;r5_records=0;struct device unknown={0};
+    t=r5_begin(&unknown,R5_WAIT,R5_RESUME_PHASE,NULL);assert(!t.object_id && r5_state==3);
+    return 0;
+}
+'''
+    source=tmp/'emitter.c';exe=tmp/'emitter'
+    source.write_text('#define CONFIG_PM_SLEEP 1\n'+adapter+header+trace+changes+helpers+main)
+    subprocess.run(['cc','-std=gnu11','-Wall','-Werror',str(source),'-o',str(exe)],check=True)
+    subprocess.run([str(exe)],check=True);count+=8
 
 assert 'trace_notifier_boundary' not in prepare.NOTIFIER_EVENT  # generated tracepoint API, not recursive
 assert '__field(int, ret)' in prepare.NOTIFIER_EVENT and '__field(bool, exit)' in prepare.NOTIFIER_EVENT

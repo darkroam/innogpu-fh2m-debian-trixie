@@ -203,4 +203,14 @@ R44的`--export-module`同时生成`semantic-contract.json`和`memory-budget.jso
 task ID/生命周期、call ID及operation/pm_phase必须齐全同一；phase=entry/exit，exit含ret。
 gen等含糊别名不静默忽略，未知字段拒绝；缺关联或冲突保留UNKNOWN/UNPAIRED并返回非零。
 完整选择子集才输出SEMANTIC_RECORDS_PAIRED，不证明全PM覆盖、根因或原件真实性。
-实际内核四元组发射器/字典尚未实现；本接口不能用于伪造内核已经提供这些字段。
+R45新增`--semantic-kernel --source <锁定R34源> --output <全新副本>`，只生成源码；
+构建配置须为`CONFIG_LOCALVERSION="-r5obs2"`且关闭LOCALVERSION_AUTO，不继承签署私钥。
+导出器要求本实例`power/r5_pair`和`power/r5_dictionary`都启用、无filter/trigger/PID筛选，
+全CPU、`nop`和`mono`，开启前ring为空；仍需独占实例、关闭其它事件，并在未来触发前核收完整字典。
+预分配512对象/1024边；字典名过长、热插拔/移动/绑定/依赖变化、代次/prepare/全事件超限即失效，
+不会重用旧ID后继续判完整。只改生成观测源码，不改F驱动语义。
+`semantic-wire-check <capture> --session <nonce> --pair-format <保存的r5_pair.format>`
+`--dictionary-format <保存的r5_dictionary.format>`校验原始字节、字典和六项身份；
+事件ID必须取同boot保存format，不从旧窗口猜值，mono时戳用于跨CPU配对，不以导出顺序推因果。
+80B配对/104B字典是编译布局；内核未启动，全量清点/allocator实占/真实吞吐及R40其余覆盖面仍未闭合。
+新CLI的成功仅代表所选原始子集配对；不签实验放行，尾部丢失仍INCOMPLETE_WITH_LOSS。
