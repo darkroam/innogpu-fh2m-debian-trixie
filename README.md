@@ -20,7 +20,7 @@
 | 回退基线（历史交付） | `4.0.2-i3`：固定 epoch `1788796800`，SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；R14 接电/电池、无外屏/外屏 6/6 deep 通过；R16 起主线为 fantgpu 5.0.0-iN |
 | 最近失败候选 | `4.0.2-i1`：patch-024 + patch-026；R11 deep 恢复时温度 work 在 PVR 上电前触发 PowerLock/POWERED_OFF，已回退，仅供历史复现 |
 | Deepin suspend 历史交付 | `4.0.2-i3`：i2 + patch-029 DDCCI panel 创建恢复（继承 024/026/028），不含 display 025；DDCCI 无 backlight device，`hwinfo_g0m.bin` 缺失不阻断 R14 矩阵 |
-| 历史已验证能力（适用版本见 [status](docs/project/status.md)，非 i10 运行验收） | Vulkan 1.3.264 枚举及队列提交 / OpenCL 3.0 枚举及 kernel 读回 / GL 4.3 core + GLES 3.2 / VA-API H.264 Main + HEVC Main 实际硬解（30 帧 320x240 NV12 输出校验）/ DMA-BUF 同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 / DRM+fbdev / 桌面硬件 GL / HDA 与 PipeWire 枚举 |
+| 历史已验证能力（适用版本见 [status](docs/project/status.md)，非当前 F 基线运行验收） | Vulkan 1.3.264 枚举及队列提交 / OpenCL 3.0 枚举及 kernel 读回 / GL 4.3 core + GLES 3.2 / VA-API H.264 Main + HEVC Main 实际硬解（30 帧 320x240 NV12 输出校验）/ DMA-BUF 同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 / DRM+fbdev / 桌面硬件 GL / HDA 与 PipeWire 枚举 |
 
 ## 版本演进
 

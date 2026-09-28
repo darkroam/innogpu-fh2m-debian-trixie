@@ -9,10 +9,10 @@
 
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
-| 当前运行驱动 | **fantgpu 5.0.0-i10（诊断线，非交付）**，运行于 `6.12.107+deb13-amd64`；R31 八核安装已终审；用户另行授权重启后，i10 已加载，基础健康及输入挂接观察通过，首启证据待复核；F0 + 030 链及后续兼容派生不代表 R5 已解决 | [安装裁定与接续](#r28-安装裁定与-r31-接续)、[030 映射表](../planning/030-mapping-table.md)、[patch-provenance](../design/patch-provenance.md) |
-| 当前磁盘安装 | **fantgpu 5.0.0-i11**，R37八核安装/只读后验PASS，待qoder/dsh审查；当前未重启，运行仍i10 | [R37安装证据与边界](#r37-当前安装状态2026-09-28待审) |
+| 当前运行驱动 | **fantgpu 5.0.0-i11（诊断线，非交付）**，运行于 `6.12.107+deb13-amd64`；R39 正常重启后加载身份、基础健康、输入挂接及本次 Xorg 观察 PASS，首启证据待 qoder/dsh 审查；不代表 R5 已解决 | [R39首启证据与边界](#r39-i11-首启2026-09-28待审)、[030 映射表](../planning/030-mapping-table.md)、[patch-provenance](../design/patch-provenance.md) |
+| 当前磁盘安装 | **fantgpu 5.0.0-i11**，R37八核安装/只读后验PASS，已由qoder/dsh审查通过（debb133）；R39已重启加载i11 | [R37安装证据与边界](#r37-当前安装状态2026-09-28已审) |
 | 回退基线 | `4.0.2-i3`（deepin 血缘最终交付）：R14 6/6 deep 矩阵通过；包 SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；回滚卡见 r5dpm2 设计 §8，执行须另行授权 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md)、[回滚卡](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
-| 当前主线目标 | `5.0.0-iN`（tag `fantgpu-5.0.0-iN` **未打**）；发布阻断：`validation-results` 未签、R5=FAIL 未解除；`postinst_current_kernel_only` 已按 R31 裁定解除并覆盖至 i10，1C 不变 | [安装裁定与接续](#r28-安装裁定与-r31-接续)、[030 映射表](../planning/030-mapping-table.md) |
+| 当前主线目标 | `5.0.0-iN`（tag `fantgpu-5.0.0-iN` **未打**）；发布阻断：`validation-results` 未签、R5=FAIL 未解除；`postinst_current_kernel_only` 已按 R37 裁定解除并覆盖至 i11，1C 不变 | [安装裁定与接续](#r28-安装裁定与-r31-接续)、[030 映射表](../planning/030-mapping-table.md) |
 | 历史当前态（2026-09-03 记录） | `4.0.2-i3` 已安装并重启至 `6.12.101+deb13-amd64`；R16 迁移后降为回退基线 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | R5 挂起悬案 | `pm_test=devices` 绑定 fantgpu 硬挂；两轮诊断内核（r5dpm1/r5dpm2）复核判定 `OUTSIDE_COVERAGE`（DPM 机制无动态正样）；`r5_root_cause=unresolved`；**禁止重跑** | [r5 调查计划](../design/r5-suspend-investigation-plan.md)、[r5dpm2 设计](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
 | 诊断内核 | `6.12.101-r5dpm1`/`6.12.101-r5dpm2` 已安装并保留（卸载待 dsh 定）；GRUB 已恢复原配置（默认启动解析 6.12.107+deb13，既有行为） | [步骤 8 证据](../planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-result.txt) |
@@ -41,9 +41,9 @@
 
 ## R28 安装裁定与 R31 接续
 
-### R37 当前安装状态（2026-09-28，待审）
+### R37 当前安装状态（2026-09-28，已审）
 
-磁盘已安装 **5.0.0-i11**，运行中仍为 **i10/107**，未重启、未触发PM。
+R37安装完成时磁盘为 **5.0.0-i11**，运行仍为 **i10/107**，该安装批未重启、未触发PM。
 候选整deb SHA-256为254a165e6f0ec8deb5bf6dab23346ecc9c7a45525adb99c62bfa6988e4eb6c92；
 来源R35已审八核A/B，收档提交3526fc9。用户明确批准后，R36临时r5obs1六个新增对象
 经完整归档回读退役；生产八核、r5dpm1/r5dpm2和默认启动配置保留，观测原件不动。
@@ -51,9 +51,23 @@ R37以实际i10单血缘prerm升级，七项预检全绿后一次dpkg rc0，八�
 另一血缘、boot ID和GRUB配置未变。证据位于本机
 .build/r37-install-evidence/install-i11-20260928-01/postverify/result.json
 及collab/R37-2026-09-28-i11受监督安装批/verification.md（均非Git，公开检出不可取得）。
-①既有闭合裁定维持，本次i11安装证据待qoder/dsh审查；不提前代行终审。
+①闭合覆盖至i11，R37安装证据已由qoder初审及dsh终审接受，debb133收档。
 i11仅修正VPU既有状态初始化与0/1正常返回处理，不代表R5修复或Deepin运行能力已对齐。
 ②validation-results未签、③未打tag、④R5=FAIL与1C不变；后续重启和PM不在本批授权内。
+
+### R39 i11 首启（2026-09-28，待审）
+
+用户另行授权后只执行一次正常重启，未改GRUB/default/next。新boot、107内核与installed=i11
+均已核实；加载srcversion为BBD701896A3DD5917757ADA，与磁盘i11一致且不同于历史i10。
+基础健康门PASS、PVR八项错误计数均0、18/18输入设备挂接fant_input、本次Xorg的glamor/AIGLX
+正常，失败服务0；107模块/initramfs及启动配置与R37后验一致。输入功能与失败分支未测试。
+签名taint、SRSO、think_lmi和opp_table告警仍在，不作信任验收通过或全功能验收结论。
+本机证据：.build/r39-reboot-evidence/firstboot-20260928-01/result.json，内容SHA-256前12位
+34cbc04ab972；交付见collab/R39-2026-09-28-i11重启与首启检查批/verification.md
+（均非Git，公开检出不可取得）。R39首启PASS为codex实测，待qoder/dsh审查。
+首启检查仅使用用户明确批准的两项sysfs只读例外，不读debugfs、不触发PM。
+后续R40仅设计父设备completion观测与容量门，实验就绪仍UNVERIFIED，未申请或执行实验。
+OUTSIDE_COVERAGE、R5=FAIL、禁止重跑、U1/U2、validation-results、未打 tag；1C不变。
 
 ### 历史安装与首启裁定
 
