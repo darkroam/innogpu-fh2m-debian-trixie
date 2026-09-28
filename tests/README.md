@@ -292,7 +292,7 @@ R33 VPU最小修正回归复用 `bash tests/unit/run-builder-fantgpu-gates-tests
 从派生源抽取原函数编译用户态夹具，非零填充分配/失败/重复通知/最终stop均覆盖。
 不加载模块、不执行PM；callback并发可终止性未由mock证明。
 
-R34/R36/R41离线测试：`python3 -B tests/unit/run-r5-observation-tests.py`，150项覆盖配置缺失/错误release拒绝、成对/未完成/嵌套notifier、任务迁核、idle按CPU隔离、跨回调错序拒绝、
+R34–R46离线测试：`python3 -B tests/unit/run-r5-observation-tests.py`，175项覆盖配置缺失/错误release拒绝、成对/未完成/嵌套notifier、任务迁核、idle按CPU隔离、跨回调错序拒绝、
 prepare重试/进度、丢失计数拒绝、符号缺失/歧义、源漂移及路径拒绝；不加载/探测设备。
 同名驱动函数保留全部实际ftrace地址；跨模块、重复地址、多个编译变体与缺失控制根拒绝，不能用set去重后宣称唯一。
 传输检查实际编译运行生产C序列化函数（仅替换内核I/O），由Python读取其字节；
@@ -312,3 +312,10 @@ R45新增生产C事件声明/赋值生成原始字节，再走同一semantic-wir
 生产发射器边界函数以内核primitive计数替身运行，核reinit/complete实际调用不被隐藏，
 并核并发重置、代次/prepare/事件上限拒绝；导出器实例缺事件/过滤拒绝。
 这些是离线语义回归，不是内核并发、全PM路径或allocator运行实测。
+
+R46增加96B辅助事件的生产C字节/CLI回归：prepare实际移动计数与返回、阶段进出、
+async排队/同步回退、缺项/重复/错代/跨命名空间call冲突，以及阶段发射helper。
+当前原始链须带`--aux-format`；R45两事件解析不默默接受新事件。
+`prepare-r5-observation.py --lookup-benchmark --output <新目录>`抽取同生产表/查找函数，
+生成C后用`cc -O2 -std=gnu11 -Wall -Wextra -Werror`编译；运行测NULL/首/中/末/未命中/混合，
+固定单CPU、各7组×20,000次、逐组校验checksum。该用户态热缓存结果不是内核WCET或吞吐验收。

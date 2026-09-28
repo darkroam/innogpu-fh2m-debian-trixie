@@ -296,7 +296,7 @@ static int cpumask_empty(int *p) { return !*p; }
 #define EVENT_FILE_FL_WAS_ENABLED 2
 static int *cpu_possible_mask;
 static bool cpumask_equal(int *a,int *b) { return a==b; }
-static struct trace_event_file { unsigned long flags; } files[2]={{1},{1}},*semantic_files[]={&files[0],&files[1]};
+static struct trace_event_file { unsigned long flags; } files[3]={{1},{1},{1}},*semantic_files[]={&files[0],&files[1],&files[2]};
 static u64 ktime_get_ns(void) { return now+=100; }
 static int queue_room(void) { return room; }
 static struct ring_buffer_event *ring_buffer_consume(int b,unsigned cpu,u64 *ts,unsigned long *missed) {
@@ -316,7 +316,7 @@ static unsigned msecs_to_jiffies(unsigned n) { return n; }
 static void queue_delayed_work(int q,int *w,unsigned t) { (void)q;(void)w;(void)t;scheduled++; }
 static void reset(void) {
     memset(pending,0,sizeof pending);memset(sent,0,sizeof sent);
-    cursor=transport_error=scheduled=semantic_error=0;files[0].flags=files[1].flags=1;now=cost=lost=oversized=last_stats=0;
+    cursor=transport_error=scheduled=semantic_error=0;files[0].flags=files[1].flags=files[2].flags=1;now=cost=lost=oversized=last_stats=0;
     stopping=false;room=true;width=64;previous=99;streak=max_streak=0;
 }
 '''
@@ -413,7 +413,7 @@ static void strscpy(char *d,const char *s,size_t n) { assert(strlen(s)<n);strcpy
 struct raw_##name { struct trace_entry ent; fields }; \
 static void emit_##name proto { struct raw_##name row={.ent={.type=id_##name,.pid=12}}; \
 struct raw_##name *__entry=&row; assign; fwrite(&row,sizeof(row),1,stdout); }
-enum { id_r5_pair=101,id_r5_dictionary=102 };
+enum { id_r5_pair=101,id_r5_dictionary=102,id_r5_aux=103 };
 '''
     header=prepare.SEMANTIC_HEADER.replace('#include <linux/types.h>','')
     main=r'''
@@ -427,6 +427,14 @@ int main(void) {
         .task_id=13,.task_generation=500,.call_id=99,.peer_id=2,
         .operation=R5_WAIT,.pm_phase=R5_RESUME_PHASE};
     emit_r5_pair(&t,false,0);emit_r5_pair(&t,true,0);
+    t.operation=R5_PREPARE;t.peer_id=0;t.call_id=100;
+    emit_r5_pair(&t,false,0);emit_r5_pair(&t,true,0);
+    emit_r5_aux(&t,1,3,R5_PROGRESS,0);
+    struct r5obs2_token stage={.object_generation=1,.task_id=13,.task_generation=500,
+        .call_id=101,.operation=R5_STAGE,.pm_phase=R5_PREPARE_PHASE};
+    emit_r5_aux(&stage,1,3,R5_STAGE_BEGIN,0);emit_r5_aux(&stage,1,3,R5_STAGE_END,0);
+    t.operation=R5_TASK;t.call_id=102;
+    emit_r5_pair(&t,false,0);emit_r5_aux(&t,1,0,R5_ASYNC,0);emit_r5_pair(&t,true,0);
     return 0;
 }
 '''
@@ -434,7 +442,7 @@ int main(void) {
     c.write_text(adapter+header+prepare.SEMANTIC_EVENTS+main)
     subprocess.run(['cc','-std=gnu11','-Wall','-Werror',str(c),'-o',str(exe)],check=True)
     raw=subprocess.check_output([str(exe)])
-    assert len(raw)==3*104+2*80;count+=1
+    assert len(raw)==1176;count+=1
     dictionaries=[raw[i*104:(i+1)*104] for i in range(3)]
     pair=[raw[312:392],raw[392:472]]
     formats=[]
@@ -488,8 +496,54 @@ int main(void) {
         semantic_capture(rows,complete,loss)
         assert checked()['coverage']=='INCOMPLETE_WITH_LOSS';count+=1
     semantic_capture(rows)
+
+    aux_format=tmp/'r5_aux.format'
+    aux_format.write_text('name: r5_aux\nID: 103\n'+''.join(
+        f'field:char {field}; offset:{offset}; size:{size}; signed:0;\n'
+        for field,offset,size in obs.RAW_LAYOUTS['r5_aux']))
+    chunks=[];at=472
+    for size in (80,80,96,96,96,80,96,80):
+        chunks.append(raw[at:at+size]);at+=size
+    assert at==len(raw)
+    aux_rows=base+[(0,9+i,p) for i,p in enumerate(chunks)]
+    def aux_checked():return obs.semantic_wire_check(capture,session,*formats,aux_format)
+    semantic_capture(aux_rows)
+    result=aux_checked()
+    assert result['coverage']=='SEMANTIC_RECORDS_PAIRED';count+=1
+    assert result['auxiliary']['stages']['semantic_pairs']==1;count+=1
+    assert result['auxiliary']['prepare_progress'][0]['did_move']==1;count+=1
+    assert result['auxiliary']['async_decisions'][0]['queued']==False;count+=1
+    assert len(result['transport']['cpu_counters'])==2;count+=1
+    aux_cli=cli+['--aux-format',str(aux_format)]
+    assert subprocess.run(aux_cli,capture_output=True).returncode==0;count+=1
+    # missing progress, duplicate, wrong return/movement, stage mismatch/exit,
+    # async enabled/queued contradictions all go through production raw CLI.
+    for index in (2,3,4,6):
+        semantic_capture(base+[(0,9+i,p) for i,p in enumerate(chunks) if i!=index])
+        assert subprocess.run(aux_cli,capture_output=True).returncode==1;count+=1
+    for index,offset,fmt,value in [(2,72,'<Q',2),(2,80,'<Q',5),(2,92,'<i',-11),
+                                  (4,72,'<Q',2),(4,80,'<Q',4),(4,68,'<I',1),
+                                  (6,72,'<Q',0),(6,80,'<Q',1),(6,92,'<i',-1)]:
+        bad=list(chunks);payload=bytearray(bad[index]);struct.pack_into(fmt,payload,offset,value);bad[index]=bytes(payload)
+        # enabled=0, queued=0 is valid; pair it with queued=1 for contradiction.
+        if index==6 and offset==72:
+            struct.pack_into('<Q',payload,80,1);bad[index]=bytes(payload)
+        semantic_capture(base+[(0,9+i,p) for i,p in enumerate(bad)])
+        assert subprocess.run(aux_cli,capture_output=True).returncode==1;count+=1
+    bad=list(chunks)
+    for index in (3,4):
+        payload=bytearray(bad[index]);struct.pack_into('<Q',payload,48,100);bad[index]=bytes(payload)
+    semantic_capture(base+[(0,9+i,p) for i,p in enumerate(bad)])
+    assert aux_checked()['coverage']=='UNKNOWN';count+=1
+    semantic_capture(aux_rows+[(0,18,chunks[2])])
+    assert aux_checked()['coverage']=='UNKNOWN';count+=1
+    semantic_capture(aux_rows,complete=False)
+    assert aux_checked()['coverage']=='INCOMPLETE_WITH_LOSS';count+=1
+    semantic_capture(aux_rows)
+    rejects(checked)  # an R46 capture cannot silently use R45 two-event decoder
     formats[0].write_text(formats[0].read_text().replace('offset:72','offset:73'))
     rejects(checked)
+
 
 
 # Execute the production boundary/generation helpers with primitive counters.
@@ -526,6 +580,11 @@ static void reinit_completion(int *p) { (void)p;reinitialized++; }
     header=prepare.SEMANTIC_HEADER.replace('#include <linux/types.h>','')
     trace=r'''
 static struct r5obs2_token saved[32];static unsigned emitted;
+static unsigned aux_count;
+static struct r5obs2_token aux_token;
+static void trace_r5_aux(const struct r5obs2_token *t,u64 a,u64 b,u32 code,int ret) {
+    (void)a;(void)b;(void)code;(void)ret;aux_count++;aux_token=*t;
+}
 static void trace_r5_pair(const struct r5obs2_token *t,bool exit,int ret) {
     (void)exit;(void)ret;assert(emitted<32);saved[emitted++]=*t;
 }
@@ -554,13 +613,17 @@ int main(void) {
     t=r5_begin(&dev,R5_WAIT,R5_RESUME_PHASE,NULL);assert(!t.object_id && r5_state==3);
     r5_state=2;r5_records=0;struct device unknown={0};
     t=r5_begin(&unknown,R5_WAIT,R5_RESUME_PHASE,NULL);assert(!t.object_id && r5_state==3);
+    t=r5obs2_stage_begin(1,3);assert(!t.call_id && !aux_count);
+    r5_state=2;r5_records=0;t=r5obs2_stage_begin(1,3);
+    assert(t.call_id && !t.object_id && aux_count==1 && aux_token.operation==R5_STAGE);
+    r5obs2_stage_end(&t,1,3,-5);assert(aux_count==2 && aux_token.call_id==t.call_id);
     return 0;
 }
 '''
     source=tmp/'emitter.c';exe=tmp/'emitter'
     source.write_text('#define CONFIG_PM_SLEEP 1\n'+adapter+header+trace+changes+helpers+main)
     subprocess.run(['cc','-std=gnu11','-Wall','-Werror',str(source),'-o',str(exe)],check=True)
-    subprocess.run([str(exe)],check=True);count+=8
+    subprocess.run([str(exe)],check=True);count+=10
 
 assert 'trace_notifier_boundary' not in prepare.NOTIFIER_EVENT  # generated tracepoint API, not recursive
 assert '__field(int, ret)' in prepare.NOTIFIER_EVENT and '__field(bool, exit)' in prepare.NOTIFIER_EVENT

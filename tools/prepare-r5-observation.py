@@ -211,7 +211,7 @@ static struct {
     u8 payload[PAYLOAD];
 } packet;
 static struct trace_array *array;
-static struct trace_event_file *semantic_files[2];
+static struct trace_event_file *semantic_files[3];
 static struct trace_buffer *buffer;
 static struct netpoll np = { .name = "r5_trace_export", .local_port = 6665,
                              .remote_port = 6666 };
@@ -272,7 +272,7 @@ static bool semantic_profile_ok(void)
     unsigned int i;
     if (!cpumask_equal(array->tracing_cpumask, cpu_possible_mask))
         return false;
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < 3; i++) {
         unsigned long flags = READ_ONCE(semantic_files[i]->flags);
         if (!(flags & EVENT_FILE_FL_ENABLED) ||
             (flags & ~(EVENT_FILE_FL_ENABLED | EVENT_FILE_FL_WAS_ENABLED)))
@@ -350,7 +350,7 @@ static int __init export_init(void)
     unsigned int i;
     BUILD_BUG_ON(sizeof(struct wire_header) != 64);
     BUILD_BUG_ON(PAGE_SIZE != 4096);
-    if (strcmp(init_utsname()->release, "6.12.101-r5obs2") ||
+    if (strcmp(init_utsname()->release, "6.12.101-r5obs2-r46") ||
         !instance || strncmp(instance, "r5obs2-", 7) ||
         strlen(instance) > 63 || !session || strlen(session) != 32 ||
         !interface || !sender || !receiver || !receiver_mac ||
@@ -381,9 +381,9 @@ static int __init export_init(void)
     array = trace_array_get_by_name(instance, NULL);
     if (!array)
         return -ENOMEM;
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < 3; i++) {
         semantic_files[i] = trace_get_event_file(instance, "power",
-                                i ? "r5_dictionary" : "r5_pair");
+                                i == 0 ? "r5_pair" : (i == 1 ? "r5_dictionary" : "r5_aux"));
         if (IS_ERR(semantic_files[i])) {
             ret = PTR_ERR(semantic_files[i]);
             semantic_files[i] = NULL;
@@ -449,7 +449,7 @@ static int __init export_init(void)
     queue_delayed_work(system_unbound_wq, &drain_work, 0);
     return 0;
 put:
-    for (i = 0; i < 2; i++)
+    for (i = 0; i < 3; i++)
         if (semantic_files[i])
             trace_put_event_file(semantic_files[i]);
     r5obs2_stop();
@@ -473,7 +473,7 @@ static void __exit export_exit(void)
         send_packet(4, ~0U, ktime_get_ns(), sizeof(end));
     r5obs2_stop();
     netpoll_cleanup(&np);
-    for (i = 0; i < 2; i++)
+    for (i = 0; i < 3; i++)
         trace_put_event_file(semantic_files[i]);
     trace_array_put(array);
 }
@@ -509,7 +509,7 @@ def prepare_export(source, output):
     return {'source_sha256': hashlib.sha256(EXPORT_MODULE.encode()).hexdigest(),
             'trace_header_sha256': expected, 'ring_source_sha256': ring_sha,
             'trace_source_sha256': trace_sha,
-            'kernel_release': '6.12.101-r5obs2',
+            'kernel_release': '6.12.101-r5obs2-r46',
             'semantic_schema': contract['schema'], 'semantic_events': 'OFFLINE_IMPLEMENTED_NOT_BOOTED',
             'parser': 'RAW_SEMANTIC_PAIRS_IMPLEMENTED', 'memory_budget': budget,
             'admission': 'UNVERIFIED',
@@ -630,7 +630,8 @@ struct r5obs2_token {
     u32 peer_id, operation, pm_phase, flags;
 };
 enum { R5_WAIT, R5_COMPLETE, R5_CALLBACK, R5_RESUME, R5_REINIT, R5_LOCK,
-       R5_NOTIFIER, R5_PREPARE, R5_TASK };
+       R5_NOTIFIER, R5_PREPARE, R5_TASK, R5_SKIP, R5_SUPERIOR, R5_UNLOCK, R5_STAGE };
+enum { R5_PROGRESS = 1, R5_STAGE_BEGIN, R5_STAGE_END, R5_ASYNC };
 enum { R5_PREPARE_PHASE, R5_SUSPEND_PHASE, R5_RESUME_PHASE, R5_COMPLETE_PHASE };
 #ifdef CONFIG_PM_SLEEP
 void r5obs2_topology_changed(void);
@@ -640,6 +641,8 @@ int r5obs2_census(void);
 int r5obs2_emit_dictionary(void);
 int r5obs2_status(void);
 void r5obs2_stop(void);
+struct r5obs2_token r5obs2_stage_begin(unsigned int stage, u64 value);
+void r5obs2_stage_end(struct r5obs2_token *t, unsigned int stage, u64 value, int ret);
 #else
 static inline void r5obs2_topology_changed(void) { }
 #endif
@@ -684,6 +687,24 @@ TRACE_EVENT(r5_dictionary,
     TP_printk("id=%u parent=%u supplier=%u life=%llu kind=%u name=%s driver=%s",
         __entry->id, __entry->parent, __entry->supplier, __entry->life,
         __entry->kind, __entry->name, __entry->driver)
+);
+'''
+
+SEMANTIC_EVENTS += r'''
+TRACE_EVENT(r5_aux,
+    TP_PROTO(const struct r5obs2_token *t, u64 a, u64 b, u32 code, s32 ret),
+    TP_ARGS(t, a, b, code, ret),
+    TP_STRUCT__entry(
+        __field_struct(struct r5obs2_token, token)
+        __field(u64, a)
+        __field(u64, b)
+        __field(u32, code)
+        __field(s32, ret)
+    ),
+    TP_fast_assign(__entry->token = *t; __entry->a = a; __entry->b = b;
+                   __entry->code = code; __entry->ret = ret;),
+    TP_printk("call=%llu code=%u a=%llu b=%llu ret=%d", __entry->token.call_id,
+              __entry->code, __entry->a, __entry->b, __entry->ret)
 );
 '''
 
@@ -772,7 +793,7 @@ int r5obs2_census(void)
 	unsigned int i;
 	BUILD_BUG_ON(sizeof(r5_objects) + sizeof(r5_edges) > 1024 * 1024);
 	BUILD_BUG_ON(sizeof(struct r5obs2_token) > 96);
-	if (!trace_r5_pair_enabled() || !trace_r5_dictionary_enabled())
+	if (!trace_r5_pair_enabled() || !trace_r5_dictionary_enabled() || !trace_r5_aux_enabled())
 		return -EINVAL;
 	if (atomic_cmpxchg(&r5_state, 0, 1))
 		return -EBUSY;
@@ -876,11 +897,12 @@ static struct r5obs2_token r5_begin(struct device *dev, unsigned int op,
 				  unsigned int phase, struct device *peer)
 {
 	struct r5obs2_token t = { };
-	unsigned int id;
+	unsigned int id, peer_id;
 	if (!atomic_read(&r5_exported) || atomic_read(&r5_state) != 2)
 		return t;
 	id = r5_find(dev);
-	if (!id || (peer && !r5_find(peer))) {
+	peer_id = r5_find(peer);
+	if (!id || (peer && !peer_id)) {
 		r5obs2_topology_changed();
 		return t;
 	}
@@ -896,7 +918,7 @@ static struct r5obs2_token r5_begin(struct device *dev, unsigned int op,
 	t.task_id = (u64)task_pid_nr(current) + 1;
 	t.task_generation = current->start_boottime + 1;
 	t.call_id = atomic64_inc_return(&r5_calls);
-	t.peer_id = r5_find(peer);
+	t.peer_id = peer_id;
 	t.operation = op;
 	t.pm_phase = phase;
 	if (atomic_read(&r5_objects[id-1].resetting) && op != R5_REINIT) {
@@ -919,6 +941,44 @@ static void r5_end(struct r5obs2_token *t, int ret)
 	if (r5_slot())
 		trace_r5_pair(t, true, ret);
 }
+
+
+/* Auxiliary records share the slot budget and exact task/call identity.
+ * Progress is an observation of actual list movement, not a second callback.
+ */
+static void r5_aux(struct r5obs2_token *t, u64 a, u64 b, u32 code, int ret)
+{
+    if (!t->call_id)
+        return;
+    if (atomic_read(&r5_state) != 2 || t->task_id != (u64)task_pid_nr(current)+1 ||
+        t->task_generation != current->start_boottime+1)
+        t->flags = 1;
+    if (r5_slot())
+        trace_r5_aux(t, a, b, code, ret);
+}
+
+struct r5obs2_token r5obs2_stage_begin(unsigned int stage, u64 value)
+{
+    struct r5obs2_token t = { };
+    if (!atomic_read(&r5_exported) || atomic_read(&r5_state) != 2)
+        return t;
+    /* Namespace separate from device IDs: object_id=completion_generation=0. */
+    t.object_generation = atomic64_read(&r5_lifetime);
+    t.task_id = (u64)task_pid_nr(current)+1;
+    t.task_generation = current->start_boottime+1;
+    t.call_id = atomic64_inc_return(&r5_calls);
+    t.operation = R5_STAGE;
+    t.pm_phase = R5_PREPARE_PHASE;
+    r5_aux(&t, stage, value, R5_STAGE_BEGIN, 0);
+    return t;
+}
+EXPORT_SYMBOL_GPL(r5obs2_stage_begin);
+
+void r5obs2_stage_end(struct r5obs2_token *t, unsigned int stage, u64 value, int ret)
+{
+    r5_aux(t, stage, value, R5_STAGE_END, ret);
+}
+EXPORT_SYMBOL_GPL(r5obs2_stage_end);
 
 static unsigned int r5_phase(void)
 {
@@ -965,6 +1025,8 @@ SEMANTIC_LOCK = {
     'include/trace/events/power.h': '62b7be15bf5e70af7cfc20071b50b1016a9a33adc2e184c17e46a265794f86e8',
     'drivers/base/core.c': 'efbd4c9ba455cc068678b440d04554f24fa459c391ff935c9071ec4d811c29b5',
     'Makefile': LOCK['Makefile'],
+    'kernel/power/main.c': 'a94a32d69a95deabbd9c0c185ea511c18fa832f734d779930b7090f7389d74ff',
+    'kernel/power/suspend.c': '52d4d2085285052d4f55c28798a0e797a3812b4d3c93dc7c38da560405c0255b',
     'drivers/base/base.h': 'f0727aa65d08af024bda1fd5ac75b8a40a91c05b7a6160f5859203f1b96301ba',
 }
 
@@ -1058,7 +1120,94 @@ def semantic_overlay(files):
     part = replace_once(part, '\treturn error;',
                         '\tr5obs2_topology_changed();\n\treturn error;')
     t = t[:pos]+part+t[end:]
+
     result[p] = t
+    p = 'drivers/base/power/main.c'
+    t = result[p]
+    # The pair call survives to the list movement after device_prepare returns.
+    t = replace_once(t, '\t\tint r5_ret;', '\t\tint r5_ret;\n\t\tstruct r5obs2_token r5_prepare;')
+    t = replace_once(t, '\t\t\tstruct r5obs2_token r5 = r5_begin(dev, R5_PREPARE, R5_PREPARE_PHASE, NULL);',
+                     '\t\t\tr5_prepare = r5_begin(dev, R5_PREPARE, R5_PREPARE_PHASE, NULL);')
+    t = replace_once(t, '\t\t\tr5_end(&r5, error);', '\t\t\tr5_end(&r5_prepare, error);')
+    anchor = '\t\ttrace_r5_prepare_progress(dev, ++r5_attempt, r5_moved,\n\t\t\t\t\t  r5_did_move, r5_ret);'
+    t = replace_once(t, anchor, anchor+'\n\t\tr5_aux(&r5_prepare, r5_attempt, (r5_moved << 1) | r5_did_move, R5_PROGRESS, r5_ret);')
+    # Explicit skips do not create fake wait events.
+    start=t.index('static void dpm_wait(');end=t.index('static int dpm_wait_fn(',start)
+    part=t[start:end]
+    part=replace_once(part,'\tif (dev->power.no_pm)\n\t\treturn;',
+        '\tif (dev->power.no_pm) {\n\t\tstruct r5obs2_token t = r5_begin(dev, R5_SKIP, r5_phase(), peer);\n'
+        '\t\tr5_end(&t, 1); /* no_pm */\n\t\treturn;\n\t}')
+    part=replace_once(part,'\t\tr5_end(&t, 0);\n\t}',
+        '\t\tr5_end(&t, 0);\n\t} else {\n'
+        '\t\tstruct r5obs2_token t = r5_begin(dev, R5_SKIP, r5_phase(), peer);\n'
+        '\t\tr5_end(&t, 2); /* async condition false */\n\t}')
+    t=t[:start]+part+t[end:]
+    # Whole superior boundary includes both parent and supplier waits.
+    start=t.index('static bool dpm_wait_for_superior(');end=t.index('static void dpm_wait_for_consumers(',start)
+    part=t[start:end]
+    part=replace_once(part,'\tstruct device *parent;',
+        '\tstruct device *parent;\n\tbool ready;\n\tstruct r5obs2_token r5 = r5_begin(dev, R5_SUPERIOR, r5_phase(), NULL);')
+    part=replace_once(part,'\t\treturn false;', '\t\tr5_end(&r5, 0);\n\t\treturn false;')
+    part=replace_once(part,'\treturn device_pm_initialized(dev);',
+        '\tready = device_pm_initialized(dev);\n\tr5_end(&r5, ready);\n\treturn ready;')
+    t=t[:start]+part+t[end:]
+    # Queue result never implies worker execution; task pair records actual work.
+    start=t.index('static bool dpm_async_fn(');end=t.index('\n/**',start)
+    part=t[start:end]
+    part=replace_once(part,'{\n\tr5_reinit(dev);',
+        '{\n\tstruct r5obs2_token r5;\n\tbool enabled;\n\tr5_reinit(dev);\n'
+        '\tr5 = r5_begin(dev, R5_TASK, r5_phase(), NULL);\n\tenabled = is_async(dev);')
+    part=replace_once(part,'\tif (is_async(dev)) {','\tif (enabled) {')
+    part=replace_once(part,'\t\tif (async_schedule_dev_nocall(func, dev))\n\t\t\treturn true;',
+        '\t\tif (async_schedule_dev_nocall(func, dev)) {\n'
+        '\t\t\tr5_aux(&r5, 1, 1, R5_ASYNC, 0);\n\t\t\tr5_end(&r5, 1);\n\t\t\treturn true;\n\t\t}')
+    part=replace_once(part,'\treturn false;',
+        '\tr5_aux(&r5, enabled, 0, R5_ASYNC, 0);\n\tr5_end(&r5, 0);\n\treturn false;')
+    t=t[:start]+part+t[end:]
+    start=t.index('static void device_resume(');end=t.index('static void async_resume(',start)
+    part=t[start:end]
+    part=replace_once(part,'\tdevice_unlock(dev);',
+        '\tr5_lock = r5_begin(dev, R5_UNLOCK, R5_RESUME_PHASE, NULL);\n\tdevice_unlock(dev);\n\tr5_end(&r5_lock, 0);')
+    # Resume exit includes explicit skip reason via auxiliary enum, separate from errno.
+    for condition,reason in [('dev->power.syscore',3),('!dev->power.is_suspended',4),('!dpm_wait_for_superior(dev, async)',6)]:
+        anchor='\tif ('+condition+')\n\t\tgoto Complete;'
+        part=replace_once(part,anchor,'\tif ('+condition+') {\n'
+            '\t\tstruct r5obs2_token skip = r5_begin(dev, R5_SKIP, R5_RESUME_PHASE, NULL);\n'
+            f'\t\tr5_end(&skip, {reason});\n\t\tgoto Complete;\n\t}}')
+    part=replace_once(part,'\t\tpm_runtime_enable(dev);',
+        '\t\tstruct r5obs2_token skip = r5_begin(dev, R5_SKIP, R5_RESUME_PHASE, NULL);\n'
+        '\t\tpm_runtime_enable(dev);\n\t\tr5_end(&skip, 5);')
+    t=t[:start]+part+t[end:]
+    result[p]=t
+    # Add narrow stage wrappers around existing statements. Stage IDs are
+    # defined in the production parser contract; no tracepoint registration.
+    def stage_call(text, statement, stage, value, ret, count=1):
+        if text.count(statement) != count:
+            raise ValueError('stage statement identity drift')
+        return text.replace(statement, '{\n\t\tstruct r5obs2_token r5 = r5obs2_stage_begin('
+            +str(stage)+', '+value+');\n\t\t'+statement+'\n\t\tr5obs2_stage_end(&r5, '
+            +str(stage)+', '+value+', '+ret+');\n\t}')
+    p='kernel/power/suspend.c';t='#include <linux/r5obs2.h>\n'+files[p]
+    for statement,stage,value,ret,count in [
+        ('pm_prepare_console();',1,'state','0',1),
+        ('error = suspend_freeze_processes();',2,'state','error',1),
+        ('suspend_console();',3,'state','0',1),
+        ('resume_console();',4,'state','0',1),
+        ('pm_restore_console();',5,'0','0',2),
+        ('suspend_thaw_processes();',6,'0','0',1),
+        ('error = suspend_ops->enter(state);',7,'state','error',1),
+        ('platform_recover(state);',8,'state','0',1),
+        ('error = enter_state(state);',9,'state','error',1),
+        ('error = suspend_devices_and_enter(state);',10,'state','error',1)]:
+        t=stage_call(t,statement,stage,value,ret,count)
+    result[p]=t
+    p='kernel/power/main.c';t='#include <linux/r5obs2.h>\n'+files[p]
+    t=stage_call(t,'ret = blocking_notifier_call_chain_robust(&pm_chain_head, val_up, val_down, NULL);',
+                 11,'val_up','ret')
+    t=replace_once(t,'\treturn blocking_notifier_call_chain(&pm_chain_head, val, NULL);',
+                   '\tint ret;\n\tret = blocking_notifier_call_chain(&pm_chain_head, val, NULL);\n\treturn ret;')
+    t=stage_call(t,'ret = blocking_notifier_call_chain(&pm_chain_head, val, NULL);',12,'val','ret')
+    result[p]=t
     return result
 
 
@@ -1091,6 +1240,86 @@ def prepare(source, output, semantic=False):
     return {'generation': 'r5obs2' if semantic else 'r5obs1', 'changed': rows, 'input': lock,
             'install': 'NOT_RUN', 'PM': 'NOT_RUN', 'R5': 'FAIL'}
 
+def prepare_lookup(output):
+    """Emit a userspace surrogate of the exact table/search, never kernel PM."""
+    start=SEMANTIC_EMITTER.index('struct r5_object {')
+    end=SEMANTIC_EMITTER.index('struct r5_edge',start)
+    table=SEMANTIC_EMITTER[start:end]
+    start=SEMANTIC_EMITTER.index('static unsigned int r5_find(')
+    end=SEMANTIC_EMITTER.index('/* Called only while census',start)
+    search=SEMANTIC_EMITTER[start:end]
+    code=r'''// SPDX-License-Identifier: GPL-2.0-only
+#define _GNU_SOURCE
+#include <stdint.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <assert.h>
+#include <sched.h>
+#include <time.h>
+#include <errno.h>
+typedef uint32_t u32;
+typedef struct { int counter; } atomic_t;
+typedef struct { long counter; } atomic64_t;
+struct device { unsigned char unused; } devices[513];
+@TABLE@
+static struct r5_object r5_objects[512];
+static unsigned int r5_n;
+@SEARCH@
+/* Prevent loop hoisting without changing the production search body. */
+__attribute__((noinline)) static unsigned int trial(struct device *p) {
+    __asm__ volatile("" : "+r"(p) : : "memory");
+    return r5_find(p);
+}
+static uint64_t now(void) {
+    struct timespec t; assert(clock_gettime(CLOCK_MONOTONIC_RAW,&t)==0);
+    return (uint64_t)t.tv_sec*1000000000ULL+t.tv_nsec;
+}
+int main(void) {
+    _Static_assert(sizeof(struct r5_object)==104,"must match compiled kernel BTF");
+    _Static_assert(offsetof(struct r5_object,dev)==0,"search stride/offset");
+    _Static_assert(offsetof(struct r5_object,name)==28,"same table layout");
+    cpu_set_t allowed,one; CPU_ZERO(&allowed);
+    if(sched_getaffinity(0,sizeof(allowed),&allowed))return 2;
+    int cpu=-1;for(int i=0;i<CPU_SETSIZE;i++)if(CPU_ISSET(i,&allowed)){cpu=i;break;}
+    if(cpu<0)return 2;
+    CPU_ZERO(&one);CPU_SET(cpu,&one);
+    if(sched_setaffinity(0,sizeof(one),&one))return 2;
+    for(unsigned i=0;i<512;i++)r5_objects[i].dev=&devices[i];
+    printf("n,case,rep,cpu,calls,elapsed_ns,ns_per_lookup,checksum\n");
+    unsigned sizes[]={0,1,64,256,512};
+    for(unsigned s=0;s<5;s++) {
+        r5_n=sizes[s];
+        for(unsigned c=0;c<6;c++)for(unsigned rep=0;rep<7;rep++) {
+            const unsigned calls=20000;uint64_t checksum=0;
+            struct device *p=c==0?NULL:c==1?&devices[0]:c==2?&devices[r5_n/2]:
+                c==3?&devices[r5_n?r5_n-1:0]:&devices[512];
+            for(unsigned i=0;i<1024;i++)checksum+=trial(p); /* untimed warm-up */
+            checksum=0;uint64_t start=now();
+            for(unsigned i=0;i<calls;i++)checksum+=trial(c==5?&devices[i%513]:p);
+            uint64_t elapsed=now()-start;
+            assert(sched_getcpu()==cpu);
+            uint64_t expected=0;
+            for(unsigned i=0;i<calls;i++) {
+                struct device *want=c==5?&devices[i%513]:p;
+                for(unsigned j=0;j<r5_n;j++)if(want==&devices[j]){expected+=j+1;break;}
+            }
+            assert(checksum==expected);
+            printf("%u,%u,%u,%d,%u,%llu,%.3f,%llu\n",r5_n,c,rep,cpu,calls,
+                   (unsigned long long)elapsed,(double)elapsed/calls,(unsigned long long)checksum);
+        }
+    }
+    return 0;
+}
+'''.replace('@TABLE@',table).replace('@SEARCH@',search)
+    output.mkdir()
+    (output/'lookup.c').write_text(code)
+    return dict(source_sha256=hashlib.sha256(code.encode()).hexdigest(),
+                search_sha256=hashlib.sha256(search.encode()).hexdigest(),
+                table_sha256=hashlib.sha256(table.encode()).hexdigest(),
+                cases=['null','first','middle','last','miss','uniform_513'],
+                boundary='userspace same-layout/search surrogate; not kernel timing or WCET',
+                PM='NOT_RUN')
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', type=Path)
@@ -1099,8 +1328,11 @@ if __name__ == '__main__':
     modes.add_argument('--export-module', action='store_true')
     modes.add_argument('--receiver-script', action='store_true')
     modes.add_argument('--semantic-kernel', action='store_true')
+    modes.add_argument('--lookup-benchmark', action='store_true')
     args = parser.parse_args()
-    if args.receiver_script:
+    if args.lookup_benchmark:
+        result = prepare_lookup(args.output)
+    elif args.receiver_script:
         result = prepare_receiver(args.output)
     else:
         if args.source is None:

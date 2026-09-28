@@ -17,11 +17,18 @@ SEMANTIC_SCHEMA = 'r5obs2-pairs-v1'
 PAIR_FIELDS = ('object_id', 'object_generation', 'completion_generation',
                'task_id', 'task_generation', 'call_id')
 PAIR_OPERATIONS = ('wait', 'complete', 'callback', 'resume', 'reinit', 'lock',
-                   'notifier', 'prepare', 'task')
+                   'notifier', 'prepare', 'task', 'skip', 'superior', 'unlock', 'stage')
 SEMANTIC_HINTS = set(PAIR_FIELDS) | {'gen', 'generation', 'schema', 'operation', 'pm_phase'}
 BUFFER_PAGES = 1920
 BUFFER_KIB = BUFFER_PAGES * (4096 - 16) // 1024
 MEMORY_CAP = 133 * 1024**2
+
+
+STAGES = {1:'prepare_console',2:'freeze_processes',3:'suspend_console',4:'resume_console',
+          5:'restore_console',6:'thaw_processes',7:'platform_enter',8:'platform_recover',
+          9:'enter_state',10:'devices_and_enter',11:'pm_notifier_robust',12:'pm_notifier_chain'}
+SKIP_REASONS = {1:'no_pm',2:'async_condition_false',3:'syscore',4:'not_suspended',
+                5:'direct_complete',6:'superior_unavailable'}
 
 
 def semantic_contract():
@@ -31,6 +38,9 @@ def semantic_contract():
                 max_records=39936, max_cpus=16,
                 call_id_scope='unique within a stable task lifetime; never reused',
                 missing_or_conflicting_identity='UNKNOWN_OR_UNPAIRED',
+                auxiliary_codes={1:'prepare_progress',2:'stage_entry',3:'stage_exit',4:'async_decision'},
+                stages=STAGES, skip_reasons=SKIP_REASONS,
+                auxiliary_namespace='stage: object_id=completion_generation=0; not a device ID',
                 boundary='normalized evidence only; producer, dictionary and raw binding require review')
 
 
@@ -199,6 +209,7 @@ def check_stream(path, session):
             'transport_complete':complete,'begin':begin,'end':end,'loss_detected':bool(losses),
             'raw_sha256':digest,
             'boundary':'raw transport only; event formats, graph/probe counters, exact boot and PM coverage require separate evidence',
+            'cpu_counters':stats,'last_event_wire_seq':last_event,'last_stats_wire_seq':last_stats,
             'PM_coverage':'NOT_ASSESSED','R5':'FAIL'}
 
 
@@ -206,7 +217,10 @@ def check_stream(path, session):
 # IDs are obtained from saved format files, never guessed from another boot.
 RAW_PAIR = struct.Struct('<6Q4IIi')
 RAW_DICTIONARY = struct.Struct('<Q4I48s24s')
+RAW_AUX = struct.Struct('<6Q4I2QIi')
 RAW_LAYOUTS = {
+    'r5_aux': [('common_type',0,2), ('common_flags',2,1), ('common_preempt_count',3,1),
+               ('common_pid',4,4), ('token',8,64), ('a',72,8), ('b',80,8), ('code',88,4), ('ret',92,4)],
     'r5_pair': [('common_type',0,2), ('common_flags',2,1), ('common_preempt_count',3,1),
                 ('common_pid',4,4), ('token',8,64), ('exit',72,4), ('ret',76,4)],
     'r5_dictionary': [('common_type',0,2), ('common_flags',2,1), ('common_preempt_count',3,1),
@@ -229,15 +243,88 @@ def semantic_format(path, name):
         raise ValueError('semantic event layout drift')
     return int(ids[0])
 
-def semantic_wire_check(path, session, pair_format, dictionary_format):
+
+def check_auxiliary(auxiliary, records, objects, life):
+    """Same pair checker for stage calls; progress binds to the real prepare call."""
+    issues=[]; stages=[]; progress=[]; decisions=[]; locations=[]
+    completed=check_semantic_records(records)['pairs']
+    def key(event):
+        return tuple(event[k] for k in PAIR_FIELDS)
+    pairs={key(pair['entry']):pair for pair in completed}
+    device_calls={(event['task_id'],event['task_generation'],event['call_id']) for event in records}
+    seen=set(); last={}
+    for seq,(timestamp,wire_seq,event) in enumerate(sorted(auxiliary,key=lambda row:row[:2])):
+        event=dict(event,seq=seq)
+        locations.append(dict(seq=seq,wire_seq=wire_seq,timestamp=timestamp,cpu=event['cpu']))
+        code,a,b=event['code'],event['a'],event['b']
+        if event['flags'] or event['object_generation'] != life:
+            issues.append(dict(reason='auxiliary invalidated identity',record=event))
+        if code in (2,3):
+            if (event['task_id'],event['task_generation'],event['call_id']) in device_calls:
+                issues.append(dict(reason='stage/device call ID collision',record=event))
+            if (a not in STAGES or event['object_id'] or event['completion_generation'] or
+                    event['peer_id'] or event['operation']!='stage' or event['pm_phase']!='prepare' or
+                    (code==2 and event['ret'])):
+                raise ValueError('stage namespace/layout mismatch')
+            # Separate projection: stage IDs never resolve through device dictionary.
+            stage={k:v for k,v in event.items() if k not in ('a','b','code')}
+            stage.update(object_id=a,completion_generation=b+1,kind='pm_boundary',schema=SEMANTIC_SCHEMA,
+                         phase='entry' if code==2 else 'exit')
+            if b >= 2**64-1:
+                raise ValueError('stage value overflow')
+            stages.append(stage)
+            continue
+        if event['object_id'] not in objects or not 1 <= event['completion_generation'] <= 7:
+            raise ValueError('auxiliary object/generation invalid')
+        identity=key(event);pair=pairs.get(identity);unique=(code,identity)
+        if unique in seen or pair is None:
+            issues.append(dict(reason='duplicate or unpaired auxiliary call',record=event))
+            continue
+        seen.add(unique)
+        if (event['operation']!=pair['entry']['operation'] or event['peer_id']!=pair['entry'].get('peer_id',0) or
+                event['pm_phase']!=pair['entry']['pm_phase']):
+            issues.append(dict(reason='auxiliary call metadata conflict',record=event))
+        if code==1:
+            if event['operation']!='prepare':
+                raise ValueError('progress must bind prepare')
+            moved,did_move=b>>1,b&1
+            task=(event['task_id'],event['task_generation'])
+            attempt_before,moved_before=last.get(task,(0,0))
+            if (a!=attempt_before+1 or moved!=moved_before+did_move or
+                    (event['ret'] and did_move) or event['ret']!=pair['exit']['ret']):
+                issues.append(dict(reason='prepare progression/return mismatch',record=event))
+            last[task]=(a,moved)
+            progress.append(dict(record=event,attempt=a,moved=moved,did_move=did_move))
+        elif code==4:
+            if event['operation']!='task' or a not in (0,1) or b not in (0,1) or (b and not a) or event['ret']:
+                raise ValueError('async decision domain mismatch')
+            if pair['exit']['ret']!=b:
+                issues.append(dict(reason='async decision/return mismatch',record=event))
+            decisions.append(dict(record=event,async_enabled=bool(a),queued=bool(b),
+                                  interpretation='queued is not task execution; false uses existing synchronous fallback'))
+    for identity,pair in pairs.items():
+        op=pair['entry']['operation'];code={'prepare':1,'task':4}.get(op)
+        if code and (code,identity) not in seen:
+            issues.append(dict(reason='missing required auxiliary observation',pair=pair))
+        if op=='skip' and pair['exit']['ret'] not in SKIP_REASONS:
+            raise ValueError('unknown skip reason')
+    stage_result=check_semantic_records(stages)
+    coverage='UNKNOWN' if issues else ('UNPAIRED' if stage_result['coverage']!='SEMANTIC_RECORDS_PAIRED'
+                                      else 'AUXILIARY_CONSISTENT')
+    return dict(coverage=coverage,issues=issues,stages=stage_result,prepare_progress=progress,
+                async_decisions=decisions,raw_locations=locations,
+                boundary='selected stage calls and actual progression only; not all required stages or PM success')
+
+def semantic_wire_check(path, session, pair_format, dictionary_format, aux_format=None):
     transport = check_stream(path, session)  # strict frame/nonce/order validation
     if sum(transport['event_types'].values()) > semantic_contract()['max_records']:
         raise ValueError('raw semantic record envelope exceeded')
     pair_id = semantic_format(pair_format, 'r5_pair')
     dictionary_id = semantic_format(dictionary_format, 'r5_dictionary')
-    if pair_id == dictionary_id:
+    aux_id = semantic_format(aux_format, 'r5_aux') if aux_format else None
+    if len({pair_id,dictionary_id,aux_id}) != 3:
         raise ValueError('event IDs collide')
-    objects = {}; edges = set(); dictionary_end = None; life = None; events = []
+    objects = {}; edges = set(); dictionary_end = None; life = None; events = []; auxiliary = []
     def short_name(raw):
         head, sep, tail = raw.partition(b'\0')
         if not sep or any(tail) or any(c < 32 or c == 127 for c in head):
@@ -276,6 +363,18 @@ def semantic_wire_check(path, session, pair_format, dictionary_format):
                     dictionary_end = (obj,parent)
                 else:
                     raise ValueError('unknown dictionary kind')
+            elif event_id == aux_id:
+                if len(payload) != 96:
+                    raise ValueError('auxiliary record layout')
+                values = RAW_AUX.unpack_from(payload,8)
+                item = dict(zip(PAIR_FIELDS,values[:6]))
+                peer,op,phase,flags,a,b,code,ret = values[6:]
+                if (pid < 0 or item['task_id'] != pid+1 or not item['task_generation'] or
+                        not item['call_id'] or op >= len(PAIR_OPERATIONS) or phase >= 4 or code not in (1,2,3,4)):
+                    raise ValueError('auxiliary identity/code invalid')
+                item.update(seq=seq,cpu=cpu,pid=pid,peer_id=peer,flags=flags,a=a,b=b,code=code,ret=ret,
+                            operation=PAIR_OPERATIONS[op],pm_phase=semantic_contract()['pm_phases'][phase])
+                auxiliary.append((ts,seq,item))
             elif event_id == pair_id:
                 if len(payload) != 80 or len(events) >= 39936:
                     raise ValueError('pair layout/envelope')
@@ -311,15 +410,19 @@ def semantic_wire_check(path, session, pair_format, dictionary_format):
             event['flags'] |= 1
         ordered.append(event)
     result = check_semantic_records(ordered)
+    aux_result = check_auxiliary(auxiliary, ordered, objects, life) if aux_format else None
+    if aux_result and aux_result['coverage'] != 'AUXILIARY_CONSISTENT':
+        result['coverage'] = aux_result['coverage']
     if not transport['transport_complete']:
         result['coverage'] = 'INCOMPLETE_WITH_LOSS'
     elif not dictionary_complete or not ordered:
         result['coverage'] = 'UNKNOWN'
     result.update(transport=transport,dictionary_complete=dictionary_complete,
                   objects=objects,supplier_edges=sorted(edges),
-                  raw_locations=raw_locations,
-                  format_sha256={p.name:hashlib.sha256(p.read_bytes()).hexdigest()
-                                 for p in (pair_format,dictionary_format)},
+                  raw_locations=raw_locations,auxiliary=aux_result,
+                  format_sha256={name:hashlib.sha256(p.read_bytes()).hexdigest()
+                                 for name,p in (('r5_pair',pair_format),('r5_dictionary',dictionary_format),
+                                                ('r5_aux',aux_format)) if p is not None},
                   boundary='selected semantic events only; no full PM coverage or root cause; boot identity must match saved formats')
     return result
 
@@ -506,7 +609,7 @@ def check_evidence(evidence):
     if (not re.fullmatch(r'[A-Za-z0-9_.-]+', identity.get('batch', ''))
             or not re.fullmatch(r'[0-9a-f]{32}', identity.get('boot_id', ''))
             or not re.fullmatch(r'[0-9a-f]{64}', identity.get('raw_sha256', ''))
-            or identity.get('kernel') != ('6.12.101-r5obs2' if semantic else '6.12.101-r5obs1')):
+            or identity.get('kernel') not in (('6.12.101-r5obs2','6.12.101-r5obs2-r46') if semantic else ('6.12.101-r5obs1',))):
         raise ValueError('exact batch/boot/raw SHA/kernel identity required')
     if any(e.get('kind') == 'pm_boundary' for e in evidence['records']) != semantic:
         raise ValueError('evidence/record schema mismatch')
@@ -527,6 +630,7 @@ if __name__ == '__main__':
     p.add_argument('--session',required=True)
     p.add_argument('--pair-format',type=Path,required=True)
     p.add_argument('--dictionary-format',type=Path,required=True)
+    p.add_argument('--aux-format',type=Path)
     args = parser.parse_args()
     if args.mode == 'plan':
         result = plan(args.system_map, args.config)
@@ -534,7 +638,7 @@ if __name__ == '__main__':
         evidence = json.loads(args.evidence.read_text())
         result = check_evidence(evidence)
     elif args.mode == 'semantic-wire-check':
-        result = semantic_wire_check(args.capture,args.session,args.pair_format,args.dictionary_format)
+        result = semantic_wire_check(args.capture,args.session,args.pair_format,args.dictionary_format,args.aux_format)
     else:
         result = check_stream(args.capture, args.session)
     print(json.dumps(result, indent=2))

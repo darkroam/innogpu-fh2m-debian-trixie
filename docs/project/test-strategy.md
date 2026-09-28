@@ -297,7 +297,7 @@ R28 i9兼容修订：用户批准先修107。DRM接口按编译探针区分，�
 
 ## R34 观测离线边界
 
-`python3 -B tests/unit/run-r5-observation-tests.py`为普通用户态150项检查（R36配置/release、物理符号重名及实际C序列化；R41生产drain的热点/均匀突发、公平性/预算/反例及本机HTTP保全），
+`python3 -B tests/unit/run-r5-observation-tests.py`为普通用户态175项检查（R36配置/release、物理符号重名及实际C序列化；R41生产drain的热点/均匀突发、公平性/预算/反例及本机HTTP保全），
 不访问sysfs/debugfs/tracefs、不触发PM；真实观测事件须经离线内核编译另验。
 [实现说明](../design/r5-vpu-and-observation-implementation.md)区分配置规格、内核事件和未来通道前置；
 本地RAM记录不能替代独立接收，静态/编译通过不解除禁止重跑。
@@ -312,3 +312,10 @@ R44的119项在上述基础上接入生产四元组规范化配对及CLI反例�
 R45在同一测试入口追加原始C事件到生产CLI、字典/format/身份反例及生产边界primitive保真验证。
 新r5obs2观测源离线编译；Windows接收脚本与上传工具保持原身份。静态表布局/ELF尺寸只能
 证明固定预留，不能冒充slab、percpu、netpoll、tracefs或动态峰值实占；133MiB门仍UNVERIFIED。
+
+R46身份`6.12.101-r5obs2-r46`增prepare进度/阶段/async辅助记录与等待skip/superior/unlock。
+新raw辅助字段仍走生产解析器和同一配对检查；逐notifier身份/回退内部、回调函数ID/PM层、
+任务排队到worker的完整关联及实际事件总量仍须核准，不把所选记录配对绿写成全R40覆盖。
+同布局lookup微基准仅用户态替代；正式前置要测目标内核完整发射成本、多核竞争与端到端吞吐。
+allocator上界须独立物理测试层真实对象/背页/保留/峰值账，不能用容器或VM、sizeof或单次峰值顶替。
+安装/启动新观测核属另批授权边界，本批不申请，实验门维持关闭。
