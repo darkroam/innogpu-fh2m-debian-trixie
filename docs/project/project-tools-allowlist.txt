@@ -397,6 +397,7 @@ tools/r16-build-bc-map.py
 tools/r16-classify.py
 tools/r16-f-payload-integrity.py
 tools/r16-gate.py
+tools/r5-observation-upload.py
 tools/r5-observation.py
 tools/run-dmabuf-regression-test.sh
 tools/run-vaapi-decode-test.sh

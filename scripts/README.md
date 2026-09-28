@@ -182,3 +182,15 @@ vendor unit/helper 和全部命令链接，不能把 `PASS_RELEASE_PACKAGE_BOUND
 R34离线观测实现：`tools/prepare-r5-observation.py`锁定6.12.101输入并向全新副本增加notifier成对边界/prepare进度；
 `tools/r5-observation.py`只生成配置规格或检查普通JSON，不挂载/访问tracefs、不安装或触发PM。
 实现与运行前置见[双立项说明](../docs/design/r5-vpu-and-observation-implementation.md)。
+
+R41段一修订：生成的导出器只接受新观测身份`6.12.101-r5obs2`与`nop`事件模式，
+无函数后代图；每CPU连续最多128条、每次最多2048条、逐条核5ms预算后轮换，默认1ms再调度。
+16核数据页共128MiB时`buffer_size_kb`为8160（4KiB页减16字节页头），不是8192；
+reader页/管理结构另须计入总预算。128字节载荷门不证明含ring头的事件计费已≤128字节。
+旧`plan/check`保持r5obs1历史口径，不能拿来配置新导出器；wire-check兼容两种精确BEGIN参数。
+Windows脚本增加每秒心跳/序号缺口/丢弃/flush状态；Windows执行仍须另验。
+`tools/r5-observation-upload.py --unit <本机配置>`只输出独立systemd服务文件，不安装或启用；
+`--serve <本机配置>`才启动接收端，配置要求listen/peer/port/session/output五项，现场值只放本机。
+服务仅接受指定peer的`/observation`和`X-R5-Session`，按SHA保全原件及中断文件，不覆盖旧attempt；
+`/health`不报告PM覆盖。独立服务的退出会话/冷启存活未实测，不能以unit语法通过代替。
+四元组事件、全量清点、真实吞吐及独立保全尚未闭合，段二不得启动。

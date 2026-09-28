@@ -297,7 +297,9 @@ R28 i9兼容修订：用户批准先修107。DRM接口按编译探针区分，�
 
 ## R34 观测离线边界
 
-`python3 -B tests/unit/run-r5-observation-tests.py`为普通用户态55项检查（R36补配置/release、物理符号重名及实际C序列化与传输反例），
+`python3 -B tests/unit/run-r5-observation-tests.py`为普通用户态78项检查（R36配置/release、物理符号重名及实际C序列化；R41生产drain的热点/均匀突发、公平性/预算/反例及本机HTTP保全），
 不访问sysfs/debugfs/tracefs、不触发PM；真实观测事件须经离线内核编译另验。
 [实现说明](../design/r5-vpu-and-observation-implementation.md)区分配置规格、内核事件和未来通道前置；
 本地RAM记录不能替代独立接收，静态/编译通过不解除禁止重跑。
+R41的C调度夹具替换内核I/O/时钟，吞吐数不得外推；上传测试仅回环，临时systemd unit只语法验证，
+不安装/启动服务。新四元组完整关联反例、Windows及真实目标内核通道须另验；段一缺口未闭合不进PM。

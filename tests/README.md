@@ -292,9 +292,13 @@ R33 VPU最小修正回归复用 `bash tests/unit/run-builder-fantgpu-gates-tests
 从派生源抽取原函数编译用户态夹具，非零填充分配/失败/重复通知/最终stop均覆盖。
 不加载模块、不执行PM；callback并发可终止性未由mock证明。
 
-R34/R36离线测试：`python3 -B tests/unit/run-r5-observation-tests.py`，55项覆盖配置缺失/错误release拒绝、成对/未完成/嵌套notifier、任务迁核、idle按CPU隔离、跨回调错序拒绝、
+R34/R36/R41离线测试：`python3 -B tests/unit/run-r5-observation-tests.py`，78项覆盖配置缺失/错误release拒绝、成对/未完成/嵌套notifier、任务迁核、idle按CPU隔离、跨回调错序拒绝、
 prepare重试/进度、丢失计数拒绝、符号缺失/歧义、源漂移及路径拒绝；不加载/探测设备。
 同名驱动函数保留全部实际ftrace地址；跨模块、重复地址、多个编译变体与缺失控制根拒绝，不能用set去重后宣称唯一。
 传输检查实际编译运行生产C序列化函数（仅替换内核I/O），由Python读取其字节；
 错身份、截断、乱序、重复、缺END、溢出与末尾未排空均拒绝完整结论。Windows执行与真实内核加载另验。
 真实编译使用独立观测源码副本，成绩不替代安装、通道正样或PM验收。
+R41新增实际生产C drain的热点/均匀各39936条、公平性/5ms边界/队列阻塞/超宽拒绝、页预算常量，
+内核I/O和时钟用夹具替换，不报告真实吞吐。新旧wire精确参数分别验证；上传器用普通文件及
+本机回环HTTP验证SHA/短读/错身份/重复拒绝/保全，systemd-analyze只验证临时unit、不启动服务。
+测试环境须允许回环socket及systemd-analyze的本地socket；Windows和真实内核正样未由上述替代。

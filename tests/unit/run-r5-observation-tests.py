@@ -6,6 +6,12 @@ from pathlib import Path
 import tempfile
 import subprocess
 import struct
+import io
+import hashlib
+import json
+import re
+import threading
+import http.client
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -17,6 +23,7 @@ def load(name, path):
 
 obs = load('obs', ROOT/'tools/r5-observation.py')
 prepare = load('prepare', ROOT/'tools/prepare-r5-observation.py')
+upload = load('upload', ROOT/'tools/r5-observation-upload.py')
 count = 0
 
 def rejects(fn):
@@ -181,6 +188,130 @@ int main(void) {
         rows=list(frames); changed=bytearray(rows[index]); struct.pack_into('!Q',changed,offset,value)
         rows[index]=bytes(changed); capture_frames(rows)
         assert not obs.check_stream(capture,'a'*32)['transport_complete']; count+=1
+
+    # New transport bounds; old bytes above still use their original bounds.
+    bounded = list(frames)
+    changed = bytearray(bounded[0]); struct.pack_into('!4I',changed,64,1,1,2048,128)
+    bounded[0] = bytes(changed); capture_frames(bounded)
+    assert obs.check_stream(capture,'a'*32)['transport_complete']; count+=1
+    for offset,value in ((64,17),(68,20),(72,256),(76,129)):
+        bad=list(bounded); changed=bytearray(bad[0]);struct.pack_into('!I',changed,offset,value)
+        bad[0]=bytes(changed);capture_frames(bad)
+        rejects(lambda: obs.check_stream(capture,'a'*32))
+
+    # Run the production drain, mocking only kernel I/O and time. This tests
+    # fairness/deadline/overflow, NOT kernel/netpoll/Windows throughput.
+    drain = c[c.index('static void drain('):c.index('static int __init export_init(')]
+    constants = '\n'.join(re.findall(r'^#define (?:PAYLOAD|BURST|CPU_BURST|CPU_BUFFER_BYTES|TOTAL_PAGE_BYTES) .+$',c,re.M))
+    adapter = r'''
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <assert.h>
+typedef uint64_t u64;
+#define NSEC_PER_MSEC 1000000ULL
+#define NSEC_PER_SEC 1000000000ULL
+#define TRACE_ITER_OVERWRITE 1
+#define READ_ONCE(x) (x)
+struct work_struct { int dummy; };
+struct ring_buffer_event { unsigned char data[128]; } record;
+struct tracer { const char *name; } tracer={"nop"};
+struct trace_array { int pipe_cpumask[1]; int trace_flags; struct tracer *current_trace; } a={{0},0,&tracer},*array=&a;
+struct { unsigned char payload[128]; } packet;
+static int buffer,drain_work,system_unbound_wq,scheduled;
+static unsigned cursor,transport_error,interval_ms=1,nr_cpu_ids=16;
+static u64 lost,oversized,last_stats,now,cost;
+static bool stopping,room=true;
+static unsigned pending[16],sent[16],width=64;
+static unsigned previous=99,streak,max_streak;
+static int cpumask_empty(int *p) { return !*p; }
+static u64 ktime_get_ns(void) { return now+=100; }
+static int queue_room(void) { return room; }
+static struct ring_buffer_event *ring_buffer_consume(int b,unsigned cpu,u64 *ts,unsigned long *missed) {
+    (void)b;*ts=now;*missed=0;
+    if (!pending[cpu]) return 0;
+    pending[cpu]--;return &record;
+}
+static unsigned ring_buffer_event_length(struct ring_buffer_event *p) { (void)p;return width; }
+static void *ring_buffer_event_data(struct ring_buffer_event *p) { return p->data; }
+static void send_packet(unsigned kind,unsigned cpu,u64 ts,unsigned size) {
+    (void)kind;(void)ts;(void)size;sent[cpu]++;now+=cost;
+    streak=previous==cpu ? streak+1:1;previous=cpu;
+    if(streak>max_streak)max_streak=streak;
+}
+static void stats(void) { }
+static unsigned msecs_to_jiffies(unsigned n) { return n; }
+static void queue_delayed_work(int q,int *w,unsigned t) { (void)q;(void)w;(void)t;scheduled++; }
+static void reset(void) {
+    memset(pending,0,sizeof pending);memset(sent,0,sizeof sent);
+    cursor=transport_error=scheduled=0;now=cost=lost=oversized=last_stats=0;
+    stopping=false;room=true;width=64;previous=99;streak=max_streak=0;
+}
+'''
+    main = r'''
+int main(void) {
+    _Static_assert(CPU_BUFFER_BYTES==2048ULL*4080, "data capacity must account for page headers");
+    _Static_assert(TOTAL_PAGE_BYTES==16ULL*2048*4096, "physical data pages must fit 128MiB");
+    reset();pending[14]=39936;
+    for(unsigned i=0;i<100 && pending[14];i++)drain(0);
+    assert(!pending[14] && sent[14]==39936 && !lost && !oversized);
+    reset();for(unsigned i=0;i<16;i++)pending[i]=2496;
+    drain(0);for(unsigned i=0;i<16;i++)assert(sent[i]==128);
+    assert(max_streak<=128);
+    for(unsigned j=0;j<100;j++)drain(0);
+    for(unsigned i=0;i<16;i++)assert(!pending[i] && sent[i]==2496);
+    reset();pending[0]=pending[1]=1000;cost=100000;
+    drain(0);assert(now<=5200000 && sent[0]<128 && !sent[1]);
+    drain(0);assert(sent[1]>0); /* next invocation starts with next CPU */
+    reset();pending[0]=1;room=false;drain(0);assert(pending[0]==1 && scheduled==1);
+    reset();pending[0]=1;width=129;drain(0);assert(oversized==1 && transport_error && !scheduled);
+    reset();tracer.name="function_graph";drain(0);assert(transport_error && !scheduled);
+    return 0;
+}
+'''
+    source=tmp/'drain.c';exe=tmp/'drain';source.write_text(constants+'\n'+adapter+drain+main)
+    subprocess.run(['cc','-std=gnu11','-Wall','-Werror',str(source),'-o',str(exe)],check=True)
+    subprocess.run([str(exe)],check=True);count+=7
+
+    # Production upload persistence, no socket or privileged service needed.
+    root=tmp/'uploads';root.mkdir()
+    raw=b'R5CAP01\n';sha=hashlib.sha256(raw).hexdigest()
+    got=upload.save_upload(io.BytesIO(raw),root,len(raw),sha,'a'*32)
+    assert got['upload']=='SHA_MATCH' and got['coverage']=='UNVERIFIED';count+=1
+    try: upload.save_upload(io.BytesIO(raw),root,len(raw),sha,'a'*32)
+    except FileExistsError: count+=1
+    else: raise AssertionError('prior upload overwritten')
+    for nonce,body,size,expected in [('b'*32,raw,9,sha),('c'*32,raw,8,'0'*64)]:
+        got=upload.save_upload(io.BytesIO(body),root,size,expected,nonce)
+        assert got['upload']=='FAILED_OR_UNVERIFIED' and (root/nonce/'capture.r5o').read_bytes()==raw
+        assert json.loads((root/nonce/'receipt.json').read_text())==got;count+=1
+    for size in (0,upload.MAX_CAPTURE+1):
+        rejects(lambda: upload.save_upload(io.BytesIO(raw),root,size,sha,'d'*32))
+    config=tmp/'config.json'
+    config.write_text(json.dumps(dict(listen='127.0.0.1',peer='127.0.0.2',port=8766,session='e'*32,output=str(root))))
+    unit=tmp/'r41-upload.service';unit.write_text(upload.service_unit(config))
+    checked=subprocess.run(['systemd-analyze','verify',str(unit)],capture_output=True,text=True)
+    assert checked.returncode==0, checked.stdout+checked.stderr
+    assert 'WantedBy=multi-user.target' in unit.read_text() and 'BindsTo=' not in unit.read_text();count+=1
+
+    # Local HTTP production handler, not Windows or PM-channel throughput.
+    config_data=upload.load_config(config);config_data['peer']='127.0.0.1'
+    with upload.HTTPServer(('127.0.0.1',0),upload.Handler) as server:
+        server.config=config_data
+        thread=threading.Thread(target=server.serve_forever);thread.start()
+        try:
+            conn=http.client.HTTPConnection('127.0.0.1',server.server_port,timeout=5)
+            conn.request('GET','/health');response=conn.getresponse()
+            assert response.status==200 and json.loads(response.read())['PM']=='NOT_RUN';count+=1
+            headers={'X-Content-SHA256':sha,'X-R5-Session':'e'*32}
+            conn.request('POST','/observation',raw,dict(headers,**{'X-R5-Session':'f'*32}))
+            response=conn.getresponse();assert response.status==400;response.read();count+=1
+            conn.request('POST','/observation',raw,headers);response=conn.getresponse()
+            assert response.status==200 and json.loads(response.read())['upload']=='SHA_MATCH';count+=1
+            conn.request('POST','/observation',raw,headers);response=conn.getresponse()
+            assert response.status==409;response.read();conn.close();count+=1
+        finally:
+            server.shutdown();thread.join()
 
 assert 'trace_notifier_boundary' not in prepare.NOTIFIER_EVENT  # generated tracepoint API, not recursive
 assert '__field(int, ret)' in prepare.NOTIFIER_EVENT and '__field(bool, exit)' in prepare.NOTIFIER_EVENT

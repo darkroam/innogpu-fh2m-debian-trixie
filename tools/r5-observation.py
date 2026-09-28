@@ -39,18 +39,21 @@ def check_stream(path, session):
                 if seq != 0 or size != 16 or cpu != 0xffffffff:
                     raise ValueError('invalid BEGIN')
                 begin = struct.unpack('!4I', payload)
-                if not (1 <= begin[0] <= 64 and 1 <= begin[1] <= 100 and
-                        begin[2:] == (256, 1280)):
+                legacy = (1 <= begin[0] <= 64 and 1 <= begin[1] <= 100 and
+                          begin[2:] == (256, 1280))
+                bounded = (1 <= begin[0] <= 16 and 1 <= begin[1] <= 5 and
+                           begin[2:] == (2048, 128))
+                if not (legacy or bounded):
                     raise ValueError('unexpected transport bounds')
             elif begin is None:
                 raise ValueError('missing BEGIN')
             elif kind == 1:
-                if cpu >= 64 or size < 8:
+                if cpu >= (begin[0] if begin[2:] == (2048, 128) else 64) or not 8 <= size <= begin[3]:
                     raise ValueError('invalid trace entry')
                 event_type = int.from_bytes(payload[:2], 'little')
                 types[event_type] += 1; last_event[cpu] = seq
             elif kind == 2:
-                if cpu >= 64 or size != 32:
+                if cpu >= (begin[0] if begin[2:] == (2048, 128) else 64) or size != 32:
                     raise ValueError('invalid CPU counters')
                 values = struct.unpack('!4Q', payload)
                 if cpu in stats and any(a < b for a,b in zip(values[:3],stats[cpu][:3])):

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""R34 offline-only source overlay; no build, mount, install, probe or PM."""
+"""Offline source/transport preparation; no build, mount, install, probe or PM."""
 import argparse
 import hashlib
 import json
 from pathlib import Path
 import shutil
 
-WINDOWS_RECEIVER = r'''# R36 raw UDP capture. No PM action; a receipt is not a coverage verdict.
+WINDOWS_RECEIVER = r'''# R41 raw UDP capture. No PM action; a receipt is not a coverage verdict.
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)][string]$LocalAddress,
@@ -24,7 +24,7 @@ $allowed = @($Sessions.Split(','))
 if ($allowed.Count -lt 1 -or $allowed.Count -gt 2 -or
     @($allowed | Select-Object -Unique).Count -ne $allowed.Count) { throw 'One or two unique sessions required' }
 foreach ($id in $allowed) { if ($id -cnotmatch '^[a-f0-9]{32}$') { throw 'Invalid session' } }
-$root = Join-Path ([Environment]::GetFolderPath('MyDocuments')) ('R36-stream-' + [guid]::NewGuid().ToString('N'))
+$root = Join-Path ([Environment]::GetFolderPath('MyDocuments')) ('R41-stream-' + [guid]::NewGuid().ToString('N'))
 [IO.Directory]::CreateDirectory($root) | Out-Null
 $rule = Split-Path $root -Leaf
 $udp = $null; $file = $null; $writer = $null; $ruleMade = $false
@@ -32,6 +32,14 @@ $active = ''; $finished = @(); $packets = 0L; $ignored = 0L; $bytesStored = 0L
 $failure = $null; $exitCode = 0
 $scriptHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $PSCommandPath).Hash.ToLowerInvariant()
 $clock = [Diagnostics.Stopwatch]::StartNew(); $flushedAt = 0L
+$heartbeatAt = -1000L; $receivedAt = -1L; $expectedSequence = [uint64]0
+$sequenceGaps = [uint64]0; $sequenceErrors = 0L; $reportedLost = [uint64]0; $oversized = [uint64]0
+$cpuDropped = @{}
+function Read-BigEndian64([byte[]]$Data, [int]$Offset) {
+    $part = [byte[]]::new(8); [Array]::Copy($Data,$Offset,$part,0,8)
+    if ([BitConverter]::IsLittleEndian) { [Array]::Reverse($part) }
+    return [BitConverter]::ToUInt64($part,0)
+}
 try {
     New-NetFirewallRule -DisplayName $rule -Direction Inbound -Action Allow `
         -Protocol UDP -LocalPort 6666 -RemotePort 6665 -LocalAddress $LocalAddress `
@@ -47,6 +55,14 @@ try {
     Write-Host ('CAPTURE_DIRECTORY=' + $root)
     Write-Host 'READY_CONTINUOUS (keep this window open; Ctrl+C preserves partial capture)'
     while ($finished.Count -lt $allowed.Count) {
+        if ($clock.ElapsedMilliseconds - $heartbeatAt -ge 1000) {
+            $age = if ($receivedAt -lt 0) { 'WAITING' } else { [string]($clock.ElapsedMilliseconds-$receivedAt) }
+            $dropped = [uint64]0
+            foreach ($v in $cpuDropped.Values) { $dropped += $v }
+            Write-Host ('HEARTBEAT session={0} packets={1} bytes={2} last_rx_ms={3} gaps={4} sequence_errors={5} header_lost={6} dropped={7} oversized={8} flush_age_ms={9}' -f `
+                $active,$packets,$bytesStored,$age,$sequenceGaps,$sequenceErrors,$reportedLost,$dropped,$oversized,($clock.ElapsedMilliseconds-$flushedAt))
+            $heartbeatAt = $clock.ElapsedMilliseconds
+        }
         if ($clock.Elapsed.TotalSeconds -ge 7200) { throw 'Two-hour receiver deadline; incomplete streams preserved' }
         try { $data = $udp.Receive([ref]$peer) }
         catch [Net.Sockets.SocketException] {
@@ -68,6 +84,7 @@ try {
         }
         if ($null -eq $file) {
             $active = $nonce
+            $expectedSequence = [uint64]0; $cpuDropped = @{}
             $file = [IO.File]::Open((Join-Path $root ($active + '.r5o')),'CreateNew','Write','Read')
             $writer = [IO.BinaryWriter]::new($file)
             $magic = [Text.Encoding]::ASCII.GetBytes("R5CAP01`n")
@@ -77,6 +94,13 @@ try {
         $writer.Write([int64][DateTime]::UtcNow.Ticks)
         $writer.Write($data,0,$data.Length)
         $packets++; $bytesStored += 12 + $data.Length
+        $receivedAt = $clock.ElapsedMilliseconds
+        $seq = Read-BigEndian64 $data 24
+        if ($seq -gt $expectedSequence) { $sequenceGaps += $seq-$expectedSequence }
+        if ($seq -lt $expectedSequence) { $sequenceErrors++ }
+        $expectedSequence = [Math]::Max($expectedSequence,$seq+[uint64]1)
+        $reportedLost = [Math]::Max($reportedLost,(Read-BigEndian64 $data 48))
+        $oversized = [Math]::Max($oversized,(Read-BigEndian64 $data 56))
         if ($clock.ElapsedMilliseconds - $flushedAt -ge 100) {
             $file.Flush($true); $flushedAt = $clock.ElapsedMilliseconds
         }
@@ -84,6 +108,11 @@ try {
         $length = [int]$data[6]*256 + [int]$data[7]
         if ($length -ne $data.Length-64 -or $data[5] -lt 1 -or $data[5] -gt 4) {
             throw 'Malformed expected stream preserved'
+        }
+        if ($data[5] -eq 2) {
+            if ($length -ne 32) { throw 'Malformed CPU counters preserved' }
+            $cpu = [int]$data[32]*16777216 + [int]$data[33]*65536 + [int]$data[34]*256 + [int]$data[35]
+            $cpuDropped[$cpu] = (Read-BigEndian64 $data 64) + (Read-BigEndian64 $data 72) + (Read-BigEndian64 $data 80)
         }
         if ($data[5] -eq 4) {
             if ($length -ne 16) { throw 'Malformed END preserved' }
@@ -109,6 +138,8 @@ finally {
     })
     @{script_sha256=$scriptHash; sessions=$allowed; ended=$finished; packets=$packets;
       ignored=$ignored; failure=$failure; seconds=$clock.Elapsed.TotalSeconds;
+      sequence_gaps=$sequenceGaps; sequence_errors=$sequenceErrors; reported_lost=$reportedLost;
+      oversized=$oversized; cpu_dropped=$cpuDropped;
       capture=$files; coverage='UNVERIFIED'; R5='FAIL'} | ConvertTo-Json -Depth 5 |
         Set-Content -LiteralPath (Join-Path $root 'receipt.json') -Encoding UTF8
     Write-Host ('Evidence preserved: ' + $root)
@@ -125,7 +156,7 @@ def prepare_receiver(output):
 # The generated Linux module is separately licensed GPL-2.0-only. The Python
 # generator retains the repository's original-tools license.
 EXPORT_MODULE = r'''// SPDX-License-Identifier: GPL-2.0-only
-/* R36: consume one private ftrace instance; no PM trigger or watchdog. */
+/* R41 transport only; r5obs2 semantic events/admission are separate gates. */
 #include <linux/module.h>
 #include <linux/inet.h>
 #include <linux/etherdevice.h>
@@ -136,13 +167,20 @@ EXPORT_MODULE = r'''// SPDX-License-Identifier: GPL-2.0-only
 #include <linux/ktime.h>
 #include <linux/utsname.h>
 #include <linux/ctype.h>
+#include <linux/mm.h>
 #include <net/net_namespace.h>
 #include "trace.h"
 
-#define PAYLOAD 1280
-#define BURST 256
+#define PAYLOAD 128
+#define BURST 2048
+#define CPU_BURST 128
 #define QUEUE_LIMIT 64
-#define CPU_LIMIT 64
+#define CPU_LIMIT 16
+/* Locked 4KiB pages have a 16-byte data-page header: 2048 pages/CPU.
+ * buffer_size_kb must be 8160, not 8192 (which allocates extra pages).
+ * Reader pages and allocator metadata still require separate admission. */
+#define CPU_BUFFER_BYTES (8160ULL * 1024)
+#define TOTAL_PAGE_BYTES (128ULL * 1024 * 1024)
 static char *instance, *session, *interface, *sender, *receiver, *receiver_mac;
 module_param(instance, charp, 0400);
 module_param(session, charp, 0400);
@@ -150,7 +188,7 @@ module_param(interface, charp, 0400);
 module_param(sender, charp, 0400);
 module_param(receiver, charp, 0400);
 module_param(receiver_mac, charp, 0400);
-static unsigned int interval_ms = 20;
+static unsigned int interval_ms = 1;
 module_param(interval_ms, uint, 0400);
 
 struct wire_header {
@@ -222,41 +260,49 @@ static void stats(void)
 
 static void drain(struct work_struct *work)
 {
-    unsigned int n, empty = 0;
+    unsigned int n = 0, empty = 0;
     u64 deadline = ktime_get_ns() + 5 * NSEC_PER_MSEC;
     /* Admission requires exclusive ownership: no trace_pipe/snapshot reader. */
     if (!cpumask_empty(array->pipe_cpumask) ||
         (array->trace_flags & TRACE_ITER_OVERWRITE) ||
-        strcmp(array->current_trace->name, "function_graph")) {
+        strcmp(array->current_trace->name, "nop")) {
         transport_error = 1;
         return;
     }
-    for (n = 0; n < BURST && ktime_get_ns() < deadline; n++) {
-        struct ring_buffer_event *event;
-        unsigned long missed = 0;
-        unsigned int size, cpu = cursor++ % nr_cpu_ids;
-        u64 timestamp;
-        if (!queue_room())
-            break;
-        if (!cpu_possible(cpu))
-            continue;
-        event = ring_buffer_consume(buffer, cpu, &timestamp, &missed);
-        if (!event) {
-            if (++empty >= num_possible_cpus())
+    /* Empty CPU visits do not spend the event budget. A busy CPU yields after
+     * CPU_BURST records, including across worker runs, so peers cannot starve.
+     * The deadline is tested per record; one netpoll call is not preempted. */
+    while (n < BURST && ktime_get_ns() < deadline) {
+        unsigned int quota, cpu = cursor;
+        cursor = (cursor + 1) % nr_cpu_ids;
+        for (quota = 0; quota < CPU_BURST && n < BURST &&
+             ktime_get_ns() < deadline; quota++) {
+            struct ring_buffer_event *event;
+            unsigned long missed = 0;
+            unsigned int size;
+            u64 timestamp;
+            if (!queue_room())
+                goto reschedule;
+            event = ring_buffer_consume(buffer, cpu, &timestamp, &missed);
+            if (!event) {
+                if (++empty >= nr_cpu_ids)
+                    goto reschedule;
                 break;
-            continue;
+            }
+            empty = 0;
+            n++;
+            lost += missed;
+            size = ring_buffer_event_length(event);
+            if (size > PAYLOAD) {
+                oversized++;
+                transport_error = 1;
+                return; /* Do not silently truncate an unapproved layout. */
+            }
+            memcpy(packet.payload, ring_buffer_event_data(event), size);
+            send_packet(1, cpu, timestamp, size);
         }
-        empty = 0;
-        lost += missed;
-        size = ring_buffer_event_length(event);
-        if (size > PAYLOAD) {
-            oversized++;
-            continue;
-        }
-        /* Copy before any further consume; only this worker owns the reader. */
-        memcpy(packet.payload, ring_buffer_event_data(event), size);
-        send_packet(1, cpu, timestamp, size);
     }
+reschedule:
     if (ktime_get_ns() - last_stats >= NSEC_PER_SEC) {
         stats();
         last_stats = ktime_get_ns();
@@ -274,11 +320,13 @@ static int __init export_init(void)
     int ret, cpu;
     unsigned int i;
     BUILD_BUG_ON(sizeof(struct wire_header) != 64);
-    if (strcmp(init_utsname()->release, "6.12.101-r5obs1") ||
-        !instance || strncmp(instance, "r5obs1-", 7) ||
+    BUILD_BUG_ON(PAGE_SIZE != 4096);
+    if (strcmp(init_utsname()->release, "6.12.101-r5obs2") ||
+        !instance || strncmp(instance, "r5obs2-", 7) ||
         strlen(instance) > 63 || !session || strlen(session) != 32 ||
         !interface || !sender || !receiver || !receiver_mac ||
-        interval_ms < 1 || interval_ms > 100 || nr_cpu_ids > CPU_LIMIT)
+        interval_ms < 1 || interval_ms > 5 || nr_cpu_ids > CPU_LIMIT ||
+        nr_cpu_ids != num_possible_cpus())
         return -EINVAL;
     for (i = 0; instance[i]; i++)
         if (!isalnum(instance[i]) && !strchr("_.-", instance[i]))
@@ -308,14 +356,23 @@ static int __init export_init(void)
     if (!READ_ONCE(array->buffer_disabled) ||
         !cpumask_empty(array->pipe_cpumask) ||
         (array->trace_flags & TRACE_ITER_OVERWRITE) ||
-        strcmp(array->current_trace->name, "function_graph") ||
+        strcmp(array->current_trace->name, "nop") ||
         ring_buffer_entries(buffer)) {
         ret = -EBUSY;
         goto put;
     }
-    for_each_possible_cpu(cpu)
-        allocated += ring_buffer_size(buffer, cpu);
-    if (!allocated || allocated > 64ULL * 1024 * 1024) {
+    if (ring_buffer_subbuf_size_get(buffer) != PAGE_SIZE) {
+        ret = -E2BIG;
+        goto put;
+    }
+    for_each_possible_cpu(cpu) {
+        if (ring_buffer_size(buffer, cpu) != CPU_BUFFER_BYTES) {
+            ret = -E2BIG;
+            goto put;
+        }
+        allocated += CPU_BUFFER_BYTES / (PAGE_SIZE - 16) * PAGE_SIZE;
+    }
+    if (!allocated || allocated > TOTAL_PAGE_BYTES) {
         ret = -E2BIG;
         goto put;
     }
@@ -357,7 +414,7 @@ static void __exit export_exit(void)
 module_init(export_init);
 module_exit(export_exit);
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("R36 bounded ftrace consumer; no PM or watchdog");
+MODULE_DESCRIPTION("R41 bounded nop/event ftrace consumer; no PM or watchdog");
 '''
 
 def prepare_export(source, output):
@@ -366,11 +423,18 @@ def prepare_export(source, output):
     expected = 'c614689246f36f68bdf32ea4b4e9981cfc357da5485fa8a1a7ea1a3732441560'
     if path.is_symlink() or hashlib.sha256(path.read_bytes()).hexdigest() != expected:
         raise ValueError('internal trace layout differs from the locked kernel')
+    ring = source/'kernel/trace/ring_buffer.c'
+    ring_sha = 'b83a8b848a44e0785912328f613bd66de23b182483c1820a5f6448f0cc53d338'
+    if ring.is_symlink() or hashlib.sha256(ring.read_bytes()).hexdigest() != ring_sha:
+        raise ValueError('ring page accounting differs from the locked kernel')
     output.mkdir()  # Never overwrite an old experiment's source or products.
     (output/'r5_trace_export.c').write_text(EXPORT_MODULE)
     (output/'Makefile').write_text('obj-m := r5_trace_export.o\nccflags-y += -I$(srctree)/kernel/trace\n')
     return {'source_sha256': hashlib.sha256(EXPORT_MODULE.encode()).hexdigest(),
-            'trace_header_sha256': expected, 'install': 'NOT_RUN', 'PM': 'NOT_RUN'}
+            'trace_header_sha256': expected, 'ring_source_sha256': ring_sha,
+            'kernel_release': '6.12.101-r5obs2',
+            'semantic_events': 'NOT_IMPLEMENTED', 'admission': 'UNVERIFIED',
+            'install': 'NOT_RUN', 'PM': 'NOT_RUN'}
 
 LOCK = {
     'kernel/notifier.c': '1f4a1b2384a8751d780d39a748ef5beda21149f6e715af54df131ff9add2c44e',
