@@ -2,9 +2,16 @@
 """Offline source/transport preparation; no build, mount, install, probe or PM."""
 import argparse
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import shutil
+
+# One contract owner: the production checker. Do not maintain a second schema
+# or budget in the generator or its test fixtures.
+_spec = importlib.util.spec_from_file_location('r5_observation', Path(__file__).with_name('r5-observation.py'))
+_analysis = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_analysis)
 
 WINDOWS_RECEIVER = r'''# R41 raw UDP capture. No PM action; a receipt is not a coverage verdict.
 [CmdletBinding()]
@@ -176,11 +183,11 @@ EXPORT_MODULE = r'''// SPDX-License-Identifier: GPL-2.0-only
 #define CPU_BURST 128
 #define QUEUE_LIMIT 64
 #define CPU_LIMIT 16
-/* Locked 4KiB pages have a 16-byte data-page header: 2048 pages/CPU.
- * buffer_size_kb must be 8160, not 8192 (which allocates extra pages).
- * Reader pages and allocator metadata still require separate admission. */
-#define CPU_BUFFER_BYTES (8160ULL * 1024)
-#define TOTAL_PAGE_BYTES (128ULL * 1024 * 1024)
+/* R44 scheme 2: 1920 data pages/CPU, 120MiB across 16 CPUs.
+ * This is only the data-page limit: memory-budget.json accounts known
+ * reader/metadata buckets. Full 133MiB admission still needs target receipts. */
+#define CPU_BUFFER_BYTES (@CPU_BUFFER_KIB@ULL * 1024)
+#define TOTAL_PAGE_BYTES (@DATA_PAGE_BYTES@ULL)
 static char *instance, *session, *interface, *sender, *receiver, *receiver_mac;
 module_param(instance, charp, 0400);
 module_param(session, charp, 0400);
@@ -365,11 +372,24 @@ static int __init export_init(void)
         ret = -E2BIG;
         goto put;
     }
+#ifdef CONFIG_TRACER_MAX_TRACE
+    if (array->allocated_snapshot) {
+        ret = -E2BIG;
+        goto put;
+    }
+#endif
     for_each_possible_cpu(cpu) {
         if (ring_buffer_size(buffer, cpu) != CPU_BUFFER_BYTES) {
             ret = -E2BIG;
             goto put;
         }
+#ifdef CONFIG_TRACER_MAX_TRACE
+        if (ring_buffer_subbuf_size_get(array->max_buffer.buffer) != PAGE_SIZE ||
+            ring_buffer_size(array->max_buffer.buffer, cpu) != 2 * (PAGE_SIZE - 16)) {
+            ret = -E2BIG;
+            goto put;
+        }
+#endif
         allocated += CPU_BUFFER_BYTES / (PAGE_SIZE - 16) * PAGE_SIZE;
     }
     if (!allocated || allocated > TOTAL_PAGE_BYTES) {
@@ -416,6 +436,8 @@ module_exit(export_exit);
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("R41 bounded nop/event ftrace consumer; no PM or watchdog");
 '''
+EXPORT_MODULE = EXPORT_MODULE.replace('@CPU_BUFFER_KIB@', str(_analysis.BUFFER_KIB)).replace(
+    '@DATA_PAGE_BYTES@', str(_analysis.memory_budget()['components']['data_pages']))
 
 def prepare_export(source, output):
     """Emit an external module for the exact observation kernel, never load it."""
@@ -427,13 +449,24 @@ def prepare_export(source, output):
     ring_sha = 'b83a8b848a44e0785912328f613bd66de23b182483c1820a5f6448f0cc53d338'
     if ring.is_symlink() or hashlib.sha256(ring.read_bytes()).hexdigest() != ring_sha:
         raise ValueError('ring page accounting differs from the locked kernel')
+    trace = source/'kernel/trace/trace.c'
+    trace_sha = '5bbeb2364266a38ef93da3b669d45d02e4b879f900225631378a3d4b7be84a57'
+    if trace.is_symlink() or hashlib.sha256(trace.read_bytes()).hexdigest() != trace_sha:
+        raise ValueError('snapshot/trace-array accounting differs from the locked kernel')
     output.mkdir()  # Never overwrite an old experiment's source or products.
     (output/'r5_trace_export.c').write_text(EXPORT_MODULE)
     (output/'Makefile').write_text('obj-m := r5_trace_export.o\nccflags-y += -I$(srctree)/kernel/trace\n')
+    contract = _analysis.semantic_contract()
+    budget = _analysis.memory_budget()
+    (output/'semantic-contract.json').write_text(json.dumps(contract, indent=2)+'\n')
+    (output/'memory-budget.json').write_text(json.dumps(budget, indent=2)+'\n')
     return {'source_sha256': hashlib.sha256(EXPORT_MODULE.encode()).hexdigest(),
             'trace_header_sha256': expected, 'ring_source_sha256': ring_sha,
+            'trace_source_sha256': trace_sha,
             'kernel_release': '6.12.101-r5obs2',
-            'semantic_events': 'NOT_IMPLEMENTED', 'admission': 'UNVERIFIED',
+            'semantic_schema': contract['schema'], 'semantic_events': 'NOT_IMPLEMENTED',
+            'parser': 'NORMALIZED_PAIRS_IMPLEMENTED', 'memory_budget': budget,
+            'admission': 'UNVERIFIED',
             'install': 'NOT_RUN', 'PM': 'NOT_RUN'}
 
 LOCK = {

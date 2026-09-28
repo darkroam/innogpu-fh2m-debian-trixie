@@ -11,6 +11,125 @@ import struct
 WIRE = struct.Struct('!4sBBH16sQIIQQQ')
 FRAME = struct.Struct('<Iq')
 
+# Shared with prepare-r5-observation.py; a normalized record contract, not an
+# assertion that the target kernel already emits these fields.
+SEMANTIC_SCHEMA = 'r5obs2-pairs-v1'
+PAIR_FIELDS = ('object_id', 'object_generation', 'completion_generation',
+               'task_id', 'task_generation', 'call_id')
+PAIR_OPERATIONS = ('wait', 'complete', 'callback', 'resume', 'reinit', 'lock',
+                   'notifier', 'prepare', 'task')
+SEMANTIC_HINTS = set(PAIR_FIELDS) | {'gen', 'generation', 'schema', 'operation', 'pm_phase'}
+BUFFER_PAGES = 1920
+BUFFER_KIB = BUFFER_PAGES * (4096 - 16) // 1024
+MEMORY_CAP = 133 * 1024**2
+
+
+def semantic_contract():
+    return dict(schema=SEMANTIC_SCHEMA, kind='pm_boundary', identity_fields=PAIR_FIELDS,
+                operations=PAIR_OPERATIONS, phases=('entry', 'exit'),
+                pm_phases=('prepare', 'suspend', 'resume', 'complete'),
+                max_records=39936, max_cpus=16,
+                call_id_scope='unique within a stable task lifetime; never reused',
+                missing_or_conflicting_identity='UNKNOWN_OR_UNPAIRED',
+                boundary='normalized evidence only; producer, dictionary and raw binding require review')
+
+
+def memory_budget():
+    """Locked-kernel allocation model, NOT target allocator measurements."""
+    cpus = 16
+    # BTF sizes 64/552/264; 64-byte cache alignment + kmalloc buckets gives
+    # 64/1024/512. Allocator page slack/debug metadata is NOT included here.
+    components = dict(data_pages=cpus * BUFFER_PAGES * 4096,
+                      reader_pages=cpus * 4096,
+                      page_descriptors=cpus * (BUFFER_PAGES + 1) * 64,
+                      per_cpu_bucket=cpus * 1024, buffer_bucket=512,
+                      cpu_pointer_bucket=128, cpumask_bucket=8,
+                      # CONFIG_TRACER_MAX_TRACE=y creates a minimal second
+                      # ring even without an allocated full-size snapshot.
+                      minimal_snapshot=cpus*(3*4096 + 3*64 + 1024)+512+128+8,
+                      trace_array_bucket=8192, trace_name_bucket=64,
+                      trace_cpumasks=2*8, array_cpu_payload=2*cpus*128,
+                      netpoll_info_bucket=192,
+                      dictionary_cap=1024**2, pair_table_cap=4 * 1024**2)
+    total = sum(components.values())
+    return dict(data_pages_per_cpu=BUFFER_PAGES, buffer_size_kb_per_cpu=BUFFER_KIB,
+                cap_bytes=MEMORY_CAP, components=components, accounted_bytes=total,
+                remaining_bytes=MEMORY_CAP-total,
+                burst_bytes=39936*128, burst_data_page_fraction=39936*128/(BUFFER_PAGES*4096),
+                unknown_allocations=['slab backing-page slack/debug metadata',
+                    'percpu allocator backing, event files/filters, tracefs and ftrace bookkeeping',
+                    'netpoll/skb pools/queue, module and control state, transient peak allocations',
+                    'actual dictionary/pair layout and allocator charge'],
+                basis='saved R36 BTF and locked SLUB allocation model; no target measurements',
+                admission='UNVERIFIED', PM='NOT_RUN')
+
+
+def check_semantic_records(records):
+    """Keep both ends of every conflict; CPU is location, never task identity."""
+    if len(records) > semantic_contract()['max_records']:
+        raise ValueError('semantic record envelope exceeded')
+    pending = {}; seen = set(); tainted = set(); issues = []; pairs = []
+    task_pids = {}; previous_seq = -1
+    for event in records:
+        if (type(event.get('seq')) is not int or event['seq'] <= previous_seq or
+                type(event.get('cpu')) is not int or not 0 <= event['cpu'] < 16 or
+                type(event.get('pid')) is not int or event['pid'] < 0):
+            raise ValueError('semantic sequence/CPU/PID invalid')
+        previous_seq = event['seq']
+        if (event.get('schema') != SEMANTIC_SCHEMA or event.get('kind') != 'pm_boundary' or
+                event.get('phase') not in ('entry', 'exit') or
+                event.get('operation') not in PAIR_OPERATIONS or
+                event.get('pm_phase') not in semantic_contract()['pm_phases']):
+            raise ValueError('semantic schema/operation/phase mismatch')
+        allowed = set(PAIR_FIELDS) | {'seq', 'cpu', 'pid', 'schema', 'kind', 'phase',
+                                     'operation', 'pm_phase', 'ret'}
+        if set(event) - allowed:
+            raise ValueError('unknown semantic fields; identity aliases are not silently ignored')
+        if any(type(event.get(k)) is not int or not 1 <= event[k] < 2**64 for k in PAIR_FIELDS):
+            issues.append(dict(status='UNKNOWN', reason='missing stable identity', record=event))
+            continue
+        if event['phase'] == 'exit' and type(event.get('ret')) is not int:
+            raise ValueError('semantic exit return required')
+        task = (event['task_id'], event['task_generation'])
+        if task in task_pids and task_pids[task] != event['pid']:
+            issues.append(dict(status='UNKNOWN', reason='stable task has conflicting PID', record=event))
+            continue
+        task_pids[task] = event['pid']
+        call = (*task, event['call_id'])
+        identity = tuple(event[k] for k in PAIR_FIELDS) + (event['operation'], event['pm_phase'])
+        if event['phase'] == 'entry':
+            if call in seen:
+                tainted.add(call)
+                issues.append(dict(status='UNPAIRED', reason='duplicate/reused call ID', record=event))
+            else:
+                seen.add(call)
+                pending[call] = (identity, event)
+        elif call not in pending:
+            # Also invalidate a prior positive if a second exit later appears.
+            tainted.add(call)
+            issues.append(dict(status='UNPAIRED', reason='exit without entry', record=event))
+        else:
+            before, entry = pending[call]
+            if (call in tainted or before != identity or
+                    (event['pid'] == 0 and entry['cpu'] != event['cpu'])):
+                tainted.add(call)
+                issues.append(dict(status='UNPAIRED', reason='identity/phase/idle CPU conflict', record=event))
+            else:
+                pairs.append(dict(call=call, entry=entry, exit=event))
+                del pending[call]
+    valid = []
+    for pair in pairs:
+        if pair['call'] in tainted:
+            issues.append(dict(status='UNPAIRED', reason='later duplicate invalidates pair', pair=pair))
+        else:
+            valid.append(pair)
+    unmatched = [entry for _, entry in pending.values()]
+    return dict(schema=SEMANTIC_SCHEMA, semantic_pairs=len(valid), pairs=valid,
+                unmatched_entries=unmatched, issues=issues,
+                coverage='UNKNOWN' if issues else ('UNPAIRED' if unmatched else 'SEMANTIC_RECORDS_PAIRED'),
+                root_cause='unresolved', R5='FAIL',
+                boundary='selected normalized pairs only; not full dictionary, PM coverage or root cause')
+
 def check_stream(path, session):
     """Validate preserved datagrams; this is transport, not PM coverage."""
     if not re.fullmatch('[0-9a-f]{32}', session):
@@ -191,7 +310,12 @@ def check_records(records, losses):
         raise ValueError('all aggregated per-CPU/graph/probe loss counters required')
     if not records or any(losses.values()):
         raise ValueError('empty or lossy window cannot establish coverage')
+    if any(event.get('kind') == 'pm_boundary' for event in records):
+        return check_semantic_records(records)
+    if any(SEMANTIC_HINTS.intersection(event) for event in records):
+        raise ValueError('semantic identity fields require explicit pm_boundary schema; never ignore them')
     pending = {}; pairs = 0; retries = Counter(); last_progress = {}; previous_seq = -1
+    unassociated = []
     for event in records:
         # sequence is assigned when merging the same-boot raw trace, never across boots.
         if type(event.get('seq')) is not int or event['seq'] <= previous_seq:
@@ -204,12 +328,12 @@ def check_records(records, losses):
         if event.get('kind') == 'notifier':
             if event.get('phase') not in ('entry', 'exit'):
                 raise ValueError('invalid notifier phase')
-            # Tasks may migrate; idle tasks share PID 0 but cannot share a stack.
+            # Legacy PID-only records cannot prove identity across migration.
             key = (event['pid'], event['cpu'] if event['pid'] == 0 else None)
             call = (event['nb'], event['callback'], event['action'])
             stack = pending.setdefault(key, [])
             if event['phase'] == 'entry':
-                stack.append((call, event['seq']))
+                stack.append((call, event['seq'], event['cpu']))
             elif not stack:
                 raise ValueError('exit without matching entry')
             else:
@@ -217,6 +341,9 @@ def check_records(records, losses):
                     raise ValueError('notifier exit violates task call-stack order')
                 if type(event.get('ret')) is not int:
                     raise ValueError('exit return required')
+                if stack[-1][2] != event['cpu']:
+                    unassociated.append(dict(reason='legacy migration lacks stable task identity', record=event))
+                    continue
                 stack.pop(); pairs += 1
         elif event.get('kind') == 'prepare':
             required = ('attempt', 'moved', 'did_move', 'ret')
@@ -235,21 +362,27 @@ def check_records(records, losses):
             raise ValueError('unknown normalized record type')
     unmatched = [{'pid':key[0], 'idle_cpu':key[1], 'nb':call[0],
                   'callback':call[1], 'action':call[2], 'entry_seq':seq}
-                 for key,stack in pending.items() for call,seq in stack]
+                 for key,stack in pending.items() for call,seq,cpu in stack]
     return {'notifier_pairs': pairs, 'unmatched_entries': unmatched,
+            'unassociated_exits': unassociated,
             'prepare_retry_candidates': [dict(pid=k[0], device=k[1], moved=k[2], count=v)
                                          for k,v in retries.items() if v >= 3],
-            'coverage': 'INCOMPLETE' if unmatched else 'SELECTED_RECORDS_PAIRED',
+            'coverage': 'UNKNOWN' if unassociated else ('INCOMPLETE' if unmatched else 'SELECTED_RECORDS_PAIRED'),
             'root_cause': 'unresolved', 'R5': 'FAIL',
             'boundary': 'normalized subset only; raw graph, identities and channel require review'}
 
 def check_evidence(evidence):
     identity = evidence.get('identity', {})
+    semantic = evidence.get('schema') == SEMANTIC_SCHEMA
+    if 'schema' in evidence and not semantic:
+        raise ValueError('unknown evidence schema')
     if (not re.fullmatch(r'[A-Za-z0-9_.-]+', identity.get('batch', ''))
             or not re.fullmatch(r'[0-9a-f]{32}', identity.get('boot_id', ''))
             or not re.fullmatch(r'[0-9a-f]{64}', identity.get('raw_sha256', ''))
-            or identity.get('kernel') != '6.12.101-r5obs1'):
+            or identity.get('kernel') != ('6.12.101-r5obs2' if semantic else '6.12.101-r5obs1')):
         raise ValueError('exact batch/boot/raw SHA/kernel identity required')
+    if any(e.get('kind') == 'pm_boundary' for e in evidence['records']) != semantic:
+        raise ValueError('evidence/record schema mismatch')
     result = check_records(evidence['records'], evidence['losses'])
     result['identity'] = identity
     result['identity_boundary'] = 'declared identity; reviewer must match preserved raw bytes'
@@ -273,4 +406,6 @@ if __name__ == '__main__':
         result = check_stream(args.capture, args.session)
     print(json.dumps(result, indent=2))
     if args.mode == 'wire-check' and not result['transport_complete']:
+        raise SystemExit(1)
+    if args.mode == 'check' and result['coverage'] not in ('SELECTED_RECORDS_PAIRED', 'SEMANTIC_RECORDS_PAIRED'):
         raise SystemExit(1)

@@ -51,7 +51,7 @@ events = [entry, dict(entry, seq=2), dict(entry, seq=3, pid=13),
           dict(exit_event, seq=4, pid=13), dict(exit_event, seq=5), dict(exit_event, seq=6)]
 assert obs.check_records(events, losses)['notifier_pairs'] == 3
 count += 1
-assert obs.check_records([entry, dict(exit_event, cpu=1)], losses)['notifier_pairs'] == 1
+assert obs.check_records([entry, dict(exit_event, cpu=1)], losses)['coverage'] == 'UNKNOWN'
 count += 1
 idle = dict(entry, pid=0)
 rejects(lambda: obs.check_records([idle, dict(exit_event, pid=0, cpu=1)], losses))
@@ -78,8 +78,72 @@ rejects(lambda: obs.check_records(bad, losses))
 bad = copy.deepcopy(retries); bad[-1]['ret'] = -11
 rejects(lambda: obs.check_records(bad, losses))
 
+# R44: exercise the SAME production entry point, not a fixture-only checker.
+rejects(lambda: obs.check_records([dict(entry, task_generation=1),
+                                  dict(exit_event, task_generation=2)], losses))
+semantic = dict(seq=1, pid=12, cpu=0, kind='pm_boundary', schema=obs.SEMANTIC_SCHEMA,
+                phase='entry', operation='wait', pm_phase='resume', object_id=5,
+                object_generation=1, completion_generation=2, task_id=7,
+                task_generation=3, call_id=9)
+finished = dict(semantic, seq=2, cpu=1, phase='exit', ret=0)
+assert obs.check_records([semantic, finished], losses)['semantic_pairs'] == 1; count+=1
+# Every identity dimension must match; retain the entry and conflicting exit.
+for field in obs.PAIR_FIELDS:
+    result = obs.check_records([semantic, dict(finished, **{field:finished[field]+1})], losses)
+    assert result['semantic_pairs']==0 and result['coverage'] in ('UNKNOWN','UNPAIRED')
+    assert result['unmatched_entries'] and result['issues']; count+=1
+for field in obs.PAIR_FIELDS:
+    bad = dict(finished); del bad[field]
+    assert obs.check_records([semantic,bad], losses)['coverage']=='UNKNOWN'; count+=1
+assert obs.check_records([semantic], losses)['coverage']=='UNPAIRED'; count+=1
+for rows in ([semantic,dict(semantic,seq=2),dict(finished,seq=3)],
+             [semantic,finished,dict(finished,seq=3)],
+             [semantic,finished,dict(semantic,seq=3),dict(finished,seq=4)],
+             [semantic,dict(finished,pm_phase='suspend')],
+             [semantic,dict(finished,operation='complete')],
+             [dict(semantic,pid=0),dict(finished,pid=0)]):
+    result=obs.check_records(rows,losses)
+    assert result['semantic_pairs']==0 and result['coverage']=='UNKNOWN'; count+=1
+# Distinct lifetimes/calls, same PID, are legitimate when each pair is complete.
+second=dict(semantic,seq=3,task_generation=4,object_generation=2)
+result=obs.check_records([semantic,finished,second,dict(second,seq=4,phase='exit',ret=-5)],losses)
+assert result['semantic_pairs']==2 and result['coverage']=='SEMANTIC_RECORDS_PAIRED'; count+=1
+# Negative callback return still pairs; it does not prove complete or wait exit.
+assert obs.check_records([dict(semantic,operation='callback'),
+                          dict(finished,operation='callback',ret=-5)],losses)['semantic_pairs']==1; count+=1
+for bad in (dict(finished,gen=99),dict(finished,task_id=True),dict(finished,schema='other'),
+            dict(finished,cpu=16),dict(finished,phase='skip')):
+    if bad.get('task_id') is True:
+        assert obs.check_records([semantic,bad],losses)['coverage']=='UNKNOWN';count+=1
+    else:rejects(lambda: obs.check_records([semantic,bad],losses))
+rejects(lambda: obs.check_records([semantic,exit_event],losses))
+rejects(lambda: obs.check_records([semantic],dict(losses,dropped_events=1)))
+rejects(lambda: obs.check_records([dict(semantic,seq=i) for i in range(39937)],losses))
+new_identity=dict(identity,kernel='6.12.101-r5obs2')
+envelope=dict(schema=obs.SEMANTIC_SCHEMA,identity=new_identity,records=[semantic,finished],losses=losses)
+assert obs.check_evidence(envelope)['coverage']=='SEMANTIC_RECORDS_PAIRED';count+=1
+rejects(lambda: obs.check_evidence(dict(envelope,identity=identity)))
+rejects(lambda: obs.check_evidence(dict(envelope,schema='unknown')))
+rejects(lambda: obs.check_evidence(dict(envelope,records=[entry,exit_event])))
+budget=obs.memory_budget()
+assert budget['admission']=='UNVERIFIED' and budget['remaining_bytes']>0
+assert budget['cap_bytes']==133*1024**2 and budget['buffer_size_kb_per_cpu']==7650
+assert budget['components']['minimal_snapshot']>0 and budget['unknown_allocations'];count+=1
+assert prepare._analysis.semantic_contract()==obs.semantic_contract();count+=1
+assert prepare._analysis.memory_budget()==budget;count+=1
+
 with tempfile.TemporaryDirectory(prefix='r5obs-unit-') as tmp:
-    tmp = Path(tmp); symbols = tmp/'System.map'
+    tmp = Path(tmp)
+    # The actual CLI must not turn an UNKNOWN result into exit 0.
+    evidence_file=tmp/'semantic.json'
+    for records,expected_rc in (([semantic,finished],0),([semantic],1),
+                               ([semantic,dict(finished,task_generation=4)],1)):
+        evidence_file.write_text(json.dumps(dict(envelope,records=records)))
+        checked=subprocess.run(['python3','-B',str(ROOT/'tools/r5-observation.py'),
+                                'check',str(evidence_file)],capture_output=True,text=True)
+        assert checked.returncode==expected_rc,checked.stdout+checked.stderr
+        assert json.loads(checked.stdout)['R5']=='FAIL';count+=1
+    symbols = tmp/'System.map'
     symbols.write_text('\n'.join(f'000000000000{n:04x} t {name}' for n,name in enumerate(obs.ROOTS)))
     config = tmp/'config'
     valid_config = '\n'.join(name+'=y' for name in obs.REQUIRED_CONFIG) + '\nCONFIG_LOCALVERSION="-r5obs1"\n# CONFIG_LOCALVERSION_AUTO is not set\n'
@@ -250,8 +314,8 @@ static void reset(void) {
 '''
     main = r'''
 int main(void) {
-    _Static_assert(CPU_BUFFER_BYTES==2048ULL*4080, "data capacity must account for page headers");
-    _Static_assert(TOTAL_PAGE_BYTES==16ULL*2048*4096, "physical data pages must fit 128MiB");
+    _Static_assert(CPU_BUFFER_BYTES==1920ULL*4080, "data capacity must account for page headers");
+    _Static_assert(TOTAL_PAGE_BYTES==16ULL*1920*4096, "physical data pages must fit 120MiB");
     reset();pending[14]=39936;
     for(unsigned i=0;i<100 && pending[14];i++)drain(0);
     assert(!pending[14] && sent[14]==39936 && !lost && !oversized);

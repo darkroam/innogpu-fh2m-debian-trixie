@@ -185,12 +185,22 @@ R34离线观测实现：`tools/prepare-r5-observation.py`锁定6.12.101输入并
 
 R41段一修订：生成的导出器只接受新观测身份`6.12.101-r5obs2`与`nop`事件模式，
 无函数后代图；每CPU连续最多128条、每次最多2048条、逐条核5ms预算后轮换，默认1ms再调度。
-16核数据页共128MiB时`buffer_size_kb`为8160（4KiB页减16字节页头），不是8192；
-reader页/管理结构另须计入总预算。128字节载荷门不证明含ring头的事件计费已≤128字节。
-旧`plan/check`保持r5obs1历史口径，不能拿来配置新导出器；wire-check兼容两种精确BEGIN参数。
+R44按已批准备选方案改为1920数据页/核，16核共120MiB，`buffer_size_kb`为7650；
+reader、页描述符/SLUB桶及最小snapshot等已列入生成的memory-budget.json，仍有目标allocator
+及动态元数据未实测，总133MiB门保持UNVERIFIED。拒绝完整或超规格snapshot。128字节载荷门
+不证明含ring头的事件计费已≤128字节。旧`plan`保持r5obs1历史口径，不能配置新导出器；
+`check`按显式schema区分历史子集与新r5obs2配对。wire-check保持两种精确BEGIN参数。
 Windows脚本增加每秒心跳/序号缺口/丢弃/flush状态；Windows执行仍须另验。
 `tools/r5-observation-upload.py --unit <本机配置>`只输出独立systemd服务文件，不安装或启用；
 `--serve <本机配置>`才启动接收端，配置要求listen/peer/port/session/output五项，现场值只放本机。
 服务仅接受指定peer的`/observation`和`X-R5-Session`，按SHA保全原件及中断文件，不覆盖旧attempt；
 `/health`不报告PM覆盖。独立服务的退出会话/冷启存活未实测，不能以unit语法通过代替。
 四元组事件、全量清点、真实吞吐及独立保全尚未闭合，段二不得启动。
+
+R44的`--export-module`同时生成`semantic-contract.json`和`memory-budget.json`，契约由
+生产`tools/r5-observation.py`唯一提供；`check`的新schema为`r5obs2-pairs-v1`，内核身份
+6.12.101-r5obs2，规范化记录kind=pm_boundary。对象ID/生命周期、completion代次、
+task ID/生命周期、call ID及operation/pm_phase必须齐全同一；phase=entry/exit，exit含ret。
+gen等含糊别名不静默忽略，未知字段拒绝；缺关联或冲突保留UNKNOWN/UNPAIRED并返回非零。
+完整选择子集才输出SEMANTIC_RECORDS_PAIRED，不证明全PM覆盖、根因或原件真实性。
+实际内核四元组发射器/字典尚未实现；本接口不能用于伪造内核已经提供这些字段。
