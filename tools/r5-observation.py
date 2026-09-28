@@ -6,6 +6,73 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import struct
+
+WIRE = struct.Struct('!4sBBH16sQIIQQQ')
+FRAME = struct.Struct('<Iq')
+
+def check_stream(path, session):
+    """Validate preserved datagrams; this is transport, not PM coverage."""
+    if not re.fullmatch('[0-9a-f]{32}', session):
+        raise ValueError('exact lowercase session nonce required')
+    sequence = 0; begin = None; end = None; stats = {}; types = Counter()
+    last_event = {}; last_stats = {}; losses = 0
+    with path.open('rb') as stream:
+        if stream.read(8) != b'R5CAP01\n':
+            raise ValueError('capture magic mismatch')
+        while frame := stream.read(FRAME.size):
+            if len(frame) != FRAME.size:
+                raise ValueError('truncated frame header')
+            length, receiver_ticks = FRAME.unpack(frame)
+            if not WIRE.size <= length <= WIRE.size + 1280 or receiver_ticks <= 0:
+                raise ValueError('invalid frame length/time')
+            data = stream.read(length)
+            if len(data) != length:
+                raise ValueError('truncated datagram')
+            magic, version, kind, size, nonce, seq, cpu, pid, ts, lost, oversized = WIRE.unpack_from(data)
+            if (magic != b'R5O1' or version != 1 or nonce.hex() != session or
+                    seq != sequence or size != length-WIRE.size or end is not None):
+                raise ValueError('identity/sequence/size/end boundary mismatch')
+            payload = data[WIRE.size:]; sequence += 1
+            losses |= lost | oversized
+            if kind == 3:
+                if seq != 0 or size != 16 or cpu != 0xffffffff:
+                    raise ValueError('invalid BEGIN')
+                begin = struct.unpack('!4I', payload)
+                if not (1 <= begin[0] <= 64 and 1 <= begin[1] <= 100 and
+                        begin[2:] == (256, 1280)):
+                    raise ValueError('unexpected transport bounds')
+            elif begin is None:
+                raise ValueError('missing BEGIN')
+            elif kind == 1:
+                if cpu >= 64 or size < 8:
+                    raise ValueError('invalid trace entry')
+                event_type = int.from_bytes(payload[:2], 'little')
+                types[event_type] += 1; last_event[cpu] = seq
+            elif kind == 2:
+                if cpu >= 64 or size != 32:
+                    raise ValueError('invalid CPU counters')
+                values = struct.unpack('!4Q', payload)
+                if cpu in stats and any(a < b for a,b in zip(values[:3],stats[cpu][:3])):
+                    raise ValueError('loss counters went backwards')
+                stats[cpu] = values; last_stats[cpu] = seq
+                losses |= values[0] | values[1] | values[2]
+            elif kind == 4:
+                if size != 16 or cpu != 0xffffffff:
+                    raise ValueError('invalid END')
+                end = struct.unpack('!QII',payload)
+            else:
+                raise ValueError('unknown packet kind')
+    complete = bool(begin and end == (0,0,0) and not losses and types and
+                    len(stats) == begin[0] and all(v[3] == 0 for v in stats.values()) and
+                    all(last_stats.get(cpu, -1) > seq for cpu,seq in last_event.items()))
+    with path.open('rb') as stream:
+        digest = hashlib.file_digest(stream,'sha256').hexdigest()
+    return {'session':session,'packets':sequence,'event_types':dict(types),
+            'transport_complete':complete,'begin':begin,'end':end,'loss_detected':bool(losses),
+            'raw_sha256':digest,
+            'boundary':'raw transport only; event formats, graph/probe counters, exact boot and PM coverage require separate evidence',
+            'PM_coverage':'NOT_ASSESSED','R5':'FAIL'}
 
 ROOTS = (
     'pm_prepare_console', 'suspend_console', 'notifier_call_chain',
@@ -27,10 +94,45 @@ DRIVER_ROOTS = (
     'fantgpu_pci_probe', 'fh2m_hal_mcufw_comm_msg_xfer',
     'g0m_soc_check_pcie_irq_response', 'mailbox_interrupt_handler',
 )
+REQUIRED_CONFIG = (
+    'CONFIG_TRACING', 'CONFIG_EVENT_TRACING', 'CONFIG_FUNCTION_GRAPH_TRACER',
+    'CONFIG_FUNCTION_GRAPH_RETVAL', 'CONFIG_KPROBE_EVENTS',
+)
 
-def plan(system_map):
-    symbols = {x[2] for line in system_map.read_text().splitlines()
-               if len(x := line.split()) == 3 and x[1] in ('t', 'T')}
+def resolve_graph_roots(kernel_roots, available, control=None):
+    """Resolve actual ftrace sites; never collapse same-name physical functions."""
+    sites = {}
+    for line in available.splitlines():
+        row = line.split()
+        if len(row) in (2, 3) and re.fullmatch('[0-9a-fA-F]+', row[0]):
+            sites.setdefault(row[1], []).append({'address': row[0], 'module': row[2] if len(row)==3 else None})
+    selected = {}
+    for name in list(kernel_roots) + ([control] if control else []):
+        found = sites.get(name, [])
+        if len(found)!=1 or found[0]['module'] is not None:
+            raise ValueError('kernel/control root missing or ambiguous: '+name)
+        selected[name] = found
+    for name in DRIVER_ROOTS:
+        matches = [n for n in sites if (n==name or n.startswith(name+'.')) and '.cold' not in n]
+        if len(matches)!=1:
+            raise ValueError('driver root missing or ambiguous spelling: '+name)
+        found = sites[matches[0]]
+        if any(r['module']!='[fantgpu]' for r in found) or len({r['address'] for r in found})!=len(found):
+            raise ValueError('driver root module/address collision: '+name)
+        selected[matches[0]] = found
+    return selected
+
+def plan(system_map, config):
+    config_lines = config.read_text().splitlines()
+    for name in REQUIRED_CONFIG:
+        settings = [line for line in config_lines if line.startswith(name+'=')]
+        if settings != [name+'=y']:
+            raise ValueError('required observation configuration missing: '+name)
+    if ('CONFIG_LOCALVERSION="-r5obs1"' not in config_lines
+            or '# CONFIG_LOCALVERSION_AUTO is not set' not in config_lines):
+        raise ValueError('observation release configuration mismatch')
+    symbols = [x[2] for line in system_map.read_text().splitlines()
+               if len(x := line.split()) == 3 and x[1] in ('t', 'T')]
     selected = {}
     for name in ROOTS:
         # Require one real text symbol; compiler cloning is explicit, not guessed.
@@ -42,10 +144,14 @@ def plan(system_map):
     return {
         'generation': 'r5obs1', 'kernel_release': '6.12.101-r5obs1',
         'system_map_sha256': hashlib.sha256(system_map.read_bytes()).hexdigest(),
+        'config_sha256': hashlib.sha256(config.read_bytes()).hexdigest(),
+        'required_config': {name: 'y' for name in REQUIRED_CONFIG},
         'scope': 'offline configuration; not applied; does not authorize PM',
         'instance': 'r5obs1-<approved-batch>', 'buffer_size_kb_per_cpu': 1024,
         'max_total_buffer_kb': 65536, 'overwrite': False, 'trace_clock': 'mono',
         'current_tracer': 'function_graph', 'set_graph_function': list(selected.values()),
+        'graph_root_filter_scope': 'global on Linux 6.12; require exclusive ownership and restore on exit',
+        'same_name_driver_functions': 'include every physical ftrace site; retain addresses in evidence',
         'driver_roots_require_loaded_symbol_and_ftrace_membership': DRIVER_ROOTS,
         'options': ['funcgraph-abstime', 'funcgraph-proc', 'funcgraph-cpu',
                     'funcgraph-tail', 'funcgraph-retval', 'funcgraph-overrun',
@@ -150,11 +256,18 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='mode', required=True)
     p = sub.add_parser('plan'); p.add_argument('system_map', type=Path)
+    p.add_argument('--config', type=Path, required=True)
     p = sub.add_parser('check'); p.add_argument('evidence', type=Path)
+    p = sub.add_parser('wire-check'); p.add_argument('capture', type=Path)
+    p.add_argument('--session', required=True)
     args = parser.parse_args()
     if args.mode == 'plan':
-        result = plan(args.system_map)
-    else:
+        result = plan(args.system_map, args.config)
+    elif args.mode == 'check':
         evidence = json.loads(args.evidence.read_text())
         result = check_evidence(evidence)
+    else:
+        result = check_stream(args.capture, args.session)
     print(json.dumps(result, indent=2))
+    if args.mode == 'wire-check' and not result['transport_complete']:
+        raise SystemExit(1)

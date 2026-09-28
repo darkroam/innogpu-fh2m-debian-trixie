@@ -23,24 +23,24 @@ HOST_K = sorted(["6.12.101+deb13-amd64", "6.12.101-r5dpm1", "6.12.101-r5dpm2",
             "6.12.107+deb13-amd64", "6.12.63+deb13-amd64", "6.12.90+deb13.1-amd64",
             "6.12.95+deb13-amd64", "6.12.96+deb13-amd64"])
 K = HOST_K.copy()  # User: repair 107 first; production full-kernel set retained.
-EPOCH = "1790121600"
-BATCH = "20260922-offline-01"
-BATCH_WORK = Path.home() / "tmp" / f"r5-phase2-f-i7-{BATCH}"
-WORK = BATCH_WORK / "attempt-10-i10-all-k"
-N0_TEST_WORK = BATCH_WORK / "revision-n0-test-20260923-04"
-EVIDENCE = ROOT / f".build/r26-f-i7-{BATCH}" / "attempt-10-i10-all-k"
+EPOCH = "1790208000"
+BATCH = "20260924-offline-01"
+BATCH_WORK = Path.home() / "tmp" / f"r5-phase2-f-i11-{BATCH}"
+WORK = BATCH_WORK / "attempt-11-i11-all-k"
+N0_TEST_WORK = BATCH_WORK / "revision-n0-test-20260924-01"
+EVIDENCE = ROOT / f".build/r35-i11-{BATCH}" / "attempt-11-i11-all-k"
 SOURCE = "usr/src/fantgpu-fh2m-kernel-2.2"
 META = "docs/planning/evidence/o-stage/5.0.0-i6"
 META_SHA = "a14250711f4b367cce0aed345da6e89c9921761b1b65aa3d87c5d67769d91321"
 POLICY_SHA = "e362342a516c0507da4407b889d041a1df7e187f4cb8d05c8a039b1a307d2d4b"
-# Previous candidate is the sealed i9 offline window, never live host DKMS data.
-PREDECESSOR = ROOT / f".build/r26-f-i7-{BATCH}" / "attempt-09-i9-all-k"
-PREDECESSOR_DEB = PREDECESSOR / "A/i9.deb"
-PREDECESSOR_DEB_SHA = "37caa6fbb2fe00cf29258e07deb6690c945b224e84d0f04b55f1310528e9dfa7"
+# R35 inherits the sealed R30 i10 window, never live host DKMS data.
+PREDECESSOR = ROOT / ".build/r26-f-i7-20260922-offline-01/attempt-10-i10-all-k"
+PREDECESSOR_DEB = PREDECESSOR / "A/i10.deb"
+PREDECESSOR_DEB_SHA = "527ae5bc2a0a8246e3933f1812bb0f72e2756af07deaca8829b8257e5ae10141"
 PREDECESSOR_PRERM_SHA = "7eebf888d6a6d0bb5dd49b4de202b10ff643d91d0becc42340f3ca63de00af31"
-PREDECESSOR_MANIFEST_SHA = "fc54c58acb2d457d7956fd42b76107d025a1f9202bc59ac432cd5115ceef43c8"
+PREDECESSOR_MANIFEST_SHA = "304398ff615e7bcce48ea29d160650a8a6366ae0e74017fc045fab00465ba228"
 OLD_MODULES = [PREDECESSOR / f"A/evidence/abi/{k}/installed-module" for k in K]
-HOST_CURRENT = "6.12.107+deb13-amd64"  # R28 already booted i9 on 107; builder stays 101.
+HOST_CURRENT = "6.12.107+deb13-amd64"  # R31 i10 booted on 107; builder stays 101.
 REPO_INPUTS = ["scripts", "tools", "drivers", "binary-manifest-fantgpu.json",
                "vendor/fantgpu", META, "tests/unit"]
 # Explicit ordinary tool closure; no /usr/local, host source, modules or keys.
@@ -63,10 +63,10 @@ TOOL_COMMANDS = """bash sh awk cc c++ gcc make ld ar as nm objcopy objdump reade
     mkdir mktemp cp mv rm ln install chmod touch du nproc uname dirname basename tee""".split()
 BUILD_SCRIPT = '''#!/bin/bash
 set -euo pipefail
-export VERSION=5.0.0-i10 SOURCE_DATE_EPOCH=1790121600
+export VERSION=5.0.0-i11 SOURCE_DATE_EPOCH=1790208000
 export KERNELDIR_VER=6.12.101+deb13-amd64
 export KERNELDIR=/lib/modules/$KERNELDIR_VER/build
-export STAGE_ROOT=/candidate BUILD_LOG=/evidence/builder.log OUT_DEB=/candidate/i10.deb
+export STAGE_ROOT=/candidate BUILD_LOG=/evidence/builder.log OUT_DEB=/candidate/i11.deb
 bash /repo/scripts/build-innogpu-driver.sh
 '''
 DENIED = "modprobe insmod rmmod systemctl service reboot shutdown halt poweroff update-grub grub-install update-secureboot-policy".split()
@@ -96,7 +96,7 @@ cp "$build/fantgpu.mod" "$dest/fantgpu.mod"
 cp "$build/fantgpu.mod.c" "$dest/fantgpu.mod.c"
 find "$build" -type f -name '*.cmd' -print0 | sort -z | xargs -0 sha256sum > "$dest/dependency-files.sha256"
 find "$build" -type f -name '*.cmd' -printf '%P\\0' | sort -z > "$dest/dependency-files.list0"
-tar --mtime=@1790121600 --owner=0 --group=0 --numeric-owner -cf "$dest/dependency-files.tar" -C "$build" --null -T "$dest/dependency-files.list0"
+tar --mtime=@1790208000 --owner=0 --group=0 --numeric-owner -cf "$dest/dependency-files.tar" -C "$build" --null -T "$dest/dependency-files.list0"
 printf '%s\\0' "$@" > "$dest/strip.argv"
 exec /fixture/real-strip "$@"
 '''
@@ -109,19 +109,19 @@ def sha(path):
 
 def predecessor_identity():
     manifest = PREDECESSOR / "files.sha256"
-    assert sha(manifest) == PREDECESSOR_MANIFEST_SHA, "i9 evidence manifest drift"
+    assert sha(manifest) == PREDECESSOR_MANIFEST_SHA, "i10 evidence manifest drift"
     rows = dict(line.split("  ", 1)[::-1] for line in manifest.read_text().splitlines())
     paths = [PREDECESSOR_DEB, *OLD_MODULES]
     for path in paths:
-        assert not path.is_symlink() and path.resolve() == path, "i9 input redirect"
-        assert sha(path) == rows[str(path.relative_to(PREDECESSOR))], "i9 input identity drift"
-    assert sha(PREDECESSOR_DEB) == PREDECESSOR_DEB_SHA, "i9 package drift"
-    assert subprocess.check_output(["dpkg-deb", "-f", str(PREDECESSOR_DEB), "Version"], text=True).strip() == "5.0.0-i9"
+        assert not path.is_symlink() and path.resolve() == path, "i10 input redirect"
+        assert sha(path) == rows[str(path.relative_to(PREDECESSOR))], "i10 input identity drift"
+    assert sha(PREDECESSOR_DEB) == PREDECESSOR_DEB_SHA, "i10 package drift"
+    assert subprocess.check_output(["dpkg-deb", "-f", str(PREDECESSOR_DEB), "Version"], text=True).strip() == "5.0.0-i10"
     control = subprocess.check_output(["dpkg-deb", "--ctrl-tarfile", str(PREDECESSOR_DEB)])
     with tarfile.open(fileobj=io.BytesIO(control)) as archive:
         prerm = archive.extractfile("./prerm").read()
-    assert hashlib.sha256(prerm).hexdigest() == PREDECESSOR_PRERM_SHA, "i9 prerm identity drift"
-    return {"version": "5.0.0-i9", "deb_sha256": PREDECESSOR_DEB_SHA,
+    assert hashlib.sha256(prerm).hexdigest() == PREDECESSOR_PRERM_SHA, "i10 prerm identity drift"
+    return {"version": "5.0.0-i10", "deb_sha256": PREDECESSOR_DEB_SHA,
             "prerm_sha256": PREDECESSOR_PRERM_SHA, "manifest_sha256": PREDECESSOR_MANIFEST_SHA,
             "modules": {k: sha(p) for k, p in zip(K, OLD_MODULES)}}
 
@@ -245,7 +245,7 @@ def inputs():
         paths += sorted(Path(f"/lib/modules/{k}").glob("modules.*"))
     return {"head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
             "kernels": K, "host_kernels": sorted(actual), "host_current": current,
-            "predecessor": predecessor, "version": "5.0.0-i10", "epoch": EPOCH,
+            "predecessor": predecessor, "version": "5.0.0-i11", "epoch": EPOCH,
             "cpus": sorted(os.sched_getaffinity(0))[:8],
             "headers": list(map(str, headers)), "pseudo_devices": pseudo_devices(), "files": identity(paths)}
 
@@ -330,7 +330,7 @@ def mounts(root, lock):
     args.extend(["--ro-bind", str(Path("/usr/bin/strip").resolve()), "/fixture/real-strip"])
     env = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LC_ALL": "C", "TZ": "UTC",
            "SOURCE_DATE_EPOCH": EPOCH, "PYTHONDONTWRITEBYTECODE": "1", "TMPDIR": "/tmp",
-           "KBUILD_BUILD_TIMESTAMP": "Wed Sep 23 00:00:00 UTC 2026",
+           "KBUILD_BUILD_TIMESTAMP": "Thu Sep 24 00:00:00 UTC 2026",
            "KBUILD_BUILD_USER": "r27", "KBUILD_BUILD_HOST": "offline", "KBUILD_BUILD_VERSION": "1",
            "OMP_NUM_THREADS": str(len(lock["cpus"]))}
     for key, value in env.items():
@@ -414,7 +414,7 @@ printf 'native_tool_links=PASS\\n'
 
 def build_test(work):
     """Development regression of the actual producer, never a formal A/B result."""
-    assert work.parent == BATCH_WORK and re.fullmatch(r"revision-build-test-20260923-[0-9]+", work.name), "unapproved build-test root"
+    assert work.parent == BATCH_WORK and re.fullmatch(r"revision-build-test-20260924-[0-9]+", work.name), "unapproved build-test root"
     assert work.resolve() == work and not work.exists(), "fresh build-test root required"
     work.mkdir(mode=0o700)
     start = datetime.now(timezone.utc).isoformat()
@@ -430,7 +430,7 @@ def build_test(work):
         write(root, "fixture/build.sh", BUILD_SCRIPT)
         command(root, lock, ["bash", "/fixture/build.sh"], ledger, deadline)
         assert inputs() == lock, "build-test input drift"
-        write(work, "candidate.json", json.dumps({"purpose": "regression", "deb_sha256": sha(root / "candidate/i10.deb")}, indent=2) + "\n")
+        write(work, "candidate.json", json.dumps({"purpose": "regression", "deb_sha256": sha(root / "candidate/i11.deb")}, indent=2) + "\n")
         success = True
     finally:
         write(work, "result.json", json.dumps({"purpose": "regression", "start": start,
@@ -614,11 +614,11 @@ def run(work, manifest, reviewed_sha):
                 signing += ["--ro-bind", str(common / "var/lib/dkms" / name), "/var/lib/dkms/" + name]
             write(root, "fixture/build.sh", BUILD_SCRIPT)
             command(root, lock, ["bash", "/fixture/build.sh"], ledger, deadline)
-            command(root, lock, ["dpkg-deb", "-R", "/candidate/i10.deb", "/package"], ledger, deadline)
-            # Seed the actual i9 source/control/modules, then exercise i9 prerm.
-            # The i10 package is not copied over the predecessor until removal.
-            shutil.copyfile(PREDECESSOR_DEB, root / "fixture/i9.deb")
-            command(root, lock, ["dpkg-deb", "-R", "/fixture/i9.deb", "/predecessor"], ledger, deadline)
+            command(root, lock, ["dpkg-deb", "-R", "/candidate/i11.deb", "/package"], ledger, deadline)
+            # Seed actual i10 source/control/modules, then exercise its prerm.
+            # The i11 package is not copied over the predecessor until removal.
+            shutil.copyfile(PREDECESSOR_DEB, root / "fixture/i10.deb")
+            command(root, lock, ["dpkg-deb", "-R", "/fixture/i10.deb", "/predecessor"], ledger, deadline)
             predecessor = root / "predecessor"
             check_package_links(predecessor)
             assert sha(predecessor / "DEBIAN/prerm") == PREDECESSOR_PRERM_SHA
@@ -658,7 +658,7 @@ test ! -e /var/lib/dkms/fantgpu-fh2m-kernel/2.2
             assert not re.search(r"failed to sign|won't be signed|unsigned module", log, re.I), "signature warning"
             out = evidence / side
             out.mkdir()
-            shutil.copyfile(root / "candidate/i10.deb", out / "i10.deb")
+            shutil.copyfile(root / "candidate/i11.deb", out / "i11.deb")
             for k in K:
                 for module in ["fantgpu", "innogpu"]:
                     sentinel = root / f"usr/lib/modules/{k}/kernel/kylin/{module}"
@@ -692,7 +692,7 @@ sha256sum "$ko" "$found"
                     assert sentinel.with_suffix(".ko").read_bytes() == b"R27 rename-only sentinel: " + module.encode() + b"\n"
                     assert not sentinel.with_suffix(".bak").exists()
             shutil.copytree(root / "evidence", out / "evidence")
-        subprocess.run(["cmp", str(evidence / "A/i10.deb"), str(evidence / "B/i10.deb")], check=True)
+        subprocess.run(["cmp", str(evidence / "A/i11.deb"), str(evidence / "B/i11.deb")], check=True)
         different_initrds = []
         for k in K:
             for name in ["installed-module", "unstripped.ko", "kernel_autocfg.h", "fantgpu.mod", "fantgpu.mod.c", "dependency-files.sha256", "dependency-files.tar"]:
@@ -705,17 +705,17 @@ sha256sum "$ko" "$found"
         write(evidence, "comparison.json", json.dumps({"deb_cmp": 0, "module_cmp": 0,
               "initramfs_differences_require_review": different_initrds}, indent=2) + "\n")
         write(evidence, "candidate-provenance.json", json.dumps({
-            "candidate_version": "5.0.0-i10", "source_date_epoch": EPOCH,
+            "candidate_version": "5.0.0-i11", "source_date_epoch": EPOCH,
             "source_materialization_version": "5.0.0-i6", "source_meta_sha256": META_SHA,
             "snapshot_sha256": sha(ROOT / META / "o-stage-snapshot.tar.zst"),
             "o_stage_tree_hash": "5f6a5347c7e217ba3f7c5b71fdcad520148e0bc71231ab95fb023655865d11da",
-            "derived_tree_hash": "c08b2bd426bcceba2853eb0767994875b3080cfaf4d5a1afcff821f3092aa67e",
+            "derived_tree_hash": "f0e5490ad2d14fb280ef0e3bf76018462143b9223a357e0699b1c0ed376980b5",
             "cfg_detect_sha256": "f096890ea5662301f6eb805c2a5554aa9d027aebd1b2b8c28d31f84ae7c431ca",
             "reviewed_inputs_sha256": reviewed_sha, "input_commit": lock["head"], "kernels": K,
             "certificate_sha256": sha(evidence / "test-certificate.der"),
-            "deb_sha256": {s: sha(evidence / s / "i10.deb") for s in ["A", "B"]},
+            "deb_sha256": {s: sha(evidence / s / "i11.deb") for s in ["A", "B"]},
             "predecessor": lock["predecessor"],
-            "predecessor_F": f"{len(OLD_MODULES)} sealed i9 modules, i9 package source/prerm, real isolated DKMS installed state",
+            "predecessor_F": f"{len(OLD_MODULES)} sealed i10 modules, i10 package source/prerm, real isolated DKMS installed state",
             "predecessor_O": "added registration only; not installed O-module removal",
             "host_trust": "UNVERIFIED; offline test certificate only"}, indent=2) + "\n")
         assert not different_initrds, "initramfs differs: retain roots for per-file diff and qoder/dsh ruling"

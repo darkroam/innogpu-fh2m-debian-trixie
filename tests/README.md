@@ -278,16 +278,23 @@ R28 i9：构建器30项含生产派生函数与新旧DRM对象所有权/NULL/ERR
 
 R29 i10：现有 builder 入口新增 USB/蓝牙各6项真实生产函数抽取回归（12项），
 逆序资源栈断言覆盖每个失败出口；原函数7个预期失败与修正后12/12分列。
-R30 正式原生执行器现为 i10/1790121600，attempt-10-i10-all-k 全新根；
+R30 历史正式原生执行器为 i10/1790121600，attempt-10-i10-all-k 全新根；
 前驱从已验证 attempt-09 提取 i9 包/source/prerm 与八核已签模块，逐项对封存清单核验，
 先运行 i9 prerm（保留 O 注册），再放入 i10。宿主当前107与构建首核101分别锁定，K仍完整八核。
 i9原证据不改写；不重复i9宿主安装/首启，不触发PM。
+
+R35当前正式执行器为i11/1790208000，全新attempt-11-i11-all-k；前驱改为已封存R30的i10整包、
+同窗八核模块与包内prerm，清单和实物复算后执行真实隔离升级链。K仍完整八核，N0先行、
+A/B双根、逐核ABI/签署/initrd与整deb字节一致门不变；旧R30证据不改，宿主安装不由离线PASS授权。
 
 R33 VPU最小修正回归复用 `bash tests/unit/run-builder-fantgpu-gates-tests.sh`：
 生产派生函数锁定i11树，只改既有timer_suspend初始化、PREPARE/stop接受0/1；
 从派生源抽取原函数编译用户态夹具，非零填充分配/失败/重复通知/最终stop均覆盖。
 不加载模块、不执行PM；callback并发可终止性未由mock证明。
 
-R34离线测试：`python3 -B tests/unit/run-r5-observation-tests.py`，30项覆盖成对/未完成/嵌套notifier、任务迁核、idle按CPU隔离、跨回调错序拒绝、
+R34/R36离线测试：`python3 -B tests/unit/run-r5-observation-tests.py`，55项覆盖配置缺失/错误release拒绝、成对/未完成/嵌套notifier、任务迁核、idle按CPU隔离、跨回调错序拒绝、
 prepare重试/进度、丢失计数拒绝、符号缺失/歧义、源漂移及路径拒绝；不加载/探测设备。
+同名驱动函数保留全部实际ftrace地址；跨模块、重复地址、多个编译变体与缺失控制根拒绝，不能用set去重后宣称唯一。
+传输检查实际编译运行生产C序列化函数（仅替换内核I/O），由Python读取其字节；
+错身份、截断、乱序、重复、缺END、溢出与末尾未排空均拒绝完整结论。Windows执行与真实内核加载另验。
 真实编译使用独立观测源码副本，成绩不替代安装、通道正样或PM验收。

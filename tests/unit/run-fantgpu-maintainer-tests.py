@@ -481,7 +481,7 @@ def main():
     cases.append("native-package-replaces-links-and-preserves-usrmerge")
     # Production predecessor gate: sealed package, matching modules, exact prerm.
     root = work / "predecessor-identity"
-    deb = put(root, "A/i9.deb", "fixture deb")
+    deb = put(root, "A/i10.deb", "fixture deb")
     module = put(root, "A/module", "fixture module")
     prerm = b"#!/bin/sh\nexit 0\n"
     data = native.io.BytesIO()
@@ -492,7 +492,7 @@ def main():
         f"{native.sha(p)}  {p.relative_to(root)}\n" for p in [deb, module]))
     def package_query(argv, **kwargs):
         assert argv[0] == "dpkg-deb"
-        return "5.0.0-i9\n" if "-f" in argv else data.getvalue()
+        return "5.0.0-i10\n" if "-f" in argv else data.getvalue()
     with patch.multiple(native, PREDECESSOR=root, PREDECESSOR_DEB=deb,
                         PREDECESSOR_DEB_SHA=native.sha(deb), OLD_MODULES=[module], K=[KERNELS[0]],
                         PREDECESSOR_MANIFEST_SHA=native.sha(manifest),
@@ -515,7 +515,7 @@ def main():
                 pass
             else:
                 raise AssertionError("mixed predecessor prerm accepted")
-    cases.append("native-i9-predecessor-identity-and-drift")
+    cases.append("native-i10-predecessor-identity-and-drift")
     print("PASS " + cases[-1])
     root = work / "tool-chain"
     binary = put(root, "bin/real-tool", "#!/bin/sh\nexit 0\n")
