@@ -1,6 +1,6 @@
 # 当前状态与问题清单
 
-最后更新：2026-09-24
+最后更新：2026-09-28
 
 本文件是项目当前运行状态的唯一摘要。历史过程、补丁细节和故障推导分别见
 [阶段补丁](../patches/README.md) 与 [事故和经验](../incidents/README.md)。
@@ -10,6 +10,7 @@
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
 | 当前运行驱动 | **fantgpu 5.0.0-i10（诊断线，非交付）**，运行于 `6.12.107+deb13-amd64`；R31 八核安装已终审；用户另行授权重启后，i10 已加载，基础健康及输入挂接观察通过，首启证据待复核；F0 + 030 链及后续兼容派生不代表 R5 已解决 | [安装裁定与接续](#r28-安装裁定与-r31-接续)、[030 映射表](../planning/030-mapping-table.md)、[patch-provenance](../design/patch-provenance.md) |
+| 当前磁盘安装 | **fantgpu 5.0.0-i11**，R37八核安装/只读后验PASS，待qoder/dsh审查；当前未重启，运行仍i10 | [R37安装证据与边界](#r37-当前安装状态2026-09-28待审) |
 | 回退基线 | `4.0.2-i3`（deepin 血缘最终交付）：R14 6/6 deep 矩阵通过；包 SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；回滚卡见 r5dpm2 设计 §8，执行须另行授权 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md)、[回滚卡](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
 | 当前主线目标 | `5.0.0-iN`（tag `fantgpu-5.0.0-iN` **未打**）；发布阻断：`validation-results` 未签、R5=FAIL 未解除；`postinst_current_kernel_only` 已按 R31 裁定解除并覆盖至 i10，1C 不变 | [安装裁定与接续](#r28-安装裁定与-r31-接续)、[030 映射表](../planning/030-mapping-table.md) |
 | 历史当前态（2026-09-03 记录） | `4.0.2-i3` 已安装并重启至 `6.12.101+deb13-amd64`；R16 迁移后降为回退基线 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
@@ -39,6 +40,22 @@
 `latest-*` 文件名不表示已验证当前 fantgpu。当前待办见 [current-work](../state/current-work.md)。
 
 ## R28 安装裁定与 R31 接续
+
+### R37 当前安装状态（2026-09-28，待审）
+
+磁盘已安装 **5.0.0-i11**，运行中仍为 **i10/107**，未重启、未触发PM。
+候选整deb SHA-256为254a165e6f0ec8deb5bf6dab23346ecc9c7a45525adb99c62bfa6988e4eb6c92；
+来源R35已审八核A/B，收档提交3526fc9。用户明确批准后，R36临时r5obs1六个新增对象
+经完整归档回读退役；生产八核、r5dpm1/r5dpm2和默认启动配置保留，观测原件不动。
+R37以实际i10单血缘prerm升级，七项预检全绿后一次dpkg rc0，八核postinst与独立后验PASS；
+另一血缘、boot ID和GRUB配置未变。证据位于本机
+.build/r37-install-evidence/install-i11-20260928-01/postverify/result.json
+及collab/R37-2026-09-28-i11受监督安装批/verification.md（均非Git，公开检出不可取得）。
+①既有闭合裁定维持，本次i11安装证据待qoder/dsh审查；不提前代行终审。
+i11仅修正VPU既有状态初始化与0/1正常返回处理，不代表R5修复或Deepin运行能力已对齐。
+②validation-results未签、③未打tag、④R5=FAIL与1C不变；后续重启和PM不在本批授权内。
+
+### 历史安装与首启裁定
 
 2026-09-23 dsh 终审接受 i9 的真实八核安装及 107 基础首启，裁定
 `release_blocker ①（postinst_current_kernel_only）解除`。唯一范围是该安装缺陷，
