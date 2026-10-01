@@ -2,7 +2,7 @@
 # tests/unit/run-builder-fantgpu-gates-tests.sh — builder F 分支早期门禁与静态契约单测
 #
 # 依据 docs/design/c3-a-4-reproducible-input-plan.md §三（改造点 9-13）与
-# §四（postinst/md5sums/trace）：R33 候选 5.0.0-i11、血统判定 5.0.0-i*、
+# §四（postinst/md5sums/trace）：R49 候选 5.0.0-i12、血统判定 5.0.0-i*、
 # 输入预检分支、PKG_DESC $VERSION 参数化、share/命令前缀血统参数化、
 # ld.so.conf fantgpu-fh2m、postinst fh2m_dri.so + 设备门。
 # 只测可运行早期门禁与静态契约（不编译内核：KERNELDIR 注入不存在路径使
@@ -43,8 +43,8 @@ else
     bad t01 "rc=$RC"
 fi
 
-# t02 i11 仅通过版本/epoch门，未通过源身份门，更不代表实际构建通过。
-run_builder VERSION=5.0.0-i11 SOURCE_DATE_EPOCH=1790208000
+# t02 i12 仅通过版本/epoch门，未通过源身份门，更不代表实际构建通过。
+run_builder VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=1790812800
 if [ "$RC" -eq 1 ] && grep -Fq "staging_kernel_headers=FAIL" "$TMP/b.out"; then
     ok t02
 else
@@ -60,7 +60,7 @@ else
 fi
 
 # t04 epoch 错误 → builder_repro=FAIL
-run_builder VERSION=5.0.0-i11 SOURCE_DATE_EPOCH=1111111111
+run_builder VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=1111111111
 if [ "$RC" -eq 1 ] && grep -Fq "builder_repro=FAIL" "$TMP/b.out"; then
     ok t04
 else
@@ -212,11 +212,12 @@ else
     bad t19_archived_i5 "rc=$RC"
 fi
 
-for version in 5.0.0-i{1..10}; do
+for version in 5.0.0-i{1..11}; do
     epoch=1788796800
     [[ "$version" != 5.0.0-i5 && "$version" != 5.0.0-i6 ]] || epoch=1789516800
     [[ "$version" != 5.0.0-i7 ]] || epoch=1790035200
     [[ "$version" != 5.0.0-i8 && "$version" != 5.0.0-i9 && "$version" != 5.0.0-i10 ]] || epoch=1790121600
+    [[ "$version" != 5.0.0-i11 ]] || epoch=1790208000
     run_builder VERSION="$version" SOURCE_DATE_EPOCH="$epoch"
     if [[ "$RC" == 1 ]] && ! [[ -d "$TMP/stage" ]]; then
         ok "archived-$version"
@@ -224,7 +225,7 @@ for version in 5.0.0-i{1..10}; do
         bad "archived-$version" "rc=$RC or staging was written"
     fi
 done
-run_builder VERSION=5.0.0-i11 SOURCE_DATE_EPOCH=
+run_builder VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=
 if [[ "$RC" == 1 ]] && grep -Fq builder_repro=FAIL "$TMP/b.out"; then
     ok empty-epoch
 else
@@ -234,7 +235,7 @@ fi
 mkdir -p "$TMP/root/headers" "$TMP/root/docs/planning/evidence/o-stage/5.0.0-i6"
 printf '%s\n' '{}' > "$TMP/root/docs/planning/evidence/o-stage/5.0.0-i6/5.0.0-i6.meta.json"
 set +e
-INNOGPU_ROOT="$TMP/root" VERSION=5.0.0-i11 SOURCE_DATE_EPOCH=1790208000 \
+INNOGPU_ROOT="$TMP/root" VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=1790812800 \
     KERNELDIR="$TMP/root/headers" STAGE_ROOT="$TMP/stage" \
     bash "$BUILDER" > "$TMP/b.out" 2> "$TMP/b.err"
 RC=$?
@@ -251,7 +252,7 @@ resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
 builder, repo, tree, tmp = map(pathlib.Path, sys.argv[1:])
 text = builder.read_text()
 func = text[text.index("derive_fantgpu_source() {"):text.index("\nAPPLIED_SOURCE_FIXES=")]
-names = ["cfg_detect.sh", "test_item.sh", "fantsrvkm/fantdpu_drm_fb.c", "fantpower/fant_input_event.c", "fantvpu/fantvpu_drv.c"]
+names = ["cfg_detect.sh", "test_item.sh", "fantsrvkm/fantdpu_drm_fb.c", "fantsrvkm/ft_drm.c", "fantpower/fant_input_event.c", "fantvpu/fantvpu_drv.c"]
 originals = {name: (tree / name).read_bytes() for name in names}
 before = originals["cfg_detect.sh"]
 env = dict(os.environ, ROOT=str(repo))
@@ -266,6 +267,10 @@ assert hashlib.sha256(after).hexdigest() == "f096890ea5662301f6eb805c2a5554aa9d0
 fb_source = (tree / "fantsrvkm/fantdpu_drm_fb.c").read_text()
 input_source = (tree / "fantpower/fant_input_event.c").read_text()
 vpu_source = (tree / "fantvpu/fantvpu_drv.c").read_text()
+drm_source = (tree / "fantsrvkm/ft_drm.c").read_text()
+drm_before = originals["fantsrvkm/ft_drm.c"].decode()
+assert drm_source.count("fantgpu_drm_to_ft_private(ddev)") == drm_before.count("fantgpu_drm_to_ft_private(ddev)") + 2
+assert drm_source.count("struct ft_drm_private *priv = ddev->dev_private;") == drm_before.count("struct ft_drm_private *priv = ddev->dev_private;") - 2
 # Reject second application and unrelated parent drift before mutation.
 assert derive().returncode != 0
 for name, data in originals.items():

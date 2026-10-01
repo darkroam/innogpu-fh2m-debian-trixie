@@ -131,6 +131,16 @@ assert budget['cap_bytes']==133*1024**2 and budget['buffer_size_kb_per_cpu']==76
 assert budget['components']['minimal_snapshot']>0 and budget['unknown_allocations'];count+=1
 assert prepare._analysis.semantic_contract()==obs.semantic_contract();count+=1
 assert prepare._analysis.memory_budget()==budget;count+=1
+assert obs.dictionary_limits(obs.CAPACITY_PROFILE)==dict(objects=4096,edges=8192,functions=256,notifiers=64)
+assert obs.semantic_contract()['max_records']==39936;count+=2
+rejects(lambda: obs.dictionary_limits('unknown'))
+large=dict(semantic,object_id=513,peer_id=obs.MAX_OBJECTS)
+large_exit=dict(large,seq=2,phase='exit',ret=0)
+assert obs.check_semantic_records([large,large_exit])['coverage']=='UNKNOWN';count+=1
+assert obs.check_semantic_records([large,large_exit],obs.CAPACITY_PROFILE)['semantic_pairs']==1;count+=1
+for field in ('object_id','peer_id'):
+    a=dict(large,**{field:obs.MAX_OBJECTS+1});b=dict(a,seq=2,phase='exit',ret=0)
+    assert obs.check_semantic_records([a,b],obs.CAPACITY_PROFILE)['coverage']=='UNKNOWN';count+=1
 
 with tempfile.TemporaryDirectory(prefix='r5obs-unit-') as tmp:
     tmp = Path(tmp)
@@ -243,11 +253,17 @@ int main(void) {
         capture.write_bytes(b'R5CAP01\n'+b''.join(obs.FRAME.pack(len(r),1)+r for r in rows))
     for bad in (raw[:-1], b'badmagic'+raw[8:]):
         capture.write_bytes(bad); rejects(lambda: obs.check_stream(capture,'a'*32))
-    for rows in (frames[1:], [frames[0],*frames[2:]], frames+[frames[-1]],
+    for rows in (frames[1:], frames+[frames[-1]],
                  [frames[0],frames[2],frames[1],frames[3]]):
         capture_frames(rows); rejects(lambda: obs.check_stream(capture,'a'*32))
+    capture_frames([frames[0], *frames[2:]])
+    gap = obs.check_stream(capture,'a'*32)
+    assert gap['sequence_gaps']==1 and not gap['transport_complete']; count+=1
     capture_frames(frames[:-1])
     assert not obs.check_stream(capture,'a'*32)['transport_complete']; count+=1
+    capture_frames(frames[:2]+frames[3:])
+    gap = obs.check_stream(capture,'a'*32)
+    assert gap['sequence_gaps']==1 and not gap['transport_complete']; count+=1
     for index,offset,value in ((1,48,1),(1,56,1),(2,64,1),(2,88,1),(3,64,1)):
         rows=list(frames); changed=bytearray(rows[index]); struct.pack_into('!Q',changed,offset,value)
         rows[index]=bytes(changed); capture_frames(rows)
@@ -255,7 +271,7 @@ int main(void) {
 
     # New transport bounds; old bytes above still use their original bounds.
     bounded = list(frames)
-    changed = bytearray(bounded[0]); struct.pack_into('!4I',changed,64,1,1,2048,128)
+    changed = bytearray(bounded[0]); struct.pack_into('!4I',changed,64,1,1,2048,256)
     bounded[0] = bytes(changed); capture_frames(bounded)
     assert obs.check_stream(capture,'a'*32)['transport_complete']; count+=1
     for offset,value in ((64,17),(68,20),(72,256),(76,129)):
@@ -278,10 +294,10 @@ typedef uint64_t u64;
 #define TRACE_ITER_OVERWRITE 1
 #define READ_ONCE(x) (x)
 struct work_struct { int dummy; };
-struct ring_buffer_event { unsigned char data[128]; } record;
+struct ring_buffer_event { unsigned char data[256]; } record;
 struct tracer { const char *name; } tracer={"nop"};
 struct trace_array { int pipe_cpumask[1]; int trace_flags; struct tracer *current_trace; int buffer_disabled,clock_id; int *tracing_cpumask; } a={{0},0,&tracer,0,5,0},*array=&a;
-struct { unsigned char payload[128]; } packet;
+struct { unsigned char payload[256]; } packet;
 static int buffer,drain_work,system_unbound_wq,scheduled;
 static unsigned cursor,transport_error,interval_ms=1,nr_cpu_ids=16;
 static u64 lost,oversized,last_stats,now,cost;
@@ -336,7 +352,7 @@ int main(void) {
     drain(0);assert(now<=5200000 && sent[0]<128 && !sent[1]);
     drain(0);assert(sent[1]>0); /* next invocation starts with next CPU */
     reset();pending[0]=1;room=false;drain(0);assert(pending[0]==1 && scheduled==1);
-    reset();pending[0]=1;width=129;drain(0);assert(oversized==1 && transport_error && !scheduled);
+    reset();pending[0]=1;width=257;drain(0);assert(oversized==1 && transport_error && !scheduled);
     reset();files[0].flags=0;pending[0]=1;drain(0);assert(transport_error && !scheduled && pending[0]);
     reset();files[1].flags=5;drain(0);assert(transport_error && !scheduled);
     reset();semantic_error=1;pending[0]=1;drain(0);assert(transport_error && !scheduled && pending[0]);
@@ -419,7 +435,7 @@ enum { id_r5_pair=101,id_r5_dictionary=102,id_r5_aux=103 };
     main=r'''
 int main(void) {
     _Static_assert(sizeof(struct raw_r5_pair)==80,"pair width");
-    _Static_assert(sizeof(struct raw_r5_dictionary)==104,"dictionary width");
+    _Static_assert(sizeof(struct raw_r5_dictionary)==136,"dictionary width");
     emit_r5_dictionary(1,2,0,1,0,"child","driver");
     emit_r5_dictionary(2,0,0,1,0,"parent","bus");
     emit_r5_dictionary(2,0,0,1,2,"END_DICTIONARY","");
@@ -442,9 +458,9 @@ int main(void) {
     c.write_text(adapter+header+prepare.SEMANTIC_EVENTS+main)
     subprocess.run(['cc','-std=gnu11','-Wall','-Werror',str(c),'-o',str(exe)],check=True)
     raw=subprocess.check_output([str(exe)])
-    assert len(raw)==1176;count+=1
-    dictionaries=[raw[i*104:(i+1)*104] for i in range(3)]
-    pair=[raw[312:392],raw[392:472]]
+    assert len(raw)==1272;count+=1
+    dictionaries=[raw[i*136:(i+1)*136] for i in range(3)]
+    pair=[raw[408:488],raw[488:568]]
     formats=[]
     for name,eid in [('r5_pair',101),('r5_dictionary',102)]:
         path=tmp/(name+'.format')
@@ -459,7 +475,7 @@ int main(void) {
             seq=len(packets)
             packets.append(obs.WIRE.pack(b'R5O1',1,kind,len(payload),bytes.fromhex(session),
                                         seq,cpu,12,ts,loss,0)+payload)
-        packet(3,0xffffffff,1,struct.pack('!4I',2,1,2048,128))
+        packet(3,0xffffffff,1,struct.pack('!4I',2,1,2048,256))
         for cpu,ts,payload in payloads: packet(1,cpu,ts,payload)
         for cpu in range(2): packet(2,cpu,20,struct.pack('!4Q',0,0,0,0))
         if complete: packet(4,0xffffffff,21,struct.pack('!QII',0,0,0))
@@ -501,7 +517,7 @@ int main(void) {
     aux_format.write_text('name: r5_aux\nID: 103\n'+''.join(
         f'field:char {field}; offset:{offset}; size:{size}; signed:0;\n'
         for field,offset,size in obs.RAW_LAYOUTS['r5_aux']))
-    chunks=[];at=472
+    chunks=[];at=568
     for size in (80,80,96,96,96,80,96,80):
         chunks.append(raw[at:at+size]);at+=size
     assert at==len(raw)
@@ -541,6 +557,107 @@ int main(void) {
     assert aux_checked()['coverage']=='INCOMPLETE_WITH_LOSS';count+=1
     semantic_capture(aux_rows)
     rejects(checked)  # an R46 capture cannot silently use R45 two-event decoder
+    # R47 production TRACE_EVENT bytes: function/notifier dictionaries, actual
+    # callback metadata, queue->worker cookie, robust-return and wake snapshot.
+    details=r'''
+    emit_r5_dictionary(1,0,0,1,3,"callback","");
+    emit_r5_dictionary(1,1,0,1,4,"PM_NOTIFIER","");
+    emit_r5_dictionary(1,1,0,1,5,"DETAIL_COUNTS","");
+'''
+    extra=r'''
+    t.operation=R5_CALLBACK;t.call_id=200;
+    emit_r5_pair(&t,false,0);emit_r5_aux(&t,1,5,R5_CALLBACK_META,0);emit_r5_pair(&t,true,-5);
+    t.operation=R5_TASK;t.call_id=201;
+    emit_r5_pair(&t,false,0);emit_r5_aux(&t,1,1,R5_ASYNC,0);emit_r5_pair(&t,true,1);
+    t.operation=R5_WORKER;t.call_id=202;
+    emit_r5_pair(&t,false,0);emit_r5_aux(&t,201,27,R5_WORKER_META,0);emit_r5_pair(&t,true,0);
+    stage.operation=R5_NOTIFIER;stage.call_id=203;
+    emit_r5_aux(&stage,1,4,R5_NOTIFIER_BEGIN,0);emit_r5_aux(&stage,1,4,R5_NOTIFIER_END,0x8001);
+    stage.operation=R5_STAGE;stage.call_id=204;
+    emit_r5_aux(&stage,16,0,R5_STAGE_BEGIN,0);emit_r5_aux(&stage,19,1,R5_WAKE_META,0);
+    emit_r5_aux(&stage,16,0,R5_STAGE_END,-16);
+'''
+    r47_main=main.replace('    emit_r5_dictionary(2,0,0,1,2,"END_DICTIONARY","");',
+                          details+'    emit_r5_dictionary(2,0,0,1,2,"END_DICTIONARY","");')
+    r47_main=r47_main.replace('    return 0;',extra+'    return 0;')
+    c.write_text(adapter+header+prepare.SEMANTIC_EVENTS+r47_main)
+    subprocess.run(['cc','-std=gnu11','-Wall','-Werror',str(c),'-o',str(exe)],check=True)
+    raw47=subprocess.check_output([str(exe)]);events47=[];at=0
+    while at<len(raw47):
+        size={101:80,102:136,103:96}[struct.unpack_from('<H',raw47,at)[0]]
+        events47.append(raw47[at:at+size]);at+=size
+    semantic_capture([(i%2,i+1,p) for i,p in enumerate(events47)])
+    strict_cli=aux_cli+['--require-r47']
+    checked47=subprocess.run(strict_cli,capture_output=True)
+    assert checked47.returncode==0,checked47.stderr.decode()+checked47.stdout.decode();count+=1
+    result47=json.loads(checked47.stdout)
+    assert result47['auxiliary']['notifiers']['pairs'][0]['exit']['ret']==0x8001
+    assert len(result47['auxiliary']['workers'])==1 and result47['detail_dictionary_complete'];count+=2
+    for code,offset,fmt,value in [(5,72,'<Q',2),(8,72,'<Q',999),(7,80,'<Q',5),(9,48,'<Q',999)]:
+        bad=list(events47)
+        index=next(i for i,p in enumerate(bad) if len(p)==96 and struct.unpack_from('<I',p,88)[0]==code)
+        row=bytearray(bad[index]);struct.pack_into(fmt,row,offset,value);bad[index]=bytes(row)
+        semantic_capture([(i%2,i+1,p) for i,p in enumerate(bad)])
+        assert subprocess.run(strict_cli,capture_output=True).returncode==1;count+=1
+    for code in (5,8,7,9):
+        bad=[p for p in events47 if not (len(p)==96 and struct.unpack_from('<I',p,88)[0]==code)]
+        semantic_capture([(i%2,i+1,p) for i,p in enumerate(bad)])
+        assert subprocess.run(strict_cli,capture_output=True).returncode==1;count+=1
+    semantic_capture(aux_rows)
+    assert subprocess.run(strict_cli,capture_output=True).returncode==1;count+=1
+    # New profile has metadata in the real entry; no pair-entry is discarded
+    # during analysis. Historical expanded-profile bytes remain unchanged.
+    compact_main=r47_main.replace('DETAIL_COUNTS"','DETAIL_COUNTS_R40"')
+    compact_main=compact_main.replace('emit_r5_pair(&t,false,0);emit_r5_aux(&t,1,5,R5_CALLBACK_META,0);',
+                                    'emit_r5_aux(&t,1,5,R5_CALLBACK_ENTRY,0);')
+    compact_main=compact_main.replace('emit_r5_pair(&t,false,0);emit_r5_aux(&t,201,27,R5_WORKER_META,0);',
+                                    'emit_r5_aux(&t,201,27,R5_WORKER_ENTRY,0);')
+    c.write_text(adapter+header+prepare.SEMANTIC_EVENTS+compact_main)
+    subprocess.run(['cc','-std=gnu11','-Wall','-Werror',str(c),'-o',str(exe)],check=True)
+    raw_compact=subprocess.check_output([str(exe)]);compact=[];at=0
+    while at<len(raw_compact):
+        size={101:80,102:136,103:96}[struct.unpack_from('<H',raw_compact,at)[0]]
+        compact.append(raw_compact[at:at+size]);at+=size
+    semantic_capture([(i%2,i+1,p) for i,p in enumerate(compact)])
+    checked_compact=subprocess.run(strict_cli,capture_output=True)
+    assert checked_compact.returncode==0,checked_compact.stderr.decode();count+=1
+    result_compact=json.loads(checked_compact.stdout)
+    assert result_compact['semantic_pairs']==result47['semantic_pairs'] and len(result_compact['fused_entry_wire_sequences'])==2
+    assert len(events47)-len(compact)==2;count+=2
+    for code in (10,11):
+        bad=[p for p in compact if not (len(p)==96 and struct.unpack_from('<I',p,88)[0]==code)]
+        semantic_capture([(i%2,i+1,p) for i,p in enumerate(bad)])
+        assert subprocess.run(strict_cli,capture_output=True).returncode==1;count+=1
+    # New producer marker, genuine TRACE_EVENT layouts, and all boundary IDs
+    # traverse the same strict CLI. Legacy evidence never inherits new limits.
+    for n in (513,obs.MAX_OBJECTS,obs.MAX_OBJECTS+1):
+        expanded=compact_main.replace('DETAIL_COUNTS_R40"','DETAIL_COUNTS_R40_V2"')
+        expanded=expanded.replace('    emit_r5_dictionary(1,2,0,1,0,"child","driver");',
+            f'    for (unsigned i=1;i<={n};i++) emit_r5_dictionary(i,i==1?{n}:0,0,1,0,"node","driver");')
+        expanded=expanded.replace('    emit_r5_dictionary(2,0,0,1,0,"parent","bus");','')
+        expanded=expanded.replace('emit_r5_dictionary(2,0,0,1,2,',f'emit_r5_dictionary({n},0,0,1,2,')
+        expanded=expanded.replace('.peer_id=2,',f'.peer_id={n},')
+        c.write_text(adapter+header+prepare.SEMANTIC_EVENTS+expanded)
+        subprocess.run(['cc','-std=gnu11','-Wall','-Werror',str(c),'-o',str(exe)],check=True)
+        large_raw=subprocess.check_output([str(exe)]);payloads=[];at=0
+        while at<len(large_raw):
+            size={101:80,102:136,103:96}[struct.unpack_from('<H',large_raw,at)[0]]
+            payloads.append(large_raw[at:at+size]);at+=size
+        semantic_capture([(i%2,i+1,p) for i,p in enumerate(payloads)])
+        verified=subprocess.run(strict_cli,capture_output=True)
+        if n>obs.MAX_OBJECTS:
+            assert verified.returncode!=0;count+=1
+            continue
+        assert verified.returncode==0,verified.stderr.decode()
+        assert len(json.loads(verified.stdout)['objects'])==n;count+=1
+        for marker in ('DETAIL_COUNTS','DETAIL_COUNTS_R40','UNKNOWN_PROFILE'):
+            downgraded=[p.replace(b'DETAIL_COUNTS_R40_V2'.ljust(48,b'\0'),marker.encode().ljust(48,b'\0'))
+                        for p in payloads]
+            semantic_capture([(i%2,i+1,p) for i,p in enumerate(downgraded)])
+            assert subprocess.run(strict_cli,capture_output=True).returncode!=0;count+=1
+        for complete,loss in ((False,0),(True,1)):
+            semantic_capture([(i%2,i+1,p) for i,p in enumerate(payloads)],complete,loss)
+            assert subprocess.run(strict_cli,capture_output=True).returncode==1;count+=1
     formats[0].write_text(formats[0].read_text().replace('offset:72','offset:73'))
     rejects(checked)
 
@@ -572,6 +689,8 @@ enum { PM_EVENT_RESUME,PM_EVENT_RECOVER,PM_EVENT_THAW,PM_EVENT_RESTORE };
 static struct { struct device *dev; atomic64_t generation; atomic_t resetting,prepares; } r5_objects[1];
 static unsigned r5_n=1;
 static atomic_t r5_state=2,r5_exported=1,r5_records;
+static bool r5_ordinary=true;
+#define READ_ONCE(x) (x)
 static atomic64_t r5_lifetime=1,r5_calls;
 static int completed,reinitialized;
 static void complete_all(int *p) { (void)p;completed++; }
@@ -617,6 +736,12 @@ int main(void) {
     r5_state=2;r5_records=0;t=r5obs2_stage_begin(1,3);
     assert(t.call_id && !t.object_id && aux_count==1 && aux_token.operation==R5_STAGE);
     r5obs2_stage_end(&t,1,3,-5);assert(aux_count==2 && aux_token.call_id==t.call_id);
+    r5_ordinary=false;unsigned before=emitted;
+    t=r5_begin(&dev,R5_WAIT,R5_RESUME_PHASE,NULL);assert(!t.call_id);
+    t=r5_begin(&dev,R5_CALLBACK,R5_SUSPEND_PHASE,NULL);assert(!t.call_id);
+    r5_complete(&dev);assert(completed==3 && emitted==before+2);
+    r5_ordinary=true;t=r5_begin(&dev,R5_CALLBACK,R5_RESUME_PHASE,NULL);
+    assert(t.call_id && emitted==before+2); /* aux carries entry; pair exit remains */
     return 0;
 }
 '''
@@ -624,6 +749,374 @@ int main(void) {
     source.write_text('#define CONFIG_PM_SLEEP 1\n'+adapter+header+trace+changes+helpers+main)
     subprocess.run(['cc','-std=gnu11','-Wall','-Werror',str(source),'-o',str(exe)],check=True)
     subprocess.run([str(exe)],check=True);count+=10
+
+# R47 admission failures: compile the production guards, not a replacement checker.
+with tempfile.TemporaryDirectory() as temporary:
+    tmp=Path(temporary); c=prepare.EXPORT_MODULE
+    constants='\n'.join(re.findall(r'^#define (?:CPU_BUFFER_BYTES|TOTAL_PAGE_BYTES) .+$',c,re.M))
+    guards=c[c.index('static int geometry_reject('):c.index('static bool semantic_profile_ok(')]
+    shim=r'''
+#include <assert.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+typedef uint64_t u64;
+#define PAGE_SIZE 4096
+#define CONFIG_TRACER_MAX_TRACE 1
+static char report[256];
+#define pr_err(...) snprintf(report,sizeof report,__VA_ARGS__)
+struct trace_buffer { int subbuf; unsigned long sizes[17]; } primary, secondary;
+static struct trace_buffer *buffer=&primary;
+static struct { int allocated_snapshot; struct { struct trace_buffer *buffer; } max_buffer; } a={0,{&secondary}},*array=&a;
+static unsigned cpus=16;
+#define for_each_possible_cpu(cpu) for((cpu)=0;(unsigned)(cpu)<cpus;(cpu)++)
+static int ring_buffer_subbuf_size_get(struct trace_buffer *b) { return b->subbuf; }
+static unsigned long ring_buffer_size(struct trace_buffer *b,int cpu) { return b->sizes[cpu]; }
+static void reset(void) {
+    cpus=16;array->allocated_snapshot=0;report[0]=0;primary.subbuf=secondary.subbuf=4096;
+    for(unsigned i=0;i<17;i++) {primary.sizes[i]=CPU_BUFFER_BYTES;secondary.sizes[i]=2*(4096-16);}
+}
+'''
+    main=r'''
+int main(void) {
+    reset();assert(check_buffer_geometry()==0 && !report[0]);
+    primary.subbuf=8192;assert(check_buffer_geometry()==-E2BIG && strstr(report,"primary-subbuf"));
+    reset();array->allocated_snapshot=1;assert(check_buffer_geometry()==-E2BIG && strstr(report,"snapshot-active"));
+    reset();primary.sizes[15]++;assert(check_buffer_geometry()==-E2BIG && strstr(report,"primary-size cpu=15"));
+    reset();secondary.subbuf=8192;assert(check_buffer_geometry()==-E2BIG && strstr(report,"snapshot-subbuf"));
+    reset();secondary.sizes[15]++;assert(check_buffer_geometry()==-E2BIG && strstr(report,"snapshot-size cpu=15"));
+    reset();cpus=0;assert(check_buffer_geometry()==-E2BIG && strstr(report,"total-pages"));
+    reset();cpus=17;assert(check_buffer_geometry()==-E2BIG && strstr(report,"total-pages"));
+    return 0;
+}
+'''
+    source=tmp/'admission.c';exe=tmp/'admission';source.write_text(constants+'\n'+shim+guards+main)
+    subprocess.run(['cc','-std=gnu11','-Wall','-Werror',str(source),'-o',str(exe)],check=True)
+    subprocess.run([str(exe)],check=True);count+=1
+    emitter=prepare.SEMANTIC_EMITTER
+    latch=emitter[emitter.index('static const char *r5_reject_gate'):emitter.index('void r5obs2_topology_changed(')]
+    functions=prepare.DETAIL_TABLES
+    functions=functions[functions.index('static unsigned int r5_function('):functions.index('static int r5_ops_add(')]
+    shim=r'''
+#include <assert.h>
+#include <errno.h>
+#include <string.h>
+#define KSYM_SYMBOL_LEN 256
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
+static struct {void *fn;char name[48];} r5_functions[256];
+static unsigned r5_nf;
+static char symbol_text[KSYM_SYMBOL_LEN];
+static void sprint_symbol_no_offset(char *out,unsigned long fn) {(void)fn;strcpy(out,symbol_text);}
+static long strscpy(char *out,const char *in,unsigned long cap) {
+    if(strlen(in)>=cap)return -E2BIG;
+    strcpy(out,in);return strlen(in);
+}
+'''
+    main=r'''
+int main(void) {
+    assert(r5_function_add(0)==0);
+    memset(symbol_text,'x',47);symbol_text[47]=0;
+    assert(r5_function_add((void *)1)==1 && r5_function_add((void *)1)==1);
+    symbol_text[47]='x';symbol_text[48]=0;
+    assert(r5_function_add((void *)2)==-E2BIG && r5_nf==1);
+    assert(!strcmp(r5_reject_gate,"function-name") && r5_reject_value==49 && r5_reject_limit==48);
+    r5_nf=256;assert(r5_function_add((void *)2)==-E2BIG);
+    assert(!strcmp(r5_reject_gate,"functions") && r5_reject_value==257 && r5_reject_limit==256);
+    assert(r5_size_error("objects",513,512)==-E2BIG && r5_reject_value==513);
+    assert(r5_size_error("driver-name-copy",-E2BIG,24)==-E2BIG && r5_reject_value==-E2BIG);
+    return 0;
+}
+'''
+    source.write_text(shim+latch+functions+main)
+    subprocess.run(['cc','-std=gnu11','-Wall','-Werror',str(source),'-o',str(exe)],check=True)
+    subprocess.run([str(exe)],check=True);count+=1
+
+# Actual r5_add/r5_find and table declarations, with primitive device refs.
+# The sanitizer covers the queued-call array indexed by the enlarged IDs.
+with tempfile.TemporaryDirectory(prefix='r47-capacity-') as temporary:
+    tmp=Path(temporary);emitter=prepare.SEMANTIC_EMITTER
+    constants='\n'.join(re.findall(r'^#define R5_\w+ .+$',emitter,re.M))
+    tables=emitter[emitter.index('struct r5_object {'):emitter.index('static unsigned int r5_n, r5_e;')]
+    details=prepare.DETAIL_TABLES
+    details=details[details.index('static struct { void *fn;'):details.index('static unsigned int r5_nf, r5_nn;')]
+    helpers=emitter[emitter.index('static unsigned int r5_find('):emitter.index('int r5obs2_census(void)')]
+    latch=emitter[emitter.index('static const char *r5_reject_gate'):emitter.index('void r5obs2_topology_changed(')]
+    shim=r'''
+#include <stdint.h>
+#include <assert.h>
+#include <errno.h>
+#include <string.h>
+typedef uint32_t u32;typedef uint64_t u64;
+typedef struct {int counter;} atomic_t;
+typedef struct {long counter;} atomic64_t;
+#define atomic_set(p,v) ((p)->counter=(v))
+#define atomic64_set atomic_set
+struct device {unsigned refs;};
+static struct device *get_device(struct device *p) {p->refs++;return p;}
+static unsigned r5_n;
+'''
+    main=r'''
+int main(void) {
+    static struct device devices[R5_OBJECTS+1];
+    assert(sizeof(r5_objects[0])==136 && sizeof(r5_edges[0])==8);
+    assert(sizeof(r5_functions[0])==56 && sizeof(r5_notifiers[0])==16);
+    assert(sizeof(r5_queued_call)==R5_OBJECTS*8);
+    assert(sizeof(r5_objects)+sizeof(r5_edges)+sizeof(r5_queued_call)+
+           sizeof(r5_functions)+sizeof(r5_notifiers)+R5_DICTIONARY_RESERVE<=R5_DICTIONARY_CAP);
+    assert(r5_add(NULL)==0);
+    for(unsigned i=0;i<R5_OBJECTS;i++) {
+        int id=r5_add(&devices[i]);assert(id==(int)i+1);
+        r5_queued_call[id-1]=id;assert(devices[i].refs==1);
+        assert(r5_add(&devices[i])==id && devices[i].refs==1);
+    }
+    assert(r5_find(&devices[512])==513 && r5_find(&devices[R5_OBJECTS-1])==R5_OBJECTS);
+    assert(r5_queued_call[R5_OBJECTS-1]==R5_OBJECTS);
+    assert(r5_add(&devices[R5_OBJECTS])==-E2BIG && r5_n==R5_OBJECTS);
+    assert(!devices[R5_OBJECTS].refs && !strcmp(r5_reject_gate,"objects"));
+    assert(r5_reject_value==R5_OBJECTS+1 && r5_reject_limit==R5_OBJECTS);
+    return 0;
+}
+'''
+    source=tmp/'capacity.c';exe=tmp/'capacity'
+    source.write_text(constants+'\n'+shim+tables+details+latch+helpers+main)
+    subprocess.run(['cc','-std=gnu11','-Wall','-Werror','-fsanitize=address,undefined',
+                    str(source),'-o',str(exe)],check=True)
+    subprocess.run([str(exe)],check=True);count+=1
+
+# R47: production journal replay, shared slab lifetime and PFN reuse. These
+# bytes test the interface; they are never recorded as target measurements.
+with tempfile.TemporaryDirectory() as temporary:
+    tmp=Path(temporary); path=tmp/'meter.bin';rows=[]
+    # Compile the actual bounded journal writer, with only kernel I/O supplied
+    # by deterministic stand-ins. Never substitute a second writer algorithm.
+    c=prepare.METER_SOURCE
+    structure=c[c.index('struct r5m_record {'):c.index('static struct r5m_record r5m_log')]
+    append=c[c.index('static void r5m_append('):c.index('static void r5m_emit(')]
+    shim='''#include <stdint.h>
+#include <assert.h>
+typedef uint64_t u64; typedef uint32_t u32;
+#define R5M_SLOTS 8192
+'''+structure+'''
+static struct r5m_record r5m_log[R5M_SLOTS];
+static u64 r5m_head,r5m_tail,r5m_seq,r5m_lost,clock_ns;
+static unsigned r5m_phase;
+static struct {u64 start_boottime;} task={7},*current=&task;
+#define atomic64_inc(p) (++*(p))
+#define task_pid_nr(p) 23
+static u64 ktime_get_mono_fast_ns(void) {return ++clock_ns;}
+'''+append+'''
+int main(void) {
+ _Static_assert(sizeof(struct r5m_record)==88,"meter ABI");
+ struct r5m_record r={.kind=1};
+ for(unsigned i=0;i<R5M_SLOTS;i++)r5m_append(&r);
+ r5m_append(&r); assert(r5m_head==8192 && r5m_seq==8193 && r5m_lost==1);
+ assert(r5m_log[0].seq==1 && r5m_log[8191].seq==8192);
+ r5m_tail++;r5m_phase=4;r5m_append(&r);
+ assert(r5m_log[0].seq==8194 && r5m_log[0].phase==4 && r5m_log[0].birth==7);
+ return 0;
+}
+'''
+    (tmp/'meter.c').write_text(shim)
+    subprocess.run(['cc','-std=gnu11','-Wall','-Werror',str(tmp/'meter.c'),'-o',str(tmp/'meter')],check=True)
+    subprocess.run([str(tmp/'meter')],check=True);count+=1
+    def meter(kind,phase,**kw):
+        row=dict.fromkeys(obs.METER_FIELDS,0)
+        row.update(seq=len(rows)+1,ns=len(rows)+1,kind=kind,phase=phase,**kw)
+        rows.append(row)
+    def mark(phase):
+        meter(0,phase,ptr=0x52354d31,site=16,requested=8192*88,allocated=8192*88,order=12)
+    def save(data):
+        path.write_bytes(b''.join(obs.METER.pack(*(r[k] for k in obs.METER_FIELDS)) for r in data))
+    mark(0);mark(1)
+    meter(3,1,pfn=100)
+    meter(1,1,ptr=409600,pfn=100,requested=64,allocated=64)
+    meter(1,1,ptr=409664,pfn=100,requested=64,allocated=64)
+    meter(2,1,ptr=409600);mark(2)
+    meter(2,2,ptr=409664);mark(3)
+    meter(4,3,pfn=100);meter(3,3,pfn=100);mark(4)
+    meter(4,4,pfn=100);mark(5);mark(6);mark(7);save(rows)
+    checked=obs.meter_check(path)
+    assert checked['marks'][2]['backing_bytes']==4096 and checked['marks'][2]['objects_live']==1
+    assert checked['marks'][3]['backing_bytes']==4096 and checked['marks'][3]['objects_live']==0
+    assert checked['final']['backing_bytes']==0 and checked['final']['physical_peak_bytes']==4096
+    assert checked['admission']=='ALLOCATOR_UNVERIFIED';count+=4
+    rc=subprocess.run(['python3',str(ROOT/'tools/r5-observation.py'),'meter-check',str(path)],stdout=subprocess.PIPE)
+    assert rc.returncode==1 and json.loads(rc.stdout)['admission']=='ALLOCATOR_UNVERIFIED';count+=1
+    bad=copy.deepcopy(rows);bad[-1]['extra']=1;save(bad)
+    assert obs.meter_check(path)['journal']=='INCOMPLETE_WITH_LOSS';count+=1
+    save(rows[:-1]);assert obs.meter_check(path)['issues']['missing_M0_M6_or_END'];count+=1
+    bad=copy.deepcopy(rows);bad[4]['ptr']=409600;save(bad);rejects(lambda:obs.meter_check(path))
+    bad=copy.deepcopy(rows);bad[9]['kind']=3;save(bad);rejects(lambda:obs.meter_check(path))
+    save(rows);path.write_bytes(path.read_bytes()[:-1]);rejects(lambda:obs.meter_check(path))
+    bounds=[dict(class_='objects',L=1,R=2,C=2,B=4096,source_sha256='a'*64,unit='objects')]
+    bounds[0]['class']=bounds[0].pop('class_')
+    assert obs.check_bounds(bounds,4096,0)['status']=='RETURN_TO_DESIGN';count+=1
+    bounds[0]['C']=None
+    assert obs.check_bounds(bounds,4096,0)['U_total'] is None;count+=1
+    assert obs.event_budget({})['total'] is None;count+=1
+    envelope=dict(N=512,E=1024,G=6,R=4,C=16,functions=256,notifiers=64,stage_calls=56,wake_calls=1,external_wait_calls=0)
+    b=obs.event_budget(envelope)
+    assert b['status']=='RETURN_TO_DESIGN' and b['total']>39936 and b['remaining']<0;count+=1
+    compact_budget=obs.event_budget(dict(envelope,profile='R40_ORDINARY_RESUME'))
+    assert compact_budget['total']==38707 and compact_budget['remaining']==1229
+    assert compact_budget['status']=='CENSUS_UNVERIFIED';count+=2
+    expanded=dict(envelope,N=513,profile=obs.CAPACITY_PROFILE)
+    assert obs.event_budget(expanded)['status']=='CENSUS_UNVERIFIED';count+=1
+    rejects(lambda: obs.event_budget(dict(expanded,profile='R40_ORDINARY_RESUME')))
+    rejects(lambda: obs.event_budget(dict(expanded,N=obs.MAX_OBJECTS+1)))
+    rejects(lambda: obs.event_budget(dict(expanded,E=obs.MAX_EDGES+1)))
+    enlarged=obs.event_budget(dict(expanded,N=obs.MAX_OBJECTS,E=obs.MAX_EDGES))
+    assert enlarged['status']=='RETURN_TO_DESIGN' and enlarged['remaining']<0;count+=1
+    envelope['N']=True;rejects(lambda:obs.event_budget(envelope))
+
+# Run the exact production bulk hooks: trace before pointer permutation,
+# skip disabled tracing, and emit only the returned successful allocation count.
+with tempfile.TemporaryDirectory(prefix='r47-bulk-') as temporary:
+    tmp=Path(temporary)
+    code='''#include <stddef.h>
+#include <assert.h>
+struct kmem_cache { int unused; };
+static int enabled=1,n; static void *seen[4];
+#define _RET_IP_ 0
+#define NUMA_NO_NODE -1
+#define trace_kfree_enabled() enabled
+#define trace_kmem_cache_alloc_enabled() enabled
+#define trace_kfree(site,p) (seen[n++]=(p))
+#define trace_kmem_cache_alloc(site,p,s,f,node) (seen[n++]=(p))
+static void release(size_t size,void **p) {
+'''+prepare.BULK_FREE_TRACE+'''
+ if(size)p[0]=NULL;
+}
+static void allocated(int i,void **p) {
+'''+prepare.BULK_ALLOC_TRACE+'''
+}
+int main(void) {
+ int a,b; void *p[]={&a,&b};
+ release(2,p); assert(n==2 && seen[0]==&a && seen[1]==&b && !p[0]);
+ n=0;enabled=0;release(2,p);assert(!n);
+ enabled=1;allocated(1,p);assert(n==1 && seen[0]==NULL);
+ n=0;allocated(0,p);release(0,p);assert(!n);return 0;
+}
+'''
+    (tmp/'bulk.c').write_text(code)
+    subprocess.run(['cc','-Wall','-Werror',str(tmp/'bulk.c'),'-o',str(tmp/'bulk')],check=True)
+    subprocess.run([str(tmp/'bulk')],check=True);count+=1
+
+# Control EOF after END must not discard buffered kernel journal bytes.
+from unittest.mock import patch
+import os
+import types
+with patch('os.uname',return_value=types.SimpleNamespace(release='6.12.101-r5obs2-r47e')), \
+     patch('os.open') as device_open:
+    rejects(lambda: obs.meter_session(Path('/unused-old-boot-journal')))
+    device_open.assert_not_called()
+with tempfile.TemporaryDirectory(prefix='r47-reader-') as temporary:
+    target=Path(temporary)/'journal';fakefd=-987;real_open=os.open;real_close=os.close
+    payload=b'tail after END';chunks=iter([None]*7+[payload,b''])
+    def device_read(fd,size):
+        assert fd==fakefd
+        data=next(chunks)
+        if data is None:raise BlockingIOError()
+        return data
+    def opened(path,flags,*args):
+        return fakefd if path=='/dev/r5_meter' else real_open(path,flags,*args)
+    with patch('os.uname',return_value=types.SimpleNamespace(release=obs.KERNEL_RELEASE)), \
+         patch('os.open',side_effect=opened), patch('os.read',side_effect=device_read), \
+         patch('os.close',side_effect=lambda fd:None if fd==fakefd else real_close(fd)), \
+         patch('fcntl.ioctl') as control, patch('sys.stdin',io.StringIO('M1\nM2\nM3\nM4\nM5\nM6\nEND\n')), \
+         patch('sys.stdout',io.StringIO()), patch('select.select',side_effect=lambda readers,*args:(readers,[],[])), \
+         patch.object(obs,'meter_check',return_value={'admission':'ALLOCATOR_UNVERIFIED'}):
+        assert obs.meter_session(target)['admission']=='ALLOCATOR_UNVERIFIED'
+        assert [c.args[1] for c in control.call_args_list]==list(range(0x523500,0x523508))
+    assert target.read_bytes()==payload;count+=1
+
+# A blocked disk sync must not block production device reads. No real meter opens.
+with tempfile.TemporaryDirectory(prefix='r47-reader-sync-') as temporary:
+    target=Path(temporary)/'journal';fakefd=-987;real_open=os.open;real_close=os.close
+    syncing=threading.Event();released=threading.Event();reads=0;controls=0
+    payload=b'x'*(obs.METER.size*16)
+    def opened(path,flags,*args):
+        return fakefd if path=='/dev/r5_meter' else real_open(path,flags,*args)
+    def ioctl(fd,cmd,arg):
+        global controls
+        assert fd==fakefd and cmd==0x523500+controls and not arg
+        controls+=1
+    def device_read(fd,size):
+        global reads
+        assert fd==fakefd and size==len(payload)
+        if controls<8:raise BlockingIOError()
+        if reads==64:assert syncing.wait(2),'sync and device reads still serialized'
+        if reads==128:released.set();return b''
+        reads+=1
+        return payload
+    def slow_sync(fd):
+        syncing.set()
+        assert released.wait(2),'reader did not advance during disk sync'
+    with patch('os.uname',return_value=types.SimpleNamespace(release=obs.KERNEL_RELEASE)), \
+         patch('os.open',side_effect=opened),patch('os.read',side_effect=device_read), \
+         patch('os.close',side_effect=lambda fd:None if fd==fakefd else real_close(fd)), \
+         patch('fcntl.ioctl',side_effect=ioctl),patch('os.fsync',side_effect=slow_sync), \
+         patch('sys.stdin',io.StringIO('M1\nM2\nM3\nM4\nM5\nM6\nEND\n')), \
+         patch('sys.stdout',io.StringIO()),patch('select.select',side_effect=lambda readers,*args:(readers,[],[])), \
+         patch.object(obs,'meter_check',return_value={'admission':'ALLOCATOR_UNVERIFIED'}):
+        assert obs.meter_session(target)['admission']=='ALLOCATOR_UNVERIFIED'
+    assert reads==128 and controls==8 and target.read_bytes()==payload*128;count+=1
+
+# A writer error must propagate and keep the partial file, not sign a replay.
+with tempfile.TemporaryDirectory(prefix='r47-reader-error-') as temporary:
+    target=Path(temporary)/'journal';fakefd=-987;real_open=os.open;real_close=os.close
+    chunks=iter([None]*7+[b'partial',b''])
+    def device_read(fd,size):
+        assert fd==fakefd
+        data=next(chunks)
+        if data is None:raise BlockingIOError()
+        return data
+    def opened(path,flags,*args):
+        return fakefd if path=='/dev/r5_meter' else real_open(path,flags,*args)
+    with patch('os.uname',return_value=types.SimpleNamespace(release=obs.KERNEL_RELEASE)), \
+         patch('os.open',side_effect=opened),patch('os.read',side_effect=device_read), \
+         patch('os.close',side_effect=lambda fd:None if fd==fakefd else real_close(fd)), \
+         patch('fcntl.ioctl'),patch('os.fsync',side_effect=OSError('injected storage failure')), \
+         patch('sys.stdin',io.StringIO('M1\nM2\nM3\nM4\nM5\nM6\nEND\n')), \
+         patch('sys.stdout',io.StringIO()),patch('select.select',side_effect=lambda readers,*args:(readers,[],[])), \
+         patch.object(obs,'meter_check') as replay:
+        try:obs.meter_session(target)
+        except OSError as exc:assert 'writer failed' in str(exc)
+        else:raise AssertionError('writer failure must reject')
+        replay.assert_not_called()
+    assert target.read_bytes()==b'partial';count+=1
+
+# Bounded backpressure must reject, not silently drop or allocate without limit.
+with tempfile.TemporaryDirectory(prefix='r47-reader-full-') as temporary:
+    import time
+    target=Path(temporary)/'journal';fakefd=-987;real_open=os.open;real_close=os.close
+    syncing=threading.Event();reads=0;controls=0;payload=b'x'*(obs.METER.size*16)
+    def opened(path,flags,*args):
+        return fakefd if path=='/dev/r5_meter' else real_open(path,flags,*args)
+    def ioctl(fd,cmd,arg):
+        global controls
+        assert fd==fakefd and cmd==0x523500+controls and not arg
+        controls+=1
+    def device_read(fd,size):
+        global reads
+        assert fd==fakefd and size==len(payload)
+        if controls<8:raise BlockingIOError()
+        if reads==64:assert syncing.wait(2)
+        reads+=1
+        assert reads<=(obs.METER_QUEUE_BLOCKS+2)*64,'queue exceeded its bound'
+        return payload
+    def slow_sync(fd):
+        if not syncing.is_set():syncing.set();time.sleep(0.5)
+    with patch('os.uname',return_value=types.SimpleNamespace(release=obs.KERNEL_RELEASE)), \
+         patch('os.open',side_effect=opened),patch('os.read',side_effect=device_read), \
+         patch('os.close',side_effect=lambda fd:None if fd==fakefd else real_close(fd)), \
+         patch('fcntl.ioctl',side_effect=ioctl),patch('os.fsync',side_effect=slow_sync), \
+         patch('sys.stdin',io.StringIO('M1\nM2\nM3\nM4\nM5\nM6\nEND\n')), \
+         patch('sys.stdout',io.StringIO()),patch('select.select',side_effect=lambda readers,*args:(readers,[],[])), \
+         patch.object(obs,'meter_check') as replay:
+        rejects(lambda:obs.meter_session(target));replay.assert_not_called()
+    assert reads<=(obs.METER_QUEUE_BLOCKS+2)*64 and 0<target.stat().st_size<reads*len(payload);count+=1
 
 assert 'trace_notifier_boundary' not in prepare.NOTIFIER_EVENT  # generated tracepoint API, not recursive
 assert '__field(int, ret)' in prepare.NOTIFIER_EVENT and '__field(bool, exit)' in prepare.NOTIFIER_EVENT

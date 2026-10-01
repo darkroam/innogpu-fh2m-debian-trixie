@@ -6,8 +6,8 @@
 
 | 工具 | 类型 | 用途与边界 |
 | --- | --- | --- |
-| `prepare-r5-observation.py` | R34–R46 离线源码准备 | 校验锁定输入/唯一锚，在全新副本生成观测源码；当前`--semantic-kernel`身份为r5obs2-r46，含字典/配对及prepare、阶段、async辅助事件，census失效/超限拒绝。`--export-module`生成同核GPL-2.0-only导出器及同源契约/预算；1920页/CPU，总实占待验。`--receiver-script`保持Windows脚本；`--lookup-benchmark`抽取生产表/查找函数生成用户态C，不冒称内核时延。生成器不复制私钥、不改冻结源、不构建/加载/安装。验证见 `tests/unit/run-r5-observation-tests.py` 与[实现说明](../docs/design/r5-vpu-and-observation-implementation.md) |
-| `r5-observation.py` | R34–R46 离线配置与分析 | `plan`保留历史r5obs1配置；`check`校验规范化记录，`wire-check`校验传输。`semantic-wire-check`按同boot保存format核80B配对/104B字典，R46须带`--aux-format`解96B辅助事件；prepare进度绑定实际调用/返回/移动，stage独立命名空间，async决定不等于任务执行。身份/关联错配非零，末尾每CPU损失计数和wire定位输出；选择子集通过不等于全PM覆盖/实占或根因。只读普通文件，不访问tracefs、不加载探针、不触发PM。验证见同一测试与实现说明 |
+| `prepare-r5-observation.py` | R34–R47 离线源码准备 | 锁定源码/唯一锚、生成全新观测副本；当前身份 r5obs2-r47e（已获准安装/首启，非PM计量因日志丢失停止），联合字典容量由生产解析器契约提供，含成对与辅助事件、独立 88B allocator 日志接口及准入失败定位。`--export-module` 生成同核导出器与同源契约/预算；`--receiver-script` 保持 Windows 身份；`--lookup-benchmark` 抽取生产查找函数。生成不构建/安装/启动、不复制私钥。验证见 `tests/unit/run-r5-observation-tests.py` 与[实现说明](../docs/design/r5-vpu-and-observation-implementation.md) |
+| `r5-observation.py` | R34–R47 证据解析与计量读取 | `check`/`wire-check`/`semantic-wire-check` 分层判读；R47 原始链需三份同 boot format 和 `--require-r47`，核函数/notifier 字典、callback 层、queue→worker、wake 摘要。`meter-check` 重放对象/物理背页分账，`event-budget` 核含 aux 总量；缺真实输入非零。`meter-session` 仅供另批授权的精确观测核物理机读取 `/dev/r5_meter`、推进 M0–M6/END；有界批量读取与写盘线程分离，队列满/写入失败非零，不执行矩阵动作或 PM。ALLOCATOR_UNVERIFIED 保留，不以日志重放或边界算术替代上界证明。 |
 | `r5-observation-upload.py` | R41 受限证据回传 | 指定peer/session、SHA核验、原件及短读保全、不覆盖旧attempt；`--unit <本机配置>`只生成独立systemd unit，`--serve`才监听，不安装/启用服务、不触发PM、不判覆盖通过。文件/回环HTTP及unit离线验证见同一观测测试；会话退出/冷启存活待现场验证，用法见[scripts/README](../scripts/README.md) |
 | `check-fantgpu-shipped-abi.py` | F 共享 ABI 门 | 既有文本门检查 size=140536、members=115、尾字段及固定偏移；`--module MODULE OUTPUT` 完整 DWARF 前缀扫描，避开 pahole 1.30 的 `-C` 提前停止错误，返回码仍须0。保留全部布局，仅精确 SHA 匹配的冻结 shipped 114成员原布局另列，其余须唯一通过115成员门；原始输出/错误一并留存。builder 与 strip 前共用，缺失/多义/漂移均拒绝 |
 | `patch-gpupll-object.py` | 构建期对象变换 | 对 Deepin 202504 的 `innogpu.o_shipped` 执行严格单点字节替换；只接受唯一旧序列或已变换状态，其他载荷立即失败 |

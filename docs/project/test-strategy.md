@@ -73,9 +73,9 @@ Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
 
 | 范围 | 入口与用例 | 小计 |
 | --- | --- | --- |
-| unit | manifest 9 + license 50 + version 12 + extractor 7 + results parser 19 + exec probes 12 + VA-API 56 + DMA-BUF 147 + DRI repair 34 + collab 26 + suspend/resume 60 + suspend failure finalize 15 + p2-normalize 6 + r16-gate 13 + r16-build-bc-map 10 + r16-classify 10 + F runtime health 7 | 17 个入口 / 493 项 |
-| 其他 CI/沙箱 | fbterm 1 + package 11 + Picom install 3 + Picom session 3 + xdisplay 5 | 5 个入口 / 23 项 |
-| **合计** | 不含需真实设备/root/副作用授权的 runtime 项 | **22 个入口 / 515 项** |
+| unit | manifest 9 + license 50 + version 12 + extractor 7 + results parser 19 + exec probes 12 + VA-API 56 + DMA-BUF 147 + DRI repair 34 + collab 26 + suspend/resume 60 + suspend failure finalize 15 + p2-normalize 6 + r16-gate 13 + r16-build-bc-map 10 + r16-classify 10 + F runtime health 7 + Hygon xHCI 升级检查 4 | 18 个入口 / 497 项 |
+| 其他 CI/沙箱 | fbterm 1 + xHCI 补丁静态 1 + package 11 + Picom install 3 + Picom session 3 + xdisplay 5 | 6 个入口 / 24 项 |
+| **合计** | 不含需真实设备/root/副作用授权的 runtime 项 | **24 个入口 / 521 项** |
 
 | 测试 | 位置 | 断言 | 权限/环境 | 修改系统 |
 | --- | --- | --- | --- | --- |
@@ -91,6 +91,7 @@ Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
 | Vulkan/OpenCL 探针失败路径 | tests/unit/run-exec-probes-tests.sh | 编译、loader/设备失败、格式与清理 | gcc，无设备可跑 | 否 |
 | VA-API 解码控制流 | tests/unit/run-vaapi-decode-tests.sh | 参数/工具/设备/身份/输入/参考/硬解/超时（rc=124 与 rc=137 忽略 TERM→SIGKILL 忙循环 fixture 均归类超时，退出码 5）/真实 framemd5 格式负例/聚合/硬解参数断言/状态门禁严格解析/mktemp/TERM 清理/无残留；fixture 模式独立命名空间 fixture_*，不产出权威 PASS | 无设备（fake ffmpeg/vainfo/sysfs/status），隔离 baseline | 否 |
 | F runtime health | tests/unit/run-fantgpu-runtime-health-tests.sh | 7 个合成用例：正常通过、DRM sysfs/devfs card 缺失、必需固件请求失败、可选 `hwinfo_g0m.bin` 缺失允许、kernel fault、dmesg 缺失、status 缺失；所有阻断路径 fail-closed | 无设备（fake dmesg/status/sysfs/devfs） | 否 |
+| Hygon xHCI 升级检查 | tests/unit/run-hygon-xhci-resume-fix-tests.sh | 4 个合成用例：reset quirk PASS、quirk 缺失 FAIL、boot 日志不足 UNVERIFIED、非目标 PCI ID NOT_APPLICABLE | 无设备（fake PCI sysfs/boot log） | 否 |
 | F builder contract | tests/unit/run-builder-fantgpu-gates-tests.sh | F-only fallback 同时进入编译树/包内 DKMS 树、guard 顺序、O_stage 快照 `patch --dry-run` 可重放且无 fuzz | shell/patch/tar/zstd，无设备 | 否 |
 | DRI repair 服务生命周期 | tests/unit/run-dri-repair-tests.sh | helper 三态判定（absent/owned/foreign；外国普通文件/符号链接拒绝覆盖）与 unit `ExecStart` 一致（包 `/usr/sbin` vs 源码 fallback `/usr/local/sbin` 区分）、**PATH 注入反例（任意同名程序不得被持久化）**、失败回滚**只删本次新建**（已有有效安装在重装失败后保留）、`enable/start` 失败传播、幂等安装/卸载、**package-absent 只清 DRI 自有路径**（不触碰 userspace/modules-load）、**版本不匹配零副作用**、**精确所有权**（只删除规范化目标等于本仓库 `scripts/repair-dri-nodes.sh` 的符号链接；同名外国仓库链接/普通文件保留）、**测试根安全（空//相对路径 fail closed）**、包 helper 分支正例、无硬编码目标用户名/无 root `$HOME` 回退静态反例 | 无 root/systemd//dev（fake systemctl + 测试根前缀钩子，默认关闭） | 否 |
 | DMA-BUF 回归聚合 | tests/unit/run-dmabuf-regression-tests.sh | 参数/设备发现与身份/self-import（含 create_size 与 CLOEXEC 严格断言）/READ 逐轮唯一性解析/性能门槛/WRITE verify/topology 多 CRTC/vblank（active 逐样本校验：顺序 + delta/kernel_delta 数值自洽 + uint32 回绕 + summary 指标与样本重算交叉验证 + 每 CRTC 独立证据；inactive 全 CRTC 守卫：success=0 时指标全零）/状态门禁（增减均拒）/内核日志门禁（独立状态机：新严重行 FAIL/rc1；post 不可用/截断/重排/插入/无重叠 UNVERIFIED/rc3；正常环形轮转只查重叠后新增行）/mktemp/超时/TERM 清理/汇总 + 真实 C 探针契约测试（含生产构建 fixture 钩子编译剔除门禁与正常路径 fd_leak=unknown）；fixture 模式独立命名空间 fixture_dmabuf_*，零权威 dmabuf_* 行 | 无设备（fake sysfs/dev/探针 + 真实探针 FIFO 路径），隔离 baseline | 否 |
@@ -319,3 +320,39 @@ R46身份`6.12.101-r5obs2-r46`增prepare进度/阶段/async辅助记录与等待
 同布局lookup微基准仅用户态替代；正式前置要测目标内核完整发射成本、多核竞争与端到端吞吐。
 allocator上界须独立物理测试层真实对象/背页/保留/峰值账，不能用容器或VM、sizeof或单次峰值顶替。
 安装/启动新观测核属另批授权边界，本批不申请，实验门维持关闭。
+
+
+R47既有已构建身份为`6.12.101-r5obs2-r47c`；计量独立日志与生产解析器同步，初始203项回归。
+对象账与PFN+分配代次背页账分开；free对象不等于释放slab。M0–M6/END、丢失、重复生命周期、
+L+R≤C及U_total≤133MiB分别检查。新增日志720,896B计入已知下界：134,071,840B约127.86MiB；
+仍未包含完整静态/动态及背页开销，余数5,388,768B不是实际余量。全局日志、峰值或自填C/B都不能
+把ALLOCATOR_UNVERIFIED升级为通过。真实N/E/G/R/C缺失时`event-budget`总量为null，不借39936
+硬限流宣称全覆盖；新增aux及各阶段事件须按生产路径核算。计量设备授权与PM实验授权分离。
+
+R47b沿R40范围回设计：普通resume细粒度、其它阶段摘要+完整代次/complete；融合重复入口
+后38,707条包络示例低于39,936，真实N/E与调用界未取到前仍不签容量通过。210项离线回归
+覆盖新旧格式不混配/缺入口拒绝。当前设备安装与启动已另获用户明确授权，PM仍NOT_RUN。
+
+R47c沿同链修复bulk生命周期漏记与大分配双trace，当时212项离线回归；
+实际首轮M3加载失败及缺END账本保全，不能据回归通过宣称allocator上界或五项前置已闭合。
+后续M1/M2完成、M3 E2BIG失败独立保全，具体拒绝项UNKNOWN。准入诊断新增生产guard
+提取编译正反例，当时214项；不放宽门、不在PM热路径打印。该时点尚未编入新完整内核，
+不得覆盖旧r47c身份或将诊断回归通过称为E2BIG已修复；全局区间峰值不是观测器专属上界。
+
+后续新身份`6.12.101-r5obs2-r47d`已离线构建并完成同核签署一致核验；215项回归含旧boot
+打开计量器前拒绝。只增加准入诊断，真实N/E、allocator上界与M4吞吐仍未闭合；安装/启动/
+加载前集中请求宿主动作授权，不申请逐项审查，不触发PM，实验申请门保持关闭。
+
+R47d本次真实准入日志将E2BIG定位为objects第513项超过512；只证明N>=513，不是全量N=513，
+早退时edges=0不是E=0。R47e源码候选联合扩大字典及所有索引消费者，采用独立profile保持
+历史512/1024严格性；241项离线回归和实际内核目标对象编译通过。五表加预留543744B是
+静态字典资源界，不能升级为133MiB物理实占上界；39936事件门保持，真实清点仍未闭合。
+该初始节点未构建新完整内核；后续已获用户缓存清理/~/tmp许可，完成完整离线构建及4229
+模块身份、4签名、15布局、60 CRC核验，之后已获用户集中授权安装并正常启动；首启通过。
+非PM矩阵在M2标记检出M1期间5911条日志丢失即停；仅完成实例创建，导出器/清点/吞吐未运行。
+原件6588560B、74870条，511段序号缺口与内核累计丢失相符；不能把后续重复分配报错
+独立归因为再次漏钩子，也不将其当作R5根因。当前boot不重试，PM机会未消费。
+用户态读取与写盘分离，245项离线检查包含同生产入口的阻塞fsync、写失败及有界队列饱和；
+旧读取器同反例失败。内核生成器/产物不变，无重构建或新安装；离线反例证明结构修正，
+不证明此次丢失唯一由fsync导致或实机已无损。下一次物理计量仍须新授权启动与真实接收会话，
+完整归属/上界和事件清点未闭合前不交逐项审查、不提交PM申请。

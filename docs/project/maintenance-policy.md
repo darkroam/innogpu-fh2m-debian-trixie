@@ -26,9 +26,12 @@
   裁定；OUTSIDE_COVERAGE、R5=FAIL、禁止重跑、U1/U2、validation-results、签发与 tag 冻结不因文档更新解除。
 - 补丁/变换边界：已迁入 `drivers/` 的历史内核补丁在 `patches/` 保留作溯源与回退复现，不再
   重复叠加；新行为修复以独立补丁进入升号候选，验证通过后再决定是否迁入源码树。当前维护的
-  第三方组件补丁与配置在 `components/`（picom、fbterm）；无法表示为源码 diff 的厂商对象变换使用
+  第三方组件补丁与配置在 `components/`（picom、fbterm、Linux）；无法表示为源码 diff 的厂商对象变换使用
   `tools/` 下的严格确定性工具；设计、开关、验证和回退写入对应的 `docs/patches/patch-*.md`。
   不得通过复制 `.so`、固件或 `.ko` 绕过构建失败。
+- 第三方问题修复必须同时归档：固定上游版本与源码哈希、最小补丁、许可证/NOTICE、事故根因与
+  排除项、静态锁、真实验证和回退边界。依赖宿主版本或硬件的修复还必须提供只读升级检查入口；
+  每次内核、系统或对应组件升级后先运行该入口，`FAIL`/`UNVERIFIED` 均阻断相关运行验收。
 - 黑盒载荷边界：`.o_shipped`、用户态库、固件等第三方二进制**不入库**；Deepin 线由
   `binary-manifest.json` 管理并经 `scripts/extract-vendor-binaries.sh` 提取，fantgpu 线由
   `binary-manifest-fantgpu.json` 管理，构建器校验 `vendor/fantgpu/` 后用

@@ -23,6 +23,7 @@ case "$VERSION" in
     5.0.0-i7) EXPECTED_SOURCE_DATE_EPOCH=1790035200 ;;  # R27 packaging candidate; i6 source remains frozen
     5.0.0-i8|5.0.0-i9|5.0.0-i10) EXPECTED_SOURCE_DATE_EPOCH=1790121600 ;;  # R29: same audit day, distinct cleanup candidate
     5.0.0-i11) EXPECTED_SOURCE_DATE_EPOCH=1790208000 ;;  # R33: VPU timer contract only
+    5.0.0-i12) EXPECTED_SOURCE_DATE_EPOCH=1790812800 ;;  # R49: R5 private accessor fix
     *)
         echo "builder_version_review=FAIL unreviewed package version: $VERSION" >&2
         exit 1
@@ -48,7 +49,7 @@ KERNEL="${KERNELDIR_VER:-$(uname -r)}"
 KERNELDIR="${KERNELDIR:-/lib/modules/$KERNEL/build}"
 # 默认输出名按血统（codex P1：5.0.0-i1 不得沿用 innogpu 名）
 if [[ "$FANT_LINEAGE" == 1 ]]; then
-	[[ "$VERSION" == "5.0.0-i11" ]] || {
+	[[ "$VERSION" == "5.0.0-i12" ]] || {
 		echo "staging_ostage_generation=FAIL archived generation is not rebuildable from the current snapshot: $VERSION"
 		exit 1
 	}
@@ -186,6 +187,20 @@ if derived != "f0e5490ad2d14fb280ef0e3bf76018462143b9223a357e0699b1c0ed376980b5"
     sys.exit("builder_derived_source=FAIL derived tree drift: " + derived)
 print("builder_derived_source=PASS version=5.0.0-i11 tree=" + derived)
 PY
+    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$1" -p1 \
+        < "$ROOT/patches/030-035.patch"
+    python3 - "$ROOT" "$1" <<'PY'
+import hashlib, importlib.util, pathlib, sys
+repo, tree = map(pathlib.Path, sys.argv[1:])
+spec = importlib.util.spec_from_file_location("o4", repo / "tools/o4-f0-lock-gen.py")
+o4 = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(o4)
+digest = hashlib.sha256(o4.manifest_text(list(o4.walk_rows(str(tree)))).encode()).hexdigest()
+expected = "9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee"
+if digest != expected:
+    sys.exit("builder_derived_source=FAIL i12 final tree drift: " + digest)
+print("builder_derived_source=PASS version=5.0.0-i12 tree=" + digest)
+PY
 }
 
 APPLIED_SOURCE_FIXES="patch-024"
@@ -261,7 +276,7 @@ PY
     mv "$STAGE/source.tree" "$STAGE/source"
     derive_fantgpu_source "$STAGE/source"
 	APPLIED_SOURCE_FIXES="o-stage-materialized-030-chain-18 (incl. 030-030 audio fallback, 030-031 PM markers, 030-032 PM probe, 030-033 shipped-object ABI correction and 030-034 diagnostic stop-stage; patch-000 no-transform)"
-    APPLIED_SOURCE_FIXES+=" i8-cfg-detect-output-order i9-drm-fb-info-ownership i10-input-failure-cleanup i11-vpu-timer-contract"
+    APPLIED_SOURCE_FIXES+=" i8-cfg-detect-output-order i9-drm-fb-info-ownership i10-input-failure-cleanup i11-vpu-timer-contract 030-035-private-accessor"
     echo "staging_deterministic_transform=PASS (no-transform: fantgpu objects used as-is)"
 else
     cp -r drivers/. "$STAGE/source/"
@@ -354,7 +369,7 @@ if [[ "$FANT_LINEAGE" == 1 ]]; then
         || { echo "builder_materialize_trace=FAIL"; exit 1; }
     trace_rows="$(wc -l < "$STAGE/materialize-trace.tsv")"
     echo "builder_materialize_trace=PASS trace_entries=$trace_rows"
-    echo "builder_materialize_trace_scope=i6-parent-before-i11-derivation"
+    echo "builder_materialize_trace_scope=i6-parent-before-i12-derivation"
     derive_fantgpu_source "$P/usr/src/$DKMS_SRC_NAME"
 else
     while IFS= read -r vp; do
@@ -454,7 +469,7 @@ if [[ "$FANT_LINEAGE" == 1 ]]; then
     DKMS_MOD="fantgpu-fh2m-kernel"
     DKMS_VER="2.2"
     PKG_CONFLICTS="innogpu-fh2m, innogpu-fh2m-kernel-dkms, innogpu-kernel-dkms, innogpu-fh2m-trixie"
-	DESC_BODY=$(printf ' fantgpu lineage: O_stage materialized source tree (030 chain of 18,\n patch-000 no-transform), coherent fantgpu (F) userspace payload (binary-manifest-fantgpu.json locked; build-time DDX/UCM/wayland selection).')
+	DESC_BODY=$(printf ' fantgpu lineage: O_stage materialized source tree (030 chain of 18,\n patch-000 no-transform) plus reviewed post-i6 derivations through 030-035; coherent fantgpu (F) userspace payload (binary-manifest-fantgpu.json locked; build-time DDX/UCM/wayland selection).')
 else
     PKG_NAME="innogpu-fh2m-trixie"
     PKG_DESC="Innosilicon Fantasy II-M driver (migrated source tree, version $VERSION)"

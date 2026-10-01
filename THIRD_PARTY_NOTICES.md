@@ -57,6 +57,11 @@ SOFTWARE.
   版权：**Copyright (C) 2008 dragchan <zgchan317@gmail.com>**；许可：**GPL-2.0-only**（GPL-2.0
   全文见 `LICENSES/GPL-2.0-only.txt`）。上游许可依据：Debian `fbterm_1.7-5_copyright`（
   https://metadata.ftp-master.debian.org/changelogs/main/f/fbterm/fbterm_1.7-5_copyright ）。
+- `components/linux/001-hygon-148c-xhci-reset-on-resume.patch`：修改 **Linux xHCI PCI 驱动
+  （Debian linux-source-6.12 6.12.107-1）** 的派生补丁。目标文件
+  `drivers/usb/host/xhci-pci.c` 声明 `SPDX-License-Identifier: GPL-2.0`、
+  **Copyright (C) 2008 Intel Corp.**，作者 Sarah Sharp；补丁按 **GPL-2.0-only** 分发，全文见
+  `LICENSES/GPL-2.0-only.txt`。
 - `components/picom/001-probe-explicit-uniform-location.patch`：修改 **picom（固定 commit
   `6d676824c457a933c52e3e92c5a1856466f90545`，https://github.com/yshui/picom ）** 的
   `src/backend/gl/gl_common.c`。该目标文件声明 `SPDX-License-Identifier: MPL-2.0` 与

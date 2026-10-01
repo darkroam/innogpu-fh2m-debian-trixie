@@ -94,6 +94,15 @@ tests/fbterm/run-static-tests.sh
 该测试检查构建入口语法以及配置开关、偏移复位和命令行接口是否保留，不访问 framebuffer。真实
 VT 的长输出、清屏和跨会话测试不能由 mock 替代，结果记录在事故文档中。
 
+Hygon xHCI reset-on-resume 补丁静态测试：
+
+```sh
+tests/linux/run-xhci-quirk-static-tests.sh
+```
+
+该测试锁定已通过三轮 devices 验证的补丁字节及精确 PCI ID/quirk，不编译、加载或安装内核模块。
+真实恢复结果记录在事故文档中；静态绿灯不替代宿主 PM 测试。
+
 Release 包边界测试：
 
 ```sh
@@ -140,6 +149,7 @@ bash tests/unit/run-builder-fantgpu-gates-tests.sh
 bash tests/unit/run-check-release-package-tests.sh
 bash tests/unit/run-fantgpu-helper-transform-tests.sh
 bash tests/unit/run-fantgpu-runtime-health-tests.sh
+bash tests/unit/run-hygon-xhci-resume-fix-tests.sh
 ```
 
 - manifest 测试用 `tools/validate-binary-manifest.py` 对真实清单与 `tests/fixtures/` 下的恶意
@@ -157,6 +167,8 @@ bash tests/unit/run-fantgpu-runtime-health-tests.sh
 - `run-fantgpu-runtime-health-tests.sh` 用合成 dmesg/status/sysfs/devfs 根验证 F 真机前置门禁的
   fail-closed 行为：无 card、固件请求失败、kernel fault 和无 dmesg 均拒绝。它不模拟预编译 HAL
   的真实 bind，也不替代安装后的生产探针和人工特权日志采集；这些限制必须在计划书中明确记录；
+- `run-hygon-xhci-resume-fix-tests.sh` 用合成 PCI sysfs 与 boot 日志验证 quirk 位存在、缺失、
+  日志不足和非目标硬件四条分支；不访问真实 PCI 设备、不加载模块、不触发 PM；
 - suspend 失败收尾 fixture 验证只有失败证据、回退和重启三个 round ID 绑定标记都为 PASS 时，
   才删除指定 active 指针并保留证据；缺失/错配标记、路径穿越、符号链接根/文件和重复 finalize
   全部失败关闭；active 指针只接受规范化小写 round ID，绝对路径和大写 ID 均拒绝，不需要 root 或真实挂起；
@@ -259,7 +271,7 @@ bash tests/unit/run-fantgpu-runtime-health-tests.sh
 | --- | --- | --- | --- | --- | --- | --- |
 | unit | manifest/许可证审计/版本排序/提取器隔离 | python3、git、dpkg、dpkg-deb | 否 | 否 | 否 | CI/沙箱 |
 | fixture | package 边界、fixtures/ | dpkg-deb | 否 | 否 | 否 | CI/沙箱 |
-| static | check-docs、fbterm 静态 | rg、perl | 否 | 否 | 否 | CI/沙箱 |
+| static | check-docs、fbterm/xHCI 补丁静态 | rg、perl、sha256sum | 否 | 否 | 否 | CI/沙箱 |
 | static | picom 安装/会话、xdisplay 安装 | bash、fake HOME | 否 | 否 | 否 | CI/沙箱 |
 | integration | parity/oracle/离线 DKMS（scripts/） | 内核头 | 否 | 否 | 否 | 本机 |
 | runtime | 能力基线（tests/runtime/run-capability-baseline.sh，12 能力域，只读默认） | 真机/沙箱；设备项需 /dev/dri | 部分 | 是 | 否 | 沙箱只读（SKIP/UNVERIFIED）；真机授权（--allow-authorized-tests + --results-file） |
@@ -292,7 +304,7 @@ R33 VPU最小修正回归复用 `bash tests/unit/run-builder-fantgpu-gates-tests
 从派生源抽取原函数编译用户态夹具，非零填充分配/失败/重复通知/最终stop均覆盖。
 不加载模块、不执行PM；callback并发可终止性未由mock证明。
 
-R34–R46离线测试：`python3 -B tests/unit/run-r5-observation-tests.py`，175项覆盖配置缺失/错误release拒绝、成对/未完成/嵌套notifier、任务迁核、idle按CPU隔离、跨回调错序拒绝、
+R34–R46历史离线测试：`python3 -B tests/unit/run-r5-observation-tests.py`，175项覆盖配置缺失/错误release拒绝、成对/未完成/嵌套notifier、任务迁核、idle按CPU隔离、跨回调错序拒绝、
 prepare重试/进度、丢失计数拒绝、符号缺失/歧义、源漂移及路径拒绝；不加载/探测设备。
 同名驱动函数保留全部实际ftrace地址；跨模块、重复地址、多个编译变体与缺失控制根拒绝，不能用set去重后宣称唯一。
 传输检查实际编译运行生产C序列化函数（仅替换内核I/O），由Python读取其字节；
@@ -319,3 +331,40 @@ async排队/同步回退、缺项/重复/错代/跨命名空间call冲突，以�
 `prepare-r5-observation.py --lookup-benchmark --output <新目录>`抽取同生产表/查找函数，
 生成C后用`cc -O2 -std=gnu11 -Wall -Wextra -Werror`编译；运行测NULL/首/中/末/未命中/混合，
 固定单CPU、各7组×20,000次、逐组校验checksum。该用户态热缓存结果不是内核WCET或吞吐验收。
+
+
+R47沿用同一入口，初始203项离线回归：直接抽取生产计量C写入器核88B ABI、满环不覆写/丢失可见；
+生产解析器核共享slab对象free不扣背页、PFN复用、缺M0–M6/END、截断、超界和unknown不得绿。
+新增生产TRACE_EVENT字节经真实CLI，核function/notifier字典、回调层/返回、queue→worker cookie、
+notifier停止返回及wake摘要，关联错配/缺项均非零。`--require-r47`拒用旧子集签新覆盖。
+这些均为离线回归；真实内核/Windows吞吐、allocator归属上界及扰动未测，不能借203项PASS替代。
+
+R47b同链预算回设计增加7项（当时210项）：回调/worker元数据融合入口，配对总数保持；缺入口
+仍非零。普通resume之外不展开细粒度wait/调度/回调，但reinit/complete保留，六阶段成对摘要
+保留（R40原设计范围）；满包络算术38,707条、余1,229，真实census缺失仍UNVERIFIED。
+
+R47c在同链增加2项（当时212项）：实际bulk alloc/free补点代码的边界执行，以及生产
+meter-session在END后控制输入EOF仍排空日志的回归。真实r47b首轮M3加载失败与账本重复
+分配证据保全；新核修复批量漏记与大分配双重trace。上述回归不替代本机allocator实占验收。
+
+准入诊断续修再增2组（当时214项）：直接提取生产几何guard及census函数字典/latch，用
+native C执行正反例、最后CPU/总页上限、名称长度/重复身份/函数容量边界；不另造验收器。
+诊断仅在准入失败路径输出门名/计数/返回码，census打印位于释放锁后，不增PM热路径打印，
+不放宽原门。r47c的M3 E2BIG具体拒绝项仍UNKNOWN，失败原件保持；该次诊断尚未编入新完整
+内核或加载，214项通过不等于运行问题修复、真实吞吐或allocator上界通过。
+
+R47d再增旧r47c身份拒绝回归（当时215项）：必须在`os.open`前拒绝，计量器不得在旧boot
+重新打开；原EOF后排空正例改用新r47d身份。新内核/同核模块已离线编译并核签署/ABI/CRC，
+不把这些结果写成运行准入或五项前置闭合；所有失败现场与旧文件解析口径保留。
+
+R47e联合容量回归为241项：直接编译生产r5_add/r5_find和同源数组，ASan/UBSan核第513项、
+第4096项/第4097项拒绝、重复引用与queued-call末项；真实TRACE_EVENT字节经过同一CLI，
+新profile大字典可解析、旧/未知profile拒绝，丢失/缺END仍非零。旧512/1024算术例保留；
+4096/8192全取满时303923条超39936，必须RETURN_TO_DESIGN，不把准入上限当覆盖证明。
+同布局查找基准扩展至513/1024/4096对象，仍只是用户态成本替代，不等于内核扰动或吞吐验收。
+meter-session正例适配新r47e，旧r47d在os.open前拒绝；不允许本boot重开计量器。
+
+R47e非PM计量在M1后检出5911条日志丢失，原件与真实失败保留。用户态读取修订后245项
+离线检查通过，新增同一生产meter_session的阻塞fsync继续排空、写盘失败传播、16块队列
+饱和拒绝；旧读取器运行同一阻塞反例rc1。控制END后尾部和旧boot拒绝仍覆盖。
+测试未打开真实计量器；这些结果不证明目标核无损吞吐或allocator上界，不据此重跑实机。

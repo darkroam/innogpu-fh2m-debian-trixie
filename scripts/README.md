@@ -28,7 +28,7 @@
 | `generate-binary-manifest.py`（tools/） | 清单生成 | 从 Deepin deb 确定性生成 `binary-manifest.json`（校验 deb SHA、覆盖全部黑盒文件与符号链接、kind/role/license 分类） |
 | `compare-oracle-candidates.sh` | oracle 对比 | 新架构候选包 vs patched-27：对比 control（除 Version/Description/Installed-Size）、文件清单、载荷哈希、DKMS 源码、黑盒对象、maintainer 脚本（版本归一）、版本排序与 module_symbols（调用 compare-module-symbols.sh）；构建产物（.o.cmd/.o/.ko/modules.order/Module.symvers/.mod）统一按 ARTIFACT_RE 排除；输出机器可读 PASS/FAIL |
 | `compare-module-symbols.sh` | 只读符号对比 | 离线构建候选与 patched-27 两包 DKMS 源码（同一内核头），逐 .ko 对比 vermagic/depends/导出符号/导入符号；构建于 `$ROOT/.build/`，不安装不重启；module_symbols=PASS/FAIL/UNCOMPARABLE |
-| `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；R33 候选仅 `5.0.0-i11` + epoch `1790208000`：继承已审 i10，仅初始化 VPU timer_suspend 并在 PREPARE/stop 接受0/1成功。编译/包内源共用派生树门 `f0e5490ad2d1`；i1-i10/未知版本/错 epoch 拒绝，ABI 门保持。D/F共享代码问题，不是R5解法；i11尚无正式包A/B或安装验收，i10历史成绩不改 |
+| `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；R49 候选仅 `5.0.0-i12` + epoch `1790812800`：继承已审 i11，严格应用 `030-035` 私有对象 accessor 修复。编译/包内源共用最终派生树门 `9a8d185f2a65`；i1-i11/未知版本/错 epoch 拒绝，ABI 门保持。i12 A/B 与安装通过，运行验收首轮因外接输入未恢复失败停止；历史成绩不改 |
 | `generate-fantgpu-maintainer-scripts.sh` | F 构建器共用生成段 | 只向显式 PACKAGE_ROOT 的 DEBIAN/ 写 postinst/prerm/postrm，生产与回归共用。K 全集检查/失败传播；两调用点共用配置门，仅固定 autoinstall_all_kernels.conf 已审 30 字节 SHA 例外，其它有效配置与目录/文件符号链接拒绝，不 source 配置取值。回退丢弃未装包暂存根，已安装包另行批准恢复 |
 | `build-patched17-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝把 patched-17 作为后续构建父版本 |
 | `build-patched18-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝重建历史混合载荷 patched-18 |
@@ -102,6 +102,7 @@ xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项
 - `verify-install-status.sh`
 - `check-fantgpu-runtime-health.sh`
 - `check-fantgpu-pm-probe-removed.sh`
+- `check-hygon-xhci-resume-fix.sh`
 
 `check-fantgpu-runtime-health.sh` 是 F 真机 R 项前的只读硬门禁：需要操作者提供特权采集的完整
 `dmesg` 和计算侧 status 文件，并同时检查 DRM sysfs/devfs card、固件请求失败和 kernel fault。
@@ -111,6 +112,10 @@ xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项
 `check-fantgpu-pm-probe-removed.sh` 是 030-032 诊断代码退出发布候选时的只读门禁：同时扫描
 源码、物化 snapshot/manifest、builder/DKMS 树、模块和 deb 解包载荷；任一层残留探针符号、
 确认 token 或状态字段即失败关闭。
+
+`check-hygon-xhci-resume-fix.sh` 是受影响 Hygon `1d94:148c` 宿主在内核/系统升级后的只读门禁：
+从 sysfs 定位控制器，并从当前 boot 日志核 `XHCI_RESET_ON_RESUME` 的 `0x80` quirk 位。
+`FAIL` 或 `UNVERIFIED` 均不得继续 suspend 验收；不加载模块、不触发 PM。
 
 `run-capability-survey.sh` 编译并运行 Vulkan/OpenCL/VA-API 最小枚举探针并抓取 sysfs 环境快照，输出保存到 `baselines/capability-survey-<ts>.log`（可用 `--out DIR` 改位置）；只读，不 modeset、不改配置。设备无 DRM render 节点时（如无特权容器）优雅降级并记录失败本身。
 其中 `check-docs.sh` 检查根入口、`LICENSES/`、`drivers/`、`docs/`、`scripts/`、`baselines/`、
@@ -207,7 +212,7 @@ R45新增`--semantic-kernel --source <锁定R34源> --output <全新副本>`，�
 R45历史产物配置为`CONFIG_LOCALVERSION="-r5obs2"`且关闭LOCALVERSION_AUTO，不继承签署私钥。
 导出器要求本实例`power/r5_pair`和`power/r5_dictionary`都启用、无filter/trigger/PID筛选，
 全CPU、`nop`和`mono`，开启前ring为空；仍需独占实例、关闭其它事件，并在未来触发前核收完整字典。
-预分配512对象/1024边；字典名过长、热插拔/移动/绑定/依赖变化、代次/prepare/全事件超限即失效，
+R45历史预分配512对象/1024边；字典名过长、热插拔/移动/绑定/依赖变化、代次/prepare/全事件超限即失效，
 不会重用旧ID后继续判完整。只改生成观测源码，不改F驱动语义。
 `semantic-wire-check <capture> --session <nonce> --pair-format <保存的r5_pair.format>`
 `--dictionary-format <保存的r5_dictionary.format>`校验原始字节、字典和六项身份；
@@ -215,7 +220,7 @@ R45历史产物配置为`CONFIG_LOCALVERSION="-r5obs2"`且关闭LOCALVERSION_AUT
 80B配对/104B字典是编译布局；内核未启动，全量清点/allocator实占/真实吞吐及R40其余覆盖面仍未闭合。
 新CLI的成功仅代表所选原始子集配对；不签实验放行，尾部丢失仍INCOMPLETE_WITH_LOSS。
 
-R46当前生成器/导出器身份为`6.12.101-r5obs2-r46`，配置LOCALVERSION须同步`-r5obs2-r46`；
+R46历史生成器/导出器身份为`6.12.101-r5obs2-r46`，配置LOCALVERSION须同步`-r5obs2-r46`；
 历史R45内核/模块和证据不得机械改版或混装。当前实例须额外启用`power/r5_aux`，
 三事件都要求无filter/trigger/PID选择，原nop/mono、1920页/CPU、16CPU上限不变。
 新CLI使用`semantic-wire-check`并同时提供`--pair-format`、`--dictionary-format`、`--aux-format`，
@@ -224,3 +229,46 @@ R46当前生成器/导出器身份为`6.12.101-r5obs2-r46`，配置LOCALVERSION�
 PM notifier链整体进出不等于链内每个notifier身份齐全，queued不等于worker已运行；
 完整性输出含每CPU末尾计数和原始wire位置，缺END/丢失仍INCOMPLETE_WITH_LOSS。
 真实allocator/事件包络/内核热路径成本仍未验，不安装、不启动、不触发PM。
+
+
+R47当前源码候选身份为`6.12.101-r5obs2-r47e`，LOCALVERSION须同步；旧产物保留。
+新增`/dev/r5_meter`只在该观测核启动后存在，0600 + CAP_SYS_ADMIN，独立预分配8192×88B日志，
+不借被测ring落计量记录。分配/free、page分配/free、percpu/chunk分别记账；M0–M6与END强制顺序，
+关闭未结束会话、溢出和NMI漏记均失效。计量期间全局分配是保守超集，不能据此认定所有归属已闭合。
+未来另批授权后才可用`meter-session <全新普通输出文件>`读取；M0在实例创建前，操作人依矩阵
+输入M1…M6、END；读取工具不创建实例、不加载模块、不触发PM。普通离线文件用`meter-check`
+重放；`--bounds`的L/R/C/B仅核显式来源声明的算术，不把自填上界视为实测证明。
+R47原始语义判读须带`--require-r47`和三份format；缺详细字典、回调元数据或worker关联不签完整。
+Windows脚本身份不变，上传工具零改动。OUTSIDE_COVERAGE、R5=FAIL、禁止重跑（pm_test/watchdog）、
+U1/U2、validation-results、未打 tag；1C不变，真实实占/吞吐与实验申请门仍未闭合。
+
+R47b发射范围按R40：普通resume保留细粒度，其它阶段保留代次/complete及成对摘要。
+callback/worker原96B aux携入口，解析器按DETAIL_COUNTS_R40字典标志还原入口，exit仍原pair。
+新旧profile不能混配；不合并未结束调用、不丢弃失败调用。总计39,936硬门不变。
+用户后续明确批准在当前物理设备安装/启动，只用于非PM计量；原“独立物理机”不再作为
+当前设备事实。安装、首启与M0–M6结果分别记录，安装授权不等于挂起实验触发授权。
+
+R47c修正计量路径：public bulk alloc/free补trace、大分配避免内外重复trace，生产驱动语义不变。
+专用trace实例须在启用事件前通过实例`trace_options`设置`norecord-cmd`和`norecord-tgid`并回读；
+实例不提供顶层的独立`options/record-cmd`文件。前置检查全局事件关闭且没有其它实例，
+并核全局选项前后不变；不得放宽导出器检查或改全局trace选项。
+END后输入EOF仍须排空计量日志；r47b失败现场单独保全，不拼接为完整M0–M6。
+
+R47d将准入失败定位编入新身份内核与同核导出器：几何门在导出器，census细项在内核内置
+emitter，锁释放后才打印；不改上限或PM生产语义。当时`meter-session`仅接受r47d，旧r47c在打开
+设备前拒绝；文件解析仍保留旧身份。离线构建/签署通过不等于运行准入，宿主安装/启动/加载
+仍停在用户授权边界，不能把旧r47c原件改成r47d证据。
+
+R47e源码候选修正已定位的对象容量不足：单一契约定义4096对象/8192边，queued-call数组与
+对象ID同界；全部五表尺寸及4096B控制预留由真实内核编译期断言核为543744B，仍在原1MiB
+字典预算内。新字典标记DETAIL_COUNTS_R40_V2，旧标记仍严格512/1024，不放宽历史验收。
+当前`meter-session`仅接受r47e，旧r47d在打开设备前拒绝；文件解析保留所有历史身份。
+39936总事件门、133MiB总预算和1920页/核不变；新字典准入上限不是全事件覆盖证明。
+初始节点只完成目标对象编译/离线回归；用户允许缓存清理与~/tmp落点后，现已完成新完整
+内核/同核i11/导出器的离线构建、签署及身份核验；后经集中授权安装/正常启动，首启通过。
+一次非PM计量在M2标记检出M1期间丢失5911条日志即停；导出器/census/M4未执行。
+真实完整清点/allocator/吞吐仍未闭合，不因字典扩容或编译通过而允许PM。
+用户态读取修订仅合并至多64次原16条read，通过16块有界队列交给单写盘线程；不改变内核
+日志容量/ABI或观测模块，写失败/队列满/收尾超时非零。每块至多90112B、队列载荷至多
+1441792B，另有读写在途载荷和Python运行时开销；此工具扰动须在实占归属中核算，
+不能当作观测器总预算已闭合。接收脚本与上传工具保持不变；现boot不重开计量。

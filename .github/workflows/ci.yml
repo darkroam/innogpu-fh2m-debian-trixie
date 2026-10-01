@@ -46,9 +46,13 @@ jobs:
           bash tests/unit/run-validate-fantgpu-manifest-tests.sh
           bash tests/unit/run-r16-f-payload-integrity-tests.sh
           bash tests/unit/run-fantgpu-runtime-health-tests.sh
+          bash tests/unit/run-hygon-xhci-resume-fix-tests.sh
 
       - name: fbterm static tests
         run: bash tests/fbterm/run-static-tests.sh
+
+      - name: xHCI quirk static tests
+        run: bash tests/linux/run-xhci-quirk-static-tests.sh
 
       - name: Package boundary tests (self-generated fixtures)
         run: bash tests/package/run-boundary-tests.sh

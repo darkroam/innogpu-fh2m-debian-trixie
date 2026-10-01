@@ -29,6 +29,7 @@ baselines/runtime-results-20260824.txt
 binary-manifest-fantgpu.json
 binary-manifest.json
 components/fbterm/001-configurable-redraw-scrolling.patch
+components/linux/001-hygon-148c-xhci-reset-on-resume.patch
 components/picom/001-probe-explicit-uniform-location.patch
 components/picom/picom.conf
 docs/README.md
@@ -75,6 +76,7 @@ docs/incidents/README.md
 docs/incidents/boot-errors-attribution-20260903.md
 docs/incidents/design-phase-out-of-bounds-patch.md
 docs/incidents/fbterm-ypan-rendering.md
+docs/incidents/hygon-xhci-resume-input-loss.md
 docs/incidents/patched-17-fbdev-mmap.md
 docs/incidents/patched-18-shader-firmware.md
 docs/incidents/patched-18-userspace-mix.md
@@ -97,6 +99,7 @@ docs/patches/025-suspend-resume-display.md
 docs/patches/026-suspend-resume-dvfs-lifecycle.md
 docs/patches/028-suspend-resume-hal-temp-monitor-delay.md
 docs/patches/029-suspend-resume-ddcci-panel.md
+docs/patches/030-035-private-accessor.md
 docs/patches/README.md
 docs/patches/patch-000-skip-first-gpupll.md
 docs/patches/patch-001-kernel-6.12.md
@@ -254,6 +257,7 @@ scripts/check-desktop-hwgl.sh
 scripts/check-docs.sh
 scripts/check-fantgpu-pm-probe-removed.sh
 scripts/check-fantgpu-runtime-health.sh
+scripts/check-hygon-xhci-resume-fix.sh
 scripts/check-innogpu-progress.sh
 scripts/check-patched17-baseline.sh
 scripts/check-post-reboot-hwgl.sh
@@ -314,6 +318,7 @@ tests/fixtures/manifest-link-escape.json
 tests/fixtures/manifest-missing-license.json
 tests/fixtures/manifest-missing-sha.json
 tests/fixtures/manifest-traversal.json
+tests/linux/run-xhci-quirk-static-tests.sh
 tests/package/run-boundary-tests.sh
 tests/picom/run-install-tests.sh
 tests/picom/run-session-tests.sh
@@ -325,6 +330,7 @@ tests/unit/run-030-031-pm-marker-tests.sh
 tests/unit/run-030-032-pm-probe-tests.sh
 tests/unit/run-030-033-shipped-abi-tests.sh
 tests/unit/run-030-034-stop-stage-tests.sh
+tests/unit/run-030-035-private-accessor-tests.sh
 tests/unit/run-030-meta-tests.sh
 tests/unit/run-builder-fantgpu-gates-tests.sh
 tests/unit/run-capability-baseline-tests.sh
@@ -344,6 +350,7 @@ tests/unit/run-fantgpu-runtime-health-tests.sh
 tests/unit/run-fbdev-mmap-tests.sh
 tests/unit/run-gen-fantgpu-manifest-tests.sh
 tests/unit/run-gen-package-md5sums-tests.sh
+tests/unit/run-hygon-xhci-resume-fix-tests.sh
 tests/unit/run-license-audit-tests.sh
 tests/unit/run-manifest-tests.sh
 tests/unit/run-materialize-fantgpu-payload-tests.sh

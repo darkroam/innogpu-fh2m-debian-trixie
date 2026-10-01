@@ -98,15 +98,8 @@ done
 # DKMS configuration can redirect trees or run hooks/load modules. Do not
 # execute unreviewed local overrides; leave them untouched for review.
 dkms_policy_guard
-add_kernel "$(uname -r)"
 arch=$(uname -m)
 shopt -s nullglob
-for image in /boot/vmlinuz-*; do
-    [[ -e "$image" ]] || continue
-    resolved=$(readlink -f "$image")
-    [[ "$resolved" == /boot/vmlinuz-* ]] || die "kernel image link escapes /boot: $image"
-    add_kernel "${resolved#/boot/vmlinuz-}"
-done
 package_list=$(dpkg-query -W -f='${db:Status-Status}\t${Package}\n')
 while IFS=$'\t' read -r status package; do
     [[ -n "$status" && "$package" =~ ^[a-z0-9][a-z0-9+.-]+$ ]] || die 'malformed package enumeration'
@@ -123,6 +116,17 @@ while IFS=$'\t' read -r status package; do
     kernel=${package#linux-image-}
     add_kernel "${kernel%-unsigned}"
 done <<< "$package_list"
+running=$(uname -r)
+[[ "$running" =~ ^[0-9][A-Za-z0-9._+~-]*$ ]] || die "invalid running kernel version: $running"
+[[ ${targets[$running]+set} ]] || die "running kernel is not package-managed: $running"
+for image in /boot/vmlinuz-*; do
+    [[ -e "$image" ]] || continue
+    resolved=$(readlink -f "$image")
+    [[ "$resolved" == /boot/vmlinuz-* ]] || die "kernel image link escapes /boot: $image"
+    kernel=${resolved#/boot/vmlinuz-}
+    [[ "$kernel" =~ ^[0-9][A-Za-z0-9._+~-]*$ ]] || die "invalid kernel image version: $kernel"
+    [[ ${targets[$kernel]+set} ]] || printf 'preserve_unmanaged_kernel=%s\n' "$kernel"
+done
 sorted=$(printf '%s\n' "${!targets[@]}" | sort)
 mapfile -t kernels <<< "$sorted"
 for k in "${kernels[@]}"; do results[$k]=NOT_RUN; done

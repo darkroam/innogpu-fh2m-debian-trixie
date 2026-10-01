@@ -256,6 +256,16 @@ def main():
     def image_alias(root):
         (root / "boot/vmlinuz.old").symlink_to(f"vmlinuz-{KERNELS[1]}")
     case("V3-image-alias", image_alias, success=True, extra=all_k)
+    def unmanaged_image(root):
+        put(root, "boot/vmlinuz-6.12.101-r5obs2-r48", "diagnostic image\n")
+        put(root, "lib/modules/6.12.101-r5obs2-r48/updates/fantgpu.ko", "diagnostic module\n")
+    def unmanaged_preserved(root, args, p, calls):
+        all_k(root, args, p, calls)
+        assert "preserve_unmanaged_kernel=6.12.101-r5obs2-r48" in p.stdout
+        assert "6.12.101-r5obs2-r48" not in calls
+        assert (root / "lib/modules/6.12.101-r5obs2-r48/updates/fantgpu.ko").read_text() == "diagnostic module\n"
+    case("V3-unmanaged-diagnostic-preserved", unmanaged_image, success=True,
+         extra=unmanaged_preserved)
     (good / "fixture/calls").unlink()
     p, calls = run(good, good_args)
     assert p.returncode == 0 and "dkms add " not in calls
