@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0",
+  "id": "030-035",
+  "ledger_ref": {
+    "item": "030",
+    "neutral_record": "F-R5-001",
+    "mapping": "collab/R48-2026-09-28-R5直面修复任务/codex-report.md",
+    "description": "use the embedded ft_drm_private in DVFS suspend and resume"
+  },
+  "deepin_patch": {
+    "path": "patches/030-035.patch",
+    "sha256": "1b5e4ee307fc1c8fbed118db336ef43353d3161659ab4281e0bf933673834342",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "docs/planning/evidence/o-stage/5.0.0-i6/o-stage-snapshot.tar.zst",
+      "sha256": "a0828049010376d5f765cce56cb17cf0d548c295964a377ca18f31e233b2bac6"
+    },
+    "tree_hash": "5f6a5347c7e217ba3f7c5b71fdcad520148e0bc71231ab95fb023655865d11da",
+    "chain_base": {
+      "id": "030-034",
+      "after_tree_hash": "5f6a5347c7e217ba3f7c5b71fdcad520148e0bc71231ab95fb023655865d11da"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "f-only-r5-root-cause-fix",
+      "summary": "ft_pm_suspend and ft_pm_resume treated drm_device.dev_private as ft_drm_private, but it points to the outer fantgpu_drm_private. Reading the wrong layout supplied NULL to SuspendDVFS and returned PVRSRV_ERROR_INVALID_DEVICE. Both callbacks now use the existing fantgpu_drm_to_ft_private accessor, matching the corresponding F open path, helper users and the successful Deepin PM implementation."
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "Two-line F-only correction in the existing vendor Dual MIT/GPLv2 source; no new dependency, binary or third-party code."
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "030-034 locked i6 tree",
+      "summary": "Requires 030-026-lifecycle DVFS calls and the existing fantgpu_drm_to_ft_private accessor. Applies cleanly after the immutable 18-entry i6 O_stage snapshot; later i8-i11 derived fixes do not touch ft_drm.c."
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "correct-port-of-existing-accessor",
+      "summary": "Deepin uses innogpu_drm_to_pvr_private in the corresponding PM callbacks. The earlier F adaptation substituted direct dev_private access based on an incorrect assumption that F lacked an accessor; fantgpu_drm_to_ft_private exists and returns &fantgpu_drm_private.ft_priv."
+    },
+    "adjacent_code": {
+      "status": "follow-up",
+      "verdict": "outside-dvfs-fix",
+      "summary": "fantgpu_ft_drm_release has the same direct typed access in the active postclose path. The current shipped PVRSRVDeviceRelease disassembly ignores its first psDeviceNode argument, so this does not affect the observed DVFS failure or current release behavior. Keep it out of 030-035 and review it as a separate lifecycle cleanup before changing that shipped-object contract."
+    }
+  },
+  "apply": {
+    "before_tree_hash": "5f6a5347c7e217ba3f7c5b71fdcad520148e0bc71231ab95fb023655865d11da",
+    "after_tree_hash": "995a77af4fd25c29746aee2441256d6af1b96ca4b346059c8d3ed663a484b98b",
+    "patch_sha256": "1b5e4ee307fc1c8fbed118db336ef43353d3161659ab4281e0bf933673834342",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <I6_TREE> < patches/030-035.patch",
+    "result": "One file and two substitutions; strict dry-run and fresh replay pass; no .orig/.rej; ft_dvfs_device.c unchanged."
+  },
+  "rollback": {
+    "command": "Discard the derived tree and re-extract the locked 5.0.0-i6 snapshot; do not edit archived i6 artifacts",
+    "target": "5f6a5347c7e217ba3f7c5b71fdcad520148e0bc71231ab95fb023655865d11da"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "strict -p1 --fuzz=0 application to the locked i6 snapshot",
+        "exact scope fantsrvkm/ft_drm.c with two accessor substitutions",
+        "SuspendDVFS and ResumeDVFS still receive priv->dev_node",
+        "ft_dvfs_device.c byte-identical before and after",
+        "reverse application restores the locked i6 tree hash",
+        "historical 18-entry 030 chain remains unchanged",
+        "existing 030-034 stop-stage and 030-033 shipped ABI regressions pass"
+      ]
+    },
+    "clean_build": {
+      "status": "pass",
+      "source_tree_hash": "9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee",
+      "kernel": "6.12.101-r5obs2-r48",
+      "module_sha256": "2e87babc1d69b45f6cb61e718ca9be84b2953eb4411e8ce6c7bcab8535974b70",
+      "srcversion": "026F16AA3D7BAD7A986B457",
+      "evidence": ".build/r48-030-035-review-20261001/",
+      "checks": [
+        "module build completed with MODPOST, LD and BTF",
+        "ft_pm_suspend and ft_pm_resume call fantgpu_drm_to_ft_private before dereferencing dev_node",
+        "SuspendDVFS has no temporary bReady or devfreq pointer guard",
+        "ft_dvfs_device.c is byte-identical to the locked i6 source",
+        "shipped ABI passes: dev_rsrc size=140536 members=115 pvr_resume_count offset=140528"
+      ]
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "After qoder and dsh review, build and install an accessor-only clean candidate, then run three pm_test=devices attempts with pm_async=1 and one normal deep suspend/resume. R48 diagnostic-binary success is supporting evidence, not clean-candidate release validation."
+    }
+  }
+}

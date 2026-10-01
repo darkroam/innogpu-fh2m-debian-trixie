@@ -1,0 +1,21 @@
+diff --git a/fantsrvkm/ft_drm.c b/fantsrvkm/ft_drm.c
+--- a/fantsrvkm/ft_drm.c
++++ b/fantsrvkm/ft_drm.c
+@@ -139,7 +139,7 @@ static int ft_pm_suspend(struct device *dev)
+ 	plat_data_t *pdata = fh2m_fant_dev_get_platdata(dev);
+ 	int index = pdata ? pdata->dev_idx : -1;
+ #if defined(SUPPORT_LINUX_DVFS) && (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
+-	struct ft_drm_private *priv = ddev->dev_private;
++	struct ft_drm_private *priv = fantgpu_drm_to_ft_private(ddev);
+ 	PVRSRV_ERROR dvfs_err;
+ 	PVRSRV_ERROR rollback_err;
+ #endif
+@@ -230,7 +230,7 @@ static int ft_pm_resume(struct device *dev)
+ 	plat_data_t *pdata = fh2m_fant_dev_get_platdata(dev);
+ 	int index = pdata ? pdata->dev_idx : -1;
+ #if defined(SUPPORT_LINUX_DVFS) && (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
+-	struct ft_drm_private *priv = ddev->dev_private;
++	struct ft_drm_private *priv = fantgpu_drm_to_ft_private(ddev);
+ 	PVRSRV_ERROR dvfs_err;
+ #endif
+ 	int resumed;
