@@ -5,7 +5,7 @@
 本项目自有工作采用 GPL-3.0-or-later；fork 上游 MIT 内容与导入源码/厂商载荷按各自声明处理，
 当前再分发边界见[许可证与再分发边界](docs/project/licensing.md)（唯一权威文档）。
 
-> 最后更新：2026-09-28 —— 当前主线为 fantgpu 5.0.0-iN（诊断线，R5=FAIL 悬案中，见
+> 最后更新：2026-10-01 —— 当前主线为 fantgpu 5.0.0-iN（i12/107 验收通过，R5=FAIL 观察期，见
 > [status.md](docs/project/status.md)）。历史（2026-09-03 记录）：当前驱动包和正式交付版本为 `4.0.2-i3`（patch-024 + patch-026 +
 > patch-028 + patch-029）；R14 在当前设备完成 6/6 deep 验收。patch-025-display 继续保持
 > UNVERIFIED，不进入 i3；DDCCI 不提供亮度控制，`hwinfo_g0m.bin` 仍缺失。
@@ -29,7 +29,7 @@
 3. **迁移 Deepin**：以 Deepin 202504 完整原包为唯一技术基线，统一用户态/固件/DDX 载荷，消除 ABI 混配。
 4. **完全重构**：取消历史补丁叠加模式 → `drivers/` 仓库内维护的导入源码树 + manifest 管理黑盒，新构建器从 `4.0.0-i1` 基线演进并保持可复现构建。
 5. **Deepin suspend/resume 历史交付**：R10 证明 patch-024 存在 TOCTOU；R11 的 i1 增加 devfreq/PVR 生命周期同步后，仍因独立温度 work 提前启动而失败；R12 的 i2 用 patch-028 等待 PVR 子设备恢复成功；R13 的 i3 让 DDCCI 回退模式创建 panel 以恢复 GPIO callback；R14 完成 6/6 deep 正式矩阵，display 025 保持独立实验状态。
-6. **fantgpu 诊断线（当前）**：F0 + 030 链由 `5.0.0-i6` 继续派生兼容与生命周期修正；R5=FAIL、OUTSIDE_COVERAGE、根因未定位，禁止重跑；安装版本与当前运行版本分列，见 [status](docs/project/status.md)。
+6. **fantgpu 主线（当前）**：F0 + 030 链已推进至 `5.0.0-i12`；R49 最终 3+1 验收通过，用户选择 R5=FAIL 观察期后再裁决；早期 OUTSIDE_COVERAGE 历史不重写，见 [status](docs/project/status.md)。
 
 ## 主要修复的问题
 

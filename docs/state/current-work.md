@@ -5,33 +5,26 @@
 
 ## R5 悬案与 fantgpu 5.0.0 主线（当前最高优先级）
 
-**接续（2026-09-28）**：R37安装与R38父设备completion静态分析已由qoder/dsh接受，
-debb133收档。R39经另行授权正常重启后，当前磁盘与运行均为i11/107，基础首启PASS，
-证据待审；详见[首启状态](../project/status.md#r39-i11-首启2026-09-28待审)。
-R36一次观测已经消费，父名/完成者仍UNKNOWN，不自动重做实验。
-
-- [ ] **R39/R40集中审查**：R39首启证据与R40未来观测设计交qoder初审及实质研判、dsh终审。
-  R40按首启PASS条件转接，仅设计四元组、单核最坏容量与X2–X4流程；算术边界与通道实测分列，
-  实验就绪UNVERIFIED，容量论证不成立即不提交实验申请，不实现、不申请或执行新实验。
+**接续（2026-10-01）**：当前磁盘与运行均为 i12/107。R48 accessor 修复已闭合源码级根因链；
+R49 最终 3/3 devices + 1/1 normal deep 验收通过。用户选择暂不翻转 R5，维持 FAIL 观察期；
+详见[R49 当前状态](../project/status.md#r49-验收与-r5-观察期2026-10-01)。R50 已清理纯构建暂存、
+63/90/95/96 和六个 r5obs2 过程内核，保留 107/101/r5dpm1/r5dpm2、回滚卡与证据根。
 
 - [ ] **当前内核 F/Deepin 能力对齐**（2026-09-23 用户调整优先级）：以
   `6.12.101+deb13-amd64` 上 Deepin `4.0.2-i3` 已交付能力为对照，先补齐 F 的功能与稳定性
   差距，核心是 R5 挂起/恢复。Deepin 的 6/6 deep、显示恢复及 PVR 错误判据是对齐目标，
   不能用 F 构建成功、首启健康或包验收代替。依据见
   [当前基线](../project/status.md#当前基线)、[Deepin 验收边界](../patches/029-suspend-resume-ddcci-panel.md#当前状态)。
-- [ ] **R5 挂起根因定位**：fantgpu 绑定下 `pm_test=devices` 硬挂；两轮诊断内核（r5dpm1/r5dpm2）
-  复核判定 `OUTSIDE_COVERAGE`，根因未定位。冻结：禁止重跑任何 pm_test/watchdog；接续已有
-  pre-DPM 等待图和 O/F 静态增量，优先核对与 Deepin 成功路径的差异及可区分证据，不重复已收档
-  的 wrapper 等价分析或盲加 timer。新的运行调查仍须明确调整相应冻结与观测条件。证据链：
-  [r5 调查计划](../design/r5-suspend-investigation-plan.md)、
-  [步骤 8 结果](../planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-result.txt)。
+- [ ] **R5 观察期裁决**：R48 源码级根因链与 R49 修复后 3+1 验收证据已闭合，但用户选择
+  `R5=FAIL` 暂不翻转。观察期内保留证据，不改写早期 `OUTSIDE_COVERAGE`；期满后由用户裁决。
+  未另行授权不得继续执行 pm_test/watchdog。
 - [ ] **发布阻断（fantgpu 5.0.0-iN 线）**：② `validation-results.json` 未签；③ tag
   `fantgpu-5.0.0-iN` 未打；④ R5=FAIL 未解除。① `postinst_current_kernel_only` 已由 dsh
-  在 R28 接受精确 i9 的真实八核安装证据后裁定解除；R37 独立终审已将解除范围覆盖至 i11，
-  不代表运行能力验收。裁定来源见 [status](../project/status.md#r28-安装裁定与-r31-接续)。
+  在 R28 接受精确 i9 的真实八核安装证据后裁定解除；R49 已将安装后验覆盖至 i12，运行验收
+  与发布裁定仍分开。裁定来源见 [status](../project/status.md#r49-验收与-r5-观察期2026-10-01)。
   许可发布边界（1C/BLOCKED）不变。
-- [ ] 诊断内核处置：r5dpm1/r5dpm2 包保留待 dsh 决定是否卸载；GRUB 已恢复原配置（默认解析
-  6.12.107+deb13，既有行为；改默认须另立变更）。
+- [ ] 诊断内核处置：r5dpm1/r5dpm2 包保留，卸载待另行裁决；R50 后 GRUB 只列
+  107/101/r5dpm1/r5dpm2，默认仍解析 107（改默认须另立变更）。
 
 **优先级与接续（2026-09-24）**：此前暂缓的 107 兼容修复，已按用户后续「先修复，然后再继续」
 授权在 i9 完成；R28 的真实八核安装与 107 基础首启已获终审接受。R30 的 i10 八核 A/B

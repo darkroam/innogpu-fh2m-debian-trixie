@@ -1,6 +1,6 @@
 # 当前状态与问题清单
 
-最后更新：2026-09-28
+最后更新：2026-10-01
 
 本文件是项目当前运行状态的唯一摘要。历史过程、补丁细节和故障推导分别见
 [阶段补丁](../patches/README.md) 与 [事故和经验](../incidents/README.md)。
@@ -9,13 +9,13 @@
 
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
-| 当前运行驱动 | **fantgpu 5.0.0-i11（诊断线，非交付）**，运行于 `6.12.107+deb13-amd64`；R39 正常重启后加载身份、基础健康、输入挂接及本次 Xorg 观察 PASS，首启证据待 qoder/dsh 审查；不代表 R5 已解决 | [R39首启证据与边界](#r39-i11-首启2026-09-28待审)、[030 映射表](../planning/030-mapping-table.md)、[patch-provenance](../design/patch-provenance.md) |
-| 当前磁盘安装 | **fantgpu 5.0.0-i11**，R37八核安装/只读后验PASS，已由qoder/dsh审查通过（debb133）；R39已重启加载i11 | [R37安装证据与边界](#r37-当前安装状态2026-09-28已审) |
+| 当前运行驱动 | **fantgpu 5.0.0-i12（干净候选，非发布）**，运行于 `6.12.107+deb13-amd64`；R49 最终 3/3 devices + 1/1 normal deep 通过。Hygon xHCI 修复为独立宿主模块，不在 i12 包内；用户选择 R5 维持 FAIL 进入观察期 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01) |
+| 当前磁盘安装 | **fantgpu 5.0.0-i12**；R49 七项预检后唯一一次安装与 8/8 受管内核后验通过，当前加载模块身份与磁盘一致 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01) |
 | 回退基线 | `4.0.2-i3`（deepin 血缘最终交付）：R14 6/6 deep 矩阵通过；包 SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；回滚卡见 r5dpm2 设计 §8，执行须另行授权 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md)、[回滚卡](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
-| 当前主线目标 | `5.0.0-iN`（tag `fantgpu-5.0.0-iN` **未打**）；发布阻断：`validation-results` 未签、R5=FAIL 未解除；`postinst_current_kernel_only` 已按 R37 裁定解除并覆盖至 i11，1C 不变 | [安装裁定与接续](#r28-安装裁定与-r31-接续)、[030 映射表](../planning/030-mapping-table.md) |
+| 当前主线目标 | `5.0.0-iN`（tag `fantgpu-5.0.0-iN` **未打**）；发布阻断：`validation-results` 未签、R5=FAIL 观察期未解除；`postinst_current_kernel_only` 已覆盖至 i12，1C 不变 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01)、[030 映射表](../planning/030-mapping-table.md) |
 | 历史当前态（2026-09-03 记录） | `4.0.2-i3` 已安装并重启至 `6.12.101+deb13-amd64`；R16 迁移后降为回退基线 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
-| R5 挂起悬案 | `pm_test=devices` 绑定 fantgpu 硬挂；两轮诊断内核（r5dpm1/r5dpm2）复核判定 `OUTSIDE_COVERAGE`（DPM 机制无动态正样）；`r5_root_cause=unresolved`；**禁止重跑** | [r5 调查计划](../design/r5-suspend-investigation-plan.md)、[r5dpm2 设计](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
-| 诊断内核 | `6.12.101-r5dpm1`/`6.12.101-r5dpm2` 已安装并保留（卸载待 dsh 定）；GRUB 已恢复原配置（默认启动解析 6.12.107+deb13，既有行为） | [步骤 8 证据](../planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-result.txt) |
+| R5 观察期 | R48 已闭合 accessor 错布局根因链，R49 修复后最终 3+1 验收通过；用户选择暂不翻转，`R5=FAIL` 保持至观察期后再裁决。早期 `OUTSIDE_COVERAGE` 与失败记录不重写 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01)、[r5 调查计划](../design/r5-suspend-investigation-plan.md) |
+| 内核保留集 | R50 后仅保留 `6.12.107+deb13-amd64`（运行/默认）、`6.12.101+deb13-amd64`（回退）、`6.12.101-r5dpm1`/`r5dpm2`（诊断，卸载待另行裁决）；63/90/95/96 与 r47b-r47f/r48 六个 r5obs2 过程内核已清理 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01) |
 | 稳定图形历史基线 | 历史记录：`3.3.3.42-patched-21` 已安装、重启并完成本机 PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收；不是当前运行包 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | 历史运行基线 | `3.3.3.42-patched-20` 曾完成运行验收，但 deb 含收敛前辅助载荷，仅保留为历史证据 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
 | 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |
@@ -40,6 +40,20 @@
 `latest-*` 文件名不表示已验证当前 fantgpu。当前待办见 [current-work](../state/current-work.md)。
 
 ## R28 安装裁定与 R31 接续
+
+### R49 验收与 R5 观察期（2026-10-01）
+
+R48 的 030-035 accessor 修复闭合源码级根因链；R49 构建并唯一一次安装 i12，8/8 受管内核
+后验通过。首轮 devices 暴露独立的 Hygon `1d94:148c` xHCI 恢复缺陷，精确启用既有
+`XHCI_RESET_ON_RESUME` 后，最终新一组 3/3 devices 与 1/1 normal deep 均 rc=0，DVFS、
+Corsair HID、RTL8153 和键盘 LED 恢复门通过。该 xHCI 修复是独立宿主模块，不在 i12 包内。
+
+用户裁决选择暂不翻转 R5：R49 验收证据保留，`R5=FAIL` 进入观察期，观察期结束后再裁决；
+validation-results 未签、tag 未打、发布级阻断与 1C 均不变。R50 随后清理纯构建暂存、
+63/90/95/96 和六个无包所有者的 r5obs2 过程内核；GRUB 由 `update-grub` 重建，107 仍为首项，
+101 与 r5dpm1/r5dpm2 完整保留，未重启。R36/R48/R49 证据根与 4.0.2-i3 回滚实物不动。
+本机证据位于 `.build/r49-final-acceptance-20261001-01/` 与
+`.build/r50-system-cleanup-20261001-01/`（均非 Git，公开检出不可取得）。
 
 ### R37 当前安装状态（2026-09-28，已审）
 
@@ -110,13 +124,11 @@ R31 已从实际 i9 的血缘隔离 prerm 升级至 i10：八核 dpkg/postinst r
 
 ## 当前未解决或需要后续处理
 
-- **R5 挂起悬案（最高优先，未解决）**：fantgpu 绑定下 `pm_test=devices` 硬挂；自旋类探测器与
-  两轮 DPM watchdog 均全静默，四可达回调体挂死降为低概率；机制无动态正样，timer 不可达或
-  尚未进入 DPM 时仍不能排除回调路径。候选为 pre-DPM 段/等待区/timer 不可达；
-  `r5_dpm_watchdog_capture_reviewed=OUTSIDE_COVERAGE`、`r5_root_cause=unresolved`。冻结：
-  R5=FAIL、禁止重跑、U1/U2 未执行、validation-results 未签、tag `fantgpu-5.0.0-iN` 未打。
-  用户已授权限时离线工程与包生命周期推进；新运行调查仍须明确调整冻结与观测条件，
-  不把 i9/i10 构建、安装或基础首启外推为 R5 通过。
+- **R5 观察期（当前仍为 FAIL）**：早期两轮 DPM watchdog 的
+  `r5_dpm_watchdog_capture_reviewed=OUTSIDE_COVERAGE` 与失败历史保持原样；R48 后续以 accessor
+  错布局闭合源码级根因链，R49 的修复后最终 3+1 验收通过。用户选择暂不翻转，观察期后再裁决。
+  未另行授权不得继续执行 PM/watchdog；U1/U2 未执行、validation-results 未签、tag
+  `fantgpu-5.0.0-iN` 未打，发布级阻断与 1C 不变。
 - **R18 文档结构迭代主体已闭合**：R17 四轮已闭合，三篇[基线代际文档](../README.md)已审定；
   patched-27 的 `debs/` 实物补证已由 dsh 在 R17 §21.1 补记，原先「本机无实物」记录保留为错误资产。
   批 5 收档交叉确认已通过，工具适配另批（R19）已由 `e656612` 收档闭合；
