@@ -51,6 +51,9 @@ SOFTWARE.
 
 `components/` 是第三方开源组件的**派生修改/配置**，按上游组件许可分发，不视为本项目原创层。
 **固定上游版本与封存的许可材料**（随 `LICENSES/` 提供标准文本副本，审计器按路径组强制登记）：
+当前维护的第三方补丁共 4 个；完整路径、版本基线、验证状态和 DKMS/内核边界见
+[`docs/patches/README.md`](docs/patches/README.md#当前第三方补丁台账)。这里的第三方分类按
+来源、许可和目标组件判定，不按是否使用 DKMS 判定。
 
 - `components/fbterm/001-configurable-redraw-scrolling.patch`：修改 **fbterm（Debian 1.7-5，
   上游 https://code.google.com/archive/p/fbterm/ ）** 的派生补丁。
@@ -61,6 +64,11 @@ SOFTWARE.
   （Debian linux-source-6.12 6.12.107-1）** 的派生补丁。目标文件
   `drivers/usb/host/xhci-pci.c` 声明 `SPDX-License-Identifier: GPL-2.0`、
   **Copyright (C) 2008 Intel Corp.**，作者 Sarah Sharp；补丁按 **GPL-2.0-only** 分发，全文见
+  `LICENSES/GPL-2.0-only.txt`。
+- `components/linux/002-kaitian-x7h-battery-notification-delay.patch`：修改 **Linux ACPI battery
+  驱动（Debian linux-source-6.12 6.12.107-1）** 的机型延迟 quirk 表，仅针对
+  **KaiTian X7h G1e** 复用既有电池通知延迟逻辑。目标文件 `drivers/acpi/battery.c` 按 Linux
+  内核 GPL-2.0 语境分发，补丁按 **GPL-2.0-only** 分发，全文见
   `LICENSES/GPL-2.0-only.txt`。
 - `components/picom/001-probe-explicit-uniform-location.patch`：修改 **picom（固定 commit
   `6d676824c457a933c52e3e92c5a1856466f90545`，https://github.com/yshui/picom ）** 的

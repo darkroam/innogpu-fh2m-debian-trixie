@@ -160,6 +160,8 @@ fail-closed/恢复清理失败 fail-closed）+ `tests/unit/run-030-meta-tests.sh
 | `try-hotload-patched17.sh` | 尝试热替换内核模块，图形会话繁忙时必须停止 |
 | `start-soft-xorg-dwm-from-ssh.sh` | 从 SSH 启动临时图形链路，必须保留 TTY 恢复手段 |
 | `display-recover-and-diagnose.sh` | 故障恢复编排，会修改显示/Xorg 状态 |
+| `r51-battery-task2.sh` | R51 受授权现场恢复与拔插补证；从普通用户 shell 启动，特权动作由脚本自动 `sudo` 提示密码；仅操作 `PNP0C0A:00` 的 battery unbind/bind，读取 DSDT 并采集 udev/journal/sysfs；不重启、不触发 PM/watchdog；恢复失败时不进入拔插测试；完整输出、真实 rc、时间戳和 `result.txt` 自动落到 `.build/r51-battery-observation-20261002-01/task2-run-<ts>/`，`latest-run.txt` 指向最近一次执行 |
+| `restore-bat0.sh` | 现场 BAT0 恢复；从普通用户 shell 启动并自动 `sudo`；不依赖 AC 是否在线，枚举 `PNP0C0A:*` 后执行 battery unbind/bind，必要时只请求一次 `modprobe battery`；不卸载模块、不重启、不触发 PM/watchdog；完整输出、步骤 rc、时间戳和 `result.txt` 自动落到 `.build/bat0-recovery/run-<ts>/`，`latest-run.txt` 指向最近一次执行 |
 | `install-deepin-desktop-hwgl-trial.sh` | 仅在本地 DDX 门槛通过后启用硬件 GL 试验 |
 | `mark-patched17-soft-baseline.sh` | 只适用于 patched-17 历史软渲染基线 |
 

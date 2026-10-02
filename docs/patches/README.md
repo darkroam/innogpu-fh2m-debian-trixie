@@ -31,6 +31,55 @@ OUTSIDE_COVERAGE、禁止重跑、U1/U2 未执行、validation-results 未签、
   与驱动包构建无关；`components/picom/picom.conf` 是项目维护的配置模板，由
   `scripts/install-picom-user.sh` 作为默认配置源安装。
 
+## 当前第三方补丁台账
+
+截至 2026-10-02，仓库中**当前维护的第三方组件补丁共 4 个**。这里的“第三方”按
+**补丁修改的上游/厂商来源、许可和版本基线**判定，不按是否进入 DKMS 判定。DKMS 只是
+内核外部模块的构建/打包机制；一个补丁即使修改内核源码而不进入 DKMS，仍然可以是第三方
+补丁；反过来，DKMS 里的本项目修改也不因此成为第三方补丁。
+
+| 路径 | 上游/目标 | 适用基线 | 类型与当前状态 |
+| --- | --- | --- | --- |
+| `components/fbterm/001-configurable-redraw-scrolling.patch` | Debian fbterm | 1.7-5 | 用户态第三方派生补丁；真实 VT 验证通过 |
+| `components/linux/001-hygon-148c-xhci-reset-on-resume.patch` | Linux xHCI PCI | Debian `linux-source-6.12` `6.12.107-1` | 内核第三方派生补丁；静态/升级检查通过，是否适用于其他内核版本需重新验证 |
+| `components/linux/002-kaitian-x7h-battery-notification-delay.patch` | Linux ACPI battery | Debian `linux-source-6.12` `6.12.107-1` | 机型专用内核 workaround；当前仅离线验证，未安装；其他内核版本不得直接套用 |
+| `components/picom/001-probe-explicit-uniform-location.patch` | picom | 固定上游 commit `6d676824c457a933c52e3e92c5a1856466f90545` | 用户态第三方派生补丁；实机通过 |
+
+每个第三方补丁必须同时记录：目标组件、上游版本或 commit、目标文件、许可/NOTICE、适用
+内核或组件版本、应用方式、静态/运行验证、当前安装状态和升级时的重新验证要求。机器权威
+登记位于 [`THIRD_PARTY_NOTICES.md`](../../THIRD_PARTY_NOTICES.md) 与
+[`license-audit-policy.json`](../../license-audit-policy.json)；事故或运行问题另见
+[`docs/incidents/`](../incidents/README.md)。
+
+## 与 `patches/`、DKMS 的边界
+
+- `components/`：当前维护的第三方组件派生补丁；每个新增文件必须进入上述台账和许可审计。
+- `patches/`：Deepin/fantgpu 阶段补丁、迁移补丁、诊断候选和历史实验。它们按项目血缘、
+  目标树和许可状态单独记录，**不因位于仓库且不在 DKMS 中就自动算第三方**；其中部分已
+  迁入 `drivers/`，部分是混合/未决许可并排除出公开制品。
+- `drivers/` 与 DKMS：这是厂商驱动源码和其构建/打包路径。是否第三方取决于源码来源和
+  许可声明，不取决于 DKMS 这个包装机制。
+- Linux `components/linux/*.patch`：修改发行版内核源码，通常需要重新构建对应内核包；
+  不会因为 DKMS 自动应用，也不会随普通内核 `.deb` 升级自动保留。
+
+### 部署前置条件
+
+| 补丁 | 需要的源码/包 | 不需要时的处理 |
+| --- | --- | --- |
+| fbterm-001 | fbterm 1.7-5 源码或对应 Debian 源码包，以及 fbterm 构建依赖；不需要内核 headers | 不使用 fbterm 或不需要该 redraw 行为时不构建、不安装 |
+| picom-001 | 固定 picom commit 的完整源码，以及 picom 构建依赖；不需要内核 headers | 不使用 patched picom 时不构建、不安装 |
+| Linux xHCI reset-on-resume | 与补丁基线匹配的完整 Linux 内核源码树（当前为 `6.12.107-1`）和内核构建依赖；仅安装 headers 不足 | 不使用该内核候选或设备不需要该 Hygon quirk 时不应用；普通 DKMS 构建不会自动接入 |
+| Linux ACPI battery workaround | 与补丁基线匹配的完整 Linux 内核源码树（当前为 `6.12.107-1`）和内核构建依赖；仅安装 headers 不足 | 不使用该机型电池 workaround 时不应用；普通 DKMS 构建不会自动接入 |
+
+Linux 两个补丁是“内核源码补丁”，不是 DKMS 模块补丁。若发行版已经提供包含同等修改的内核
+`.deb`，直接安装该包即可；若 `.deb` 不包含修改，就必须从匹配的完整源码构建内核包。仅有
+`linux-headers` 只能编译外部模块，不能把修改注入 `drivers/acpi/battery.c` 或
+`drivers/usb/host/xhci-pci.c`。
+
+`components/linux/001-hygon-148c-xhci-reset-on-resume.patch` 也属于第三方派生补丁：它修改
+的是上游 Linux xHCI PCI 驱动，而不是 DKMS 的 InnoGPU 驱动。目标设备若不需要该 quirk，或使用
+的内核已内置同等修复，就不应重复应用。
+
 ## 历史内核和驱动补丁
 
 | 阶段 | 代码补丁 | 构建开关/入口 | 状态 |

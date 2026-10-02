@@ -167,6 +167,7 @@
       "patches/029-suspend-resume-ddcci-panel.patch": "MIT OR GPL-2.0-only",
       "components/fbterm/001-configurable-redraw-scrolling.patch": "GPL-2.0-only",
       "components/linux/001-hygon-148c-xhci-reset-on-resume.patch": "GPL-2.0-only",
+      "components/linux/002-kaitian-x7h-battery-notification-delay.patch": "GPL-2.0-only",
       "components/picom/001-probe-explicit-uniform-location.patch": "MPL-2.0",
       "components/picom/picom.conf": "GPL-3.0-or-later"
     }
@@ -199,13 +200,16 @@
       },
       {
         "paths": [
-          "components/linux/001-hygon-148c-xhci-reset-on-resume.patch"
+          "components/linux/001-hygon-148c-xhci-reset-on-resume.patch",
+          "components/linux/002-kaitian-x7h-battery-notification-delay.patch"
         ],
         "markers": [
           "Linux xHCI PCI",
+          "Linux ACPI battery",
           "Copyright (C) 2008 Intel Corp.",
           "GPL-2.0-only",
-          "6.12.107-1"
+          "6.12.107-1",
+          "KaiTian X7h G1e"
         ]
       },
       {
