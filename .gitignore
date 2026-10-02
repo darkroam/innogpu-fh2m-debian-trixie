@@ -44,3 +44,7 @@ __pycache__/
 
 # qoder agent-local state (tool permissions etc.), not repository content.
 /.qoder/
+
+# Other agent-local session state; never project content.
+/.agents/
+/.codex/

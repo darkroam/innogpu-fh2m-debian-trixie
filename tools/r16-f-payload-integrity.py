@@ -81,7 +81,7 @@
 #
 # 退出码：0=PASS 1=审计失败 2=用法/环境错误
 #
-# 边界：只读 debs/ 与 build/（保护区），只写 --out-dir；--out-dir 落在保护区
+# 边界：只读 debs/ 与 .build/work/（保护区），只写 --out-dir；--out-dir 落在保护区
 # 内即拒绝。产物不含墙钟时间戳 → 双跑字节一致（审计 provenance 由引入它的
 # git commit 承载，与 o-stage.manifest.tsv 同口径）。
 
@@ -107,7 +107,7 @@ EX_FAIL = 1
 
 DEFAULT_DEB = ("debs/fantgpu-fh2m_3.3.8.126-driver-linux-desktop-"
                "sp-generic_amd64.deb")
-DEFAULT_UNPACK = "build/r16-fantgpu-deb"
+DEFAULT_UNPACK = ".build/work/r16/r16-fantgpu-deb"
 DEFAULT_OUT = "docs/planning/evidence/o-stage"
 
 MANIFEST_NAME = "f-payload.manifest.tsv"
@@ -137,7 +137,7 @@ F_MANIFEST_NAME = "binary-manifest-fantgpu.json"
 F_DEB_SHA256 = ("6f0daaf79fb6b2a547138c17628bb990dff0d0c684ee1c13775b"
                 "ebc2d28fd11b")
 
-PROTECTED_TOP = ("debs", "vendor", "build", "third_party", "migration",
+PROTECTED_TOP = ("debs", "vendor", "build", ".build", "third_party", "migration",
                  "drivers", "baselines", "patches")
 
 DEBIAN_PREFIX = "DEBIAN/"

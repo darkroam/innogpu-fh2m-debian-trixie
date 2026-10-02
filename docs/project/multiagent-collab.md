@@ -46,7 +46,7 @@
 
 - **自包含**：写明背景、目标、具体任务、验收标准、约束，codex 无需追问即可执行。
 - **明确边界**（三层，按此分级写入提示词）：
-  - **绝对禁止**（任何情况下不可修改）：本地载荷 `debs/`、`vendor/`、`build/`、
+  - **绝对禁止**（没有任务内精确授权不得修改）：本地载荷 `debs/`、`vendor/`、`.build/`、退役 `build/`、
     `third_party/`，以及监督分支 `migration/supervised-source-tree`。
   - **默认保护**（默认不可修改；仅当用户在提示词中明确批准**精确路径范围**后才可改）：
     `drivers/`、`baselines/`、`binary-manifest.json`。
@@ -259,7 +259,7 @@
 
 - **目标**：多轮工作后周期性把文档收敛为「与实现一致、结构清晰、便于后续检查」的形态。四轮：1 内容对齐 → 2 结构调整 → 3 二次对齐 → 4 收尾。
 - **冻结**：迭代期间不改任何实现（源码/补丁链/脚本/构建产物/证据）；不可变区只读引用不重写。
-- **不可变区清单**：docs/planning/evidence/**、patches/**、.runtime-archive/**（本机唯一副本，不入 Git，引用须注明）、baselines/**（运行结果目录）、build/**、debs/**、vendor/**、third_party/**、LICENSES/**、THIRD_PARTY_NOTICES.md、allowlist 两件、git tags（迭代期禁打/禁移）、collab 原文快照区；本规约除本节按三方合并更新外，其余条款只读。
+- **不可变区清单**：docs/planning/evidence/**、patches/**、.runtime-archive/**（本机唯一副本，不入 Git，引用须注明）、baselines/**（运行结果目录）、.build/evidence/**、退役 build/**、debs/**、vendor/**、third_party/**、LICENSES/**、THIRD_PARTY_NOTICES.md、allowlist 两件、git tags（迭代期禁打/禁移）、collab 原文快照区；本规约除本节按三方合并更新外，其余条款只读。
 - **门禁**：每轮结束 git diff --check + 四门禁；allowlist 由 dsh commit-time 重生成；tracked 文档每轮结束一个提交。
 
 ### 12.2 快照与原文保留（前置硬规则）

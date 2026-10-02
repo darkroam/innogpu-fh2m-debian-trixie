@@ -3,7 +3,7 @@
 
 Usage: p2-normalize-v3.py [OUTPUT_PATH]
 
-If OUTPUT_PATH is not provided, writes to build/p2-manifest.tsv.
+If OUTPUT_PATH is not provided, writes to .build/work/r16/p2-manifest.tsv.
 Uses LC_ALL=C for deterministic sorting.
 """
 import os, hashlib, sys, locale
@@ -11,8 +11,8 @@ import os, hashlib, sys, locale
 # Force C locale for deterministic sorting
 locale.setlocale(locale.LC_ALL, 'C')
 
-D_SRC = os.environ.get("P2_NORM_D_SRC", "build/r16-unpack-D/usr/src/innogpu-kernel-2.2")
-F_SRC = os.environ.get("P2_NORM_F_SRC", "build/r16-fantgpu-deb/usr/src/fantgpu-fh2m-kernel-2.2")
+D_SRC = os.environ.get("P2_NORM_D_SRC", ".build/work/r16/r16-unpack-D/usr/src/innogpu-kernel-2.2")
+F_SRC = os.environ.get("P2_NORM_F_SRC", ".build/work/r16/r16-fantgpu-deb/usr/src/fantgpu-fh2m-kernel-2.2")
 
 MOD_MAP = {
     'innogpu': 'gpu', 'fantgpu': 'gpu',
@@ -138,7 +138,7 @@ def main():
         print("Usage: p2-normalize-v3.py [OUTPUT_PATH]", file=sys.stderr)
         sys.exit(2)
 
-    output_path = sys.argv[1] if len(sys.argv) > 1 else 'build/p2-manifest.tsv'
+    output_path = sys.argv[1] if len(sys.argv) > 1 else '.build/work/r16/p2-manifest.tsv'
 
     if not os.path.isdir(D_SRC):
         print(f"FATAL: D source root not found: {D_SRC}", file=sys.stderr)

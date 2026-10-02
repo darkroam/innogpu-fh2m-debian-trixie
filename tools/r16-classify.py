@@ -10,7 +10,7 @@ Pipeline (deterministic, replayable):
      - PURE_RENAME → drop
      - BEHAVIORAL  → defer (always fail-closed; not BC-level cluster default)
      - F-ONLY      → drop (F-only means D never had this file; per-BC notes apply)
-  4. Per-file license field (from build/r16-license-precheck/{D,F}-license-manifest.tsv).
+  4. Per-file license field (from accepted .build/evidence/r16/r16-license-precheck/{D,F}-license-manifest.tsv).
   5. Per-BC rollup and gate assertions.
 
 Production cardinality invariant (fail-closed):
@@ -19,17 +19,17 @@ Production cardinality invariant (fail-closed):
   - input != 435 ⇒ abort without overwriting output
 
 Inputs:
-  build/p2-manifest.tsv                          (P2 manifest, normalized paths)
-  build/r16-unpack-D/usr/src/innogpu-kernel-2.2  (D source tree)
-  build/r16-fantgpu-deb/usr/src/fantgpu-fh2m-kernel-2.2  (F source tree)
-  build/r16-license-precheck/D-license-manifest.tsv
-  build/r16-license-precheck/F-license-manifest.tsv
+  .build/work/r16/p2-manifest.tsv                          (generated P2 manifest)
+  .build/work/r16/r16-unpack-D/usr/src/innogpu-kernel-2.2  (D source tree)
+  .build/work/r16/r16-fantgpu-deb/usr/src/fantgpu-fh2m-kernel-2.2  (F source tree)
+  .build/evidence/r16/r16-license-precheck/D-license-manifest.tsv
+  .build/evidence/r16/r16-license-precheck/F-license-manifest.tsv
 
 Outputs (deterministic, LC_ALL=C sorted):
-  build/r16-evidence/per-file-classification.tsv
+  .build/work/r16/r16-evidence/per-file-classification.tsv
        (canon_path, bc, disposition, classification, license_d, license_f,
         first_diff_d, first_diff_f)
-  build/r16-evidence/per-bc-summary.tsv
+  .build/work/r16/r16-evidence/per-bc-summary.tsv
        (bc, drop, defer, selected, f_only, identical,
         pure_rename, behavioral, total)
 
@@ -47,12 +47,12 @@ from collections import Counter, defaultdict
 
 locale.setlocale(locale.LC_ALL, 'C')
 
-D_SRC = os.environ.get("R16_D_SRC", "build/r16-unpack-D/usr/src/innogpu-kernel-2.2")
-F_SRC = os.environ.get("R16_F_SRC", "build/r16-fantgpu-deb/usr/src/fantgpu-fh2m-kernel-2.2")
-MANIFEST = os.environ.get("R16_MANIFEST", "build/p2-manifest.tsv")
-D_LICENSE = os.environ.get("R16_D_LICENSE", "build/r16-license-precheck/D-license-manifest.tsv")
-F_LICENSE = os.environ.get("R16_F_LICENSE", "build/r16-license-precheck/F-license-manifest.tsv")
-OUT_DIR = os.environ.get("R16_OUT_DIR", "build/r16-evidence")
+D_SRC = os.environ.get("R16_D_SRC", ".build/work/r16/r16-unpack-D/usr/src/innogpu-kernel-2.2")
+F_SRC = os.environ.get("R16_F_SRC", ".build/work/r16/r16-fantgpu-deb/usr/src/fantgpu-fh2m-kernel-2.2")
+MANIFEST = os.environ.get("R16_MANIFEST", ".build/work/r16/p2-manifest.tsv")
+D_LICENSE = os.environ.get("R16_D_LICENSE", ".build/evidence/r16/r16-license-precheck/D-license-manifest.tsv")
+F_LICENSE = os.environ.get("R16_F_LICENSE", ".build/evidence/r16/r16-license-precheck/F-license-manifest.tsv")
+OUT_DIR = os.environ.get("R16_OUT_DIR", ".build/work/r16/r16-evidence")
 PER_FILE_OUT = f"{OUT_DIR}/per-file-classification.tsv"
 PER_BC_OUT = f"{OUT_DIR}/per-bc-summary.tsv"
 

@@ -12,7 +12,7 @@ Layers
   declared in its own header. "Dual MIT/GPLv2" normalizes to
   `MIT OR GPL-2.0-only` (never GPLv3-only); BSD/LGPL dual stays as declared.
   `MODULE_LICENSE(...)` is module metadata, not a file license.
-- local_payloads (not distributed): debs/, vendor/, build/, third_party/ and
+- local_payloads (not distributed): debs/, vendor/, .build/, retired build/, third_party/ and
   *.deb are never part of a public artifact.
 
 Checks (all mechanical; the auditor is read-only against .git: only
@@ -832,7 +832,7 @@ def write_allowlists(root, policy, inventory_rows, all_tracked, problems):
             header = (
                 "# project-tools 候选制品允许清单（按权利边界生成）：原创层 GPL-3.0-or-later + "
                 "上游继承层 MIT + components/ 第三方派生分类；"
-                "不含 patches/、debs/、collab/、drivers/、vendor/、build/、third_party/"
+                "不含 patches/、debs/、collab/、drivers/、vendor/、.build/、退役 build/、third_party/"
             )
         else:
             paths = sorted(

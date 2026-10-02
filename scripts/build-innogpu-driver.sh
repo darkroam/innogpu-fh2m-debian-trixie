@@ -33,9 +33,8 @@ esac
 # patch-000 no-transform）；其余 = innogpu/Deepin 血统。
 FANT_LINEAGE=0
 [[ "$VERSION" == 5.0.0-i* ]] && FANT_LINEAGE=1
-# 保护区边界：staging 根与构建日志可注入（5.0.0-i1 实跑注入 /tmp，build/ 保护区零写入；
-# 4.0.x-iN 默认保持历史行为）
-STAGE_ROOT="${STAGE_ROOT:-$ROOT/build}"
+# 保护区边界：候选、staging 与日志默认只写可清理 work；接受后的包另行归档到 debs/。
+STAGE_ROOT="${STAGE_ROOT:-$ROOT/.build/work/driver-build}"
 BUILD_LOG="${BUILD_LOG:-$STAGE_ROOT/staging-build.log}"
 # 可复现构建: 固定审核 epoch 必须显式提供, 禁止回退到当前时间(同源码不同时间产出不同 deb)。
 # 审核 epoch 记录于对应的 docs/patches/ 候选说明。
@@ -258,6 +257,7 @@ PY
         echo "staging_ostage_sidecar=FAIL"; exit 1; }
     tar --use-compress-program=zstd -xf "$OSTAGE_SNAP" -C "$STAGE/source"
     # 快照顶层必须仅含 o-stage/ 单一目录（防额外路径混入）
+    # shellcheck disable=SC2012 # controlled staging names; count direct entries only
     [[ -d "$STAGE/source/o-stage" && "$(ls -A "$STAGE/source" | wc -l)" == 1 ]] || {
         echo "staging_ostage_prefix=FAIL"; exit 1; }
     tree_hash="$(python3 - "$STAGE/source/o-stage" <<'PY'
@@ -288,6 +288,7 @@ else
     python3 tools/patch-gpupll-object.py "$STAGE/source/innogpu/innogpu.o_shipped" >/dev/null
     echo "staging_deterministic_transform=PASS"
 fi
+# shellcheck disable=SC2012 # glob cardinality is part of the historical builder gate
 echo "staging_objects=$(ls "$STAGE/source"/*/*.o_shipped | wc -l)"
 echo "staging_source_fixes=PASS $APPLIED_SOURCE_FIXES"
 
@@ -333,6 +334,7 @@ if [[ "$FANT_LINEAGE" == 1 ]]; then
     # （.o/.o.cmd 等编译产物会进入包内并破坏双构建字节一致）
     tar --use-compress-program=zstd -xf "$OSTAGE_SNAP" -C "$P/usr/src"
     # 快照顶层必须仅含 o-stage/ 单一目录（防额外路径混入，codex P1）
+    # shellcheck disable=SC2012 # controlled package staging names; count direct entries only
     [[ -d "$P/usr/src/o-stage" && "$(ls -A "$P/usr/src" | wc -l)" == 1 ]] || {
         echo "builder_ostage_prefix=FAIL"; exit 1; }
     mv "$P/usr/src/o-stage" "$P/usr/src/$DKMS_SRC_NAME"

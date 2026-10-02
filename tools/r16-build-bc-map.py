@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the canonical-path → BC mapping (P5 6th-round · qoder · 2026-09-04).
 
-Reads the P2 manifest and emits build/r16-evidence/canon-to-bc.tsv
+Reads the generated P2 manifest and emits .build/work/r16/r16-evidence/canon-to-bc.tsv
 with each of the 435 differs/F-only canonical paths assigned to exactly
 one of 23 BCs (BC-01..BC-21 + BC-22a + BC-22b).
 
@@ -58,8 +58,8 @@ import sys
 
 locale.setlocale(locale.LC_ALL, 'C')
 
-MANIFEST = os.environ.get("R16_MANIFEST", "build/p2-manifest.tsv")
-OUT = os.environ.get("R16_BC_MAP_OUT", "build/r16-evidence/canon-to-bc.tsv")
+MANIFEST = os.environ.get("R16_MANIFEST", ".build/work/r16/p2-manifest.tsv")
+OUT = os.environ.get("R16_BC_MAP_OUT", ".build/work/r16/r16-evidence/canon-to-bc.tsv")
 
 BC_08_FILES = {
     "srvkm/include/ftsrv.h",

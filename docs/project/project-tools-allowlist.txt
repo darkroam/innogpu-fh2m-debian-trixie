@@ -1,4 +1,4 @@
-# project-tools 候选制品允许清单（按权利边界生成）：原创层 GPL-3.0-or-later + 上游继承层 MIT + components/ 第三方派生分类；不含 patches/、debs/、collab/、drivers/、vendor/、build/、third_party/
+# project-tools 候选制品允许清单（按权利边界生成）：原创层 GPL-3.0-or-later + 上游继承层 MIT + components/ 第三方派生分类；不含 patches/、debs/、collab/、drivers/、vendor/、.build/、退役 build/、third_party/
 .gitattributes
 .github/workflows/ci.yml
 .gitignore
@@ -215,6 +215,7 @@ docs/project/audio-management.md
 docs/project/code-analysis.md
 docs/project/compositor-management.md
 docs/project/dependencies.md
+docs/project/directory-layout.md
 docs/project/display-management.md
 docs/project/driver-source-allowlist.txt
 docs/project/frameworks-and-references.md
@@ -297,6 +298,8 @@ scripts/prepare-deepin-userspace-root.sh
 scripts/prepare-soft-xorg-dwm.sh
 scripts/prune-kernel-source-cache.sh
 scripts/r50-grub-task2-audit.sh
+scripts/r50-storage-task3.sh
+scripts/r50-storage-task4.py
 scripts/r51-battery-task2.sh
 scripts/r51-battery-task3-verify.sh
 scripts/repair-dri-nodes.sh

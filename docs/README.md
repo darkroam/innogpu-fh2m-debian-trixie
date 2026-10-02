@@ -13,10 +13,11 @@
 6. [技术栈与参考模型](project/frameworks-and-references.md)：开发框架、来源基线、参考模型与证据等级。
 7. [测试体系策略](project/test-strategy.md)：分层、能力域、输出规范与执行顺序。
 8. [维护策略](project/maintenance-policy.md)：不可破坏的开发、隐私、测试和 release 约束。
-9. [阶段补丁](patches/README.md)：每个补丁的目的、开关、验证和回退边界。
-10. [事故与经验](incidents/README.md)：失败证据、根因、排除项和后续门槛。
-11. [用户验证](user/verification.md)：安装或重启后的最小验收流程。
-12. [多 Agent 协作规约](project/multiagent-collab.md)：dsh 与 codex 的协作流程、审查门禁、git 纪律与定期文档梳理（唯一权威，不复制规则）。
+9. [目录使用规范](project/directory-layout.md)：源码、输入包、构建树、证据与冻结归档放在哪里、何时可清。
+10. [阶段补丁](patches/README.md)：每个补丁的目的、开关、验证和回退边界。
+11. [事故与经验](incidents/README.md)：失败证据、根因、排除项和后续门槛。
+12. [用户验证](user/verification.md)：安装或重启后的最小验收流程。
+13. [多 Agent 协作规约](project/multiagent-collab.md)：dsh 与 codex 的协作流程、审查门禁、git 纪律与定期文档梳理（唯一权威，不复制规则）。
 
 按需查阅：[依赖与外部文件](project/dependencies.md)、[显示接入使用](user/display-guide.md)、
 [许可证与再分发边界](project/licensing.md)（唯一权威文档）、[驱动源码许可证审计](project/source-license-audit.md)、

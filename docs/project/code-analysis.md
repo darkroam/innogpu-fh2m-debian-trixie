@@ -42,8 +42,9 @@
 `binary-manifest.json`（192 项，5 类 kind，license 全部 `vendor-binary`）← 由
 `tools/generate-binary-manifest.py` 从 pinned Deepin deb（SHA `b5a70e78…f6f5b2`）确定性生成 →
 `scripts/extract-vendor-binaries.sh` 幂等提取到被忽略的 `vendor/` → 构建器按 manifest 装配进包。
-`third_party/` = Deepin 解包区（gitignore 子目录）；`build/` = 构建输出（候选 deb 与 staging）；
-`.build/` = 临时校验工作区。**载荷不入库，清单入库**（CONFIRMED）。
+`third_party/` = Deepin 解包区（gitignore 子目录）；`.build/work/` = 构建输出（候选 deb、展开树与
+staging）；`.build/evidence/` = 本机验证证据；`debs/` = 不可变输入与经裁决保留的包。
+**载荷不入库，清单入库**（CONFIRMED）。历史 `build/` 已由 R50 任务段 4 规划迁空。
 
 ### A4. 所有权边界（CONFIRMED）
 

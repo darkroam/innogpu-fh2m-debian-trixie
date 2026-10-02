@@ -7,6 +7,8 @@
 
 多 Agent（dsh/codex）协作流程、轮次存档与审查门禁见
 [multiagent-collab.md](multiagent-collab.md)（唯一权威，本文不复制规则）。
+源码、输入包、构建树、本机证据与冻结运行归档的放置和生命周期见
+[directory-layout.md](directory-layout.md)；新任务不得继续向遗留 `build/` 写入。
 
 ### 基线与载荷
 
@@ -62,8 +64,9 @@
   标记与阶段验收审计证据（脱敏后）；原始诊断日志不提交。
 - 文档示例使用 `~`、环境变量或 `/tmp` 通用路径，不写入本机绝对 home、临时 `serverauth`、真实
   网络标识或硬件隐私数据。提交前必须执行隐私扫描并人工审查新增证据。
-- release 上传是源码提交之外的步骤；新架构构建器输出写入被忽略的 `build/`，legacy patched
-  构建输出默认写入 `debs/`；均不得因本地构建把二进制产物重新加入 Git。
+- release 上传是源码提交之外的步骤；新架构构建器候选先写入被忽略的 `.build/work/`，经裁决
+  保留的包才归档到 `debs/`；legacy patched 构建输出默认写入 `debs/`。均不得因本地构建把
+  二进制产物重新加入 Git。
 - release 前必须先通过 `python3 tools/audit-licenses.py --artifact project-tools --require-releasable`
   （或对应制品），再运行 `scripts/check-release-package.sh`。xdisplay 引擎副本、
   历史 Kylin/实验安装器和直接二进制热补丁入口不得出现在 coherent 发布包中。

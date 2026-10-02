@@ -20,7 +20,7 @@ set -euo pipefail
 ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$ROOT"
 
-CAND="${1:-$ROOT/build/innogpu-fh2m-trixie_4.0.0-i1.deb}"
+CAND="${1:-$ROOT/debs/archive/legacy-build/innogpu-fh2m-trixie_4.0.0-i1.deb}"
 REF="${2:-$ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb}"
 KERNEL="${3:-${KERNELDIR_VER:-$(uname -r)}}"
 
@@ -29,7 +29,8 @@ KERNEL="${3:-${KERNELDIR_VER:-$(uname -r)}}"
 [[ -d "/lib/modules/$KERNEL/build" ]] || {
     echo "module_symbols=UNCOMPARABLE (kernel headers missing: /lib/modules/$KERNEL/build)"; exit 1; }
 
-W="$(mktemp -d "$ROOT/build/symcmp.XXXXXX")"
+mkdir -p "$ROOT/.build/work"
+W="$(mktemp -d "$ROOT/.build/work/symcmp.XXXXXX")"
 trap 'rm -rf "$W"' EXIT
 
 jobs=$(nproc); (( jobs > 8 )) && jobs=8

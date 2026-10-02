@@ -17,7 +17,7 @@
     },
     "local_payloads": {
       "license": "not-distributed",
-      "scope": "debs/、vendor/、build/、third_party/ 与 *.deb 为本地取得/构建的载荷，不随公开制品发布，不适用任何仓库许可证。"
+      "scope": "debs/、vendor/、.build/、退役 build/、third_party/ 与 *.deb 为本地取得/构建的载荷，不随公开制品发布，不适用任何仓库许可证。"
     }
   },
   "source_root": "drivers",
@@ -235,6 +235,7 @@
         "^debs/",
         "^collab/",
         "^vendor/",
+        "^\\.build/",
         "^build/",
         "^third_party/",
         "\\.deb$",
@@ -251,6 +252,7 @@
       "allowlist_file": "docs/project/driver-source-allowlist.txt",
       "denylist": [
         "^vendor/",
+        "^\\.build/",
         "^build/",
         "^third_party/",
         "\\.deb$",

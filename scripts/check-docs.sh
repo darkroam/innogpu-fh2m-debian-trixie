@@ -1,5 +1,6 @@
 #!/bin/bash
 # Check repository documentation links, compatibility entries, and local data.
+# shellcheck disable=SC2016 # literal Markdown backticks and shell tokens are required text
 
 set -euo pipefail
 
@@ -78,6 +79,14 @@ for removed_copy in \
     tests/xdisplay/run-stage4-regression-tests.sh; do
     [[ ! -e "$removed_copy" ]] || fail "dotconfig-owned xdisplay copy returned: $removed_copy"
 done
+
+# Once R50 task 4 records a successful migration, legacy build/ must not
+# reappear. Keep the ignore rule as defense-in-depth; this is the live-state gate.
+if rg -l '^R50_TASK4_MIGRATION_PASS ' \
+    .build/r50-system-cleanup-20261001-01/task4-migration/apply-*/result.txt \
+    >/dev/null 2>&1; then
+    [[ ! -e build ]] || fail "retired build/ directory returned after R50 task 4"
+fi
 
 stale_xdisplay_refs="$(
     rg -n \

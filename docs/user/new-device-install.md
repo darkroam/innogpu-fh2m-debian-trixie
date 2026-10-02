@@ -39,7 +39,7 @@ cd "$INNOGPU_ROOT"
 sha256sum debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 bash scripts/extract-vendor-binaries.sh                        # 按 manifest 重建 vendor/ 黑盒载荷
 SOURCE_DATE_EPOCH=1788796800 bash scripts/build-innogpu-driver.sh
-# 默认输出 build/innogpu-fh2m-trixie_4.0.2-i3.deb
+# 默认输出 .build/work/driver-build/innogpu-fh2m-trixie_4.0.2-i3.deb
 # R06 i3/i4 与失败的 R11 i1 仅保留为显式历史复现入口
 ```
 
@@ -49,9 +49,9 @@ SOURCE_DATE_EPOCH=1788796800 bash scripts/build-innogpu-driver.sh
 构建后必须核对该历史交付制品；安装、重启和实机验收另按授权执行：
 
 ```sh
-echo '177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662  build/innogpu-fh2m-trixie_4.0.2-i3.deb' | sha256sum -c -
-scripts/check-release-package.sh build/innogpu-fh2m-trixie_4.0.2-i3.deb
-sudo apt install ./build/innogpu-fh2m-trixie_4.0.2-i3.deb
+echo '177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662  .build/work/driver-build/innogpu-fh2m-trixie_4.0.2-i3.deb' | sha256sum -c -
+scripts/check-release-package.sh .build/work/driver-build/innogpu-fh2m-trixie_4.0.2-i3.deb
+sudo apt install ./.build/work/driver-build/innogpu-fh2m-trixie_4.0.2-i3.deb
 # 禁止热切模块；重启后再做包/DKMS/模块/显示基线和受控 suspend 验收
 ```
 
@@ -116,7 +116,7 @@ sudo INNOGPU_X_USER="$USER" INNOGPU_X_HOME="$HOME" \
 
 ```sh
 cd "$INNOGPU_ROOT"
-sudo apt install ./build/innogpu-fh2m-trixie_4.0.0-i1.deb
+sudo apt install ./debs/archive/legacy-build/innogpu-fh2m-trixie_4.0.0-i1.deb
 # 安装后暂停，重启后再做 A1-A12 验收；任一失败按 recovery.md 回退 patched-27
 ```
 
@@ -156,7 +156,7 @@ patched-20 仅保留运行证据，不提供重新部署或回退到该版本的
 作为源码或载荷基线，也不得从不同版本挑选 DRI、GBM、GLAPI、DDX 或固件拼装。新包还必须通过：
 
 ```sh
-scripts/check-release-package.sh build/<new-package>.deb
+scripts/check-release-package.sh .build/work/<round>/packages/<new-package>.deb
 ```
 
 `4.0.1-i1` 已完成离线构建、安装与 s2idle 验收，但因红屏失败；`4.0.1-i2` 已完成一次

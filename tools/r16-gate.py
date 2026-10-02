@@ -33,9 +33,9 @@ specific FAIL line printed to stderr; a misleading PASS is never produced):
        - MISSING + disposition=drop       → FAIL (defensive default)
 
 Reads:
-  build/p2-manifest.tsv                          (P2 manifest)
-  build/r16-evidence/canon-to-bc.tsv             (built by r16-build-bc-map.py)
-  build/r16-evidence/per-file-classification.tsv (built by r16-classify.py)
+  .build/evidence/r16/p2-manifest.tsv                          (accepted P2 manifest)
+  .build/evidence/r16/r16-evidence/canon-to-bc.tsv             (accepted BC map)
+  .build/evidence/r16/r16-evidence/per-file-classification.tsv (accepted classification)
 
 Exit codes:
   0 — all gates PASS
@@ -48,9 +48,9 @@ import os
 import sys
 from collections import Counter, defaultdict
 
-MANIFEST = os.environ.get("R16_MANIFEST", "build/p2-manifest.tsv")
-BC_MAP = os.environ.get("R16_BC_MAP", "build/r16-evidence/canon-to-bc.tsv")
-PER_FILE = os.environ.get("R16_PER_FILE", "build/r16-evidence/per-file-classification.tsv")
+MANIFEST = os.environ.get("R16_MANIFEST", ".build/evidence/r16/p2-manifest.tsv")
+BC_MAP = os.environ.get("R16_BC_MAP", ".build/evidence/r16/r16-evidence/canon-to-bc.tsv")
+PER_FILE = os.environ.get("R16_PER_FILE", ".build/evidence/r16/r16-evidence/per-file-classification.tsv")
 
 REQUIRED_BCS = {
     'BC-01', 'BC-02', 'BC-03', 'BC-04', 'BC-05', 'BC-06', 'BC-07',

@@ -2,19 +2,21 @@
 # Phase-3 oracle comparison: new-architecture candidate vs patched-27 (old builder).
 # Compares control fields, file lists, payload hashes, maintainer scripts and
 # module symbols. Read-only; no install, no reboot.
+# shellcheck disable=SC2015 # report() is deliberately used in compact PASS/FAIL branches
 
 set -euo pipefail
 
 ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$ROOT"
 
-CAND="${1:-$ROOT/build/innogpu-fh2m-trixie_4.0.0-i1.deb}"
+CAND="${1:-$ROOT/debs/archive/legacy-build/innogpu-fh2m-trixie_4.0.0-i1.deb}"
 REF="${2:-$ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb}"
 KERNEL="${3:-${KERNELDIR_VER:-$(uname -r)}}"
 [[ -f "$CAND" ]] || { echo "oracle_candidate=FAIL missing $CAND"; exit 1; }
 [[ -f "$REF" ]] || { echo "oracle_reference=FAIL missing $REF"; exit 1; }
 
-W="$(mktemp -d "$ROOT/build/oracle.XXXXXX")"
+mkdir -p "$ROOT/.build/work"
+W="$(mktemp -d "$ROOT/.build/work/oracle.XXXXXX")"
 trap 'rm -rf "$W"' EXIT
 mkdir -p "$W/ref" "$W/cand"
 dpkg-deb -x "$REF" "$W/ref/"
