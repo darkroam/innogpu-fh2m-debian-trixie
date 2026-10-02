@@ -49,3 +49,7 @@ xHCI quirk 日志：`PASS` 才证明 `0x80` reset-on-resume 位生效；`FAIL` �
 已安装测试模块位于 `/lib/modules/6.12.107+deb13-amd64/updates/r49/xhci-pci.ko.xz`。现场回退
 脚本保存在 `.build/r49-xhci-fix-20261001/rollback.sh`；移除覆盖模块并恢复该内核 initramfs 后
 重启即可回到发行版 xHCI 驱动。执行回退仍属于宿主修改，必须另行获准。
+
+后续部署使用当前系统包管理器提供的匹配内核源码包和目标内核 headers，不再复用临时 R49
+源码树。由于 `CONFIG_USB_XHCI_PCI=m`，只需重编 `xhci-pci.ko`；源码包保留在 `debs/` 供同一
+内核版本后续补丁复用，直到该内核退役。

@@ -28,6 +28,12 @@
 | `generate-binary-manifest.py`（tools/） | 清单生成 | 从 Deepin deb 确定性生成 `binary-manifest.json`（校验 deb SHA、覆盖全部黑盒文件与符号链接、kind/role/license 分类） |
 | `compare-oracle-candidates.sh` | oracle 对比 | 新架构候选包 vs patched-27：对比 control（除 Version/Description/Installed-Size）、文件清单、载荷哈希、DKMS 源码、黑盒对象、maintainer 脚本（版本归一）、版本排序与 module_symbols（调用 compare-module-symbols.sh）；构建产物（.o.cmd/.o/.ko/modules.order/Module.symvers/.mod）统一按 ARTIFACT_RE 排除；输出机器可读 PASS/FAIL |
 | `compare-module-symbols.sh` | 只读符号对比 | 离线构建候选与 patched-27 两包 DKMS 源码（同一内核头），逐 .ko 对比 vermagic/depends/导出符号/导入符号；构建于 `$ROOT/.build/`，不安装不重启；module_symbols=PASS/FAIL/UNCOMPARABLE |
+| `build-linux-patched-modules.sh` | Linux 第三方补丁构建 | 从 `debs/` 复用或通过 APT 下载精确源码 `.deb`，临时展开并严格应用 001/002，针对已安装内核只构建 `xhci-pci.ko` 与 `battery.ko`；不安装、不重启 |
+| `install-linux-patched-modules.sh` | 受监督模块安装 | 校验构建证据，备份原始模块/initramfs，安装到 `updates/r51/` 并刷新 depmod/initramfs；不自动重启 |
+| `rollback-linux-patched-modules.sh` | 模块回退 | 删除 `updates/r51/` 覆盖模块并恢复安装前 initramfs；需要 root，不自动重启 |
+| `r51-battery-task3-verify.sh` | R51 安装后验收 | 核对已加载 battery/xHCI Build ID 与 `0x90` quirk，指引一轮拔电/插电并自动保存 sysfs/udev/journal 时间线；不触发 PM |
+| `cleanup-linux-module-worktree.sh` | 源码工作树清理 | 只删除本轮展开源码和构建树，保留 `debs/` 源码包、模块与日志 |
+| `prune-kernel-source-cache.sh` | 旧源码包清理 | 默认只列出无对应已安装内核的源码 `.deb`；显式 `--delete` 才删除，当前实现面向 Debian |
 | `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；R49 候选仅 `5.0.0-i12` + epoch `1790812800`：继承已审 i11，严格应用 `030-035` 私有对象 accessor 修复。编译/包内源共用最终派生树门 `9a8d185f2a65`；i1-i11/未知版本/错 epoch 拒绝，ABI 门保持。i12 A/B 与安装通过，运行验收首轮因外接输入未恢复失败停止；历史成绩不改 |
 | `generate-fantgpu-maintainer-scripts.sh` | F 构建器共用生成段 | 只向显式 PACKAGE_ROOT 的 DEBIAN/ 写 postinst/prerm/postrm，生产与回归共用。K 全集检查/失败传播；两调用点共用配置门，仅固定 autoinstall_all_kernels.conf 已审 30 字节 SHA 例外，其它有效配置与目录/文件符号链接拒绝，不 source 配置取值。回退丢弃未装包暂存根，已安装包另行批准恢复 |
 | `build-patched17-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝把 patched-17 作为后续构建父版本 |
@@ -116,6 +122,9 @@ xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项
 `check-hygon-xhci-resume-fix.sh` 是受影响 Hygon `1d94:148c` 宿主在内核/系统升级后的只读门禁：
 从 sysfs 定位控制器，并从当前 boot 日志核 `XHCI_RESET_ON_RESUME` 的 `0x80` quirk 位。
 `FAIL` 或 `UNVERIFIED` 均不得继续 suspend 验收；不加载模块、不触发 PM。
+
+`tests/linux/run-battery-delay-static-tests.sh` 锁定 002 补丁的 SHA、KaiTian/X7h G1e 双 DMI 匹配、
+既有 delay callback 和 107 基线声明；它只验证补丁形状，不替代安装后的拔插测试。
 
 `run-capability-survey.sh` 编译并运行 Vulkan/OpenCL/VA-API 最小枚举探针并抓取 sysfs 环境快照，输出保存到 `baselines/capability-survey-<ts>.log`（可用 `--out DIR` 改位置）；只读，不 modeset、不改配置。设备无 DRM render 节点时（如无特权容器）优雅降级并记录失败本身。
 其中 `check-docs.sh` 检查根入口、`LICENSES/`、`drivers/`、`docs/`、`scripts/`、`baselines/`、

@@ -1,6 +1,6 @@
 # 当前状态与问题清单
 
-最后更新：2026-10-01
+最后更新：2026-10-02
 
 本文件是项目当前运行状态的唯一摘要。历史过程、补丁细节和故障推导分别见
 [阶段补丁](../patches/README.md) 与 [事故和经验](../incidents/README.md)。
@@ -9,7 +9,7 @@
 
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
-| 当前运行驱动 | **fantgpu 5.0.0-i12（干净候选，非发布）**，运行于 `6.12.107+deb13-amd64`；R49 最终 3/3 devices + 1/1 normal deep 通过。Hygon xHCI 修复为独立宿主模块，不在 i12 包内；用户选择 R5 维持 FAIL 进入观察期 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01) |
+| 当前运行驱动 | **fantgpu 5.0.0-i12（干净候选，非发布）**，运行于 `6.12.107+deb13-amd64`；R49 最终 3/3 devices + 1/1 normal deep 通过。R51 已加载独立 Hygon xHCI 001 与 KaiTian battery 002 模块，一轮拔/插电验收通过，待审查；用户选择 R5 维持 FAIL 进入观察期 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01) |
 | 当前磁盘安装 | **fantgpu 5.0.0-i12**；R49 七项预检后唯一一次安装与 8/8 受管内核后验通过，当前加载模块身份与磁盘一致 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01) |
 | 回退基线 | `4.0.2-i3`（deepin 血缘最终交付）：R14 6/6 deep 矩阵通过；包 SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；回滚卡见 r5dpm2 设计 §8，执行须另行授权 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md)、[回滚卡](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
 | 当前主线目标 | `5.0.0-iN`（tag `fantgpu-5.0.0-iN` **未打**）；发布阻断：`validation-results` 未签、R5=FAIL 观察期未解除；`postinst_current_kernel_only` 已覆盖至 i12，1C 不变 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01)、[030 映射表](../planning/030-mapping-table.md) |

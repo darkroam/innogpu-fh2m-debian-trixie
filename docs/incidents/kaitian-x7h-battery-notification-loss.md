@@ -20,7 +20,11 @@
 
 第三方 workaround：[`components/linux/002-kaitian-x7h-battery-notification-delay.patch`](../../components/linux/002-kaitian-x7h-battery-notification-delay.patch) 复用 Linux 现有 `battery_notification_delay_ms=1000` 机制，仅匹配该机型的 DMI。适用基线为 Debian `linux-source-6.12` `6.12.107-1`；换用其他内核版本必须重新检查上下文/API 并离线编译验证。它不修改 ACPI、通用 PM 顺序或其他机型。
 
-该补丁已通过 `patch --dry-run --fuzz=0`、`olddefconfig` 和 `drivers/acpi/battery.o` 离线编译；尚未安装或运行验证。优先修复路径仍是 BIOS/EC/DSDT；补丁是本机内核兜底，安装需另行授权。
+该补丁已通过 `patch --dry-run --fuzz=0`、`olddefconfig` 和 `drivers/acpi/battery.o` 离线编译，
+并以模块方式安装到 `6.12.107+deb13-amd64` 的 `updates/r51/`。重启后已加载模块 Build ID
+与目标文件精确一致。一轮真实拔电/插电中，ADP1 通知后约 1.02 s 出现 BAT0 变更，
+BAT0 全程 `present=1`；插回后 `ADP1 online=1`、BAT0 capacity=95，电池内核错误为 0。
+运行 workaround 验收通过。优先修复路径仍是 BIOS/EC/DSDT；补丁是本机内核兜底。
 
 没有该内核补丁时，现场可先运行 [`scripts/restore-bat0.sh`](../../scripts/restore-bat0.sh)。脚本从普通用户
 启动并自动提权，记录完整证据，然后对 ACPI `PNP0C0A:*` battery 设备执行 unbind/bind；它不要求
@@ -30,3 +34,10 @@
 ## 维护要求
 
 未来更换内核基座时必须重新检查该 DMI 机型是否仍需要此 workaround，并复跑一次拔电/插电序列；不得因新内核能启动就删除补丁或把固件缺陷当作已消失。
+
+长期部署优先使用当前系统包管理器提供的匹配源码包，不复用临时诊断源码树。当前 Debian 流程
+把源码 `.deb` 保留在 `debs/`，每次临时展开，严格应用 001/002，并只重编当前配置为模块的
+`xhci-pci.ko` 和 `battery.ko`。源码 `.deb` 保留到对应内核版本退役。
+
+安装后验收入口为 `scripts/r51-battery-task3-verify.sh`；它从普通用户启动、自动 sudo 并将
+完整时间线保存到 `.build/r51-module-deploy-20261002-10/runtime/`。

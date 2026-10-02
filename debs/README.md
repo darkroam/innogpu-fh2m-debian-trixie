@@ -5,6 +5,22 @@
 （`project-tools` / `driver-source`，见 [docs/project/licensing.md](../docs/project/licensing.md)）。
 本目录存在不等于可发布。仓库只跟踪本说明文件，避免把大体积二进制包和本机版本状态混入源码历史。
 
+## 内核源码包缓存
+
+内核第三方补丁优先使用当前系统包管理器提供的、与目标内核精确匹配的源码包。当前 Debian
+基线保存为 `debs/linux-source-6.12_6.12.107-1_all.deb`。源码 `.deb` 只作本地可复用输入，
+不安装成系统源码包；构建时临时展开干净源码树，只重编目标模块。
+
+当前 107 源码包 SHA-256：
+
+```text
+775b9ef84d7fa7927ccebfec33fbbe9aeb2482ebf9a92c771aafd33fb6e2ee27
+```
+
+展开树和构建树属于本轮证据，审查完成后可清理。源码 `.deb` 不在一次验证完成后立即删除；只有
+对应内核版本不再保留时，才可通过 `scripts/prune-kernel-source-cache.sh --delete` 明确清理。
+非 Debian 系统应使用自身包管理器的源码包并记录包名、版本、来源和 SHA-256。
+
 ## 输入包
 
 后续 coherent 构建以 Deepin 202504 原包为唯一技术基线。**当前新架构（4.0.0-i1）**由

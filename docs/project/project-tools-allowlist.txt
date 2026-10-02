@@ -239,6 +239,7 @@ license-audit-policy.json
 scripts/README.md
 scripts/build-deepin-coherent.sh
 scripts/build-innogpu-driver.sh
+scripts/build-linux-patched-modules.sh
 scripts/build-patched-fbterm.sh
 scripts/build-patched-picom.sh
 scripts/build-patched17-deepin-local-display.sh
@@ -266,6 +267,7 @@ scripts/check-post-reboot-hwgl.sh
 scripts/check-release-package.sh
 scripts/check-soft-xorg-dwm.sh
 scripts/check-source-parity.sh
+scripts/cleanup-linux-module-worktree.sh
 scripts/compare-module-symbols.sh
 scripts/compare-oracle-candidates.sh
 scripts/disable-incompatible-userspace.sh
@@ -277,6 +279,7 @@ scripts/install-dri-node-repair-service.sh
 scripts/install-experimental-hwgl.sh
 scripts/install-hygon-hda-audio.sh
 scripts/install-kylin-userspace.sh
+scripts/install-linux-patched-modules.sh
 scripts/install-patched17-and-check.sh
 scripts/install-patched8-and-check.sh
 scripts/install-picom-prereqs-debian.sh
@@ -292,11 +295,14 @@ scripts/phase4-baseline-capture.sh
 scripts/picom-session.sh
 scripts/prepare-deepin-userspace-root.sh
 scripts/prepare-soft-xorg-dwm.sh
+scripts/prune-kernel-source-cache.sh
 scripts/r51-battery-task2.sh
+scripts/r51-battery-task3-verify.sh
 scripts/repair-dri-nodes.sh
 scripts/restore-bat0.sh
 scripts/restore-dp1-mode-x11.sh
 scripts/restore-tty1-login.sh
+scripts/rollback-linux-patched-modules.sh
 scripts/run-capability-survey.sh
 scripts/run-deepin-gbm-egl.sh
 scripts/run-deepin-surfaceless-egl.sh
@@ -322,6 +328,7 @@ tests/fixtures/manifest-link-escape.json
 tests/fixtures/manifest-missing-license.json
 tests/fixtures/manifest-missing-sha.json
 tests/fixtures/manifest-traversal.json
+tests/linux/run-battery-delay-static-tests.sh
 tests/linux/run-xhci-quirk-static-tests.sh
 tests/package/run-boundary-tests.sh
 tests/picom/run-install-tests.sh

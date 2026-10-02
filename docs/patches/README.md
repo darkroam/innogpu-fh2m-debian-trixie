@@ -59,8 +59,10 @@ OUTSIDE_COVERAGE、禁止重跑、U1/U2 未执行、validation-results 未签、
   迁入 `drivers/`，部分是混合/未决许可并排除出公开制品。
 - `drivers/` 与 DKMS：这是厂商驱动源码和其构建/打包路径。是否第三方取决于源码来源和
   许可声明，不取决于 DKMS 这个包装机制。
-- Linux `components/linux/*.patch`：修改发行版内核源码，通常需要重新构建对应内核包；
-  不会因为 DKMS 自动应用，也不会随普通内核 `.deb` 升级自动保留。
+- Linux `components/linux/*.patch`：修改发行版内核源码，不会因为 DKMS 自动应用，也不会随普通
+  内核升级自动保留。长期部署优先从当前系统包管理器获取与目标内核匹配的源码包；当前 Debian
+  实现使用 `apt-get download linux-source-6.12=<version>`，源码 `.deb` 保存在本地 `debs/`，
+  不安装成系统源码包。
 
 ### 部署前置条件
 
@@ -68,13 +70,23 @@ OUTSIDE_COVERAGE、禁止重跑、U1/U2 未执行、validation-results 未签、
 | --- | --- | --- |
 | fbterm-001 | fbterm 1.7-5 源码或对应 Debian 源码包，以及 fbterm 构建依赖；不需要内核 headers | 不使用 fbterm 或不需要该 redraw 行为时不构建、不安装 |
 | picom-001 | 固定 picom commit 的完整源码，以及 picom 构建依赖；不需要内核 headers | 不使用 patched picom 时不构建、不安装 |
-| Linux xHCI reset-on-resume | 与补丁基线匹配的完整 Linux 内核源码树（当前为 `6.12.107-1`）和内核构建依赖；仅安装 headers 不足 | 不使用该内核候选或设备不需要该 Hygon quirk 时不应用；普通 DKMS 构建不会自动接入 |
-| Linux ACPI battery workaround | 与补丁基线匹配的完整 Linux 内核源码树（当前为 `6.12.107-1`）和内核构建依赖；仅安装 headers 不足 | 不使用该机型电池 workaround 时不应用；普通 DKMS 构建不会自动接入 |
+| Linux xHCI reset-on-resume | 包管理器提供的匹配源码包、目标内核 headers/build tree、`CONFIG_USB_XHCI_PCI=m` 和构建依赖 | 不使用该内核候选或设备不需要该 Hygon quirk 时不应用；普通 DKMS 构建不会自动接入 |
+| Linux ACPI battery workaround | 包管理器提供的匹配源码包、目标内核 headers/build tree、`CONFIG_ACPI_BATTERY=m` 和构建依赖 | 不使用该机型电池 workaround 时不应用；普通 DKMS 构建不会自动接入 |
 
 Linux 两个补丁是“内核源码补丁”，不是 DKMS 模块补丁。若发行版已经提供包含同等修改的内核
-`.deb`，直接安装该包即可；若 `.deb` 不包含修改，就必须从匹配的完整源码构建内核包。仅有
-`linux-headers` 只能编译外部模块，不能把修改注入 `drivers/acpi/battery.c` 或
-`drivers/usb/host/xhci-pci.c`。
+包，直接安装该包即可；否则从包管理器取得匹配的完整源码包并在证据目录临时展开。当前 107
+配置中两个目标均为模块，因此长期部署只重编 `battery.ko` 和 `xhci-pci.ko`，不重建 `bzImage`。
+源码包提供目标 `.c`，headers/build tree 提供已安装内核的生成头、符号和 `vermagic`；两者不能
+相互替代。
+
+源码 `.deb` 持久保存在 `debs/`；每次构建重新展开干净工作树。工作树、构建输出及安装证据位于
+本轮 `.build/` 证据目录，审查后可只清理工作树。源码 `.deb` 只有在对应内核版本不再保留且用户
+明确执行清理时才删除。入口为 `build-linux-patched-modules.sh`、
+`install-linux-patched-modules.sh`、`rollback-linux-patched-modules.sh`、
+`cleanup-linux-module-worktree.sh` 和 `prune-kernel-source-cache.sh`。
+
+脚本对未知包管理器、源码版本不匹配、补丁 fuzz、非模块配置及 `vermagic` 不匹配 fail-closed。
+未来 RPM 系统应接入其包管理器的源码包，不得把 Debian 包名硬套到其他发行版。
 
 `components/linux/001-hygon-148c-xhci-reset-on-resume.patch` 也属于第三方派生补丁：它修改
 的是上游 Linux xHCI PCI 驱动，而不是 DKMS 的 InnoGPU 驱动。目标设备若不需要该 quirk，或使用
