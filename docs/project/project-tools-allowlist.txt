@@ -300,6 +300,7 @@ scripts/prune-kernel-source-cache.sh
 scripts/r50-grub-task2-audit.sh
 scripts/r50-storage-task3.sh
 scripts/r50-storage-task4.py
+scripts/r50-storage-task5.py
 scripts/r51-battery-task2.sh
 scripts/r51-battery-task3-verify.sh
 scripts/repair-dri-nodes.sh
