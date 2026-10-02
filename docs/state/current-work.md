@@ -3,14 +3,14 @@
 本文件是未完成工作的唯一权威清单。当前运行结论见
 [`status.md`](../project/status.md)，已完成工作与时序记录见 [`../history/todo.md`](../history/todo.md)。
 
-## R5 悬案与 fantgpu 5.0.0 主线（当前最高优先级）
+## R5 闭合与 fantgpu 5.0.0 主线（当前最高优先级）
 
-**接续（2026-10-01）**：当前磁盘与运行均为 i12/107。R48 accessor 修复已闭合源码级根因链；
-R49 最终 3/3 devices + 1/1 normal deep 验收通过。用户选择暂不翻转 R5，维持 FAIL 观察期；
+**接续（2026-10-02）**：当前磁盘与运行均为 i12/107。R48 accessor 修复已闭合源码级根因链；
+R49 最终 3/3 devices + 1/1 normal deep 验收通过，观察期无复发后用户已裁决 R5 通过；
 详见[R49 当前状态](../project/status.md#r49-验收与-r5-观察期2026-10-01)。R50 已清理纯构建暂存、
 63/90/95/96 和六个 r5obs2 过程内核；任务段 3 又净回收约 298.50 GiB，保留集前后不变。
 107/101/r5dpm1/r5dpm2、回滚卡与证据根继续保留；任务段 4 已按物理 TTY 回执完成 43 项同盘迁移，
-旧 `build/` 已退役，真实 R16 gate 与 151+50 项回归通过，现等待 qoder 窄复核与 dsh 终审。
+旧 `build/` 已退役，真实 R16 gate 与 151+50 项回归通过，并由 qoder/dsh 复核收档。
 
 - [ ] **R51 待审查**：107 已加载包含 Hygon xHCI 001 与 KaiTian battery 002 的独立模块；
   一轮拔电/插电中 BAT0 全程存在，插回后 capacity 可读，xHCI quirk 为 `0x90`。
@@ -21,16 +21,19 @@ R49 最终 3/3 devices + 1/1 normal deep 验收通过。用户选择暂不翻转
   差距，核心是 R5 挂起/恢复。Deepin 的 6/6 deep、显示恢复及 PVR 错误判据是对齐目标，
   不能用 F 构建成功、首启健康或包验收代替。依据见
   [当前基线](../project/status.md#当前基线)、[Deepin 验收边界](../patches/029-suspend-resume-ddcci-panel.md#当前状态)。
-- [ ] **R5 观察期裁决**：R48 源码级根因链与 R49 修复后 3+1 验收证据已闭合，但用户选择
-  `R5=FAIL` 暂不翻转。观察期内保留证据，不改写早期 `OUTSIDE_COVERAGE`；期满后由用户裁决。
-  未另行授权不得继续执行 pm_test/watchdog。
+- **R5 闭合说明（非待办）**：R48 源码级根因链、R49 修复后 3+1 验收与观察期无复发均已闭合，
+  用户裁决 R5 通过。根因是把指向外层 `fantgpu_drm_private` 的 `dev_private` 当作内嵌
+  `ft_drm_private`，使 `dev_node` 错读为 NULL，进而 `SuspendDVFS=6`、`-EFAULT` 并中止 suspend；
+  030-035 用既有 accessor 修正两处读取。R49 首轮另发现独立 Hygon xHCI 恢复缺陷，第三方 Linux
+  001 为 `1d94:148c` 启用既有 `XHCI_RESET_ON_RESUME` 后，键盘/RTL8153 与最终 3+1 全通过。
+  该翻转不改写早期 `OUTSIDE_COVERAGE` 或失败轮；未另行授权仍不得继续执行 pm_test/watchdog。
 - [ ] **发布阻断（fantgpu 5.0.0-iN 线）**：② `validation-results.json` 未签；③ tag
-  `fantgpu-5.0.0-iN` 未打；④ R5=FAIL 未解除。① `postinst_current_kernel_only` 已由 dsh
+  `fantgpu-5.0.0-iN` 未打。① `postinst_current_kernel_only` 与④ R5 均已解除；前者由 dsh
   在 R28 接受精确 i9 的真实八核安装证据后裁定解除；R49 已将安装后验覆盖至 i12，运行验收
   与发布裁定仍分开。裁定来源见 [status](../project/status.md#r49-验收与-r5-观察期2026-10-01)。
   许可发布边界（1C/BLOCKED）不变。
-- [ ] 诊断内核处置：r5dpm1/r5dpm2 包保留，卸载待另行裁决；R50 后 GRUB 只列
-  107/101/r5dpm1/r5dpm2，默认仍解析 107（改默认须另立变更）。
+- [ ] **诊断内核卸载（已裁决）**：用户已裁决卸载 r5dpm1/r5dpm2，由 R50 任务段 5 按包管理
+  正常路径执行；保留 107 默认与 101 回退，不改变 GRUB 默认。
 
 **优先级与接续（2026-09-24）**：此前暂缓的 107 兼容修复，已按用户后续「先修复，然后再继续」
 授权在 i9 完成；R28 的真实八核安装与 107 基础首启已获终审接受。R30 的 i10 八核 A/B
@@ -39,7 +42,7 @@ i10/107 基础首启与18/18输入挂接观察通过，证据待复核；输入�
 仍为主线，构建/安装/基础首启均不代替 deep、显示恢复与 PVR 判据。
 R27 早期八核窗口的 `FAILED_OR_UNVERIFIED` 原记录保留，不通过删除107或缩小历史矩阵改写为通过；
 各次窗口单列身份与结果，不改变宿主内核清单、默认启动项或生产 postinst 的目标集合。
-冻结不变：OUTSIDE_COVERAGE、R5=FAIL、禁止重跑、U1/U2、validation-results、未打 tag。
+历史边界不变：OUTSIDE_COVERAGE 不重写、禁止重跑、U1/U2、validation-results、未打 tag。
 
 **闭合说明（R21 叙事批量提升，非待办）**：R20 的 D2 已由 `841c07a` 闭合，D4 已由 `6370fa2` 闭合；
 见 [D2 记录](../history/history.md#2026-09-21-r20-d2-叙事提升试点闭合)与

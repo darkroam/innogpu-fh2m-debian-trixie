@@ -9,13 +9,13 @@
 
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
-| 当前运行驱动 | **fantgpu 5.0.0-i12（干净候选，非发布）**，运行于 `6.12.107+deb13-amd64`；R49 最终 3/3 devices + 1/1 normal deep 通过。R51 已加载独立 Hygon xHCI 001 与 KaiTian battery 002 模块，一轮拔/插电验收通过，待审查；用户选择 R5 维持 FAIL 进入观察期 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01) |
+| 当前运行驱动 | **fantgpu 5.0.0-i12（干净候选，非发布）**，运行于 `6.12.107+deb13-amd64`；R49 最终 3/3 devices + 1/1 normal deep 通过，观察期无复发后用户裁决 R5 通过。R51 已加载独立 Hygon xHCI 001 与 KaiTian battery 002 模块，一轮拔/插电验收通过，待审查 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01) |
 | 当前磁盘安装 | **fantgpu 5.0.0-i12**；R49 七项预检后唯一一次安装与 8/8 受管内核后验通过，当前加载模块身份与磁盘一致 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01) |
 | 回退基线 | `4.0.2-i3`（deepin 血缘最终交付）：R14 6/6 deep 矩阵通过；包 SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；回滚卡见 r5dpm2 设计 §8，执行须另行授权 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md)、[回滚卡](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
-| 当前主线目标 | `5.0.0-iN`（tag `fantgpu-5.0.0-iN` **未打**）；发布阻断：`validation-results` 未签、R5=FAIL 观察期未解除；`postinst_current_kernel_only` 已覆盖至 i12，1C 不变 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01)、[030 映射表](../planning/030-mapping-table.md) |
+| 当前主线目标 | `5.0.0-iN`（tag `fantgpu-5.0.0-iN` **未打**）；R5 阻断已解除，剩余发布阻断为 `validation-results` 未签与 tag 未打；`postinst_current_kernel_only` 已覆盖至 i12，1C 不变 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01)、[030 映射表](../planning/030-mapping-table.md) |
 | 历史当前态（2026-09-03 记录） | `4.0.2-i3` 已安装并重启至 `6.12.101+deb13-amd64`；R16 迁移后降为回退基线 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
-| R5 观察期 | R48 已闭合 accessor 错布局根因链，R49 修复后最终 3+1 验收通过；用户选择暂不翻转，`R5=FAIL` 保持至观察期后再裁决。早期 `OUTSIDE_COVERAGE` 与失败记录不重写 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01)、[r5 调查计划](../design/r5-suspend-investigation-plan.md) |
-| 内核保留集 | R50 后仅保留 `6.12.107+deb13-amd64`（运行/默认）、`6.12.101+deb13-amd64`（回退）、`6.12.101-r5dpm1`/`r5dpm2`（诊断，卸载待另行裁决）；63/90/95/96 与 r47b-r47f/r48 六个 r5obs2 过程内核已清理 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01) |
+| R5 状态 | **已解决**：R48 闭合 accessor 错布局根因链，R49 修复后最终 3+1 验收通过，观察期无复发后用户裁决 R5 通过；早期 `OUTSIDE_COVERAGE` 与失败记录不重写 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01)、[r5 调查计划](../design/r5-suspend-investigation-plan.md) |
+| 内核保留集 | 当前为 `6.12.107+deb13-amd64`（运行/默认）、`6.12.101+deb13-amd64`（回退）、`6.12.101-r5dpm1`/`r5dpm2`（诊断）；用户已裁决卸载两套诊断内核，由 R50 任务段 5 执行。63/90/95/96 与 r47b-r47f/r48 六个 r5obs2 过程内核已清理 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01) |
 | 稳定图形历史基线 | 历史记录：`3.3.3.42-patched-21` 已安装、重启并完成本机 PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收；不是当前运行包 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | 历史运行基线 | `3.3.3.42-patched-20` 曾完成运行验收，但 deb 含收敛前辅助载荷，仅保留为历史证据 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
 | 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |
@@ -43,13 +43,25 @@
 
 ### R49 验收与 R5 观察期（2026-10-01）
 
-R48 的 030-035 accessor 修复闭合源码级根因链；R49 构建并唯一一次安装 i12，8/8 受管内核
-后验通过。首轮 devices 暴露独立的 Hygon `1d94:148c` xHCI 恢复缺陷，精确启用既有
-`XHCI_RESET_ON_RESUME` 后，最终新一组 3/3 devices 与 1/1 normal deep 均 rc=0，DVFS、
-Corsair HID、RTL8153 和键盘 LED 恢复门通过。该 xHCI 修复是独立宿主模块，不在 i12 包内。
+**R5 根因与修复**：030-026 移植时把 `ddev->dev_private` 直接当作内嵌
+`ft_drm_private` 读取，但 F 驱动的该字段实际指向外层 `fantgpu_drm_private`；外层 offset 0 是从未
+赋值、`kzalloc` 后为 NULL 的 `dev`，真实 private 位于内嵌 `ft_priv`。错布局读取因此把
+`priv->dev_node` 解析为 NULL，形成 `SuspendDVFS(NULL)=6 (PVRSRV_ERROR_INVALID_DEVICE)` →
+`-EFAULT` → suspend 中止 → 异步子设备等待父 completion 的完整故障链。R48 的 030-035 只将两处
+错误读取改为项目已有 `fantgpu_drm_to_ft_private()` accessor；不改变 `SuspendDVFS`、结构布局、
+闭源对象或 PM 顺序。该结论与 netconsole 的 `rc=6 propagated=-14`、反汇编“仅 NULL 入参返回 6”
+及 R36/R38 观测一致。
 
-用户裁决选择暂不翻转 R5：R49 验收证据保留，`R5=FAIL` 进入观察期，观察期结束后再裁决；
-validation-results 未签、tag 未打、发布级阻断与 1C 均不变。R50 随后清理纯构建暂存、
+**R49 干净候选与额外发现**：R49 将 030-035 接入干净 i12，唯一一次安装后 8/8 受管内核后验
+通过。首轮 `pm_test=devices` 中 F 的 DVFS/PCI/DRM 已全部 rc=0，但外接键盘和 RTL8153 未恢复；
+该轮按整机判据记为失败并停止。排查确认是独立于 R5 的 Hygon `1d94:148c` xHCI 恢复缺陷：控制器
+原只有基础 quirk `0x10`，该设备 ID 未启用内核既有、值为 `0x80` 的 `XHCI_RESET_ON_RESUME`。第三方 Linux
+组件补丁 001 仅给该 ID 增加现成 quirk，部署后实测 `quirks=0x90`；没有修改 fantgpu、R5 accessor
+或 PM 顺序。修复后的新一组 3/3 devices 与 1/1 normal deep 均 rc=0，DVFS、Corsair HID、
+RTL8153、键盘 LED 与往返恢复门全部通过。原首轮失败仍保留，不追认为 PASS。
+
+用户最初裁决暂不翻转 R5，保留 R49 验收证据进入观察期；观察期无复发后，用户于 2026-10-02
+裁决 R5 通过。R5 发布阻断据此解除；validation-results 未签、tag 未打与 1C 均不变。R50 随后清理纯构建暂存、
 63/90/95/96 和六个无包所有者的 r5obs2 过程内核；GRUB 由 `update-grub` 重建，107 仍为首项，
 101 与 r5dpm1/r5dpm2 完整保留，未重启。R36/R48/R49 证据根与 4.0.2-i3 回滚实物不动。
 本机证据位于 `.build/r49-final-acceptance-20261001-01/` 与
@@ -107,6 +119,7 @@ R31 已从实际 i9 的血缘隔离 prerm 升级至 i10：八核 dpkg/postinst r
 
 | 问题 | 修复/结论 | 阶段 |
 | --- | --- | --- |
+| fantgpu suspend/resume R5：DVFS 返回 6 并中止挂起 | R48 以 030-035 将两处错布局读取改为既有 private accessor，闭合 `dev_private` 外层结构误读根因；R49 干净 i12 候选最终 3/3 devices + 1/1 normal deep 通过，观察期无复发后用户裁决 R5 通过 | R48 / R49 |
 | Debian 6.12 与厂商内核接口不兼容 | 通过兼容补丁适配 DKMS 构建；已补充 6.12.101 的 PCI resize API 参数变化 | `patch-001` |
 | DP 输出在启动阶段无安全 fallback | 当前候选启用 DP fbcon fallback | `patch-002` |
 | 面板背光/平台注册和初始 enable 试验 | 历史补丁已保留，4.0.0-i1 沿用关闭这些实验补丁的稳定选择 | `patch-003` 至 `patch-005` |
@@ -124,11 +137,6 @@ R31 已从实际 i9 的血缘隔离 prerm 升级至 i10：八核 dpkg/postinst r
 
 ## 当前未解决或需要后续处理
 
-- **R5 观察期（当前仍为 FAIL）**：早期两轮 DPM watchdog 的
-  `r5_dpm_watchdog_capture_reviewed=OUTSIDE_COVERAGE` 与失败历史保持原样；R48 后续以 accessor
-  错布局闭合源码级根因链，R49 的修复后最终 3+1 验收通过。用户选择暂不翻转，观察期后再裁决。
-  未另行授权不得继续执行 PM/watchdog；U1/U2 未执行、validation-results 未签、tag
-  `fantgpu-5.0.0-iN` 未打，发布级阻断与 1C 不变。
 - **R18 文档结构迭代主体已闭合**：R17 四轮已闭合，三篇[基线代际文档](../README.md)已审定；
   patched-27 的 `debs/` 实物补证已由 dsh 在 R17 §21.1 补记，原先「本机无实物」记录保留为错误资产。
   批 5 收档交叉确认已通过，工具适配另批（R19）已由 `e656612` 收档闭合；
