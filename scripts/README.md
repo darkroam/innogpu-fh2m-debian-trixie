@@ -32,6 +32,7 @@
 | `install-linux-patched-modules.sh` | 受监督模块安装 | 校验构建证据，备份原始模块/initramfs，安装到 `updates/r51/` 并刷新 depmod/initramfs；不自动重启 |
 | `rollback-linux-patched-modules.sh` | 模块回退 | 删除 `updates/r51/` 覆盖模块并恢复安装前 initramfs；需要 root，不自动重启 |
 | `r51-battery-task3-verify.sh` | R51 安装后验收 | 核对已加载 battery/xHCI Build ID 与 `0x90` quirk，指引一轮拔电/插电并自动保存 sysfs/udev/journal 时间线；不触发 PM |
+| `r50-grub-task2-audit.sh` | R50 GRUB 只读排查 | 从普通用户自动 sudo，采集 UEFI 变量、ESP/主 GRUB 配置、菜单与加载链到 R50 证据根；不修改宿主 |
 | `cleanup-linux-module-worktree.sh` | 源码工作树清理 | 只删除本轮展开源码和构建树，保留 `debs/` 源码包、模块与日志 |
 | `prune-kernel-source-cache.sh` | 旧源码包清理 | 默认只列出无对应已安装内核的源码 `.deb`；显式 `--delete` 才删除，当前实现面向 Debian |
 | `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；R49 候选仅 `5.0.0-i12` + epoch `1790812800`：继承已审 i11，严格应用 `030-035` 私有对象 accessor 修复。编译/包内源共用最终派生树门 `9a8d185f2a65`；i1-i11/未知版本/错 epoch 拒绝，ABI 门保持。i12 A/B 与安装通过，运行验收首轮因外接输入未恢复失败停止；历史成绩不改 |
