@@ -30,6 +30,7 @@ binary-manifest-fantgpu.json
 binary-manifest.json
 components/fbterm/001-configurable-redraw-scrolling.patch
 components/linux/001-hygon-148c-xhci-reset-on-resume.patch
+components/linux/002-kaitian-x7h-battery-notification-delay.patch
 components/picom/001-probe-explicit-uniform-location.patch
 components/picom/picom.conf
 docs/README.md
@@ -77,6 +78,7 @@ docs/incidents/boot-errors-attribution-20260903.md
 docs/incidents/design-phase-out-of-bounds-patch.md
 docs/incidents/fbterm-ypan-rendering.md
 docs/incidents/hygon-xhci-resume-input-loss.md
+docs/incidents/kaitian-x7h-battery-notification-loss.md
 docs/incidents/patched-17-fbdev-mmap.md
 docs/incidents/patched-18-shader-firmware.md
 docs/incidents/patched-18-userspace-mix.md
@@ -290,7 +292,9 @@ scripts/phase4-baseline-capture.sh
 scripts/picom-session.sh
 scripts/prepare-deepin-userspace-root.sh
 scripts/prepare-soft-xorg-dwm.sh
+scripts/r51-battery-task2.sh
 scripts/repair-dri-nodes.sh
+scripts/restore-bat0.sh
 scripts/restore-dp1-mode-x11.sh
 scripts/restore-tty1-login.sh
 scripts/run-capability-survey.sh
