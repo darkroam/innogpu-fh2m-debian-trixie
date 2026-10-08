@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0",
+  "id": "030-036",
+  "ledger_ref": {
+    "item": "030",
+    "neutral_record": "F-R52-111-bf-shf",
+    "mapping": "collab/R52-2026-10-03-111内核启动与驱动栈验证批/codex-report.md",
+    "description": "rename the driver-private bitfield shift macro so 6.12.111 headers can build i12"
+  },
+  "deepin_patch": {
+    "path": "patches/030-036.patch",
+    "sha256": "9229a1ffd5c499ca4a9bb3e1dab02d9005a6c141bb532c0f09771a7c6b31302b",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "installed i12 DKMS tree after 030-035; not a new archived snapshot",
+      "sha256": "not-a-snapshot-file"
+    },
+    "tree_hash": "9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee",
+    "chain_base": {
+      "id": "5.0.0-i12",
+      "after_tree_hash": "9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "private-macro-rename-only",
+      "summary": "6.12.111 defines __bf_shf as the object-like macro __builtin_ctzll. The i12 header still defines a function-like __bf_shf, and -Werror stops the DKMS build. Rename only the driver-private macro to __fant_bf_shf and keep (__builtin_ffsll(x) - 1). Do not undef or ifndef the kernel macro."
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "Three-token rename in the existing vendor Dual MIT/GPLv2 header; no new dependency, binary or third-party code."
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "i12-final-tree-not-builder-input",
+      "summary": "Parent is the locked 5.0.0-i12 tree 9a8d185f, which already contains 030-035 plus the i8-i11 derivations. 030-036 is not inserted into scripts/build-innogpu-driver.sh and does not change that gate. fantgpu/fant_math.h is byte-identical between the locked i6 snapshot and that i12 tree."
+    },
+    "o_stage_adaptation": {
+      "status": "not-applicable",
+      "verdict": "post-i12-header-conflict",
+      "summary": "No Deepin behavior change. The D-line header drivers/innogpu/inno_math.h is not a DKMS compile input and is outside this patch."
+    },
+    "adjacent_code": {
+      "status": "reviewed",
+      "verdict": "single-header",
+      "summary": "The installed i12 tree uses __bf_shf only on the definition line and the two FANT_FIELD_PREP/FANT_FIELD_GET expansions in fantgpu/fant_math.h."
+    }
+  },
+  "apply": {
+    "before_tree_hash": "9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee",
+    "after_tree_hash": "0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce",
+    "file_before_sha256": "bd04a4889d5225ffcf2a6ef63f7522434c68cd4a77fec533b849c5a688c2c680",
+    "file_after_sha256": "1131e9d54c092a1e3b5a75c9bea68d81c6ec2d0e7234014a9812248655534fbc",
+    "i6_replay_after_tree_hash": "ae65641f4f9da16eb5fee7f92249d4db282db952320ca5aadf36c2944c243082",
+    "patch_sha256": "9229a1ffd5c499ca4a9bb3e1dab02d9005a6c141bb532c0f09771a7c6b31302b",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <I12_TREE> < patches/030-036.patch",
+    "result": "One file, three token renames; strict dry-run and replay on the i12 tree and on the byte-identical i6 header pass; no .orig/.rej. The i6 replay hash is not the i12 deployment hash."
+  },
+  "rollback": {
+    "command": "patch --batch --reverse --fuzz=0 --no-backup-if-mismatch -p1 -d <I12_TREE> < patches/030-036.patch",
+    "target": "9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "strict -p1 --fuzz=0 application to the locked i6 snapshot header, which matches the i12 file bytes",
+        "exact scope fantgpu/fant_math.h with three __bf_shf to __fant_bf_shf renames",
+        "shift expression remains (__builtin_ffsll(x) - 1)",
+        "no #undef and no #ifndef",
+        "reverse application restores the locked i6 tree hash",
+        "i12 builder script still gates 9a8d185f and does not reference 030-036"
+      ]
+    },
+    "clean_build": {
+      "status": "pass",
+      "source_tree_hash": "0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce",
+      "kernel": "6.12.111+deb13-amd64",
+      "srcversion": "370AB248D72951EF3C0C4BB",
+      "evidence": ".build/r52-111-fix-20261008-02/",
+      "checks": [
+        "DKMS make.log exit 0 with MODPOST and BTF [M]",
+        "DKMS stores only the strip -g .ko.xz, so pahole ran on a same-command unstripped sibling",
+        "sibling and DKMS module srcversion both 370AB248D72951EF3C0C4BB",
+        "shipped ABI size=140536 members=115 pvr_resume_count offset=140528"
+      ]
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "After install and a user reboot into 111: fantgpu loaded, DRM card present, Xorg glamor, input attached, eight error counts, both Hygon 1d94:148c quirks=0x90, and one unplug/plug BAT0 recovery. No PM and no GRUB default change."
+    }
+  }
+}

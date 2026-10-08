@@ -102,6 +102,7 @@ docs/patches/026-suspend-resume-dvfs-lifecycle.md
 docs/patches/028-suspend-resume-hal-temp-monitor-delay.md
 docs/patches/029-suspend-resume-ddcci-panel.md
 docs/patches/030-035-private-accessor.md
+docs/patches/030-036-bf-shf-rename.md
 docs/patches/README.md
 docs/patches/patch-000-skip-first-gpupll.md
 docs/patches/patch-001-kernel-6.12.md
@@ -347,6 +348,7 @@ tests/unit/run-030-032-pm-probe-tests.sh
 tests/unit/run-030-033-shipped-abi-tests.sh
 tests/unit/run-030-034-stop-stage-tests.sh
 tests/unit/run-030-035-private-accessor-tests.sh
+tests/unit/run-030-036-bf-shf-rename-tests.sh
 tests/unit/run-030-meta-tests.sh
 tests/unit/run-builder-fantgpu-gates-tests.sh
 tests/unit/run-capability-baseline-tests.sh

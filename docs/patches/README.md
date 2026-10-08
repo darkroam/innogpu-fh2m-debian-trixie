@@ -15,6 +15,10 @@
 [i4 Oops 事故](../incidents/r5-i4-oops-dev-rsrc-abi.md)。ABI 修正不解除 R5=FAIL；
 OUTSIDE_COVERAGE、禁止重跑、U1/U2 未执行、validation-results 未签、未打 tag 均保持。
 
+`030-036` 是 i12 终树 `9a8d185f2a65` 之后的续编，不进入 i12 构建器，因此不改锁定终树门。
+它只把 `fantgpu/fant_math.h` 的私有 `__bf_shf` 改名为 `__fant_bf_shf`，移位表达式仍是
+`(__builtin_ffsll(x) - 1)`。见 [030-036](030-036-bf-shf-rename.md)。
+
 **以下分类为 Deepin 补丁与组件的历史记录，计数不含 030 链**：
 
 - `patches/*.patch`（18 个源码 diff：001–009、023–029，以及显示恢复候选

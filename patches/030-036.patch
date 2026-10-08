@@ -1,0 +1,22 @@
+diff --git a/fantgpu/fant_math.h b/fantgpu/fant_math.h
+--- a/fantgpu/fant_math.h
++++ b/fantgpu/fant_math.h
+@@ -54,15 +54,15 @@
+ #define __FANT_ALIGN_KERNEL_MASK(x, mask) (((x) + (mask)) & ~(mask))
+ #define FANT_ALIGN(x, a) __FANT_ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1)
+ 
+-#define __bf_shf(x) (__builtin_ffsll(x) - 1)
++#define __fant_bf_shf(x) (__builtin_ffsll(x) - 1)
+ #define FANT_FIELD_PREP(_mask, _val)						\
+ 	({								\
+-		((typeof(_mask))(_val) << __bf_shf(_mask)) & (_mask);	\
++		((typeof(_mask))(_val) << __fant_bf_shf(_mask)) & (_mask);	\
+ 	})
+ 
+ #define FANT_FIELD_GET(_mask, _reg)						\
+ 	({								\
+-		(typeof(_mask))(((_reg) & (_mask)) >> __bf_shf(_mask));	\
++		(typeof(_mask))(((_reg) & (_mask)) >> __fant_bf_shf(_mask));	\
+ 	})
+ 
+ unsigned long fh2m_fant_abs(unsigned long val);
