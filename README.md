@@ -5,7 +5,7 @@
 本项目自有工作采用 GPL-3.0-or-later；fork 上游 MIT 内容与导入源码/厂商载荷按各自声明处理，
 当前再分发边界见[许可证与再分发边界](docs/project/licensing.md)（唯一权威文档）。
 
-> 最后更新：2026-10-03 —— 当前主线为 fantgpu 5.0.0-iN（i12/107 验收通过，观察期后用户已裁决 R5 通过；R51 xHCI/battery 独立模块运行验收通过待审，见
+> 最后更新：2026-10-08 —— 当前主线为 fantgpu 5.0.0-iN（运行内核 `6.12.111+deb13-amd64`，i12+030-036 与 001/002 已按 111 验收；R51 三段与 R5 均已通过，见
 > [status.md](docs/project/status.md)）。历史（2026-09-03 记录）：当前驱动包和正式交付版本为 `4.0.2-i3`（patch-024 + patch-026 +
 > patch-028 + patch-029）；R14 在当前设备完成 6/6 deep 验收。patch-025-display 继续保持
 > UNVERIFIED，不进入 i3；DDCCI 不提供亮度控制，`hwinfo_g0m.bin` 仍缺失。
@@ -14,7 +14,7 @@
 
 | 项 | 值 |
 | --- | --- |
-| 发行版 / 内核 | Debian Trixie (13)，当前 kernel `6.12.107+deb13-amd64`（运行状态以 [status](docs/project/status.md) 为准） |
+| 发行版 / 内核 | Debian Trixie (13)，当前 kernel `6.12.111+deb13-amd64`（运行状态以 [status](docs/project/status.md) 为准） |
 | CPU 平台 | Hygon x86_64 |
 | GPU | Innosilicon Fantasy II-M，PCI `1ec8:9810`，2 GiB VRAM（PowerVR DDK V119 RTM 谱系） |
 | 回退基线（历史交付） | `4.0.2-i3`：固定 epoch `1788796800`，SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；R14 接电/电池、无外屏/外屏 6/6 deep 通过；R16 起主线为 fantgpu 5.0.0-iN |
