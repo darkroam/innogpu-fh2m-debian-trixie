@@ -260,13 +260,66 @@ else
     record proc_driver_status SKIP "no $PROC_DIR/gpu00/status"
 fi
 
-JERR="$(journalctl -b -k --no-pager 2>/dev/null | grep -iE "$MOD_NAME|pvr" | grep -iE 'error|fail|timeout|panic' | head -5 || true)"
-if [[ -n "$JERR" ]]; then
-    record journal_kernel_errors FAIL "$(printf '%s' "$JERR" | head -1 | redact | cut -c1-90)"
-elif [[ "$IS_ROOT" == "yes" || -r /var/log/journal ]]; then
-    record journal_kernel_errors PASS
+# journal_kernel_errors: a readable journal directory is not a read.
+# PASS only after root or sudo journalctl exits 0 and the error regex
+# matches nothing. Permission failure, a nonzero reader rc, or the
+# unprivileged "-- No entries --" placeholder is UNVERIFIED with reason
+# NOT_AVAILABLE — never PASS. hwinfo_g0m.bin (-2) matches the same regex
+# and stays FAIL; this gate does not treat that fallback as optional-allowed.
+JLOG="$RUNTIME_DIR/journal-kernel.txt"
+JERRF="$RUNTIME_DIR/journal-kernel.err"
+: >"$JLOG"
+: >"$JERRF"
+JRC=0
+JMODE="unconfirmed"
+if [[ -n "$FAKE_ROOT" ]]; then
+    JMODE="fixture"
+    journalctl -b -k --no-pager -o cat >"$JLOG" 2>"$JERRF" || JRC=$?
+elif [[ "$IS_ROOT" == "yes" ]]; then
+    JMODE="root"
+    journalctl -b -k --no-pager -o cat >"$JLOG" 2>"$JERRF" || JRC=$?
 else
-    record journal_kernel_errors SKIP "journal access limited; run with root on device"
+    JMODE="sudo"
+    if sudo -n journalctl -b -k --no-pager -o cat >"$JLOG" 2>"$JERRF"; then
+        JRC=0
+    else
+        JRC=$?
+        if [[ -t 0 ]]; then
+            : >"$JLOG"
+            : >"$JERRF"
+            if sudo journalctl -b -k --no-pager -o cat >"$JLOG" 2>"$JERRF"; then
+                JRC=0
+            else
+                JRC=$?
+            fi
+        fi
+    fi
+fi
+printf '# journal_read_mode=%s journal_read_rc=%s\n' "$JMODE" "$JRC"
+JDENIED=0
+if [[ "$JRC" -ne 0 || ! -f "$JLOG" ]]; then
+    JDENIED=1
+elif grep -qiE 'not seeing messages from other users and the system|insufficient permissions|a password is required|no new privileges' "$JERRF"; then
+    JDENIED=1
+elif [[ "$JMODE" != "root" && "$JMODE" != "sudo" ]] && grep -qx -- '-- No entries --' "$JLOG"; then
+    JDENIED=1
+fi
+if [[ "$JDENIED" -eq 1 ]]; then
+    record journal_kernel_errors UNVERIFIED "NOT_AVAILABLE: kernel journal read not confirmed (mode=${JMODE} rc=${JRC})"
+else
+    JHIT="$(grep -iE "$MOD_NAME|pvr" "$JLOG" | grep -iE 'error|fail|timeout|panic' | head -5 || true)"
+    if [[ -n "$JHIT" ]]; then
+        record journal_kernel_errors FAIL "$(printf '%s' "$JHIT" | head -1 | redact | cut -c1-90)"
+    else
+        record journal_kernel_errors PASS
+    fi
+fi
+if [[ -n "${INNOGPU_JOURNAL_SAVE:-}" && -d "${INNOGPU_JOURNAL_SAVE}" ]]; then
+    printf '%s\n' "$JMODE" >"$INNOGPU_JOURNAL_SAVE/journal-read.mode"
+    printf '%s\n' "$JRC" >"$INNOGPU_JOURNAL_SAVE/journal-read.rc"
+    printf '%s\n' "$JDENIED" >"$INNOGPU_JOURNAL_SAVE/journal-read.denied"
+    { grep -iE "$MOD_NAME|pvr" "$JLOG" | grep -iE 'error|fail|timeout|panic' | head -20 || true; } | redact >"$INNOGPU_JOURNAL_SAVE/journal-hits.txt"
+    { grep -F 'hwinfo_g0m.bin' "$JLOG" | head -20 || true; } | redact >"$INNOGPU_JOURNAL_SAVE/hwinfo-lines.txt"
 fi
 
 # =====================================================================

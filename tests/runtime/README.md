@@ -71,7 +71,7 @@ DMA-BUF 聚合入口（`run-dmabuf-regression-test.sh`）随 2026-08-25 提交�
 | package_version / dkms_status / module_vermagic | 是 | 否 | 否 | 否 | 否 | 否 | 无 |
 | module_loaded / module_param_firmware_en | 是 | 否 | 否 | 否 | 否 | 否 | 无 |
 | proc_driver_status / proc_firmware_status / proc_error_counts | 是 | 否 | 否 | 否 | 否 | 否 | 无 |
-| journal_kernel_errors | 是 | 建议 | 否 | 否 | 否 | 否 | 无（受限时 SKIP） |
+| journal_kernel_errors | 是 | 是（非 root 时 sudo 读内核日志） | 否 | 否 | 否 | 否 | 无（读不到记 NOT_AVAILABLE/UNVERIFIED，不得 PASS；hwinfo -2 按正则 FAIL） |
 | drm_nodes / fbdev_node / drm_topology_enumeration | 是 | 否 | **是** | 否 | 否 | 否 | 无（drm_info 只读） |
 | fbterm_real_vt | 否 | 是 | 是 | 否 | **是** | 否 | 需授权；失败 → recovery.md VT 恢复 |
 | egl_gbm_probe / egl_x11_probe | 否 | 否 | 是 | egl_x11 需 | 否 | 否 | 编译产物在 mktemp；不污染桌面 |

@@ -177,6 +177,77 @@ else
     bad t08 "out=[$(grep 'runtime_module_param_firmware_en' "$TMP/b.out")]"
 fi
 
+# t09-t12 日志门（R53 任务段 3）：目录可读不是已读；确认读入后按正则判定。
+# 宿主 /var/log/journal 在本机可列目录。旧逻辑会把读失败记成 PASS。
+cat > "$TMP/bin/sudo" <<'EOF'
+#!/bin/bash
+echo sudo-called >> "$TMP_SUDO_LOG"
+exit 99
+EOF
+chmod 0755 "$TMP/bin/sudo"
+export TMP_SUDO_LOG="$TMP/sudo.log"
+
+set_journal() {  # set_journal <script-body>
+    cat > "$TMP/bin/journalctl" <<EOF
+#!/bin/bash
+$1
+EOF
+    chmod 0755 "$TMP/bin/journalctl"
+}
+
+# t09 负向：reader rc=1，且目录可读，不得 PASS，必须 NOT_AVAILABLE/UNVERIFIED
+set_journal 'echo denied >&2; exit 1'
+run_baseline fantgpu 5.0.0-i2 "$TMP/fk-fant"
+if grep -Fq 'runtime_journal_kernel_errors=UNVERIFIED reason=NOT_AVAILABLE:' "$TMP/b.out" \
+   && ! grep -Fq 'runtime_journal_kernel_errors=PASS' "$TMP/b.out"; then
+    ok t09
+else
+    bad t09 "out=[$(grep 'runtime_journal_kernel_errors' "$TMP/b.out")]"
+fi
+
+# t10 hwinfo_g0m.bin (-2) 命中既有 error|fail 正则 → FAIL，不另开豁免
+set_journal 'printf "%s\n" "firmware: failed to load fantgpu/hwinfo_g0m.bin (-2)"; exit 0'
+run_baseline fantgpu 5.0.0-i2 "$TMP/fk-fant"
+if grep -Fq 'runtime_journal_kernel_errors=FAIL' "$TMP/b.out" \
+   && grep -Fq 'hwinfo_g0m.bin (-2)' "$TMP/b.out"; then
+    ok t10
+else
+    bad t10 "out=[$(grep 'runtime_journal_kernel_errors' "$TMP/b.out")]"
+fi
+
+# t11 确认读入且正则无命中 → PASS
+set_journal 'printf "%s\n" "fantgpu: probe ready"; exit 0'
+run_baseline fantgpu 5.0.0-i2 "$TMP/fk-fant"
+if grep -Fq 'runtime_journal_kernel_errors=PASS' "$TMP/b.out"; then
+    ok t11
+else
+    bad t11 "out=[$(grep 'runtime_journal_kernel_errors' "$TMP/b.out")]"
+fi
+
+# t12 rc=0 但只是权限占位（空读）→ 仍 NOT_AVAILABLE，不得 PASS
+set_journal 'printf "%s\n" "-- No entries --"; printf "%s\n" "Hint: You are currently not seeing messages from other users and the system." >&2; exit 0'
+run_baseline fantgpu 5.0.0-i2 "$TMP/fk-fant"
+if grep -Fq 'runtime_journal_kernel_errors=UNVERIFIED reason=NOT_AVAILABLE:' "$TMP/b.out" \
+   && ! grep -Fq 'runtime_journal_kernel_errors=PASS' "$TMP/b.out"; then
+    ok t12
+else
+    bad t12 "out=[$(grep 'runtime_journal_kernel_errors' "$TMP/b.out")]"
+fi
+
+# t13 静态：PASS 条件不再依赖 journal 目录可读
+if ! grep -F -- '-r /var/log/journal' "$BASELINE" >/dev/null; then
+    ok t13
+else
+    bad t13 "directory-readable shortcut still present"
+fi
+
+# t14 fixture 路径不得调用 sudo（假 sudo 会留下标记）
+if [[ ! -s "$TMP/sudo.log" ]]; then
+    ok t14
+else
+    bad t14 "sudo invoked: [$(cat "$TMP/sudo.log")]"
+fi
+
 echo "PASS=$PASS FAIL=$FAILN"
 [ "$FAILN" -eq 0 ] || exit 1
 exit 0
