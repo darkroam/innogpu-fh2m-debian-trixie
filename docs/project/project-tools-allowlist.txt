@@ -139,6 +139,7 @@ docs/planning/evidence/d-stage-audit.symlink.tsv
 docs/planning/evidence/d-stage-audit.symlink.tsv.sha256
 docs/planning/evidence/d-stage-audit.tsv
 docs/planning/evidence/d-stage-audit.tsv.sha256
+docs/planning/evidence/o-stage/5.0.0-i12-validation-results.json
 docs/planning/evidence/o-stage/5.0.0-i12/5.0.0-i12.meta.json
 docs/planning/evidence/o-stage/5.0.0-i12/5.0.0-i12.meta.json.sha256
 docs/planning/evidence/o-stage/5.0.0-i2.meta.json

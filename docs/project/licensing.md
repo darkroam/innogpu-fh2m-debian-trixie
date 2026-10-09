@@ -4,7 +4,8 @@
 本文记录许可模型和工程门禁，不提供法律意见，也不以许可证文本存在来推导来源、授权链或再分发权。
 
 > 权威状态字段：`license_release_gate=BLOCKED`（仓库整体不发布；`project-tools` 为**候选制品**
-> （机械门禁 CLEARED；当前不作为发布目标，发布决策 1C 见 §4.1））。审计器机械校验该字段与
+> （机械门禁 CLEARED；当前不作为发布目标。2026-08-28 的 1C 已于 2026-10-09 被用户部分推翻，
+> 只激活签署后的 annotated tag，见 §4.1））。审计器机械校验该字段与
 > `license-audit-policy.json` 的 `release_status` 一致。
 
 ## 1. 三层许可模型
@@ -79,15 +80,24 @@ GitHub 仓库 `main` 分支本身是公开分发面：clone / GitHub 源码归�
 **不经 `build-release-archive.py`**，因此当前仍公开分发 3 个 confidential 与 70 个无许可文件。
 本仓库因此**不宣称许可证发布闭环**。
 
-**发布决策 1C（当前选择，本文为唯一权威记录，其他文档只引用）**：
+**当前结论（2026-10-09，用户裁决「取消 1C，推进到打 tag」；本文为唯一权威记录，其他文档只引用）**：
 
-- 当前**不创建 GitHub Release、tag 或发布附件**；`main` 继续作为研究开发仓库，**不作为发布目标**。
+- 推翻范围只有 1C 里「不打 tag」这一条，而且只针对 fantgpu `5.0.0-i12`：validation-results
+  签署并且用户批准之后，可以打 annotated tag `fantgpu-5.0.0-i12`，再只推送这个 tag ref。
+- 本结论不授权现在打 tag。签署未完成时 tag 不得创建。
+- 仍不创建 GitHub Release，不传发布附件。载荷权利链保持阻断。
 - `license_release_gate` 状态保持 `BLOCKED` 不变；`project-tools=CLEARED` 仍只表示候选制品机械
-  门禁通过，`driver-source` 状态保持 `BLOCKED` 不变。
-- **不得声称“不做 Release”可以消除 `main` 当前公开跟踪 3 个 Strictly Confidential + 70 个无许可
-  路径（共 73 个）的风险**——分支本身仍是公开分发面；其处置保留为独立发布决策（若未来要发布
-  main，须先把阻断路径从公开分支移除——不执行历史重写——并解决权利链）。
+  门禁通过，`driver-source` 状态保持 `BLOCKED` 不变。`main` 仍不是仓库级发布目标。
+- **不得声称推翻 1C 或只打 tag 可以消除 `main` 当前公开跟踪 3 个 Strictly Confidential + 70 个无许可
+  路径（共 73 个）的风险**——分支本身仍是公开分发面；若未来要发布 main，须先把阻断路径从公开分支
+  移除——不执行历史重写——并解决权利链。
+- 不激活 `source-v4.0.0-i1` annotated tag、Release 附件审查或 Phase 5 第二步。
+- 同日签署事实，不改变许可门禁：用户豁免 `hwinfo_g0m.bin` 缺失，R1 保持 fail；R2 记 pass；R5 维持同 4.0.2-i3 观察口径的 pass。豁免不表示该固件已经补上。
 - `patches/`（驱动派生补丁，含未分类驱动源码片段）不随 `project-tools` / `driver-source` 发布。
+
+**历史决定 1C（2026-08-28，保留不删）**：当时不创建 GitHub Release、tag 或发布附件，`main`
+作为研究开发仓库。其中「不打 tag」已由上节按上述范围推翻；BLOCKED、不建 Release、不传附件、
+73 个阻断路径仍在，都不是被本裁决放开的内容。
 
 ## 5. 机械审计与发布门禁
 

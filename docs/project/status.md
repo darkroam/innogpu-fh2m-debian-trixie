@@ -1,6 +1,6 @@
 # 当前状态与问题清单
 
-最后更新：2026-10-08
+最后更新：2026-10-09
 
 本文件是项目当前运行状态的唯一摘要。历史过程、补丁细节和故障推导分别见
 [阶段补丁](../patches/README.md) 与 [事故和经验](../incidents/README.md)。
@@ -12,7 +12,7 @@
 | 当前运行驱动 | **fantgpu 5.0.0-i12（干净候选，非发布）** 加未进入 i12 构建器的 `030-036`，运行于 `6.12.111+deb13-amd64`。R49 的 3/3 devices + 1/1 normal deep 与用户裁决 R5 通过保持原边界。R51 三段已通过。R52 将 i12+030-036、001 xHCI 与 002 battery 按 111 重建并验收，驱动栈 PASS | [R52 111 内核与驱动栈](#r52-111-内核与驱动栈2026-10-08) |
 | 当前磁盘安装 | **fantgpu 5.0.0-i12** 包仍是 R49 的干净候选；111 上已加载模块是该树加 `030-036` 后的 DKMS 构建，srcversion `370AB248D72951EF3C0C4BB`，与 `updates/dkms` 磁盘模块一致。重装未带 030-036 的旧 DKMS 包会退回头文件 | [R52 111 内核与驱动栈](#r52-111-内核与驱动栈2026-10-08) |
 | 回退基线 | `4.0.2-i3`（deepin 血缘最终交付）：R14 6/6 deep 矩阵通过；包 SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；回滚卡见 r5dpm2 设计 §8，执行须另行授权 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md)、[回滚卡](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
-| 当前主线目标 | `5.0.0-iN`（tag `fantgpu-5.0.0-iN` **未打**）；R5 阻断已解除，剩余发布阻断为 `validation-results` 未签与 tag 未打；`postinst_current_kernel_only` 已覆盖至 i12，1C 不变 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01)、[030 映射表](../planning/030-mapping-table.md) |
+| 当前主线目标 | `5.0.0-i12`（tag `fantgpu-5.0.0-i12` **未打**）；R5 阻断已解除。用户 2026-10-09 推翻 1C，只激活批准后的 annotated tag。validation-results 已定稿但 `signed=false`：R1=fail 且 hwinfo 豁免不改成 pass，R2=pass，R5=pass。C2 i12 新署名未完成。`license_release_gate=BLOCKED`。不建 Release、不传附件 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01)、[030 映射表](../planning/030-mapping-table.md) |
 | 历史当前态（2026-09-03 记录） | `4.0.2-i3` 已安装并重启至 `6.12.101+deb13-amd64`；R16 迁移后降为回退基线 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | R5 状态 | **已解决**：R48 闭合 accessor 错布局根因链，R49 修复后最终 3+1 验收通过，观察期无复发后用户裁决 R5 通过；早期 `OUTSIDE_COVERAGE` 与失败记录不重写 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01)、[r5 调查计划](../design/r5-suspend-investigation-plan.md) |
 | 内核保留集 | 当前为 `6.12.111+deb13-amd64`（运行；`GRUB_DEFAULT` 是 111 精确子菜单字符串，`saved_entry` 已清）、`6.12.107+deb13-amd64` 与 `6.12.101+deb13-amd64`（备用，菜单保留）。R50 当时的 107/101 清理结论不改写；111 是此后安装并被选为默认的内核。63/90/95/96 与 r47b-r47f/r48 六个 r5obs2 过程内核仍已清理 | [R52 111 内核与驱动栈](#r52-111-内核与驱动栈2026-10-08) |
@@ -34,7 +34,7 @@
 | Vulkan/OpenCL 执行 | 探针 exec 模式 + 真机验证通过（2026-08-24）：Vulkan queue+fence submit+wait、OpenCL add kernel+读回逐元素校验均在 Fantasy II-M 上执行成功；`runtime_vulkan_execution`/`runtime_opencl_execution`=PASS（证据 `baselines/runtime-results-20260824.txt`）；离线失败路径已有 fixture | [probe-vulkan-devices.c](../../tools/probe-vulkan-devices.c)、[probe-opencl-devices.c](../../tools/probe-opencl-devices.c)、[test-strategy](test-strategy.md) |
 | VA-API 实际解码 | `tools/run-vaapi-decode-test.sh --codec all` 真机执行（2026-08-24）：H.264 Main 与 HEVC Main 强制 VA-API 硬解，各 30 帧 320x240 NV12 framemd5 与软件参考逐帧 hash 一致，Driver/Firmware 状态门禁通过；`runtime_vaapi_decode`=PASS（证据 `baselines/runtime-results-20260824.txt`）；能力边界仅 Main/Main 8-bit 4:2:0 | [run-vaapi-decode-test.sh](../../tools/run-vaapi-decode-test.sh)、[test-strategy](test-strategy.md) |
 | DMA-BUF 回归工具 | `tools/run-dmabuf-regression-test.sh` 已实现（2026-08-24）：同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 + 状态门禁聚合，配套离线 fixture；**真机 PASS（2026-08-26 root 权限运行，证据已封存）**：self-import/READ/WRITE/vblank/状态门禁/内核日志全部通过；能力边界不变：仅同设备 PRIME self-import，foreign/cross-device、GBM、V4L2、长期压力与并发仍 UNVERIFIED | [run-dmabuf-regression-test.sh](../../tools/run-dmabuf-regression-test.sh)、[test-strategy](test-strategy.md)、[webkit 调查](../investigations/webkit-dmabuf-investigation.md) |
-| 发布边界 | 三层许可模型（原创层 GPL-3.0-or-later / 上游 MIT / drivers/ 逐文件）；`project-tools` 为**候选制品**（机械门禁 CLEARED，当前不作为发布目标；**失败关闭分类**——已批准原创前缀 + 显式映射，未知路径拒绝，无默认 GPL；排除 patches/、debs/、collab/（本机私有目录，不跟踪）、drivers/、vendor/、build/、third_party/；**路径绑定 NOTICE 门禁**，components/ 许可材料已封存：picom 补丁为文件级 MPL-2.0、`picom.conf` 为原创 GPLv3、fbterm 1.7-5 (C) 2008 dragchan GPL-2.0-only）；`driver-source` 排除 confidential ×3 与无许可 ×70 后非完整驱动（BLOCKED，不假 PASS）；**GitHub 主分支仍公开分发阻断路径，仓库级发布未闭环**；二进制 deb 与 vendor 载荷不作为当前发布目标；patched-1.deb 为上游历史非阻断；本地 debs/ 与 vendor/ 不参与发布；**发布决策 1C（见 licensing.md §4.1 权威记录）：当前不创建 Release/tag/附件，main 为研究开发仓库、不作为发布目标，BLOCKED 不变；不做 Release 不消除 main 公开跟踪 73 个阻断路径的风险** | [licensing.md](licensing.md)（唯一权威文档）、[source-license-audit.md](source-license-audit.md) |
+| 发布边界 | 三层许可模型（原创层 GPL-3.0-or-later / 上游 MIT / drivers/ 逐文件）；`project-tools` 为**候选制品**（机械门禁 CLEARED，当前不作为发布目标；**失败关闭分类**——已批准原创前缀 + 显式映射，未知路径拒绝，无默认 GPL；排除 patches/、debs/、collab/（本机私有目录，不跟踪）、drivers/、vendor/、build/、third_party/；**路径绑定 NOTICE 门禁**，components/ 许可材料已封存：picom 补丁为文件级 MPL-2.0、`picom.conf` 为原创 GPLv3、fbterm 1.7-5 (C) 2008 dragchan GPL-2.0-only）；`driver-source` 排除 confidential ×3 与无许可 ×70 后非完整驱动（BLOCKED，不假 PASS）；**GitHub 主分支仍公开分发阻断路径，仓库级发布未闭环**；二进制 deb 与 vendor 载荷不作为当前发布目标；patched-1.deb 为上游历史非阻断；本地 debs/ 与 vendor/ 不参与发布；**发布决策（见 licensing.md §4.1）：2026-08-28 的 1C 已于 2026-10-09 被用户部分推翻，只激活签署后的 annotated tag；Release/附件仍不创建，BLOCKED 不变，只打 tag 也不消除 main 公开跟踪 73 个阻断路径的风险** | [licensing.md](licensing.md)（唯一权威文档）、[source-license-audit.md](source-license-audit.md) |
 
 以上引用 Phase 4、2026-08 runtime、patched 或 `4.0.x` 的验收均保留其原版本边界；
 `latest-*` 文件名不表示已验证当前 fantgpu。当前待办见 [current-work](../state/current-work.md)。
@@ -266,10 +266,14 @@ p21/p22 的电源、合盖、拔屏和跨硬件限制仍按历史记录保留。
 `4.0.0-i1`/`patched-27` 回退链及 Phase 5 状态为准；公开发布仍被许可证审计阻断。
 `patched-17`/`patched-8` 仅作深层回退。
 
-**发布决策 1C（当前状态，2026-08-28）**：
+**发布决策（当前，2026-10-09）**：用户推翻 1C 里「不打 tag」这一条，范围只到签署完成且用户批准后的
+annotated tag `fantgpu-5.0.0-i12`。validation-results 已定稿，`signed=false`，tag 未打。hwinfo 豁免不把 R1 改成 pass；R2=pass；R5=pass。不创建 GitHub Release，不传附件。
+`license_release_gate=BLOCKED` 不变。打 tag 不消除 `main` 公开跟踪 73 个阻断路径的风险，也不把
+`main` 变成仓库级发布目标。权威记录见 [licensing.md §4.1](licensing.md#41-github-主分支发布面与发布决策-1c当前结论)。
 
-- 当前**不创建 GitHub Release、tag 或发布附件**；`main` 继续作为研究开发仓库。
-- `license_release_gate=BLOCKED` **保持不变**；`project-tools=CLEARED` 仍只表示候选制品机械门禁
-  通过，`driver-source=BLOCKED` 保持不变。
-- **不得声称“不做 Release”可以消除 `main` 当前公开跟踪 3 个 Strictly Confidential + 70 个无许可
-  路径（共 73 个）的风险**——分支本身仍是公开分发面；其处置保留为独立发布决策。
+**历史决定 1C（2026-08-28，其中「不打 tag」已被上节推翻）**：
+
+- 当时不创建 GitHub Release、tag 或发布附件；`main` 作为研究开发仓库。
+- `license_release_gate=BLOCKED` 与 `driver-source=BLOCKED` 仍是当前事实；`project-tools=CLEARED`
+  仍只表示候选制品机械门禁通过。
+- 不做 Release 不能消除 73 个阻断路径的风险。该句仍然有效。

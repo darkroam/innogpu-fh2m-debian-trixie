@@ -5,7 +5,7 @@
 本项目自有工作采用 GPL-3.0-or-later；fork 上游 MIT 内容与导入源码/厂商载荷按各自声明处理，
 当前再分发边界见[许可证与再分发边界](docs/project/licensing.md)（唯一权威文档）。
 
-> 最后更新：2026-10-08 —— 当前主线为 fantgpu 5.0.0-iN（运行内核 `6.12.111+deb13-amd64`，i12+030-036 与 001/002 已按 111 验收；R51 三段与 R5 均已通过，见
+> 最后更新：2026-10-09 —— 当前主线为 fantgpu 5.0.0-iN（运行内核 `6.12.111+deb13-amd64`，i12+030-036 与 001/002 已按 111 验收；R51 三段与 R5 均已通过，见
 > [status.md](docs/project/status.md)）。历史（2026-09-03 记录）：当前驱动包和正式交付版本为 `4.0.2-i3`（patch-024 + patch-026 +
 > patch-028 + patch-029）；R14 在当前设备完成 6/6 deep 验收。patch-025-display 继续保持
 > UNVERIFIED，不进入 i3；DDCCI 不提供亮度控制，`hwinfo_g0m.bin` 仍缺失。
@@ -104,7 +104,7 @@ SOURCE_DATE_EPOCH=1788796800 bash scripts/build-innogpu-driver.sh  # 默认构�
   [许可证与再分发边界](docs/project/licensing.md)；机械审计见
   [源码许可证审计](docs/project/source-license-audit.md)；第三方声明见
   [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
-- 发布制品：`project-tools`（**候选制品**，机械门禁 `CLEARED`，当前不作为发布目标——发布决策 1C：按权利边界生成
+- 发布制品：`project-tools`（**候选制品**，机械门禁 `CLEARED`，当前不作为发布目标——2026-10-09 起 1C 只放开签署后的 annotated tag，本制品边界不变：按权利边界生成
   的允许清单，排除 patches/、debs/、collab/、drivers/、vendor/、build/、third_party/，非 drivers 逐路径
   分类 + NOTICE 门禁）与 `driver-source`（drivers/ 中仅明确许可文件，**非完整驱动**，`BLOCKED`）；
   **GitHub 主分支仍公开分发阻断路径，仓库级发布未闭环**；二进制 deb 与 vendor 载荷不作为

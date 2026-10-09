@@ -1,0 +1,197 @@
+{
+  "schema": "validation-results-1.0",
+  "id": "5.0.0-i12",
+  "draft": false,
+  "signed": true,
+  "content_final": true,
+  "tag_created": false,
+  "materialize_meta_sha256": "af613aa136fe1ea6211fb6c937d5c57dc2accfcd7213667537087ad6773c83dd",
+  "materialize_meta_path": "docs/planning/evidence/o-stage/5.0.0-i12/5.0.0-i12.meta.json",
+  "materialize_meta_check": "match",
+  "meta_not_mutated": true,
+  "o_stage_tree_hash": "0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce",
+  "package_version": "5.0.0-i12",
+  "package_deb_sha256": "3a75b6213157a82395431b6aeb8d77ff51187e3f7f64aa6719e87c1c2003e5d5",
+  "package_note": "This is the deb dpkg installed in R53 segment 5. Rollback restored module bytes and postinst from the pre-install snapshot and did not reinstall the clean candidate. The two bytes are not the same package.",
+  "clean_candidate_deb_sha256": "3b3869e7684fe55063d7ce4e0e84884dc249bdd6f0cda7d03f4f8c3592789780",
+  "clean_candidate_ab": "cmp=0",
+  "build_evidence": "No docs/planning/evidence/o-stage/build-5.0.0-i12.sha256. R49 A/B equality is the clean candidate above.",
+  "live_recheck_2026_10_09": {
+    "kernel": "6.12.111+deb13-amd64",
+    "srcversion": "370AB248D72951EF3C0C4BB",
+    "pm_test": "[none]",
+    "c1": {
+      "clean_candidate_rc": 0,
+      "install_object_rc": 0,
+      "result": "PASS_RELEASE_PACKAGE_BOUNDARIES package=fantgpu-fh2m-trixie version=5.0.0-i12 architecture=amd64"
+    },
+    "c2": {
+      "declared": "fantgpu_pci_drv.c:658 int firmware_en = 0",
+      "modprobe": "options fantgpu firmware_en=1",
+      "modprobe_sha256": "fcee01225bc219f2cd3466e1f3c8b5ff57ae183e0efe04ca919d98e71613a19d",
+      "sysfs": 1,
+      "reloc": "R_X86_64_PC32 firmware_en at 0xfc08"
+    },
+    "c3": {
+      "modinfo_firmware": [
+        "fantgpu/fh2m/fh2m.sh",
+        "fantgpu/fh2m/fh2m.fw"
+      ],
+      "fh2m_fw_sha256": "8d39a4056ea1e12443cbe5701db4e84940875a0bf1c29c62d293c61704a5ada3",
+      "fh2m_sh_sha256": "f2b0ead7edb7f06486e25b12534969f321cd28bdaf4b784b42f3c48221a6d0e5",
+      "hwinfo_g0m_bin": "absent",
+      "dmesg_hwinfo_minus2_lines": 3
+    },
+    "installed_tree": {
+      "o4_rows": 507,
+      "o4_tree_hash": "0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce",
+      "source_digest": "5ab7705c7ab38511dacdf68ae061115e18cb0ed1e6e5b4ed4afab56d45df07a6",
+      "postinst_expected_source_sha": "8c4ab55e6939f4d3fdb24e3559da973d580cc562c9835d1f49770fb6b4cfa239",
+      "postinst_expectation_matches_live_tree": false
+    }
+  },
+  "initrd_declaration": {
+    "ruling": "option-3-conditional",
+    "identity": "The three /boot initrd images are rollback update-initramfs products, not the pre-install images.",
+    "do_not_extrapolate": "111 cpio payload_diff=0 proves the current image versus a fresh mkinitramfs, not the missing pre-install bytes.",
+    "modules_ko_xz_sha256": {
+      "6.12.101+deb13-amd64": "8d48bdc0fef7fa3eee42b1c3dd6daf191ffaffe49aba0a38e9dc1ddd2501b508",
+      "6.12.107+deb13-amd64": "d9a31f0b758c7795538e26dc09020a65c290e3d759b793fdc45f3162bed1d586",
+      "6.12.111+deb13-amd64": "d8f724cc9d9aa4abd87137d453af9cece944530d2c7a2f8d62ed168ab21eacc6"
+    },
+    "preinstall_initrd_sha256": {
+      "6.12.101+deb13-amd64": "d923a524303e8a87b9ea2560f6b4c9b9c6e2aec73df541109dc00bb63dbc8b94",
+      "6.12.107+deb13-amd64": "cb2dc2368959aa19be86bf972a90a0643956a8786ecaff8853cefa35b038194e",
+      "6.12.111+deb13-amd64": "3248c9866d94c56d528674745e9fbf2b4f2175383d88c4fcd7a7266b71a3b19c"
+    },
+    "current_initrd_sha256": {
+      "6.12.101+deb13-amd64": "55c3e2a99c425ac7e5d4bb809fb6e4725b517b53b7c892d80dbe63786a093dfa",
+      "6.12.107+deb13-amd64": "a1ea1217060b2e1190adcd08b1852523a27f00b31254646dba0966408b3d90bb",
+      "6.12.111+deb13-amd64": "0f5bb94fb79ce1e0d891699d1ad0eb232c71cf151a064212d7e356787e030483"
+    },
+    "current_initrd_reread": "2026-10-09 live sha256 matches the values above"
+  },
+  "hwinfo_exemption": {
+    "status": "granted",
+    "ruling": "user 2026-10-09: 豁免 hwinfo",
+    "statement": "R1 stays fail. hwinfo_g0m.bin is absent and this boot has three firmware -2 lines. The exemption records a vendor-payload gap and a safe fallback. It does not convert fail into pass. C3 runtime closure uses this exemption, not file presence."
+  },
+  "c2_i12": {
+    "decision_proposed": "write-options",
+    "param": "firmware_en",
+    "value": 1,
+    "historical_file_untouched": "docs/planning/evidence/o-stage/c2-ruling.md",
+    "signatures": {
+      "qoder": "同意 write-options firmware_en=1（collab/R54 qoder-review-segment2.md，2026-10-09）",
+      "dsh": "dsh 终审署名（collab/R54 report.md，2026-10-09）",
+      "user": "用户批准（2026-10-09：取消1C、豁免 hwinfo、R2 收 pass、推进到打tag）"
+    }
+  },
+  "entries": [
+    {
+      "id": "R1",
+      "status": "fail",
+      "closed": false,
+      "evidence": "R54 live recheck: hwinfo_g0m.bin absent; three dmesg -2 lines. R53 segment 3 runtime_overall=FAIL",
+      "basis": "User exemption 2026-10-09 does not change this status",
+      "approval": "user 2026-10-09 hwinfo exemption",
+      "ts": "2026-10-09"
+    },
+    {
+      "id": "R2",
+      "status": "pass",
+      "closed": true,
+      "evidence": "mmap PASS d826ff5e89c6; fbcon running; user visual word tty2 normal on 2026-10-09",
+      "basis": "1920x1200 is not the panel contract and is expected not applicable",
+      "approval": "user 2026-10-09: R2 收 pass",
+      "ts": "2026-10-09"
+    },
+    {
+      "id": "R3",
+      "status": "pass",
+      "closed": true,
+      "evidence": "dmabuf_self_import=PASS rounds=5; aggregate 76bed1914bed",
+      "ts": "2026-10-08"
+    },
+    {
+      "id": "R4",
+      "status": "pass",
+      "closed": true,
+      "evidence": "vaapi_decode_overall=PASS; stdout 382f131d65fa",
+      "ts": "2026-10-08"
+    },
+    {
+      "id": "R5",
+      "status": "pass",
+      "closed": true,
+      "evidence": "R53 segment 2 and 4 DVFS rc=0; no event=fail",
+      "basis": "User ruling 2026-10-09: same 4.0.2-i3 observation口径. Temperature-work lines are a future item, not this entry.",
+      "approval": "collab/R53 report.md user ruling (a)",
+      "ts": "2026-10-09"
+    },
+    {
+      "id": "R6",
+      "status": "pass",
+      "closed": true,
+      "evidence": "dmabuf_vblank_inactive_guard=PASS; same aggregate 76bed1914bed",
+      "ts": "2026-10-08"
+    },
+    {
+      "id": "R7",
+      "status": "n-a",
+      "closed": true,
+      "evidence": "topology stdout ee203fcadd87; ddcci-props=none; backlight empty",
+      "basis": "No DDCCI panel",
+      "approval": "qoder-review-segment2 + dsh final + user 继续2, R53 report",
+      "ts": "2026-10-08"
+    },
+    {
+      "id": "R8",
+      "status": "n-a",
+      "closed": true,
+      "evidence": "same topology; no 2880x1800",
+      "basis": "No 2880x1800 panel; refresh not inferred",
+      "approval": "same R7 approval",
+      "ts": "2026-10-08"
+    },
+    {
+      "id": "R9",
+      "status": "unverified",
+      "closed": true,
+      "evidence": "2560x1600 present; refresh unknown",
+      "basis": "record-and-close",
+      "ts": "2026-10-08"
+    },
+    {
+      "id": "U1",
+      "status": "unverified",
+      "closed": true,
+      "evidence": "one deep 16:01:30-16:01:40; wakeup rc=0; no i4 red-screen record; no visual word",
+      "basis": "record-and-close",
+      "ts": "2026-10-08"
+    },
+    {
+      "id": "U2",
+      "status": "unverified",
+      "closed": true,
+      "evidence": "PLL setup/set_pll_reg/g0m_soc_setpll/Oops count 0",
+      "basis": "record-and-close",
+      "ts": "2026-10-08"
+    },
+    {
+      "id": "install-rollback",
+      "status": "pass",
+      "closed": true,
+      "evidence": "two --require-reboot rc=0; modules restored; initrd byte residue declared above, not a silent pass",
+      "ts": "2026-10-09"
+    },
+    {
+      "id": "o-stage-integrity",
+      "status": "pass",
+      "closed": true,
+      "evidence": "same aggregate 76bed1914bed; no fail row",
+      "basis": "merge rule 4",
+      "ts": "2026-10-08"
+    }
+  ]
+}
