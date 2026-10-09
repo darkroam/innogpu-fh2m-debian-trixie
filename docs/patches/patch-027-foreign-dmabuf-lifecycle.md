@@ -53,7 +53,7 @@
 ## 构建开关
 
 `APPLY_FOREIGN_DMABUF_LIFECYCLE_FIX=1`；候选包 `3.3.3.42-patched-27`，构建入口
-`scripts/build-patched27-foreign-dmabuf.sh`（固定 SOURCE_DATE_EPOCH）。
+`tools/build-patched27-foreign-dmabuf.sh`（固定 SOURCE_DATE_EPOCH）。
 
 ## 验证与回退
 

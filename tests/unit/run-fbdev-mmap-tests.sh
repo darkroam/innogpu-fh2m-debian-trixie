@@ -11,7 +11,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-SRC="$ROOT/tools/probe-fbdev-mmap.c"
+SRC="$ROOT/tools/internal/probe-fbdev-mmap.c"
 cd "$ROOT"
 export LC_ALL=C
 

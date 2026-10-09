@@ -10,7 +10,7 @@
   p27 回退演练 PASS，设备已推进至 4.0.0-i1 作为最终运行态；阶段 5 Step 1 已完成，Step 2 待条件
   满足并单独批准。
 - 阶段 3 评审整改（2026-08-21 监督意见）：
-  - `module_symbols` 不再 SKIP——`scripts/compare-module-symbols.sh` 离线构建候选与 p27 两包
+  - `module_symbols` 不再 SKIP——`tools/compare-module-symbols.sh` 离线构建候选与 p27 两包
     DKMS 源码，逐模块对比 vermagic/depends/导出符号/导入符号（见 §七）；
   - `.o.cmd` 定为**构建产物**，从 manifest 与发布包排除（196→192 项），oracle 对比按构建产物
     排除（见 §四 边界裁定）；
@@ -58,7 +58,7 @@ vendor/                          Git 忽略的黑盒就位区（由提取工具�
   firmware/...（fh2m.fw/fh2m.sh/fh2c.fw/fh2c.sh）
 build/                           Git 忽略的临时 staging 与构建产物
 binary-manifest.json             黑盒来源、路径、哈希、大小、类型、角色和许可证的唯一清单
-scripts/
+tools/
   extract-vendor-binaries.sh     幂等提取工具
   build-innogpu-driver.sh        新构建器（版本绑定 patch-024/025 与固定 epoch）
   run-dev-tests.sh               草案名称，未创建；实际测试入口登记在 tests/README.md
@@ -71,18 +71,18 @@ patches/                         历史 provenance 永久保留，不得移动�
 
 实际测试入口不是单一 `run-dev-tests.sh`：CI 顺序由 `.github/workflows/ci.yml` 定义，可重复套件及
 计数由 `tests/README.md` 和 `docs/project/test-strategy.md` 登记；完整 DKMS integration 由
-`scripts/check-deb-dkms-build.sh`、`scripts/compare-module-symbols.sh` 等独立入口承担。
+`tools/check-deb-dkms-build.sh`、`tools/compare-module-symbols.sh` 等独立入口承担。
 
 ## 三、14 个 patch 的 provenance 与分类
 
 分类四类（监督指南"三、patch 分类规则"）：`source`（源码提交）、`binary-transform`
 （确定性二进制变换）、`device-profile`（本机特例）、`closed`（关闭的历史试验）。
 启用状态以 patched-27 的开关集合为准。patch hash 为当前 `patches/` 文件 SHA-256；stage-000
-无 patch 文件，是工具 `tools/patch-gpupll-object.py`。
+无 patch 文件，是工具 `tools/internal/patch-gpupll-object.py`。
 
 | # | 类别 | 启用 | patch SHA-256 | 目标 | 转换计划 |
 | --- | --- | --- | --- | --- | --- |
-| 000 | binary-transform | 始终 | （工具）`tools/patch-gpupll-object.py` | `innogpu.o_shipped` 单点字节变换 | 保留为独立确定性工具，输入/输出 hash 入清单；不做成源码提交 |
+| 000 | binary-transform | 始终 | （工具）`tools/internal/patch-gpupll-object.py` | `innogpu.o_shipped` 单点字节变换 | 保留为独立确定性工具，输入/输出 hash 入清单；不做成源码提交 |
 | 001 | source | 始终 | `be5c8ae9...71ab5` | 多文件 6.12 兼容 + Kbuild `-Wno-error` | 拆分为源码提交；Kbuild 改动归 build-metadata |
 | 002 | source | 是 | `1a12de65...7329` | DP fbcon fallback | 源码提交 |
 | 003 | closed | 否 | `8cd6b492...c6f7b` | 背光试验 | 仅历史记录，不导入当前行为 |
@@ -134,7 +134,7 @@ body 引用 `docs/patches/patch-*.md`；记录原 patch hash、目标文件、�
 4 个 `.o.cmd`；oracle 对比将其与 `.o/.ko/modules.order/Module.symvers/.mod` 统一按构建产物排除
 （`compare-oracle-candidates.sh` 的 `ARTIFACT_RE`），新包以构建器守卫保证零 `.o.cmd`。
 
-## 五、幂等提取工具规范（`scripts/extract-vendor-binaries.sh`）
+## 五、幂等提取工具规范（`tools/extract-vendor-binaries.sh`）
 
 - 默认从 `debs/` 找 Deepin 原包，支持 `INNOGPU_DEEPIN_DEB` 环境变量；
 - 先校验原 deb SHA-256 与清单一致；
@@ -145,7 +145,7 @@ body 引用 `docs/patches/patch-*.md`；记录原 patch hash、目标文件、�
 - 临时目录 + 原子 rename，中途失败不留伪完整文件；
 - 输出机器可读 PASS/FAIL 摘要；二次执行必须证明幂等。
 
-## 六、staging 构建树与新构建器（`scripts/build-innogpu-driver.sh`）
+## 六、staging 构建树与新构建器（`tools/build-innogpu-driver.sh`）
 
 构建流程（历史 4.0.0-i1 不叠加补丁；当前 R06 i3/i4 按版本应用经审查的新行为修复）：
 
@@ -195,7 +195,7 @@ rollback=PASS
 binary、package、runtime parity 验证。禁止用单项编译成功替代完整 parity。
 
 **module_vermagic 与关键符号（阶段 3 门槛）**：vermagic 单独不足以证明模块 ABI 一致。
-`scripts/compare-module-symbols.sh` 对候选与 p27 两包的 DKMS 源码在同一内核头下离线编译，
+`tools/compare-module-symbols.sh` 对候选与 p27 两包的 DKMS 源码在同一内核头下离线编译，
 对每个产出的 `.ko` 逐项比较：vermagic、`modinfo depends`、完整定义符号表
 （`nm --defined-only`，内核模块无 `.dynsym`，必须用常规 `.symtab`）、导入符号表
 （`nm --undefined-only`）、`.ksymtab_strings` 导出符号（存在时）与 `__versions`
@@ -232,7 +232,7 @@ sudo apt install --allow-downgrades ./debs/innogpu-fh2m-trixie_3.3.3.42-patched-
 | 0 设计冻结 | 本文件：目录、manifest schema、提取工具、staging、版本排序、许可证、回退策略 | 设计审查通过；不改设备不删旧文件 | ✅ 完成 |
 | 1 源码树导入 | `drivers/`、源码架构说明、patch provenance 表、导入报告 | source_import / patch_provenance / source_tree_parity_against_p27 / working_tree_clean / runtime_unchanged | ✅ 完成 |
 | 2 黑盒 manifest 与 staging | 正式 manifest、提取工具、vendor 忽略规则、staging 构建 | first_extraction / second_extraction_idempotent / check_only / bad_hash=FAIL_AS_EXPECTED / missing_source=FAIL_AS_EXPECTED / path_traversal=FAIL_AS_EXPECTED / interrupted_extraction_recovery | ✅ 完成（用户态/固件 package boundary 属阶段 3） |
-| 3 新构建器并行验证 | 新构建器（旧构建器为 oracle，并行比较） | 源码/黑盒/用户态/固件/maintainer scripts/包清单/vermagic/关键符号逐项一致（符号对比见 §七）；`.o.cmd` 构建产物排除；SOURCE_DATE_EPOCH 必填 + 双构建 SHA-256 一致 | ✅ 完成（compare-oracle-candidates.sh 全 PASS，含 module_symbols） |
+| 3 新构建器并行验证 | 新构建器（旧构建器为 oracle，并行比较） | 源码/黑盒/用户态/固件/maintainer tools/包清单/vermagic/关键符号逐项一致（符号对比见 §七）；`.o.cmd` 构建产物排除；SOURCE_DATE_EPOCH 必填 + 双构建 SHA-256 一致 | ✅ 完成（compare-oracle-candidates.sh 全 PASS，含 module_symbols） |
 | 4 实机候选验证 | 安装候选（需监督批准 + p27 回退与 SSH/TTY 通道） | 包版本/DKMS/vermagic/Driver/Firmware/DRM/fbdev/HWGL/DRI3/PDP/vblank/VA-API 枚举/fbterm/xdisplay/Picom/音频 + p27 回退演练 | ✅ 完成 |
 | 5 旧流程退役 | Step 1 标记 deprecated；Step 2 仅评估旧 wrapper 是否移入 `legacy/` | 阶段 1–4 PASS + 一个发布周期 + 新设备 clone 安装和恢复验证；`patches/`、历史 deb/tag 不得移动或删除 | Step 1 ✅；Step 2 待条件与批准 |
 

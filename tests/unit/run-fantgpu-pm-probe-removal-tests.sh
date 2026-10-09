@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
-CHECK="$ROOT/scripts/check-fantgpu-pm-probe-removed.sh"
+CHECK="$ROOT/tools/check-fantgpu-pm-probe-removed.sh"
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 PASS=0

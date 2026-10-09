@@ -252,7 +252,7 @@ CONFIG_MODULE_SIG_KEY="certs/r5-signing-key.pem"
 signing_key_sha256=221482be8c19cef56517dcbe5819f17e9b6493019a7f0df281052d299801e0b7
 ```
 
-固定 key 只为 A/B 字节一致；`CONFIG_MODULE_SIG_FORCE` 仍未启用，Secure Boot 仍关闭，不改变 R5 语义。`scripts/diffconfig` 必须同时保存“原始 `/boot` 配置到 normalized baseline”和“normalized baseline 到 r5dpm2”两层差异；任何未裁定差异停止构建。
+固定 key 只为 A/B 字节一致；`CONFIG_MODULE_SIG_FORCE` 仍未启用，Secure Boot 仍关闭，不改变 R5 语义。`tools/diffconfig` 必须同时保存“原始 `/boot` 配置到 normalized baseline”和“normalized baseline 到 r5dpm2”两层差异；任何未裁定差异停止构建。
 
 `CONFIG_DPM_WATCHDOG=y`、`CONFIG_DPM_WATCHDOG_TIMEOUT=20` 保持不变。cmdline 仍精确包含且各一次：
 
@@ -485,7 +485,7 @@ sudo reboot
 
 ```bash
 cd ~/src/innogpu-fh2m-debian-trixie
-scripts/verify-install-status.sh --require-reboot 4.0.2-i3
+tools/verify-install-status.sh --require-reboot 4.0.2-i3
 startx
 ```
 

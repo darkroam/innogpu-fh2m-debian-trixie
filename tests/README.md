@@ -111,7 +111,7 @@ tests/package/run-boundary-tests.sh
 
 该测试在 `/tmp` 中生成最小 fixture deb，验证新版本清洁包通过，以及私有 xdisplay 副本、复用
 patched-20 版本号、过期设备接入脚本、不完整 shader、错误架构和缺失 `Installed-Size` 会被
-`scripts/check-release-package.sh` 拒绝。它不读取或安装本机 `debs/` 中的真实驱动包，不运行 DKMS，
+`tools/check-release-package.sh` 拒绝。它不读取或安装本机 `debs/` 中的真实驱动包，不运行 DKMS，
 也不改变活动 Xorg。
 
 单元测试（manifest 恶意输入、版本排序契约、提取器隔离、collab 结构，CI 可跑、无设备依赖）：
@@ -153,7 +153,7 @@ bash tests/unit/run-fantgpu-runtime-health-tests.sh
 bash tests/unit/run-hygon-xhci-resume-fix-tests.sh
 ```
 
-- manifest 测试用 `tools/validate-binary-manifest.py` 对真实清单与 `tests/fixtures/` 下的恶意
+- manifest 测试用 `tools/internal/validate-binary-manifest.py` 对真实清单与 `tests/fixtures/` 下的恶意
   fixture（绝对路径、`../` 穿越、未知 kind、重复目标、缺 sha256、缺 license、链接逃逸、缺失文件）
   断言通过/拒绝；
 - suspend/resume 静态测试把跟踪的 HAL/PCI/PVR/DVFS/显示相关源码复制到 `/tmp`，验证
@@ -233,11 +233,11 @@ bash tests/unit/run-hygon-xhci-resume-fix-tests.sh
   （含待收档的新路径），实跑 check-docs；覆盖历史显示引用允许、活动显示引用拒绝、todo
   活动任务拒绝、runtime 汇总缺失、两篇设计的陈旧断言与三篇文档缺失。仅临时仓库建索引，
   不暂存源仓库，不生成构建或运行证据。
-- 多 Agent 协作目录结构与隐私测试（无设备）：tools/validate-collab.py 持久化 fixture，覆盖目录命名/
+- 多 Agent 协作目录结构与隐私测试（无设备）：tools/internal/validate-collab.py 持久化 fixture，覆盖目录命名/
   编号唯一/request+report 模板齐全/INDEX 与目录按编号精确双向一一对应（R01 不误配 R010、重复行、
   孤立行、孤立目录、登记日期/主题与目录一致）/状态白名单/根目录散放文件/根目录或内部符号链接/嵌套目录/仅
   Markdown/INDEX 与隐藏 Markdown 的大小写无关隐私扫描（含 check-docs.sh 的 rg 层共用
-  tools/private-data-patterns.txt 模式文件的反例）/缺 INDEX/整个 collab/ 目录缺失视为通过（fresh clone 与 CI）；在临时目录构造，不访问
+  tools/internal/private-data-patterns.txt 模式文件的反例）/缺 INDEX/整个 collab/ 目录缺失视为通过（fresh clone 与 CI）；在临时目录构造，不访问
   仓库真实 collab/。
 - P2 规范化映射测试（CI 无 build/ 可跑）：完全隔离（mktemp + trap，`P2_NORM_D_SRC`/`P2_NORM_F_SRC`
   注入合成树，不触碰仓库 `build/`），覆盖合成正例两次逐字节一致且内容正确（确定性 + 规范化路径 +
@@ -276,7 +276,7 @@ bash tests/unit/run-hygon-xhci-resume-fix-tests.sh
 | fixture | package 边界、fixtures/ | dpkg-deb | 否 | 否 | 否 | CI/沙箱 |
 | static | check-docs、fbterm/xHCI 补丁静态 | rg、perl、sha256sum | 否 | 否 | 否 | CI/沙箱 |
 | static | picom 安装/会话、xdisplay 安装 | bash、fake HOME | 否 | 否 | 否 | CI/沙箱 |
-| integration | parity/oracle/离线 DKMS（scripts/） | 内核头 | 否 | 否 | 否 | 本机 |
+| integration | parity/oracle/离线 DKMS（tools/） | 内核头 | 否 | 否 | 否 | 本机 |
 | runtime | 能力基线（tests/runtime/run-capability-baseline.sh，12 能力域，只读默认） | 真机/沙箱；设备项需 /dev/dri | 部分 | 是 | 否 | 沙箱只读（SKIP/UNVERIFIED）；真机授权（--allow-authorized-tests + --results-file） |
 
 runtime 详细要求（每项权限/设备/X11/TTY/副作用/恢复）见 [tests/runtime/README.md](runtime/README.md)。

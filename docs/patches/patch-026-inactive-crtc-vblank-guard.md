@@ -29,7 +29,7 @@
 ## 构建开关
 
 `APPLY_INACTIVE_CRTC_VBLANK_GUARD=1`；候选包 `3.3.3.42-patched-26`，构建入口
-`scripts/build-patched26-vblank-guard.sh`（固定 SOURCE_DATE_EPOCH）。
+`tools/build-patched26-vblank-guard.sh`（固定 SOURCE_DATE_EPOCH）。
 
 ## 验证与回退
 
@@ -39,7 +39,7 @@
   SHA-256 `d213877c60ec3aad10cb9b16b79f0c38ab95a7cd3f8aa0a7f4f0e1bd433e27b1`；
   `check-release-package.sh` 与 `check-deb-dkms-build.sh` 均通过。
 - 实机验证（2026-08-20 已通过）：安装 patched-26 并重启后 `PASS_INSTALL_STATUS` 与
-  `PASS_DESKTOP_HWGL` 通过；`tools/probe-drm-vblank.c` 逐 CRTC 探测结果：
+  `PASS_DESKTOP_HWGL` 通过；`tools/internal/probe-drm-vblank.c` 逐 CRTC 探测结果：
   - CRTC 1（活动）：10/10 成功、序号连续 +1、周期 12.2–17.9ms（60Hz 正常）；
   - CRTC 0/2（未活动）：全部立即返回 `EINVAL`（0.3–0.5ms，原行为为阻塞/300ms 超时）。
 - 回退：直接回退点 `patched-25`；本补丁不改变 ioctl ABI 或内存布局。

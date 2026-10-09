@@ -44,7 +44,7 @@
 ## 构建开关
 
 `APPLY_DMA_RESV_USAGE_FIX=1`；候选包为 `3.3.3.42-patched-25`，构建入口
-`scripts/build-patched25-dma-resv-fix.sh`（固定 SOURCE_DATE_EPOCH=1787184000）。
+`tools/build-patched25-dma-resv-fix.sh`（固定 SOURCE_DATE_EPOCH=1787184000）。
 
 ## 验证与回退
 
@@ -60,7 +60,7 @@
   `verify=pass pages=2048`（写回保留，`munmap` 128–168ms）。
 - 实机验证门槛（由操作者在真实会话执行）：
   1. 安装候选包并重启，确认 DKMS、Driver/Firmware、DRM/fbdev 正常；
-  2. 最小 PDP 探针 READ/WRITE CPU_PREP 行为回归（`tools/probe-pdp-invisible-read.c`）；
+  2. 最小 PDP 探针 READ/WRITE CPU_PREP 行为回归（`tools/internal/probe-pdp-invisible-read.c`）；
   3. 桌面 Xorg/GLX 与既有 p21/p24 行为一致。
 - 回退：直接回退点 `patched-24`；本补丁不改变内存布局或 ioctl ABI。
 - 若新内核（>6.12）或旧内核（<5.19）构建失败，先检查 `innodpu_compatibility.h` 的

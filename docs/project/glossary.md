@@ -1,7 +1,7 @@
 # 术语表
 
 本表只解释本项目反复出现、且会影响维护或验收判断的名称。当前版本角色以
-[`status.md`](status.md) 为准，命令和风险以 [`../../scripts/README.md`](../../scripts/README.md) 为准。
+[`status.md`](status.md) 为准，命令和风险以 [`../../tools/README.md`](../../tools/README.md) 为准。
 
 | 术语 | 含义 | 本项目中的边界 |
 | --- | --- | --- |

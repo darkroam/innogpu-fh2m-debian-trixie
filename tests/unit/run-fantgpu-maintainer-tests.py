@@ -17,7 +17,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
-GENERATOR = ROOT / "scripts/generate-fantgpu-maintainer-scripts.sh"
+GENERATOR = ROOT / "tools/generate-fantgpu-maintainer-scripts.sh"
 KERNELS = sorted(["6.12.101+deb13-amd64", "6.12.107+deb13-amd64",
                   "6.12.101-r5dpm1", "6.12.101-r5dpm2"])
 MODULE = "fantgpu-fh2m-kernel"
@@ -399,15 +399,15 @@ def main():
             cases.append(root.name)
             print("PASS " + root.name)
 
-    current = (ROOT / "scripts/build-innogpu-driver.sh").read_text()
-    assert 'bash "$ROOT/scripts/generate-fantgpu-maintainer-scripts.sh" "$P" "$VERSION"' in current
+    current = (ROOT / "tools/build-innogpu-driver.sh").read_text()
+    assert 'bash "$ROOT/tools/generate-fantgpu-maintainer-scripts.sh" "$P" "$VERSION"' in current
     start = 'cat > "$P/DEBIAN/postinst" <<EOF\n'
     end = 'chmod 0755 "$P/DEBIAN/postinst" "$P/DEBIAN/prerm" "$P/DEBIAN/postrm"'
     # The legacy O emission block is byte-identical, avoiding an O policy change.
     assert current[current.index(start):current.index(end)] == baseline[baseline.index(start):baseline.index(end)]
     cases.append("V7-production-wiring-and-O-preservation")
     print("PASS V7-production-wiring-and-O-preservation")
-    p = subprocess.run(["bash", str(ROOT / "scripts/build-innogpu-driver.sh")],
+    p = subprocess.run(["bash", str(ROOT / "tools/build-innogpu-driver.sh")],
                        env={**os.environ, "VERSION": "5.0.0-i6", "SOURCE_DATE_EPOCH": "1789516800",
                             "KERNELDIR": str(work), "STAGE_ROOT": str(work / "must-not-exist")},
                        capture_output=True, text=True)
@@ -416,7 +416,7 @@ def main():
     assert not (work / "must-not-exist").exists()
     cases.append("V7-frozen-version-rebuild-refused")
     print("PASS V7-frozen-version-rebuild-refused")
-    spec = importlib.util.spec_from_file_location("abi", ROOT / "tools/check-fantgpu-shipped-abi.py")
+    spec = importlib.util.spec_from_file_location("abi", ROOT / "tools/internal/check-fantgpu-shipped-abi.py")
     abi = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(abi)
     layout = "struct dev_rsrc {\n" + "".join(

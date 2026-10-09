@@ -58,8 +58,8 @@ A=i3 一次 s2idle：无红屏、cursor 分支未执行 → 命中预定停止�
 - 本机来源（非 Git、公开检出不可取得）：`collab/R06-2026-09-02-suspend-resume严格定位A-B/request.md#L8-L64 @ 966bf9a9ecde`（dsh 完整提示词）
 - 本机来源（非 Git、公开检出不可取得）：`.runtime-archive/r17-docs/archive-originals/R06/R06-originals.tar @ 1b012fa0c903`（原文快照）
 - [025-suspend-resume-display.patch](../../../patches/025-suspend-resume-display.patch)；历史版本锚：`patches/025-suspend-resume-display.patch#L1 @ b499b8ac7cc4`（-U3 重生版）
-- [build-innogpu-driver.sh](../../../scripts/build-innogpu-driver.sh)；历史版本锚：`scripts/build-innogpu-driver.sh#L1 @ b499b8ac7cc4`（strict patch 三级拒绝）
-- [check-release-package.sh](../../../scripts/check-release-package.sh)；历史版本锚：`scripts/check-release-package.sh#L1 @ b499b8ac7cc4`（.orig/.rej 反例）
+- [build-innogpu-driver.sh](../../../tools/build-innogpu-driver.sh)；历史版本锚：`scripts/build-innogpu-driver.sh#L1 @ b499b8ac7cc4`（strict patch 三级拒绝）
+- [check-release-package.sh](../../../tools/check-release-package.sh)；历史版本锚：`scripts/check-release-package.sh#L1 @ b499b8ac7cc4`（.orig/.rej 反例）
 - [.gitattributes](../../../.gitattributes)；历史版本锚：`.gitattributes#L1 @ b499b8ac7cc4`
 - 事实值（非指针）：A=i3 SHA 6cab9e52…9dcba；B=i4 SHA 085e0684…969a7；epoch
   1788451200（2026-09-04 00:00 +0800）；准备阶段全量 413/413；真机 1/4 轮

@@ -35,19 +35,19 @@
   排除项、静态锁、真实验证和回退边界。依赖宿主版本或硬件的修复还必须提供只读升级检查入口；
   每次内核、系统或对应组件升级后先运行该入口，`FAIL`/`UNVERIFIED` 均阻断相关运行验收。
 - 黑盒载荷边界：`.o_shipped`、用户态库、固件等第三方二进制**不入库**；Deepin 线由
-  `binary-manifest.json` 管理并经 `scripts/extract-vendor-binaries.sh` 提取，fantgpu 线由
+  `binary-manifest.json` 管理并经 `tools/extract-vendor-binaries.sh` 提取，fantgpu 线由
   `binary-manifest-fantgpu.json` 管理，构建器校验 `vendor/fantgpu/` 后用
-  `tools/materialize-fantgpu-payload.py` 物化包载荷；两线固定来源、清单和载荷不得混用；
+  `tools/internal/materialize-fantgpu-payload.py` 物化包载荷；两线固定来源、清单和载荷不得混用；
   清单中的 `vendor-binary` 是来源分类，不是许可证名称（见 [licensing.md](licensing.md)）。
 - 许可证发布门禁：`drivers/` 含 `Strictly Confidential` 与多种许可证声明；在
   [source-license-audit.md](source-license-audit.md) 的 BLOCKED 状态关闭前，不得发布新的源码归档、
   第三方载荷或声称整个导入源码树开源。新增或改变来源内容必须同步
-  `license-audit-policy.json` 和逐文件 inventory，并运行 `python3 tools/audit-licenses.py`。机械审计
+  `license-audit-policy.json` 和逐文件 inventory，并运行 `python3 tools/internal/audit-licenses.py`。机械审计
   PASS 与发布许可是两件事；release 必须额外通过 `--require-releasable`。
 
 ### 代码与接口
 
-- `scripts/<name>` 是稳定入口。移动或重命名脚本前必须扫描安装器、测试、配置、服务、桌面源码
+- `tools/<name>` 是稳定入口。移动或重命名脚本前必须扫描安装器、测试、配置、服务、桌面源码
   和文档，并保留兼容包装器；不得为了“整理目录”直接破坏外部调用。
 - 通用逻辑与设备特例分离：通用显示、安装和验证代码不得硬编码本机输出名、绝对 home 路径或
   固定模式；本机 connector、modeline 和恢复动作必须以明确钩子存在并写明边界。
@@ -67,8 +67,8 @@
 - release 上传是源码提交之外的步骤；新架构构建器候选先写入被忽略的 `.build/work/`，经裁决
   保留的包才归档到 `debs/`；legacy patched 构建输出默认写入 `debs/`。均不得因本地构建把
   二进制产物重新加入 Git。
-- release 前必须先通过 `python3 tools/audit-licenses.py --artifact project-tools --require-releasable`
-  （或对应制品），再运行 `scripts/check-release-package.sh`。xdisplay 引擎副本、
+- release 前必须先通过 `python3 tools/internal/audit-licenses.py --artifact project-tools --require-releasable`
+  （或对应制品），再运行 `tools/check-release-package.sh`。xdisplay 引擎副本、
   历史 Kylin/实验安装器和直接二进制热补丁入口不得出现在 coherent 发布包中。
 
 ### 文档与验证
@@ -183,15 +183,15 @@
 
 | 实现变化 | 必须复核的当前权威 | 其他同步项 |
 | --- | --- | --- |
-| `build-innogpu-driver.sh`、提取器、manifest 或包载荷路径 | `architecture.md`、`dependencies.md`、`docs/user/new-device-install.md` | `scripts/README.md`、迁移设计、包边界测试、恢复文档 |
-| 安装/卸载脚本、systemd unit、helper 或持久化配置 | 对应 `project/*-management.md` 与本维护策略 | `scripts/README.md`、用户安装/恢复、卸载清单、fixture 测试 |
-| `tools/` 探针参数、输出、退出码或能力边界 | `tools/README.md`、`test-strategy.md` | `tests/README.md`、runtime README、能力调查；真实状态变化还需证据/摘要流程 |
+| `build-innogpu-driver.sh`、提取器、manifest 或包载荷路径 | `architecture.md`、`dependencies.md`、`docs/user/new-device-install.md` | `tools/README.md`、迁移设计、包边界测试、恢复文档 |
+| 安装/卸载脚本、systemd unit、helper 或持久化配置 | 对应 `project/*-management.md` 与本维护策略 | `tools/README.md`、用户安装/恢复、卸载清单、fixture 测试 |
+| `tools/` 探针参数、输出、退出码或能力边界 | `tools/internal/README.md`、`test-strategy.md` | `tests/README.md`、runtime README、能力调查；真实状态变化还需证据/摘要流程 |
 | 测试入口、用例数或 CI 顺序 | `tests/README.md`、`test-strategy.md`、`.github/workflows/ci.yml` | status/todo 中的当前统计；历史计数不回写 |
 | patch、`drivers/` 转换提交或外部载荷分类 | `docs/patches/README.md`、对应 patch 文档、`patch-provenance.md` | architecture、manifest、许可证审计；不得擅自关闭 BLOCKED |
 | runtime 真机结论 | `baselines/latest-runtime-baseline.txt`（按授权流程生成）和 `status.md` | test-strategy/goals/todo/能力文档；证据文件只追加经审查结果 |
 
 `docs/history/history.md`、`docs/incidents/`、`docs/archive/` 和历史 baseline 只保存时点事实。发现其中
-与当前态不同，应链接当前权威或增加新时点记录，不能重写旧结论。`scripts/check-docs.sh` 是必要护栏，
+与当前态不同，应链接当前权威或增加新时点记录，不能重写旧结论。`tools/check-docs.sh` 是必要护栏，
 其链接扫描覆盖 `git ls-files '*.md'` 列出的 tracked Markdown，隐私扫描还覆盖指定目录下的
 ignored/untracked 内容，并校验本机 `collab/` 结构与隐私；untracked 新文档不在 tracked
 链接扫描内，提交时须重跑。机械检查不能证明文字事实、
@@ -203,8 +203,8 @@ ignored/untracked 内容，并校验本机 `collab/` 结构与隐私；untracked
 
 ```sh
 git diff --check
-scripts/check-docs.sh
-bash -n scripts/*.sh
+tools/check-docs.sh
+bash -n tools/*.sh
 ```
 
 还应检查 Markdown 内部链接和文档中出现的仓库相对路径是否存在。显示接入修改必须运行

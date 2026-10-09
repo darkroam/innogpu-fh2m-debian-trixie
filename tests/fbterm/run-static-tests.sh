@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-BUILD_SCRIPT="$ROOT/scripts/build-patched-fbterm.sh"
+BUILD_SCRIPT="$ROOT/tools/build-patched-fbterm.sh"
 PATCH_FILE="$ROOT/components/fbterm/001-configurable-redraw-scrolling.patch"
 
 bash -n "$BUILD_SCRIPT"

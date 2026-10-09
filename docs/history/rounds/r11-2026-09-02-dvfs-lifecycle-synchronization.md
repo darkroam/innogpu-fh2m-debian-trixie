@@ -60,7 +60,7 @@ cancel_delayed_work_sync → SuspendDVFS() 真正等待在途 target 并排空�
 - 本机来源（非 Git、公开检出不可取得）：`.runtime-archive/r17-docs/archive-originals/R11/R11-originals.tar @ 4117818ba087`（原文快照）
 - [026-suspend-resume-dvfs-lifecycle.patch](../../../patches/026-suspend-resume-dvfs-lifecycle.patch)；历史版本锚：`patches/026-suspend-resume-dvfs-lifecycle.patch#L1 @ 6e3c8ce033b0`
 - [026-suspend-resume-dvfs-lifecycle.md](../../patches/026-suspend-resume-dvfs-lifecycle.md)；历史版本锚：`docs/patches/026-suspend-resume-dvfs-lifecycle.md#L1 @ 6e3c8ce033b0`
-- [finalize-suspend-resume-failure.py](../../../tools/finalize-suspend-resume-failure.py)；历史版本锚：`tools/finalize-suspend-resume-failure.py#L1 @ 6e3c8ce033b0`
+- [finalize-suspend-resume-failure.py](../../../tools/internal/finalize-suspend-resume-failure.py)；历史版本锚：`tools/finalize-suspend-resume-failure.py#L1 @ 6e3c8ce033b0`
 - 事实值（非指针）：4.0.2-i1 deb SHA e115bdcd…0c09e；epoch 1788624000（2026-09-06
   00:00 +0800）；suspend 39/39、finalize 12/12、version 10/10、package 11/11、
   17 入口 444/444

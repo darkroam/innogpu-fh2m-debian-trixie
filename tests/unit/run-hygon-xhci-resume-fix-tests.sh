@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CHECK="$ROOT/scripts/check-hygon-xhci-resume-fix.sh"
+CHECK="$ROOT/tools/check-hygon-xhci-resume-fix.sh"
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 PCI="$TMP/sys/bus/pci/devices/0000:06:00.1"

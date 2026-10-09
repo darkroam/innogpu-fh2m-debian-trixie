@@ -11,7 +11,7 @@ i10父树`c08b2bd426bcceba2853eb0767994875b3080cfaf4d5a1afcff821f3092aa67e`之�
 退出条件从`ret == 0`改为`ret == 0 || ret == 1`。派生整树实测：
 `f0e5490ad2d14fb280ef0e3bf76018462143b9223a357e0699b1c0ed376980b5`。
 
-[生产builder](../../scripts/build-innogpu-driver.sh)编译与包内源码共用派生函数；版本窄门仅i11，
+[生产builder](../../tools/build-innogpu-driver.sh)编译与包内源码共用派生函数；版本窄门仅i11，
 i1–i10、未知版本、错epoch、输入漂移继续拒绝。默认Deepin版本不变，不回写任何原物。
 没有改shared dev_rsrc、宏配置、回调路由、锁、POST次序或对象发布/注销时序。
 
@@ -29,7 +29,7 @@ VPU全局初始化在首次设备注册通知之前开始；remove中的注销�
 
 ## 2. r5obs1实现与记录边界
 
-[离线源码准备工具](../../tools/prepare-r5-observation.py)只接受锁定的6.12.101归档输入，
+[离线源码准备工具](../../tools/internal/prepare-r5-observation.py)只接受锁定的6.12.101归档输入，
 新建独立副本；不复制`.pem/.key`等签名材料、不修改冻结源。变更仅四个文件：
 
 | 文件 | 实现 | 不改变的行为 |
@@ -44,7 +44,7 @@ VPU全局初始化在首次设备注册通知之前开始；remove中的注销�
 由Kbuild使用自带显式配置生成，私钥不读取/导出且构建结束删除；测试证书不构成宿主信任。
 不安装内核、不加载观测模块、不触发PM。当前普通101驱动模块不能直接冒充新release的兼容模块。
 
-[离线配置/检查工具](../../tools/r5-observation.py)从System.map选唯一实际text symbol，
+[离线配置/检查工具](../../tools/internal/r5-observation.py)从System.map选唯一实际text symbol，
 生成JSON规格，不执行tracefs写入。部分小函数被内联时在外层dpm_prepare与依赖等待根覆盖，
 不是凭空要求不存在的device_prepare/dpm_wait符号；实际ftrace可用性仍须未来预检，缺失即停。
 

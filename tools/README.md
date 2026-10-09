@@ -1,63 +1,289 @@
-# 工具索引
+# 脚本入口、生命周期与风险
 
-`tools/` 保存构建期确定性变换和最小诊断探针。它们不是用户命令，也不会由 release deb 安装；
-调用入口、输入载荷和编译方式由相应脚本或阶段文档负责。新增工具必须在本文件登记，避免出现没有
-所有权、验证方式或风险说明的临时程序。
+`tools/<name>` 是操作者与 CI 的稳定入口。新增脚本必须在本文件登记所有权、状态改变范围和回退方式。
+`tools/internal/` 里的程序不是给人记的命令名；门禁和测试直接调用。
 
-| 工具 | 类型 | 用途与边界 |
+## 构建与打包
+
+> **当前入口**：新架构构建器 `build-innogpu-driver.sh`（迁移源码树 + 经审查的新修复 + manifest
+> 黑盒载荷，产出 4.0.x-iN）。以下 `build-deepin-coherent.sh`、`build-patchedNN-*.sh` 与历史安装/卸载入口为
+> **legacy（保留）**：永久保留作 p27 oracle、版本护栏、回退包与事故证据；**不作为新工作入口**，
+> 不移动不删除（Phase 5 第二步后再评估，见 `docs/design/phase5-retirement-design.md`）。
+
+| 入口 | 生命周期 | 职责 |
 | --- | --- | --- |
-| `prepare-r5-observation.py` | R34–R47 离线源码准备 | 锁定源码/唯一锚、生成全新观测副本；当前身份 r5obs2-r47e（已获准安装/首启，非PM计量因日志丢失停止），联合字典容量由生产解析器契约提供，含成对与辅助事件、独立 88B allocator 日志接口及准入失败定位。`--export-module` 生成同核导出器与同源契约/预算；`--receiver-script` 保持 Windows 身份；`--lookup-benchmark` 抽取生产查找函数。生成不构建/安装/启动、不复制私钥。验证见 `tests/unit/run-r5-observation-tests.py` 与[实现说明](../docs/design/r5-vpu-and-observation-implementation.md) |
-| `r5-observation.py` | R34–R47 证据解析与计量读取 | `check`/`wire-check`/`semantic-wire-check` 分层判读；R47 原始链需三份同 boot format 和 `--require-r47`，核函数/notifier 字典、callback 层、queue→worker、wake 摘要。`meter-check` 重放对象/物理背页分账，`event-budget` 核含 aux 总量；缺真实输入非零。`meter-session` 仅供另批授权的精确观测核物理机读取 `/dev/r5_meter`、推进 M0–M6/END；有界批量读取与写盘线程分离，队列满/写入失败非零，不执行矩阵动作或 PM。ALLOCATOR_UNVERIFIED 保留，不以日志重放或边界算术替代上界证明。 |
-| `r5-observation-upload.py` | R41 受限证据回传 | 指定peer/session、SHA核验、原件及短读保全、不覆盖旧attempt；`--unit <本机配置>`只生成独立systemd unit，`--serve`才监听，不安装/启用服务、不触发PM、不判覆盖通过。文件/回环HTTP及unit离线验证见同一观测测试；会话退出/冷启存活待现场验证，用法见[scripts/README](../scripts/README.md) |
-| `check-fantgpu-shipped-abi.py` | F 共享 ABI 门 | 既有文本门检查 size=140536、members=115、尾字段及固定偏移；`--module MODULE OUTPUT` 完整 DWARF 前缀扫描，避开 pahole 1.30 的 `-C` 提前停止错误，返回码仍须0。保留全部布局，仅精确 SHA 匹配的冻结 shipped 114成员原布局另列，其余须唯一通过115成员门；原始输出/错误一并留存。builder 与 strip 前共用，缺失/多义/漂移均拒绝 |
-| `patch-gpupll-object.py` | 构建期对象变换 | 对 Deepin 202504 的 `innogpu.o_shipped` 执行严格单点字节替换；只接受唯一旧序列或已变换状态，其他载荷立即失败 |
-| `probe-egl-gbm.c` | 最小 C 探针 | 在指定用户态库环境中创建 GBM device 和 EGL/GLES2 context，报告 backend、renderer 与基本绘制错误，不修改系统配置 |
-| `probe-drm-topology.c` | 只读 KMS 探针 | 报告 DRM connector 物理尺寸、encoder、底层 CRTC ID/索引和 active mode，用于核对 WebKit 的 monitor 匹配结果；不 modeset。输出契约：active 但内核未提供 mode 名称时 `mode=` 输出稳定占位 `<unnamed>`（如 `mode=<unnamed> refresh=60`），inactive 输出 `mode=-`；空名称绝不产生空字段。**F5 扩展**：新增 connector 契约段（`connector <id> <name> status=<connected|disconnected> modes=<count> source=<ioctl|sysfs>` + 全部 mode 行 `<hdisp>x<vdisp>@<vrefresh>`）；当 GETCONNECTOR modes payload 失败时，按对应 `/sys/class/drm/<card>-<connector>/modes` 只读回退，source 标为 `sysfs`，sysfs 仅提供分辨率时刷新率输出为 `@unknown`；回退失败输出 `modes=unavailable source=unavailable` 并 rc=1。DDCCI 属性段（props 名匹配 `(?i)ddcci` 的 `connector <id> prop <name>=<value>`，全无 → `connector <id> ddcci-props=none`）、backlight 关联表（`<backlight_name> -> <drm_connector_path>`，经 `/sys/class/backlight/<name>/device` symlink 解析；解析失败或目标非 drm → `unresolved`，禁止全局枚举误归因）；输出格式固定（validation-plan §1.2 R7-R9 证据格式）。夹具构建 `-DINNOGPU_DMABUF_FIXTURE_HOOKS` + `INNOGPU_DMABUF_TOPOLOGY_FIXTURE=1`（backlight 根经 `INNOGPU_DMABUF_BACKLIGHT_ROOT` 注入），新段输出 `fixture_` 命名空间；生产构建不定义该宏，环境变量无效 |
-| `probe-fbdev-mmap.c` | 非破坏性 fbdev mmap 探针（F4 新探针） | open /dev/fb0 → FBIOGET_FSCREENINFO → 选单页测试区 → 保存原始字节 → mmap → 写入测试 → 读回比对 → 恢复原始字节 → munmap；atexit 清理兜底（异常退出也恢复测试页）；HUP/INT/TERM 信号处理器只置 `volatile sig_atomic_t` 标志（异步信号安全，绝不调用 cleanup/memcpy/msync/munmap/close/free），主流程检查点恢复测试页后以 128+signum 退出（129/130/143）；长度/偏移越界测试（越界 mmap 成功即 FAIL）。单一源码双构建：生产构建（无夹具宏）→ 真机 R2 权威判定（权威行无 `fixture_` 前缀）；`-DINNOGPU_DMABUF_FIXTURE_HOOKS` + `INNOGPU_FBDEV_FIXTURE=1` → 仅静态自测（进程内伪造页，输出 `fixture_` 命名空间，绝不产出权威行；不引入 LD_PRELOAD；夹具同步钩子 `INNOGPU_FBDEV_FIXTURE_HOLD_MS`/`INNOGPU_FBDEV_FIXTURE_HOLD_FILE` 供真实信号中断测试——写坏后持留脏窗口，测试进程发 SIGTERM，断言 rc=143 + `INTERRUPTED signal=15 page_restored=yes`）。覆盖边界：静态夹具只证明探针自身控制流/解析/保存→写→读回→恢复/清理兜底/越界拒绝/输出契约，内核 fb_io_mmap 语义只能由真机 R2 证明（validation-plan「F4 覆盖边界声明」） |
-| `probe-drm-vblank.c` | 只读 DRM ioctl 探针 | 对指定 CRTC 重复执行带硬超时的相对 vblank wait，记录阻塞时间、序号和内核时间戳；失败行附 `errno=%d` 供 inactive-CRTC 守卫机器解析（预期 EINVAL=22）；不创建 framebuffer、不 modeset |
-| `probe-dmabuf-self-import.c` | DRM 同设备 PRIME 探针 | 创建 GEM（dumb-buffer 路径）→ `DRM_IOCTL_PRIME_HANDLE_TO_FD` 导出 DMA-BUF → 同一 innogpu 设备 `PRIME_FD_TO_HANDLE` 导入（自导入可返回同 handle，恰好关闭一次）→ 每轮逆序释放 fd/导入 handle/原 handle；导出请求 `DRM_CLOEXEC` 并**严格断言返回 fd 带 FD_CLOEXEC**（缺失即 FAIL，不自补救）；多轮后 `/proc/self/fd` 计数无泄漏。退出码 0=通过 1=ioctl/校验失败 2=参数 3=设备/能力缺失（stdout 输出 `capability=no-dumb-buffer`/`no-prime-export`/`no-prime-import`）。只验证同设备 PRIME self-import，不涉及 foreign import/跨设备 GTT |
-| `probe-pdp-invisible-read.c` | 最小 PDP GEM 探针 | 创建单个 invisible GEM；READ 模式测量逐页读取和 munmap，WRITE 模式逐页写入、解除映射并以 READ mapping 验证回写；支持可选 page stride 测量稀疏访问；不提交 GPU 工作、不 modeset |
-| `probe-surfaceless-gles2.c` | 最小 C 探针 | 验证 surfaceless EGL/GLES2 初始化和基本绘制，用于区分 Xorg/DDX 与核心 EGL 路径故障 |
-| `probe-x11-egl-gles2.c` | 最小 C 探针 | 连接测试 X server 并验证 X11 EGL/GLES2 context，用于隔离 DDX/窗口系统路径 |
-| `trace-loader.c` | 诊断 shim（**O-only**） | 通过 `LD_PRELOAD` 记录 vendor loader 选择、失败 ioctl，以及 PDP GEM 分配位置和 CPU_PREP/CPU_FINI 的 handle/flags；**硬编码 O 血统 PDP_GEM_INVISIBLE=1<<28 ABI——F 血统为 0x2（FANT_BIT(1)），本工具当前不参与 F 路径/不用于 F 诊断**（如后续用于 F，须先按 `INNOGPU_PDP_INVISIBLE_FLAG` 模式参数化）；只用于受控诊断，不得进入发布包 |
-| `probe-vulkan-devices.c` | 枚举+执行探针 | **枚举**（默认）：dlopen Vulkan loader，枚举实例版本/扩展、物理设备与队列族，不创建设备；**执行**（`exec [timeout_ms]`）：创建 instance→选 GPU 设备（拒绝 CPU-only）→device/queue→空 command buffer+fence 提交并限时等待→逆序释放。退出码 0=PASS 2=loader 3=无 GPU/初始化 4=device/queue 5=submit/wait；loader 路径可用 `PROBE_VULKAN_LOADER` 覆盖（测试注入）。无需 Vulkan 头文件 |
-| `probe-opencl-devices.c` | 枚举+执行探针 | **枚举**（默认）：dlopen OpenCL ICD loader，枚举 platform/device 及关键能力，不创建 context；**执行**（`exec [elements]`）：选 GPU 设备（拒绝 CPU 平台）→context/queue→两 buffer→add kernel 编译运行→阻塞读回→逐元素校验→逆序释放。退出码 0=PASS 2=loader 3=无 GPU 4=context/queue/buffer 5=build 6=run 7=verify；loader 路径可用 `PROBE_OPENCL_LOADER` 覆盖。无需 OpenCL 头文件 |
-| `probe-vaapi.c` | 最小 C 探针 | 打开 DRM render 节点并 dlopen libva，枚举 VA-API 驱动、profile 与 entrypoint；不创建 surface/context、不编解码，无需 libva 头文件 |
-| `run-dmabuf-regression-test.sh` | DMA-BUF 回归聚合入口 | 编译并运行 self-import + invisible GEM READ/WRITE(+verify) + topology/vblank 探针，Driver/Firmware 双快照严格门禁；参数 `--render-device/--card-device/--size/--iterations/--vblank-samples/--timeout/--read-munmap-limit-ms` 均在设备探测前严格校验（rc=2）；**F6 非夹具血统参数** `--lineage innogpu|fantgpu`（非法值 rc=2）与 `--status-file FILE`（优先级 CLI > 夹具钩子 env > 血统缺省路径 `/proc/driver/<模块名>/gpu00/status`；CLI 参数不触发 fixture mode），内核日志来源正则按血统参数化（`<模块名>|pvr|drm|gpu|dma_buf|dma_resv|fence`）；默认动态发现 1ec8:9810 并核对 card/render 同源 BDF；READ munmap 性能门槛默认 max≤40ms（p22 71.9-119.4ms vs 修复后 1.7-2.6ms，可覆盖但必须记录）；vblank 输出全文件严格校验（header/列标题/summary 各恰好一行、样本行按 1..N 顺序、浮点 valid_num + min≤avg≤max、sequence/delta 限制规范 uint32 并按 modulo 2^32 校验回绕、kernel_delta 与相邻 kernel_time 差交叉验证、summary 指标与样本重算交叉验证到 %.3f 容差 0.001ms），inactive CRTC 守卫与 active 共用严格元数据解析并期望快速 EINVAL，且 success=0 时 avg/min/max 必须全零（超时/错误 errno/过慢/重复 header 或列标题/坏浮点/字段乱序/指标与样本不符/kernel_delta 矛盾/uint32 越界均 FAIL，真实回绕合法）；多 CRTC 每个都记录 ok/avg 证据（失败也附完整 per_crtc）；topology 严格解析器容忍 F5 新增契约行（connector/mode/backlight 行；其余行仍 fail-closed）；内核日志门禁来源覆盖模块名/pvr/drm/gpu/dma_buf/dma_resv/fence，严重事件按词边界+词形匹配（error/fail/fault/bug/hang/timeout/reset/oops/panic/deadlock/stall/corrupt/abort/warn/lockup/wedged 含单复数与进行时），dma_buf timeout、GPU hang、failures、WARNING/WARN_ON、lockup、wedged 均阻断 PASS 而 debug/installed/hangcheck 等 benign 行保持 clean；日志门禁为独立状态机：新严重行 -> fail/FAIL(rc1)；post 不可用或无法证明连续（截断/重排/中间插入/无重叠）-> UNVERIFIED(rc3) 且**一致性失败优先**（不可信窗口不做严重词分类，绝不升级为 fail）；正常环形轮转（after=suffix(before)+new）只检查重叠后新增行（多集差集按 after 原始顺序输出，支持多条新增），重排（after 全为 before 行但乱序）判不连续；内核时间严格单调（%.3f 输入不允许 0.001 倒退容差）；退出码 0=PASS 1=子项/状态 FAIL 2=参数/工具/编译或整体 SKIP 3=设备/能力缺失或整体 UNVERIFIED 5=超时/清理；HUP/INT/TERM 幂等清理退出 129/130/143；fixture 钩子须显式 `INNOGPU_DMABUF_FIXTURE_MODE=1`，输出独立命名空间 `fixture_dmabuf_*`/`fixture_tests_*`，绝不输出权威 `dmabuf_*` 行。能力边界：仅同设备 PRIME self-import；foreign/cross-device/GBM/V4L2/第二 GPU/长期压力/并发保持 UNVERIFIED。依赖：gcc + DRM 头文件（`/usr/include/drm/drm.h`，Debian Trixie 上属 `linux-libc-dev`）、timeout（coreutils）、grep、awk（mawk/gawk） |
-| `run-vaapi-decode-test.sh` | 真机解码验证 | H.264/HEVC 实际解码：lavfi testsrc2（恰好 30 帧 320x240）→ libx264/libx265 编码 → 软件参考 NV12 framemd5 → **强制 VAAPI 硬解**（hwaccel vaapi + hwaccel_output_format vaapi + hwdownload,format=nv12，无软件回退）→ **真实 framemd5 格式校验**（尾换行、`#dimensions 320x240`、恰好 30 条合法帧记录、NV12 帧大小 115200、32 位 hex hash）→ 逐帧 hash 对比。动态定位 1ec8:9810 render node（`--device` 覆盖并验证 sysfs 身份）；Driver/Firmware 状态门禁：解码前/后两份快照严格解析（OK + 8 类计数字段存在且非负整数）+ 逐字段比较增长（pre 无效解码前即 FAIL）；HUP/INT/TERM 幂等清理后退出 129/130/143；按 `--codec` 校验编码器/解码器/vainfo VLD profile；输入生成、软件参考和硬解三阶段均把 GNU timeout rc=124/137 统一归类为超时；退出码设计为 0=PASS 1=解码/校验/状态 2=参数/工具/codec 缺失（设备检测前） 3=节点缺失/身份 4=输入/参考 5=超时/清理。**F7 lineage 参数化**：`INNOGPU_LINEAGE=innogpu|fantgpu`（缺省 innogpu，非法值 fail-closed exit 2）——proc 状态缺省路径按血统派生（fantgpu → `/proc/driver/fantgpu/gpu00/status`）；vainfo 身份门按血统分派：O 保持 `innosilicon|innogpu` 历史口径，fantgpu 血统只接受精确 `fh2m` 标识（独立 token，前后须为非标识符字符；厂商/显示标签如 innosilicon 仅辅助证据，不得单独过门；未建立 fh2m 身份 → fail-closed exit 3）；`--status-file FILE` 独立非夹具 CLI 参数（优先级 CLI > env 钩子 > 血统缺省路径；CLI 不触发 fixture mode）。fixture 钩子 `FFMPEG_BIN`/`VAINFO_BIN`/`INNOGPU_VAAPI_SKIP_DEVICE_CHECKS`/`FAKE_SYSFS_ROOT`/`INNOGPU_VAAPI_STATUS_FILE` 须显式 `INNOGPU_VAAPI_FIXTURE_MODE=1`，fixture 模式使用**独立命名空间 fixture_***（fixture_tests_total/fixture_vaapi_decode_overall 等），绝不输出任何 `vaapi_decode_*` 权威行。依赖：ffmpeg(+vaapi/libx264/libx265)、vainfo（Debian Trixie 包名 `vainfo`） |
-| `generate-binary-manifest.py` | 构建期清单生成 | 从 pinned Deepin deb 确定性生成 `binary-manifest.json`：校验 deb SHA-256，覆盖全部黑盒文件与符号链接，标记 kind/role/license；输出正式 JSON，重复运行结果一致 |
-| `validate-binary-manifest.py` | 清单 schema 校验 | 校验 `binary-manifest.json`：source/vendor 路径非空唯一且相对、link_target 不越出载荷根、kind 白名单、license 非空、文件条目 sha256+size、符号链接条目 link_target；提取工具在写入前调用。许可证证据语义由 `audit-licenses.py` 负责 |
-| `build-release-archive.py` | 确定性发布归档构建（HEAD 绑定） | 支持制品：`project-tools`、`driver-source`（CLI 只声明这两个）。从 **HEAD blob** 读取 allowlist 内容（要求干净工作树，工作区==索引==提交）；发布模式调用审计器 `artifact_is_cleared` 全量门禁（手工把 status 改成 CLEARED 无法绕过许可证/notice/allowlist 校验）；拒绝符号链接（120000）、重复 allowlist、输出落在仓库内；保留 Git 0644/0755 模式；固定 epoch、gzip mtime=0、排序条目、临时文件 0644 + 原子替换；`--draft` 仅供结构测试并输出 `archive_draft=OK`（非发布 PASS 语义）。双构建 SHA-256 一致 |
-| `audit-licenses.py` | 三层模型许可证机械审计 | 按 `license-audit-policy.json` 机械校验：许可证文本存在且 hash 固定；根 LICENSE 为 GPL-3.0-or-later 且范围仅限原创层；上游 MIT notice 保留（`Copyright (c) 2026 Tim Hant`）；`drivers/` 逐文件分类（dual/BSD/confidential/unclassified）；**非 drivers/ 失败关闭逐路径分类**（`non_drivers_licenses`：已批准原创前缀 + 显式路径映射——上游 MIT、`LICENSES/` 标准文本组、components/ 第三方派生组；未知路径一律拒绝 `non_drivers_unclassified`，无全局默认 GPL）+ **路径绑定 NOTICE 门禁**（`notice_gate.entries` 按路径组绑定版权/许可标记，新第三方路径缺条目即拒绝）；制品 allowlist 不含 confidential/`NOASSERTION`/vendor/deb 且与机械派生集合双向一致（project-tools 排除 patches/、debs/、collab/、drivers/、vendor/、build/、third_party/）；allowlist 路径安全/唯一/已跟踪/非符号链接；manifest license 只允许 `vendor-binary` 或精确允许 SPDX；确定性生成/检查 `source-license-inventory.tsv` 与两个 allowlist（`--write-inventory`/`--write-allowlists`）。只读 `.git`（ls-files/ls-tree/cat-file/status，不写 index）。普通检查可在 `license_release_gate=BLOCKED` 时 PASS；发布必须用 `--artifact <name> --require-releasable`，且要求干净工作树。该工具不作法律结论 |
-| `validate-collab.py` | 目录结构与隐私校验 | 机械校验 `collab/`（本机私有目录；不存在视为通过）：INDEX.md 表头 轮次/日期/主题/状态、轮次目录命名 R{编号}-{YYYY-MM-DD}-{主题}、编号唯一、request.md/report.md 齐全、仅 Markdown 文件、根目录与内部无符号链接/嵌套目录/根目录散放文件；INDEX 与目录按编号精确双向一一对应（R01 不误配 R010）、登记日期/主题与目录一致、状态白名单；INDEX 与包括隐藏 Markdown 在内的轮次文件均以大小写无关方式检查已知隐私标记；退出码 0=通过 1=违规（逐行 stderr）2=用法错误；`--root` 指定仓库根（默认 tools/ 上一级）；fixture 见 tests/unit/run-collab-structure-tests.sh |
-| `private-data-patterns.txt` | 隐私模式清单 | scripts/check-docs.sh 与 tools/validate-collab.py 共用的唯一隐私模式来源：每行一条 PCRE/RE 模式，两侧均忽略大小写匹配；新增模式须同时评估误报风险（模式文件与两个消费者本身被隐私扫描豁免） |
-| `finalize-suspend-resume-failure.py` | deep 失败轮次收尾 | 校验 active 指针、真实证据目录以及“失败证据已捕获/回退已验证/重启已验证”三个绑定 round ID 的 PASS 标记；全部满足后只移除指定 active 指针并写入 finalize 标记，保留 journal 等证据和其他 active 状态；拒绝符号链接、路径穿越、缺失/错配标记与已有 finalize 文件 |
-| `probe-suspend-resume-state.sh` | 只读真机观测包装器 | 对固定的 4.0.1-i3/内核/厂商对象及已加载模块 BTF ABI 失败关闭，保存 XRandR properties、DRM debugfs、connector/primary format 与 PVR 快照，并限时运行 bpftrace；entry/已完成 return/停止时未匹配项分开报告，存在未匹配项时证据质量标为 `PARTIAL_UNMATCHED_AT_STOP`，不解释为仍在执行；不挂起、不 modeset、不调用驱动函数或主动读写寄存器。**F3 lineage 参数化**：`INNOGPU_LINEAGE=innogpu|fantgpu`（包名/模块名/btf 路径/对象名参数族；非法值 fail-closed）；期望指纹经 `INNOGPU_EXPECT_KERNEL/INNOGPU_EXPECT_VERSION/INNOGPU_EXPECT_OBJECT_SHA/INNOGPU_EXPECT_MODULE_BUILD_ID` 注入——O 血统保持历史 pinned 默认，fantgpu 血统四者必须显式注入（真机批步骤 3 采集），缺任一 fail-closed；fantgpu 血统下 O 树 ABI 偏移/kallsyms 符号 pinned 指纹与 innogpu 符号 bpftrace 观察脚本显式记录 `O_LINEAGE_PINS_NOT_APPLICABLE`/`O_SYMBOL_SCRIPT_NOT_APPLICABLE`（不静默跳过），结果行 `r08_observer_result=OBSERVER_SNAPSHOT_ONLY lineage=fantgpu`（状态快照仍采集）。单测夹具钩子 `INNOGPU_PROBE_FIXTURE=1`（gates-only，输出 `fixture_` 命名空间）与 `INNOGPU_FAKE_ROOT`（重映射 /sys、/proc），生产运行绝不设置 |
-| `probe-suspend-resume-observer.bt` | 只读内核动态观测 | 记录自然发生的 primary FB/GEM 地址返回、plane update、shadow/config-valid、cursor 与 HAL `0x258..0x25a`/config-valid 访问；HAL 参数按 `reg_module`/`reg_entity` 原型标记，CRTC active 偏移由运行模块 BTF 门禁；无自然事件或安全接口时明确报告不可用 |
-| `p2-normalize-v3.py` | 构建期清单生成 | D/F 文件规范化映射；默认从 `.build/work/r16/{r16-unpack-D,r16-fantgpu-deb}` 读取并写 `.build/work/r16/p2-manifest.tsv`（仅 fixture 可由环境变量覆盖）。生成态不得覆盖 `.build/evidence/r16/p2-manifest.tsv` 接受证据；LC_ALL=C 确定性排序；失败时不创建输出 |
-| `r16-build-bc-map.py` | 构建期 BC 映射 | 默认读/写 `.build/work/r16/` 生成态；强制 432 differs + 3 F-only、拒绝重复/未知状态并原子输出。production gate 只读 `.build/evidence/r16/` 接受态 |
-| `r16-classify.py` | per-file 分类 + license 字段 | D/F 源、P2 manifest 与输出默认使用 `.build/work/r16/` 生成态；许可字段只读 `.build/evidence/r16/r16-license-precheck/` 接受证据。强制 435 路径与 fail-closed 原子双输出 |
+| `build-deepin-coherent.sh` | legacy 构建器（保留） | 从完整 Deepin 202504 原包构建 patched-N 系 coherent deb；p27 oracle 与 check-docs 版本护栏依赖，禁止删除；版本、release epoch 和所有功能均由显式参数控制 |
+| `build-patched21-deepin-release-candidate.sh` | legacy 包装（保留） | 以固定 p21 开关构建所有权收敛后的首个 release candidate；只构建，不安装 |
+| `build-patched22-local-lid.sh` | legacy 包装（保留） | 以 patch-009 修正本机内置 eDP connector；脚本只构建，安装和重启由操作者显式执行 |
+| `build-patched23-invisible-read-fix.sh` | legacy 包装（保留） | 在 p22 补丁集合上增加 invisible READ mapping 释放不回写修复；历史上只构建不安装，当前仅作 p23 复现/证据入口 |
+| `build-patched24-kernel-612101.sh` | legacy 包装（保留） | 在 p23 补丁集合上增加 `6.12.101+` 的 `pci_resize_resource()` 兼容修复；当前仅作 p24 复现/证据入口 |
+| `build-patched25-dma-resv-fix.sh` | legacy 包装（保留） | 在 p24 补丁集合上增加 patch-025 dma_resv usage 语义修复；当前仅作 p25 复现/证据入口 |
+| `build-patched26-vblank-guard.sh` | legacy 包装（保留） | 在 p25 补丁集合上增加 patch-026 未活动 CRTC vblank 守卫；当前仅作 p26 复现/证据入口 |
+| `build-patched27-foreign-dmabuf.sh` | legacy 包装（保留） | 在 p26 补丁集合上增加 patch-027 foreign DMA-BUF 生命周期修复；当前仅作 p27 oracle/复现入口 |
+| `build-patched28-suspend-resume.sh` | legacy 实验包装 | 在 p27 补丁集合上增加 patch-024 resume 期间 devfreq 电源状态门禁；只用于复现，`4.0.1-i1` 的 s2idle 可见恢复已失败 |
+| `check-deb-dkms-build.sh` | 离线编译检查 | 将指定候选 deb 解包到 `/tmp`，针对指定内核 headers 编译 `innogpu.ko` 并校验 vermagic；不注册或安装 DKMS |
+| `check-source-parity.sh` | 只读 parity 检查 | 在临时目录重建 p27 生成源码树（third_party + 9 个启用补丁按构建器顺序 + 清理 .orig/.rej），与 `drivers/` 逐文件对比（排除 README/.o_shipped/.o.cmd），输出机器可读 PASS/FAIL；不修改源码树、旧构建器或设备 |
+| `phase4-baseline-capture.sh` | 只读基线采集 | Phase 4 安装前 B1-B12 基线采集（dpkg/lsmod/DKMS/modprobe/initramfs/音频内核可见/Picom/用户态一致性/恢复通道），输出存 `baselines/phase4-baseline-<ts>.log`；真实会话项（/dev/dri、Xorg/GL、音频 sink、显示切换）由用户实机执行 |
+| `extract-vendor-binaries.sh` | 幂等提取工具 | 按 `binary-manifest.json` 从 pinned Deepin deb 提取黑盒载荷到 `vendor/`；校验 deb SHA、目标存在且哈希一致则跳过、缺失/不符安全重建、拒绝路径穿越/未知 kind、临时目录 + 原子 rename；`--check-only` 只读；输出机器可读 PASS/FAIL；路径可用 `MANIFEST_PATH`/`VENDOR_ROOT` 覆盖（隔离测试用） |
+| `generate-binary-manifest.py`（tools/） | 清单生成 | 从 Deepin deb 确定性生成 `binary-manifest.json`（校验 deb SHA、覆盖全部黑盒文件与符号链接、kind/role/license 分类） |
+| `compare-oracle-candidates.sh` | oracle 对比 | 新架构候选包 vs patched-27：对比 control（除 Version/Description/Installed-Size）、文件清单、载荷哈希、DKMS 源码、黑盒对象、maintainer 脚本（版本归一）、版本排序与 module_symbols（调用 compare-module-symbols.sh）；构建产物（.o.cmd/.o/.ko/modules.order/Module.symvers/.mod）统一按 ARTIFACT_RE 排除；输出机器可读 PASS/FAIL |
+| `compare-module-symbols.sh` | 只读符号对比 | 离线构建候选与 patched-27 两包 DKMS 源码（同一内核头），逐 .ko 对比 vermagic/depends/导出符号/导入符号；构建于 `$ROOT/.build/`，不安装不重启；module_symbols=PASS/FAIL/UNCOMPARABLE |
+| `build-linux-patched-modules.sh` | Linux 第三方补丁构建 | 从 `debs/` 复用或通过 APT 下载精确源码 `.deb`，临时展开并严格应用 001/002，针对已安装内核只构建 `xhci-pci.ko` 与 `battery.ko`；不安装、不重启 |
+| `install-linux-patched-modules.sh` | 受监督模块安装 | 校验构建证据，备份原始模块/initramfs，安装到 `updates/r51/` 并刷新 depmod/initramfs；不自动重启 |
+| `rollback-linux-patched-modules.sh` | 模块回退 | 删除 `updates/r51/` 覆盖模块并恢复安装前 initramfs；需要 root，不自动重启 |
+| `r51-battery-task3-verify.sh` | R51 安装后验收 | 核对已加载 battery/xHCI Build ID 与 `0x90` quirk，指引一轮拔电/插电并自动保存 sysfs/udev/journal 时间线；不触发 PM |
+| `r50-grub-task2-audit.sh` | R50 GRUB 只读排查 | 从普通用户自动 sudo，采集 UEFI 变量、ESP/主 GRUB 配置、菜单与加载链到 R50 证据根；不修改宿主 |
+| `r50-storage-task3.sh` | R50 大目录盘点与清理 | `--inventory` 只读分类、`--self-test` 复核 80 个目标/三区独立键/无重叠/重建来源；`--confirm` 强制普通用户在物理 TTY 对 `.runtime-archive/.build/build` 逐区确认并留回执；`--apply RECEIPT` 仅按回执绑定的精确清单先生成内容 SHA 再删除，并核对保留集 |
+| `r50-storage-task4.py` | R50 `build/` 迁移 | 普通用户启动；`--confirm` 在物理 TTY 用 sudo 只读生成 45 项 content/metadata SHA 并绑定回执，不移动；`--apply RECEIPT` 由受限 sudo 子模式逐项复核并同盘 rename，可在验证已完成项后续跑，拒绝覆盖、双份、缺失和漂移；`--self-test` 验证 rename 身份与 moved/already-moved 语义 |
+| `r50-storage-task5.py` | R50 r5dpm 构建物清理 | 普通用户启动；`--inventory` 用 sudo 只读锁定 119 项 content/metadata SHA 与保留证据；`--confirm` 强制物理 TTY 精确短语回执且不删除；`--apply RECEIPT` 仅在候选、保留集、107/101 内核与 GRUB 无漂移时，先记逐文件 SHA 再删除精确目标 |
+| `cleanup-linux-module-worktree.sh` | 源码工作树清理 | 只删除本轮展开源码和构建树，保留 `debs/` 源码包、模块与日志 |
+| `prune-kernel-source-cache.sh` | 旧源码包清理 | 默认只列出无对应已安装内核的源码 `.deb`；显式 `--delete` 才删除，当前实现面向 Debian |
+| `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；R49 候选仅 `5.0.0-i12` + epoch `1790812800`：继承已审 i11，严格应用 `030-035` 私有对象 accessor 修复。编译/包内源共用最终派生树门 `9a8d185f2a65`；i1-i11/未知版本/错 epoch 拒绝，ABI 门保持。i12 A/B 与安装通过，运行验收首轮因外接输入未恢复失败停止；历史成绩不改 |
+| `generate-fantgpu-maintainer-scripts.sh` | F 构建器共用生成段 | 只向显式 PACKAGE_ROOT 的 DEBIAN/ 写 postinst/prerm/postrm，生产与回归共用。K 全集检查/失败传播；两调用点共用配置门，仅固定 autoinstall_all_kernels.conf 已审 30 字节 SHA 例外，其它有效配置与目录/文件符号链接拒绝，不 source 配置取值。回退丢弃未装包暂存根，已安装包另行批准恢复 |
+| `build-patched17-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝把 patched-17 作为后续构建父版本 |
+| `build-patched18-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝重建历史混合载荷 patched-18 |
+| `build-patched19-deepin-coherent.sh` | legacy 护栏（保留） | 明确拒绝用当前辅助载荷复用 patched-19 版本号 |
+| `build-patched20-deepin-diagnostic.sh` | legacy 护栏（保留） | 明确拒绝用当前辅助载荷复用已验收 patched-20 版本号 |
+| `prepare-deepin-userspace-root.sh` | 当前辅助 | 将 Deepin 原包解包到被忽略的 `third_party/` |
+| `build-patched-picom.sh` | 独立组件 | 构建/安装固定基线的 patched Picom，不进入驱动 deb |
+| `build-patched-fbterm.sh` | 独立组件 | 从 Debian fbterm 1.7-5 构建可配置 redraw 的用户本地版本，不进入驱动 deb |
 
-R50 路径说明：本表后续长段落中残留的 `build/r16-fantgpu-deb` 是 R16 当时路径与算法审查原文；
-当前工具默认值已迁到 `.build/work/r16/r16-fantgpu-deb`，`.build/` 也属于本地载荷保护区。
-| `r16-gate.py` | 7 项独立门禁（G0-G6） | R16 P5 失败关闭 gate：**G0 production cardinality invariant** —— 强制 `differs == 432` 且 `F-only == 3` 且 `differs+F-only == 435`，三条件全部满足前拒绝进入下游门禁；raw-row duplicate canonical path 拒绝（在 dict 折叠前 `Counter`，与 G1 重复定义不同：G0 拒绝 manifest 内重复，G1 拒绝 BC map 缺失）；未知 manifest status 拒绝（白名单 differs/identical/D-only/F-only/F-only-deferred）+ **G1** canonical path→BC 映射覆盖（assigned=435，差异与未分配立即拒绝）+ **G2** BC 唯一性（`Counter` 真重复检测，路径跨 BC 即拒绝）+ **G3** BC 覆盖（必须含全部 23 个 BC：BC-01..BC-21 + BC-22a + BC-22b）+ **G4** per-file 处置覆盖（per-file=435，BC tag 不同步拒绝）+ **G5** disposition/classification/license 白名单 + 总数=435（拒绝 UNASSIGNED/MISSING/未知 license/未知 classification/未知 disposition）+ **G6** fail-closed 纪律（BEHAVIORAL+drop=0，PURE_RENAME+defer=0，MISSING+drop=0，MISSING+defer=0）。每项失败 `sys.exit(1)` 非零退出，禁止误导性 PASS；FAIL summary 输出 stderr + stdout 双通道。G0 PASS 仅证明输入组成、映射、许可字段和 fail-closed 处置可重放，不等于 319 个 BEHAVIORAL 文件已完成语义裁决。fixture `tests/unit/run-r16-gate-tests.sh`（13 项）含正/负向、G0 错配（2 例）、未知 status、原始重复、确定性重放 |
-| `d-stage-audit-gen.py` | O-2 D→D_stage 完整性审计生成器 | 实现唯一依据 = `docs/design/030-d-stage-audit.md` §五 v24 Python 契约（design §5.3 bash 草案仅为算法伪代码）。三子命令：`gen-manifest`（**两次独立调用**：`--label D` 生成 D manifest + .sha256；`--label D_stage` 生成 D_stage manifest + .sha256 + 主表 6 字段 + symlink 专表 7 字段/9 类互斥分类 + genesis.json 运行时元数据；LC_ALL=C、tar 1.35/zstd 1.5.7 精确版本锁、确定性双跑 exit 2、NF 校验 exit 1、F0 引用 exit 4、保护区 exit 3、symlink 闭合 exit 7、SYM-N-A reconcile exit 8）、`snapshot`（OUT_DIR 排他锁 exit 6 + 固定事务目录 .txn + 结构化 journal 状态机 staged/backed_up/tarball_committed/sha_committed/verified/rolling_back + fsync 状态依赖数据屏障（回滚段逐次 mv 后立即 fsync 源、目标目录，任一 fsync 失败 exit 5）+ rolling_back 合法中途态白名单集合成员判断 + 无 journal 走全新路径 + 幂等 no-op 复用严格 sidecar 校验 + staging reconcile-first；tar.zst 可复现：`--sort=name --mtime=@1640995200 --owner=0 --group=0 --numeric-owner --no-acls --no-xattrs --no-selinux --transform=s,^.,d-stage,` + `zstd -q -19`）、`reconcile`（已存在 tarball+manifest 4 字段独立校验）。退出码子命令作用域契约（snapshot 0/1/2/3/4/5/6/9/78，gen-manifest 0/1/2/3/4/5/7/8/78，reconcile 0/1/2/3）；只读 D/D_stage 源树，只写 --out-dir 与其 .txn，绝不写保护区路径。29 场景故障注入测试由 `tests/unit/run-d-stage-audit-fault-tests.sh` + 配套 harness 实现（O-2 工具实现时一并实测，未经故障注入测试通过的 snapshot 禁止在阶段二 release commit 中使用） |
-| `o4-f0-lock-gen.py` | O-4 F0 源树锁定生成器 | 实现依据 = `docs/planning/030-patch-rederivation-design.md` §6.5 O-4（阶段三前置，dsh 提供）。三子命令：`manifest`（生成 `f0.manifest.tsv` 4 字段 type/path/symlink_target/file_sha256、字节序排序 + .sha256 + `o4-f0.genesis.json`——源树计数、deb 出处与 SHA-256、tree_hash=manifest 规范化字节 SHA-256、工具自哈希；控制字符 exit 3）、`snapshot`（tar 1.35/zstd 1.5.7 精确版本锁，不匹配 exit 7；`--sort=name --mtime=@1640995200 --owner=0 --group=0 --numeric-owner --no-acls --no-xattrs --no-selinux --transform=s,^.,f0,` + `zstd -q -19`；确定性双跑自检不一致 exit 5）、`verify`（解包重建 manifest 与正式 manifest 4 字段字节比对，不一致 exit 5）。退出码子命令作用域：0 成功 / 2 源树或类型异常 / 3 manifest 违规 / 5 快照或校验失败 / 7 版本不匹配 / 78 配置或输出路径越界（LC_ALL 必须 C；输出路径 realpath+commonpath 精确边界：拒绝 /tmpfoo 前缀误匹配、仓库外同名路径、输出目录 symlink）；只读源树与 debs/，绝不写保护区。snapshot 事务语义（codex O-4 初审/复审 P1）：genesis 先写临时文件再 `os.replace` 原子提交；提交点前任一步失败回滚旧对（保留旧证据，不产生不一致证据）；提交点后备份清理失败**不回滚**（否则形成旧对+新 genesis 不一致，仅留 .bak.tmp 由下次启动统一清理）；启动恢复按状态判定——备份对完整且正式对缺失 → 两段式恢复（第二步失败撤销第一步，保留完整 backup-only 状态可重试）；正式对与 genesis/sidecar 三方严格一致 → 清理残留；混合/无法判定 → fail-closed exit 5 保留全部现场。故障注入钩子 `O4_FAIL_INJECT`；回归测试：`tests/unit/run-o4-f0-snapshot-txn-tests.sh`（12 事务场景）+ `tests/unit/run-o4-f0-lock-tests.sh`（6 路径边界负向）。产物落点 `docs/planning/evidence/o-stage/`（O-4 闭合证据） |
-| `r16-f-payload-integrity.py` | C3-a ③ F 载荷完整性审计生成器 | 实现依据 = `docs/design/5.0.0-i2-validation-plan.md` §三「C3-a 放行前置」第 ③ 项（dsh 2026-09-11 裁决：① 来源已闭合、② 授权定档「仅自用、不分发」、③④ 交 qoder 技术执行）。对 `build/r16-fantgpu-deb`（来源 `debs/fantgpu-fh2m_3.3.8.126-driver-linux-desktop-sp-generic_amd64.deb`）做完整性审计，用**三个相互独立的证据源**两两交叉校验：S1 = deb data 归档（`dpkg-deb --fsys-tarfile` 流式，不落盘）、S2 = deb control 归档（`--ctrl-tarfile` 流式）、S3 = 本地解包树只读遍历；因 S1 不含 `DEBIAN/` 而 S2 只含控制成员，故 B 用 S1↔S3\DEBIAN/、C 用 S2↔S3 的 DEBIAN/ 子树，两侧各自双向闭合。六项检查：**A** 来源身份（deb SHA-256 `6f0daaf7…fd11b` + 57,607,700 B + control 五字段）、**B** 载荷一致（747 项 type/size/mode/sha256/symlink target 双向逐项相等，即解包字节忠实；载荷计数 87 目录/602 常规/58 符号链接，`dpkg-deb -c` 的 88 含归档根 `./` 故减一）、**C** 控制与校验和（DEBIAN/ 五成员双向字节相等；md5sums 拆为精确子集 507 条与重定位子集 95 条）、**E** 血统相干（20 条 F 关键路径存在，符号链接须在载荷根内解析到常规文件；全树零悬空链接；零 O 血统 loader 文件名——**仅按文件名判定**，因 `blacklist-fh2m.conf` 与 `DEBIAN/control` 的内容合法含 innogpu 令牌，按内容扫描会假阳性）、**F** 固件对账（`fh2m.fw` `8d39a405…`/`fh2c.fw` `96043630…`/两 `.sh` `f2b0ead7…`，与 `docs/investigations/fantgpu-base-update-evaluation.md:229-232` 记录逐值一致）、**G** 安装期暂存（DDX 三 ABI 1.19/1.20/1.21 齐备 + postinst 设备门 PCI ID `1ec8:9810` **锁定断言**——缺失或出现未锁定 ID 即 FAIL，codex 初审 P2 修复）。**上游 md5sums 路径列缺陷的有界刻画**：厂商 md5sums 是对重定位前暂存布局生成的，缺 `opt/fantgpu-fh2m/`、`usr/lib/<triplet>/fantgpu-fh2m/`、`usr/share/doc/fantgpu-fh2m/` 三个组件；507 条精确命中，余 95 条经三段**可复合**重定位后逐值命中（分布 opt 54 / opt+privlib 4 / privlib 36 / docdir 1），映射单射且像集与「未登记的 95 个常规文件」严格双射 → 内容完整性得证，缺陷严格限定在路径列。privlib 段余部锚定为**单个文件名**（`([^/]+)$`），故 `dri/`、`gbm/`、`va/drivers/` 等子目录路径不会被误重写（该锚点由 t18 回归锁定）。缺陷影响如实入库：真机 `dpkg -V` 会报这 95 条缺失、另有 95 个真实文件无归属，属上游打包瑕疵，**不得在 R 项验证时误归因于 030 链**；且 ④ builder 改造**必须按实际安装的载荷重生成 md5sums**，不得原样继承厂商文件。三子命令：`gen`（写 `f-payload.manifest.tsv` 7 列 type/path/size/mode/sha256/md5/link_target 共 753 行 + `.sha256` + `f-payload-integrity.json`；**三件产物事务提交**（codex 初审 P1-1 / re-review P1-1/P1-2/P2 / re-review#2 P1-1/P1-2 / re-review#4 P1-1/P1-2 / re-review#5 P1/P2 / re-review#7 P2×2 / re-review#9 P2 修复）：**all-or-none 守卫先于任何暂存文件创建**（旧产物部分存在 → rc=2 且零残留）→ mkstemp 唯一临时文件（O_EXCL 随机名，固定 `.tmp` 名废弃——预置同名 symlink 无法劫持；**mkstemp 后立即登记路径，写入/fsync 失败统一清理并 die rc=2；清理本身 best-effort 逐文件隔离**——清理异常收集上报「cleanup INCOMPLETE」、不得覆盖原始异常、不得绕过统一 rc=2，残留由下次 gen 启动恢复）→ journal（`{"state": backing_up|committing|committed|rolling_back, "pre_existing": [bool×3]}`；**journal 临时文件清理与 journal 删除（committed 清理/rolling_back 恢复/同进程回滚三处）均 best-effort**——失败 WARNING + 残留可续恢复，状态切换失败时原始异常不被覆盖，回滚路径恢复完成后 journal 删除失败仍如实报「previous generation restored」、不谎称 INCOMPLETE）→ 旧产物 `.bak` 备份 → 逐个 `os.replace` → 清理；提交中任一失败 → **先把 journal 切换为 rolling_back（切换成功才允许修改 `.bak`/dst；切换失败保留原现场 rc=2）** → 按 2→0 反序回滚（有 `.bak` 恢复旧代；无 `.bak` 且事务前不存在的目标删除——**首代中途失败不残留新产物**；反序使回滚/恢复再次中断的残留恒为前缀集，二次启动可续恢复）→ rc=2；**回滚本身失败如实报告 INCOMPLETE + journal 保留，绝不谎称已恢复**；清理失败不回滚、残留由下次 gen 启动恢复：先按原状态只读验证 `.bak` 集合不变量（backing_up/rolling_back→前缀、committing→与 pre_existing 完全一致；`.bak` 只允许对应 pre_existing=true，journal 的 pre_existing 必须全真/全假）→ 切换 journal 为 rolling_back → 反序恢复 + **三件统一 reconcile**（sidecar↔manifest 哈希绑定 + JSON↔manifest 绑定：schema_version/manifest.file/manifest.sha256），committed 清理与旧代恢复前均执行，不一致或 JSON 不可读 → fail-closed rc=2 保留现场；**无 journal 出现任何 `.bak` → fail-closed rc=2 保留现场**——`.bak` 无法自证属于本工具事务；journal 为 symlink 时拒绝跟随 rc=2）、`verify`（不写盘，重算并与既有产物逐字节比对，供三方独立复验；遇任何提交残留 fail-closed rc=2）、**`restore`（C3-a ④ 落库，dsh 2026-09-12 授权的一次性保护区写入——仅限 `vendor/fantgpu/` 与 `.fantgpu-restore.{journal,lock}`/`.fantgpu-txn.*`/`.fantgpu-old.*` 事务文件）**：依据 `docs/design/c3-a-4-reproducible-input-plan.md` §一 v12——排他锁（`O_CREAT|O_RDWR|O_NOFOLLOW` 打开固定锁文件 + `flock(LOCK_EX|LOCK_NB)`，**锁文件永不删除**，symlink 锁 → fail-closed；并发 restore → rc≠0）+ journal 写前状态机（`staged→moving_old→moved_old→moving_new→committed`，先写状态后动文件）+ **逐状态真值表**（仅正向流程或恢复动作实际可产生的 (C,T,O) 组合合法，其余一律 fail-closed 保留现场）+ journal 字段安全校验（非 symlink、state/pre_existing 类型、txn/old 工具生成名正则 + 前缀匹配、realpath 边界）+ deb SHA 预检 + `dpkg-deb -R` 到同级 txn 目录 + 剔除 DEBIAN/ + 严格清点（87 目录/602 常规/58 符号链接与 manifest 严格双射，SHA/mode/link target 逐条 + 目录 mode 0755）+ 原子切换（mv old→mv new→committed→清理；清理失败 journal 保持 committed 下次启动继续）。**保证范围：进程中断与并发进程；不承诺掉电/系统崩溃**（设计稿 v12 已收窄）。故障注入（仅测试，逗号分隔多点）：`FPI_FAIL_INJECT=stage.N|stage-cleanup.N|backup.N|commit.N|cleanup.N|rollback.1..3|journal.<state>|journal-cleanup.1|journal-unlink.*|restore-journal.<state>|restore-mv.old|restore-mv.new|restore-cleanup.1`；测试夹具开关 `FPI_RESTORE_FIXTURE=1`（合成小载荷，生产必须缺省）。**任一检查失败即不写任何产物**、逐项打印 FAIL 后 exit 1；产物不含墙钟时间戳故双跑字节一致，provenance 由引入它的 git commit 承载（与 `o-stage.manifest.tsv` 同口径）；`baseline_source` 记录用的是锁定默认基线还是 `--baseline` 覆盖，使入库证据自证 `source=default`。`--baseline` 仅供单测以合成 deb 驱动全部分支，要求**完整键集**（缺失或多余一律 exit 2），避免部分覆盖在生产中被用来放宽断言。退出码：0=PASS 1=审计失败 2=用法/环境错误；只读 `debs/` 与 `build/`，`--out-dir` 落在保护区（debs/vendor/build/third_party/migration/drivers/baselines/patches）内即拒绝（restore 的 `--vendor-dir` 为 dsh 授权例外）。产物落点 `docs/planning/evidence/o-stage/`（gen/verify）；restore 落点 `vendor/fantgpu/`。单测：`tests/unit/run-r16-f-payload-integrity-tests.sh`（54 项）+ `tests/unit/run-r16-restore-tests.sh`（58 项：真值表全组合、双进程竞争、锁生命周期、journal 字段安全、**未引用 txn/old 残留 fail-closed（codex 初审 P1-1）**、残留对象类型安全删除（P2）、**首次 C symlink/普通文件拒绝（re-review P1-1）**、**symlink target 绝对/外逃拒绝（re-review P1-2）**、首代 mv 失败、恢复中断幂等、清理失败残留可续、mode/target/DEBIAN 漂移，全合成夹具不触碰真实 debs/vendor/build） |
-| `gen-fantgpu-manifest.py` | C3-a ④ F 载荷清单生成器 | 依据 `docs/design/c3-a-4-reproducible-input-plan.md` §二（v12）：读 ③ `f-payload.manifest.tsv`（先校验其 `.sha256` sidecar）→ 生成 `binary-manifest-fantgpu.json`（git 追踪；S_INPUT = 全部 660 条目隐含集合；条目 = O schema 键 kind/license/role/sha256/size/source_path/vendor_path + `variant`/`materialize`/`mode` 三键；**M6 分类表全量实现**：DDX 三 ABI / ucm2 conf.d / ucm 旧布局（实测 42 条）/ vendor 死暂存 5 条 / wayland 12 条 / sw-fant-gl+service 2 条 / 内核源 ~490 条 locked-reference；**任何 `/opt` 条目未分类 → fail-closed 拒绝生成**）。计数：`input_entries=660`、`locked_reference_entries=497`、`f_materialized_entries=107`（按定案默认预选 1.21/ucm2/off）、`f_dir_entries=87`。严格双射校验（含 mode 逐值）、变体组完备（每个 ABI 恰一条）、**symlink target 词法边界（绝对/`..` 越界拒绝，codex re-review P1-2）**、双跑字节一致（无墙钟时间戳）；**产物 chmod 0644（codex re-review P2，tracked 清单可读性）**。退出码：0=PASS 1=审计失败 2=用法/环境错误。单测 `tests/unit/run-gen-fantgpu-manifest-tests.sh`（11 项：正向/确定性/sidecar 漂移/SHA 漂移注入/未分类 /opt 拒绝/计数漂移/畸形行/tsv 缺失/symlink 绝对/symlink 外逃/产物 mode） |
-| `validate-binary-manifest-fantgpu.py` | C3-a ④ F 载荷清单校验器（输入预检路径） | 依据 §二：逐条校验 `vendor/fantgpu/<path>` 存在且 SHA（常规文件）/mode/链接目标与 manifest 一致；全树 O 血统 loader 文件名禁则（按文件名判定，同 ③ E 口径）；载荷缺失 fail-closed。退出码：0=PASS 1=校验失败（含全局 deb SHA/660 口径不符）2=用法/环境错误。**严格双射 + 路径安全（codex 初审 P1-2 / re-review P1-2）**：先校验全部 manifest 路径为安全相对路径（非绝对/无 `..` 组件/无反斜杠/无 `./` 前缀，违者 rc=1），再对 vendor 做全量 lstat 清点——常规文件/symlink 集合与清单严格一致（额外条目、缺失条目均 rc=1）、目录计数 == 期望（`dir_entries`/`f_dir_entries`）且目录 mode 固定 0755；**symlink target 载荷根边界**：绝对 target 或 realpath 解析后逃出 vendor 根、或未解析到根内常规文件 → rc=1。测试夹具开关 `FPI_VAL_FIXTURE=1`（合成小载荷；生产必须缺省）。单测 `tests/unit/run-validate-fantgpu-manifest-tests.sh`（15 项：SHA/mode/target 漂移、缺失、额外文件、路径逃逸、symlink 绝对/外逃、目录 mode/计数、O loader 禁则、非 fixture 全局检查、非 JSON、vendor 缺失） |
-| `gen-package-md5sums.py` | 构建期 md5sums 重生成（F 分支专用） | 依据 §四 强制项 1（codex P1-3 确定性契约）：`LC_ALL=C`、`os.walk(followlinks=False)` 常规文件（**symlink 与目录排除**，dpkg 惯例）、排除 `DEBIAN/`、相对路径 `/` 分隔无 `./` 前缀、`<md5 十六进制小写><双空格><相对路径><LF>`、**相对路径字节序排序**、尾换行；输出 mkstemp + `os.replace` 原子落盘 + chmod 0644（默认 `<root>/DEBIAN/md5sums`，`-o` 指定、`--stdout` 供测试）。双构建字节一致依赖本工具字节确定性；`FPI_MD5_INJECT=walk-order`（仅测试）验证输出不依赖目录枚举顺序。退出码：0=PASS 2=用法/环境错误。单测 `tests/unit/run-gen-package-md5sums-tests.sh`（7 项：正向/排序/双跑+乱序注入一致/落盘/`-o`/root 缺失/输出目录缺失） |
-| `materialize-fantgpu-payload.py` | C3-a ④ builder F 载荷物化（M1-M6） | 依据 `docs/design/c3-a-4-reproducible-input-plan.md` §四（v12）：读 `binary-manifest-fantgpu.json` 按 `materialize` 策略 + 预选参数（`F_XORG_ABI=1.21`/`F_UCM_LAYOUT=ucm2`/`F_WAYLAND_COMPAT=off`，env 可覆盖）把 `vendor/fantgpu/` 物化到包组装根：direct（`install -m <mode>` 显式 mode + `ln -sfn` 链接）、ddx-abi 命中 → `/usr/lib/xorg/modules/drivers/fh2m_drv.so`、ucm 命中组 → 去 `opt/fantgpu-fh2m/` staging 前缀、wayland-compat on → 前缀剥离；locked-reference 零复制；**逐级目录 0755（不受调用者 umask 影响，codex 初审 P1-3）**。产出 **materialize-trace.tsv 四列**（source_entry=vendor_path 含 `fantgpu/` 前缀 / destination / rule / kind，仅 regular+symlink）；`--ostage-manifest` 追加 O_stage 内核 regular 行；`--verify-trace` **逐行复核**（destination 存在、kind 一致、fantgpu-* 行 SHA+mode == manifest、ostage-kernel 行 SHA == o-stage.manifest.tsv、symlink target 一致、locked 来源零出现、行数 == f+ostage——codex 初审 P1-5 审计证据口径）。断言（fail-closed）：落位逐条 SHA/mode/target、locked 计数 == manifest、`$P/opt` 为空、物化计数 == **动态期望**（按当前预选逐条计算；生产模式且预选 == manifest `preset` 时另与 `f_materialized_entries` 等值互锁——codex 初审 P2 非默认预选可用）。夹具模式 `FPI_MAT_FIXTURE=1`（仅测试）放宽全局 660/deb SHA。退出码：0=PASS 1=审计失败 2=用法/环境错误。单测 `tests/unit/run-materialize-fantgpu-payload-tests.sh`（18 项：默认预选/locked 零/opt 空/trace 四列/ABI 1.20/ucm 布局/wayland on/非法预选/SHA 漂移/mode 落位/ostage 追加/verify 正向/篡改检出/locked 来源拒绝/umask 002 目录 0755/verify 缺行拒绝/非法 rule 拒绝/`../` 逃逸拒绝） |
-| `transform-fantgpu-helper.sh` | F 血统 helper 打包变换（stdin→stdout） | 依据 §四（codex 初审 P1-2 修复：F 包 helper 内部调用链不得引用不存在的 innogpu-* 命令）：只变换**调用链 token**——`innogpu-disable-incompatible-userspace`/`innogpu-repair-dri-nodes`（含 .service 名与链接路径）→ fantgpu-*、`usr/share/innogpu-fh2m-trixie` → `usr/share/fantgpu-fh2m-trixie`、install-dri-node-repair-service 的 `ConditionPathExists=/sys/module/innogpu` → `/sys/module/fantgpu`；其余 innogpu token（O 遗留清理清单/日志名/诊断 grep）保持不动。O 血统不调用（打包字节与 scripts/ 一致，check-release-package cmp 契约）。单测 `tests/unit/run-fantgpu-helper-transform-tests.sh`（5 项：旧调用链零残留/引用命令树内可解析/O 字节不动/模块类 token 保留/安装树运行——变换后 install-dri-node-repair-service 在假树 + stub systemctl 下安装 fantgpu 命名单元） |
+## 支持的安装与恢复
 
-## 使用约束
+| 入口 | 风险 | 说明 |
+| --- | --- | --- |
+| `install-prereqs-debian.sh` | 修改软件包 | 安装 Debian 基础构建和运行依赖；当前未显式安装新构建器直接使用的 `python3`，最小系统须按 `docs/project/dependencies.md` 补充核对 |
+| `install.sh` | 修改驱动、需重启 | 只调度 patched-8/17；不把 patched-20 诊断候选设为默认 |
+| `install-patched17-and-check.sh` | 修改驱动、需重启 | legacy 深层回退入口；新设备默认入口是 4.0.0-i1 |
+| `install-patched8-and-check.sh` | 修改驱动、需重启 | 更早的历史恢复入口 |
+| `uninstall-innogpu.sh` | 卸载驱动、需重启 | 通用卸载器；版本包装见 `uninstall-patched*.sh`。会安全清理源码 fallback 创建的 `/usr/local/sbin` helper 符号链接（仅当指向本项目 `tools/repair-dri-nodes.sh`，用户/包文件不删）并移除 repair unit；其内置恢复提示仍固定指向 patched-17，当前应以 `docs/user/recovery.md` 的 p27 首选链为准 |
+| `uninstall-patched17.sh` | 卸载驱动、需重启 | 仅允许卸载版本精确匹配 patched-17 的兼容包装 |
+| `uninstall-patched8.sh` | 卸载驱动、需重启 | 仅允许卸载版本精确匹配 patched-8 的兼容包装 |
+| `disable-incompatible-userspace.sh` | 修改 `/usr` 和 Xorg 配置 | 恢复软件渲染/兼容用户态边界 |
+| `restore-tty1-login.sh` | 修改系统服务 | 优先恢复可见 TTY 登录 |
+| `prepare-soft-xorg-dwm.sh` | 修改 Xorg/会话 | 准备软件 Xorg；若 dotconfig xdisplay 已存在则接入，否则保留软件路径并警告 |
+| `repair-dri-nodes.sh` | 修改 `/dev` 节点 | 根据 sysfs 设备号临时恢复缺失的 DRM/fbdev 节点 |
+| `install-dri-node-repair-service.sh` | 安装系统服务 | 固化 DRM/fbdev 节点权限恢复；helper 仅从受信来源解析（包 `/usr/sbin`→源码 fallback `/usr/local/sbin`，任意 PATH 命中被拒绝），unit `ExecStart` 始终指向实际安装的 helper；`/usr/bin` 为**可选**便利链接（创建失败仅告警不阻断）；`enable/start` 失败传播并统一事务回滚（含恢复既有 unit 字节/权限与 systemd enable 状态）。测试钩子 `INNOGPU_DRI_TEST_ROOT`（默认关闭）供 fixture 无 root 验证 |
+| `install-hygon-hda-audio.sh` | 安装系统/用户服务 | 固化本机 HDA 和 PipeWire 恢复；创建系统/用户 unit、helper、modules-load 与 ALSA 配置并可能改写 profile/PipeWire 旧配置；仅部分文件有条件性备份，当前无 systemd-analyze 门禁、对称自动卸载器或 fixture，人工回退边界见 `docs/project/audio-management.md` |
 
-1. 探针编译产物和完整输出属于本机临时证据，放在 `/tmp` 或被忽略的 `baselines/` 路径，不进入 Git。
-2. `patch-gpupll-object.py` 只由 coherent 构建流程调用；禁止直接修改已安装 `.ko` 后将结果描述为可复现构建。
-3. EGL/GBM/X11 探针需要的库路径必须通过对应 `scripts/run-*` 或测试脚本隔离，不能为运行探针全局改写 `/etc/ld.so.conf`。
-4. 工具输入、厂商库或内核基线变化后，必须重新验证字节契约、编译依赖和返回码。
-5. vblank 探针只允许针对已经活动的 CRTC；失败或返回过快时先保留原始输出，不得自动修改显示配置。
-6. KMS 拓扑探针直接使用 `linux-libc-dev` 提供的 DRM UAPI，不依赖 `libdrm-dev`；不得根据 XRandR
-   输出编号猜测底层 CRTC 索引。
-7. `probe-pdp-invisible-read.c` 的第五个参数是页步长，默认 `1`；只用于测量稀疏 fault 行为，
-   不代表驱动预取策略，也不改变设备配置。
+## Picom 接入
+
+| 入口 | 状态改变范围 | 说明 |
+| --- | --- | --- |
+| `install-picom-prereqs-debian.sh` | 安装软件包 | 安装固定 Picom 基线的 Debian 构建依赖 |
+| `install-picom-user.sh` | 修改目标用户配置 | 安装项目 Picom 配置（模板 `components/picom/picom.conf`）和单一 xprofile 会话入口 |
+| `picom-session.sh` | 启动用户进程 | 优先启动 patched Picom，缺失时回退 xcompmgr，并避免重复实例 |
+
+## 显示接入
+
+xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项目仅保留：
+
+| 入口 | 职责 |
+| --- | --- |
+| `restore-dp1-mode-x11.sh` | 本设备固定 modeline 恢复钩子 |
+| `xdisplay-session.sh` | 注入本设备候选输出和恢复命令，启动已有 xdisplay |
+| `install-xdisplay-user.sh` | 安装上述接入，不复制或覆盖 xdisplay/displayselect/共享库 |
+
+详细契约见 [`docs/project/display-management.md`](../docs/project/display-management.md)。
+
+## 只读与临时验证
+
+以下入口默认只读，或只创建 `/tmp`/`baselines/` 下的测试环境；带 VT/Xorg 的脚本仍可能短暂切换
+控制台，运行前必须阅读输出中的恢复命令：
+
+- `check-deepin-userspace-coherence.sh`
+- `check-docs.sh`
+- `materialize-d-stage.sh`
+- `materialize-o-stage.sh`
+- `check-desktop-hwgl.sh`
+- `check-innogpu-progress.sh`
+- `check-patched17-baseline.sh`
+- `check-post-reboot-hwgl.sh`
+- `check-soft-xorg-dwm.sh`
+- `check-release-package.sh`
+- `test-current-xorg-hwgl-runtime.sh`
+- `test-isolated-deepin-egl-gbm.sh`
+- `test-isolated-deepin-hwgl.sh`
+- `test-isolated-deepin-xorg-ddx.sh`
+- `test-xorg-once.sh`
+- `run-local-ddx-vt-test.sh`
+- `run-deepin-gbm-egl.sh`
+- `run-deepin-surfaceless-egl.sh`
+- `verify-install-status.sh`
+- `check-fantgpu-runtime-health.sh`
+- `check-fantgpu-pm-probe-removed.sh`
+- `check-hygon-xhci-resume-fix.sh`
+
+`check-fantgpu-runtime-health.sh` 是 F 真机 R 项前的只读硬门禁：需要操作者提供特权采集的完整
+`dmesg` 和计算侧 status 文件，并同时检查 DRM sysfs/devfs card、固件请求失败和 kernel fault。
+输出 `PASS` 才能继续 R 项；`FAIL` 或 `UNVERIFIED` 都必须停批，不能由 Driver/Firmware `OK`
+单独替代显示设备注册证据。
+
+`check-fantgpu-pm-probe-removed.sh` 是 030-032 诊断代码退出发布候选时的只读门禁：同时扫描
+源码、物化 snapshot/manifest、builder/DKMS 树、模块和 deb 解包载荷；任一层残留探针符号、
+确认 token 或状态字段即失败关闭。
+
+`check-hygon-xhci-resume-fix.sh` 是受影响 Hygon `1d94:148c` 宿主在内核/系统升级后的只读门禁：
+从 sysfs 定位控制器，并从当前 boot 日志核 `XHCI_RESET_ON_RESUME` 的 `0x80` quirk 位。
+`FAIL` 或 `UNVERIFIED` 均不得继续 suspend 验收；不加载模块、不触发 PM。
+
+`tests/linux/run-battery-delay-static-tests.sh` 锁定 002 补丁的 SHA、KaiTian/X7h G1e 双 DMI 匹配、
+既有 delay callback 和 107 基线声明；它只验证补丁形状，不替代安装后的拔插测试。
+
+`run-capability-survey.sh` 编译并运行 Vulkan/OpenCL/VA-API 最小枚举探针并抓取 sysfs 环境快照，输出保存到 `baselines/capability-survey-<ts>.log`（可用 `--out DIR` 改位置）；只读，不 modeset、不改配置。设备无 DRM render 节点时（如无特权容器）优雅降级并记录失败本身。
+其中 `check-docs.sh` 检查根入口、`LICENSES/`、`drivers/`、`docs/`、`tools/`、`baselines/`、
+`tests/`、`tools/` 下的 Markdown 链接，并对受跟踪文档目录与本机 `collab/` 执行隐私扫描，同时检查稳定入口登记、当前版本、
+runtime 统计、manifest 原包 SHA、过期状态断言和 Markdown 表格结构。它还调用
+`tools/internal/audit-licenses.py` 校验逐文件许可证 inventory、策略、条款 hash、模块元数据和 manifest
+许可证证据语义；机械审计通过不解除 `license_release_gate=BLOCKED`。导入源码内容、内联代码路径、
+法律授权与文档语义仍须人工审查。
+`materialize-d-stage.sh` 是阶段一 D_stage 物化入口：只读 `third_party/` D 快照，按 4.0.2-i3
+配方（显式补丁文件名清单，builder 序 + suspend 组）重放补丁到 `/tmp/r16-d-stage/`，补丁失败或
+`.orig/.rej` 残留 fail-closed；只写 `/tmp/r16-d-stage/`，不修改仓库任何路径，不安装不 modeset。
+`materialize-o-stage.sh` 是阶段三 O_stage 物化入口：只读 `docs/planning/evidence/o-stage/f0-snapshot.tar.zst`
+与 `patches/030-*`，按 18 条 030-NNN 链序（-p1 --fuzz=0，每链点 after_tree_hash 校验，最终树 hash
+5f6a5347…）物化 O_stage 源树，并以五件同代事务产物（o-stage-snapshot.tar.zst + 双 sidecar +
+5.0.0-i6.meta.json 不可变 provenance；版本族经 OSTAGE_* 注入，缺省 5.0.0-i6 代）写入 `docs/planning/evidence/o-stage/5.0.0-i6/`；i2/i3/i4/i5 五件保持失败档案锚点不覆盖（阶段三证据/产物目录；
+O-4 F0 输入只读）；tar 1.35/zstd 1.5.7 精确版本锁（不匹配 exit 7）、输出目录 realpath 边界（越界
+exit 78）、排他锁（占用 exit 6）、journal+fsync+恢复、禁止混代；故障注入钩子 `OSTAGE_FAIL_INJECT`
+（仅测试）。契约 = `docs/design/o-stage-integration-plan.md` §一；回归测试：
+`tests/unit/run-o-stage-materialize-tests.sh`（19 用例：路径越界/symlink 拒绝/SHA 不符/坏输入/
+工具版本锁/事务故障注入（commit 与 staged_done）/恢复/幂等/链点 fail-closed/回滚失败
+rolling_back 保留现场/人工裁决后恢复/committed 写入失败自洽恢复/未知与损坏 journal
+fail-closed/恢复清理失败 fail-closed）+ `tests/unit/run-030-meta-tests.sh`
+（18 条 meta 链点校验）+ `tests/unit/run-030-031-pm-marker-tests.sh`（15 项 F PM marker 静态契约）+
+`tests/unit/run-030-032-pm-probe-tests.sh`（16 项诊断探针静态契约）+
+`tests/unit/run-030-033-shipped-abi-tests.sh`（i3 共享结构 ABI 与独立 devres 状态契约）+
+`tests/unit/run-030-034-stop-stage-tests.sh`（17 项检查点顺序/errno、re-arm、DMA variant、ABI 与真实逆序撤销静态契约）+
+`tests/unit/run-fantgpu-pm-probe-removal-tests.sh`（12 项发布移除门禁）。
+`check-release-package.sh` 只解包读取指定 deb，核对版本、关键载荷、禁止文件和设备接入脚本，
+不会安装包。发布包边界的可重复 fixture 见 `tests/package/run-boundary-tests.sh`。
+`verify-install-status.sh --require-reboot VERSION` 用于运行验收：除常规状态外，它要求包元数据早于当前
+启动、驱动已加载、Driver/Firmware 为 OK 且 DRM/fbdev 节点存在；仅查询安装状态时不加该选项。
+
+## 实验和历史入口
+
+以下脚本会改动活动驱动、用户态或 Xorg，不能进入默认安装流程，也不随 coherent release deb 发布：
+
+| 入口 | 状态与风险 |
+| --- | --- |
+| `install-kylin-userspace.sh` | 历史 Kylin/UOS 用户态实验，存在 Xorg ABI 24/25 混配风险 |
+| `install-experimental-hwgl.sh` | 历史完整 vendor GBM/EGL/GLX 实验，已知错误组合可令 Xorg 崩溃 |
+| `patch-skip-first-gpupll.sh` | 直接修改预编译对象或已安装模块；只用于受控构建/恢复 |
+| `try-hotload-patched17.sh` | 尝试热替换内核模块，图形会话繁忙时必须停止 |
+| `start-soft-xorg-dwm-from-ssh.sh` | 从 SSH 启动临时图形链路，必须保留 TTY 恢复手段 |
+| `display-recover-and-diagnose.sh` | 故障恢复编排，会修改显示/Xorg 状态 |
+| `r51-battery-task2.sh` | R51 受授权现场恢复与拔插补证；从普通用户 shell 启动，特权动作由脚本自动 `sudo` 提示密码；仅操作 `PNP0C0A:00` 的 battery unbind/bind，读取 DSDT 并采集 udev/journal/sysfs；不重启、不触发 PM/watchdog；恢复失败时不进入拔插测试；完整输出、真实 rc、时间戳和 `result.txt` 自动落到 `.build/r51-battery-observation-20261002-01/task2-run-<ts>/`，`latest-run.txt` 指向最近一次执行 |
+| `restore-bat0.sh` | 现场 BAT0 恢复；从普通用户 shell 启动并自动 `sudo`；不依赖 AC 是否在线，枚举 `PNP0C0A:*` 后执行 battery unbind/bind，必要时只请求一次 `modprobe battery`；不卸载模块、不重启、不触发 PM/watchdog；完整输出、步骤 rc、时间戳和 `result.txt` 自动落到 `.build/bat0-recovery/run-<ts>/`，`latest-run.txt` 指向最近一次执行 |
+| `install-deepin-desktop-hwgl-trial.sh` | 仅在本地 DDX 门槛通过后启用硬件 GL 试验 |
+| `mark-patched17-soft-baseline.sh` | 只适用于 patched-17 历史软渲染基线 |
+
+这些入口保留用于追溯或受控排障，但不得被描述为当前推荐安装方式。
+
+## 包载荷规则
+
+coherent 驱动 deb 只携带运行和恢复所需的 Innogpu 辅助脚本。历史 Kylin 用户态安装器、实验 HWGL
+安装器和直接二进制热补丁不得暴露为系统命令。仓库保留它们不等于 release 支持它们。
+
+当前 `4.0.0-i1` 把 12 个项目 helper 实体安装到 `/usr/share/innogpu-fh2m-trixie/`，并为其中 10 个
+提供 `/usr/bin/innogpu-*` 与 `/usr/sbin/innogpu-*` 双链接。manifest 还原样导入 vendor 的
+`/lib/systemd/system/sw-inno-gl.service` 与 `/usr/sbin/sw-inno-gl`；maintainer scripts 不会启用或
+启动该单元。`check-release-package.sh` 当前只强制 3 个显示接入 helper 与若干关键载荷，尚未验证
+vendor unit/helper 和全部命令链接，不能把 `PASS_RELEASE_PACKAGE_BOUNDARIES` 扩写为这些路径均已受门禁。
+
+## 修改规则
+
+1. 改名或移动前扫描 `tools/`、`tests/`、配置、服务、桌面源码和文档，并提供兼容过渡。
+2. 改变系统状态的入口必须在文件头和用户文档中说明 root、重启、modeset、卸载和回退风险。
+3. 测试原始日志进入忽略路径，Git 只保留精简结果。
+4. 维护规则、隐私和 release 边界见
+   [`docs/project/maintenance-policy.md`](../docs/project/maintenance-policy.md)。
+
+R34离线观测实现：`tools/internal/prepare-r5-observation.py`锁定6.12.101输入并向全新副本增加notifier成对边界/prepare进度；
+`tools/internal/r5-observation.py`只生成配置规格或检查普通JSON，不挂载/访问tracefs、不安装或触发PM。
+实现与运行前置见[双立项说明](../docs/design/r5-vpu-and-observation-implementation.md)。
+
+R41段一修订：生成的导出器只接受新观测身份`6.12.101-r5obs2`与`nop`事件模式，
+无函数后代图；每CPU连续最多128条、每次最多2048条、逐条核5ms预算后轮换，默认1ms再调度。
+R44按已批准备选方案改为1920数据页/核，16核共120MiB，`buffer_size_kb`为7650；
+reader、页描述符/SLUB桶及最小snapshot等已列入生成的memory-budget.json，仍有目标allocator
+及动态元数据未实测，总133MiB门保持UNVERIFIED。拒绝完整或超规格snapshot。128字节载荷门
+不证明含ring头的事件计费已≤128字节。旧`plan`保持r5obs1历史口径，不能配置新导出器；
+`check`按显式schema区分历史子集与新r5obs2配对。wire-check保持两种精确BEGIN参数。
+Windows脚本增加每秒心跳/序号缺口/丢弃/flush状态；Windows执行仍须另验。
+`tools/internal/r5-observation-upload.py --unit <本机配置>`只输出独立systemd服务文件，不安装或启用；
+`--serve <本机配置>`才启动接收端，配置要求listen/peer/port/session/output五项，现场值只放本机。
+服务仅接受指定peer的`/observation`和`X-R5-Session`，按SHA保全原件及中断文件，不覆盖旧attempt；
+`/health`不报告PM覆盖。独立服务的退出会话/冷启存活未实测，不能以unit语法通过代替。
+四元组事件、全量清点、真实吞吐及独立保全尚未闭合，段二不得启动。
+
+R44的`--export-module`同时生成`semantic-contract.json`和`memory-budget.json`，契约由
+生产`tools/internal/r5-observation.py`唯一提供；`check`的新schema为`r5obs2-pairs-v1`，内核身份
+6.12.101-r5obs2，规范化记录kind=pm_boundary。对象ID/生命周期、completion代次、
+task ID/生命周期、call ID及operation/pm_phase必须齐全同一；phase=entry/exit，exit含ret。
+gen等含糊别名不静默忽略，未知字段拒绝；缺关联或冲突保留UNKNOWN/UNPAIRED并返回非零。
+完整选择子集才输出SEMANTIC_RECORDS_PAIRED，不证明全PM覆盖、根因或原件真实性。
+R45新增`--semantic-kernel --source <锁定R34源> --output <全新副本>`，只生成源码；
+R45历史产物配置为`CONFIG_LOCALVERSION="-r5obs2"`且关闭LOCALVERSION_AUTO，不继承签署私钥。
+导出器要求本实例`power/r5_pair`和`power/r5_dictionary`都启用、无filter/trigger/PID筛选，
+全CPU、`nop`和`mono`，开启前ring为空；仍需独占实例、关闭其它事件，并在未来触发前核收完整字典。
+R45历史预分配512对象/1024边；字典名过长、热插拔/移动/绑定/依赖变化、代次/prepare/全事件超限即失效，
+不会重用旧ID后继续判完整。只改生成观测源码，不改F驱动语义。
+`semantic-wire-check <capture> --session <nonce> --pair-format <保存的r5_pair.format>`
+`--dictionary-format <保存的r5_dictionary.format>`校验原始字节、字典和六项身份；
+事件ID必须取同boot保存format，不从旧窗口猜值，mono时戳用于跨CPU配对，不以导出顺序推因果。
+80B配对/104B字典是编译布局；内核未启动，全量清点/allocator实占/真实吞吐及R40其余覆盖面仍未闭合。
+新CLI的成功仅代表所选原始子集配对；不签实验放行，尾部丢失仍INCOMPLETE_WITH_LOSS。
+
+R46历史生成器/导出器身份为`6.12.101-r5obs2-r46`，配置LOCALVERSION须同步`-r5obs2-r46`；
+历史R45内核/模块和证据不得机械改版或混装。当前实例须额外启用`power/r5_aux`，
+三事件都要求无filter/trigger/PID选择，原nop/mono、1920页/CPU、16CPU上限不变。
+新CLI使用`semantic-wire-check`并同时提供`--pair-format`、`--dictionary-format`、`--aux-format`，
+各format必须来自同boot保存原件；96B aux关联真实prepare调用/移动计数、async决定及阶段进出。
+阶段object_id/completion_generation为0，独立命名空间，不伪装设备字典项；void调用返回0仅表示返回。
+PM notifier链整体进出不等于链内每个notifier身份齐全，queued不等于worker已运行；
+完整性输出含每CPU末尾计数和原始wire位置，缺END/丢失仍INCOMPLETE_WITH_LOSS。
+真实allocator/事件包络/内核热路径成本仍未验，不安装、不启动、不触发PM。
+
+
+R47当前源码候选身份为`6.12.101-r5obs2-r47e`，LOCALVERSION须同步；旧产物保留。
+新增`/dev/r5_meter`只在该观测核启动后存在，0600 + CAP_SYS_ADMIN，独立预分配8192×88B日志，
+不借被测ring落计量记录。分配/free、page分配/free、percpu/chunk分别记账；M0–M6与END强制顺序，
+关闭未结束会话、溢出和NMI漏记均失效。计量期间全局分配是保守超集，不能据此认定所有归属已闭合。
+未来另批授权后才可用`meter-session <全新普通输出文件>`读取；M0在实例创建前，操作人依矩阵
+输入M1…M6、END；读取工具不创建实例、不加载模块、不触发PM。普通离线文件用`meter-check`
+重放；`--bounds`的L/R/C/B仅核显式来源声明的算术，不把自填上界视为实测证明。
+R47原始语义判读须带`--require-r47`和三份format；缺详细字典、回调元数据或worker关联不签完整。
+Windows脚本身份不变，上传工具零改动。OUTSIDE_COVERAGE、R5=FAIL、禁止重跑（pm_test/watchdog）、
+U1/U2、validation-results、未打 tag；1C不变，真实实占/吞吐与实验申请门仍未闭合。
+
+R47b发射范围按R40：普通resume保留细粒度，其它阶段保留代次/complete及成对摘要。
+callback/worker原96B aux携入口，解析器按DETAIL_COUNTS_R40字典标志还原入口，exit仍原pair。
+新旧profile不能混配；不合并未结束调用、不丢弃失败调用。总计39,936硬门不变。
+用户后续明确批准在当前物理设备安装/启动，只用于非PM计量；原“独立物理机”不再作为
+当前设备事实。安装、首启与M0–M6结果分别记录，安装授权不等于挂起实验触发授权。
+
+R47c修正计量路径：public bulk alloc/free补trace、大分配避免内外重复trace，生产驱动语义不变。
+专用trace实例须在启用事件前通过实例`trace_options`设置`norecord-cmd`和`norecord-tgid`并回读；
+实例不提供顶层的独立`options/record-cmd`文件。前置检查全局事件关闭且没有其它实例，
+并核全局选项前后不变；不得放宽导出器检查或改全局trace选项。
+END后输入EOF仍须排空计量日志；r47b失败现场单独保全，不拼接为完整M0–M6。
+
+R47d将准入失败定位编入新身份内核与同核导出器：几何门在导出器，census细项在内核内置
+emitter，锁释放后才打印；不改上限或PM生产语义。当时`meter-session`仅接受r47d，旧r47c在打开
+设备前拒绝；文件解析仍保留旧身份。离线构建/签署通过不等于运行准入，宿主安装/启动/加载
+仍停在用户授权边界，不能把旧r47c原件改成r47d证据。
+
+R47e源码候选修正已定位的对象容量不足：单一契约定义4096对象/8192边，queued-call数组与
+对象ID同界；全部五表尺寸及4096B控制预留由真实内核编译期断言核为543744B，仍在原1MiB
+字典预算内。新字典标记DETAIL_COUNTS_R40_V2，旧标记仍严格512/1024，不放宽历史验收。
+当前`meter-session`仅接受r47e，旧r47d在打开设备前拒绝；文件解析保留所有历史身份。
+39936总事件门、133MiB总预算和1920页/核不变；新字典准入上限不是全事件覆盖证明。
+初始节点只完成目标对象编译/离线回归；用户允许缓存清理与~/tmp落点后，现已完成新完整
+内核/同核i11/导出器的离线构建、签署及身份核验；后经集中授权安装/正常启动，首启通过。
+一次非PM计量在M2标记检出M1期间丢失5911条日志即停；导出器/census/M4未执行。
+真实完整清点/allocator/吞吐仍未闭合，不因字典扩容或编译通过而允许PM。
+用户态读取修订仅合并至多64次原16条read，通过16块有界队列交给单写盘线程；不改变内核
+日志容量/ABI或观测模块，写失败/队列满/收尾超时非零。每块至多90112B、队列载荷至多
+1441792B，另有读写在途载荷和Python运行时开销；此工具扰动须在实占归属中核算，
+不能当作观测器总预算已闭合。接收脚本与上传工具保持不变；现boot不重开计量。

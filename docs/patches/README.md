@@ -1,7 +1,7 @@
 # 阶段补丁
 
 每个补丁文件只描述一个可独立审查的变更。源码 diff 位于仓库 `patches/`；stage-000 因目标是厂商
-预编译对象，使用 `tools/patch-gpupll-object.py` 执行严格字节契约。本目录记录各阶段的目的、应用
+预编译对象，使用 `tools/internal/patch-gpupll-object.py` 执行严格字节契约。本目录记录各阶段的目的、应用
 条件、验证证据和回退边界。Deepin 与 fantgpu 分线使用各自锁定来源，不得混配；
 当前版本角色与执行冻结见 [status](../project/status.md)。
 
@@ -31,9 +31,9 @@ OUTSIDE_COVERAGE、禁止重跑、U1/U2 未执行、validation-results 未签、
   legacy 回退包复现依据。
 - `components/picom/`、`components/fbterm/`——**当前维护的第三方组件补丁与配置**（2026-08-21 由
   `patches/picom/`、`patches/fbterm/`、`config/` 迁入，历史内容保留）：补丁由
-  `scripts/build-patched-picom.sh`、`scripts/build-patched-fbterm.sh` 在构建对应组件时应用，
+  `tools/build-patched-picom.sh`、`tools/build-patched-fbterm.sh` 在构建对应组件时应用，
   与驱动包构建无关；`components/picom/picom.conf` 是项目维护的配置模板，由
-  `scripts/install-picom-user.sh` 作为默认配置源安装。
+  `tools/install-picom-user.sh` 作为默认配置源安装。
 
 ## 当前第三方补丁台账
 
@@ -136,13 +136,13 @@ patched-24 不增加新的设备行为补丁；它沿用 patched-23 的补丁集
 
 ```text
 Deepin 202504 原 deb
-  -> scripts/build-innogpu-driver.sh（drivers/ 源码树 + 版本绑定补丁 + manifest 黑盒 + 确定性变换）
+  -> tools/build-innogpu-driver.sh（drivers/ 源码树 + 版本绑定补丁 + manifest 黑盒 + 确定性变换）
   -> 4.0.1-i3：patch-024；4.0.1-i4：patch-024 + patch-025-suspend-resume-display（历史实验）
   -> 4.0.2-i1：patch-024 + patch-026-suspend-resume-dvfs-lifecycle（R11 deep 失败）
   -> 4.0.2-i2：i1 + patch-028-suspend-resume-hal-temp-monitor-delay（历史未安装候选）
   -> 4.0.2-i3：i2 + patch-029-suspend-resume-ddcci-panel（R14 6/6 deep 正式交付）
   -> 离线 DKMS 编译 + 完整包组装
-  -> scripts/check-release-package.sh
+  -> tools/check-release-package.sh
 ```
 
 **历史 patched 包（legacy，保留）**：
@@ -150,10 +150,10 @@ Deepin 202504 原 deb
 ```text
 Deepin 202504 原 deb
   -> 新版本号（必须 >20）和已审查补丁开关
-  -> scripts/build-deepin-coherent.sh
+  -> tools/build-deepin-coherent.sh
        -> stage-000 GPU PLL 对象变换和 patch-001 始终应用
        -> wrapper 显式选择 patch-002 至 patch-007
-       -> scripts/check-release-package.sh
+       -> tools/check-release-package.sh
   -> 打包、DKMS、固件完整性检查
   -> 隔离 Xorg/GLX
   -> 重启后 PVR/DRM/fbdev/fbterm
@@ -172,22 +172,22 @@ patched-19/20 的固定 wrapper 已改为拒绝执行，因为当前源码的辅
 - [patched-21：所有权收敛后的首个 release candidate](patched-21-release-candidate.md)：固定启用
   stage-000、patch-001/002/006/007，关闭 patch-003/004/005/008；分开记录构建、包边界与运行
   验收。p21 已完成当前设备运行验收，仍不能继承 p20 的包或运行证据，也尚未完成跨硬件发布。
-- patched-22：`scripts/build-patched22-local-lid.sh` 固定启用 patch-009，已从 Deepin 202504
+- patched-22：`tools/build-patched22-local-lid.sh` 固定启用 patch-009，已从 Deepin 202504
   原包构建、通过包边界检查并在当前设备重启；它只修正本机内置 DP0/eDP 语义，电源与合盖实机矩阵仍待完成。
-- patched-23：`scripts/build-patched23-invisible-read-fix.sh` 在 p22 开关集合上只增加 patch-023，修复
+- patched-23：`tools/build-patched23-invisible-read-fix.sh` 在 p22 开关集合上只增加 patch-023，修复
   invisible READ mapping 释放时的无意义回写；历史上已安装、重启并完成基础图形与 Clash 启动态 A/B，
   当前只作 provenance/回退链证据。
-- patched-24：`scripts/build-patched24-kernel-612101.sh` 沿用 p23 全部开关，增加 Debian
+- patched-24：`tools/build-patched24-kernel-612101.sh` 沿用 p23 全部开关，增加 Debian
   `6.12.101` 及以后 headers 的 `pci_resize_resource(..., exclude_bars)` 兼容分支；构建和安装前
   必须重新执行对应内核的 DKMS 编译验证；2026-08-18 已重启并确认 p24、DKMS、Driver/Firmware
   和 DRM/fbdev 正常。
-- patched-25：`scripts/build-patched25-dma-resv-fix.sh` 增加 patch-025（CPU_PREP 的 dma_resv
+- patched-25：`tools/build-patched25-dma-resv-fix.sh` 增加 patch-025（CPU_PREP 的 dma_resv
   usage 语义修复）；已实机验证并合并、打 tag。
-- patched-26：`scripts/build-patched26-vblank-guard.sh` 增加 patch-026（未活动 CRTC vblank 守卫）；
+- patched-26：`tools/build-patched26-vblank-guard.sh` 增加 patch-026（未活动 CRTC vblank 守卫）；
   已实机验证并合并、打 tag。
-- patched-27：`scripts/build-patched27-foreign-dmabuf.sh` 增加 patch-027（foreign DMA-BUF 生命周期
+- patched-27：`tools/build-patched27-foreign-dmabuf.sh` 增加 patch-027（foreign DMA-BUF 生命周期
   修复）；已实机验证并合并、打 tag。
-- patched-28：`scripts/build-patched28-suspend-resume.sh` 继承 p27 并增加 patch-024（resume 早期
+- patched-28：`tools/build-patched28-suspend-resume.sh` 继承 p27 并增加 patch-024（resume 早期
   devfreq 电源状态门禁）；补丁编号 024 是空缺回填，包版本不复用历史 patched-24；仅作 legacy
   对照。新架构 `4.0.1-i1` 的 s2idle 可见恢复验收已失败，不再作为可安装候选。
 - `4.0.1-i2`：R05 完成一次 s2idle 可见恢复；是历史候选，不作为严格 A/B 包复用。

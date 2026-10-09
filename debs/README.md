@@ -18,14 +18,14 @@
 ```
 
 展开树和构建树属于本轮证据，审查完成后可清理。源码 `.deb` 不在一次验证完成后立即删除；只有
-对应内核版本不再保留时，才可通过 `scripts/prune-kernel-source-cache.sh --delete` 明确清理。
+对应内核版本不再保留时，才可通过 `tools/prune-kernel-source-cache.sh --delete` 明确清理。
 非 Debian 系统应使用自身包管理器的源码包并记录包名、版本、来源和 SHA-256。
 
 ## 输入包
 
 后续 coherent 构建以 Deepin 202504 原包为唯一技术基线。**当前新架构（4.0.0-i1）**由
-`scripts/build-innogpu-driver.sh` 驱动（drivers/ 源码树 + `binary-manifest.json` 黑盒载荷 + 确定性
-变换，产出到被忽略的 `build/`，可复现 epoch 1787342400）；`scripts/build-deepin-coherent.sh` 为
+`tools/build-innogpu-driver.sh` 驱动（drivers/ 源码树 + `binary-manifest.json` 黑盒载荷 + 确定性
+变换，产出到被忽略的 `build/`，可复现 epoch 1787342400）；`tools/build-deepin-coherent.sh` 为
 legacy patched 系构建器（保留作 p27 oracle 与版本护栏）。两者都以本目录的 Deepin 原包为输入：
 
 ```text
@@ -33,8 +33,8 @@ debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 ```
 
 新架构构建器经 manifest/提取器默认只读取上述 `debs/` 路径；其他位置必须显式设置
-`INNOGPU_DEEPIN_DEB`。`scripts/build-deepin-coherent.sh` 与
-`scripts/prepare-deepin-userspace-root.sh` 仍保留仓库根旧路径兼容查找，但它只服务 legacy 流程。
+`INNOGPU_DEEPIN_DEB`。`tools/build-deepin-coherent.sh` 与
+`tools/prepare-deepin-userspace-root.sh` 仍保留仓库根旧路径兼容查找，但它只服务 legacy 流程。
 历史 patched 包只用于安装回退或复现记录，不能作为新包输入。
 
 本机保存的 patched-19/20 deb 生成于 xdisplay 所有权收敛之前，包内仍有旧显示引擎和实验辅助文件。
@@ -94,7 +94,7 @@ Debian 6.12 兼容基础始终应用，`patch-005` 当前关闭，`patch-008` �
 发布前必须逐项确认：
 
 1. tag 指向的提交与对应文档、版本号和 SHA-256 一致。
-2. `scripts/check-release-package.sh`、`scripts/check-docs.sh`、Shell 语法检查和包边界测试通过。
+2. `tools/check-release-package.sh`、`tools/check-docs.sh`、Shell 语法检查和包边界测试通过。
 3. Deepin 原包来源、补丁开关、DKMS 构建、固件/用户态完整性和可复现构建证据齐全。
 4. 当前设备运行验证、跨硬件限制、已知问题和默认安装策略写入文档。
 5. patched-17 回退包可用，回退命令、SSH/TTY 恢复路径和风险说明经过实际演练；2026-08-17 已完成
@@ -106,11 +106,11 @@ Debian 6.12 兼容基础始终应用，`patch-005` 当前关闭，`patch-008` �
 
 ```sh
 PATCH_VERSION=N SOURCE_DATE_EPOCH=<已审查的UTC时间戳> \
-  [已审查的补丁开关...] scripts/build-deepin-coherent.sh
+  [已审查的补丁开关...] tools/build-deepin-coherent.sh
 ```
 
-patched-21 已由 `scripts/build-patched21-deepin-release-candidate.sh` 固定定义；不要手工复制上述
+patched-21 已由 `tools/build-patched21-deepin-release-candidate.sh` 固定定义；不要手工复制上述
 示例并改变其开关。其设计和分阶段验收状态见
 [`docs/patches/patched-21-release-candidate.md`](../docs/patches/patched-21-release-candidate.md)。可通过
-`OUT_DEB` 指定其他输出路径。构建器会调用 `scripts/check-release-package.sh`；提交前还需确认
+`OUT_DEB` 指定其他输出路径。构建器会调用 `tools/check-release-package.sh`；提交前还需确认
 `git status --ignored` 中的包仍被忽略，release 上传不应反向修改源码目录。

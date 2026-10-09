@@ -46,11 +46,11 @@
 
 ```sh
 git clone https://github.com/darkroam/innogpu-fh2m-debian-trixie.git && cd innogpu-fh2m-debian-trixie
-sudo scripts/install-prereqs-debian.sh                        # 基础构建/运行依赖
+sudo tools/install-prereqs-debian.sh                        # 基础构建/运行依赖
 # 最小化系统还须确认 python3、dpkg-deb 等新构建器直接命令（见 dependencies.md）
 # 取得 Deepin 202504 原包放入 debs/（完整 SHA-256 见 docs/project/dependencies.md）
-bash scripts/extract-vendor-binaries.sh                       # 按 manifest 重建 vendor/ 黑盒载荷
-SOURCE_DATE_EPOCH=1788796800 bash scripts/build-innogpu-driver.sh  # 默认构建 4.0.2-i3
+bash tools/extract-vendor-binaries.sh                       # 按 manifest 重建 vendor/ 黑盒载荷
+SOURCE_DATE_EPOCH=1788796800 bash tools/build-innogpu-driver.sh  # 默认构建 4.0.2-i3
 # R06 与失败的 R11 i1 仍可显式复现，不能替代当前交付版本
 # 安装前核对 i3 SHA-256；新硬件仍须按 new-device-install.md 独立验收
 ```
@@ -74,7 +74,7 @@ SOURCE_DATE_EPOCH=1788796800 bash scripts/build-innogpu-driver.sh  # 默认构�
 | 新设备安装 / 验证 / 恢复 | [docs/user/new-device-install.md](docs/user/new-device-install.md)、[docs/user/verification.md](docs/user/verification.md)、[docs/user/recovery.md](docs/user/recovery.md) |
 | 补丁与验收 / 事故 | [docs/patches/README.md](docs/patches/README.md)、[docs/incidents/README.md](docs/incidents/README.md) |
 | 源码树迁移与 Phase 4/5 | [source-tree-migration.md](docs/design/source-tree-migration.md)、[phase4](docs/archive/phase4-device-validation.md)、[phase5](docs/design/phase5-retirement-design.md) |
-| 脚本 / 工具 / 测试入口 | [scripts/README.md](scripts/README.md)、[tools/README.md](tools/README.md)、[tests/README.md](tests/README.md) |
+| 脚本 / 工具 / 测试入口 | [tools/README.md](tools/README.md)、[tools/internal/README.md](tools/internal/README.md)、[tests/README.md](tests/README.md) |
 | 多 Agent 协作 / 定期文档梳理 | [multiagent-collab.md](docs/project/multiagent-collab.md) |
 
 ## 致谢
@@ -89,23 +89,12 @@ SOURCE_DATE_EPOCH=1788796800 bash scripts/build-innogpu-driver.sh  # 默认构�
 
 ## 许可证
 
-- **原创层**（本项目后续原创的脚本、工具、测试、文档、配置和辅助工作）采用
-  [GPL-3.0-or-later](LICENSE)；此前按 MIT 发布的版本及副本继续保有原 MIT 授权，换证不撤销
-  既有授权。
-- **上游继承层**：fork 自 [timhant/innogpu-fh2m-debian-trixie](https://github.com/timhant/innogpu-fh2m-debian-trixie)，
-  Tim Hant 原始代码及其实质性派生内容继续保留 `Copyright (c) 2026 Tim Hant` 的 MIT 授权，全文
-  见 [LICENSES/MIT.txt](LICENSES/MIT.txt) 与 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
-- **`drivers/`** 按逐文件声明处理：408 个文件映射为 `MIT OR GPL-2.0-only`，2 个文件映射为
-  `BSD-3-Clause OR LGPL-2.1-only`；3 个 confidential 和 70 个无许可文件**排除出公开制品**，
-  不继承根许可证。`OR` 只表示对应双许可文件的选择。
-- 黑盒对象、用户态库、DDX、固件和其他载荷是本地取得的第三方内容，**不随公开制品发布**；
-  `vendor-binary` 是来源分类，不是许可证名称。
-- 许可边界（三层模型、阻断路径、制品范围）的唯一权威文档：
-  [许可证与再分发边界](docs/project/licensing.md)；机械审计见
-  [源码许可证审计](docs/project/source-license-audit.md)；第三方声明见
-  [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
-- 发布制品：`project-tools`（**候选制品**，机械门禁 `CLEARED`，当前不作为发布目标——2026-10-09 起 1C 只放开签署后的 annotated tag，本制品边界不变：按权利边界生成
-  的允许清单，排除 patches/、debs/、collab/、drivers/、vendor/、build/、third_party/，非 drivers 逐路径
-  分类 + NOTICE 门禁）与 `driver-source`（drivers/ 中仅明确许可文件，**非完整驱动**，`BLOCKED`）；
-  **GitHub 主分支仍公开分发阻断路径，仓库级发布未闭环**；二进制 deb 与 vendor 载荷不作为
-  当前发布目标。本地 `debs/` 与 `vendor/` 不参与发布。
+- 原创层采用 [GPL-3.0-or-later](LICENSE)。此前按 MIT 发布的版本继续保有原授权。
+- 上游 Tim Hant 代码保留 MIT，见 [LICENSES/MIT.txt](LICENSES/MIT.txt) 与 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+- `drivers/` 按逐文件声明。confidential 与无许可文件排除出公开制品，不继承根许可证。
+- 黑盒载荷不随公开制品发布。`vendor-binary` 是来源分类，不是许可证名称。
+- 三层模型、阻断路径、制品范围和排除清单只以
+  [许可证与再分发边界](docs/project/licensing.md) 为准。机械审计见
+  [源码许可证审计](docs/project/source-license-audit.md)。
+- `project-tools` 是候选制品，当前不作为发布目标。`driver-source` 不是完整驱动，状态为 BLOCKED。
+  仓库级发布未闭环。

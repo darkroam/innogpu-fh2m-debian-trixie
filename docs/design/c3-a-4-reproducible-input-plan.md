@@ -13,7 +13,7 @@
 ## 2026-09-15 R5 阶段 D 传导
 
 - `patches/030-031.patch` + meta 以 i2 链尾 `c44ce785…` 为 before，fresh replay 后树 hash 为 `acfe80d1…`；范围仅含 PCI、DRM、FT/PVR 三个 PM 源文件。
-- 该轮 `scripts/materialize-o-stage.sh` 链为 15 项，i3 五件写入 `docs/planning/evidence/o-stage/5.0.0-i3/`；顶层 i2 五件及 `build-5.0.0-i2.sha256` 保持失败档案字节不变。
+- 该轮 `tools/materialize-o-stage.sh` 链为 15 项，i3 五件写入 `docs/planning/evidence/o-stage/5.0.0-i3/`；顶层 i2 五件及 `build-5.0.0-i2.sha256` 保持失败档案字节不变。
 - 该轮 builder 只允许 i3 候选消费 i3 隔离快照；i1/i2 归档代不得借用当代快照重构建。包内 DKMS 树 hash、i3 meta、snapshot sidecar 与 trace manifest 四者必须一致。
 - build A/B deb SHA 均为 `f2e821f25a59bc2b3053388599655c7572be247f3275715d8925499d98f13b35`，`DEBIAN/md5sums` 562 行字节一致；该事实仅闭合静态可复现构建，不改变 `R5=FAIL`。
 - 该轮唯一复测受 `r5-suspend-stage-d-design.md` 硬前置约束：新包/模块/provenance 身份、runtime health、`no_console_suspend ignore_loglevel`、已演练带外 marker 通道、用户现场监督及 30 秒单次窗口全部满足后，才可由 dsh 明示放行。
@@ -21,7 +21,7 @@
 ## 2026-09-16 R5 030-032 诊断传导
 
 - `patches/030-032.patch` + meta 以 i3 链尾 `acfe80d1…` 为 before，fresh replay 后树 hash 为 `43f63f3f…`；范围仅含 `fantgpu_pci_drv.c` 与 `hal.h`。
-- `scripts/materialize-o-stage.sh` 当前链为 16 项，i4 五件写入 `docs/planning/evidence/o-stage/5.0.0-i4/`；i2/i3 五件和既有构建证据保持失败档案字节不变。
+- `tools/materialize-o-stage.sh` 当前链为 16 项，i4 五件写入 `docs/planning/evidence/o-stage/5.0.0-i4/`；i2/i3 五件和既有构建证据保持失败档案字节不变。
 - builder 只允许当前 i4 候选消费 i4 隔离快照；i1/i2/i3 归档代不得借用当前快照重构建。包内 DKMS 树 hash、i4 meta、snapshot sidecar 与 trace manifest 四者必须一致。
 - build A/B deb SHA 均为 `8a77ac9fb08d880858b0fbe44923abaad68ccbed58e6d544eaec431f35d559d0`，`DEBIAN/md5sums` 562 行字节一致；Description 已锁定 16 链。修订前文案仍写 15 链的 `1fddf05b…` 已作废且未进入正式证据。
 - 030-032 仅用于诊断；发布候选须完全反向移除，并由 `check-fantgpu-pm-probe-removed.sh` 在源码、snapshot/manifest、builder、DKMS、模块和 deb 解包层逐层证明无诊断 token/symbol。
@@ -55,7 +55,7 @@ F 载荷来源 = `build/r16-fantgpu-deb/`（③ 已审计解包树：87 目录 +
 
 推荐 **A**：manifest 的 `vendor_path` 前缀统一为 `fantgpu/`，builder 血统分支的遍历与映射自然区分两血统条目族；O 条目族（192 条）与 F 条目族完全隔离，不破坏现有 `validate-binary-manifest.py` 对 O manifest 的校验口径。
 
-**恢复步骤（干净工作区重建输入的显式路径；codex re-review P1-1 事务化落库 + P1-2 journal 状态机 + re-review#3 P1 状态写入失败窗口 + re-review#5 P1-1 逐状态真值表 / P1-2 并发排他锁 / P2 fsync 范围）**：`tools/r16-f-payload-integrity.py` 新增 `restore` 子命令，**事务化 + 写前状态机 + 排他锁**。journal = `vendor/.fantgpu-restore.journal`（`{"state": staged|moving_old|moved_old|moving_new|committed, "pre_existing": bool, "txn": <名>, "old": <名>}`，临时文件 + `os.replace` 原子写入）。**核心纪律：先写状态、后动文件**——任何文件移动都发生在对应「意图状态」落盘之后；journal 写入本身失败时，文件尚未移动，现场可由状态机确定性解释。恢复裁决依据 = journal 状态 + `vendor/fantgpu`(C)/`txn`(T)/`old`(O) 三者**存在性** + **pre_existing 严格布尔校验** + 对拟保留目录的**内容复核**（严格清点 + SHA + mode 与 manifest 一致，即步骤 4 同一例程；不符 → fail-closed die 保留现场）。
+**恢复步骤（干净工作区重建输入的显式路径；codex re-review P1-1 事务化落库 + P1-2 journal 状态机 + re-review#3 P1 状态写入失败窗口 + re-review#5 P1-1 逐状态真值表 / P1-2 并发排他锁 / P2 fsync 范围）**：`tools/internal/r16-f-payload-integrity.py` 新增 `restore` 子命令，**事务化 + 写前状态机 + 排他锁**。journal = `vendor/.fantgpu-restore.journal`（`{"state": staged|moving_old|moved_old|moving_new|committed, "pre_existing": bool, "txn": <名>, "old": <名>}`，临时文件 + `os.replace` 原子写入）。**核心纪律：先写状态、后动文件**——任何文件移动都发生在对应「意图状态」落盘之后；journal 写入本身失败时，文件尚未移动，现场可由状态机确定性解释。恢复裁决依据 = journal 状态 + `vendor/fantgpu`(C)/`txn`(T)/`old`(O) 三者**存在性** + **pre_existing 严格布尔校验** + 对拟保留目录的**内容复核**（严格清点 + SHA + mode 与 manifest 一致，即步骤 4 同一例程；不符 → fail-closed die 保留现场）。
 
 0. **并发互斥（codex re-review#5 P1-2 / re-review#6 P1 锁生命周期定稿，先于一切扫描与暂存）**：固定锁文件 `vendor/.fantgpu-restore.lock`——`open(path, O_CREAT|O_RDWR|O_NOFOLLOW, 0o644)`（已存在则复用打开；`O_NOFOLLOW` 拒绝 symlink 劫持，open 报 ELOOP → fail-closed die），对 fd `flock(LOCK_EX|LOCK_NB)`（拿不到 → rc≠0 `restore already in progress`）；**锁文件永不删除**（/vendor/ gitignored，持久存在，避免「删除与重新获取」竞态），fd 持有至事务与恢复清理全部结束。补测试：锁文件为 symlink → fail-closed；双进程并发 → 串行化且后者不得删除前者 txn；**前一次 restore 完成后再次 restore 成功**（锁文件可复用）。
 
@@ -119,9 +119,9 @@ F manifest（`binary-manifest-fantgpu.json`，git 追踪）顶层 schema 同 O�
 - **条目 `materialize` 键**：`direct`（默认，`fantgpu/<p>` → `$P/<p>`）；`locked-reference`（不复制）；`ddx-abi-<x>`（仅当 `F_XORG_ABI=x` 时按 M3 变换）；`ucm-<layout>-<rel>`（仅当选定时按 M4 变换）；`wayland-compat`（仅当 `F_WAYLAND_COMPAT=on` 时按 M5 变换）。
 - **符号链接条目**：`sha256/size` 为空、`target` 键记录链接目标；物化用 `ln -sfn "<target>" "$P/<p>"`（F 载荷链接目标均为载荷根内相对路径，③ E 检查已证全树零悬空，物化后有效性由 builder 断言复验：每个落位链接的 `readlink -f` 解析到包内常规文件）。
 - **条目字段补充（codex re-review#5 P1-3：mode 锁定）**：常规文件条目增加 `mode`（4 位八进制，取自 ③ `f-payload.manifest.tsv` mode 列）；符号链接条目记录 `target` + `mode`（Linux 符号链接 mode 恒 0777，记录仅作一致性锁定）；目录不入条目但 restore/预检按 **固定目录 mode 0755** 校验。可复现性声明因此同时锁定**内容（SHA）、布局（路径）、类型（file/link/dir）、权限（mode）**——chmod 漂移不改 SHA 但改变 deb 字节，必须被检出。
-- **生成工具** `tools/gen-fantgpu-manifest.py`：读 ③ `f-payload.manifest.tsv` → 生成 manifest + sidecar 计数（`input_entries`/`locked_reference_entries`/按预选参数的 **`f_materialized_entries`** 期望值 + **`f_dir_entries=87`**；O_stage 侧计数 `ostage_materialized_entries`/`ostage_dir_entries=16` 由 builder 侧常量断言，不入 F sidecar）；校验 S_INPUT 与 ③ 清单**严格双射**（零多写/漏写，含 mode 逐值）、变体组完备（每个 `/opt` 条目已分类、每个 ABI/UCM 组非空）。
+- **生成工具** `tools/internal/gen-fantgpu-manifest.py`：读 ③ `f-payload.manifest.tsv` → 生成 manifest + sidecar 计数（`input_entries`/`locked_reference_entries`/按预选参数的 **`f_materialized_entries`** 期望值 + **`f_dir_entries=87`**；O_stage 侧计数 `ostage_materialized_entries`/`ostage_dir_entries=16` 由 builder 侧常量断言，不入 F sidecar）；校验 S_INPUT 与 ③ 清单**严格双射**（零多写/漏写，含 mode 逐值）、变体组完备（每个 `/opt` 条目已分类、每个 ABI/UCM 组非空）。
 
-## 三、builder 8 点改造（`scripts/build-innogpu-driver.sh`，FANT_LINEAGE=1 分支）
+## 三、builder 8 点改造（`tools/build-innogpu-driver.sh`，FANT_LINEAGE=1 分支）
 
 | # | 位置（现状） | 改法 |
 | --- | --- | --- |
@@ -171,7 +171,7 @@ F manifest（`binary-manifest-fantgpu.json`，git 追踪）顶层 schema 同 O�
 **物化后总断言（builder）**：`f_materialized_entries`/`ostage_materialized_entries`/`trace_entries` 计数 == 期望值（§四 M2 拆分口径）；`find $P -type f` 中来自 F 载荷的每个文件 SHA 命中 F manifest 且**反向无遗漏**（未选变体/S_LOCKED 零出现）；**`$P/opt` 必须为空**（去 staging 前缀口径）。
 
 **强制项 1：md5sums 按实际载荷重生成（确定性契约，codex P1-3 修正）**
-- 新工具 `tools/gen-package-md5sums.py`（F 分支专用；O 分支行为不变）：`LC_ALL=C`；`os.walk(followlinks=False)` 收集 `$P` 下**常规文件**（**符号链接排除**，与 dpkg 惯例一致），排除 `DEBIAN/` 子树；相对路径（去 `$P/` 前缀、`/` 分隔）；**按 LC_ALL=C 字节序排序**；每行 `<md5>  <relpath>\n`（双空格，Debian 惯例）；尾换行。单测：双跑字节一致、排序锁定、symlink/DEBIAN 排除、路径规范化。
+- 新工具 `tools/internal/gen-package-md5sums.py`（F 分支专用；O 分支行为不变）：`LC_ALL=C`；`os.walk(followlinks=False)` 收集 `$P` 下**常规文件**（**符号链接排除**，与 dpkg 惯例一致），排除 `DEBIAN/` 子树；相对路径（去 `$P/` 前缀、`/` 分隔）；**按 LC_ALL=C 字节序排序**；每行 `<md5>  <relpath>\n`（双空格，Debian 惯例）；尾换行。单测：双跑字节一致、排序锁定、symlink/DEBIAN 排除、路径规范化。
 - **双构建断言**：build-A/B 的 `DEBIAN/md5sums` 逐字节一致（整体 deb 字节一致已含此项，另加显式 `cmp` 证据行）。
 
 **强制项 2：安装期探测改构建期决定 + postinst 行为精确固定（codex re-review P1-2 闭合）**

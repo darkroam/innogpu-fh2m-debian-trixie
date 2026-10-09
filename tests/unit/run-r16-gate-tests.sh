@@ -1,5 +1,5 @@
 #!/bin/bash
-# Unit tests for tools/r16-gate.py
+# Unit tests for tools/internal/r16-gate.py
 # Patterned after tests/unit/run-p2-normalize-tests.sh:
 #   isolated tmpfs, never touches build/ or repo state.
 #   Each test builds a synthetic p2-manifest + canon-to-bc + per-file
@@ -24,7 +24,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-GATE="$REPO_ROOT/tools/r16-gate.py"
+GATE="$REPO_ROOT/tools/internal/r16-gate.py"
 
 if [ ! -f "$GATE" ]; then
     echo "FATAL: gate not found: $GATE" >&2

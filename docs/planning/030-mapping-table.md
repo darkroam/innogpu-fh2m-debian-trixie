@@ -71,7 +71,7 @@
 | 语义（修改做什么、为什么、改动范围） | text | 修改内容描述 + 原因 + 影响范围 |
 | 依赖（前序 patch / 反向 patch / 共享结构 / 共享回调） | text | 与其他 patch 的依赖关系 |
 | 顺序（应用顺序约束） | text | 必须在哪些 patch 之前 / 之后应用 |
-| 许可证证据（来源 SPDX + 上游 notice） | text | `tools/audit-licenses.py` 输出 + 上游 notice 引用 |
+| 许可证证据（来源 SPDX + 上游 notice） | text | `tools/internal/audit-licenses.py` 输出 + 上游 notice 引用 |
 | 静态验证入口 | enum+ref | 见框架 §七.1（仅阶段二 fixture 子集） |
 | 运行时验证入口 | enum+ref | 见框架 §七.1（仅阶段二 fixture 子集） |
 | 处置 | enum | **`applied`** / **`duplicate`** / **`no-op`** / **`pure-rename`** / **`invalid`**（**不包含**任何 F0 决策字段） |
@@ -93,7 +93,7 @@
 - **追溯 BC**：`docs/investigations/fantgpu-base-update-evaluation.md` line 470-492 的 23 BC 标签
   （仅用于追溯 D 端文件归属，**不涉及 F0**）；
 - **追溯 per-file 证据**：P5 BC 矩阵的 per-file 列表 +
-  `tools/r16-classify.py` 输出 8 字段；
+  `tools/internal/r16-classify.py` 输出 8 字段；
 - **双向追溯校验**（v6 强化）：标记该 Patch 与 D_stage 实际文件之间是否完成
   反向追溯，依赖 O-2 闭合；
 - **reverse-lookup 路径**（v6 新增）：每个 TBD 字段必须显式给出反查来源
@@ -127,7 +127,7 @@
 ### 三.1 追溯 BC 反查明细（2026-09-07 填实，非估算）
 
 反查来源：`build/r16-evidence/per-file-classification.tsv`（435 行，
-`tools/r16-classify.py` 输出，`tools/r16-gate.py` 验证；canon_path 为
+`tools/internal/r16-classify.py` 输出，`tools/internal/r16-gate.py` 验证；canon_path 为
 inno_ 前缀剥离后的规范路径）。全部命中行 disposition = `defer`、
 classification = `BEHAVIORAL`（无 drop/PURE_RENAME 命中）。
 
@@ -193,7 +193,7 @@ docs/patches/024-suspend-resume.md 构建接线记录。
 | 2 002 | `patches/002-dp-fbdev-fallback-mode.patch` | 1a12de65f201839232a99f542707f43240b175bbe80029926b4ed3ab180f7329 | patched-27 启用集；001 之后 |
 | 3 006 | `patches/006-local-connector-acpi-map.patch` | 63a6569ccb13adfadc7d717cf0b1bc6a338ff7f0231429e6b9d266b0a07340b5 | patched-27 启用集 |
 | 4 007 | `patches/007-fbdev-io-mmap.patch` | 1adb7a3744abb936d41e4c6e54f490f4535b3a2e344d0538aa9368a824337733 | patched-27 启用集 |
-| 5 009 | `patches/009-local-internal-edp-connector.patch` | e6b955fd3cbde69f211098108c2770fdce8d8eb052096ee20d03b9522e5bb26c | patched-27 启用集（**builder 序：009 先于 007**，per scripts/build-deepin-coherent.sh） |
+| 5 009 | `patches/009-local-internal-edp-connector.patch` | e6b955fd3cbde69f211098108c2770fdce8d8eb052096ee20d03b9522e5bb26c | patched-27 启用集（**builder 序：009 先于 007**，per tools/build-deepin-coherent.sh） |
 | 6 023 | `patches/023-invisible-read-no-writeback.patch` | ea35a852d3b0d2818cd1abfbf20c888eacaccdc87371fd9a20f9520d5ee01f63 | patched-27 启用集；与 025-dma 重叠，物化时按 025 后的上下文重基 |
 | 7 025-dma | `patches/025-dma-resv-usage-rw.patch` | 05de1bdd503d3a83d82b7e0de44d74535c39d02ae153be4649c90e0c1ae0a027 | patched-27 启用集；先于 023 的重基步骤 |
 | 8 026-vblank | `patches/026-inactive-crtc-vblank-guard.patch` | 864bc3d651250ed9b701d376f6408fe7f506b2fea5fe7129007034e95a80216b | patched-27 启用集 |
@@ -201,8 +201,8 @@ docs/patches/024-suspend-resume.md 构建接线记录。
 | 10 024 | `patches/024-suspend-resume.patch` | 3e2c9ab19e2675cfc900ed96c74c7bae947248f369854c7dea5913461f7eec48 | suspend 组：builder 序为 **024 → 025 → 023(rebased)**，先于 026-lifecycle / 028 / 029（防御性快速路径） |
 | 11 026-lifecycle | `patches/026-suspend-resume-dvfs-lifecycle.patch` | 5f6f834f4a6c3bd42d69dab29ac55f988f63e1be60d92c54d4a5177acab11d26 | suspend 组：024 之后 |
 | 12 028 | `patches/028-suspend-resume-hal-temp-monitor-delay.patch` | 3adbc25dfd49198f44943b10248babd3fc06c1bccad3e233d3f36ded082ef4aa | suspend 组：024 之后 |
-| 13 029 | `patches/029-suspend-resume-ddcci-panel.patch` | c44f129ec6df50e9aceb6d11e76f17aacdf8b86efb57d5926fef809882690e36 | 4.0.2-i3 源树配方 026-lifecycle → 028 → 029（per scripts/build-innogpu-driver.sh，DDCCI 退场验证前置） |
-| 14 stage-000 | `tools/patch-gpupll-object.py`（binary-transform，无 .patch 文件）+ Deepin 基线导入 | e5f9ee94f55aed2507359d0708f2d88b5b3251582380f5792cab54892a35274a | 基线最先；对象单点字节变换在构建期执行 |
+| 13 029 | `patches/029-suspend-resume-ddcci-panel.patch` | c44f129ec6df50e9aceb6d11e76f17aacdf8b86efb57d5926fef809882690e36 | 4.0.2-i3 源树配方 026-lifecycle → 028 → 029（per tools/build-innogpu-driver.sh，DDCCI 退场验证前置） |
+| 14 stage-000 | `tools/internal/patch-gpupll-object.py`（binary-transform，无 .patch 文件）+ Deepin 基线导入 | e5f9ee94f55aed2507359d0708f2d88b5b3251582380f5792cab54892a35274a | 基线最先；对象单点字节变换在构建期执行 |
 | 15 003 | `patches/003-panel-backlight-fallback.patch` | 8cd6b492b01e2c42c3eb6dfa8d7042bc2e5f57654159dc579a11a66d6a2c6f7b | **关闭项**（patched-27 集合外，不应用） |
 | 16 004 | `patches/004-panel-platform-fallback.patch` | 330c3a06998400bb4235385ccaff24a27dc319df508f613eeaf7a80b42814513 | 关闭项 |
 | 17 005 | `patches/005-backlight-force-initial-enable.patch` | 9fee230ceb3347b05c107bdb4454fd8d19f3ee32d19f194c7f492526d6deec15 | 关闭项 |
@@ -217,13 +217,13 @@ docs/patches/024-suspend-resume.md 构建接线记录。
 裁决记录 = 引用 P5 line（追溯用，**不引入 F0 决策**）；**许可证证据
 （D 端）** = 全部 patch 目标文件 per-file-classification.tsv license_d
 = `mit-or-gpl-2.0-only`（§三.1 命中行反查；正式证据待
-`tools/audit-licenses.py` 运行时输出回填，未匹配参照行见 §三.2）；
+`tools/internal/audit-licenses.py` 运行时输出回填，未匹配参照行见 §三.2）；
 验证入口 = 框架 §七.1 阶段二 fixture 子集（阶段二启动时填实）；
 处置 / 状态 / 双向追溯校验 = 待批次3/4。
 
 | D-NNN | 来源台账项 | 来源 P5 语义裁决记录 | 来源 patch | 目标路径（D_stage 端，简） | 语义（简） | 顺序 | 处置 | 状态 |
 |---|---|---|---|---|---|---|---|---|
-| D001 | stage-000 | P5 line 366 | 基线导入 + `tools/patch-gpupll-object.py`（000） | 整树基线 + innogpu/innogpu.o_shipped 单点字节 | Deepin 202504 基线 + GPU PLL 首字节跳过（构建期确定性变换） | 最先 | TBD（待 O-2） | 候选 |
+| D001 | stage-000 | P5 line 366 | 基线导入 + `tools/internal/patch-gpupll-object.py`（000） | 整树基线 + innogpu/innogpu.o_shipped 单点字节 | Deepin 202504 基线 + GPU PLL 首字节跳过（构建期确定性变换） | 最先 | TBD（待 O-2） | 候选 |
 | D002 | 001 | P5 line 353（18 项） | `patches/001-kernel-6.12-compat.patch` | Kbuild + innogpu/*（6）+ innopmbus/innopower/innosmmu/innovpu + innosrvkm 11 文件 | Kernel 6.12 兼容（构建前提；Kbuild -Wno-error 归 build-metadata） | 最先 | TBD | 候选 |
 | D003 | 002 | P5 line 354（2 项） | `patches/002-dp-fbdev-fallback-mode.patch` | innosrvkm/innodpu_connector.c、innodpu_dp.c | DP fbdev 回退模式 | 001 后 | TBD | 候选 |
 | D004 | 006 | P5 line 355（4 项） | `patches/006-local-connector-acpi-map.patch` | innosrvkm/innodpu_connector.c | 本地 connector ACPI 映射（device-profile 边界） | builder 序 006 | TBD | 候选 |
@@ -247,12 +247,12 @@ docs/patches/024-suspend-resume.md 构建接线记录。
 
 - D001 → 双 clean-build 字节一致 + 包载荷/许可 + `tests/runtime/run-capability-baseline.sh`；
 - D002 → 编译通过 + 模块 vermagic/符号（`tests/unit/run-r16-build-bc-map-tests.sh` 编译套件）；
-- D003 / D004 / D006 → `tools/probe-drm-topology.c`（DRM device open + 内接 eDP/ACPI 映射观测）；
+- D003 / D004 / D006 → `tools/internal/probe-drm-topology.c`（DRM device open + 内接 eDP/ACPI 映射观测）；
 - D005 → DRM open + fbdev mmap（fbdev mmap 集成维持 UNVERIFIED，per §7.2 BC-09 口径）；
-- D007 → `tools/probe-pdp-invisible-read.c`（READ 不写回断言）；
-- D008 / D010 → `tools/run-dmabuf-regression-test.sh`（self-import 子集；foreign/cross-device PRIME 维持 UNVERIFIED）；
-- D009 → `tools/probe-drm-vblank.c`（inactive CRTC 守卫，预期快速 EINVAL）；
-- D011 / D012 / D013 / D014 → `tests/unit/run-suspend-resume-tests.sh` + `tools/probe-suspend-resume-state.sh`（hal suspend/resume、rail gating 真机 UNVERIFIED）；
+- D007 → `tools/internal/probe-pdp-invisible-read.c`（READ 不写回断言）；
+- D008 / D010 → `tools/internal/run-dmabuf-regression-test.sh`（self-import 子集；foreign/cross-device PRIME 维持 UNVERIFIED）；
+- D009 → `tools/internal/probe-drm-vblank.c`（inactive CRTC 守卫，预期快速 EINVAL）；
+- D011 / D012 / D013 / D014 → `tests/unit/run-suspend-resume-tests.sh` + `tools/internal/probe-suspend-resume-state.sh`（hal suspend/resume、rail gating 真机 UNVERIFIED）；
 - D015-D019（关闭项）→ 阶段一无 fixture（阶段三 P3c 裁决口径：retain / runtime-verify）。
 
 ### 字段差异（v6 vs v5）
@@ -283,7 +283,7 @@ applied" 处置已删除** —— F-only 文件不能由 D + 000-029 重放产�
 > 处置" —— **这些全部违反阶段一禁止读取 F0 的硬边界**，已被 v6 删除。
 
 **F-only 定义（不可在阶段一应用）**：P5 per-file 证据中分类为 `F-only` 的
-文件 = D 中不存在而 F0 中存在的文件（P5 line 491-492 + `tools/r16-classify.py`
+文件 = D 中不存在而 F0 中存在的文件（P5 line 491-492 + `tools/internal/r16-classify.py`
 输出）。F-only 不能由 D + 000-029 重放产生，**必须**作为阶段三输入待裁决
 记录，**不进入**阶段一 O-1 D_stage 中性记录，**不进入**阶段一 O-2
 D → D_stage 完整性审计的 differs / identical / D-only / D_stage-only 分类。

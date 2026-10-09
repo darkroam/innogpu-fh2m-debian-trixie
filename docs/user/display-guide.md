@@ -12,7 +12,7 @@ xdisplay 的命令、共享库、配置、状态机、布局策略和内部测�
 
 ```sh
 sudo INNOGPU_X_USER="$USER" INNOGPU_X_HOME="$HOME" \
-  scripts/install-xdisplay-user.sh
+  tools/install-xdisplay-user.sh
 ```
 
 该命令不会启动 watcher，也不会改变当前 RandR 布局。它只安装设备钩子，并在尚无 watcher 入口时

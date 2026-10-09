@@ -62,8 +62,8 @@ Debian 适配、设备修正、打包与回退约束；不能据此推断闭源�
 ## 溯源与验证边界
 
 - `README.md#L14-L22 @ 2b4759a3e168`：0.5 来源与 patched-5 示例。
-- `scripts/build-patched27-foreign-dmabuf.sh#L11-L26 @ f90e8bc431ee`：p27 的开关、输出路径与构建器入口。
-- `scripts/build-deepin-coherent.sh#L38-L60 @ f90e8bc431ee`：Deepin 输入身份断言。
+- `tools/build-patched27-foreign-dmabuf.sh#L11-L26 @ f90e8bc431ee`：p27 的开关、输出路径与构建器入口。
+- `tools/build-deepin-coherent.sh#L38-L60 @ f90e8bc431ee`：Deepin 输入身份断言。
 - `debs/README.md#L50-L77 @ b7cdeb4aa8c1`：历史包哈希表、版本与 tag 边界。
 
 本轮只读核对 Git 对象和现有包，没有重建、安装或补做历史运行验收；tag 存在、

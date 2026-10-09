@@ -1,9 +1,9 @@
 #!/bin/bash
-# Persistent fixtures for tools/validate-collab.py (multiagent-collab.md §五).
+# Persistent fixtures for tools/internal/validate-collab.py (multiagent-collab.md §五).
 # Builds isolated collab/ trees in a temporary directory and asserts the
 # validator's exit codes and violation messages. No device, no git, no network.
 
-TOOL="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/tools/validate-collab.py"
+TOOL="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/tools/internal/validate-collab.py"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 passed=0

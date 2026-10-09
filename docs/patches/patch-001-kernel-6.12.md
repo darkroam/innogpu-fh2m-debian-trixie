@@ -7,7 +7,7 @@
 ## 实现
 
 - 代码：`patches/001-kernel-6.12-compat.patch`。
-- 应用位置：`scripts/build-deepin-coherent.sh`，始终应用。
+- 应用位置：`tools/build-deepin-coherent.sh`，始终应用。
 - 载荷边界：只修改 DKMS 源码，不替换 Deepin 用户态 DRI、GBM、GLAPI、GLVND 或 DDX。
 - 兼容范围：Debian `6.12.101` 起 `pci_resize_resource()` 增加第四个
   `exclude_bars` 参数；补丁按内核版本传入 `0`，旧的 6.12 内核继续使用三参数接口。

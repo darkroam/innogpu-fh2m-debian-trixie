@@ -11,7 +11,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-SRC="$ROOT/tools/probe-drm-topology.c"
+SRC="$ROOT/tools/internal/probe-drm-topology.c"
 cd "$ROOT"
 export LC_ALL=C
 

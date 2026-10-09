@@ -53,7 +53,7 @@ import hashlib
 import importlib.util
 import sys
 
-spec = importlib.util.spec_from_file_location("o4", "tools/o4-f0-lock-gen.py")
+spec = importlib.util.spec_from_file_location("o4", "tools/internal/o4-f0-lock-gen.py")
 o4 = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(o4)
 rows = list(o4.walk_rows(sys.argv[1]))

@@ -56,8 +56,8 @@ DWARF ABI，绑定运行模块 build-id；输出只落入规范化 build/ 或 /t
 - 本机来源（非 Git、公开检出不可取得）：`collab/R07-2026-09-02-suspend-resume观测与触发设计/report.md#L107-L118 @ e1e6a5657b03`（dsh 裁决）
 - 本机来源（非 Git、公开检出不可取得）：`collab/R07-2026-09-02-suspend-resume观测与触发设计/request.md#L7-L39 @ 4bb29dcbd160`（dsh 完整提示词）
 - 本机来源（非 Git、公开检出不可取得）：`.runtime-archive/r17-docs/archive-originals/R07/R07-originals.tar @ 88ae8fda3003`（原文快照）
-- [probe-suspend-resume-observer.bt](../../../tools/probe-suspend-resume-observer.bt)；历史版本锚：`tools/probe-suspend-resume-observer.bt#L1 @ 4d669a8dce52`
-- [probe-suspend-resume-state.sh](../../../tools/probe-suspend-resume-state.sh)；历史版本锚：`tools/probe-suspend-resume-state.sh#L1 @ 4d669a8dce52`
+- [probe-suspend-resume-observer.bt](../../../tools/internal/probe-suspend-resume-observer.bt)；历史版本锚：`tools/probe-suspend-resume-observer.bt#L1 @ 4d669a8dce52`
+- [probe-suspend-resume-state.sh](../../../tools/internal/probe-suspend-resume-state.sh)；历史版本锚：`tools/probe-suspend-resume-state.sh#L1 @ 4d669a8dce52`
 - 事实值（非指针）：13 probes attach PASS；50 个 config-valid 事件全部
   cursor_enable=0；suspend fixture 24/24、license 50/50、collab 26/26、16 入口
   416/416；allowlist 222 个路径

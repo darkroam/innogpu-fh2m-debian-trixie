@@ -166,4 +166,4 @@
   [../project/dependencies.md](../project/dependencies.md)
 - WebKit DMA-BUF 调查：[webkit-dmabuf-investigation.md](webkit-dmabuf-investigation.md)
 - 阶段补丁：[../patches/README.md](../patches/README.md)
-- 工具与脚本：[../../tools/README.md](../../tools/README.md)、[../../scripts/README.md](../../scripts/README.md)
+- 工具与脚本：[../../tools/README.md](../../tools/README.md)、[../../scripts/README.md](../../tools/README.md)

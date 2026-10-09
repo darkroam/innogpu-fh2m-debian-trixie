@@ -32,8 +32,8 @@
 [Picom 接入记录](investigations/picom-integration.md)、[fantgpu 基座评估](investigations/fantgpu-base-update-evaluation.md)；
 未完成但暂不推进的事项见 [挂起项](state/suspended.md)。
 
-代码入口索引：[`scripts/README.md`](../scripts/README.md) 记录稳定脚本、生命周期和风险；
-[`tools/README.md`](../tools/README.md) 记录构建期变换与诊断探针；
+代码入口索引：[`tools/README.md`](../tools/README.md) 记录稳定脚本、生命周期和风险；
+[`tools/internal/README.md`](../tools/internal/README.md) 记录构建期变换与诊断探针；
 [`tests/README.md`](../tests/README.md) 记录本仓库可重复测试边界。
 
 设计与计划按主题查阅：[R5 调查方案](design/r5-suspend-investigation-plan.md)、

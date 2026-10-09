@@ -109,7 +109,7 @@ Linux 没有 `/sys/class/pstore/backend`；round-1 收集器由此得到的 `pst
 
 配置门禁：
 
-1. `make olddefconfig` 后用 `scripts/diffconfig` 对比基线；除上述三项外出现任何差异即停止。
+1. `make olddefconfig` 后用 `tools/diffconfig` 对比基线；除上述三项外出现任何差异即停止。
 2. `make -s kernelrelease` 必须精确输出 `6.12.101-r5dpm1`。
 3. 构建后的 `/boot/config-6.12.101-r5dpm1` 必须再次断言 watchdog、20 秒、pstore、符号和 ORC 配置。
 4. 不改变 `pm_async`，避免通过串行化掩盖原有排序问题。
@@ -307,7 +307,7 @@ r5_root_cause=<candidate-or-unresolved>
 r5_validation_status=FAIL
 ```
 
-设计提交前运行 `git diff --check`、`scripts/check-docs.sh`、`python3 tools/audit-licenses.py`、协作校验和 R16 gate；allowlist 只由 dsh 在 commit-time 正式重生成。
+设计提交前运行 `git diff --check`、`tools/check-docs.sh`、`python3 tools/internal/audit-licenses.py`、协作校验和 R16 gate；allowlist 只由 dsh 在 commit-time 正式重生成。
 
 ## 11. 放行流程
 

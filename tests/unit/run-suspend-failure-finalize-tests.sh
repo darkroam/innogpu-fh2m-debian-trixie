@@ -3,7 +3,7 @@
 set -u -o pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-TOOL="$ROOT/tools/finalize-suspend-resume-failure.py"
+TOOL="$ROOT/tools/internal/finalize-suspend-resume-failure.py"
 TMP="$(mktemp -d "${TMPDIR:-/tmp}/innogpu-failure-finalize-tests.XXXXXX")"
 trap 'rm -rf "$TMP"' EXIT
 

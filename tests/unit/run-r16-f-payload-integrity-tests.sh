@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tests/unit/run-r16-f-payload-integrity-tests.sh — tools/r16-f-payload-integrity.py 单元验证
+# tests/unit/run-r16-f-payload-integrity-tests.sh — tools/internal/r16-f-payload-integrity.py 单元验证
 #
 # 职责（docs/design/5.0.0-i2-validation-plan.md §三 C3-a 放行前置 ③）：
 # 用**小型合成 deb + 合成解包树**验证 来源身份 / deb↔解包字节忠实 /
@@ -7,7 +7,7 @@
 # 确定性 / verify 复验 / 篡改检出 / 写保护 / fail-closed 输出纪律。
 #
 # 所有用例秒级，**不触碰真实 debs/ 与 build/**（同 run-o-stage-materialize-tests.sh
-# 的假树口径）；只读 tools/r16-f-payload-integrity.py，只写 $TMP。
+# 的假树口径）；只读 tools/internal/r16-f-payload-integrity.py，只写 $TMP。
 # 退出码：0=全过；1=任一用例失败；2=环境/构造错误。
 #
 # md5sums 子集计数由**构造期**已知的重定位前路径推导，不依赖被测工具的
@@ -106,7 +106,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-TOOL="$ROOT/tools/r16-f-payload-integrity.py"
+TOOL="$ROOT/tools/internal/r16-f-payload-integrity.py"
 cd "$ROOT"
 LC_ALL=C
 export LC_ALL

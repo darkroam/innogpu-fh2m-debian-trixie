@@ -15,7 +15,7 @@ Debian `6.12.111` 的 `include/linux/bitfield.h` 把 `__bf_shf` 从带参宏改�
 父树是锁定的 `5.0.0-i12` 终树 `9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee`
 （其中已含 030-035 与 i8–i11 派生）。严格应用后的树哈希是
 `0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce`。
-本补丁不进入 `scripts/build-innogpu-driver.sh`，i12 终树门保持不变。重装未带本补丁的 DKMS 包会回到旧头文件，需要重新应用本补丁。
+本补丁不进入 `tools/build-innogpu-driver.sh`，i12 终树门保持不变。重装未带本补丁的 DKMS 包会回到旧头文件，需要重新应用本补丁。
 
 `fantgpu/fant_math.h` 与锁定 i6 快照中的同名文件字节相同。单元测试因此在 i6 快照上回放，
 并单独钉住 i6 回放树哈希 `ae65641f4f9da16eb5fee7f92249d4db282db952320ca5aadf36c2944c243082`。

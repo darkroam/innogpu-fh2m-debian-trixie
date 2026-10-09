@@ -58,8 +58,8 @@ r08_observer_result=PASS）→ 与 R07 样本对照并收束结论 → 形成一
 - 本机来源（非 Git、公开检出不可取得）：`collab/R08-2026-09-02-suspend-resume-primaryFB与DPU观测/report.md#L114-L127 @ 988c139ceaf2`（dsh 裁决）
 - 本机来源（非 Git、公开检出不可取得）：`collab/R08-2026-09-02-suspend-resume-primaryFB与DPU观测/request.md#L7-L45 @ ed27ee2cdee9`（dsh 完整提示词）
 - 本机来源（非 Git、公开检出不可取得）：`.runtime-archive/r17-docs/archive-originals/R08/R08-originals.tar @ 785960e05963`（原文快照）
-- [probe-suspend-resume-observer.bt](../../../tools/probe-suspend-resume-observer.bt)；历史版本锚：`tools/probe-suspend-resume-observer.bt#L1 @ 28729b3cf1e9`
-- [probe-suspend-resume-state.sh](../../../tools/probe-suspend-resume-state.sh)；历史版本锚：`tools/probe-suspend-resume-state.sh#L1 @ 28729b3cf1e9`
+- [probe-suspend-resume-observer.bt](../../../tools/internal/probe-suspend-resume-observer.bt)；历史版本锚：`tools/probe-suspend-resume-observer.bt#L1 @ 28729b3cf1e9`
+- [probe-suspend-resume-state.sh](../../../tools/internal/probe-suspend-resume-state.sh)；历史版本锚：`tools/probe-suspend-resume-state.sh#L1 @ 28729b3cf1e9`
 - 事实值（非指针）：27 probes attach PASS；suspend 30/30、license 50/50、collab 26/26、
   16 入口 422/422（unit 399 + 其他 23）
 

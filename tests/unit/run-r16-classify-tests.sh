@@ -1,5 +1,5 @@
 #!/bin/bash
-# Unit tests for tools/r16-classify.py
+# Unit tests for tools/internal/r16-classify.py
 # Patterned after tests/unit/run-r16-build-bc-map-tests.sh:
 #   isolated tmpfs, never touches build/ or repo state.
 #   Each test sets R16_MANIFEST / R16_D_SRC / R16_F_SRC / R16_D_LICENSE /
@@ -26,7 +26,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-TOOL="$REPO_ROOT/tools/r16-classify.py"
+TOOL="$REPO_ROOT/tools/internal/r16-classify.py"
 
 if [ ! -f "$TOOL" ]; then
     echo "FATAL: tool not found: $TOOL" >&2

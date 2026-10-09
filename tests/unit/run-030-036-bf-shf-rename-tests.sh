@@ -33,7 +33,7 @@ assert hashlib.sha256(header).hexdigest() == meta["apply"]["file_before_sha256"]
 assert meta["apply"]["before_tree_hash"] == "9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee"
 assert meta["apply"]["after_tree_hash"] == "0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce"
 assert meta["apply"]["i6_replay_after_tree_hash"] != meta["apply"]["after_tree_hash"]
-builder = Path("scripts/build-innogpu-driver.sh").read_text()
+builder = Path("tools/build-innogpu-driver.sh").read_text()
 assert "030-036" not in builder
 assert meta["apply"]["before_tree_hash"] in builder
 print("PASS: 030-036 patch contract")
@@ -56,7 +56,7 @@ assert header.count("__fant_bf_shf") == 3
 assert "__bf_shf" not in header
 assert "(__builtin_ffsll(x) - 1)" in header
 assert hashlib.sha256(header.encode()).hexdigest() == meta["apply"]["file_after_sha256"]
-spec = importlib.util.spec_from_file_location("o4", "tools/o4-f0-lock-gen.py")
+spec = importlib.util.spec_from_file_location("o4", "tools/internal/o4-f0-lock-gen.py")
 o4 = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(o4)
 digest = hashlib.sha256(o4.manifest_text(list(o4.walk_rows(root))).encode()).hexdigest()
@@ -75,7 +75,7 @@ import importlib.util
 from pathlib import Path
 import sys
 
-spec = importlib.util.spec_from_file_location("o4", "tools/o4-f0-lock-gen.py")
+spec = importlib.util.spec_from_file_location("o4", "tools/internal/o4-f0-lock-gen.py")
 o4 = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(o4)
 digest = hashlib.sha256(o4.manifest_text(list(o4.walk_rows(Path(sys.argv[1])))).encode()).hexdigest()

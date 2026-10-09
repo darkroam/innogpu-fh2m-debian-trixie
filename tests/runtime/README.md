@@ -77,10 +77,10 @@ DMA-BUF 聚合入口（`run-dmabuf-regression-test.sh`）随 2026-08-25 提交�
 | egl_gbm_probe / egl_x11_probe | 否 | 否 | 是 | egl_x11 需 | 否 | 否 | 编译产物在 mktemp；不污染桌面 |
 | gl_enumeration | 是 | 否 | 否（X 查询） | 是 | 否 | 否 | 无；沙箱显示 llvmpipe 时标 UNVERIFIED |
 | gl_execution | 否 | 否 | 是 | 是 | 否 | 否 | 运行 check-desktop-hwgl.sh（只读） |
-| vulkan_enumeration / vulkan_execution | 是/否 | 否 | 执行需 | 否 | 否 | 否 | 执行：`tools/probe-vulkan-devices.c exec [timeout_ms]`——创建 instance/device/queue，空 cmd buffer+fence 提交并限时等待（默认 5s，可参数覆盖）；无渲染副作用 |
-| opencl_enumeration / opencl_execution | 是/否 | 否 | 执行需 | 否 | 否 | 否 | 执行：`tools/probe-opencl-devices.c exec [elements]`——context/queue + add kernel + 阻塞读回 + 逐元素校验；仅读写 buffer |
-| vaapi_enumeration / vaapi_decode / vaapi_encode | 是/否 | 否 | 是 | 否 | 否 | 否 | 解码：`bash tools/run-vaapi-decode-test.sh --codec all`（强制 VAAPI 硬解 + 真实 framemd5 格式校验 + 软件参考 hash 对比 + Driver/Firmware 双快照状态门禁，退出码 0-5）；**真机已执行并合并**：H.264 Main + HEVC Main 各 30 帧 320x240 NV12 framemd5 一致 → runtime_vaapi_decode=PASS（证据 baselines/runtime-results-20260824.txt）；fixture 钩子输出独立命名空间 fixture_*（绝不产生 vaapi_decode_* 权威行）；编码无实现 → UNVERIFIED/不支持 |
-| dmabuf_fix_present / dmabuf_regression | 是/否 | 回归通常需 | 回归需 | 否 | 否 | 否 | 回归：`bash tools/run-dmabuf-regression-test.sh [--render-device NODE] [--card-device NODE]`（同设备 PRIME self-import + invisible GEM READ/WRITE + vblank guard + 状态门禁；退出码 0-5；能力边界：仅同设备 PRIME self-import，foreign/cross-device/GBM/V4L2/长期压力/并发保持 UNVERIFIED）；**真机已执行并合并**：2026-08-26 root 权限运行 → runtime_dmabuf_regression=PASS（证据 baselines/runtime-results-20260824.txt）；普通用户无法读取 dmesg 时日志门禁不能得到 clean，整体只能 UNVERIFIED；探针可能占用 GPU，需授权 + 超时 |
+| vulkan_enumeration / vulkan_execution | 是/否 | 否 | 执行需 | 否 | 否 | 否 | 执行：`tools/internal/probe-vulkan-devices.c exec [timeout_ms]`——创建 instance/device/queue，空 cmd buffer+fence 提交并限时等待（默认 5s，可参数覆盖）；无渲染副作用 |
+| opencl_enumeration / opencl_execution | 是/否 | 否 | 执行需 | 否 | 否 | 否 | 执行：`tools/internal/probe-opencl-devices.c exec [elements]`——context/queue + add kernel + 阻塞读回 + 逐元素校验；仅读写 buffer |
+| vaapi_enumeration / vaapi_decode / vaapi_encode | 是/否 | 否 | 是 | 否 | 否 | 否 | 解码：`bash tools/internal/run-vaapi-decode-test.sh --codec all`（强制 VAAPI 硬解 + 真实 framemd5 格式校验 + 软件参考 hash 对比 + Driver/Firmware 双快照状态门禁，退出码 0-5）；**真机已执行并合并**：H.264 Main + HEVC Main 各 30 帧 320x240 NV12 framemd5 一致 → runtime_vaapi_decode=PASS（证据 baselines/runtime-results-20260824.txt）；fixture 钩子输出独立命名空间 fixture_*（绝不产生 vaapi_decode_* 权威行）；编码无实现 → UNVERIFIED/不支持 |
+| dmabuf_fix_present / dmabuf_regression | 是/否 | 回归通常需 | 回归需 | 否 | 否 | 否 | 回归：`bash tools/internal/run-dmabuf-regression-test.sh [--render-device NODE] [--card-device NODE]`（同设备 PRIME self-import + invisible GEM READ/WRITE + vblank guard + 状态门禁；退出码 0-5；能力边界：仅同设备 PRIME self-import，foreign/cross-device/GBM/V4L2/长期压力/并发保持 UNVERIFIED）；**真机已执行并合并**：2026-08-26 root 权限运行 → runtime_dmabuf_regression=PASS（证据 baselines/runtime-results-20260824.txt）；普通用户无法读取 dmesg 时日志门禁不能得到 clean，整体只能 UNVERIFIED；探针可能占用 GPU，需授权 + 超时 |
 | display_topology / display_modeset | 是/否 | 否 | 是 | 拓扑需 | 否 | modeset 需 | modeset/热插拔/合盖需授权 |
 | picom_running / picom_glx | 是/否 | 否 | 否 | glx 需 | 否 | 否 | 只读状态；glx backend 需授权 |
 | audio_cards_enumeration / audio_default_sink / audio_playback | 是/否 | 否 | 否 | 否 | 播放需 | 否 | 播放需授权（aplay 测试音） |
@@ -90,8 +90,8 @@ DMA-BUF 聚合入口（`run-dmabuf-regression-test.sh`）随 2026-08-25 提交�
 探针执行模式（dlopen、无 Vulkan/OpenCL 头文件）：
 
 ```sh
-gcc -O2 -o /tmp/pvk tools/probe-vulkan-devices.c -ldl && /tmp/pvk exec [timeout_ms]
-gcc -O2 -o /tmp/pocl tools/probe-opencl-devices.c -ldl && /tmp/pocl exec [elements]
+gcc -O2 -o /tmp/pvk tools/internal/probe-vulkan-devices.c -ldl && /tmp/pvk exec [timeout_ms]
+gcc -O2 -o /tmp/pocl tools/internal/probe-opencl-devices.c -ldl && /tmp/pocl exec [elements]
 ```
 
 - **Vulkan**：创建 instance → 选 GPU 物理设备（优先 Innosilicon 0x1ec8，拒绝仅 CPU/software）→

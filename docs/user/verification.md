@@ -13,7 +13,7 @@
 重启后的目标包检查命令为（旧 patched 包验证时替换期望版本）：
 
 ```sh
-scripts/verify-install-status.sh --require-reboot 4.0.0-i1
+tools/verify-install-status.sh --require-reboot 4.0.0-i1
 cat /proc/driver/innogpu/gpu00/status
 ls -l /dev/dri /dev/fb0
 ```
@@ -47,8 +47,8 @@ patched-21 的完整候选定义见
 
 ```sh
 tests/package/run-boundary-tests.sh
-scripts/build-patched21-deepin-release-candidate.sh
-scripts/check-release-package.sh \
+tools/build-patched21-deepin-release-candidate.sh
+tools/check-release-package.sh \
   debs/innogpu-fh2m-trixie_3.3.3.42-patched-21.deb
 dpkg-deb -f debs/innogpu-fh2m-trixie_3.3.3.42-patched-21.deb \
   Package Version Architecture Installed-Size
@@ -76,7 +76,7 @@ RUNTIME_VALIDATION: PENDING
 dpkg-query -W -f='${Package} ${Version}\n' innogpu-fh2m-trixie
 uname -r
 dkms status innogpu-kernel
-scripts/verify-install-status.sh
+tools/verify-install-status.sh
 ```
 
 本机已确认 patched-17 回退 deb、SSH/真实 TTY、当前内核 headers、DKMS 和可用磁盘空间，并已完成
@@ -88,7 +88,7 @@ scripts/verify-install-status.sh
 受控安装并重启后，先检查版本身份，任何一处仍为 p20 都不能继续宣称 p21 运行通过：
 
 ```sh
-scripts/verify-install-status.sh --require-reboot 3.3.3.42-patched-21
+tools/verify-install-status.sh --require-reboot 3.3.3.42-patched-21
 dpkg-query -W -f='${Version}\n' innogpu-fh2m-trixie
 dkms status innogpu-kernel
 modinfo -F filename innogpu
@@ -145,10 +145,10 @@ xrandr --current
 恢复命令；当前已验收设备不需要为了日常健康检查反复运行此测试。
 
 ```sh
-scripts/check-innogpu-progress.sh
-scripts/check-desktop-hwgl.sh
-sudo scripts/check-post-reboot-hwgl.sh
-sudo scripts/test-current-xorg-hwgl-runtime.sh
+tools/check-innogpu-progress.sh
+tools/check-desktop-hwgl.sh
+sudo tools/check-post-reboot-hwgl.sh
+sudo tools/test-current-xorg-hwgl-runtime.sh
 ```
 
 patched-21 的验收标志包括 `PASS_DESKTOP_HWGL`、`PASS_POST_REBOOT_HWGL` 和

@@ -21,7 +21,7 @@ git add -f --all
 checks=0
 check() {
     local expected=$1 marker=$2 rc=0
-    bash scripts/check-docs.sh > "$fixture/check.log" 2>&1 || rc=$?
+    bash tools/check-docs.sh > "$fixture/check.log" 2>&1 || rc=$?
     if [[ "$rc" != "$expected" ]] || ! grep -Fq "$marker" "$fixture/check.log"; then
         cat "$fixture/check.log"
         printf 'check_docs_test=FAIL expected_rc=%s actual_rc=%s marker=%s\n' "$expected" "$rc" "$marker"
@@ -37,7 +37,7 @@ printf '\nscripts/%s.sh\n' xdisplay >> docs/history/display-integration.md
 check 0 'RESULT: PASS_DOCS'
 
 cp docs/state/current-work.md "$fixture/current-work.before"
-printf '\nscripts/%s.sh\n' xdisplay >> docs/state/current-work.md
+printf '\ntools/%s.sh\n' xdisplay >> docs/state/current-work.md
 check 1 'current documentation references a removed xdisplay implementation'
 cp "$fixture/current-work.before" docs/state/current-work.md
 

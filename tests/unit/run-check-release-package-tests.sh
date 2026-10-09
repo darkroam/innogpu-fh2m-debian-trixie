@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tests/unit/run-check-release-package-tests.sh — scripts/check-release-package.sh 单测
+# tests/unit/run-check-release-package-tests.sh — tools/check-release-package.sh 单测
 #
 # C1-① 口径：包名白名单（innogpu-fh2m-trixie|fantgpu-fh2m-trixie）、版本正则
 # （patched-N>20 | 4.0.x-iN | 5.0.0-iN）、helper 路径按 $package 参数化。
@@ -19,7 +19,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-GATE="$ROOT/scripts/check-release-package.sh"
+GATE="$ROOT/tools/check-release-package.sh"
 cd "$ROOT"
 export LC_ALL=C
 
@@ -265,7 +265,7 @@ mkfdeb() {  # mkfdeb <name> <mode: full|forbidden|rawhelper|dirtype|dangling|dro
             printf '%s\n' '#!/bin/bash' 'innogpu-repair-dri-nodes placeholder' \
                 > "$root/usr/share/$pkg/$h"
         else
-            bash "$ROOT/tools/transform-fantgpu-helper.sh" < "$ROOT/scripts/$h" \
+            bash "$ROOT/tools/internal/transform-fantgpu-helper.sh" < "$ROOT/tools/$h" \
                 > "$root/usr/share/$pkg/$h"
         fi
         chmod 0755 "$root/usr/share/$pkg/$h"

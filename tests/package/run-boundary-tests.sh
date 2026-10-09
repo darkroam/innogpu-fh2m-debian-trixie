@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
-CHECK="$ROOT/scripts/check-release-package.sh"
+CHECK="$ROOT/tools/check-release-package.sh"
 runtime=$(mktemp -d "${TMPDIR:-/tmp}/innogpu-package-tests.XXXXXX")
 tests=0
 skipped=0
@@ -49,7 +49,7 @@ make_package() {
     : > "$root/usr/lib/xorg/modules/drivers/innogpu_drv.so"
     : > "$root/usr/share/glvnd/egl_vendor.d/00_inno.json"
     for helper in restore-dp1-mode-x11.sh xdisplay-session.sh install-xdisplay-user.sh; do
-        cp "$ROOT/scripts/$helper" "$root/usr/share/innogpu-fh2m-trixie/$helper"
+        cp "$ROOT/tools/$helper" "$root/usr/share/innogpu-fh2m-trixie/$helper"
     done
     case "$variant" in
         legacy)

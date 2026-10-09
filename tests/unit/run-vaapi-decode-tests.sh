@@ -1,5 +1,5 @@
 #!/bin/bash
-# Unit tests: tools/run-vaapi-decode-test.sh control flow with fake fixtures.
+# Unit tests: tools/internal/run-vaapi-decode-test.sh control flow with fake fixtures.
 # CI-safe without /dev/dri. Fixture mode (INNOGPU_VAAPI_FIXTURE_MODE=1) never
 # emits vaapi_decode_overall=PASS and tags every result -mode=fixture, so fake
 # runs prove control flow/parsing only and can never be merged as hardware
@@ -8,7 +8,7 @@
 set -u -o pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SCRIPT="$ROOT/tools/run-vaapi-decode-test.sh"
+SCRIPT="$ROOT/tools/internal/run-vaapi-decode-test.sh"
 runtime="$(mktemp -d "${TMPDIR:-/tmp}/inno-vaapi-decode-tests.XXXXXX")"
 trap 'rm -rf "$runtime"' EXIT
 

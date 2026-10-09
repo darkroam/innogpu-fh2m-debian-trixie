@@ -31,6 +31,9 @@ R49 最终 3/3 devices + 1/1 normal deep 验收通过，观察期无复发后用
   固定为 111 精确子菜单字符串，并清除悬空 `saved_entry`。任务段 4 只同步当前状态文档。
   1C、validation-results 与 tag 不变。
 
+**目录（2026-10-09，R55 批 1）**：`tools/` 是稳定命令入口；`tools/internal/` 不是给人记的命令名，
+门禁和测试直接调用。F 线是唯一开发主线，O 线只维护。`drivers/` 本批仍在根上。
+
 - [ ] **当前内核 F/Deepin 能力对齐**（2026-09-23 用户调整优先级）：以
   `6.12.101+deb13-amd64` 上 Deepin `4.0.2-i3` 已交付能力为对照，先补齐 F 的功能与稳定性
   差距，核心是 R5 挂起/恢复。Deepin 的 6/6 deep、显示恢复及 PVR 错误判据是对齐目标，
@@ -84,7 +87,7 @@ R27 早期八核窗口的 `FAILED_OR_UNVERIFIED` 原记录保留，不通过删�
 ## 维护与包生命周期
 
 - [ ] 为每次新候选包建立独立的 `docs/patches/` 说明和 `docs/incidents/` 验收记录。
-- [ ] 将长期维护所需的脚本参数逐步收敛为可审查的配置，保持 `scripts/<name>` 兼容入口不变。
+- [ ] 将长期维护所需的脚本参数逐步收敛为可审查的配置，入口保持为 `tools/<name>`。
 - [ ] 补齐音频安装器的写入冲突/备份保护、`systemd-analyze verify`、对称卸载与 fixture，并明确用户服务管理失败策略。
 - [ ] 为最小化 Debian 环境补齐新构建器前置依赖门禁（至少显式核对/安装 `python3` 及当前直接调用的
   dpkg/coreutils/kmod 工具），避免把 `install-prereqs-debian.sh` 成功误认为完整构建工具链可用。

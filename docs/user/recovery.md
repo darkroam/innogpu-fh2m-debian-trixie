@@ -22,7 +22,7 @@ patched-8 只在 patched-17 仍不能启动时使用。执行任何升级前都�
 
 ```sh
 export INNOGPU_ROOT="${INNOGPU_ROOT:-$HOME/src/innogpu-fh2m-debian-trixie}"
-test -x "$INNOGPU_ROOT/scripts/verify-install-status.sh" || {
+test -x "$INNOGPU_ROOT/tools/verify-install-status.sh" || {
   printf '%s\n' "INNOGPU_ROOT is not an innogpu repository: $INNOGPU_ROOT" >&2
   exit 1
 }
@@ -41,7 +41,7 @@ sudo update-initramfs -u -k "$(uname -r)"
 sudo reboot
 ```
 
-重启后使用 `scripts/verify-install-status.sh --require-reboot 3.3.3.42-patched-27` 验证回退基线。
+重启后使用 `tools/verify-install-status.sh --require-reboot 3.3.3.42-patched-27` 验证回退基线。
 必须整体切回 p27 包，禁止只替换一个 vendor `.so`。
 
 ## patched-22 回退到 patched-21
@@ -53,14 +53,14 @@ sudo update-initramfs -u -k "$(uname -r)"
 sudo reboot
 ```
 
-重启后使用 `scripts/verify-install-status.sh --require-reboot 3.3.3.42-patched-21` 验证稳定图形基线。
+重启后使用 `tools/verify-install-status.sh --require-reboot 3.3.3.42-patched-21` 验证稳定图形基线。
 必须整体切回 p21，禁止只替换一个 vendor `.so`。
 
 ## patched-21 回退到 patched-17
 
 ```sh
 sudo dpkg -i "$INNOGPU_ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-17.deb"
-sudo scripts/disable-incompatible-userspace.sh
+sudo tools/disable-incompatible-userspace.sh
 printf '%s\n' innogpu | sudo tee /etc/modules-load.d/innogpu.conf
 sudo depmod -a "$(uname -r)"
 sudo update-initramfs -u -k "$(uname -r)"
@@ -68,13 +68,13 @@ sudo reboot
 ```
 
 必须整体切回 patched-17 的包和软件 Xorg 路径，禁止只替换一个 vendor `.so`。重启后使用
-`scripts/verify-install-status.sh --require-reboot 3.3.3.42-patched-17` 验证实际运行版本。
+`tools/verify-install-status.sh --require-reboot 3.3.3.42-patched-17` 验证实际运行版本。
 
 ## patched-17 回退到 patched-8
 
 ```sh
 sudo dpkg -i "$INNOGPU_ROOT/debs/innogpu-fh2m-trixie_3.3.3.42-patched-8.deb"
-sudo scripts/disable-incompatible-userspace.sh
+sudo tools/disable-incompatible-userspace.sh
 printf '%s\n' innogpu | sudo tee /etc/modules-load.d/innogpu.conf
 sudo depmod -a "$(uname -r)"
 sudo update-initramfs -u -k "$(uname -r)"
@@ -84,8 +84,8 @@ sudo reboot
 ## 恢复 TTY 或软件 Xorg
 
 ```sh
-sudo scripts/restore-tty1-login.sh
-sudo scripts/prepare-soft-xorg-dwm.sh
+sudo tools/restore-tty1-login.sh
+sudo tools/prepare-soft-xorg-dwm.sh
 ```
 
 先恢复可见 TTY，再处理 Xorg。不要在屏幕全黑时连续尝试新的 modeset。若临时 Xorg `:9` 未退出，
@@ -111,7 +111,7 @@ XDISPLAY_RESTORE_COMMAND=innogpu-restore-dp1-mode-x11
 若 ALSA 直连有声、应用无声，检查 PipeWire 默认 sink 和是否重新出现全局 `ALSA_CONFIG_PATH`：
 
 ```sh
-sudo scripts/install-hygon-hda-audio.sh
+sudo tools/install-hygon-hda-audio.sh
 ```
 
 该操作不需要重装显卡 DKMS，但它是重应用持久化配置，不是卸载或恢复安装前文件。需要撤销该音频

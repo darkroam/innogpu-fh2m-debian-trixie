@@ -4,7 +4,7 @@ set -eu
 
 test_dir=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 project_root=$(CDPATH= cd -- "$test_dir/../.." && pwd)
-installer=${PICOM_INSTALLER_UNDER_TEST:-$project_root/scripts/install-picom-user.sh}
+installer=${PICOM_INSTALLER_UNDER_TEST:-$project_root/tools/install-picom-user.sh}
 runtime=$(mktemp -d "${TMPDIR:-/tmp}/innogpu-picom-install.XXXXXX")
 tests=0
 skipped=0
@@ -33,7 +33,7 @@ mkdir -p "$empty_home"
 run_installer "$empty_home"
 cmp -s "$project_root/components/picom/picom.conf" \
     "$empty_home/.config/x11/picom.conf" || fail 'T01 config mismatch'
-cmp -s "$project_root/scripts/picom-session.sh" \
+cmp -s "$project_root/tools/picom-session.sh" \
     "$empty_home/.config/x11/innogpu-compositor-session.sh" ||
     fail 'T01 session mismatch'
 grep -q 'BEGIN INNOGPU COMPOSITOR SESSION' \

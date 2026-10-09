@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tests/unit/run-materialize-fantgpu-payload-tests.sh — tools/materialize-fantgpu-payload.py 单元验证
+# tests/unit/run-materialize-fantgpu-payload-tests.sh — tools/internal/materialize-fantgpu-payload.py 单元验证
 #
 # 依据 docs/design/c3-a-4-reproducible-input-plan.md §四（M1-M6 + trace 契约）：
 # direct/ddx-abi/ucm-ucm2/wayland 预选物化、locked-reference 零复制、
@@ -11,7 +11,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-TOOL="$ROOT/tools/materialize-fantgpu-payload.py"
+TOOL="$ROOT/tools/internal/materialize-fantgpu-payload.py"
 cd "$ROOT"
 export LC_ALL=C
 

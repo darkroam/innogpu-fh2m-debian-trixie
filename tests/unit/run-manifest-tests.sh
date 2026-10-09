@@ -1,13 +1,13 @@
 #!/bin/bash
 # Unit tests: binary-manifest schema/path/kind/duplicate validation.
-# Uses tools/validate-binary-manifest.py against real + adversarial fixtures.
+# Uses tools/internal/validate-binary-manifest.py against real + adversarial fixtures.
 # Read-only; no root, no device, no reboot.
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
-VALIDATOR="$(dirname "${BASH_SOURCE[0]}")/../../tools/validate-binary-manifest.py"
+VALIDATOR="$(dirname "${BASH_SOURCE[0]}")/../../tools/internal/validate-binary-manifest.py"
 tests=0; failures=0; skipped=0
 
 pass() { tests=$((tests+1)); printf '%s=PASS\n' "$1"; }

@@ -61,14 +61,14 @@
 | 语义 | innodpu_drm_resume 删除 per-CRTC `innodpu_pdp0_wakeup` 循环 |
 | **F0 侧终判** | **excluded + runtime-verify（维持排除，UNVERIFIED 登记）** |
 | 依据（行级） | F0 `fantsrvkm/fantdpu_drm_pm.c:288-304` `fantdpu_drm_resume` 含 `drm_for_each_crtc + fantdpu_pdp0_wakeup` 循环（`:299-300`，= D_base/i3 语义）；patch 语义（删除循环）为 i4-only 根因假设，未证实/证伪 → 不进 030 序列 |
-| UNVERIFIED 登记 | O_stage 整体验收矩阵：suspend/resume 实机观察（tools/probe-suspend-resume-state.sh 既有 fixture），若出现 i4 假设所针对的唤醒显示异常再行裁决（属 O_stage 运行时修复范畴，不属 030-NNN 重放） |
+| UNVERIFIED 登记 | O_stage 整体验收矩阵：suspend/resume 实机观察（tools/internal/probe-suspend-resume-state.sh 既有 fixture），若出现 i4 假设所针对的唤醒显示异常再行裁决（属 O_stage 运行时修复范畴，不属 030-NNN 重放） |
 | 追溯 | BC-09（srvkm/dpu_drm_pm.c）；mapping 表「i3 不应用 + runtime-verify 口径」 |
 
 ## 二、patch-000（构建期对象字节变换）F0 侧处置
 
 | 字段 | 值 |
 | --- | --- |
-| D 侧语义 | 基线导入时对 `innogpu/innogpu.o_shipped`（3.3.3.42 HAL 对象）执行 `tools/patch-gpupll-object.py`：将首个 G0M GPU PLL setup 调用的 `e8 09 fd ff ff` 字节 NOP 化（构建期确定性变换） |
+| D 侧语义 | 基线导入时对 `innogpu/innogpu.o_shipped`（3.3.3.42 HAL 对象）执行 `tools/internal/patch-gpupll-object.py`：将首个 G0M GPU PLL setup 调用的 `e8 09 fd ff ff` 字节 NOP 化（构建期确定性变换） |
 | **F0 侧终判** | **no-transform（操作结论）**：F0 基线不执行该字节替换，对象原样使用（O-4 已锁定）。**注意：本结论仅指「不执行目标字节替换」这一操作，不构成「F0 不存在 G0M GPU PLL 双重初始化风险」的语义闭合**——语义风险已登记 UNVERIFIED，见下 |
 | 依据 | ① F0 HAL 对象 = `fantgpu/fantgpu.o_shipped`（3.3.8.126 构建，6,903,704 字节，O-4 已锁定），字节模式 `e8 09 fd ff ff` **零命中**——D 侧变换目标模式在 F0 对象中不存在；② 跨构建二进制间字节偏移不可比对/不可外推（不同 vendor 构建的重编译使该 rel32 调用位移全局漂移），D 侧字节变换不可移植；③ F0 全树 o_shipped 扫描：fantgpu/fantdma/fantsmmu/fantvpu 零命中；`fantsrvkm/fantsrvkm.o_shipped` 单次命中为不同对象中的无关 call 指令（位移巧合，非 HAL PLL 调用），不做处理 |
 | UNVERIFIED 登记（语义结论未闭合） | 若实机出现 G0M GPU PLL 双重初始化症状（阶段三验证矩阵可观测），再行裁决（O_stage 运行时修复范畴）；在实机验证完成前，该语义风险维持 UNVERIFIED，不得以 no-transform 操作结论替代语义判定 |

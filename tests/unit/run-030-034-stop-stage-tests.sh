@@ -175,7 +175,7 @@ for active in (False, True):
     subprocess.run(['cc', '-o', str(tmp / 'query'), str(tmp / 'query.c')], check=True)
     subprocess.run([str(tmp / 'query')], check=True)
 check('compiled_dma_variants', True)
-spec = importlib.util.spec_from_file_location('o4', 'tools/o4-f0-lock-gen.py')
+spec = importlib.util.spec_from_file_location('o4', 'tools/internal/o4-f0-lock-gen.py')
 o4 = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(o4)
 check('locked_after_tree', hashlib.sha256(o4.manifest_text(list(o4.walk_rows(root))).encode()).hexdigest() ==

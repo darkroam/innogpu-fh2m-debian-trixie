@@ -9,7 +9,7 @@
 | USB Audio | `snd_usb_audio` | 扩展坞耳机和麦克风 |
 
 Debian 内核包含 `snd_hda_intel`，但其 PCI alias 不自动匹配 `1d94:14c9`。本项目通过
-`scripts/install-hygon-hda-audio.sh` 安装系统级绑定服务和用户级 PipeWire 恢复服务。
+`tools/install-hygon-hda-audio.sh` 安装系统级绑定服务和用户级 PipeWire 恢复服务。
 
 ## 持久化文件
 

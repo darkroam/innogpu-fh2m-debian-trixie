@@ -7,7 +7,7 @@ set -u
 LC_ALL=C
 export LC_ALL
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SCRIPT="$ROOT/tools/o4-f0-lock-gen.py"
+SCRIPT="$ROOT/tools/internal/o4-f0-lock-gen.py"
 runtime="$(mktemp -d "${TMPDIR:-/tmp}/o4-f0-lock-tests.XXXXXX")"
 repo_runtime="$ROOT/.o4-f0-lock-tests.$$"
 trap 'rm -rf "$runtime" "$repo_runtime"' EXIT

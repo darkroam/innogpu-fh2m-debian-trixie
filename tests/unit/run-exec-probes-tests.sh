@@ -18,9 +18,9 @@ pass() { passed=$((passed+1)); printf 'exec_probes_t%02d=PASS # %s\n' "$passed" 
 fail() { failed=$((failed+1)); printf 'exec_probes_t%02d=FAIL reason=%s\n' "$passed" "$2"; }
 
 # 1/2. 编译
-gcc -O2 -Wall -o "$PVK" "$ROOT/tools/probe-vulkan-devices.c" -ldl 2> "$runtime/vk-cc.log"
+gcc -O2 -Wall -o "$PVK" "$ROOT/tools/internal/probe-vulkan-devices.c" -ldl 2> "$runtime/vk-cc.log"
 t=$((t+1)); if [ -x "$PVK" ]; then pass vk_compiles; else fail vk_compiles "gcc vulkan failed: $(head -2 "$runtime/vk-cc.log")"; fi
-gcc -O2 -Wall -o "$POCL" "$ROOT/tools/probe-opencl-devices.c" -ldl 2> "$runtime/ocl-cc.log"
+gcc -O2 -Wall -o "$POCL" "$ROOT/tools/internal/probe-opencl-devices.c" -ldl 2> "$runtime/ocl-cc.log"
 t=$((t+1)); if [ -x "$POCL" ]; then pass ocl_compiles; else fail ocl_compiles "gcc opencl failed: $(head -2 "$runtime/ocl-cc.log")"; fi
 
 # 3. 缺失 loader -> rc=2（dlopen 立即失败，很快）

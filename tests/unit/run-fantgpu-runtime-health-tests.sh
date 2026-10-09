@@ -6,7 +6,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-GATE="$ROOT/scripts/check-fantgpu-runtime-health.sh"
+GATE="$ROOT/tools/check-fantgpu-runtime-health.sh"
 TMP="$(mktemp -d "${TMPDIR:-/tmp}/fantgpu-health-tests.XXXXXX")"
 trap 'rm -rf -- "$TMP"' EXIT INT TERM HUP
 

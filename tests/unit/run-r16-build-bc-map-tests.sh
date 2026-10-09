@@ -1,5 +1,5 @@
 #!/bin/bash
-# Unit tests for tools/r16-build-bc-map.py
+# Unit tests for tools/internal/r16-build-bc-map.py
 # Patterned after tests/unit/run-p2-normalize-tests.sh:
 #   isolated tmpfs, never touches build/ or repo state.
 #   Each test sets R16_MANIFEST and R16_BC_MAP_OUT to TMPROOT paths.
@@ -22,7 +22,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-TOOL="$REPO_ROOT/tools/r16-build-bc-map.py"
+TOOL="$REPO_ROOT/tools/internal/r16-build-bc-map.py"
 
 if [ ! -f "$TOOL" ]; then
     echo "FATAL: tool not found: $TOOL" >&2

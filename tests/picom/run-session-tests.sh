@@ -4,7 +4,7 @@ set -eu
 
 test_dir=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 project_root=$(CDPATH= cd -- "$test_dir/../.." && pwd)
-session=${PICOM_SESSION_UNDER_TEST:-$project_root/scripts/picom-session.sh}
+session=${PICOM_SESSION_UNDER_TEST:-$project_root/tools/picom-session.sh}
 runtime=$(mktemp -d "${TMPDIR:-/tmp}/innogpu-picom-session.XXXXXX")
 fake_bin=$runtime/bin
 calls=$runtime/calls.log

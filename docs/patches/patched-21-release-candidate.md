@@ -84,7 +84,7 @@ SHA-256：b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2
 
 ## 固定补丁矩阵
 
-入口 `scripts/build-patched21-deepin-release-candidate.sh` 固定以下开关：
+入口 `tools/build-patched21-deepin-release-candidate.sh` 固定以下开关：
 
 | 阶段 | 开关 | p21 | 理由 |
 | --- | --- | --- | --- |
@@ -112,7 +112,7 @@ TTY 恢复、软件 Xorg 恢复和三个 xdisplay 设备接入文件。以下内
 - 与当前源码不一致的 `restore-dp1-mode-x11.sh`、`xdisplay-session.sh`、
   `install-xdisplay-user.sh`。
 
-这条边界由 `scripts/check-release-package.sh` 强制执行，并由
+这条边界由 `tools/check-release-package.sh` 强制执行，并由
 `tests/package/run-boundary-tests.sh` 的最小 fixture 覆盖。包内保留设备接入脚本不表示 Innogpu
 拥有 xdisplay 引擎；安装器只能连接预先由 dotconfig 安装的命令和库。
 
@@ -121,7 +121,7 @@ TTY 恢复、软件 Xorg 恢复和三个 xdisplay 设备接入文件。以下内
 在仓库根目录执行：
 
 ```sh
-scripts/build-patched21-deepin-release-candidate.sh
+tools/build-patched21-deepin-release-candidate.sh
 ```
 
 默认输出：
@@ -143,7 +143,7 @@ wrapper 不接受补丁开关覆盖；只允许用 `OUT_DEB` 改变输出路径�
 2. 所有启用补丁无 `.rej`，stage-000 只匹配唯一预期字节或已变换状态；
 3. `dpkg-deb` 成功生成 `innogpu-fh2m-trixie 3.3.3.42-patched-21 amd64`，并写入有效的
    `Installed-Size`；
-4. `scripts/check-release-package.sh` 通过完整 firmware/shader/ABI 文件、禁止文件和当前接入脚本比较；
+4. `tools/check-release-package.sh` 通过完整 firmware/shader/ABI 文件、禁止文件和当前接入脚本比较；
 5. 重新解包后，关键 vendor ABI 文件和 firmware 与构建树逐字一致；
 6. 使用另一路径重复构建，两个 deb 的 SHA-256 和逐字比较均一致；
 7. 记录输出 deb 的大小、control 字段和 SHA-256，并确认 `.deb` 仍被 Git 忽略。
@@ -165,7 +165,7 @@ repeat build cmp: identical
 离线验收证据：
 
 - `tests/package/run-boundary-tests.sh`：7 项通过；
-- `scripts/check-release-package.sh`：`PASS_RELEASE_PACKAGE_BOUNDARIES`；
+- `tools/check-release-package.sh`：`PASS_RELEASE_PACKAGE_BOUNDARIES`；
 - 禁止载荷清单匹配数：0；
 - 解包源码标记：patch-002、patch-006、patch-007 存在，patch-008 诊断标记不存在；
 - p21 deb 被 `/debs/*` 规则忽略，不进入 Git；
@@ -209,7 +209,7 @@ Debian 元数据，不能直接把当时的哈希写成最终候选。构建器�
 建议的只读复核命令：
 
 ```sh
-scripts/check-release-package.sh debs/innogpu-fh2m-trixie_3.3.3.42-patched-21.deb
+tools/check-release-package.sh debs/innogpu-fh2m-trixie_3.3.3.42-patched-21.deb
 dpkg-deb -f debs/innogpu-fh2m-trixie_3.3.3.42-patched-21.deb \
   Package Version Architecture Installed-Size
 dpkg-deb -c debs/innogpu-fh2m-trixie_3.3.3.42-patched-21.deb
@@ -249,7 +249,7 @@ p21 只有在离线证据写回本文并经过审阅后才可进入实机阶段�
 ## 回退
 
 运行时失败时优先保留 SSH 或真实 TTY，使用已保存的 patched-17 包和
-`scripts/install-patched17-and-check.sh` 回退；显示层异常先停用 Picom/自动 X 启动并恢复软件 Xorg，
+`tools/install-patched17-and-check.sh` 回退；显示层异常先停用 Picom/自动 X 启动并恢复软件 Xorg，
 不得在未知状态下反复热卸载活动 `innogpu` 模块。完整步骤见
 [`../user/recovery.md`](../user/recovery.md)。
 

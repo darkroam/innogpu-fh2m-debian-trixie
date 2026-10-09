@@ -51,7 +51,7 @@
   - **默认保护**（默认不可修改；仅当用户在提示词中明确批准**精确路径范围**后才可改）：
     `drivers/`、`baselines/`、`binary-manifest.json`。
   - **自由范围**：其余文件，但须遵守仓库门禁（见 §六）。
-- **明确交付物**：文件路径、格式、登记要求（新脚本/测试需同步 scripts/README、tests/README、
+- **明确交付物**：文件路径、格式、登记要求（新脚本/测试需同步 tools/README、tests/README、
   test-strategy 与 project-tools allowlist）。
 - 验收标准给足，但不限制实现路径；鼓励 codex 主动提出更优方案。
 
@@ -103,7 +103,7 @@
   在创建时即生成）、INDEX 登记与合法状态、仅 Markdown 文件、INDEX 与目录按编号**双向一一对应**
   （精确匹配编号、日期与主题，R01 不误配 R010；重复行/孤立行/孤立目录/根目录或内部符号链接/
   嵌套目录均拒绝；INDEX 与隐藏 Markdown 同样纳入大小写无关的隐私扫描），由
-  `tools/validate-collab.py` 执行、`scripts/check-docs.sh` 强制（collab/ 不存在时视为无轮次，
+  `tools/internal/validate-collab.py` 执行、`tools/check-docs.sh` 强制（collab/ 不存在时视为无轮次，
   直接通过）；fixture 见 `tests/unit/run-collab-structure-tests.sh`。
 
 ## 六、审查标准与仓库门禁（本仓库专属）
@@ -113,9 +113,9 @@
 - [ ] **CI/沙箱测试入口**全部 PASS，且 test-strategy.md 计数与实际一致（"全部测试入口"指
   test-strategy.md 列出的 CI/沙箱入口，不含需真实设备/root/副作用的 runtime/授权测试；后者仅当
   任务需要且用户在提示词中批准时运行）。文档-only 任务可按风险运行相关测试 + 固定门禁。
-- [ ] `python3 tools/audit-licenses.py` → `license_audit_overall=PASS` 且
+- [ ] `python3 tools/internal/audit-licenses.py` → `license_audit_overall=PASS` 且
   `license_release_gate=BLOCKED` 保持（发布决策 1C）。
-- [ ] `bash scripts/check-docs.sh` → `RESULT: PASS_DOCS`。
+- [ ] `bash tools/check-docs.sh` → `RESULT: PASS_DOCS`。
 - [ ] `git diff --cached --check` 干净；隐私扫描无真实用户名/hostname/凭据/token/私钥/本机
   绝对路径泄漏；涉及 shell 时 `bash -n` 与 ShellCheck（error+warning）清零。
 - [ ] 新增 tracked 文件已同步 allowlist（`--write-allowlists`）与文档登记；无未登记脚本/工具。
@@ -203,7 +203,7 @@
 | 2026-09-03 | 署名规则：codex/qoder 意见必须署名，署名保留至 dsh 终审通过，终审节为三方共识定稿、来源记录保留 |
 | 2026-09-03 | 提交决定：谁写的文件谁决定提交；dsh 为最终评审，发现问题可要求作者修改（返工）后再提交；用户最终拍板可推翻 |
 | 2026-09-03 | 临时角色交换：用户可按轮次声明交换（如 qoder 执行、codex 初审），限该轮/项目，dsh 始终终审，结案后恢复 |
-| 2026-08-31 | 复审修订：`collab/` 改为本机私有目录（.gitignore，不上传 GitHub）、轮次创建即生成 `report.md` 模板、机械校验改由 `tools/validate-collab.py` 双向精确校验（持久化 fixture） |
+| 2026-08-31 | 复审修订：`collab/` 改为本机私有目录（.gitignore，不上传 GitHub）、轮次创建即生成 `report.md` 模板、机械校验改由 `tools/internal/validate-collab.py` 双向精确校验（持久化 fixture） |
 | 2026-09-10 | 双轨变更纪律（两条腿）：源树语义改动必须「直接修改 + patch 记录」双轨存在；patch 链延续（030-NNN 续编）+ 台账同步 + 发布前印证门禁 + 未来基座更换走全链重放适配；新增 §十一 |
 | 2026-09-23 | 用户授权降低不必要确认：§四 批次授权、批内自主修订与隔离回归，集中成果审查；保留专项冻结、正式验收与提交边界；§二 同步 |
 | 2026-10-02 | 用户补充基本要求：需要用户配合的脚本必须自包含保存完整输出、rc、时间戳、结果和 latest 指针；用户仅确认已执行，codex 自行读取、核验、归档和更新文档 |

@@ -47,11 +47,11 @@ patch-029 DDCCI panel 创建恢复，
 
 历史 p19/p20 deb 的驱动/用户态结论仍可作为证据，但其辅助文件清单不符合当前所有权边界。当前
 新构建器只接受按 Debian 版本排序高于 `3.3.3.42-patched-27` 的版本，并必须运行
-`scripts/check-release-package.sh`；版本号、包清单和运行证据必须一起更新，不能覆盖旧 deb。
+`tools/check-release-package.sh`；版本号、包清单和运行证据必须一起更新，不能覆盖旧 deb。
 
 ## Debian 包
 
-基础构建与运行依赖由 `scripts/install-prereqs-debian.sh` 安装，主要包括：
+基础构建与运行依赖由 `tools/install-prereqs-debian.sh` 安装，主要包括：
 
 - `build-essential`、`dkms`、当前内核 headers、`kmod`、`initramfs-tools`；
 - `xserver-xorg-core`、`xinit`、`x11-xserver-utils`、`x11-utils`、`dwm`；
@@ -75,7 +75,7 @@ runtime 能力基线另有可选诊断依赖：`pciutils`（`lspci`）、`drm-in
 `vulkan-tools`（`vulkaninfo`）、`clinfo`、`vainfo` 所属发行版包及 `wpctl`。这些工具缺失时对应能力项
 必须输出 `SKIP reason=tool_missing:<tool>`，但不影响基础驱动构建、安装、TTY 或 Xorg 启动。
 
-DMA-BUF 回归验证（`tools/run-dmabuf-regression-test.sh`）的 runtime 可选依赖：`gcc` + DRM 头文件
+DMA-BUF 回归验证（`tools/internal/run-dmabuf-regression-test.sh`）的 runtime 可选依赖：`gcc` + DRM 头文件
 （`/usr/include/drm/drm.h`，Debian Trixie 上属 `linux-libc-dev`）编译四个 C 探针
 （`probe-dmabuf-self-import.c`、`probe-pdp-invisible-read.c`、`probe-drm-topology.c`、
 `probe-drm-vblank.c`）、`timeout`（coreutils）、`grep`（包名 `grep`）、`awk`（Debian 上包名
@@ -83,7 +83,7 @@ DMA-BUF 回归验证（`tools/run-dmabuf-regression-test.sh`）的 runtime 可�
 `gcc` 或头文件缺失 → `dmabuf_tool=fail`（退出码 2）；仅影响真机回归验证的诊断能力，不进入驱动
 deb，也不影响基础安装。
 
-VA-API 实际解码验证（`tools/run-vaapi-decode-test.sh`）的 runtime 可选依赖：`ffmpeg`（需编译支持
+VA-API 实际解码验证（`tools/internal/run-vaapi-decode-test.sh`）的 runtime 可选依赖：`ffmpeg`（需编译支持
 `--enable-vaapi`、`libx264`、`libx265`）、`vainfo`（Debian Trixie 包名 `vainfo`，源包 `libva-utils`）。
 缺失分级：`ffmpeg`/`vainfo` 缺失 → `vaapi_decode_tool=fail`（退出码 2）；缺少 `libx264`/`libx265`
 编码器或 h264/hevc 解码器 → 退出码 2；这些仅为真机解码验证的诊断依赖，不进入驱动 deb，也不影响
@@ -103,8 +103,8 @@ Picom 源码不复制进本仓库。当前基线为上游 `yshui/picom` 的 `nex
 6d676824c457a933c52e3e92c5a1856466f90545
 ```
 
-构建依赖和安装命令由 `scripts/install-picom-prereqs-debian.sh` 与
-`scripts/build-patched-picom.sh` 管理。`xcompmgr` 是 Picom 二进制不存在时的轻量回退，不用于验证
+构建依赖和安装命令由 `tools/install-picom-prereqs-debian.sh` 与
+`tools/build-patched-picom.sh` 管理。`xcompmgr` 是 Picom 二进制不存在时的轻量回退，不用于验证
 GLX 补丁。
 
 ## fbterm 外部源码
@@ -113,8 +113,8 @@ fbterm 源码不复制进本仓库。兼容补丁固定面向 Debian `fbterm 1.7
 `~/src/fbterm-1.7`。使用 Debian source repository 取得源码后，通过以下入口构建和安装：
 
 ```sh
-scripts/build-patched-fbterm.sh
-scripts/build-patched-fbterm.sh --install
+tools/build-patched-fbterm.sh
+tools/build-patched-fbterm.sh --install
 ```
 
 构建需要 C/C++ 工具链、`patch`、pkg-config、FreeType 和 Fontconfig 开发文件；已验证变体关闭当前

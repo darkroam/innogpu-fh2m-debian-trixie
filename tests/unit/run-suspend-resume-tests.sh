@@ -11,11 +11,11 @@ DISPLAY_PATCH="$ROOT/patches/025-suspend-resume-display.patch"
 LIFECYCLE_PATCH="$ROOT/patches/026-suspend-resume-dvfs-lifecycle.patch"
 TEMP_MONITOR_PATCH="$ROOT/patches/028-suspend-resume-hal-temp-monitor-delay.patch"
 DDCCI_PANEL_PATCH="$ROOT/patches/029-suspend-resume-ddcci-panel.patch"
-BUILDER="$ROOT/scripts/build-deepin-coherent.sh"
-WRAPPER="$ROOT/scripts/build-patched28-suspend-resume.sh"
-CURRENT_BUILDER="$ROOT/scripts/build-innogpu-driver.sh"
-OBSERVER="$ROOT/tools/probe-suspend-resume-state.sh"
-OBSERVER_BT="$ROOT/tools/probe-suspend-resume-observer.bt"
+BUILDER="$ROOT/tools/build-deepin-coherent.sh"
+WRAPPER="$ROOT/tools/build-patched28-suspend-resume.sh"
+CURRENT_BUILDER="$ROOT/tools/build-innogpu-driver.sh"
+OBSERVER="$ROOT/tools/internal/probe-suspend-resume-state.sh"
+OBSERVER_BT="$ROOT/tools/internal/probe-suspend-resume-observer.bt"
 TMP="$(mktemp -d "${TMPDIR:-/tmp}/innogpu-suspend-resume-tests.XXXXXX")"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -490,7 +490,8 @@ else
     fail current_builder_patches_compile_and_package_trees
 fi
 
-if [[ "$(grep -c -- '--fuzz=0 --no-backup-if-mismatch' "$CURRENT_BUILDER")" -eq 6 ]] &&
+# 030-035 is the seventh fuzz=0 apply; the other six stay inside apply_reviewed_source_fixes.
+if [[ "$(grep -c -- '--fuzz=0 --no-backup-if-mismatch' "$CURRENT_BUILDER")" -eq 7 ]] &&
    grep -Fq -- "-name '*.orig' -o -name '*.rej'" "$CURRENT_BUILDER" &&
    grep -Fq 'apply_reviewed_source_fixes "$STAGE/source" compile-staging' "$CURRENT_BUILDER" &&
    grep -Fq 'apply_reviewed_source_fixes "$P/usr/src/innogpu-kernel-2.2" packaged-dkms' "$CURRENT_BUILDER" &&

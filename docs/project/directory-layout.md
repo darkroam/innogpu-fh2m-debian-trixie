@@ -12,6 +12,19 @@
 - `build/` 是已退役的 R3–R16 遗留混合区；R50 已将内容分类迁出并删除空根，禁止复生且不建兼容 symlink。
 - 内核升级后保留当前版本源码包；只有新版本稳定且旧版无待研究补丁时，才清理前一版本源码包。
 
+## 两线
+
+- **F 线**是唯一开发主线。源码与黑盒载荷都来自
+  `debs/fantgpu-fh2m_3.3.8.126-driver-linux-desktop-sp-generic_amd64.deb`
+  （SHA-256 `6f0daaf79fb6b2a547138c17628bb990dff0d0c684ee1c13775bebc2d28fd11b`）：
+  F0 genesis、R16 整栈切换、冻结 O-stage 快照，再加上 030-035/030-036。
+  载荷清单是 `binary-manifest-fantgpu.json`，物化目录是 `vendor/fantgpu/`。
+- **O 线**只维护，不接新功能。源码树仍是根上 `drivers/`（本批不删除）。载荷来自
+  `debs/innogpu-fh2m_20250421190503-debug_amd64.deb`
+  （SHA-256 `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2`），
+  清单是 `binary-manifest.json`，提取入口是 `tools/extract-vendor-binaries.sh`。
+- 两线输入不混用。
+
 ## 目录职责
 
 | 目录 | 用途与写入者 | Git 状态 | 生命周期与清理条件 |
@@ -19,10 +32,10 @@
 | `.github/` | CI 与仓库托管配置 | tracked | 随代码审查维护 |
 | `LICENSES/` | 项目使用的标准许可证文本 | tracked | 许可证策略变更时同步 |
 | `components/` | 第三方组件的固定来源说明、最小 patch、meta 与静态回归 | tracked | 随上游版本升级审查；不放展开源码 |
-| `drivers/` | 当前维护的驱动源码树 | tracked | 变更须经补丁、构建和许可门禁 |
+| `drivers/` | O 线（innogpu 4.0.x）源码树；只维护，不接新功能 | tracked | 本批保留在根上；变更仍须经补丁、构建和许可门禁 |
 | `patches/` | 历史/当前驱动补丁及溯源材料 | tracked | 已迁入源码的补丁仍保留作复现锚 |
-| `scripts/` | 操作者与 CI 的稳定入口 | tracked | 移动前扫描全部调用并保留兼容入口 |
-| `tools/` | 构建期确定性变换、审计与诊断工具 | tracked | 与测试、allowlist 同步维护 |
+| `tools/` | 操作者与 CI 的稳定命令入口 | tracked | 在 `tools/README.md` 登记 |
+| `tools/internal/` | 构建期变换、审计与诊断；不是给人记的命令名 | tracked | 门禁与测试直接调用；与 allowlist 同步 |
 | `tests/` | fixture、静态与单元回归 | tracked | 与对应行为同批更新 |
 | `docs/` | 当前状态、设计、事故、用户指南和历史 | tracked | 同一事实只设一个权威页 |
 | `third_party/` | 可入库的第三方源码/说明；指定的大型解包目录除外 | 混合 | 每项必须有来源、版本、许可和适用条件；解包树由 `.gitignore` 排除 |
@@ -86,7 +99,7 @@ R50 的 45 项动作记录在本机轮次的 `task4-migration-plan.tsv`；绑定
 git check-ignore -v --no-index .runtime-archive/example .build/example build/example \
   debs/example.deb vendor/example collab/example .agents/example .codex/example .qoder/example
 git status --short --untracked-files=all
-scripts/check-docs.sh
+tools/check-docs.sh
 ```
 
 若应忽略路径未命中规则，先修正 `.gitignore`；不得依赖“当前目录为空所以 status 看不到”。

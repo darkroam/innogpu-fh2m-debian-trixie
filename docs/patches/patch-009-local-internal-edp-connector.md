@@ -26,7 +26,7 @@
 patched-22 构建入口为：
 
 ```sh
-scripts/build-patched22-local-lid.sh
+tools/build-patched22-local-lid.sh
 ```
 
 候选包从 `innogpu-fh2m_20250421190503-debug_amd64.deb` 重新构建，版本为
@@ -44,7 +44,7 @@ Deepin 原有的兼容性 warning，没有 patch-009 引入的错误。候选 de
 `card0-eDP-1=connected`，外接 HDMI 均为 disconnected；当前开盖桌面状态为
 `Docked=false`、`LidClosed=false`、`OnExternalPower=true`。RandR 把 `eDP-1` 设为
 primary，xdisplay 报告 `INTERNAL_ONLY`、`health=ready`，未发现显示布局回归。
-`scripts/verify-install-status.sh --require-reboot 3.3.3.42-patched-22` 返回
+`tools/verify-install-status.sh --require-reboot 3.3.3.42-patched-22` 返回
 `RESULT: PASS_INSTALL_STATUS`。
 
 以上只证明 connector 分类和开盖桌面路径，不等同于完整电源策略验收。以下矩阵仍需在电池和实际

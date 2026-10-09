@@ -50,7 +50,7 @@ helper = re.search(r'^void \* fantgpu_drm_to_ft_private\(.*?^}', helper_source, 
 assert 'drm_private = drm_dev->dev_private' in helper
 assert 'return &(drm_private->ft_priv)' in helper
 
-spec = importlib.util.spec_from_file_location('o4', 'tools/o4-f0-lock-gen.py')
+spec = importlib.util.spec_from_file_location('o4', 'tools/internal/o4-f0-lock-gen.py')
 o4 = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(o4)
 digest = hashlib.sha256(o4.manifest_text(list(o4.walk_rows(root))).encode()).hexdigest()
@@ -69,7 +69,7 @@ import importlib.util
 from pathlib import Path
 import sys
 
-spec = importlib.util.spec_from_file_location('o4', 'tools/o4-f0-lock-gen.py')
+spec = importlib.util.spec_from_file_location('o4', 'tools/internal/o4-f0-lock-gen.py')
 o4 = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(o4)
 digest = hashlib.sha256(o4.manifest_text(list(o4.walk_rows(Path(sys.argv[1])))).encode()).hexdigest()

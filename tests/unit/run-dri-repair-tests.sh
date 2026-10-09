@@ -1,6 +1,6 @@
 #!/bin/bash
-# Unit tests: DRI repair service lifecycle (scripts/install-dri-node-repair-service.sh
-# and scripts/uninstall-innogpu.sh) with a STATEFUL fake systemctl - no root,
+# Unit tests: DRI repair service lifecycle (tools/install-dri-node-repair-service.sh
+# and tools/uninstall-innogpu.sh) with a STATEFUL fake systemctl - no root,
 # no systemd, no /dev access, no real system modification. The installer is run
 # with INNOGPU_DRI_TEST_ROOT=<tmp> and the uninstaller with INNOGPU_UNINSTALL_TEST=1;
 # both hooks are hard-off in production and fail closed on an unsafe test root.
@@ -18,10 +18,10 @@
 set -u -o pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-INSTALLER="$ROOT/scripts/install-dri-node-repair-service.sh"
-UNINSTALL="$ROOT/scripts/uninstall-innogpu.sh"
-CHECK_X="$ROOT/scripts/check-soft-xorg-dwm.sh"
-HOTLOAD="$ROOT/scripts/try-hotload-patched17.sh"
+INSTALLER="$ROOT/tools/install-dri-node-repair-service.sh"
+UNINSTALL="$ROOT/tools/uninstall-innogpu.sh"
+CHECK_X="$ROOT/tools/check-soft-xorg-dwm.sh"
+HOTLOAD="$ROOT/tools/try-hotload-patched17.sh"
 T="$(mktemp -d "${TMPDIR:-/tmp}/inno-dri-repair-tests.XXXXXX")"
 trap 'rm -rf "$T"' EXIT
 export TMPDIR="$T/tmp"
@@ -257,7 +257,7 @@ fi
 mkpkg() { # <root>
     local root="$1"
     mkdir -p "$root/usr/share/innogpu-fh2m-trixie" "$root/usr/sbin" "$root/usr/bin"
-    cp "$ROOT/scripts/repair-dri-nodes.sh" "$root/usr/share/innogpu-fh2m-trixie/repair-dri-nodes.sh"
+    cp "$ROOT/tools/repair-dri-nodes.sh" "$root/usr/share/innogpu-fh2m-trixie/repair-dri-nodes.sh"
     chmod +x "$root/usr/share/innogpu-fh2m-trixie/repair-dri-nodes.sh"
     ln -sf ../share/innogpu-fh2m-trixie/repair-dri-nodes.sh "$root/usr/sbin/innogpu-repair-dri-nodes"
 }
@@ -354,9 +354,9 @@ rc=$?
 if [ "$rc" -eq 0 ]; then pass uninstall_idempotent; else fail uninstall_idempotent "rc=$rc"; fi
 
 mkdir -p "$H/other/scripts"
-printf 'other-repo-script\n' > "$H/other/scripts/repair-dri-nodes.sh"
-chmod +x "$H/other/scripts/repair-dri-nodes.sh"
-ln -sf "$H/other/scripts/repair-dri-nodes.sh" "$(helper_of "$H")"
+printf 'other-repo-script\n' > "$H/other/tools/repair-dri-nodes.sh"
+chmod +x "$H/other/tools/repair-dri-nodes.sh"
+ln -sf "$H/other/tools/repair-dri-nodes.sh" "$(helper_of "$H")"
 uninstall_run "$H"
 rc=$?
 if [ "$rc" -eq 0 ] && [ -L "$(helper_of "$H")" ]; then pass foreign_repo_symlink_preserved;

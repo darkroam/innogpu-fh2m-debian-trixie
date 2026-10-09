@@ -356,8 +356,8 @@ record fbterm_real_vt SKIP "manual-execution-required (real VT + authorization):
 # 4. EGL/GBM/DRI（复用仓库探针，编译到临时目录）
 # =====================================================================
 PROBE_BIN="$RUNTIME_DIR/probe-egl-gbm"
-if [[ "$HAS_DRI" == "yes" && -f "$ROOT/tools/probe-egl-gbm.c" && "$(command -v gcc 2>/dev/null)" ]]; then
-    if gcc -O2 -o "$PROBE_BIN" "$ROOT/tools/probe-egl-gbm.c" 2>/dev/null; then
+if [[ "$HAS_DRI" == "yes" && -f "$ROOT/tools/internal/probe-egl-gbm.c" && "$(command -v gcc 2>/dev/null)" ]]; then
+    if gcc -O2 -o "$PROBE_BIN" "$ROOT/tools/internal/probe-egl-gbm.c" 2>/dev/null; then
         # F 血统：loader 私有库在包内 fantgpu-fh2m 目录（C1-② 锁定的路径族）；
         # O 血统保持 vendor/userspace 先例。INNOGPU_LIB_PATH 由探针实际消费
         # （probe-egl-gbm.c 读该环境变量构造绝对 dlopen 路径）。
@@ -372,9 +372,9 @@ if [[ "$HAS_DRI" == "yes" && -f "$ROOT/tools/probe-egl-gbm.c" && "$(command -v g
         record egl_gbm_probe SKIP "probe compile failed"
     fi
 else
-    record egl_gbm_probe SKIP "no /dev/dri or gcc/probe missing; compile and run tools/probe-egl-gbm.c on device session"
+    record egl_gbm_probe SKIP "no /dev/dri or gcc/probe missing; compile and run tools/internal/probe-egl-gbm.c on device session"
 fi
-record egl_x11_probe SKIP "manual-execution-required: scripts/test-current-xorg-hwgl-runtime.sh on device session"
+record egl_x11_probe SKIP "manual-execution-required: tools/test-current-xorg-hwgl-runtime.sh on device session"
 
 # =====================================================================
 # 5. OpenGL / GLX / GLES
@@ -396,7 +396,7 @@ else
         record gl_enumeration SKIP "no DISPLAY in this session"
     fi
 fi
-record gl_execution SKIP "manual-execution-required: scripts/check-desktop-hwgl.sh on device session"
+record gl_execution SKIP "manual-execution-required: tools/check-desktop-hwgl.sh on device session"
 
 # =====================================================================
 # 6. Vulkan（枚举 vs 实际执行）
@@ -466,7 +466,7 @@ else
     STATIC_FIX=$(grep -rl 'dma_resv_usage_rw' "$ROOT/drivers" 2>/dev/null | wc -l)
     if [[ "$STATIC_FIX" -ge 1 ]]; then record dmabuf_source_fix_present PASS; else record dmabuf_source_fix_present FAIL "dma_resv_usage_rw not in drivers/"; fi
 fi
-record dmabuf_regression SKIP "manual-execution-required: bash tools/run-dmabuf-regression-test.sh on device session (authorized)"
+record dmabuf_regression SKIP "manual-execution-required: bash tools/internal/run-dmabuf-regression-test.sh on device session (authorized)"
 
 # =====================================================================
 # 10. 显示器真实输出（拓扑只读；modeset 人工）
@@ -535,11 +535,11 @@ if [[ "$MODE" == "allow-authorized" ]]; then
     printf '#   fbterm_real_vt:  真实 VT 下运行 fbterm，验证绘制/清屏/长输出/重入\n'
     printf '#   display_modeset: xrandr --output <out> --mode <mode>（分辨率切换/热插拔/合盖，需监督授权）\n'
     printf '#   audio_playback:  aplay -D default <test.wav>\n'
-    printf '#   vulkan_execution: gcc -O2 -o /tmp/pvk tools/probe-vulkan-devices.c -ldl && /tmp/pvk exec [timeout_ms]  # 创建 instance/device/queue，空 cmd buffer+fence 提交并等待\n'
-    printf '#   opencl_execution: gcc -O2 -o /tmp/pocl tools/probe-opencl-devices.c -ldl && /tmp/pocl exec [elements]  # context/queue + add kernel + 读回逐元素校验\n'
-    printf '#   vaapi_decode:     bash tools/run-vaapi-decode-test.sh --codec all [--device /dev/dri/renderDNN] [--timeout 30]  # H264+HEVC 强制 VAAPI 解码 + 软件参考 framemd5 对比\n'
+    printf '#   vulkan_execution: gcc -O2 -o /tmp/pvk tools/internal/probe-vulkan-devices.c -ldl && /tmp/pvk exec [timeout_ms]  # 创建 instance/device/queue，空 cmd buffer+fence 提交并等待\n'
+    printf '#   opencl_execution: gcc -O2 -o /tmp/pocl tools/internal/probe-opencl-devices.c -ldl && /tmp/pocl exec [elements]  # context/queue + add kernel + 读回逐元素校验\n'
+    printf '#   vaapi_decode:     bash tools/internal/run-vaapi-decode-test.sh --codec all [--device /dev/dri/renderDNN] [--timeout 30]  # H264+HEVC 强制 VAAPI 解码 + 软件参考 framemd5 对比\n'
     printf '#   picom_glx:        验证 Picom GLX backend（docs/project/compositor-management.md）\n'
-    printf '#   dmabuf_regression: bash tools/run-dmabuf-regression-test.sh [--render-device NODE] [--card-device NODE]  # PRIME self-import + invisible GEM READ/WRITE + vblank guard + 状态门禁\n'
+    printf '#   dmabuf_regression: bash tools/internal/run-dmabuf-regression-test.sh [--render-device NODE] [--card-device NODE]  # PRIME self-import + invisible GEM READ/WRITE + vblank guard + 状态门禁\n'
     printf '# 执行后将结果逐行写入文件，用 --results-file 合并：runtime_<name>=PASS|FAIL|SKIP|UNVERIFIED [reason=..]\n'
 fi
 

@@ -26,12 +26,12 @@
   hash、允许 SPDX 集合、制品 allowlist 路径与期望统计。
 - [source-license-inventory.tsv](source-license-inventory.tsv)：484 行逐文件记录（路径、内容
   SHA-256、分类、原始声明、规范化 SPDX、引用文本、`MODULE_LICENSE` 元数据、观察到的版权行）。
-- [audit-licenses.py](../../tools/audit-licenses.py)：从 `git ls-files` 重建清单并检查语义漂移；
+- [audit-licenses.py](../../tools/internal/audit-licenses.py)：从 `git ls-files` 重建清单并检查语义漂移；
   [run-license-audit-tests.sh](../../tests/unit/run-license-audit-tests.sh) 覆盖正反例。
 - [project-tools-allowlist.txt](project-tools-allowlist.txt) 与
   [driver-source-allowlist.txt](driver-source-allowlist.txt)：两个发布制品的精确允许清单
   （机械生成，与审计器双向校验）。
-- [build-release-archive.py](../../tools/build-release-archive.py)：确定性归档构建器（从 HEAD
+- [build-release-archive.py](../../tools/internal/build-release-archive.py)：确定性归档构建器（从 HEAD
   读 blob/mode、要求干净树、保留 0644/0755、拒绝符号链接/重复/输出落仓；仅 CLEARED 制品可发布
   构建，`--draft` 只输出 `archive_draft=OK`）。
 - [THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md)：第三方声明（上游 MIT 全文、drivers/
@@ -45,7 +45,7 @@ license_artifact_driver-source_gate=BLOCKED
 ```
 
 两行必须同时读取：审计 PASS 只证明“当前内容与已审策略一致”，不代表仓库可整体发布。发布制品
-必须另行使用 `python3 tools/audit-licenses.py --artifact <name> --require-releasable`。
+必须另行使用 `python3 tools/internal/audit-licenses.py --artifact <name> --require-releasable`。
 
 ## 明确例外与阻断路径
 
@@ -78,8 +78,8 @@ license_artifact_driver-source_gate=BLOCKED
 ## 更新流程
 
 1. 修改策略允许集合、分类或期望统计，说明事实来源。
-2. 运行 `python3 tools/audit-licenses.py --write-inventory --write-allowlists`，复审逐路径 diff。
-3. 运行 `python3 tools/audit-licenses.py`、`bash tests/unit/run-license-audit-tests.sh` 和
-   `bash scripts/check-docs.sh`。
+2. 运行 `python3 tools/internal/audit-licenses.py --write-inventory --write-allowlists`，复审逐路径 diff。
+3. 运行 `python3 tools/internal/audit-licenses.py`、`bash tests/unit/run-license-audit-tests.sh` 和
+   `bash tools/check-docs.sh`。
 4. 只有人工阻断项有证据并经独立复审后，才可讨论把对应制品状态从 `BLOCKED` 改为 `CLEARED`；
    `status=CLEARED` 本身不是授权依据，机械门禁必须同时通过。

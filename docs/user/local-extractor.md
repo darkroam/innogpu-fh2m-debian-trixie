@@ -12,8 +12,8 @@
 [`binary-manifest-fantgpu.json`](../../binary-manifest-fantgpu.json) 和
 [O_stage 物化方案](../design/o-stage-integration-plan.md)，不得直接套用本页默认参数。
 
-- 工具：`scripts/extract-vendor-binaries.sh`（本地提取，仅读取用户本地原包）、
-  `tools/generate-binary-manifest.py`、`tools/validate-binary-manifest.py`；
+- 工具：`tools/extract-vendor-binaries.sh`（本地提取，仅读取用户本地原包）、
+  `tools/internal/generate-binary-manifest.py`、`tools/internal/validate-binary-manifest.py`；
 - 清单：`binary-manifest.json`（来源分类与哈希；`vendor-binary` 是来源分类，不是许可证）；
 - 文档：本说明、`docs/project/dependencies.md`（原包身份与 SHA-256）、`THIRD_PARTY_NOTICES.md`；
 - 许可证：`LICENSE`（本项目原创层 GPL-3.0-or-later）、`LICENSES/`（标准条款副本，含上游 MIT）。
@@ -30,14 +30,14 @@
 
 ```sh
 # 1. 校验 manifest schema（只读）
-python3 tools/validate-binary-manifest.py
+python3 tools/internal/validate-binary-manifest.py
 
 # 2. 提取载荷到本地 vendor/（校验原包 SHA-256，幂等，原子写）
 INNOGPU_DEEPIN_DEB=/path/to/innogpu-fh2m_20250421190503-debug_amd64.deb \
-  bash scripts/extract-vendor-binaries.sh
+  bash tools/extract-vendor-binaries.sh
 
 # 3. 只读检查模式（不写任何文件）
-bash scripts/extract-vendor-binaries.sh --check-only
+bash tools/extract-vendor-binaries.sh --check-only
 ```
 
 ## 限制与责任

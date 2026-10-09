@@ -67,7 +67,7 @@ export VERSION=5.0.0-i11 SOURCE_DATE_EPOCH=1790208000
 export KERNELDIR_VER=6.12.101+deb13-amd64
 export KERNELDIR=/lib/modules/$KERNELDIR_VER/build
 export STAGE_ROOT=/candidate BUILD_LOG=/evidence/builder.log OUT_DEB=/candidate/i11.deb
-bash /repo/scripts/build-innogpu-driver.sh
+bash /repo/tools/build-innogpu-driver.sh
 '''
 DENIED = "modprobe insmod rmmod systemctl service reboot shutdown halt poweroff update-grub grub-install update-secureboot-policy".split()
 GUARD = '''#!/bin/sh
@@ -89,7 +89,7 @@ dest=/evidence/abi/$k
 mkdir -p "$dest"
 [[ ! -e $dest/unstripped.ko ]] || { echo repeated-strip >&2; exit 98; }
 cp -- "$2" "$dest/unstripped.ko"
-python3 /repo/tools/check-fantgpu-shipped-abi.py --module "$dest/unstripped.ko" "$dest/dev_rsrc.pahole" > "$dest/check.txt"
+python3 /repo/tools/internal/check-fantgpu-shipped-abi.py --module "$dest/unstripped.ko" "$dest/dev_rsrc.pahole" > "$dest/check.txt"
 build=$(dirname "$2")
 cp "$build/fantgpu/kernel_autocfg.h" "$dest/kernel_autocfg.h"
 cp "$build/fantgpu.mod" "$dest/fantgpu.mod"
@@ -443,7 +443,7 @@ def prepare_n0(root, lock, deadline):
     """One preparation shared by the formal preflight and its isolated regression."""
     setup(root, True)
     ledger = []
-    text = (ROOT / "scripts/generate-fantgpu-maintainer-scripts.sh").read_text()
+    text = (ROOT / "tools/generate-fantgpu-maintainer-scripts.sh").read_text()
     guard = text[text.index("dkms_policy_guard() {"):text.index("\nidentity=$(source_digest")]
     write(root, "fixture/probe.sh", "#!/bin/bash\nset -euo pipefail\n" + guard + '''
 dkms_policy_guard
@@ -720,10 +720,10 @@ sha256sum "$ko" "$found"
             "host_trust": "UNVERIFIED; offline test certificate only"}, indent=2) + "\n")
         assert not different_initrds, "initramfs differs: retain roots for per-file diff and qoder/dsh ruling"
         for label, argv in [
-            ("check-docs", ["bash", "scripts/check-docs.sh"]),
-            ("audit-licenses", ["python3", "tools/audit-licenses.py"]),
-            ("validate-collab", ["python3", "tools/validate-collab.py"]),
-            ("r16-gate", ["python3", "tools/r16-gate.py"]),
+            ("check-docs", ["bash", "tools/check-docs.sh"]),
+            ("audit-licenses", ["python3", "tools/internal/audit-licenses.py"]),
+            ("validate-collab", ["python3", "tools/internal/validate-collab.py"]),
+            ("r16-gate", ["python3", "tools/internal/r16-gate.py"]),
             ("diff-check", ["git", "diff", "--check"])]:
             with (evidence / (label + ".log")).open("wb") as stream:
                 subprocess.run(argv, cwd=ROOT, check=True, stdout=stream, stderr=subprocess.STDOUT,

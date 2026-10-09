@@ -21,9 +21,9 @@ def load(name, path):
     spec.loader.exec_module(module)
     return module
 
-obs = load('obs', ROOT/'tools/r5-observation.py')
-prepare = load('prepare', ROOT/'tools/prepare-r5-observation.py')
-upload = load('upload', ROOT/'tools/r5-observation-upload.py')
+obs = load('obs', ROOT/'tools/internal/r5-observation.py')
+prepare = load('prepare', ROOT/'tools/internal/prepare-r5-observation.py')
+upload = load('upload', ROOT/'tools/internal/r5-observation-upload.py')
 count = 0
 
 def rejects(fn):
@@ -149,7 +149,7 @@ with tempfile.TemporaryDirectory(prefix='r5obs-unit-') as tmp:
     for records,expected_rc in (([semantic,finished],0),([semantic],1),
                                ([semantic,dict(finished,task_generation=4)],1)):
         evidence_file.write_text(json.dumps(dict(envelope,records=records)))
-        checked=subprocess.run(['python3','-B',str(ROOT/'tools/r5-observation.py'),
+        checked=subprocess.run(['python3','-B',str(ROOT/'tools/internal/r5-observation.py'),
                                 'check',str(evidence_file)],capture_output=True,text=True)
         assert checked.returncode==expected_rc,checked.stdout+checked.stderr
         assert json.loads(checked.stdout)['R5']=='FAIL';count+=1
@@ -488,7 +488,7 @@ int main(void) {
     assert checked()['coverage']=='SEMANTIC_RECORDS_PAIRED';count+=1
     assert checked()['raw_locations'] == [dict(seq=0,wire_seq=5,timestamp=9,cpu=0),
                                          dict(seq=1,wire_seq=4,timestamp=10,cpu=1)];count+=1
-    cli=['python3','-B',str(ROOT/'tools/r5-observation.py'),'semantic-wire-check',str(capture),
+    cli=['python3','-B',str(ROOT/'tools/internal/r5-observation.py'),'semantic-wire-check',str(capture),
          '--session',session,'--pair-format',str(formats[0]),'--dictionary-format',str(formats[1])]
     assert subprocess.run(cli,capture_output=True).returncode==0;count+=1
     # Six identity conflicts, bad peer, producer invalidation, duplicate call.
@@ -941,7 +941,7 @@ int main(void) {
     assert checked['marks'][3]['backing_bytes']==4096 and checked['marks'][3]['objects_live']==0
     assert checked['final']['backing_bytes']==0 and checked['final']['physical_peak_bytes']==4096
     assert checked['admission']=='ALLOCATOR_UNVERIFIED';count+=4
-    rc=subprocess.run(['python3',str(ROOT/'tools/r5-observation.py'),'meter-check',str(path)],stdout=subprocess.PIPE)
+    rc=subprocess.run(['python3',str(ROOT/'tools/internal/r5-observation.py'),'meter-check',str(path)],stdout=subprocess.PIPE)
     assert rc.returncode==1 and json.loads(rc.stdout)['admission']=='ALLOCATOR_UNVERIFIED';count+=1
     bad=copy.deepcopy(rows);bad[-1]['extra']=1;save(bad)
     assert obs.meter_check(path)['journal']=='INCOMPLETE_WITH_LOSS';count+=1

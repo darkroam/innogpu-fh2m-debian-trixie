@@ -14,8 +14,8 @@
 set -u -o pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-AUDITOR="$ROOT/tools/audit-licenses.py"
-BUILDER="$ROOT/tools/build-release-archive.py"
+AUDITOR="$ROOT/tools/internal/audit-licenses.py"
+BUILDER="$ROOT/tools/internal/build-release-archive.py"
 TMP="$(mktemp -d /tmp/innogpu-license-tests.XXXXXX)"
 WORK_REL=".build/license-audit-tests.$$"
 WORK="$ROOT/$WORK_REL"

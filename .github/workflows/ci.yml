@@ -18,7 +18,7 @@ jobs:
             python3 ripgrep perl dpkg-dev dkms zstd
 
       - name: Repository documentation and boundary checks
-        run: bash scripts/check-docs.sh
+        run: bash tools/check-docs.sh
 
       - name: Unit tests (manifest, license audit, version ordering, extractor, results parser, exec probes, vaapi decode, dmabuf regression, dri repair, collab structure, suspend resume/finalize, F builder/runtime health)
         run: |

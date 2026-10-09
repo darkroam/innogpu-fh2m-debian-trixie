@@ -59,7 +59,7 @@ import threading
 import time
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-_TOOL_PATH = os.path.join(_REPO_ROOT, "tools", "d-stage-audit-gen.py")
+_TOOL_PATH = os.path.join(_REPO_ROOT, "tools", "internal", "d-stage-audit-gen.py")
 _spec = importlib.util.spec_from_file_location("d_stage_audit_gen", _TOOL_PATH)
 tool = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(tool)
@@ -546,7 +546,7 @@ def pre_cleanup_after_journal_rm(out_dir, spec):
 
 
 # ---- 注入协议（codex 十轮复审 P1）：工具内接缝 + 阻塞握手 ----
-# 每个注入点 = tools/d-stage-audit-gen.py 内的 inject_pause(tag) 接缝：
+# 每个注入点 = tools/internal/d-stage-audit-gen.py 内的 inject_pause(tag) 接缝：
 # 写入并 fsync at-<tag> marker 后阻塞（INNOGPU_DSTAGE_INJECT_DIR/TAG 匹配时
 # 生效）。--vm-inject 启动注入 snapshot 并等待 marker → 驱动在工具阻塞于
 # 接缝处断电（窗口确定性成立；无轮询竞态）。marker 断电后仍持久，是注入点

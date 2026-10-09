@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tests/unit/run-gen-package-md5sums-tests.sh — tools/gen-package-md5sums.py 单元验证
+# tests/unit/run-gen-package-md5sums-tests.sh — tools/internal/gen-package-md5sums.py 单元验证
 #
 # 依据 docs/design/c3-a-4-reproducible-input-plan.md §四 强制项 1：
 # LC_ALL=C 字节序排序 / 常规文件 only（symlink、目录排除）/ DEBIAN/ 排除 /
@@ -11,7 +11,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-TOOL="$ROOT/tools/gen-package-md5sums.py"
+TOOL="$ROOT/tools/internal/gen-package-md5sums.py"
 cd "$ROOT"
 export LC_ALL=C
 

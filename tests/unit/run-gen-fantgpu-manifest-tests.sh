@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tests/unit/run-gen-fantgpu-manifest-tests.sh — tools/gen-fantgpu-manifest.py 单元验证
+# tests/unit/run-gen-fantgpu-manifest-tests.sh — tools/internal/gen-fantgpu-manifest.py 单元验证
 #
 # 依据 docs/design/c3-a-4-reproducible-input-plan.md §二：
 # S_INPUT 与 ③ 清单严格双射（含 mode 逐值）、零多写/漏写、变体组完备
@@ -11,7 +11,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-TOOL="$ROOT/tools/gen-fantgpu-manifest.py"
+TOOL="$ROOT/tools/internal/gen-fantgpu-manifest.py"
 TSV="$ROOT/docs/planning/evidence/o-stage/f-payload.manifest.tsv"
 cd "$ROOT"
 export LC_ALL=C

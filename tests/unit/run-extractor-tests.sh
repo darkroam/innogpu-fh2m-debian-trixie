@@ -7,8 +7,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-EXTRACTOR="$ROOT/scripts/extract-vendor-binaries.sh"
-VALIDATOR="$ROOT/tools/validate-binary-manifest.py"
+EXTRACTOR="$ROOT/tools/extract-vendor-binaries.sh"
+VALIDATOR="$ROOT/tools/internal/validate-binary-manifest.py"
 runtime="$(mktemp -d "${TMPDIR:-/tmp}/inno-extractor-tests.XXXXXX")"
 trap 'rm -rf "$runtime"' EXIT
 

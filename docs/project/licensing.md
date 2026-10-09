@@ -68,7 +68,7 @@
 
 | 制品 | 内容 | 状态 | 说明 |
 | --- | --- | --- | --- |
-| `project-tools` | **候选制品**：**失败关闭分类**生成的允许清单（见 [project-tools-allowlist.txt](project-tools-allowlist.txt)）= 已批准原创前缀（`.github/`/`baselines/`/`docs/`/`scripts/`/`tests/`/`tools/`，GPL-3.0-or-later）+ 显式路径映射（上游继承层 MIT：`.gitignore`/`README.md`/`scripts/install.sh`；`LICENSES/` 标准文本组：MIT/GPL-2.0-only/BSD-3-Clause/LGPL-2.1-only/MPL-2.0；`components/` 第三方派生组）；**任何不在前缀/映射内的路径一律拒绝**（无全局默认 GPL） | **CLEARED**（仅机械门禁；当前不作为发布目标，见 §4.1） | `components/` 许可材料已封存：picom 补丁按目标文件级 **MPL-2.0**（Copyright (c) Yuxuan Shui），`picom.conf` 为原创层 GPL-3.0-or-later；fbterm 补丁为 GPL-2.0-only（(C) 2008 dragchan）；Linux xHCI 补丁基于 Debian `6.12.107-1` 的 GPL-2.0-only 目标文件（Copyright (C) 2008 Intel Corp.）；NOTICE 门禁按**路径组**绑定版权/许可标记；`patches/`（混合/未决许可，整体排除）、`debs/`（整目录）、`collab/`（本机私有目录，不跟踪、不自动重许可）、`drivers/`、`vendor/`、`.build/`、退役 `build/`、`third_party/` 不含；GitHub 主分支仍分发阻断路径，仓库级发布未闭环（§4.1） |
+| `project-tools` | **候选制品**：**失败关闭分类**生成的允许清单（见 [project-tools-allowlist.txt](project-tools-allowlist.txt)）= 已批准原创前缀（`.github/`/`baselines/`/`docs/`/`tests/`/`tools/`，GPL-3.0-or-later）+ 显式路径映射（上游继承层 MIT：`.gitignore`/`README.md`/`tools/install.sh`；`LICENSES/` 标准文本组：MIT/GPL-2.0-only/BSD-3-Clause/LGPL-2.1-only/MPL-2.0；`components/` 第三方派生组）；**任何不在前缀/映射内的路径一律拒绝**（无全局默认 GPL） | **CLEARED**（仅机械门禁；当前不作为发布目标，见 §4.1） | `components/` 许可材料已封存：picom 补丁按目标文件级 **MPL-2.0**（Copyright (c) Yuxuan Shui），`picom.conf` 为原创层 GPL-3.0-or-later；fbterm 补丁为 GPL-2.0-only（(C) 2008 dragchan）；Linux xHCI 补丁基于 Debian `6.12.107-1` 的 GPL-2.0-only 目标文件（Copyright (C) 2008 Intel Corp.）；NOTICE 门禁按**路径组**绑定版权/许可标记；`patches/`（混合/未决许可，整体排除）、`debs/`（整目录）、`collab/`（本机私有目录，不跟踪、不自动重许可）、`drivers/`、`vendor/`、`.build/`、退役 `build/`、`third_party/` 不含；GitHub 主分支仍分发阻断路径，仓库级发布未闭环（§4.1） |
 | `driver-source` | `drivers/` 中仅具有明确许可声明的路径（408 dual + 2 BSD/LGPL + `drivers/README.md`）；allowlist 见 [driver-source-allowlist.txt](driver-source-allowlist.txt) | **BLOCKED** | 排除 confidential ×3 与无许可 ×70 后**无法独立构建**（缺 Kbuild 等构建文件），**不是完整驱动**；缺失内容须由用户按原声明从本地原包取得，不假 PASS；再分发权利链待监督复审 |
 
 `local-extractor` 不再是独立制品/门禁：本地载荷提取与校验工具是 `project-tools` 的一个功能，
@@ -102,9 +102,9 @@ GitHub 仓库 `main` 分支本身是公开分发面：clone / GitHub 源码归�
 ## 5. 机械审计与发布门禁
 
 ```sh
-python3 tools/audit-licenses.py                                        # 机械一致性检查
-python3 tools/audit-licenses.py --artifact project-tools --require-releasable
-python3 tools/build-release-archive.py --artifact project-tools --out /tmp/project-tools.tar.gz
+python3 tools/internal/audit-licenses.py                                        # 机械一致性检查
+python3 tools/internal/audit-licenses.py --artifact project-tools --require-releasable
+python3 tools/internal/build-release-archive.py --artifact project-tools --out /tmp/project-tools.tar.gz
 ```
 
 - 审计器只读 `.git`（`git ls-files --stage -z` / `git ls-tree` / `git cat-file` / `git status`），
@@ -128,7 +128,7 @@ python3 tools/build-release-archive.py --artifact project-tools --out /tmp/proje
 
 - 导入或修改 `drivers/`、`binary-manifest.json` 或许可证材料后：更新
   `license-audit-policy.json` 的允许集合与期望统计 → 运行
-  `python3 tools/audit-licenses.py --write-inventory --write-allowlists` → 复审 diff →
+  `python3 tools/internal/audit-licenses.py --write-inventory --write-allowlists` → 复审 diff →
   运行检查模式与 `bash tests/unit/run-license-audit-tests.sh`。
 - 不删除已有版权声明；不重写 Git 历史；不得代表 Tim Hant 或其他贡献者换证。
 - 发布制品必须通过对应 `--artifact <name> --require-releasable` 与构建器；本地构建/验证不等于

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tests/unit/run-validate-fantgpu-manifest-tests.sh — tools/validate-binary-manifest-fantgpu.py 单元验证
+# tests/unit/run-validate-fantgpu-manifest-tests.sh — tools/internal/validate-binary-manifest-fantgpu.py 单元验证
 #
 # 依据 docs/design/c3-a-4-reproducible-input-plan.md §二：SHA/mode/链接
 # 目标漂移检出、O 血统 loader 文件名禁则、载荷缺失检出（fail-closed 预检）。
@@ -11,7 +11,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-TOOL="$ROOT/tools/validate-binary-manifest-fantgpu.py"
+TOOL="$ROOT/tools/internal/validate-binary-manifest-fantgpu.py"
 cd "$ROOT"
 export LC_ALL=C
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Unit tests for tools/p2-normalize-v3.py
+# Unit tests for tools/internal/p2-normalize-v3.py
 # Fully isolated: uses mktemp + trap, never touches build/ or repo state.
 # Exit: 0=all pass, 1=any fail, 2=usage/setup error
 
@@ -7,7 +7,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-TOOL="$REPO_ROOT/tools/p2-normalize-v3.py"
+TOOL="$REPO_ROOT/tools/internal/p2-normalize-v3.py"
 
 if [ ! -f "$TOOL" ]; then
     echo "FATAL: tool not found: $TOOL" >&2

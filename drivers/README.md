@@ -18,7 +18,7 @@
 ## 与迁移的关系
 
 - 本目录是迁移后的**可维护源码树**（Git 跟踪），已包含 9 个启用补丁的转换提交；当前
-  `4.0.0-i1` 由 `scripts/build-innogpu-driver.sh` 直接使用本目录构建。旧 patch 叠加流程仅作为
+  `4.0.0-i1` 由 `tools/build-innogpu-driver.sh` 直接使用本目录构建。旧 patch 叠加流程仅作为
   p27 历史 oracle/回退证据保留；`drivers/` 与 p27 生成树 parity 已通过。
 - **排除项**（不进入本目录，由 `binary-manifest.json` 的 192 项清单管理）：
   - 5 个预编译对象：`innogpu.o_shipped`、`innovpu.o_shipped`、`innosmmu.o_shipped`、
@@ -47,5 +47,5 @@ working_tree_clean=PASS
 
 - 本目录 = Deepin 原始源码 + 9 个启用补丁的转换提交（source: patch-0XX / device-profile: patch-0XX，
   见 [patch-provenance.md](../docs/design/patch-provenance.md)）；与 p27 生成源码树 parity 通过
-  （可复现命令：`scripts/check-source-parity.sh`）。
+  （可复现命令：`tools/check-source-parity.sh`）。
 - 后续修改直接以提交形式落库；黑盒对象（.o_shipped 等）不进入本目录，一律走 vendor/ + manifest。

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Unit tests: tools/run-dmabuf-regression-test.sh control flow with fake fixtures.
+# Unit tests: tools/internal/run-dmabuf-regression-test.sh control flow with fake fixtures.
 # CI-safe without /dev/dri. Fixture mode (INNOGPU_DMABUF_FIXTURE_MODE=1) uses the
 # independent fixture_dmabuf_* namespace, never emits authoritative dmabuf_* lines,
 # and never touches baselines/.
@@ -7,7 +7,7 @@
 set -u -o pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SCRIPT="$ROOT/tools/run-dmabuf-regression-test.sh"
+SCRIPT="$ROOT/tools/internal/run-dmabuf-regression-test.sh"
 runtime="$(mktemp -d "${TMPDIR:-/tmp}/inno-dmabuf-tests.XXXXXX")"
 trap 'rm -rf "$runtime"' EXIT
 
@@ -508,7 +508,7 @@ if [ "$rc" -eq 0 ] && grep -q 'fixture_dmabuf_vblank_active=PASS reason=active_c
 # inactive -> mode=-；active 具名 -> 保留原 mode 名称；active 无名 -> <unnamed>
 TOPO_BIN="$runtime/topo-real"
 TOPO_OUT="$runtime/topo-c-contract.out"
-if gcc -std=c11 -Wall -Wextra -Werror -O2 -DINNOGPU_DMABUF_FIXTURE_HOOKS -o "$TOPO_BIN" "$ROOT/tools/probe-drm-topology.c" 2>"$runtime/cc-topo.log"; then
+if gcc -std=c11 -Wall -Wextra -Werror -O2 -DINNOGPU_DMABUF_FIXTURE_HOOKS -o "$TOPO_BIN" "$ROOT/tools/internal/probe-drm-topology.c" 2>"$runtime/cc-topo.log"; then
     INNOGPU_DMABUF_TOPOLOGY_FIXTURE=1 "$TOPO_BIN" /dev/dri/card0 > "$TOPO_OUT" 2>&1
     if grep -q 'index=0 id=10 active=no.*mode=- refresh=0' "$TOPO_OUT" \
        && grep -q 'index=1 id=11 active=yes.*mode=1920x1080 refresh=60' "$TOPO_OUT" \
@@ -811,7 +811,7 @@ if [ "$rc" -eq 3 ] && grep -q 'fixture_dmabuf_regression_overall=UNVERIFIED' "$O
 # ================= 15. 真实 C 探针契约（编译 + 参数/设备/能力路径，验证资源清理与 fd 计数） =================
 PROBE_BIN="$runtime/probe-real"
 # 契约测试构建：定义 INNOGPU_DMABUF_FIXTURE_HOOKS 才能注入 open-fail fd 计数钩子
-if gcc -std=c11 -Wall -Wextra -Werror -O2 -DINNOGPU_DMABUF_FIXTURE_HOOKS -o "$PROBE_BIN" "$ROOT/tools/probe-dmabuf-self-import.c" 2>"$runtime/cc-real.log"; then
+if gcc -std=c11 -Wall -Wextra -Werror -O2 -DINNOGPU_DMABUF_FIXTURE_HOOKS -o "$PROBE_BIN" "$ROOT/tools/internal/probe-dmabuf-self-import.c" 2>"$runtime/cc-real.log"; then
     pass real_probe_compiles
 else
     fail real_probe_compiles "gcc: $(head -3 "$runtime/cc-real.log")"
@@ -862,7 +862,7 @@ if [ -x "$PROBE_BIN" ]; then
     fi
     # 生产构建（不定义 fixture 宏）：注入钩子必须被编译剔除，环境变量无效 -> open 失败仍 rc=3 + fd_leak=no
     PROBE_PROD="$runtime/probe-prod"
-    if gcc -std=c11 -Wall -Wextra -Werror -O2 -o "$PROBE_PROD" "$ROOT/tools/probe-dmabuf-self-import.c" 2>"$runtime/cc-prod.log"; then
+    if gcc -std=c11 -Wall -Wextra -Werror -O2 -o "$PROBE_PROD" "$ROOT/tools/internal/probe-dmabuf-self-import.c" 2>"$runtime/cc-prod.log"; then
         O="$runtime/real-prod-gate.out"
         # 同时注入两个 fixture 钩子：生产构建必须忽略二者（OPEN_FAIL_FDCOUNT 与 FDCOUNT_AFTER）
         INNOGPU_DMABUF_FIXTURE_OPEN_FAIL_FDCOUNT=9999 INNOGPU_DMABUF_FIXTURE_FDCOUNT_AFTER=-1 \
@@ -937,7 +937,7 @@ else
 fi
 
 # ================= XI. 真探针 env 解析矩阵（-Wall -Wextra -Werror）=================
-PROBE_C_SRC="$ROOT/tools/probe-pdp-invisible-read.c"
+PROBE_C_SRC="$ROOT/tools/internal/probe-pdp-invisible-read.c"
 if gcc -O2 -Wall -Wextra -Werror -o "$runtime/probe-inv-real" "$PROBE_C_SRC" \
        2>"$runtime/probe-werror.err"; then
     pass probe_builds_with_werror

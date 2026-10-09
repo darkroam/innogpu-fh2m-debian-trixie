@@ -27,7 +27,7 @@ actual=$(awk '/^diff -ruN / { print $3, $4 }' "$PATCH")
 
 tree_hash=$(cd "$ROOT" && python3 - "$TREE" <<'PY'
 import hashlib, importlib.util, sys
-spec = importlib.util.spec_from_file_location("o4", "tools/o4-f0-lock-gen.py")
+spec = importlib.util.spec_from_file_location("o4", "tools/internal/o4-f0-lock-gen.py")
 o4 = importlib.util.module_from_spec(spec); spec.loader.exec_module(o4)
 print(hashlib.sha256(o4.manifest_text(list(o4.walk_rows(sys.argv[1]))).encode()).hexdigest())
 PY

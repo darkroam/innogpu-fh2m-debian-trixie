@@ -40,15 +40,15 @@
 ### A3. 黑盒载荷生命周期（CONFIRMED）
 
 `binary-manifest.json`（192 项，5 类 kind，license 全部 `vendor-binary`）← 由
-`tools/generate-binary-manifest.py` 从 pinned Deepin deb（SHA `b5a70e78…f6f5b2`）确定性生成 →
-`scripts/extract-vendor-binaries.sh` 幂等提取到被忽略的 `vendor/` → 构建器按 manifest 装配进包。
+`tools/internal/generate-binary-manifest.py` 从 pinned Deepin deb（SHA `b5a70e78…f6f5b2`）确定性生成 →
+`tools/extract-vendor-binaries.sh` 幂等提取到被忽略的 `vendor/` → 构建器按 manifest 装配进包。
 `third_party/` = Deepin 解包区（gitignore 子目录）；`.build/work/` = 构建输出（候选 deb、展开树与
 staging）；`.build/evidence/` = 本机验证证据；`debs/` = 不可变输入与经裁决保留的包。
 **载荷不入库，清单入库**（CONFIRMED）。历史 `build/` 已由 R50 任务段 4 规划迁空。
 
 ### A4. 所有权边界（CONFIRMED）
 
-- Picom/fbterm：外部组件，本项目维护 patched 构建（components/ + scripts/build-patched-*）。
+- Picom/fbterm：外部组件，本项目维护 patched 构建（components/ + tools/build-patched-*）。
 - dotconfig/xdisplay：独立仓库，本项目只维护设备钩子/会话接入/恢复命令（`CONFIRMED`：check-docs
   拒绝仓库内出现 xdisplay 引擎副本）。
 - 音频：HDA 内置（Conexant SN6180）+ FH2M HDMI 音频 + PipeWire；本仓库维护修复脚本与接入。
@@ -95,7 +95,7 @@ Deepin deb(校验 SHA) → generate-binary-manifest(校验+生成) → validate-
 
 ## D. 脚本质量审查（P0-P3）
 
-统计（67 个 scripts/*.sh）：61 个 `set -euo pipefail`；65 个含 `set -e[u]`；5 个无 `set -e`
+统计（67 个 tools/*.sh）：61 个 `set -euo pipefail`；65 个含 `set -e[u]`；5 个无 `set -e`
 （`phase4-baseline-capture.sh`(set -u)、`picom-session.sh`、`restore-dp1-mode-x11.sh`、
 `verify-install-status.sh`(set -u -o pipefail)、`xdisplay-session.sh`——均设计为容错/只读）。
 27 个含 sudo（安装/恢复类用户入口）；9 个 `mktemp`+trap 清理。
@@ -109,9 +109,9 @@ Deepin deb(校验 SHA) → generate-binary-manifest(校验+生成) → validate-
 | ~~P1~~ 已修复 | 两个历史/诊断脚本把目标用户默认写死为 `ok`，`check-soft-xorg-dwm.sh` 用户与 home 推导不一致 | `check-soft-xorg-dwm.sh`、`try-hotload-patched17.sh` | 2026-08-28 已修复：`check-soft-xorg-dwm.sh` 解析顺序 `INNOGPU_X_USER > SUDO_USER > USER`、home 用 `INNOGPU_X_HOME`/`getent` 且不可确定时明确失败（不回退 root `$HOME`）、`run_x` 用同一解析用户；`try-hotload-patched17.sh` 提示改中性；静态反例断言无硬编码用户名 |
 | ~~P2~~ 已修复 | VA-API runner 只把 GNU timeout rc=124 识别为超时，rc=137 误归普通失败 | `run-vaapi-decode-test.sh` | 2026-08-28 已修复：三个阶段统一 `timeout_rc`（124/137 → 整体退出码 5）；`tests/unit/run-vaapi-decode-tests.sh` 增加忽略 TERM→SIGKILL fixture |
 | P2 | 音频安装器创建系统/用户 unit、helper 和配置并修改旧用户配置，但没有对称卸载入口或 fixture；多条写入无原文件备份，未运行 `systemd-analyze verify`，用户服务管理失败被忽略 | `install-hygon-hda-audio.sh` | 当前只能人工审阅有限备份后回退；需补冲突检测、幂等卸载、所有权/备份恢复及 systemd fixture |
-| ~~P2~~ 已修复 | `check-docs.sh` 的 Markdown 链接与隐私扫描目录集合曾未覆盖全部受跟踪文档 | `check-docs.sh` | 2026-08-31 已修复：链接从 `git ls-files -z -- '*.md'` 枚举，隐私扫描覆盖 tracked 文档目录和本机 `collab/`，两个消费者共用 `tools/private-data-patterns.txt`；内联路径语义仍需人工审查 |
+| ~~P2~~ 已修复 | `check-docs.sh` 的 Markdown 链接与隐私扫描目录集合曾未覆盖全部受跟踪文档 | `check-docs.sh` | 2026-08-31 已修复：链接从 `git ls-files -z -- '*.md'` 枚举，隐私扫描覆盖 tracked 文档目录和本机 `collab/`，两个消费者共用 `tools/internal/private-data-patterns.txt`；内联路径语义仍需人工审查 |
 | P2 | 包导入 `sw-inno-gl.service`/helper，但 control 无 `systemd` 依赖，maintainer scripts 不管理单元；release gate 也未校验该组合和全部 10 个 `/usr/bin`+`/usr/sbin` 命令链接 | `build-innogpu-driver.sh`、`check-release-package.sh` | 文件存在不等于服务启用；需决定保留/移除策略，再补依赖、生命周期和包边界 fixture |
-| P3 | 文档/脚本登记完整性由 check-docs 强制（scripts/README 全量登记，CONFIRMED 通过） | — | 无行动项 |
+| P3 | 文档/脚本登记完整性由 check-docs 强制（tools/README 全量登记，CONFIRMED 通过） | — | 无行动项 |
 
 > 未发现 P0（数据破坏/提权/路径穿越/热切换）问题：提取器拒绝路径穿越、构建器原子 temp+rename、
 > 恢复脚本不热卸载模块（CONFIRMED，此前 Phase 2/3 验证）。发现即记录，不冒充 PASS。
@@ -160,7 +160,7 @@ R15 对 6 个启动 journal（2026-09-02 11:50 至 2026-09-03 16:13）做了逐�
 
 ## 证据索引
 
-- 构建链：`scripts/build-innogpu-driver.sh`、`compare-oracle-candidates.sh`、`extract-vendor-binaries.sh`
+- 构建链：`tools/build-innogpu-driver.sh`、`compare-oracle-candidates.sh`、`extract-vendor-binaries.sh`
 - 运行链：`build-innogpu-driver.sh` postinst 段、`docs/user/recovery.md`、`docs/archive/phase4-device-validation.md`
 - 边界：`binary-manifest.json`、`docs/project/licensing.md`、`maintenance-policy.md`
-- 测试：`tests/README.md`、`scripts/check-docs.sh`
+- 测试：`tests/README.md`、`tools/check-docs.sh`

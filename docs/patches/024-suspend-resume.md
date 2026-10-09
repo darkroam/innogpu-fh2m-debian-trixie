@@ -36,8 +36,8 @@ R10 deep 失败证明该锁外门禁存在 TOCTOU，故 `4.0.2-i1/i2/i3` 保留 
 [patch-028 温度 work 门禁](028-suspend-resume-hal-temp-monitor-delay.md) 和
 [patch-029 DDCCI panel](029-suspend-resume-ddcci-panel.md) 建立实际同步边界。
 
-legacy `scripts/build-deepin-coherent.sh` 的开关为 `APPLY_SUSPEND_RESUME_FIX=1`，默认关闭；
-`scripts/build-patched28-suspend-resume.sh` 继承 patched-27 的完整开关集合后增加 patch-024，只作为
+legacy `tools/build-deepin-coherent.sh` 的开关为 `APPLY_SUSPEND_RESUME_FIX=1`，默认关闭；
+`tools/build-patched28-suspend-resume.sh` 继承 patched-27 的完整开关集合后增加 patch-024，只作为
 旧构建链对照入口。
 
 补丁编号 024 是补丁目录中的历史空缺；包版本 `patched-24` 已用于 Debian 6.12.101+ PCI API

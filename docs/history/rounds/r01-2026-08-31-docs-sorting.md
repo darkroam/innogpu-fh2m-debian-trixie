@@ -40,7 +40,7 @@
 | [许可证测试](../../../tests/unit/run-license-audit-tests.sh) | `tests/unit/run-license-audit-tests.sh#L418-L420 @ 13b5fbb24416` | 修复前 t03 依赖真实工作树状态 |
 | [许可证测试](../../../tests/unit/run-license-audit-tests.sh) | `tests/unit/run-license-audit-tests.sh#L418-L428 @ 301d62c09cbb`；`tests/unit/run-license-audit-tests.sh#L636-L647 @ 301d62c09cbb` | 隔离 fixture 与保留的两条脏树反例 |
 | [当前待办](../../state/current-work.md) | `docs/planning/current-work.md#L1-L18 @ 301d62c09cbb` | 当时新增唯一待办入口、发布条件项与研发验证分离 |
-| [文档门禁](../../../scripts/check-docs.sh) | `scripts/check-docs.sh#L357-L378 @ 301d62c09cbb` | 必需入口及 todo 活动 checkbox 拒绝规则 |
+| [文档门禁](../../../tools/check-docs.sh) | `scripts/check-docs.sh#L357-L378 @ 301d62c09cbb` | 必需入口及 todo 活动 checkbox 拒绝规则 |
 | [测试策略](../../project/test-strategy.md) | `docs/project/test-strategy.md#L7-L17 @ 301d62c09cbb` | unit 366、全套 385 的历史单点汇总 |
 | [工具契约](../../../tools/README.md) | `tools/README.md#L22 @ 301d62c09cbb` | VA-API rc=124/137 统一 timeout 契约 |
 

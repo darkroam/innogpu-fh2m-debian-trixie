@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tests/unit/run-r16-restore-tests.sh — tools/r16-f-payload-integrity.py restore 子命令单元验证
+# tests/unit/run-r16-restore-tests.sh — tools/internal/r16-f-payload-integrity.py restore 子命令单元验证
 #
 # 依据 docs/design/c3-a-4-reproducible-input-plan.md §一（v12）：
 # 排他锁（O_NOFOLLOW + flock NB + 永不删除）、journal 写前状态机
@@ -14,7 +14,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-TOOL="$ROOT/tools/r16-f-payload-integrity.py"
+TOOL="$ROOT/tools/internal/r16-f-payload-integrity.py"
 cd "$ROOT"
 export LC_ALL=C
 

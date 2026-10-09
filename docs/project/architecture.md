@@ -11,7 +11,7 @@
 ```text
 当前诊断线：fantgpu 5.0.0-i6（F0 + O_stage / F manifest，非交付）
 Deepin 回退线：4.0.2-i3（drivers/ + Deepin manifest）
-  -> scripts/build-innogpu-driver.sh 按版本分线构建 -> 经批准后 dpkg
+  -> tools/build-innogpu-driver.sh 按版本分线构建 -> 经批准后 dpkg
        -> DKMS + 对应血缘的同源 DDX/GL/固件（禁止混配）
        -> /dev/dri/card*、renderD*、/dev/fb0
        -> X11 会话中的 dotconfig `xdisplay watch`
@@ -35,14 +35,17 @@ PCI 0000:06:00.6 [1d94:14c9]
 | `components/picom/` | 当前维护的 Picom 源码补丁与项目配置模板（`001-probe-explicit-uniform-location.patch`、`picom.conf`） |
 | `components/fbterm/` | 当前维护的 fbterm 用户态兼容补丁（`001-configurable-redraw-scrolling.patch`） |
 | `debs/` | 本地 release/构建输入输出目录，`.deb` 被 Git 忽略，仅跟踪说明文件 |
-| `scripts/` | 构建、安装、回退、诊断、显示接入、音频固化和验证入口 |
-| `tools/` | 图形探针与聚合入口、确定性厂商对象变换、许可证/发布归档门禁、协作结构校验和共享隐私模式 |
+| `tools/` | 构建、安装、回退、诊断、显示接入、音频固化和验证的稳定命令入口 |
+| `tools/internal/` | 图形探针、确定性变换、许可证/发布归档门禁、协作结构校验和共享隐私模式；不是给人记的命令名 |
 | `tests/` | 本项目脚本、fbterm/Picom 和显示接入边界测试；xdisplay 引擎测试留在 dotconfig |
 | `collab/` | dsh/codex 本机协作轮次；`.gitignore` 排除，不属于 Git 或公开分发面 |
 | `docs/` | 文档职责、迁移后目录及保留原位清单见 [文档导航](../README.md)，此处不重复维护目录表 |
 | `baselines/` | 精简运行证据；`latest-runtime-baseline.txt` 的 35 项结果归属 Deepin `4.0.0-i1`，不得当作 fantgpu i6 验收；与 `docs/baselines/` 代际叙述区分 |
 | `vendor/fantgpu/` | F manifest 锁定的本机载荷，不进入 Git；F0 + 030 链物化源码由 O_stage 快照锁定 |
 | `third_party/` | 从外部 Deepin deb 生成的解包目录，不进入 git |
+
+F 线是唯一开发主线，O 线（根上 `drivers/`）只维护。两线输入不混用；目录事实见
+[directory-layout](directory-layout.md)。本批不删除 `drivers/`。
 
 ## 驱动与图形用户态
 
@@ -78,14 +81,14 @@ Deepin 202504 deb 同时提供硬件 GL/DDX 用户态。内核模块成功、DRM
 ### 分线构建基线
 
 fantgpu 分支使用 `binary-manifest-fantgpu.json`、`vendor/fantgpu/` 与锁定的 i6 O_stage 快照；
-构建器以 `tools/materialize-fantgpu-payload.py` 物化并复验 trace。该快照已含 030 链 18 项，
+构建器以 `tools/internal/materialize-fantgpu-payload.py` 物化并复验 trace。该快照已含 030 链 18 项，
 不从 Deepin `drivers/` 拼接源码或载荷，也不重复应用补丁；详见 [O_stage 设计](../design/o-stage-integration-plan.md)。
 以下构建细节仅描述保留的 Deepin 分支。
 
-当前 `4.0.2-i3` 构建由 `scripts/build-innogpu-driver.sh` 统一编排：直接复制 Git 跟踪的
+当前 `4.0.2-i3` 构建由 `tools/build-innogpu-driver.sh` 统一编排：直接复制 Git 跟踪的
 `drivers/` 源码树，从 `vendor/` 取得 `binary-manifest.json` 校验过的黑盒对象、固件和用户态载荷，
 再使用本项目已审查的 Debian maintainer scripts 生成包。`vendor/` 由
-`scripts/extract-vendor-binaries.sh` 从固定 SHA-256 的 Deepin 202504 原包幂等重建，不进入 Git。
+`tools/extract-vendor-binaries.sh` 从固定 SHA-256 的 Deepin 202504 原包幂等重建，不进入 Git。
 
 当前构建器默认接受 `4.0.2-i3` 与固定 epoch `1788796800`：在 patch-024 后应用
 patch-026-suspend-resume-dvfs-lifecycle、patch-028 与 patch-029，不含 UNVERIFIED 的 display 025。补丁同时
@@ -179,7 +182,7 @@ Picom 属于独立用户态组件，不进入显卡驱动 deb。项目固定上�
 
 驱动包负责提供可映射的 `/dev/fb0` 和准确的 fbdev 能力；fbterm 是独立用户态组件，不进入驱动 deb。
 当前驱动的 mmap 已通过，但其 YPan 快速滚动与 fbterm 1.7 的偏移管理不兼容，因此本项目保存
-`components/fbterm/` 补丁和独立构建入口（`scripts/build-patched-fbterm.sh`），以
+`components/fbterm/` 补丁和独立构建入口（`tools/build-patched-fbterm.sh`），以
 `scrolling=redraw` 保证正确显示。该规避不改变 framebuffer
 可见/虚拟尺寸，也不代表驱动 YPan 已修复；根因、对照证据和回归门槛见
 [`../incidents/fbterm-ypan-rendering.md`](../incidents/fbterm-ypan-rendering.md)。

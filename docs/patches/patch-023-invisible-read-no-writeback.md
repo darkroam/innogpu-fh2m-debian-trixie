@@ -6,7 +6,7 @@ FH2M 的 invisible VRAM 通过每页 staging buffer 支持 CPU mmap。page fault
 VMA close 不区分 CPU_PREP 的 READ/WRITE，始终对每页执行 `SYS2GDDR`。只读 DMA-BUF surface 因此
 在 `munmap` 时产生与页数成比例的无意义回写。
 
-独立 `tools/probe-pdp-invisible-read.c` 已在当时运行中的 patched-22 上复现：7,646,720 字节、1867 页的 READ
+独立 `tools/internal/probe-pdp-invisible-read.c` 已在当时运行中的 patched-22 上复现：7,646,720 字节、1867 页的 READ
 mapping 在逐页读取后，三轮 `munmap` 分别消耗 71.915、119.357 和 96.716ms system CPU。该复现不
 依赖 WebKit、GBM、EGL 或图形桌面。
 
@@ -14,7 +14,7 @@ mapping 在逐页读取后，三轮 `munmap` 分别消耗 71.915、119.357 和 9
 
 - 代码：`patches/023-invisible-read-no-writeback.patch`。
 - 构建开关：`APPLY_INVISIBLE_READ_NO_WRITEBACK=1`。
-- 固定候选：`scripts/build-patched23-invisible-read-fix.sh`，版本 `3.3.3.42-patched-23`。
+- 固定候选：`tools/build-patched23-invisible-read-fix.sh`，版本 `3.3.3.42-patched-23`。
 - CPU_PREP 成功后记录当前访问是否允许 WRITE；没有显式 READ 的异常/旧调用保守视为 WRITE。
 - invisible page fault 把访问方向固化到 staging 页；CPU_FINI 后不再依赖对象的瞬时状态。
 - READ 页在 VMA close 时直接释放；WRITE 页保留原有 `SYS2GDDR`。
@@ -33,7 +33,7 @@ mapping 在逐页读取后，三轮 `munmap` 分别消耗 71.915、119.357 和 9
 候选包生成后使用以下只读包/临时目录检查，不注册 DKMS、不安装模块：
 
 ```sh
-scripts/check-deb-dkms-build.sh \
+tools/check-deb-dkms-build.sh \
   debs/innogpu-fh2m-trixie_3.3.3.42-patched-23.deb
 ```
 
@@ -82,7 +82,7 @@ sudo reboot
 
 ```sh
 sudo dpkg -i debs/innogpu-fh2m-trixie_3.3.3.42-patched-23.deb
-scripts/verify-install-status.sh 3.3.3.42-patched-23
+tools/verify-install-status.sh 3.3.3.42-patched-23
 sudo reboot
 ```
 

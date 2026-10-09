@@ -7,7 +7,7 @@
 
 ## 构建边界
 
-- 构建入口：`scripts/build-patched24-kernel-612101.sh`。
+- 构建入口：`tools/build-patched24-kernel-612101.sh`。
 - 基线：Deepin 202504 原 deb。
 - 行为基线：patched-23 的 patch-000、patch-001/002/006/007/009/023 开关集合。
 - 新增兼容：patch-001 在 `6.12.101+` 传入 `exclude_bars=0`，旧内核仍走三参数接口。
@@ -18,8 +18,8 @@
 构建后必须运行：
 
 ```sh
-scripts/check-release-package.sh debs/innogpu-fh2m-trixie_3.3.3.42-patched-24.deb
-scripts/check-deb-dkms-build.sh debs/innogpu-fh2m-trixie_3.3.3.42-patched-24.deb 6.12.101+deb13-amd64
+tools/check-release-package.sh debs/innogpu-fh2m-trixie_3.3.3.42-patched-24.deb
+tools/check-deb-dkms-build.sh debs/innogpu-fh2m-trixie_3.3.3.42-patched-24.deb 6.12.101+deb13-amd64
 ```
 
 构建结果：

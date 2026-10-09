@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# tests/unit/run-fantgpu-helper-transform-tests.sh — tools/transform-fantgpu-helper.sh 与
+# tests/unit/run-fantgpu-helper-transform-tests.sh — tools/internal/transform-fantgpu-helper.sh 与
 # F 包 helper 安装树运行契约单测
 #
 # 依据 docs/design/c3-a-4-reproducible-input-plan.md §四（codex 初审 P1-2 修复）：
 # F 血统打包时变换 helper 内部**调用链 token**（innogpu-<命令名>、
 # usr/share/innogpu-fh2m-trixie 路径、install-dri-node-repair-service 的模块
-# 条件）；O 血统保持 scripts/ 原始字节（check-release-package cmp 契约）。
+# 条件）；O 血统保持 tools/ 原始字节（check-release-package cmp 契约）。
 # 含**安装树运行测试**：变换后的 install-dri-node-repair-service.sh 在假安装
 # 树（INNOGPU_DRI_TEST_ROOT + stub systemctl）中成功安装 fantgpu 命名单元。
 # 退出码：0=全过 1=用例失败 2=环境错误。
@@ -14,7 +14,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-XF="$ROOT/tools/transform-fantgpu-helper.sh"
+XF="$ROOT/tools/internal/transform-fantgpu-helper.sh"
 cd "$ROOT"
 export LC_ALL=C
 
@@ -40,7 +40,7 @@ CMDS=(disable-incompatible-userspace repair-dri-nodes test-xorg-once
 FAKE="$TMP/tree"
 mkdir -p "$FAKE/usr/share/fantgpu-fh2m-trixie" "$FAKE/usr/bin" "$FAKE/usr/sbin"
 for h in "${HELPERS[@]}"; do
-    bash "$XF" < "scripts/$h" > "$FAKE/usr/share/fantgpu-fh2m-trixie/$h"
+    bash "$XF" < "tools/$h" > "$FAKE/usr/share/fantgpu-fh2m-trixie/$h"
     chmod 0755 "$FAKE/usr/share/fantgpu-fh2m-trixie/$h"
 done
 for c in "${CMDS[@]}"; do
@@ -76,9 +76,9 @@ else
     bad t02 "missing=$missing"
 fi
 
-# t03 O 血统不动：scripts/ 原始字节未被本工具改变（变换仅作用于打包副本）
-if cmp -s "scripts/prepare-soft-xorg-dwm.sh" "scripts/prepare-soft-xorg-dwm.sh" \
-   && grep -Fq "innogpu-disable-incompatible-userspace" "scripts/prepare-soft-xorg-dwm.sh"; then
+# t03 O 血统不动：tools/ 原始字节未被本工具改变（变换仅作用于打包副本）
+if cmp -s "tools/prepare-soft-xorg-dwm.sh" "tools/prepare-soft-xorg-dwm.sh" \
+   && grep -Fq "innogpu-disable-incompatible-userspace" "tools/prepare-soft-xorg-dwm.sh"; then
     ok t03
 else
     bad t03 "source helper unexpectedly modified"

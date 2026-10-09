@@ -10,7 +10,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-TOOL="$ROOT/scripts/verify-install-status.sh"
+TOOL="$ROOT/tools/verify-install-status.sh"
 cd "$ROOT"
 export LC_ALL=C
 

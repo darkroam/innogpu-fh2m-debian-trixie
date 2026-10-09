@@ -94,9 +94,9 @@ Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
 | F runtime health | tests/unit/run-fantgpu-runtime-health-tests.sh | 7 个合成用例：正常通过、DRM sysfs/devfs card 缺失、必需固件请求失败、可选 `hwinfo_g0m.bin` 缺失允许、kernel fault、dmesg 缺失、status 缺失；所有阻断路径 fail-closed | 无设备（fake dmesg/status/sysfs/devfs） | 否 |
 | Hygon xHCI 升级检查 | tests/unit/run-hygon-xhci-resume-fix-tests.sh | 4 个合成用例：reset quirk PASS、quirk 缺失 FAIL、boot 日志不足 UNVERIFIED、非目标 PCI ID NOT_APPLICABLE | 无设备（fake PCI sysfs/boot log） | 否 |
 | F builder contract | tests/unit/run-builder-fantgpu-gates-tests.sh | F-only fallback 同时进入编译树/包内 DKMS 树、guard 顺序、O_stage 快照 `patch --dry-run` 可重放且无 fuzz | shell/patch/tar/zstd，无设备 | 否 |
-| DRI repair 服务生命周期 | tests/unit/run-dri-repair-tests.sh | helper 三态判定（absent/owned/foreign；外国普通文件/符号链接拒绝覆盖）与 unit `ExecStart` 一致（包 `/usr/sbin` vs 源码 fallback `/usr/local/sbin` 区分）、**PATH 注入反例（任意同名程序不得被持久化）**、失败回滚**只删本次新建**（已有有效安装在重装失败后保留）、`enable/start` 失败传播、幂等安装/卸载、**package-absent 只清 DRI 自有路径**（不触碰 userspace/modules-load）、**版本不匹配零副作用**、**精确所有权**（只删除规范化目标等于本仓库 `scripts/repair-dri-nodes.sh` 的符号链接；同名外国仓库链接/普通文件保留）、**测试根安全（空//相对路径 fail closed）**、包 helper 分支正例、无硬编码目标用户名/无 root `$HOME` 回退静态反例 | 无 root/systemd//dev（fake systemctl + 测试根前缀钩子，默认关闭） | 否 |
+| DRI repair 服务生命周期 | tests/unit/run-dri-repair-tests.sh | helper 三态判定（absent/owned/foreign；外国普通文件/符号链接拒绝覆盖）与 unit `ExecStart` 一致（包 `/usr/sbin` vs 源码 fallback `/usr/local/sbin` 区分）、**PATH 注入反例（任意同名程序不得被持久化）**、失败回滚**只删本次新建**（已有有效安装在重装失败后保留）、`enable/start` 失败传播、幂等安装/卸载、**package-absent 只清 DRI 自有路径**（不触碰 userspace/modules-load）、**版本不匹配零副作用**、**精确所有权**（只删除规范化目标等于本仓库 `tools/repair-dri-nodes.sh` 的符号链接；同名外国仓库链接/普通文件保留）、**测试根安全（空//相对路径 fail closed）**、包 helper 分支正例、无硬编码目标用户名/无 root `$HOME` 回退静态反例 | 无 root/systemd//dev（fake systemctl + 测试根前缀钩子，默认关闭） | 否 |
 | DMA-BUF 回归聚合 | tests/unit/run-dmabuf-regression-tests.sh | 参数/设备发现与身份/self-import（含 create_size 与 CLOEXEC 严格断言）/READ 逐轮唯一性解析/性能门槛/WRITE verify/topology 多 CRTC/vblank（active 逐样本校验：顺序 + delta/kernel_delta 数值自洽 + uint32 回绕 + summary 指标与样本重算交叉验证 + 每 CRTC 独立证据；inactive 全 CRTC 守卫：success=0 时指标全零）/状态门禁（增减均拒）/内核日志门禁（独立状态机：新严重行 FAIL/rc1；post 不可用/截断/重排/插入/无重叠 UNVERIFIED/rc3；正常环形轮转只查重叠后新增行）/mktemp/超时/TERM 清理/汇总 + 真实 C 探针契约测试（含生产构建 fixture 钩子编译剔除门禁与正常路径 fd_leak=unknown）；fixture 模式独立命名空间 fixture_dmabuf_*，零权威 dmabuf_* 行 | 无设备（fake sysfs/dev/探针 + 真实探针 FIFO 路径），隔离 baseline | 否 |
-| collab 结构 | tests/unit/run-collab-structure-tests.sh | 目录命名/编号唯一/request+report 模板齐全/INDEX 与目录按编号精确双向一一对应（R01 不误配 R010、重复行、孤立行、孤立目录、日期与主题一致）/状态白名单/根目录散放文件/根目录或内部符号链接/嵌套目录/仅 Markdown/INDEX 与隐藏 Markdown 的大小写无关隐私扫描（两侧共用 tools/private-data-patterns.txt）/缺 INDEX/collab 目录缺失视为通过 | python3，无设备 | 否 |
+| collab 结构 | tests/unit/run-collab-structure-tests.sh | 目录命名/编号唯一/request+report 模板齐全/INDEX 与目录按编号精确双向一一对应（R01 不误配 R010、重复行、孤立行、孤立目录、日期与主题一致）/状态白名单/根目录散放文件/根目录或内部符号链接/嵌套目录/仅 Markdown/INDEX 与隐藏 Markdown 的大小写无关隐私扫描（两侧共用 tools/internal/private-data-patterns.txt）/缺 INDEX/collab 目录缺失视为通过 | python3，无设备 | 否 |
 | suspend/resume 静态 | tests/unit/run-suspend-resume-tests.sh | patch-024/025-display/026-lifecycle/028-temp-monitor/029-ddcci-panel dry-run/应用、OFF 快速门禁、devfreq drain→PVR suspend、PVR/DVFS resume→温度 work 锁序、多父/多子计数、结构尾部 ABI、失败/旧内核/NO_HARDWARE、版本/epoch 失败关闭、DDCCI panel/backlight/force fixture、零 fuzz/无备份应用、编译树与包源码双扫描、patched-28 legacy 接线、R08 只读观测契约 | shell/python/patch，复制跟踪源码到 `/tmp` | 否 |
 | suspend 失败收尾 | tests/unit/run-suspend-failure-finalize-tests.sh | 失败证据/回退/重启三标记齐全后只移除指定 active 指针并保留证据；缺失/错配、路径穿越、绝对路径/大写 ID、符号链接和重复 finalize 失败关闭 | shell/python，隔离临时状态树 | 否 |
 | P2 规范化映射 | tests/unit/run-p2-normalize-tests.sh | 合成正例两次逐字节一致且内容正确（确定性 + 规范化路径 + F-only 状态）、D 根缺失 rc=3、F 根缺失 rc=3、空扫描 rc=4、canonical-path 冲突 rc=1、多余参数 rc=2；失败路径断言退出码/stderr 诊断/未创建输出；完全隔离（mktemp + trap + env 注入），不触碰 `build/` | python3，无设备 | 否 |
@@ -105,7 +105,7 @@ Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
 | R16 classify 生成器 | tests/unit/run-r16-classify-tests.sh | 完全隔离（mktemp + env 注入 `R16_MANIFEST`/`R16_D_SRC`/`R16_F_SRC`/`R16_D_LICENSE`/`R16_F_LICENSE`/`R16_OUT_DIR`），覆盖合成正例 3 differs（PURE_RENAME/BEHAVIORAL/F-ONLY）→ per-file + per-bc 均写入 + **production cardinality 硬校验**（differs != 432 或 F-only != 3 立即 FATAL）+ raw-row duplicate canonical path 拒绝 + 未知 status 拒绝 + malformed manifest rc=1 + 空 differs rc=1 + 两次运行字节一致 + 缺失 F 内容 rc=1 无输出 + **fail-closed 输出纪律**（预存在 per-file + per-bc 双输出文件 SHA-256 在失败后保持不变） | python3，无设备 | 否 |
 | runtime 能力基线 | tests/runtime/run-capability-baseline.sh | 12 能力域、35 项；默认只读，人工结果显式合并 | 沙箱/真机授权 | 授权项可能有副作用 |
 
-另：`scripts/check-docs.sh`（静态，链接/登记/隐私/版本/边界）、`check-source-parity.sh`（只读 parity）、
+另：`tools/check-docs.sh`（静态，链接/登记/隐私/版本/边界）、`check-source-parity.sh`（只读 parity）、
 `compare-oracle-candidates.sh` + `compare-module-symbols.sh`（integration oracle）、
 `check-deb-dkms-build.sh`（integration 离线编译，需本机内核头）。
 
@@ -139,7 +139,7 @@ Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
 | 5 | OpenGL/GLX/GLES | `glxinfo`/check-desktop-hwgl | 最小 GL 程序（非 llvmpipe） | OBSERVED PASS（4.3 core/ES 3.2） |
 | 6 | Vulkan | tools/probe-vulkan-devices | instance/device/queue + command submit/fence wait | 枚举及最小执行 PASS；实际渲染未覆盖 |
 | 7 | OpenCL/计算 | tools/probe-opencl-devices | 最小 kernel/buffer 读写与逐元素校验 | 枚举及最小执行 PASS |
-| 8 | 视频 | tools/probe-vaapi / vainfo / tools/run-vaapi-decode-test.sh | 固定 H264/HEVC 样本解码与输出校验 | profile 枚举 PASS；H.264 Main+HEVC Main 实际解码 PASS；无 VA encode entrypoint |
+| 8 | 视频 | tools/probe-vaapi / vainfo / tools/internal/run-vaapi-decode-test.sh | 固定 H264/HEVC 样本解码与输出校验 | profile 枚举 PASS；H.264 Main+HEVC Main 实际解码 PASS；无 VA encode entrypoint |
 | 9 | DMA-BUF/同步 | 静态审计（patch-023/025/027）+ run-dmabuf-regression-test.sh | DRI3、同设备 PRIME self-import、fence、失败路径 | Phase 4 DRI3/PRIME 基础回归 PASS；专项同设备 PRIME self-import runtime 回归 PASS（2026-08-26 真机）；foreign/跨设备/V4L2 仍 UNVERIFIED |
 | 10 | 显示输出 | xrandr/DRM 拓扑交叉核对 | 内置屏/外接/插拔/合盖恢复 | 当前 HDMI 拓扑 PASS；切换/热插拔/合盖 UNVERIFIED |
 | 11 | 桌面合成/应用 | Picom 进程/配置枚举 | backend 确认、透明/圆角/拖拽/WebKit DMA-BUF | 进程/配置 PASS；实际 GLX backend UNVERIFIED |
@@ -158,7 +158,7 @@ Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
 | EGL/GBM/DRI | eglinfo、GBM/DRI 探针 | vendor、extensions、device、DMA-BUF | buffer 分配/导入 | EGL/X11 PASS / GBM 专项 UNVERIFIED |
 | Vulkan | vulkaninfo、exec 探针 | device、API、queue、submit、fence wait | command submit/fence wait | PASS（实际渲染未覆盖） |
 | OpenCL | clinfo、exec 探针 | platform、device、kernel、读回校验 | 最小 kernel/buffer | PASS |
-| VA-API | vainfo、tools/run-vaapi-decode-test.sh | vendor、profile、entrypoint、30 帧 NV12 framemd5 hash | 固定 H.264/HEVC Main 样本强制硬解 + 输出校验 | 解码 PASS（H264 Main+HEVC Main 30 帧 320x240 NV12 校验）/ 无 encode entrypoint |
+| VA-API | vainfo、tools/internal/run-vaapi-decode-test.sh | vendor、profile、entrypoint、30 帧 NV12 framemd5 hash | 固定 H.264/HEVC Main 样本强制硬解 + 输出校验 | 解码 PASS（H264 Main+HEVC Main 30 帧 320x240 NV12 校验）/ 无 encode entrypoint |
 | 音频 | aplay、wpctl | ALSA card、PCM、PipeWire sink | 实际播放并确认听感 | 枚举 PASS / 听感 UNVERIFIED |
 
 ## 五、结果格式与退出码约定（统一，全部测试已实现）
@@ -204,7 +204,7 @@ Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
 
 ## 八、执行顺序
 
-1. `scripts/check-docs.sh`（静态门禁，任何变更后必跑）
+1. `tools/check-docs.sh`（静态门禁，任何变更后必跑）
 2. `tests/fbterm`、`tests/picom`、`tests/xdisplay`（fixture/static，CI 可跑）
 3. `tests/package`（fixture，CI 可跑）
 4. `tests/unit`（manifest 恶意输入/版本排序/提取器隔离，CI 可跑）
@@ -241,7 +241,7 @@ Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
     runtime_vulkan_execution/opencl_execution=PASS（evidence: baselines/runtime-results-20260824.txt）。
   - 测试：tests/unit/run-exec-probes-tests.sh（CI 无 /dev/dri 可跑）覆盖编译/缺 loader/
     无设备/枚举回归/超时清理/机器格式。
-- VA-API H.264/HEVC 实际解码（2026-08-24）：`tools/run-vaapi-decode-test.sh --codec h264|hevc|all`
+- VA-API H.264/HEVC 实际解码（2026-08-24）：`tools/internal/run-vaapi-decode-test.sh --codec h264|hevc|all`
   判定链 = 输入生成（lavfi testsrc2 恰好 30 帧 320x240→libx264/libx265）→ 软件参考（NV12 framemd5）→
   **强制 VAAPI 硬解**（hwaccel vaapi + hwaccel_output_format vaapi + hwdownload,format=nv12，初始化失败即
   FAIL，无软件回退）→ **真实 FFmpeg framemd5 格式校验**（尾换行、`#dimensions 320x240`、恰好 30 条合法帧
@@ -257,13 +257,13 @@ Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
   命名空间 fixture_***（fixture_vaapi_decode_h264=...、fixture_tests_total=...、fixture_vaapi_decode_overall=...），
   绝不输出任何 `vaapi_decode_*` 权威行，reason 仍附 -mode=fixture；`runtime_vaapi_decode` 仅当 H.264 与
   HEVC 均完成真实硬解+输出校验后升级 PASS——2026-08-24 真机执行（监督者于 c7b3a40 上沙箱外运行
-  `bash tools/run-vaapi-decode-test.sh --codec all`）：H264 Main 与 HEVC Main 均强制 VA-API 硬解、各 30 帧
+  `bash tools/internal/run-vaapi-decode-test.sh --codec all`）：H264 Main 与 HEVC Main 均强制 VA-API 硬解、各 30 帧
   320x240 NV12 framemd5 hash 与软件参考一致、Driver/Firmware 状态门禁通过 → 升级 PASS
   （evidence: baselines/runtime-results-20260824.txt）；**能力边界**：仅 Main/Main 8-bit 4:2:0，H.264 High/
   Constrained Baseline、HEVC Main10、编码、播放/长时/并发/4K/性能功耗均未验证；枚举
   profile/entrypoint 或 ffmpeg 退出 0 不等于实际解码成功；测试：tests/unit/run-vaapi-decode-tests.sh
   （fake fixture，CI 无 /dev/dri）。
-- DMA-BUF 回归（2026-08-24 实现，2026-08-26 真机验证）：`tools/run-dmabuf-regression-test.sh` 聚合入口，编译并运行
+- DMA-BUF 回归（2026-08-24 实现，2026-08-26 真机验证）：`tools/internal/run-dmabuf-regression-test.sh` 聚合入口，编译并运行
   四探针，判定链 = 设备发现/身份（动态 1ec8:9810 render+card 同源 BDF）→ 同设备 PRIME self-import
   （CREATE_DUMB→HANDLE_TO_FD→FD_TO_HANDLE→逆序释放，CLOEXEC 验证，多轮无 fd 泄漏）→ invisible GEM
   READ（严格输出解析 + READ munmap 性能门槛：max(system_ms) ≤ 默认 40ms，区分 p22 71.9-119.4ms 与
@@ -292,7 +292,7 @@ Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
 
 ## 证据索引
 
-`tests/README.md`、`scripts/check-docs.sh`、`docs/investigations/capability-survey.md`、
+`tests/README.md`、`tools/check-docs.sh`、`docs/investigations/capability-survey.md`、
 `docs/archive/phase4-device-validation.md`。
 
 R28 i9兼容修订：用户批准先修107。DRM接口按编译探针区分，核心预分配与旧分配路径共享错误检查；派生源码锁独立，原文不改。builder30项含实际派生C片段两分支；maintainer98项含ABI完整DWARF扫描的严格rc与布局反例。ABI仅精确识别既有shipped原布局，禁止忽略pahole错误。正式全K A/B核对deb/模块/initrd，旧失败记录保持。

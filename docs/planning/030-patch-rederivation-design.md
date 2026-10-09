@@ -2,7 +2,7 @@
 
 > 创建日期：2026-09-05
 > 起草：qoder（R-F 起草方）
-> 版本：**v24**（codex v10 初审 4 P1 + 1 P2 闭环后；codex v11 初审 2 P1 + 2 P2 闭环后；codex v12 初审 4 P1 + 1 P2 闭环后；codex v13 初审 2 P1 + 2 P2 闭环后；codex v14 初审 2 P1 + 2 P2 闭环后；codex v15 初审 2 P1 + 1 P2 闭环后；codex v16 初审 2 P1 + 1 P2 闭环后；codex v17 初审 2 P1 + 2 P2 闭环后；codex v18 初审 2 P1 + 1 P2 闭环后；codex v19 初审 1 P1 + 1 P2 闭环后；codex v20 初审 3 P1 闭环后；codex v21 初审 1 P1 闭环后；**codex v22 初审 1 P1 闭环后**；codex v23 初审 1 P1 + 1 P2 闭环后；本版：snapshot 备份-回滚协议 + 故障注入测试要求（per codex v10 P1 #1）/ snapshot `--reference-manifest` 统一 CLI + canonicalize/existence check（per codex v10 P1 #2）/ meta.json 路径统一到 `docs/planning/evidence/4.0.2-i3/` + jq 1.7.1 工具链前置（per codex v10 P1 #3）/ 全判定流程引用同一 canonicalize 实现（per codex v10 P1 #4）/ 全文档 v8/v9 当前口径残痕统一为 v10 或 v11，历史变更仅在 §十三 历史对照表中保留（per codex v10 P2 #5）；v12 叠加：备份-回滚-journal 持久化 + 启动恢复机制（per codex v11 P1 #1）/ `--reference-manifest` 实际 CLI 解析（per codex v11 P1 #2）/ v10 当前口径统一为 v11（per codex v11 P2 #3）/ 退出码子命令作用域契约 + journal 损坏退出码 9（per codex v11 P2 #4）；v13 叠加：固定事务目录 `.txn` + 结构化 key=value journal + 恢复校验重绑定（per codex v12 P1 #1）/ 逐字段解析杜绝整行裸比较（per codex v12 P1 #2）/ journal 先于任何旧文件移动、废弃"journal 写失败 → 旧对丢失"场景（per codex v12 P1 #3）/ python3 显式 fsync 文件 + rename + fsync 目录路径、禁止全局 sync（per codex v12 P1 #4）/ 当前状态标签统一 v12（per codex v12 P2 #5）；v14 叠加：OUT_DIR 排他锁 fcntl.flock + 锁获取失败退出码 6（per codex v13 P1 #1）/ staging_dir 路径约束 + journal 字段严格校验（per codex v13 P1 #2）/ 旧对完整性 fail-closed（per codex v13 P2 #3）/ 退出码作用域契约当前标签统一 v14（per codex v13 P2 #4）；v15 叠加：排他锁位置前移到参数解析之后、任何文件系统变更之前（per codex v14 P1 #1）/ journal 计划 + .txn/old.* + OUT_DIR 三者事实一致性 fail-closed + 回滚内容感知去 || true（per codex v14 P1 #2）/ 活动接口 v12/v13 标签统一 v15（per codex v14 P2 #3）/ 三类命名参数统一真实解析 + 未知参数 fail-closed（per codex v14 P2 #4）；v16 叠加：journal 新增 old_tar_sha256 / old_sha_sha256 旧对精确指纹，恢复时严格匹配（未知/损坏/替换内容一律 exit 9，.sha256 精确格式 + hash 字段校验）（per codex v15 P1 #1）/ reconcile 唯一合法入口统一为 `tools/d-stage-audit-gen.py reconcile`，旧 bash 独立脚本降级为历史对照段（per codex v15 P1 #2）/ 活动规范 v8/v10/v12 标签残留统一 v16（per codex v15 P2 #3）；v17 叠加：共享 classify_out_pair() 分类函数（即时回滚与启动恢复共用；sidecar 单行 wc -l==1 + 精确格式 + hash 字段，仅精确 new 可删除）（per codex v16 P1 #1）/ 状态专属不变量（verified/sha_committed 必须完整新对，staged 不得 new，backed_up sha 必须 absent，tarball_committed tar 必须 new；违反 exit 9 不清理证据）（per codex v16 P1 #2）/ 4a 旧对自洽校验（hash 字段 == old_tar_sha256 + sha256sum -c，失败 exit 9）（per codex v16 P2 #3）；**v18 叠加：4a 幂等 no-op 前置（既有对 == staging 新对 → 清理 staging 成功返回，避免旧新指纹相等时恢复必 exit 9）（per codex v17 P1 #1）/ selfcheck_fail 故障注入期望改为 fail-closed（废弃"自动回滚到旧对"预期）（per codex v17 P1 #2）/ 故障注入计数口径修正为 16 场景（per codex v17 P2 #3）/ 活动规范残留 v16/v15 标签统一 v18（per codex v17 P2 #4）；**v19 叠加：fsync 状态依赖数据屏障（staged ← staging 文件+目录 / backed_up ← .txn / 提交与清理 ← OUT_DIR，顺序不可交换，断电一致性）+ 5 个 power-loss 故障注入场景（强制断电，不得用 kill -9 代替）（per codex v18 P1 #1）/ §5.3 bash block 降级为算法伪代码草案 + 唯一实现依据 = 030-d-stage-audit.md §五 v19 Python 契约（per codex v18 P1 #2）/ 幂等 no-op 复用 4a 严格 sidecar 校验 + noop_duplicate_sidecar 故障场景（per codex v18 P2 #3）；**v20 叠加：跨目录 rename 源、目标双目录同步（备份 OUT_DIR→.txn：fsync_dir(.txn) + fsync_dir(OUT_DIR)；回滚 .txn→OUT_DIR：fsync_dir(OUT_DIR) + fsync_dir(.txn)）+ 3 个跨目录 rename 断电窗口故障场景（备份 mv 后 persist 前 / 备份 mv 与双目录 fsync 之间 / 回滚还原 mv 后清理前）+ 故障注入 25 场景 + reconcile 活动规范标签统一 v20（per codex v19 P1 #1 + P2 #2）；**v21 叠加：rolling_back 合法中途态白名单 (new,new)/(absent,new)/(absent,absent)/(old,absent)/(old,old)（统一混合判定仅对非 rolling_back 状态生效）+ 2 个回滚中途窗口故障场景（per codex v20 P1 #1）/ 无 journal 恢复废除"OUT_DIR 自洽即 exit 0"捷径、统一走全新路径由 4a 幂等 no-op 严格收敛 + 1 个 journal 删除后 .txn 残留窗口场景（per codex v20 P1 #2）/ verified 清理顺序 rm old.* → fsync_dir(.txn) → rm journal → rm -rf .txn → fsync_dir(OUT_DIR)（per codex v20 P1 #3）/ 故障注入 28 场景；**v22 叠加：rolling_back 白名单 shell case 修复（未转义 | 是模式分隔符而非状态对字符串，v21 草图的五个白名单状态对实际全部落入拒绝分支 → 改为带引号精确匹配 + Python 契约集合成员判断 rolling_back_mid_state_ok）（per codex v21 P1 #1）；**v23 叠加：回滚还原逐次 mv 屏障（每个跨目录还原 mv 后立即 fsync_dir(OUT_DIR) + fsync_dir(.txn)，防两次还原 mv 之间断电出现旧 tar 双存在/均缺失 exit 9；power_loss_rollback_mid_restore_window 期望改为确定性 (old,absent)）（per codex v22 P1 #1）；**v24 叠加：回滚段逐次 fsync 失败退出码统一 exit 5（两处回滚段 fsync_dir 失败原标 exit 9，与 §五 Python 契约"所有 fsync 失败 exit 5"冲突 → 统一 exit 5，journal 保持 rolling_back 重入收敛）（per codex v23 P1 #1）/ 新增 power_loss_rollback_restore_fsync_window 故障场景（回滚还原 mv 后、任一目录 fsync 未完成断电 → 按被还原文件分列四态矩阵：旧 tar target-only (old,absent)/source-only (absent,absent)；旧 sidecar target-only (old,old)/source-only (old,absent)，一致事实白名单重入收敛；旧文件双存在 / 均缺失 → 三者事实校验 exit 9 保留证据，不得仅凭 OUT 状态对恰为合法中途态而错误接受 sidecar 丢失；29 场景）（per codex v23 P2 #2）**）
+> 版本：**v24**（codex v10 初审 4 P1 + 1 P2 闭环后；codex v11 初审 2 P1 + 2 P2 闭环后；codex v12 初审 4 P1 + 1 P2 闭环后；codex v13 初审 2 P1 + 2 P2 闭环后；codex v14 初审 2 P1 + 2 P2 闭环后；codex v15 初审 2 P1 + 1 P2 闭环后；codex v16 初审 2 P1 + 1 P2 闭环后；codex v17 初审 2 P1 + 2 P2 闭环后；codex v18 初审 2 P1 + 1 P2 闭环后；codex v19 初审 1 P1 + 1 P2 闭环后；codex v20 初审 3 P1 闭环后；codex v21 初审 1 P1 闭环后；**codex v22 初审 1 P1 闭环后**；codex v23 初审 1 P1 + 1 P2 闭环后；本版：snapshot 备份-回滚协议 + 故障注入测试要求（per codex v10 P1 #1）/ snapshot `--reference-manifest` 统一 CLI + canonicalize/existence check（per codex v10 P1 #2）/ meta.json 路径统一到 `docs/planning/evidence/4.0.2-i3/` + jq 1.7.1 工具链前置（per codex v10 P1 #3）/ 全判定流程引用同一 canonicalize 实现（per codex v10 P1 #4）/ 全文档 v8/v9 当前口径残痕统一为 v10 或 v11，历史变更仅在 §十三 历史对照表中保留（per codex v10 P2 #5）；v12 叠加：备份-回滚-journal 持久化 + 启动恢复机制（per codex v11 P1 #1）/ `--reference-manifest` 实际 CLI 解析（per codex v11 P1 #2）/ v10 当前口径统一为 v11（per codex v11 P2 #3）/ 退出码子命令作用域契约 + journal 损坏退出码 9（per codex v11 P2 #4）；v13 叠加：固定事务目录 `.txn` + 结构化 key=value journal + 恢复校验重绑定（per codex v12 P1 #1）/ 逐字段解析杜绝整行裸比较（per codex v12 P1 #2）/ journal 先于任何旧文件移动、废弃"journal 写失败 → 旧对丢失"场景（per codex v12 P1 #3）/ python3 显式 fsync 文件 + rename + fsync 目录路径、禁止全局 sync（per codex v12 P1 #4）/ 当前状态标签统一 v12（per codex v12 P2 #5）；v14 叠加：OUT_DIR 排他锁 fcntl.flock + 锁获取失败退出码 6（per codex v13 P1 #1）/ staging_dir 路径约束 + journal 字段严格校验（per codex v13 P1 #2）/ 旧对完整性 fail-closed（per codex v13 P2 #3）/ 退出码作用域契约当前标签统一 v14（per codex v13 P2 #4）；v15 叠加：排他锁位置前移到参数解析之后、任何文件系统变更之前（per codex v14 P1 #1）/ journal 计划 + .txn/old.* + OUT_DIR 三者事实一致性 fail-closed + 回滚内容感知去 || true（per codex v14 P1 #2）/ 活动接口 v12/v13 标签统一 v15（per codex v14 P2 #3）/ 三类命名参数统一真实解析 + 未知参数 fail-closed（per codex v14 P2 #4）；v16 叠加：journal 新增 old_tar_sha256 / old_sha_sha256 旧对精确指纹，恢复时严格匹配（未知/损坏/替换内容一律 exit 9，.sha256 精确格式 + hash 字段校验）（per codex v15 P1 #1）/ reconcile 唯一合法入口统一为 `tools/internal/d-stage-audit-gen.py reconcile`，旧 bash 独立脚本降级为历史对照段（per codex v15 P1 #2）/ 活动规范 v8/v10/v12 标签残留统一 v16（per codex v15 P2 #3）；v17 叠加：共享 classify_out_pair() 分类函数（即时回滚与启动恢复共用；sidecar 单行 wc -l==1 + 精确格式 + hash 字段，仅精确 new 可删除）（per codex v16 P1 #1）/ 状态专属不变量（verified/sha_committed 必须完整新对，staged 不得 new，backed_up sha 必须 absent，tarball_committed tar 必须 new；违反 exit 9 不清理证据）（per codex v16 P1 #2）/ 4a 旧对自洽校验（hash 字段 == old_tar_sha256 + sha256sum -c，失败 exit 9）（per codex v16 P2 #3）；**v18 叠加：4a 幂等 no-op 前置（既有对 == staging 新对 → 清理 staging 成功返回，避免旧新指纹相等时恢复必 exit 9）（per codex v17 P1 #1）/ selfcheck_fail 故障注入期望改为 fail-closed（废弃"自动回滚到旧对"预期）（per codex v17 P1 #2）/ 故障注入计数口径修正为 16 场景（per codex v17 P2 #3）/ 活动规范残留 v16/v15 标签统一 v18（per codex v17 P2 #4）；**v19 叠加：fsync 状态依赖数据屏障（staged ← staging 文件+目录 / backed_up ← .txn / 提交与清理 ← OUT_DIR，顺序不可交换，断电一致性）+ 5 个 power-loss 故障注入场景（强制断电，不得用 kill -9 代替）（per codex v18 P1 #1）/ §5.3 bash block 降级为算法伪代码草案 + 唯一实现依据 = 030-d-stage-audit.md §五 v19 Python 契约（per codex v18 P1 #2）/ 幂等 no-op 复用 4a 严格 sidecar 校验 + noop_duplicate_sidecar 故障场景（per codex v18 P2 #3）；**v20 叠加：跨目录 rename 源、目标双目录同步（备份 OUT_DIR→.txn：fsync_dir(.txn) + fsync_dir(OUT_DIR)；回滚 .txn→OUT_DIR：fsync_dir(OUT_DIR) + fsync_dir(.txn)）+ 3 个跨目录 rename 断电窗口故障场景（备份 mv 后 persist 前 / 备份 mv 与双目录 fsync 之间 / 回滚还原 mv 后清理前）+ 故障注入 25 场景 + reconcile 活动规范标签统一 v20（per codex v19 P1 #1 + P2 #2）；**v21 叠加：rolling_back 合法中途态白名单 (new,new)/(absent,new)/(absent,absent)/(old,absent)/(old,old)（统一混合判定仅对非 rolling_back 状态生效）+ 2 个回滚中途窗口故障场景（per codex v20 P1 #1）/ 无 journal 恢复废除"OUT_DIR 自洽即 exit 0"捷径、统一走全新路径由 4a 幂等 no-op 严格收敛 + 1 个 journal 删除后 .txn 残留窗口场景（per codex v20 P1 #2）/ verified 清理顺序 rm old.* → fsync_dir(.txn) → rm journal → rm -rf .txn → fsync_dir(OUT_DIR)（per codex v20 P1 #3）/ 故障注入 28 场景；**v22 叠加：rolling_back 白名单 shell case 修复（未转义 | 是模式分隔符而非状态对字符串，v21 草图的五个白名单状态对实际全部落入拒绝分支 → 改为带引号精确匹配 + Python 契约集合成员判断 rolling_back_mid_state_ok）（per codex v21 P1 #1）；**v23 叠加：回滚还原逐次 mv 屏障（每个跨目录还原 mv 后立即 fsync_dir(OUT_DIR) + fsync_dir(.txn)，防两次还原 mv 之间断电出现旧 tar 双存在/均缺失 exit 9；power_loss_rollback_mid_restore_window 期望改为确定性 (old,absent)）（per codex v22 P1 #1）；**v24 叠加：回滚段逐次 fsync 失败退出码统一 exit 5（两处回滚段 fsync_dir 失败原标 exit 9，与 §五 Python 契约"所有 fsync 失败 exit 5"冲突 → 统一 exit 5，journal 保持 rolling_back 重入收敛）（per codex v23 P1 #1）/ 新增 power_loss_rollback_restore_fsync_window 故障场景（回滚还原 mv 后、任一目录 fsync 未完成断电 → 按被还原文件分列四态矩阵：旧 tar target-only (old,absent)/source-only (absent,absent)；旧 sidecar target-only (old,old)/source-only (old,absent)，一致事实白名单重入收敛；旧文件双存在 / 均缺失 → 三者事实校验 exit 9 保留证据，不得仅凭 OUT 状态对恰为合法中途态而错误接受 sidecar 丢失；29 场景）（per codex v23 P2 #2）**）
 > 状态：**设计稿（进行中，未具终审条件）**
 > 适用范围：R-F 阶段（fantgpu 5.0.0 基座建立）前置；不直接落代码
 > 上下游：上游 = P5 评估（`docs/investigations/fantgpu-base-update-evaluation.md` 19 项台账 +
@@ -178,7 +178,7 @@
 | 编号 | 范围 | 阶段归属 | 配套文件 / 输出路径 | 当前状态（v24） |
 | --- | --- | --- | --- | --- |
 | **O-1** | 19 项台账 → Deepin 中性变更记录（**隔离 F-only**，**不含 F0 决策字段**） | 阶段一 | `docs/planning/030-mapping-table.md`（v12 P5/阶段一/阶段三 三列分离 + F-only excluded-deferred 隔离；v12 保持 v11 政策） | v12 三列分离 + F-only excluded-deferred 隔离（v12 仅配套标签同步 per codex v12 P2 #5；O-1 表本体与 codex v10/v11/v12/v13/v14/v15/v16/v17 全部 finding 无直接关系） |
-| **O-2** | D → D_stage 完整性审计（**tree-manifest `SRC_ROOT` 显式 export**，**symlink 9 类闭合 + `realpath -m` canonicalize**，**不读 F0**，**不硬编码 F-only**，**目录级 staging + reconcile-first**，**tar.zst 精确版本锁**，**OUT_DIR 排他锁（先于一切变更）+ 持久化事务目录 + 结构化 journal 协议（含旧对精确指纹）+ staging_dir 路径约束 + 三者事实一致性（指纹严格匹配 + 共享分类函数）+ 状态专属不变量 + 旧对自洽校验 + 幂等 no-op（复用严格 sidecar 校验）+ 旧对完整性 fail-closed + fsync 状态依赖数据屏障（断电一致性；跨目录 rename 源、目标双目录同步；verified 清理 .txn 屏障；回滚还原逐次 mv 屏障）+ rolling_back 合法中途态白名单（集合成员判断可执行等价判定）**，**reconcile 子命令唯一入口**，**`--reference-manifest` CLI 解析**，**退出码子命令作用域契约**，**bash 草案降级伪代码 + Python 实现契约**） | 阶段一 | `docs/design/030-d-stage-audit.md`（v24 tree-manifest `SRC_ROOT` export + 9 类 symlink 互斥 + `realpath -m` canonicalize + F0 完全隔离 + 9 文件输出 = 8 稳定证据 + 1 运行时 genesis.json + tar.zst 可复现规范 + 目录级 staging + reconcile-first + 排他锁（先于一切变更）+ 固定事务目录 `.txn` + 结构化 journal 协议（含 old_tar_sha256/old_sha_sha256 指纹）+ staging_dir 路径约束 + 三者事实一致性（指纹严格匹配 + 共享 classify_out_pair）+ 状态专属不变量 + 旧对自洽校验 + 幂等 no-op（复用严格 sidecar 校验）+ 旧对完整性 fail-closed + fsync 状态依赖数据屏障（跨目录 rename 源、目标双目录同步；verified 清理 .txn 屏障）+ rolling_back 合法中途态白名单（rolling_back_mid_state_ok 集合成员判断）+ 回滚还原逐次 mv 屏障 + 无 journal 恢复走全新路径 + reconcile 子命令唯一入口 + `--reference-manifest` CLI 解析（三类命名参数统一解析）+ 退出码作用域契约 + `tools/d-stage-audit-gen.py` 三子命令接口 + §五 Python 实现契约（唯一实现依据）） | v24 已替换 find-exec readlink 命令 + 9 类互斥判定 + `realpath -m` canonicalize 强化 + 6 fixture 覆盖（per codex v9 P1 #4）+ 移除 F-only gate / exit 6 / `f_only_exclusion_check` 字段（F-only 整体移到阶段三 O-4）+ TSV 字段编码 + manifest schema 检查路径 + validate-then-replace + 8/1 文件拆分 + tar.zst 可复现规范 + 目录级 staging + reconcile-first + 三子命令接口 + tar.zst 精确版本锁（per codex v9 P2 #6）+ `$GIT_TAG_REF` 读取（per codex v9 P2 #7）+ 固定事务目录 `.txn` + 结构化 journal + 8 场景故障注入测试要求（per codex v12 P1 #1-#4 journal 重写）+ `--reference-manifest` 实际 CLI 解析（per codex v11 P1 #2）+ 退出码子命令作用域契约 + journal 损坏退出码 9（per codex v11 P2 #4）+ OUT_DIR 排他锁 + 锁获取失败退出码 6（per codex v13 P1 #1）+ staging_dir 路径约束 + journal 字段严格校验（per codex v13 P1 #2）+ 旧对完整性 fail-closed + 11 场景故障注入（per codex v13 P2 #3）+ 排他锁位置前移（per codex v14 P1 #1）+ 三者事实一致性 fail-closed + 12 场景故障注入（per codex v14 P1 #2）+ 旧对精确指纹 + 未知内容 exit 9 + reconcile 子命令唯一入口 + 13 场景故障注入（per codex v15 P1 #1+#2）+ 共享分类函数 + 状态专属不变量 + 旧对自洽校验 + 16 场景故障注入（per codex v16 P1 #1+#2 + P2 #3 + codex v17 P2 #3 计数修正）+ 幂等 no-op + selfcheck_fail fail-closed 期望（per codex v17 P1 #1+#2）+ fsync 状态依赖数据屏障 + bash 草案降级伪代码 + §五 Python 实现契约 + no-op 复用严格 sidecar 校验 + 22 场景故障注入（5 power-loss + 1 no-op 重复行）（per codex v18 P1 #1+#2 + P2 #3）+ 跨目录 rename 源、目标双目录同步 + 3 个跨目录 rename 断电窗口场景 + 25 场景故障注入 + reconcile 活动规范标签统一 v20（per codex v19 P1 #1 + P2 #2）+ rolling_back 合法中途态白名单 + 无 journal 恢复走全新路径 + verified 清理 .txn 屏障 + 3 个新场景 + 28 场景故障注入（per codex v20 P1 #1+#2+#3）+ 白名单可执行等价判定（shell 带引号精确匹配 + Python 集合成员判断）（per codex v21 P1 #1）+ 回滚还原逐次 mv 屏障 + power_loss_rollback_mid_restore_window 期望确定性 (old,absent)（per codex v22 P1 #1）+ 回滚段逐次 fsync 失败 exit 5 统一 + power_loss_rollback_restore_fsync_window 三态契约场景（per codex v23 P1 #1 + P2 #2） |
+| **O-2** | D → D_stage 完整性审计（**tree-manifest `SRC_ROOT` 显式 export**，**symlink 9 类闭合 + `realpath -m` canonicalize**，**不读 F0**，**不硬编码 F-only**，**目录级 staging + reconcile-first**，**tar.zst 精确版本锁**，**OUT_DIR 排他锁（先于一切变更）+ 持久化事务目录 + 结构化 journal 协议（含旧对精确指纹）+ staging_dir 路径约束 + 三者事实一致性（指纹严格匹配 + 共享分类函数）+ 状态专属不变量 + 旧对自洽校验 + 幂等 no-op（复用严格 sidecar 校验）+ 旧对完整性 fail-closed + fsync 状态依赖数据屏障（断电一致性；跨目录 rename 源、目标双目录同步；verified 清理 .txn 屏障；回滚还原逐次 mv 屏障）+ rolling_back 合法中途态白名单（集合成员判断可执行等价判定）**，**reconcile 子命令唯一入口**，**`--reference-manifest` CLI 解析**，**退出码子命令作用域契约**，**bash 草案降级伪代码 + Python 实现契约**） | 阶段一 | `docs/design/030-d-stage-audit.md`（v24 tree-manifest `SRC_ROOT` export + 9 类 symlink 互斥 + `realpath -m` canonicalize + F0 完全隔离 + 9 文件输出 = 8 稳定证据 + 1 运行时 genesis.json + tar.zst 可复现规范 + 目录级 staging + reconcile-first + 排他锁（先于一切变更）+ 固定事务目录 `.txn` + 结构化 journal 协议（含 old_tar_sha256/old_sha_sha256 指纹）+ staging_dir 路径约束 + 三者事实一致性（指纹严格匹配 + 共享 classify_out_pair）+ 状态专属不变量 + 旧对自洽校验 + 幂等 no-op（复用严格 sidecar 校验）+ 旧对完整性 fail-closed + fsync 状态依赖数据屏障（跨目录 rename 源、目标双目录同步；verified 清理 .txn 屏障）+ rolling_back 合法中途态白名单（rolling_back_mid_state_ok 集合成员判断）+ 回滚还原逐次 mv 屏障 + 无 journal 恢复走全新路径 + reconcile 子命令唯一入口 + `--reference-manifest` CLI 解析（三类命名参数统一解析）+ 退出码作用域契约 + `tools/internal/d-stage-audit-gen.py` 三子命令接口 + §五 Python 实现契约（唯一实现依据）） | v24 已替换 find-exec readlink 命令 + 9 类互斥判定 + `realpath -m` canonicalize 强化 + 6 fixture 覆盖（per codex v9 P1 #4）+ 移除 F-only gate / exit 6 / `f_only_exclusion_check` 字段（F-only 整体移到阶段三 O-4）+ TSV 字段编码 + manifest schema 检查路径 + validate-then-replace + 8/1 文件拆分 + tar.zst 可复现规范 + 目录级 staging + reconcile-first + 三子命令接口 + tar.zst 精确版本锁（per codex v9 P2 #6）+ `$GIT_TAG_REF` 读取（per codex v9 P2 #7）+ 固定事务目录 `.txn` + 结构化 journal + 8 场景故障注入测试要求（per codex v12 P1 #1-#4 journal 重写）+ `--reference-manifest` 实际 CLI 解析（per codex v11 P1 #2）+ 退出码子命令作用域契约 + journal 损坏退出码 9（per codex v11 P2 #4）+ OUT_DIR 排他锁 + 锁获取失败退出码 6（per codex v13 P1 #1）+ staging_dir 路径约束 + journal 字段严格校验（per codex v13 P1 #2）+ 旧对完整性 fail-closed + 11 场景故障注入（per codex v13 P2 #3）+ 排他锁位置前移（per codex v14 P1 #1）+ 三者事实一致性 fail-closed + 12 场景故障注入（per codex v14 P1 #2）+ 旧对精确指纹 + 未知内容 exit 9 + reconcile 子命令唯一入口 + 13 场景故障注入（per codex v15 P1 #1+#2）+ 共享分类函数 + 状态专属不变量 + 旧对自洽校验 + 16 场景故障注入（per codex v16 P1 #1+#2 + P2 #3 + codex v17 P2 #3 计数修正）+ 幂等 no-op + selfcheck_fail fail-closed 期望（per codex v17 P1 #1+#2）+ fsync 状态依赖数据屏障 + bash 草案降级伪代码 + §五 Python 实现契约 + no-op 复用严格 sidecar 校验 + 22 场景故障注入（5 power-loss + 1 no-op 重复行）（per codex v18 P1 #1+#2 + P2 #3）+ 跨目录 rename 源、目标双目录同步 + 3 个跨目录 rename 断电窗口场景 + 25 场景故障注入 + reconcile 活动规范标签统一 v20（per codex v19 P1 #1 + P2 #2）+ rolling_back 合法中途态白名单 + 无 journal 恢复走全新路径 + verified 清理 .txn 屏障 + 3 个新场景 + 28 场景故障注入（per codex v20 P1 #1+#2+#3）+ 白名单可执行等价判定（shell 带引号精确匹配 + Python 集合成员判断）（per codex v21 P1 #1）+ 回滚还原逐次 mv 屏障 + power_loss_rollback_mid_restore_window 期望确定性 (old,absent)（per codex v22 P1 #1）+ 回滚段逐次 fsync 失败 exit 5 统一 + power_loss_rollback_restore_fsync_window 三态契约场景（per codex v23 P1 #1 + P2 #2） |
 | **O-3（阶段二子项）** | 阶段二运行时 fixture 真机/VM 路径确认 | 阶段二 | 验证结果存 `docs/planning/evidence/4.0.2-i3/` | 待启动（**不阻塞阶段一**） |
 | **O-3（阶段三子项）** | 阶段三 F0 迁移 fixture 真机/VM 路径确认 | 阶段三 | 验证结果存 `docs/planning/evidence/o-stage/` | 待启动（**不阻塞阶段一 / 阶段二**） |
 | **O-4** | F0 端（fantgpu 3.3.8.126）源树就位 + SHA-256 锁定 | 阶段三前置（**阶段二完成 + 用户批准后才启动**） | — | 待启动 |
@@ -352,7 +352,7 @@ srvkm/include/common_ri_bridge.h）的处理：
 | --- | --- | --- | --- | --- |
 | **19** | **台账项** | P5 评估产出的台账条目 | **台账条目数** | `docs/investigations/fantgpu-base-update-evaluation.md` line 349-371 |
 | **59** | **语义裁决记录** | 19 项台账展开后的语义裁决条目（44 adapted-port + 7 已覆盖 + 6 retain + 2 runtime-verify） | **裁决条目数** | 台账项 → 裁决级展开（O-1 产物） |
-| **435** | **per-file 证据** | P2 manifest 提供的 per-file 分类证据（432 differs + 3 F-only） | **文件数** | `tools/r16-classify.py` 输出 |
+| **435** | **per-file 证据** | P2 manifest 提供的 per-file 分类证据（432 differs + 3 F-only） | **文件数** | `tools/internal/r16-classify.py` 输出 |
 
 ### 3.2 三个数字的阶段无关性（v6 固定 P5 口径）
 
@@ -364,7 +364,7 @@ srvkm/include/common_ri_bridge.h）的处理：
 - **59** 仅指 P5 语义裁决记录数（来自 P5 line 78 校验 7+6+2+44=59）；阶段一
   中性记录数由 O-1 实际闭合决定（**不等于** 59）；阶段二 `4.0.2-i3` 元数据
   中记录的中性裁决条目数同样**不预设**等于 59。
-- **435** 仅指 P5 per-file 证据（432 differs + 3 F-only，`tools/r16-classify.py`
+- **435** 仅指 P5 per-file 证据（432 differs + 3 F-only，`tools/internal/r16-classify.py`
   输出）；阶段一 D→D_stage diff 数 = O-2 实际生成的 differs 行数
   （**不等于** 435，**不预设**等于 432）；阶段二包载荷文件数 = `4.0.2-i3`
   包内容（**不等于** 435，**不含** 3 F-only）；阶段三追溯到 D 端的 per-file
@@ -544,7 +544,7 @@ release commit 的可验证锁。
 > 均以 python3 语义定义于 block 后段注释，按 bash 直接执行会得到
 > command-not-found。**v19 起本 block 定位 = 算法伪代码草案**（bash 语法
 > 仅作算法示意，不作为可直接执行脚本）；唯一可执行入口 =
-> `tools/d-stage-audit-gen.py snapshot`（python3），**实现唯一依据 =
+> `tools/internal/d-stage-audit-gen.py snapshot`（python3），**实现唯一依据 =
 > `030-d-stage-audit.md` §五 v19 Python 契约**（helper 签名 + fsync 顺序 +
 > 退出码 + 恢复检查先行于 staging 生成的执行顺序）。
 
@@ -863,7 +863,7 @@ fi
 #                                     # （v16 per codex v15 P1 #1；plan=absent 时为 none）
 #
 # journal 持久化（per codex v12 P1 #4 显式 syscall 路径；实现语言 =
-# python3，O-2 工具 `tools/d-stage-audit-gen.py` 内逐字实现；bash 草图
+# python3，O-2 工具 `tools/internal/d-stage-audit-gen.py` 内逐字实现；bash 草图
 # 通过同名 persist_journal 函数委托同一序列；**严禁**以全局 `sync`(1)
 # 替代——sync 不保证目标文件 fsync 也不做目录 fsync）：
 #   def persist_journal(path, fields):
@@ -1637,7 +1637,7 @@ else
   exit 1
 fi
 
-# bash 草图等价 helper（真实实现 = tools/d-stage-audit-gen.py 内 python3
+# bash 草图等价 helper（真实实现 = tools/internal/d-stage-audit-gen.py 内 python3
 # 函数；v19 per codex v18 P1 #2：本 block 为伪代码，这些函数定义排在
 # 调用点之后仅作语义参考，不代表可直接执行；persist_journal 语义见上方
 # 注释 ①②③，fsync_file / fsync_dir 语义见 v19 状态依赖数据屏障注释；
@@ -1773,13 +1773,13 @@ v24=29），
    同一契约（v24 per codex v23 P2 #2 故障注入场景覆盖）。
 
 **reconcile 子命令规范（v24 per codex v15 P1 #2：唯一合法入口 =
-`tools/d-stage-audit-gen.py reconcile`；禁止任何独立 shell 脚本入口，
+`tools/internal/d-stage-audit-gen.py reconcile`；禁止任何独立 shell 脚本入口，
 与 030-d-stage-audit §五"唯一可执行入口 + 严禁独立入口"约束一致）**：
 
 ```bash
 # 活动规范（v24）：reconcile 必须以子命令形式调用，命名参数与退出码
 # 见 030-d-stage-audit.md §五 子命令 3：
-tools/d-stage-audit-gen.py reconcile \
+tools/internal/d-stage-audit-gen.py reconcile \
   --tarball docs/planning/evidence/4.0.2-i3/d-stage-snapshot.tar.zst \
   --manifest docs/planning/evidence/d-stage-audit.D_stage.manifest.tsv
 # 退出码：0 = 4 字段全部匹配 / 1 = NF≠4 或字段编码错误 /
@@ -1789,7 +1789,7 @@ tools/d-stage-audit-gen.py reconcile \
 以下 bash 片段**仅为历史对照**（v9-v11 演化记录，**不再是活动入口**；
 v16 per codex v15 P1 #2：旧 $1/$2 位置参数入口与三子命令唯一入口、
 命名参数约束、"禁止独立 shell 入口"直接矛盾，已废弃。若未来需要独立
-命令行工具，必须包装为 `tools/d-stage-audit-gen.py reconcile` 的实现
+命令行工具，必须包装为 `tools/internal/d-stage-audit-gen.py reconcile` 的实现
 内部逻辑，不得作为独立脚本对外暴露）：
 
 ```bash
@@ -2046,13 +2046,13 @@ qoder / codex **不得**单方面决定或候选化（v7 "候选命名（待 dsh
 
 | 维度 | 验证项 | fixture / 工具 |
 | --- | --- | --- |
-| **源码复现** | 双 clean-build 字节一致 | `scripts/build.sh` + 确定性构建门禁 |
+| **源码复现** | 双 clean-build 字节一致 | `tools/build.sh` + 确定性构建门禁 |
 | **包载荷** | dpkg-deb 校验 + 控制字段 | `dpkg-deb -I` / `dpkg-deb -c` |
-| **许可** | `tools/audit-licenses.py` 无新 NOASSERTION / 机密路径 | `tools/audit-licenses.py` |
+| **许可** | `tools/internal/audit-licenses.py` 无新 NOASSERTION / 机密路径 | `tools/internal/audit-licenses.py` |
 | **DKMS / 模块加载** | 模块 vermagic / 符号验证 | `tests/unit/run-r16-build-bc-map-tests.sh` |
-| **运行时** | DRM device open / fbdev mmap / DMA-BUF self-import / VA-API 解码 / suspend/resume（Deepin-derived staging 既有能力） | `tools/run-dmabuf-regression-test.sh`（self-import 子集）+ `tools/run-vaapi-decode-test.sh` + `tools/probe-suspend-resume-state.sh` + `tests/runtime/run-capability-baseline.sh` |
+| **运行时** | DRM device open / fbdev mmap / DMA-BUF self-import / VA-API 解码 / suspend/resume（Deepin-derived staging 既有能力） | `tools/internal/run-dmabuf-regression-test.sh`（self-import 子集）+ `tools/internal/run-vaapi-decode-test.sh` + `tools/internal/probe-suspend-resume-state.sh` + `tests/runtime/run-capability-baseline.sh` |
 | **安装 / 回退** | dpkg 安装成功 + 完整系统快照回退成功 | 手动记录 + 验证脚本 |
-| **门禁汇总** | `scripts/check-docs.sh` rc=0 + `tools/validate-collab.py` rc=0 + `tools/r16-gate.py` rc=0 | 仓库既有门禁 |
+| **门禁汇总** | `tools/check-docs.sh` rc=0 + `tools/internal/validate-collab.py` rc=0 + `tools/internal/r16-gate.py` rc=0 | 仓库既有门禁 |
 
 **阶段二验证的硬约束**：
 
@@ -2065,7 +2065,7 @@ qoder / codex **不得**单方面决定或候选化（v7 "候选命名（待 dsh
 
 | 维度 | 验证项 | fixture / 工具 |
 | --- | --- | --- |
-| **静态** | 编译通过 + schema 校验 + 文档校验 + 许可校验 | `gcc` / `clang` + `tests/unit/run-030-*.sh` + `scripts/check-docs.sh` + `tools/audit-licenses.py` |
+| **静态** | 编译通过 + schema 校验 + 文档校验 + 许可校验 | `gcc` / `clang` + `tests/unit/run-030-*.sh` + `tools/check-docs.sh` + `tools/internal/audit-licenses.py` |
 | **per-030 运行时** | 每个 030-NNN 的运行时判据（按语义 BC 分组，详 §七.2 子表） | 详下 |
 | **O_stage 整体验收** | 全栈功能 + 性能基线 + 错误零增长 | 仓库既有 CI + 新增 fixture |
 | **回退验证** | 每个 030-NNN 回退到 O_stage 前一状态成功 | `patches/030-NNN.meta.json` 的 rollback 字段 |
@@ -2075,12 +2075,12 @@ qoder / codex **不得**单方面决定或候选化（v7 "候选命名（待 dsh
 | 语义分组 | 运行时判据 | 已存在的 fixture / 工具 | UNVERIFIED 标注 |
 | --- | --- | --- | --- |
 | BC-04 srvkm/ftx-public-headers | header 静态可用性 + 编译通过 | `tests/unit/run-r16-build-bc-map-tests.sh` | — |
-| BC-07 srvkm/pdp-headers | DMA-BUF self-import + pdp 探测 | `tools/run-dmabuf-regression-test.sh` + `tools/probe-pdp-invisible-read.c` | cross-device PRIME 维持 UNVERIFIED |
-| BC-09 srvkm/dpu-display | DRM device open + drm-topology + vblank probe | `tools/probe-drm-topology.c` + `tools/probe-drm-vblank.c` | fbdev mmap 集成 UNVERIFIED |
+| BC-07 srvkm/pdp-headers | DMA-BUF self-import + pdp 探测 | `tools/internal/run-dmabuf-regression-test.sh` + `tools/internal/probe-pdp-invisible-read.c` | cross-device PRIME 维持 UNVERIFIED |
+| BC-09 srvkm/dpu-display | DRM device open + drm-topology + vblank probe | `tools/internal/probe-drm-topology.c` + `tools/internal/probe-drm-vblank.c` | fbdev mmap 集成 UNVERIFIED |
 | BC-13 gpu/hal | 编译通过 + 单元断言 | `tests/unit/run-r16-*.sh` 编译套件 | hal suspend/resume 真机 UNVERIFIED |
-| BC-16 dma | DMA-BUF self-import | `tools/run-dmabuf-regression-test.sh` + `tools/probe-dmabuf-self-import.c` | vblank 守卫 + cross-device UNVERIFIED |
-| BC-17 power | suspend/resume 真机观测 | `tools/probe-suspend-resume-state.sh` + `tests/unit/run-suspend-resume-tests.sh` | rail gating 维持 UNVERIFIED |
-| BC-18 vpu | VA-API 解码 | `tools/run-vaapi-decode-test.sh` + `tests/unit/run-vaapi-decode-tests.sh` + `tools/probe-vaapi.c` | 长测 UNVERIFIED |
+| BC-16 dma | DMA-BUF self-import | `tools/internal/run-dmabuf-regression-test.sh` + `tools/internal/probe-dmabuf-self-import.c` | vblank 守卫 + cross-device UNVERIFIED |
+| BC-17 power | suspend/resume 真机观测 | `tools/internal/probe-suspend-resume-state.sh` + `tests/unit/run-suspend-resume-tests.sh` | rail gating 维持 UNVERIFIED |
+| BC-18 vpu | VA-API 解码 | `tools/internal/run-vaapi-decode-test.sh` + `tests/unit/run-vaapi-decode-tests.sh` + `tools/internal/probe-vaapi.c` | 长测 UNVERIFIED |
 | 通用能力基线 | 设备基础能力探测 | `tests/runtime/run-capability-baseline.sh` | — |
 
 **阶段三验证的硬约束**：
@@ -2329,7 +2329,7 @@ qoder / codex **不得**单方面决定或候选化（v7 "候选命名（待 dsh
 | 文件路径 | `docs/planning/030-patch-rederivation-design.md` |
 | 创建日期 | 2026-09-05 |
 | 起草 | qoder |
-| 版本 | **v24**（codex v9 初审 5 P1 + 3 P2 闭环后 + codex v10 初审 4 P1 + 1 P2 闭环后 + codex v11 初审 2 P1 + 2 P2 闭环后 + codex v12 初审 4 P1 + 1 P2 闭环后 + codex v13 初审 2 P1 + 2 P2 闭环后 + codex v14 初审 2 P1 + 2 P2 闭环后 + codex v15 初审 2 P1 + 1 P2 闭环后 + codex v16 初审 2 P1 + 1 P2 闭环后 + codex v17 初审 2 P1 + 2 P2 闭环后 + codex v18 初审 2 P1 + 1 P2 闭环后 + codex v19 初审 1 P1 + 1 P2 闭环后 + codex v20 初审 3 P1 闭环后 + codex v21 初审 1 P1 闭环后 + codex v22 初审 1 P1 闭环后 + codex v23 初审 1 P1 + 1 P2 闭环后；本版：reconcile 全局按 (file_type, relative_path) 排序 / 目录级 staging + reconcile-first + 固定事务目录 `.txn` + 结构化 journal 协议 + journal 先于移动（per codex v12 P1 #1-#3）/ OUT_DIR 排他锁 fcntl.flock（先于一切变更）+ staging_dir 路径约束 + 旧对完整性 fail-closed（per codex v13 P1 #1+#2 + P2 #3）+ 锁时序前移 + 三者事实一致性 fail-closed + 回滚内容感知（per codex v14 P1 #1+#2）/ 旧对精确指纹 + 未知内容 exit 9 + reconcile 子命令唯一入口（per codex v15 P1 #1+#2）/ 共享分类函数 + 状态专属不变量 + 旧对自洽校验（per codex v16 P1 #1+#2 + P2 #3）/ 4a 幂等 no-op（旧新指纹相等成功返回）+ selfcheck_fail 期望 fail-closed + 故障注入计数 16 场景修正（per codex v17 P1 #1+#2 + P2 #3）/ fsync 状态依赖数据屏障（staging/.txn/OUT_DIR 目录持久化顺序，断电一致性）+ 5 个 power-loss 故障注入场景 + bash 草案降级算法伪代码 + audit §五 Python 实现契约 + no-op 复用严格 sidecar 校验 + noop_duplicate_sidecar 故障场景（per codex v18 P1 #1+#2 + P2 #3）/ 跨目录 rename 源、目标双目录同步（备份 .txn + OUT_DIR；回滚 OUT_DIR + .txn）+ 3 个跨目录 rename 断电窗口故障场景 + 故障注入 25 场景 + reconcile 活动规范标签统一 v20（per codex v19 P1 #1 + P2 #2）/ rolling_back 合法中途态白名单（统一混合判定仅对非 rolling_back 生效）+ 2 个回滚中途窗口场景 + 无 journal 恢复走全新路径（废除"OUT_DIR 自洽即 exit 0"捷径）+ 1 个 journal 删除后 .txn 残留窗口场景 + verified 清理顺序 rm old.* → fsync_dir(.txn) → rm journal → rm -rf .txn → fsync_dir(OUT_DIR) + 故障注入 28 场景（per codex v20 P1 #1+#2+#3）/ rolling_back 白名单可执行等价判定（shell 带引号精确匹配 + Python 集合成员判断 rolling_back_mid_state_ok，per codex v21 P1 #1）/ 9 类 symlink 跨树判定 `realpath -m` canonicalize 强化 + 6 fixture 覆盖（per codex v9 P1 #4）/ `tools/d-stage-audit-gen.py` 三个子命令 gen-manifest + snapshot + reconcile 接口（per codex v9 P1 #5）/ tar.zst 精确版本锁定 tar 1.35 + zstd 1.5.7 工具代码内显式拒绝非目标版本（per codex v9 P2 #6）/ 阶段三 `git checkout -b` ref 改为 `$GIT_TAG_REF` 从 4.0.2-i3.meta.json `git_tag_ref` 字段读取，禁止硬编码（per codex v9 P2 #7）/ `--reference-manifest` 实际 CLI 解析 + 三类命名参数统一解析 + 未知参数 fail-closed（per codex v11 P1 #2 + codex v14 P2 #4）/ 退出码子命令作用域契约（per codex v11 P2 #4）/ 文件 fsync + rename + 目录 fsync 显式路径（per codex v12 P1 #4）/ 全文档当前状态标签统一 v12（per codex v12 P2 #5）/ 退出码契约当前标签统一 v14（per codex v13 P2 #4）/ 活动接口标签统一 v15（per codex v14 P2 #3）/ 活动规范标签统一 v16（per codex v15 P2 #3）/ 活动规范 v16/v15 标签残留统一 v18（per codex v17 P2 #4）/ 活动规范标签统一 v19（per codex v18 P1 #2 伪代码降级配套）/ 活动规范标签统一 v20（per codex v19 P2 #2）/ 活动规范标签统一 v21（per codex v20 P1 #2 无 journal 恢复配套）/ 活动规范标签统一 v22（per codex v21 P1 #1 白名单修复配套）/ 回滚段 fsync 失败退出码统一 exit 5 + 回滚还原 fsync 窗口场景（per codex v23 P1 #1+P2 #2）） |
+| 版本 | **v24**（codex v9 初审 5 P1 + 3 P2 闭环后 + codex v10 初审 4 P1 + 1 P2 闭环后 + codex v11 初审 2 P1 + 2 P2 闭环后 + codex v12 初审 4 P1 + 1 P2 闭环后 + codex v13 初审 2 P1 + 2 P2 闭环后 + codex v14 初审 2 P1 + 2 P2 闭环后 + codex v15 初审 2 P1 + 1 P2 闭环后 + codex v16 初审 2 P1 + 1 P2 闭环后 + codex v17 初审 2 P1 + 2 P2 闭环后 + codex v18 初审 2 P1 + 1 P2 闭环后 + codex v19 初审 1 P1 + 1 P2 闭环后 + codex v20 初审 3 P1 闭环后 + codex v21 初审 1 P1 闭环后 + codex v22 初审 1 P1 闭环后 + codex v23 初审 1 P1 + 1 P2 闭环后；本版：reconcile 全局按 (file_type, relative_path) 排序 / 目录级 staging + reconcile-first + 固定事务目录 `.txn` + 结构化 journal 协议 + journal 先于移动（per codex v12 P1 #1-#3）/ OUT_DIR 排他锁 fcntl.flock（先于一切变更）+ staging_dir 路径约束 + 旧对完整性 fail-closed（per codex v13 P1 #1+#2 + P2 #3）+ 锁时序前移 + 三者事实一致性 fail-closed + 回滚内容感知（per codex v14 P1 #1+#2）/ 旧对精确指纹 + 未知内容 exit 9 + reconcile 子命令唯一入口（per codex v15 P1 #1+#2）/ 共享分类函数 + 状态专属不变量 + 旧对自洽校验（per codex v16 P1 #1+#2 + P2 #3）/ 4a 幂等 no-op（旧新指纹相等成功返回）+ selfcheck_fail 期望 fail-closed + 故障注入计数 16 场景修正（per codex v17 P1 #1+#2 + P2 #3）/ fsync 状态依赖数据屏障（staging/.txn/OUT_DIR 目录持久化顺序，断电一致性）+ 5 个 power-loss 故障注入场景 + bash 草案降级算法伪代码 + audit §五 Python 实现契约 + no-op 复用严格 sidecar 校验 + noop_duplicate_sidecar 故障场景（per codex v18 P1 #1+#2 + P2 #3）/ 跨目录 rename 源、目标双目录同步（备份 .txn + OUT_DIR；回滚 OUT_DIR + .txn）+ 3 个跨目录 rename 断电窗口故障场景 + 故障注入 25 场景 + reconcile 活动规范标签统一 v20（per codex v19 P1 #1 + P2 #2）/ rolling_back 合法中途态白名单（统一混合判定仅对非 rolling_back 生效）+ 2 个回滚中途窗口场景 + 无 journal 恢复走全新路径（废除"OUT_DIR 自洽即 exit 0"捷径）+ 1 个 journal 删除后 .txn 残留窗口场景 + verified 清理顺序 rm old.* → fsync_dir(.txn) → rm journal → rm -rf .txn → fsync_dir(OUT_DIR) + 故障注入 28 场景（per codex v20 P1 #1+#2+#3）/ rolling_back 白名单可执行等价判定（shell 带引号精确匹配 + Python 集合成员判断 rolling_back_mid_state_ok，per codex v21 P1 #1）/ 9 类 symlink 跨树判定 `realpath -m` canonicalize 强化 + 6 fixture 覆盖（per codex v9 P1 #4）/ `tools/internal/d-stage-audit-gen.py` 三个子命令 gen-manifest + snapshot + reconcile 接口（per codex v9 P1 #5）/ tar.zst 精确版本锁定 tar 1.35 + zstd 1.5.7 工具代码内显式拒绝非目标版本（per codex v9 P2 #6）/ 阶段三 `git checkout -b` ref 改为 `$GIT_TAG_REF` 从 4.0.2-i3.meta.json `git_tag_ref` 字段读取，禁止硬编码（per codex v9 P2 #7）/ `--reference-manifest` 实际 CLI 解析 + 三类命名参数统一解析 + 未知参数 fail-closed（per codex v11 P1 #2 + codex v14 P2 #4）/ 退出码子命令作用域契约（per codex v11 P2 #4）/ 文件 fsync + rename + 目录 fsync 显式路径（per codex v12 P1 #4）/ 全文档当前状态标签统一 v12（per codex v12 P2 #5）/ 退出码契约当前标签统一 v14（per codex v13 P2 #4）/ 活动接口标签统一 v15（per codex v14 P2 #3）/ 活动规范标签统一 v16（per codex v15 P2 #3）/ 活动规范 v16/v15 标签残留统一 v18（per codex v17 P2 #4）/ 活动规范标签统一 v19（per codex v18 P1 #2 伪代码降级配套）/ 活动规范标签统一 v20（per codex v19 P2 #2）/ 活动规范标签统一 v21（per codex v20 P1 #2 无 journal 恢复配套）/ 活动规范标签统一 v22（per codex v21 P1 #1 白名单修复配套）/ 回滚段 fsync 失败退出码统一 exit 5 + 回滚还原 fsync 窗口场景（per codex v23 P1 #1+P2 #2）） |
 | 状态 | 设计稿（进行中，未具终审条件） |
 | 三阶段 | 阶段一：D → D_stage / 阶段二：D_stage → 4.0.2-i3 / 阶段三：4.0.2-i3 + F0 → O_stage → 5.0.0-i1 |
 | 上下游 | 上游 = P5；下游 = R-F 第一批（仅阶段三） |
@@ -2351,7 +2351,7 @@ qoder / codex **不得**单方面决定或候选化（v7 "候选命名（待 dsh
   rollback 字段、台账引用）。
 - **台账**：`030-mapping-table.md` 增加「5.x 变更台账」小节（或新建 5.x
   台账文档）；每条改动登记：来源、语义、验证状态、链基 / after hash。
-- **印证门禁**：发布前用 `tools/o4-f0-lock-gen.py manifest`（或同族工具）
+- **印证门禁**：发布前用 `tools/internal/o4-f0-lock-gen.py manifest`（或同族工具）
   重算 O_stage 物化树 hash，必须等于「F0 快照 + 全链 030-NNN 重放」树 hash；
   不一致即阻塞发布。
 - **基座更换流程（未来）**：新 vendor 基座 = F0′ 锁定（O-4 流程复用）→

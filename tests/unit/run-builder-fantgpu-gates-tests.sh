@@ -13,8 +13,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-BUILDER="$ROOT/scripts/build-innogpu-driver.sh"
-F_GENERATOR="$ROOT/scripts/generate-fantgpu-maintainer-scripts.sh"
+BUILDER="$ROOT/tools/build-innogpu-driver.sh"
+F_GENERATOR="$ROOT/tools/generate-fantgpu-maintainer-scripts.sh"
 cd "$ROOT"
 export LC_ALL=C
 
@@ -114,14 +114,14 @@ else
 fi
 
 # t10 静态契约：F 分支输入预检只要求 F manifest（不调 extract-vendor-binaries）
-if grep -Fq 'tools/validate-binary-manifest-fantgpu.py' "$BUILDER"; then
+if grep -Fq 'tools/internal/validate-binary-manifest-fantgpu.py' "$BUILDER"; then
     ok t10
 else
     bad t10 "F input precheck missing"
 fi
 
 # t11 静态契约：F 分支 md5sums 重生成调用
-if grep -Fq 'tools/gen-package-md5sums.py --root "$P"' "$BUILDER"; then
+if grep -Fq 'tools/internal/gen-package-md5sums.py --root "$P"' "$BUILDER"; then
     ok t11
 else
     bad t11 "md5sums generation missing"
@@ -146,7 +146,7 @@ else
 fi
 
 # t14 静态契约：release-audit 门禁无条件调用恢复（批 3 C1-②；无跳过行）
-if grep -Fq 'scripts/check-release-package.sh "$OUT_DEB" || { echo "builder_package_boundary=FAIL"; exit 1; }' "$BUILDER" \
+if grep -Fq 'tools/check-release-package.sh "$OUT_DEB" || { echo "builder_package_boundary=FAIL"; exit 1; }' "$BUILDER" \
    && ! grep -Fq 'release-audit gate pending' "$BUILDER"; then
     ok t14
 else
@@ -197,8 +197,8 @@ fi
 
 # t18 编译后必须按 i3 基线检查 shipped object 共享结构的实际 BTF 布局。
 if grep -Fq 'builder_shipped_abi=PASS size=140536 members=115' "$BUILDER" \
-   && grep -Fq '"pvr_resume_count": 140528' "$ROOT/tools/check-fantgpu-shipped-abi.py" \
-   && grep -Fq 'python3 "$ROOT/tools/check-fantgpu-shipped-abi.py"' "$BUILDER" \
+   && grep -Fq '"pvr_resume_count": 140528' "$ROOT/tools/internal/check-fantgpu-shipped-abi.py" \
+   && grep -Fq 'python3 "$ROOT/tools/internal/check-fantgpu-shipped-abi.py"' "$BUILDER" \
    && grep -Fq -- '--module fantgpu.ko' "$BUILDER"; then
     ok t18
 else

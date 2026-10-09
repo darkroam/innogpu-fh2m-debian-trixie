@@ -5,7 +5,7 @@
 # 假 patch 链验证 路径边界 / fail-closed / 链点校验 / 事务回滚与恢复 /
 # 幂等重跑 / patch SHA 校验。所有用例秒级（假树），不触碰真实 F0/030 输入。
 #
-# 只读 scripts/materialize-o-stage.sh；写入 /tmp 测试目录；零保护区写入。
+# 只读 tools/materialize-o-stage.sh；写入 /tmp 测试目录；零保护区写入。
 # 退出码：0=全过；1=任一用例失败。
 
 set -euo pipefail
@@ -15,7 +15,7 @@ cd "$ROOT"
 LC_ALL=C
 export LC_ALL
 
-MATERIALIZE="$ROOT/scripts/materialize-o-stage.sh"
+MATERIALIZE="$ROOT/tools/materialize-o-stage.sh"
 TMP="$(mktemp -d "${TMPDIR:-/tmp}/ostage-tests.XXXXXX")"
 trap 'rm -rf -- "$TMP"' EXIT
 
@@ -23,7 +23,7 @@ trap 'rm -rf -- "$TMP"' EXIT
 tree_hash() {
     python3 - "$1" <<'PY'
 import importlib.util, hashlib, sys
-spec = importlib.util.spec_from_file_location("o4", "tools/o4-f0-lock-gen.py")
+spec = importlib.util.spec_from_file_location("o4", "tools/internal/o4-f0-lock-gen.py")
 o4 = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(o4)
 rows = list(o4.walk_rows(sys.argv[1]))

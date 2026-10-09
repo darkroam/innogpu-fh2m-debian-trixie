@@ -26,7 +26,7 @@
 BAT0 全程 `present=1`；插回后 `ADP1 online=1`、BAT0 capacity=95，电池内核错误为 0。
 运行 workaround 验收通过。优先修复路径仍是 BIOS/EC/DSDT；补丁是本机内核兜底。
 
-没有该内核补丁时，现场可先运行 [`scripts/restore-bat0.sh`](../../scripts/restore-bat0.sh)。脚本从普通用户
+没有该内核补丁时，现场可先运行 [`scripts/restore-bat0.sh`](../../tools/restore-bat0.sh)。脚本从普通用户
 启动并自动提权，记录完整证据，然后对 ACPI `PNP0C0A:*` battery 设备执行 unbind/bind；它不要求
 电源线处于某一状态，也不卸载模块、不重启、不触发 PM。脚本只能重新探测仍由 ACPI/EC 暴露的电池，
 不能在固件完全不暴露电池设备时伪造 `BAT0`。

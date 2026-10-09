@@ -255,14 +255,14 @@ echo "OK: ${OUT_DIR}/d-stage-audit.${LABEL}.manifest.tsv ($(LC_ALL=C wc -l < "${
 
 ```bash
 # 调用 D（输入 lock 1）
-tools/d-stage-audit-gen.py gen-manifest \
+tools/internal/d-stage-audit-gen.py gen-manifest \
   --d-root /path/to/repository/third_party/innogpu-fh2m-deepin-202504/root/usr/src/innogpu-kernel-2.2 \
   --d-stage-root /tmp/r16-d-stage \
   --out-dir docs/planning/evidence \
   --label D
 
 # 调用 D_stage（输入 lock 2；**独立调用，参数明确，不复用 D 的状态**）
-tools/d-stage-audit-gen.py gen-manifest \
+tools/internal/d-stage-audit-gen.py gen-manifest \
   --d-root /path/to/repository/third_party/innogpu-fh2m-deepin-202504/root/usr/src/innogpu-kernel-2.2 \
   --d-stage-root /tmp/r16-d-stage \
   --out-dir docs/planning/evidence \
@@ -345,7 +345,7 @@ O-2 实际生成。
 
 ## 五、生成脚本占位
 
-**脚本路径**：`tools/d-stage-audit-gen.py`（**非保护区路径**，`tools/` 不在
+**脚本路径**：`tools/internal/d-stage-audit-gen.py`（**非保护区路径**，`tools/` 不在
 保护区清单内）。
 
 **当前状态（v24）**：脚本**仍为占位**（v5 占位升级，v24 接口扩展），未实际生成；待 O-1 全闭合 +
@@ -354,9 +354,9 @@ D / D_stage tree-manifest 锁定后由 qoder 实现并 codex 复审。
 **脚本接口（v24 占位规范，per codex v9 P1 #5 扩展 + codex v10 P1 #1+#2+#3+#4 + codex v11 P1 #1+#2 + codex v11 P2 #4 + codex v12 P1 #1-#4 + codex v13 P1 #1+#2 + P2 #3 + codex v14 P1 #1+#2 + codex v15 P1 #1+#2 + codex v16 P1 #1+#2 + P2 #3 + codex v17 P1 #1+#2 + P2 #3 + codex v18 P1 #1+#2 + P2 #3 + codex v19 P1 #1 + P2 #2 + codex v20 P1 #1+#2+#3 + codex v21 P1 #1 + codex v22 P1 #1 + codex v23 P1 #1+P2 #2 修订）**：
 
 ```python
-# tools/d-stage-audit-gen.py（v24 占位，待 O-1 全闭合 + tree-manifest 锁定后实现）
+# tools/internal/d-stage-audit-gen.py（v24 占位，待 O-1 全闭合 + tree-manifest 锁定后实现）
 #
-# 唯一可执行入口：tools/d-stage-audit-gen.py <subcommand> [args]
+# 唯一可执行入口：tools/internal/d-stage-audit-gen.py <subcommand> [args]
 #
 # 三个子命令（v24 per codex v9 P1 #5 扩展 + codex v10 P1 #1+#2+#3+#4 修订 + codex v11 P1 #1+#2 进一步修订 + codex v11 P2 #4 退出码作用域契约 + codex v12 P1 #1-#4 journal 协议修订 + codex v13 P1 #1+#2 + P2 #3 排他锁/路径约束/旧对完整性修订 + codex v14 P1 #1+#2 锁时序/事实一致性修订 + codex v15 P1 #1+#2 旧对指纹/reconcile 子命令入口修订 + codex v16 P1 #1+#2 + P2 #3 共享分类/状态不变量/旧对自洽修订 + codex v17 P1 #1+#2 + P2 #3 幂等 no-op/selfcheck fail-closed/16 场景计数修正修订 + codex v18 P1 #1+#2 + P2 #3 fsync 屏障/Python 契约/no-op 严格 sidecar 校验/22 场景修订 + codex v19 P1 #1 + P2 #2 跨目录 rename 双目录同步/3 断电窗口场景/25 场景/reconcile 标签统一修订 + codex v20 P1 #1+#2+#3 rolling_back 白名单/无 journal 走全新路径/verified 清理 .txn 屏障/28 场景修订 + codex v21 P1 #1 白名单可执行等价判定修订 + codex v22 P1 #1 回滚还原逐次 mv 屏障修订 + codex v23 P1 #1+P2 #2 回滚段 fsync 退出码统一 exit 5/回滚还原 fsync 窗口三态契约场景 29 场景修订）：
 #   1) gen-manifest  →  生成 9 文件 O-2 输出（主表 + 专表 + genesis + 2 manifest + 4 .sha256）
@@ -581,7 +581,7 @@ D / D_stage tree-manifest 锁定后由 qoder 实现并 codex 复审。
 #          v15 P1 #1；要求 dsh 人工清理）
 #     78 = EX_CONFIG（LC_ALL≠C / tar/zstd 版本不符 / OUT_DIR 文件系统不保证 atomic rename）
 #   调用示例（v24）：
-#     tools/d-stage-audit-gen.py snapshot \
+#     tools/internal/d-stage-audit-gen.py snapshot \
 #       --d-stage-root /tmp/r16-d-stage \
 #       --out-dir docs/planning/evidence/4.0.2-i3 \
 #       --reference-manifest docs/planning/evidence/d-stage-audit.D_stage.manifest.tsv
@@ -628,7 +628,7 @@ D / D_stage tree-manifest 锁定后由 qoder 实现并 codex 复审。
 # 白名单可执行等价判定修订 + codex v22 P1 #1 回滚还原逐次 mv 屏障修订 +
 # codex v23 P1 #1+P2 #2 回滚段 fsync 退出码统一 exit 5/回滚还原 fsync 窗口
 # 三态契约修订：design §5.3 bash 草案已降级
-# 为算法伪代码，本契约是 tools/d-stage-audit-gen.py snapshot 子命令实现的
+# 为算法伪代码，本契约是 tools/internal/d-stage-audit-gen.py snapshot 子命令实现的
 # 唯一依据；契约与草案冲突时以本契约为准） ===
 #
 # 执行顺序（与 bash 伪代码线性排版不同，恢复检查**先于** staging 生成）：
@@ -1353,9 +1353,9 @@ classification \t d_rel \t d_stage_rel \t symlink_target_d \t symlink_target_dst
 **自校验流程**：
 
 ```
-Run 1: tools/d-stage-audit-gen.py --d-root D --d-stage-root D_stage --out-dir OUT
+Run 1: tools/internal/d-stage-audit-gen.py --d-root D --d-stage-root D_stage --out-dir OUT
         → d-stage-audit.tsv (sha256 = H1)
-Run 2: tools/d-stage-audit-gen.py --d-root D --d-stage-root D_stage --out-dir OUT
+Run 2: tools/internal/d-stage-audit-gen.py --d-root D --d-stage-root D_stage --out-dir OUT
         → d-stage-audit.tsv (sha256 = H2)
 Assert H1 == H2  # 确定性自校验通过
 ```
@@ -1702,7 +1702,7 @@ schema 校验失败按 §九 失败关闭规则 exit 1。
 
 - **v15 关键变化（per codex v14 2 P1 + 2 P2）**：v15 在 v14 基础上叠加 排他锁位置前移（参数解析之后、任何文件系统变更之前，per codex v14 P1 #1）/ journal 计划 + .txn/old.* + OUT_DIR 三者事实一致性 fail-closed 校验（内容感知区分新旧；回滚去 || true，mv 失败 exit 9 + journal 重入收敛，per codex v14 P1 #2）/ 活动接口 v12/v13 标签统一 v15（per codex v14 P2 #3）/ 三类命名参数统一真实解析 + 未知参数 fail-closed（per codex v14 P2 #4）/ 故障注入 11 场景 + genesis schema 1.5。v15 O-2 闭合判据沿用 v14 的 16 项结构（仅规范修订）。
 
-- **v16 关键变化（per codex v15 2 P1 + 1 P2）**：v16 在 v15 基础上叠加 journal 新增 old_tar_sha256 / old_sha_sha256 旧对精确指纹，恢复时严格匹配（OUT_DIR 分类 absent/new/old/unknown，未知/损坏/替换内容一律 exit 9；.sha256 精确格式 + hash 字段校验，per codex v15 P1 #1）/ reconcile 唯一合法入口统一为 `tools/d-stage-audit-gen.py reconcile`，旧 v11 bash 独立脚本降级为历史对照段（per codex v15 P1 #2）/ 活动规范 v8/v10/v12 标签残留统一 v16（per codex v15 P2 #3）/ 故障注入 12 场景 + genesis schema 1.6。v16 O-2 闭合判据沿用 v15 的 16 项结构（仅规范修订）。
+- **v16 关键变化（per codex v15 2 P1 + 1 P2）**：v16 在 v15 基础上叠加 journal 新增 old_tar_sha256 / old_sha_sha256 旧对精确指纹，恢复时严格匹配（OUT_DIR 分类 absent/new/old/unknown，未知/损坏/替换内容一律 exit 9；.sha256 精确格式 + hash 字段校验，per codex v15 P1 #1）/ reconcile 唯一合法入口统一为 `tools/internal/d-stage-audit-gen.py reconcile`，旧 v11 bash 独立脚本降级为历史对照段（per codex v15 P1 #2）/ 活动规范 v8/v10/v12 标签残留统一 v16（per codex v15 P2 #3）/ 故障注入 12 场景 + genesis schema 1.6。v16 O-2 闭合判据沿用 v15 的 16 项结构（仅规范修订）。
 
 - **v17 关键变化（per codex v16 2 P1 + 1 P2）**：v17 在 v16 基础上叠加 共享 classify_out_pair() 分类函数（即时回滚与启动恢复共用；sidecar 单行 wc -l==1 + 精确格式 + hash 字段，仅精确 new 可删除，per codex v16 P1 #1）/ 状态专属不变量（verified/sha_committed 必须完整新对、staged 不得 new、backed_up sha 必须 absent、tarball_committed tar 必须 new；违反 exit 9 不清理证据，per codex v16 P1 #2）/ 4a 旧对自洽校验（hash 字段 == old_tar_sha256 + sha256sum -c，失败 exit 9，损坏证据不被静默丢弃，per codex v16 P2 #3）/ 故障注入 16 场景（v18 per codex v17 P2 #3 计数口径修正，v17 文本当时误标 14）+ genesis schema 1.7。v17 O-2 闭合判据沿用 v16 的 16 项结构（仅规范修订）。
 
@@ -1758,7 +1758,7 @@ O-2 视为**全闭合**（阶段一即可进入终审）**当且仅当**：
 1. O-1 全闭合（19 项台账全部展开为 Deepin 中性变更记录，详 O-1 v7 §五）；
 2. D_stage 源树 tree-manifest 已锁定（`d-stage-audit.D_stage.manifest.tsv.sha256` 已写入）；
 3. D 源树根 tree-manifest 已锁定（`d-stage-audit.D.manifest.tsv.sha256` 已写入）；
-4. **生成脚本 `tools/d-stage-audit-gen.py` 已实现**（v24 仍为占位；实现
+4. **生成脚本 `tools/internal/d-stage-audit-gen.py` 已实现**（v24 仍为占位；实现
    唯一依据 = §五 v24 Python 契约，design §5.3 bash 草案仅为算法伪代码），通过
    codex 阶段一复审 + dsh 终审；
 5. 实际生成的 D → D_stage diff 行数 N + **9 类** symlink 各类行数已确定；
@@ -1840,5 +1840,5 @@ O-1 全闭合 + 用户阶段一批准后启动）。
   **v10 per codex v7 P2 #8 + codex v9 P2 #7** Git tag 名称从 `git_tag_ref` 字段读取
   （dsh 确认），禁止硬编码包版本号 `4.0.2-i3`；**v11 per codex v10 P1 #3 路径统一到
   evidence dir**；待阶段二启动后生成）
-- `tools/d-stage-audit-gen.py`（O-2 生成脚本，待 O-1 全闭合 + tree-manifest 锁定后实现）
+- `tools/internal/d-stage-audit-gen.py`（O-2 生成脚本，待 O-1 全闭合 + tree-manifest 锁定后实现）
 - `collab/R16-2026-09-03-基座更新迭代评估/{qoder-notes,report}.md`
