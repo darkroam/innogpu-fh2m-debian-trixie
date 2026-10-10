@@ -12,9 +12,10 @@
 [`binary-manifest-fantgpu.json`](../../binary-manifest-fantgpu.json) 和
 [O_stage 物化方案](../design/o-stage-integration-plan.md)，不得直接套用本页默认参数。
 
-- 工具：`tools/extract-vendor-binaries.sh`（本地提取，仅读取用户本地原包）、
-  `tools/internal/generate-binary-manifest.py`、`tools/internal/validate-binary-manifest.py`；
-- 清单：`binary-manifest.json`（来源分类与哈希；`vendor-binary` 是来源分类，不是许可证）；
+- 主线已删除 `tools/extract-vendor-binaries.sh`、`tools/internal/generate-binary-manifest.py`、
+  `tools/internal/validate-binary-manifest.py` 和 `binary-manifest.json`。
+  这些 O 线输入在 tag `innogpu-4x-frozen`，不在主线复用。
+- `vendor-binary` 是来源分类，不是许可证。F 线清单是 `binary-manifest-fantgpu.json`。
 - 文档：本说明、`docs/project/dependencies.md`（原包身份与 SHA-256）、`THIRD_PARTY_NOTICES.md`；
 - 许可证：`LICENSE`（本项目原创层 GPL-3.0-or-later）、`LICENSES/`（标准条款副本，含上游 MIT）。
 
@@ -28,21 +29,11 @@
 
 ## 本地提取与校验
 
-```sh
-# 1. 校验 manifest schema（只读）
-python3 tools/internal/validate-binary-manifest.py
-
-# 2. 提取载荷到本地 vendor/（校验原包 SHA-256，幂等，原子写）
-INNOGPU_DEEPIN_DEB=/path/to/innogpu-fh2m_20250421190503-debug_amd64.deb \
-  bash tools/extract-vendor-binaries.sh
-
-# 3. 只读检查模式（不写任何文件）
-bash tools/extract-vendor-binaries.sh --check-only
-```
+主线构建器对 O 分支只打印「O 线仅从 deepin-4.0.2-i3 tag 检出构建」后退出。
+不要在主线上调用已删除的提取器。
 
 ## 限制与责任
 
 - 提取产物只供**本地**构建、安装与回退使用；未经对应权利方授权不得再次公开分发。
 - 本功能不授予任何第三方内容的许可证；第三方条款以权利方文件为准（见 `THIRD_PARTY_NOTICES.md`）。
-- 完整驱动构建需要 `drivers/` 源码树与构建脚本，二者不在本功能内；`driver-source` 制品排除
-  confidential 与无许可文件后**不是完整驱动**，缺失内容须由用户按原声明从本地原包取得。
+- 主线不含 `drivers/`。O 线源码在 tag `innogpu-4x-frozen`。`driver-source` 在主线上为空清单，状态仍是 BLOCKED，不是完整驱动。

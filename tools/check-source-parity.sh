@@ -9,6 +9,11 @@ set -euo pipefail
 ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$ROOT"
 
+if [[ ! -d drivers ]]; then
+    echo "parity_drivers=FAIL reason=mainline_has_no_drivers tag=innogpu-4x-frozen"
+    exit 1
+fi
+
 SRC="$ROOT/third_party/innogpu-fh2m-deepin-202504/root/usr/src/innogpu-kernel-2.2"
 [[ -d "$SRC" ]] || { echo "parity_source_input=FAIL (missing $SRC)"; exit 1; }
 

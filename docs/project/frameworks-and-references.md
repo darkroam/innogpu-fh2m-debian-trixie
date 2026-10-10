@@ -65,5 +65,5 @@
 ## 证据索引
 
 [`ddk-v119-mapping.md`](../investigations/ddk-v119-mapping.md)、[`capability-survey.md`](../investigations/capability-survey.md)、[`reverse-engineering-assessment.md`](../investigations/reverse-engineering-assessment.md)、
-`docs/project/licensing.md`、`docs/project/source-license-audit.md`、`binary-manifest.json`、`drivers/dkms.conf`、
+`docs/project/licensing.md`、`docs/project/source-license-audit.md`、`binary-manifest-fantgpu.json`、
 `tools/build-innogpu-driver.sh`。

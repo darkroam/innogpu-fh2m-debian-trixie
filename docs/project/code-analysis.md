@@ -37,7 +37,9 @@
 | `build-innogpu-driver.sh` | **当前新架构构建器** | 默认 i3 绑定 024+026+028+029；i1/i2 与 R06 i3/i4 仅供历史复现；拒绝未审版本/epoch 和 patch 备份/reject 产物 |
 | `build-patchedNN-*.sh` | legacy 包装/护栏 | 停用护栏（p17-20）与历史候选包装 |
 
-### A3. 黑盒载荷生命周期（CONFIRMED）
+### A3. 黑盒载荷生命周期
+
+R55 批 2 起主线不含 `drivers/` 与 `binary-manifest.json`。下面这段是删除前的 O 线链，不是当前主线构建。F 线用 `binary-manifest-fantgpu.json`。
 
 `binary-manifest.json`（192 项，5 类 kind，license 全部 `vendor-binary`）← 由
 `tools/internal/generate-binary-manifest.py` 从 pinned Deepin deb（SHA `b5a70e78…f6f5b2`）确定性生成 →
@@ -67,8 +69,7 @@ Deepin deb(校验 SHA) → generate-binary-manifest(校验+生成) → validate-
 
 - 门禁逐项核实：版本排序（`dpkg --compare-versions`）、manifest check-only 失败即停、
   `.o.cmd` 守卫、`SOURCE_DATE_EPOCH` 缺失即失败（P0 级保护，CONFIRMED）。
-- 构建器引用核验：`build-innogpu-driver.sh` 引用的 `extract-vendor-binaries.sh`、
-  `patch-gpupll-object.py`、`check-release-package.sh` 均存在且路径正确（CONFIRMED）。
+- 构建器引用核验：主线 `build-innogpu-driver.sh` 的 O 分支在读取清单前退出，不再调用已删除的 `extract-vendor-binaries.sh`。F 分支仍调用 `patch-gpupll-object.py` 路径上的对象工具与 `check-release-package.sh`。
 - maintainer scripts：与 legacy 构建器字节一致（oracle maintainer_scripts=PASS，CONFIRMED）。
 - 可复现性：epoch 1787342400 双构建 SHA `68aea6c0…` 逐字一致（OBSERVED）。
 

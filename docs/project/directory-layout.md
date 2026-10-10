@@ -19,10 +19,12 @@
   （SHA-256 `6f0daaf79fb6b2a547138c17628bb990dff0d0c684ee1c13775bebc2d28fd11b`）：
   F0 genesis、R16 整栈切换、冻结 O-stage 快照，再加上 030-035/030-036。
   载荷清单是 `binary-manifest-fantgpu.json`，物化目录是 `vendor/fantgpu/`。
-- **O 线**只维护，不接新功能。源码树仍是根上 `drivers/`（本批不删除）。载荷来自
+- **O 线**只维护，不接新功能。主线不含 `drivers/`。484 件在 tag `innogpu-4x-frozen`；
+  相对 `deepin-4.0.2-i3` 只有 `drivers/README.md` 四行路径表述不同。构建器在主线拒绝 O 分支，
+  原句是「O 线仅从 deepin-4.0.2-i3 tag 检出构建」。载荷 deb
   `debs/innogpu-fh2m_20250421190503-debug_amd64.deb`
-  （SHA-256 `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2`），
-  清单是 `binary-manifest.json`，提取入口是 `tools/extract-vendor-binaries.sh`。
+  （SHA-256 `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2`）仍保留；
+  `binary-manifest.json` 与 `tools/extract-vendor-binaries.sh` 不在主线，可从 `innogpu-4x-frozen` 取回。
 - 两线输入不混用。
 
 ## 目录职责
@@ -32,7 +34,7 @@
 | `.github/` | CI 与仓库托管配置 | tracked | 随代码审查维护 |
 | `LICENSES/` | 项目使用的标准许可证文本 | tracked | 许可证策略变更时同步 |
 | `components/` | 第三方组件的固定来源说明、最小 patch、meta 与静态回归 | tracked | 随上游版本升级审查；不放展开源码 |
-| `drivers/` | O 线（innogpu 4.0.x）源码树；只维护，不接新功能 | tracked | 本批保留在根上；变更仍须经补丁、构建和许可门禁 |
+| `drivers/` | O 线源码；主线不含 | 不在主线；tag `innogpu-4x-frozen` 可取回 484 件 | 不在主线重建。构建只从 `deepin-4.0.2-i3` 检出 |
 | `patches/` | 历史/当前驱动补丁及溯源材料 | tracked | 已迁入源码的补丁仍保留作复现锚 |
 | `tools/` | 操作者与 CI 的稳定命令入口 | tracked | 在 `tools/README.md` 登记 |
 | `tools/internal/` | 构建期变换、审计与诊断；不是给人记的命令名 | tracked | 门禁与测试直接调用；与 allowlist 同步 |

@@ -641,7 +641,7 @@ def inventory_text(rows):
     return stream.getvalue()
 
 
-def read_allowlist(root, rel, problems):
+def read_allowlist(root, rel, problems, allow_empty=False):
     path = root / safe_repo_path(rel, "allowlist_path")
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
@@ -650,6 +650,8 @@ def read_allowlist(root, rel, problems):
         return None
     listed = [line.strip() for line in lines if line.strip() and not line.lstrip().startswith("#")]
     if not listed:
+        if allow_empty:
+            return []
         problems.append(f"allowlist_empty:{rel}")
         return None
     return listed
@@ -661,7 +663,7 @@ def validate_allowlist(root, policy, name, inventory_rows, all_tracked, index, p
     if not isinstance(rel, str) or not rel:
         problems.append(f"{name}_allowlist_path_missing")
         return
-    listed = read_allowlist(root, rel, problems)
+    listed = read_allowlist(root, rel, problems, allow_empty=(name == "driver-source"))
     if listed is None:
         return
     tracked_set = set(all_tracked)
@@ -842,7 +844,8 @@ def write_allowlists(root, policy, inventory_rows, all_tracked, problems):
             )
             header = "# driver-source 允许清单：drivers/ 中具有明确许可声明的路径（confidential 与无许可路径已排除）"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(header + "\n" + "\n".join(paths) + "\n", encoding="utf-8")
+        body = "\n".join(paths)
+        path.write_text(header + "\n" + (body + "\n" if body else ""), encoding="utf-8")
 
 
 def artifact_is_cleared(root, policy, artifact_name):

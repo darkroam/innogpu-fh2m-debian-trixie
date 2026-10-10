@@ -22,10 +22,8 @@
 | `build-patched27-foreign-dmabuf.sh` | legacy 包装（保留） | 在 p26 补丁集合上增加 patch-027 foreign DMA-BUF 生命周期修复；当前仅作 p27 oracle/复现入口 |
 | `build-patched28-suspend-resume.sh` | legacy 实验包装 | 在 p27 补丁集合上增加 patch-024 resume 期间 devfreq 电源状态门禁；只用于复现，`4.0.1-i1` 的 s2idle 可见恢复已失败 |
 | `check-deb-dkms-build.sh` | 离线编译检查 | 将指定候选 deb 解包到 `/tmp`，针对指定内核 headers 编译 `innogpu.ko` 并校验 vermagic；不注册或安装 DKMS |
-| `check-source-parity.sh` | 只读 parity 检查 | 在临时目录重建 p27 生成源码树（third_party + 9 个启用补丁按构建器顺序 + 清理 .orig/.rej），与 `drivers/` 逐文件对比（排除 README/.o_shipped/.o.cmd），输出机器可读 PASS/FAIL；不修改源码树、旧构建器或设备 |
+| `check-source-parity.sh` | 只读 parity 检查 | 对照对象 `drivers/` 已不在主线。要比较时先检出 tag `innogpu-4x-frozen`；本脚本不修改旧构建器或设备 |
 | `phase4-baseline-capture.sh` | 只读基线采集 | Phase 4 安装前 B1-B12 基线采集（dpkg/lsmod/DKMS/modprobe/initramfs/音频内核可见/Picom/用户态一致性/恢复通道），输出存 `baselines/phase4-baseline-<ts>.log`；真实会话项（/dev/dri、Xorg/GL、音频 sink、显示切换）由用户实机执行 |
-| `extract-vendor-binaries.sh` | 幂等提取工具 | 按 `binary-manifest.json` 从 pinned Deepin deb 提取黑盒载荷到 `vendor/`；校验 deb SHA、目标存在且哈希一致则跳过、缺失/不符安全重建、拒绝路径穿越/未知 kind、临时目录 + 原子 rename；`--check-only` 只读；输出机器可读 PASS/FAIL；路径可用 `MANIFEST_PATH`/`VENDOR_ROOT` 覆盖（隔离测试用） |
-| `generate-binary-manifest.py`（tools/） | 清单生成 | 从 Deepin deb 确定性生成 `binary-manifest.json`（校验 deb SHA、覆盖全部黑盒文件与符号链接、kind/role/license 分类） |
 | `compare-oracle-candidates.sh` | oracle 对比 | 新架构候选包 vs patched-27：对比 control（除 Version/Description/Installed-Size）、文件清单、载荷哈希、DKMS 源码、黑盒对象、maintainer 脚本（版本归一）、版本排序与 module_symbols（调用 compare-module-symbols.sh）；构建产物（.o.cmd/.o/.ko/modules.order/Module.symvers/.mod）统一按 ARTIFACT_RE 排除；输出机器可读 PASS/FAIL |
 | `compare-module-symbols.sh` | 只读符号对比 | 离线构建候选与 patched-27 两包 DKMS 源码（同一内核头），逐 .ko 对比 vermagic/depends/导出符号/导入符号；构建于 `$ROOT/.build/`，不安装不重启；module_symbols=PASS/FAIL/UNCOMPARABLE |
 | `build-linux-patched-modules.sh` | Linux 第三方补丁构建 | 从 `debs/` 复用或通过 APT 下载精确源码 `.deb`，临时展开并严格应用 001/002，针对已安装内核只构建 `xhci-pci.ko` 与 `battery.ko`；不安装、不重启 |
@@ -131,7 +129,7 @@ xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项
 既有 delay callback 和 107 基线声明；它只验证补丁形状，不替代安装后的拔插测试。
 
 `run-capability-survey.sh` 编译并运行 Vulkan/OpenCL/VA-API 最小枚举探针并抓取 sysfs 环境快照，输出保存到 `baselines/capability-survey-<ts>.log`（可用 `--out DIR` 改位置）；只读，不 modeset、不改配置。设备无 DRM render 节点时（如无特权容器）优雅降级并记录失败本身。
-其中 `check-docs.sh` 检查根入口、`LICENSES/`、`drivers/`、`docs/`、`tools/`、`baselines/`、
+其中 `check-docs.sh` 检查根入口、`LICENSES/`、`docs/`、`tools/`、`baselines/`、
 `tests/`、`tools/` 下的 Markdown 链接，并对受跟踪文档目录与本机 `collab/` 执行隐私扫描，同时检查稳定入口登记、当前版本、
 runtime 统计、manifest 原包 SHA、过期状态断言和 Markdown 表格结构。它还调用
 `tools/internal/audit-licenses.py` 校验逐文件许可证 inventory、策略、条款 hash、模块元数据和 manifest

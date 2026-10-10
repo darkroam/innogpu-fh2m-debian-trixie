@@ -413,7 +413,7 @@ expect current_audit_consistent "$rc" "$O" 'license_audit_overall=PASS'
 
 python3 "$AUDITOR" --root "$ROOT" > "$O" 2>&1
 rc=$?
-expect current_classification_counts "$rc" "$O" 'license_unclassified=70'
+expect current_classification_counts "$rc" "$O" 'license_tracked_paths=0'
 
 F="$TMP/scoped-gate-states"
 make_fixture "$F" '/* no license declaration */'

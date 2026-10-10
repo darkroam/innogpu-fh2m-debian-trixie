@@ -4,6 +4,7 @@
 
 当前 fantgpu `5.0.0-i6` 为诊断线，使用 F0 + 030 链 O_stage 和
 [`binary-manifest-fantgpu.json`](../../binary-manifest-fantgpu.json) 锁定的同源载荷；
+同源 deb SHA-256 `6f0daaf79fb6b2a547138c17628bb990dff0d0c684ee1c13775bebc2d28fd11b`。
 来源、物化及门槛见 [O_stage 设计](../design/o-stage-integration-plan.md) 与 [当前状态](status.md)。
 下表是 Deepin 线回退包与历史候选，不表示公开 Release 或 fantgpu 安装授权。
 
@@ -33,12 +34,11 @@
 | `debs/archive/legacy-build/innogpu-fh2m-trixie_4.0.2-i3.deb`（Deepin 历史交付、当前回退基线） | i2 + patch-029 DDCCI panel 创建恢复（继承 patch-024/026/028）；固定 epoch 1788796800；SHA `177133ee…`；R14 6/6 deep 通过；不含 display 025，DDCCI 无 backlight device，`hwinfo_g0m.bin` 仍缺失 |
 | `debs/innogpu-fh2m_20250421190503-debug_amd64.deb` | Deepin 202504 DKMS/GL/DDX 来源；SHA-256 `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2` |
 
-新架构提取器默认只读取 `debs/innogpu-fh2m_20250421190503-debug_amd64.deb`，其他位置必须通过
-`INNOGPU_DEEPIN_DEB` 显式指定。只有 legacy `build-deepin-coherent.sh` 与
+主线已删除 O 线提取器。该 deb 仍是 O 线历史输入，清单在 tag `innogpu-4x-frozen`。只有 legacy `build-deepin-coherent.sh` 与
 `prepare-deepin-userspace-root.sh` 仍保留仓库根旧路径的兼容查找；后者将 Deepin deb 解包到被 Git
 忽略的 `third_party/innogpu-fh2m-deepin-202504/root/`。不得依赖该 legacy 回退构建新架构包。
 
-Deepin 202504 原包是 Deepin 分支的来源基线。该分支构建使用 `drivers/` 中已转换的历史源码提交，
+Deepin 202504 原包是 Deepin 分支的来源基线。该分支的源码树不在主线，在 tag `innogpu-4x-frozen` 与 `deepin-4.0.2-i3`。
 `4.0.1-i1`/`i2` 是历史实验候选；R06 的 i3/i4 和失败的 R11 `4.0.2-i1` 保留作复现。当前
 `4.0.2-i3` 在 patch-024 后应用 patch-026 生命周期同步、patch-028 温度 work 恢复时序门禁和
 patch-029 DDCCI panel 创建恢复，

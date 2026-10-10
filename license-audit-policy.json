@@ -4,7 +4,7 @@
   "layers": {
     "original": {
       "license": "GPL-3.0-or-later",
-      "scope": "本项目原创层：darkroam fork 后续原创的框架、脚本、工具、测试、文档、配置和辅助代码，以及 drivers/README.md；不含从上游保留或派生的实质性内容，也不含 drivers/ 厂商代码。此前按 MIT 发布的版本继续保有原 MIT 授权。"
+      "scope": "本项目原创层：darkroam fork 后续原创的框架、脚本、工具、测试、文档、配置和辅助代码；不含从上游保留或派生的实质性内容，也不含 O 线厂商代码。O 线 drivers/README.md 不在主线，留在 tag innogpu-4x-frozen 与 deepin-4.0.2-i3。此前按 MIT 发布的版本继续保有原 MIT 授权。"
     },
     "upstream_mit": {
       "license": "MIT",
@@ -13,7 +13,7 @@
     },
     "drivers": {
       "license": "per-file",
-      "scope": "drivers/ 不适用根 GPL-3.0-or-later；每个文件保留并沿用原文件声明（Dual MIT/GPLv2 规范化映射为 MIT OR GPL-2.0-only，BSD/LGPL 双许可保持原样）；MODULE_LICENSE 只是模块元数据，不替代文件许可。"
+      "scope": "主线不含 drivers/。O 线源码仅在 tag：innogpu-4x-frozen（R55 批 2 删除前的 484 件）与 deepin-4.0.2-i3（树哈希不同，仅 README 四行路径表述）。那些文件不适用根 GPL-3.0-or-later，仍沿用各文件原声明；主线不把它们记成可发布制品。"
     },
     "local_payloads": {
       "license": "not-distributed",
@@ -22,19 +22,10 @@
   },
   "source_root": "drivers",
   "source_origin": "Deepin innogpu-fh2m 20250421190503-debug source payload",
-  "project_owned_paths": [
-    "drivers/README.md"
-  ],
+  "project_owned_paths": [],
   "classifications": {
-    "strict_confidential": [
-      "drivers/innosrvkm/include/pdp_drm.h",
-      "drivers/innosrvkm/include/pvrsrv_firmware_boot.h",
-      "drivers/innosrvkm/include/rgxlayer_impl.h"
-    ],
-    "bsd_lgpl_dual": [
-      "drivers/innopmbus/innopmbus_drv.c",
-      "drivers/innopmbus/innopmbus_drv.h"
-    ]
+    "strict_confidential": [],
+    "bsd_lgpl_dual": []
   },
   "dual_mit_gpl": {
     "declaration": "Dual MIT/GPLv2",
@@ -109,24 +100,10 @@
     "LGPL-2.1-only",
     "MPL-2.0"
   ],
-  "module_license_metadata": {
-    "drivers/innodma/innodma_drv.c": "Dual MIT/GPL",
-    "drivers/innogpu/innogpu_pci_drv.c": "Dual MIT/GPL",
-    "drivers/innopmbus/innopmbus_drv.c": "Dual BSD/GPL",
-    "drivers/innopower/innopower.c": "Dual MIT/GPL",
-    "drivers/innosmmu/innosmmu_drv.c": "Dual MIT/GPL",
-    "drivers/innosrvkm/include/pvrmodule.h": "Dual MIT/GPL",
-    "drivers/innosrvkm/innogpu_drm.c": "Dual MIT/GPL",
-    "drivers/innovpu/innovpu_drv.c": "Dual BSD/GPL",
-    "drivers/tools/gpu_info/gpu_info.c": "Dual MIT/GPL",
-    "drivers/tools/kernel_api_support_test/kernel_api_support_test.c": "GPL"
-  },
-  "known_declaration_conflicts": [
-    "drivers/innopmbus/innopmbus_drv.c",
-    "drivers/innovpu/innovpu_drv.c"
-  ],
+  "module_license_metadata": {},
+  "known_declaration_conflicts": [],
   "manifest": {
-    "path": "binary-manifest.json",
+    "path": "binary-manifest-fantgpu.json",
     "unresolved_marker": "vendor-binary"
   },
   "license_authority_doc": {
@@ -147,7 +124,6 @@
       "license-audit-policy.json": "GPL-3.0-or-later",
       "LICENSES/README.md": "GPL-3.0-or-later",
       "THIRD_PARTY_NOTICES.md": "GPL-3.0-or-later",
-      "binary-manifest.json": "GPL-3.0-or-later",
       "binary-manifest-fantgpu.json": "GPL-3.0-or-later",
       "LICENSES/MIT.txt": "MIT",
       "LICENSES/GPL-3.0-or-later.txt": "GPL-3.0-or-later",
@@ -244,7 +220,7 @@
         "\\.so(\\.\\d+)*$",
         "\\.fw$"
       ],
-      "reason": "候选制品（机械门禁 CLEARED，当前不作为发布目标（发布决策 1C））：失败关闭分类——允许清单 = 已批准原创前缀（.github/baselines/docs/tests/tools，GPL-3.0-or-later）+ 显式路径映射（上游继承层 MIT、LICENSES/ 标准文本组、components/ 第三方派生组）；任何不在前缀/映射内的路径一律拒绝（non_drivers_unclassified），无全局默认 GPL；components/ 许可材料已封存（picom 固定 commit 6d676824…：目标文件级 MPL-2.0，Copyright (c) Yuxuan Shui，文本见 LICENSES/MPL-2.0.txt；picom.conf 为项目原创 GPL-3.0-or-later；fbterm Debian 1.7-5：(C) 2008 dragchan，GPL-2.0-only；Linux xHCI Debian 6.12.107-1：Copyright (C) 2008 Intel Corp.，GPL-2.0-only），NOTICE 按路径组绑定版权/许可标记（notice_gate）；排除 patches/（混合/未决许可，含未分类驱动源码片段，整体排除）、debs/（整目录）、collab/（多 Agent 协作记录：本机私有目录，.gitignore 排除、不跟踪，不自动重许可、不进发布候选，denylist 防御性保留）、drivers/、vendor/、build/、third_party/ 与载荷；GitHub 主分支本身仍分发阻断路径，仓库级发布未闭环，本归档仅为候选制品。"
+      "reason": "候选制品（机械门禁 CLEARED，当前不作为发布目标（发布决策 1C））：失败关闭分类——允许清单 = 已批准原创前缀（.github/baselines/docs/tests/tools，GPL-3.0-or-later）+ 显式路径映射（上游继承层 MIT、LICENSES/ 标准文本组、components/ 第三方派生组）；任何不在前缀/映射内的路径一律拒绝（non_drivers_unclassified），无全局默认 GPL；components/ 许可材料已封存（picom 固定 commit 6d676824…：目标文件级 MPL-2.0，Copyright (c) Yuxuan Shui，文本见 LICENSES/MPL-2.0.txt；picom.conf 为项目原创 GPL-3.0-or-later；fbterm Debian 1.7-5：(C) 2008 dragchan，GPL-2.0-only；Linux xHCI Debian 6.12.107-1：Copyright (C) 2008 Intel Corp.，GPL-2.0-only），NOTICE 按路径组绑定版权/许可标记（notice_gate）；排除 patches/（混合/未决许可，含未分类驱动源码片段，整体排除）、debs/（整目录）、collab/（多 Agent 协作记录：本机私有目录，.gitignore 排除、不跟踪，不自动重许可、不进发布候选，denylist 防御性保留）、drivers/、vendor/、build/、third_party/ 与载荷；主线不再跟踪 drivers/ 阻断路径（留在 tag innogpu-4x-frozen 与 deepin-4.0.2-i3）；仓库级发布未闭环，本归档仅为候选制品。"
     },
     "driver-source": {
       "status": "BLOCKED",
@@ -261,19 +237,19 @@
         "\\.so(\\.\\d+)*$",
         "\\.fw$"
       ],
-      "reason": "仅含明确许可声明文件（408 dual + 2 BSD/LGPL + drivers/README.md）；confidential x3 与无许可 x70 已排除；排除后无法独立构建（缺 Kbuild 等构建文件），非完整驱动；再分发权利链待监督复审，不假 PASS。"
+      "reason": "主线不含 drivers/，本清单为空，不假 PASS。O 线 484 件在 tag innogpu-4x-frozen；相对 deepin-4.0.2-i3 仅 README 四行。历史上明确许可文件为 408 dual + 2 BSD/LGPL + drivers/README.md，confidential x3 与无许可 x70 仍在 tag 上且排除出制品；再分发权利链未闭合。"
     }
   },
   "expected_summary": {
-    "tracked_paths": 484,
-    "project_documents": 1,
-    "implementation_paths": 483,
-    "dual_mit_gpl": 408,
-    "strict_confidential": 3,
-    "bsd_lgpl_dual": 2,
+    "tracked_paths": 0,
+    "project_documents": 0,
+    "implementation_paths": 0,
+    "dual_mit_gpl": 0,
+    "strict_confidential": 0,
+    "bsd_lgpl_dual": 0,
     "standard_spdx": 0,
-    "unclassified": 70,
-    "module_license_files": 10,
-    "declaration_conflicts": 2
+    "unclassified": 0,
+    "module_license_files": 0,
+    "declaration_conflicts": 0
   }
 }

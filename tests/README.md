@@ -153,9 +153,7 @@ bash tests/unit/run-fantgpu-runtime-health-tests.sh
 bash tests/unit/run-hygon-xhci-resume-fix-tests.sh
 ```
 
-- manifest 测试用 `tools/internal/validate-binary-manifest.py` 对真实清单与 `tests/fixtures/` 下的恶意
-  fixture（绝对路径、`../` 穿越、未知 kind、重复目标、缺 sha256、缺 license、链接逃逸、缺失文件）
-  断言通过/拒绝；
+- O 线 `run-manifest-tests.sh` / `run-extractor-tests.sh` 已随 `binary-manifest.json` 从主线删除。F 线清单测试仍是 `run-validate-fantgpu-manifest-tests.sh`。
 - suspend/resume 静态测试把跟踪的 HAL/PCI/PVR/DVFS/显示相关源码复制到 `/tmp`，验证
   patch-024/patch-025-display/patch-026-lifecycle/patch-028-temp-monitor/patch-029-ddcci-panel dry-run/应用、025 三行上下文、PowerLock 门禁顺序、
   post-atomic 重复光标恢复移除、单文件范围、`4.0.1-i3`/`4.0.1-i4` 同 epoch 与旧迭代失败关闭、

@@ -25,8 +25,8 @@
 
 ## 2. drivers/ 逐文件许可
 
-`drivers/` **不适用**根 GPL-3.0-or-later。每个文件保留并沿用其自身文件头声明；本项目对这些
-文件的修改采用与原文件兼容的原许可，优先保持原双许可表达式：
+主线不含 `drivers/`。本节描述 tag `innogpu-4x-frozen` 与 `deepin-4.0.2-i3` 上的 O 线文件。
+那些文件**不适用**根 GPL-3.0-or-later，沿用各自文件头声明：
 
 | 文件声明 | 规范化表达式 | 处置 |
 | --- | --- | --- |
@@ -48,8 +48,8 @@
 
 ## 3. 当前公开范围与阻断路径
 
-`drivers/` 共 **484** 个跟踪路径：1 个项目文档 + 408 双许可 + 3 confidential + 2 BSD/LGPL +
-70 无许可。**不得声称从 Git 历史删除阻断内容**；处置方式是**从未来公开制品排除**：
+tag 上的 `drivers/` 共 **484** 个路径：1 个项目文档 + 408 双许可 + 3 confidential + 2 BSD/LGPL +
+70 无许可。主线 HEAD 不再跟踪它们。**不得声称从 Git 历史删除阻断内容**：
 
 - **Strictly Confidential ×3**（排除出公开制品）：
   - `drivers/innosrvkm/include/pdp_drm.h`
@@ -58,7 +58,7 @@
 - **无许可 ×70**（排除出公开制品）：见 [source-license-audit.md](source-license-audit.md) 与
   inventory 中 `unclassified` 行。
 - **本地载荷**：`debs/`、`vendor/`、`.build/`、退役 `build/`、`third_party/` 与 `*.deb` 由 `.gitignore` 排除，
-  不随公开制品发布；`binary-manifest.json` 的 `vendor-binary` 是来源分类，**不是许可证**。
+  不随公开制品发布。主线清单是 `binary-manifest-fantgpu.json`；O 线 `binary-manifest.json` 只在 tag `innogpu-4x-frozen`。两处的 `vendor-binary` 都是来源分类，**不是许可证**。
 - **未发布二进制权利方推测**：不为未计划发布的 192 项载荷建立权利登记流程；二进制 deb 与
   vendor 载荷不作为当前发布目标。
 
@@ -68,17 +68,17 @@
 
 | 制品 | 内容 | 状态 | 说明 |
 | --- | --- | --- | --- |
-| `project-tools` | **候选制品**：**失败关闭分类**生成的允许清单（见 [project-tools-allowlist.txt](project-tools-allowlist.txt)）= 已批准原创前缀（`.github/`/`baselines/`/`docs/`/`tests/`/`tools/`，GPL-3.0-or-later）+ 显式路径映射（上游继承层 MIT：`.gitignore`/`README.md`/`tools/install.sh`；`LICENSES/` 标准文本组：MIT/GPL-2.0-only/BSD-3-Clause/LGPL-2.1-only/MPL-2.0；`components/` 第三方派生组）；**任何不在前缀/映射内的路径一律拒绝**（无全局默认 GPL） | **CLEARED**（仅机械门禁；当前不作为发布目标，见 §4.1） | `components/` 许可材料已封存：picom 补丁按目标文件级 **MPL-2.0**（Copyright (c) Yuxuan Shui），`picom.conf` 为原创层 GPL-3.0-or-later；fbterm 补丁为 GPL-2.0-only（(C) 2008 dragchan）；Linux xHCI 补丁基于 Debian `6.12.107-1` 的 GPL-2.0-only 目标文件（Copyright (C) 2008 Intel Corp.）；NOTICE 门禁按**路径组**绑定版权/许可标记；`patches/`（混合/未决许可，整体排除）、`debs/`（整目录）、`collab/`（本机私有目录，不跟踪、不自动重许可）、`drivers/`、`vendor/`、`.build/`、退役 `build/`、`third_party/` 不含；GitHub 主分支仍分发阻断路径，仓库级发布未闭环（§4.1） |
-| `driver-source` | `drivers/` 中仅具有明确许可声明的路径（408 dual + 2 BSD/LGPL + `drivers/README.md`）；allowlist 见 [driver-source-allowlist.txt](driver-source-allowlist.txt) | **BLOCKED** | 排除 confidential ×3 与无许可 ×70 后**无法独立构建**（缺 Kbuild 等构建文件），**不是完整驱动**；缺失内容须由用户按原声明从本地原包取得，不假 PASS；再分发权利链待监督复审 |
+| `project-tools` | **候选制品**：**失败关闭分类**生成的允许清单（见 [project-tools-allowlist.txt](project-tools-allowlist.txt)）= 已批准原创前缀（`.github/`/`baselines/`/`docs/`/`tests/`/`tools/`，GPL-3.0-or-later）+ 显式路径映射（上游继承层 MIT：`.gitignore`/`README.md`/`tools/install.sh`；`LICENSES/` 标准文本组：MIT/GPL-2.0-only/BSD-3-Clause/LGPL-2.1-only/MPL-2.0；`components/` 第三方派生组）；**任何不在前缀/映射内的路径一律拒绝**（无全局默认 GPL） | **CLEARED**（仅机械门禁；当前不作为发布目标，见 §4.1） | `components/` 许可材料已封存：picom 补丁按目标文件级 **MPL-2.0**（Copyright (c) Yuxuan Shui），`picom.conf` 为原创层 GPL-3.0-or-later；fbterm 补丁为 GPL-2.0-only（(C) 2008 dragchan）；Linux xHCI 补丁基于 Debian `6.12.107-1` 的 GPL-2.0-only 目标文件（Copyright (C) 2008 Intel Corp.）；NOTICE 门禁按**路径组**绑定版权/许可标记；`patches/`（混合/未决许可，整体排除）、`debs/`（整目录）、`collab/`（本机私有目录，不跟踪、不自动重许可）、`drivers/`、`vendor/`、`.build/`、退役 `build/`、`third_party/` 不含；主线 HEAD 不再跟踪 drivers/ 阻断路径（仍在 tag 与历史）；仓库级发布未闭环（§4.1） |
+| `driver-source` | 主线 allowlist 为空。O 线明确许可路径（408 dual + 2 BSD/LGPL + `drivers/README.md`）只在 tag；清单见 [driver-source-allowlist.txt](driver-source-allowlist.txt) | **BLOCKED** | 主线不含 `drivers/`，不把空清单记成 PASS。tag 上排除 confidential ×3 与无许可 ×70 后仍**不是完整驱动**；再分发权利链待监督复审 |
 
 `local-extractor` 不再是独立制品/门禁：本地载荷提取与校验工具是 `project-tools` 的一个功能，
 见 [docs/user/local-extractor.md](../user/local-extractor.md)。
 
 ### 4.1 GitHub 主分支发布面与发布决策 1C（当前结论）
 
-GitHub 仓库 `main` 分支本身是公开分发面：clone / GitHub 源码归档直接分发全部 712 个跟踪路径，
-**不经 `build-release-archive.py`**，因此当前仍公开分发 3 个 confidential 与 70 个无许可文件。
-本仓库因此**不宣称许可证发布闭环**。
+GitHub 仓库 `main` 分支本身是公开分发面，clone / GitHub 源码归档直接分发主线 HEAD 的全部跟踪路径，
+**不经 `build-release-archive.py`**。R55 批 2 起主线 HEAD 不再跟踪 3 个 confidential 与 70 个无许可的 `drivers/` 文件；
+它们仍在 tag `innogpu-4x-frozen`、`deepin-4.0.2-i3` 和更早历史中。本仓库因此**不宣称许可证发布闭环**。
 
 **当前结论（2026-10-09，用户裁决「取消 1C，推进到打 tag」；本文为唯一权威记录，其他文档只引用）**：
 
@@ -88,16 +88,15 @@ GitHub 仓库 `main` 分支本身是公开分发面：clone / GitHub 源码归�
 - 仍不创建 GitHub Release，不传发布附件。载荷权利链保持阻断。
 - `license_release_gate` 状态保持 `BLOCKED` 不变；`project-tools=CLEARED` 仍只表示候选制品机械
   门禁通过，`driver-source` 状态保持 `BLOCKED` 不变。`main` 仍不是仓库级发布目标。
-- **不得声称推翻 1C 或只打 tag 可以消除 `main` 当前公开跟踪 3 个 Strictly Confidential + 70 个无许可
-  路径（共 73 个）的风险**——分支本身仍是公开分发面；若未来要发布 main，须先把阻断路径从公开分支
-  移除——不执行历史重写——并解决权利链。
+- R55 批 2 把这 73 个 `drivers/` 路径移出主线 HEAD，留在 tag `innogpu-4x-frozen` 与 `deepin-4.0.2-i3`，不重写历史。这不授权发布 main，也不闭合权利链。
+- 同批另获授权创建本地 annotated tag `innogpu-4x-frozen`，只用于取回删除前的 O 线树，不是发布 tag，不推送。
 - 不激活 `source-v4.0.0-i1` annotated tag、Release 附件审查或 Phase 5 第二步。
 - 同日签署事实，不改变许可门禁：用户豁免 `hwinfo_g0m.bin` 缺失，R1 保持 fail；R2 记 pass；R5 维持同 4.0.2-i3 观察口径的 pass。豁免不表示该固件已经补上。
 - `patches/`（驱动派生补丁，含未分类驱动源码片段）不随 `project-tools` / `driver-source` 发布。
 
 **历史决定 1C（2026-08-28，保留不删）**：当时不创建 GitHub Release、tag 或发布附件，`main`
 作为研究开发仓库。其中「不打 tag」已由上节按上述范围推翻；BLOCKED、不建 Release、不传附件、
-73 个阻断路径仍在，都不是被本裁决放开的内容。
+写下时 73 个阻断路径在 main。R55 批 2 起它们不在主线 HEAD，仍在 tag 与历史中，都不是被该裁决放开的内容。
 
 ## 5. 机械审计与发布门禁
 
@@ -126,7 +125,7 @@ python3 tools/internal/build-release-archive.py --artifact project-tools --out /
 
 ## 6. 维护要求
 
-- 导入或修改 `drivers/`、`binary-manifest.json` 或许可证材料后：更新
+- 主线不再导入 `drivers/` 或 `binary-manifest.json`。修改许可证材料后：更新
   `license-audit-policy.json` 的允许集合与期望统计 → 运行
   `python3 tools/internal/audit-licenses.py --write-inventory --write-allowlists` → 复审 diff →
   运行检查模式与 `bash tests/unit/run-license-audit-tests.sh`。

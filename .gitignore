@@ -23,7 +23,7 @@ third_party/innogpu-fh2m-deepin-202504/
 /baselines/capability-survey-*.log
 /baselines/runtime-baseline-*.txt
 !/baselines/latest-runtime-baseline.txt
-# Migrated black-box payload and staging build area (managed by binary-manifest.json + extractor).
+# Migrated black-box payload and staging build area (F: binary-manifest-fantgpu.json; O manifest is on tag innogpu-4x-frozen).
 /vendor/
 /build/
 # Python bytecode cache (created by py_compile / imports).

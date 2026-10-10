@@ -26,8 +26,9 @@ patched-18/19 是问题定位和 coherent 构建演进记录，不是安装推�
 ## 构建 Deepin 回退包
 
 新架构包不随 Git 提供。clone 本仓库后，从有权提供该内容的来源取得 Deepin 原包并放入 `debs/`；
-本项目当前不提供该第三方原包或载荷的公开下载。构建器会按 `binary-manifest.json` 校验完整
-SHA-256。Deepin `4.0.2-i3` 使用固定审核 epoch `1788796800`（2026-09-08 00:00 +0800）：
+本项目当前不提供该第三方原包或载荷的公开下载。主线不再按 `binary-manifest.json` 构建。
+F 线来源 deb SHA-256 是 `6f0daaf79fb6b2a547138c17628bb990dff0d0c684ee1c13775bebc2d28fd11b`。
+Deepin `4.0.2-i3` 的历史 epoch 是 `1788796800`（2026-09-08 00:00 +0800）：
 
 ```text
 debs/innogpu-fh2m_20250421190503-debug_amd64.deb
@@ -37,14 +38,12 @@ SHA-256: b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2
 ```sh
 cd "$INNOGPU_ROOT"
 sha256sum debs/innogpu-fh2m_20250421190503-debug_amd64.deb
-bash tools/extract-vendor-binaries.sh                        # 按 manifest 重建 vendor/ 黑盒载荷
-SOURCE_DATE_EPOCH=1788796800 bash tools/build-innogpu-driver.sh
-# 默认输出 .build/work/driver-build/innogpu-fh2m-trixie_4.0.2-i3.deb
-# R06 i3/i4 与失败的 R11 i1 仅保留为显式历史复现入口
+# O 线仅从 deepin-4.0.2-i3 tag 检出构建
+# 主线默认版本 4.0.2-i3 会走这条拒绝。F 线要显式：
+# VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=1790812800 bash tools/build-innogpu-driver.sh
 ```
 
-> 新 clone 上 `vendor/` 为空（不入库）：必须先 `extract-vendor-binaries.sh` 重建黑盒载荷，
-> 构建器的 `--check-only` 门禁才会通过。
+> O 线清单与提取器不在主线，在 tag `innogpu-4x-frozen`。不要在主线上运行已删除的提取器。
 
 构建后必须核对该历史交付制品；安装、重启和实机验收另按授权执行：
 

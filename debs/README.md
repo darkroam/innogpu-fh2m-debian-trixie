@@ -24,8 +24,7 @@
 ## 输入包
 
 后续 coherent 构建以 Deepin 202504 原包为唯一技术基线。**当前新架构（4.0.0-i1）**由
-`tools/build-innogpu-driver.sh` 驱动（drivers/ 源码树 + `binary-manifest.json` 黑盒载荷 + 确定性
-变换，产出到被忽略的 `build/`，可复现 epoch 1787342400）；`tools/build-deepin-coherent.sh` 为
+`tools/build-innogpu-driver.sh` 在主线上拒绝 O 分支（O 线仅从 deepin-4.0.2-i3 tag 检出构建）。历史 4.0.0-i1 曾用当时的 drivers/ 与 binary-manifest.json（epoch 1787342400）；`tools/build-deepin-coherent.sh` 为
 legacy patched 系构建器（保留作 p27 oracle 与版本护栏）。两者都以本目录的 Deepin 原包为输入：
 
 ```text

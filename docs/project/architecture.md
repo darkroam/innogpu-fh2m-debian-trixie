@@ -30,7 +30,7 @@ PCI 0000:06:00.6 [1d94:14c9]
 
 | 路径 | 职责 |
 | --- | --- |
-| `drivers/` | Deepin 202504 DKMS 源码树及已转换为提交的 9 个启用修复 |
+| `drivers/` | 不在主线。O 线 DKMS 源码在 tag `innogpu-4x-frozen` / `deepin-4.0.2-i3` |
 | `patches/` | Deepin 历史补丁 provenance 与版本绑定修复；fantgpu 使用独立 030 链物化 O_stage，已入快照的补丁不重复叠加 |
 | `components/picom/` | 当前维护的 Picom 源码补丁与项目配置模板（`001-probe-explicit-uniform-location.patch`、`picom.conf`） |
 | `components/fbterm/` | 当前维护的 fbterm 用户态兼容补丁（`001-configurable-redraw-scrolling.patch`） |
@@ -44,8 +44,8 @@ PCI 0000:06:00.6 [1d94:14c9]
 | `vendor/fantgpu/` | F manifest 锁定的本机载荷，不进入 Git；F0 + 030 链物化源码由 O_stage 快照锁定 |
 | `third_party/` | 从外部 Deepin deb 生成的解包目录，不进入 git |
 
-F 线是唯一开发主线，O 线（根上 `drivers/`）只维护。两线输入不混用；目录事实见
-[directory-layout](directory-layout.md)。本批不删除 `drivers/`。
+F 线是唯一开发主线，O 线只维护且不在主线。两线输入不混用；目录事实见
+[directory-layout](directory-layout.md)。`drivers/` 在 tag `innogpu-4x-frozen`。
 
 ## 驱动与图形用户态
 

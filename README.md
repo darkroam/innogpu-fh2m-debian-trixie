@@ -48,15 +48,13 @@
 git clone https://github.com/darkroam/innogpu-fh2m-debian-trixie.git && cd innogpu-fh2m-debian-trixie
 sudo tools/install-prereqs-debian.sh                        # 基础构建/运行依赖
 # 最小化系统还须确认 python3、dpkg-deb 等新构建器直接命令（见 dependencies.md）
-# 取得 Deepin 202504 原包放入 debs/（完整 SHA-256 见 docs/project/dependencies.md）
-bash tools/extract-vendor-binaries.sh                       # 按 manifest 重建 vendor/ 黑盒载荷
-SOURCE_DATE_EPOCH=1788796800 bash tools/build-innogpu-driver.sh  # 默认构建 4.0.2-i3
-# R06 与失败的 R11 i1 仍可显式复现，不能替代当前交付版本
-# 安装前核对 i3 SHA-256；新硬件仍须按 new-device-install.md 独立验收
+# F 线。不设 VERSION 时构建器仍按 4.0.2-i3 进入 O 分支并拒绝。
+VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=1790812800 bash tools/build-innogpu-driver.sh
+# O 线仅从 deepin-4.0.2-i3 tag 检出构建
 ```
 
-> 新 clone 上 vendor/ 与 debs/ 均为空（不入库）：必须先取得 Deepin 原包并提取黑盒载荷，构建器
-> 的 `--check-only` 门禁才会通过。
+> 主线不含 `drivers/` 与 `binary-manifest.json`。O 线 484 件在 tag `innogpu-4x-frozen`
+> （相对 `deepin-4.0.2-i3` 仅 README 四行）。F 线载荷见 `binary-manifest-fantgpu.json`。
 
 回退到保留基线：`sudo apt install --allow-downgrades ./debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb`
 （详见 [docs/user/recovery.md](docs/user/recovery.md)）。
@@ -91,7 +89,7 @@ SOURCE_DATE_EPOCH=1788796800 bash tools/build-innogpu-driver.sh  # 默认构建 
 
 - 原创层采用 [GPL-3.0-or-later](LICENSE)。此前按 MIT 发布的版本继续保有原授权。
 - 上游 Tim Hant 代码保留 MIT，见 [LICENSES/MIT.txt](LICENSES/MIT.txt) 与 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
-- `drivers/` 按逐文件声明。confidential 与无许可文件排除出公开制品，不继承根许可证。
+- O 线 `drivers/` 不在主线，按 tag 上的逐文件声明。confidential 与无许可文件不继承根许可证。
 - 黑盒载荷不随公开制品发布。`vendor-binary` 是来源分类，不是许可证名称。
 - 三层模型、阻断路径、制品范围和排除清单只以
   [许可证与再分发边界](docs/project/licensing.md) 为准。机械审计见

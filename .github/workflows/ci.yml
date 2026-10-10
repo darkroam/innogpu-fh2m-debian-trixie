@@ -20,12 +20,10 @@ jobs:
       - name: Repository documentation and boundary checks
         run: bash tools/check-docs.sh
 
-      - name: Unit tests (manifest, license audit, version ordering, extractor, results parser, exec probes, vaapi decode, dmabuf regression, dri repair, collab structure, suspend resume/finalize, F builder/runtime health)
+      - name: Unit tests (license audit, version ordering, results parser, exec probes, vaapi decode, dmabuf regression, dri repair, collab structure, suspend resume/finalize, F builder/runtime health)
         run: |
-          bash tests/unit/run-manifest-tests.sh
           bash tests/unit/run-license-audit-tests.sh
           bash tests/unit/run-version-tests.sh
-          bash tests/unit/run-extractor-tests.sh
           bash tests/unit/run-results-parser-tests.sh
           bash tests/unit/run-exec-probes-tests.sh
           bash tests/unit/run-vaapi-decode-tests.sh

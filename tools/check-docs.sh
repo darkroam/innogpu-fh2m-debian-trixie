@@ -104,8 +104,8 @@ if [[ -n "$stale_xdisplay_refs" ]]; then
 fi
 
 # Payload manifest schema must stay valid (read-only; works without vendor/).
-if ! python3 tools/internal/validate-binary-manifest.py >/dev/null 2>&1; then
-    fail "binary-manifest.json schema validation failed"
+if ! python3 -c 'import json,sys; m=json.load(open("binary-manifest-fantgpu.json",encoding="utf-8")); e=m.get("entries"); s=m.get("source_deb_sha256"); locked="6f0daaf79fb6b2a547138c17628bb990dff0d0c684ee1c13775bebc2d28fd11b"; sys.exit(0 if isinstance(e,list) and e and s==locked else 1)'; then
+    fail "binary-manifest-fantgpu.json schema validation failed"
 fi
 if ! python3 tools/internal/audit-licenses.py >/dev/null 2>&1; then
     fail "source/payload license inventory or policy is stale"
@@ -203,7 +203,7 @@ require_text baselines/latest-runtime-baseline.txt 'runtime_dmabuf_regression=PA
 # in the user-facing acquisition documents.
 source_deb_sha="$(python3 - <<'PY'
 import json
-with open('binary-manifest.json', encoding='utf-8') as stream:
+with open('binary-manifest-fantgpu.json', encoding='utf-8') as stream:
     print(json.load(stream)['source_deb_sha256'])
 PY
 )"

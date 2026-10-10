@@ -463,8 +463,12 @@ if [[ "$LINEAGE" == "fantgpu" ]]; then
     record dmabuf_source_fix_present UNVERIFIED \
         "fantgpu lineage: 030-chain fixes applied at build (o-stage snapshot); runtime source check targets innogpu drivers/ tree only"
 else
-    STATIC_FIX=$(grep -rl 'dma_resv_usage_rw' "$ROOT/drivers" 2>/dev/null | wc -l)
-    if [[ "$STATIC_FIX" -ge 1 ]]; then record dmabuf_source_fix_present PASS; else record dmabuf_source_fix_present FAIL "dma_resv_usage_rw not in drivers/"; fi
+    if [[ ! -d "$ROOT/drivers" ]]; then
+        record dmabuf_source_fix_present UNVERIFIED "O drivers tree is not on mainline; see tag innogpu-4x-frozen"
+    else
+        STATIC_FIX=$(grep -rl 'dma_resv_usage_rw' "$ROOT/drivers" 2>/dev/null | wc -l)
+        if [[ "$STATIC_FIX" -ge 1 ]]; then record dmabuf_source_fix_present PASS; else record dmabuf_source_fix_present FAIL "dma_resv_usage_rw not in drivers/"; fi
+    fi
 fi
 record dmabuf_regression SKIP "manual-execution-required: bash tools/internal/run-dmabuf-regression-test.sh on device session (authorized)"
 

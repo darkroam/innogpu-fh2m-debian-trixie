@@ -6,8 +6,9 @@
 > 本页只汇总仓库可直接观察到的声明，不提供法律意见，也不把源码或许可证文本可访问等同于获得
 > 再分发授权。权威许可边界见 [licensing.md](licensing.md)。
 
-扫描基线：2026-08-26。`drivers/` 共 484 个 Git 跟踪路径，其中 `drivers/README.md` 是项目文档
-（原创层 GPL-3.0-or-later）；其余 483 个是导入的实现/构建文件。确定性扫描结果如下：
+扫描基线：2026-08-26，当时主线跟踪 `drivers/` 484 个路径，其中 `drivers/README.md` 是项目文档
+（原创层 GPL-3.0-or-later）；其余 483 个是导入的实现/构建文件。R55 批 2 起这些路径不在主线 HEAD，
+在 tag `innogpu-4x-frozen`（相对 `deepin-4.0.2-i3` 仅 README 四行）。下表是该冻结树，不是主线 inventory：
 
 | 类别 | 路径数 | 机械映射 | 发布含义 |
 | --- | ---: | --- | --- |
@@ -24,7 +25,7 @@
 
 - [license-audit-policy.json](../../license-audit-policy.json)：许可层、分类允许集合、标准文本
   hash、允许 SPDX 集合、制品 allowlist 路径与期望统计。
-- [source-license-inventory.tsv](source-license-inventory.tsv)：484 行逐文件记录（路径、内容
+- [source-license-inventory.tsv](source-license-inventory.tsv)：主线清单不含 drivers/ 行。484 件分类见上表与 tag（路径、内容
   SHA-256、分类、原始声明、规范化 SPDX、引用文本、`MODULE_LICENSE` 元数据、观察到的版权行）。
 - [audit-licenses.py](../../tools/internal/audit-licenses.py)：从 `git ls-files` 重建清单并检查语义漂移；
   [run-license-audit-tests.sh](../../tests/unit/run-license-audit-tests.sh) 覆盖正反例。
@@ -58,7 +59,7 @@ license_artifact_driver-source_gate=BLOCKED
 | `drivers/innopmbus/innopmbus_drv.h` | BSD-3-Clause / LGPL-2.1-only 双许可声明 | 同上 |
 | `drivers/innovpu/innovpu_drv.c` | Dual MIT/GPLv2；`MODULE_LICENSE=Dual BSD/GPL` 冲突 | 保留 MIT/GPL 双许可，冲突已记录 |
 
-70 个无许可路径的完整列表见 inventory 中 `content_class=unclassified` 行（含 `drivers/Kbuild`、
+70 个无许可路径在 tag 上的 `drivers/` 树（含 `drivers/Kbuild`、
 各子系统 `Makefile`、`dkms.conf`、`compat_kernel6.h`、`hal_power.c` 等构建/实现文件）。
 
 ## 未关闭的阻断项

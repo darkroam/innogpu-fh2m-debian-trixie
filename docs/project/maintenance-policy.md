@@ -12,7 +12,7 @@
 
 ### 基线与载荷
 
-- 驱动候选按血缘使用固定来源：Deepin `4.0.x-iN` 使用 Deepin 202504 原包与 `drivers/`；
+- 驱动候选按血缘使用固定来源：Deepin `4.0.x-iN` 只从 tag `deepin-4.0.2-i3` 检出（主线构建器会拒绝）；
   fantgpu `5.0.0-iN` 使用 F0 + [O_stage](../design/o-stage-integration-plan.md) 与
   `binary-manifest-fantgpu.json`。新增行为修复必须经独立补丁审查、升号，经对应物化/构建流程
   保证编译树与包内 DKMS 源码一致；fantgpu 构建器消费已锁定的 O_stage，不在快照外补丁。legacy
@@ -26,7 +26,7 @@
   必须生成逐字一致的包。哈希不一致时先定位构建环境或时间戳来源，禁止选择其中一个直接发布。
 - 当前诊断与回退角色见 [status](status.md)：`4.0.2-i3` 回滚卡不变，r5dpm1/r5dpm2 包保留待 dsh
   裁定；OUTSIDE_COVERAGE、R5=FAIL、禁止重跑、U1/U2、validation-results、签发与 tag 冻结不因文档更新解除。
-- 补丁/变换边界：已迁入 `drivers/` 的历史内核补丁在 `patches/` 保留作溯源与回退复现，不再
+- 补丁/变换边界：已迁入 O 线源码树的历史内核补丁在 `patches/` 保留作溯源与回退复现，不再
   重复叠加；新行为修复以独立补丁进入升号候选，验证通过后再决定是否迁入源码树。当前维护的
   第三方组件补丁与配置在 `components/`（picom、fbterm、Linux）；无法表示为源码 diff 的厂商对象变换使用
   `tools/` 下的严格确定性工具；设计、开关、验证和回退写入对应的 `docs/patches/patch-*.md`。
@@ -34,12 +34,11 @@
 - 第三方问题修复必须同时归档：固定上游版本与源码哈希、最小补丁、许可证/NOTICE、事故根因与
   排除项、静态锁、真实验证和回退边界。依赖宿主版本或硬件的修复还必须提供只读升级检查入口；
   每次内核、系统或对应组件升级后先运行该入口，`FAIL`/`UNVERIFIED` 均阻断相关运行验收。
-- 黑盒载荷边界：`.o_shipped`、用户态库、固件等第三方二进制**不入库**；Deepin 线由
-  `binary-manifest.json` 管理并经 `tools/extract-vendor-binaries.sh` 提取，fantgpu 线由
+- 黑盒载荷边界：`.o_shipped`、用户态库、固件等第三方二进制**不入库**；Deepin 线清单与提取器已不在主线，在 tag `innogpu-4x-frozen`，fantgpu 线由
   `binary-manifest-fantgpu.json` 管理，构建器校验 `vendor/fantgpu/` 后用
   `tools/internal/materialize-fantgpu-payload.py` 物化包载荷；两线固定来源、清单和载荷不得混用；
   清单中的 `vendor-binary` 是来源分类，不是许可证名称（见 [licensing.md](licensing.md)）。
-- 许可证发布门禁：`drivers/` 含 `Strictly Confidential` 与多种许可证声明；在
+- 许可证发布门禁：O 线 tag 上的 `drivers/` 含 `Strictly Confidential` 与多种许可证声明；在
   [source-license-audit.md](source-license-audit.md) 的 BLOCKED 状态关闭前，不得发布新的源码归档、
   第三方载荷或声称整个导入源码树开源。新增或改变来源内容必须同步
   `license-audit-policy.json` 和逐文件 inventory，并运行 `python3 tools/internal/audit-licenses.py`。机械审计

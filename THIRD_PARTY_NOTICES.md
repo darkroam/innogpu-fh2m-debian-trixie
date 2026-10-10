@@ -93,14 +93,14 @@ SOFTWARE.
 ## 5. 本地载荷与 debs/（不随公开制品发布）
 
 `debs/`（**整目录**，含 `debs/README.md`）、`vendor/`、`build/`、`third_party/` 与
-`*.deb` 是用户本地取得/构建的载荷，**不随任何公开制品发布**。`binary-manifest.json` 中的
+`*.deb` 是用户本地取得/构建的载荷，**不随任何公开制品发布**。主线 `binary-manifest-fantgpu.json` 与 tag 上 O 线清单中的
 `vendor-binary` 是来源分类标记，不是许可证名称，也不授予再分发权。用户须自行从第三方（如
 Deepin 官方渠道）取得原包并在本地使用；本项目不托管、不镜像、不自动下载该包。
 
 ## 6. GitHub 主分支发布面
 
-本仓库 GitHub 主分支（main）本身公开分发全部跟踪路径，包括 3 个 `Strictly Confidential` 与
-70 个无许可文件；**仓库级发布未闭环**。本声明随 `project-tools` 候选制品分发时只描述该制品
+本仓库 GitHub 主分支（main）公开分发主线 HEAD 的跟踪路径。3 个 `Strictly Confidential` 与
+70 个无许可文件已不在主线 HEAD，仍在 tag `innogpu-4x-frozen`、`deepin-4.0.2-i3` 和历史中；**仓库级发布未闭环**。本声明随 `project-tools` 候选制品分发时只描述该制品
 的实际内容；项目-tools 归档是**候选制品**，不构成许可证发布闭环。
 
 ## 7. 免责声明

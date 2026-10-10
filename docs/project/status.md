@@ -20,7 +20,7 @@
 | 历史运行基线 | `3.3.3.42-patched-20` 曾完成运行验收，但 deb 含收敛前辅助载荷，仅保留为历史证据 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
 | 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |
 | 历史运行验收 | p21 完整图形验收通过；p22 完成 connector 分类和开盖桌面烟测，但电源/合盖/拔屏矩阵未完成 | [`patch-009` 验收](../patches/patch-009-local-internal-edp-connector.md) |
-| 源码/用户态基线 | F 线（唯一开发主线）的源码与黑盒载荷都来自 `debs/fantgpu-fh2m_3.3.8.126-driver-linux-desktop-sp-generic_amd64.deb`（SHA-256 `6f0daaf79fb6b2a547138c17628bb990dff0d0c684ee1c13775bebc2d28fd11b`），经 F0、冻结 O-stage 与 030-035/030-036。O 线只维护：源码树仍是根上 `drivers/`，载荷来自 `debs/innogpu-fh2m_20250421190503-debug_amd64.deb`（SHA-256 `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2`）。两线输入不混用。稳定命令入口是 `tools/`；`tools/internal/` 不是给人记的命令名 | [架构](architecture.md)、[目录规范](directory-layout.md) |
+| 源码/用户态基线 | F 线（唯一开发主线）的源码与黑盒载荷都来自 `debs/fantgpu-fh2m_3.3.8.126-driver-linux-desktop-sp-generic_amd64.deb`（SHA-256 `6f0daaf79fb6b2a547138c17628bb990dff0d0c684ee1c13775bebc2d28fd11b`），经 F0、冻结 O-stage 与 030-035/030-036。O 线只维护：源码不在主线，在 tag `innogpu-4x-frozen` 与 `deepin-4.0.2-i3`；载荷来自 `debs/innogpu-fh2m_20250421190503-debug_amd64.deb`（SHA-256 `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2`）。两线输入不混用。稳定命令入口是 `tools/`；`tools/internal/` 不是给人记的命令名 | [架构](architecture.md)、[目录规范](directory-layout.md) |
 | Deepin 源码树迁移 | 阶段 0–4 完成；该线已交付 4.0.2-i3，4.0.0-i1 保留为其首层回退；阶段 5 第一步完成，第二步待条件满足 + 监督批准；不代表 fantgpu 验收 | [phase5-retirement-design](../design/phase5-retirement-design.md) |
 | 固件与 PVR | `4.0.2-i3` R14 每轮 PVR 八项计数均为 0 且不增长；`hwinfo_g0m.bin` 缺失为已知厂商载荷边界 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | DRM/fbdev | `4.0.2-i3` R14 内屏及外屏恢复通过；`card0`、`renderD128`、`fb0` 基线继续可用 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
@@ -34,7 +34,7 @@
 | Vulkan/OpenCL 执行 | 探针 exec 模式 + 真机验证通过（2026-08-24）：Vulkan queue+fence submit+wait、OpenCL add kernel+读回逐元素校验均在 Fantasy II-M 上执行成功；`runtime_vulkan_execution`/`runtime_opencl_execution`=PASS（证据 `baselines/runtime-results-20260824.txt`）；离线失败路径已有 fixture | [probe-vulkan-devices.c](../../tools/internal/probe-vulkan-devices.c)、[probe-opencl-devices.c](../../tools/internal/probe-opencl-devices.c)、[test-strategy](test-strategy.md) |
 | VA-API 实际解码 | `tools/internal/run-vaapi-decode-test.sh --codec all` 真机执行（2026-08-24）：H.264 Main 与 HEVC Main 强制 VA-API 硬解，各 30 帧 320x240 NV12 framemd5 与软件参考逐帧 hash 一致，Driver/Firmware 状态门禁通过；`runtime_vaapi_decode`=PASS（证据 `baselines/runtime-results-20260824.txt`）；能力边界仅 Main/Main 8-bit 4:2:0 | [run-vaapi-decode-test.sh](../../tools/internal/run-vaapi-decode-test.sh)、[test-strategy](test-strategy.md) |
 | DMA-BUF 回归工具 | `tools/internal/run-dmabuf-regression-test.sh` 已实现（2026-08-24）：同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 + 状态门禁聚合，配套离线 fixture；**真机 PASS（2026-08-26 root 权限运行，证据已封存）**：self-import/READ/WRITE/vblank/状态门禁/内核日志全部通过；能力边界不变：仅同设备 PRIME self-import，foreign/cross-device、GBM、V4L2、长期压力与并发仍 UNVERIFIED | [run-dmabuf-regression-test.sh](../../tools/internal/run-dmabuf-regression-test.sh)、[test-strategy](test-strategy.md)、[webkit 调查](../investigations/webkit-dmabuf-investigation.md) |
-| 发布边界 | 三层许可模型（原创层 GPL-3.0-or-later / 上游 MIT / drivers/ 逐文件）；`project-tools` 为**候选制品**（机械门禁 CLEARED，当前不作为发布目标；**失败关闭分类**——已批准原创前缀 + 显式映射，未知路径拒绝，无默认 GPL；排除 patches/、debs/、collab/（本机私有目录，不跟踪）、drivers/、vendor/、build/、third_party/；**路径绑定 NOTICE 门禁**，components/ 许可材料已封存：picom 补丁为文件级 MPL-2.0、`picom.conf` 为原创 GPLv3、fbterm 1.7-5 (C) 2008 dragchan GPL-2.0-only）；`driver-source` 排除 confidential ×3 与无许可 ×70 后非完整驱动（BLOCKED，不假 PASS）；**GitHub 主分支仍公开分发阻断路径，仓库级发布未闭环**；二进制 deb 与 vendor 载荷不作为当前发布目标；patched-1.deb 为上游历史非阻断；本地 debs/ 与 vendor/ 不参与发布；**发布决策（见 licensing.md §4.1）：2026-08-28 的 1C 已于 2026-10-09 被用户部分推翻，只激活签署后的 annotated tag；Release/附件仍不创建，BLOCKED 不变，只打 tag 也不消除 main 公开跟踪 73 个阻断路径的风险** | [licensing.md](licensing.md)（唯一权威文档）、[source-license-audit.md](source-license-audit.md) |
+| 发布边界 | 三层许可模型（原创层 GPL-3.0-or-later / 上游 MIT / drivers/ 逐文件）；`project-tools` 为**候选制品**（机械门禁 CLEARED，当前不作为发布目标；**失败关闭分类**——已批准原创前缀 + 显式映射，未知路径拒绝，无默认 GPL；排除 patches/、debs/、collab/（本机私有目录，不跟踪）、drivers/、vendor/、build/、third_party/；**路径绑定 NOTICE 门禁**，components/ 许可材料已封存：picom 补丁为文件级 MPL-2.0、`picom.conf` 为原创 GPLv3、fbterm 1.7-5 (C) 2008 dragchan GPL-2.0-only）；`driver-source` 排除 confidential ×3 与无许可 ×70 后非完整驱动（BLOCKED，不假 PASS）；**GitHub 主分支仍公开分发阻断路径，仓库级发布未闭环**；二进制 deb 与 vendor 载荷不作为当前发布目标；patched-1.deb 为上游历史非阻断；本地 debs/ 与 vendor/ 不参与发布；**发布决策（见 licensing.md §4.1）：2026-08-28 的 1C 已于 2026-10-09 被用户部分推翻，只激活签署后的 annotated tag；Release/附件仍不创建，BLOCKED 不变，R55 批 2 已把 73 个 drivers/ 阻断路径移出主线 HEAD（仍在 tag 与历史，不重写）** | [licensing.md](licensing.md)（唯一权威文档）、[source-license-audit.md](source-license-audit.md) |
 
 以上引用 Phase 4、2026-08 runtime、patched 或 `4.0.x` 的验收均保留其原版本边界；
 `latest-*` 文件名不表示已验证当前 fantgpu。当前待办见 [current-work](../state/current-work.md)。
@@ -268,12 +268,11 @@ p21/p22 的电源、合盖、拔屏和跨硬件限制仍按历史记录保留。
 
 **发布决策（当前，2026-10-09）**：用户推翻 1C 里「不打 tag」这一条，范围只到签署完成且用户批准后的
 annotated tag `fantgpu-5.0.0-i12`。validation-results 已定稿，`signed=false`，tag 未打。hwinfo 豁免不把 R1 改成 pass；R2=pass；R5=pass。不创建 GitHub Release，不传附件。
-`license_release_gate=BLOCKED` 不变。打 tag 不消除 `main` 公开跟踪 73 个阻断路径的风险，也不把
-`main` 变成仓库级发布目标。权威记录见 [licensing.md §4.1](licensing.md#41-github-主分支发布面与发布决策-1c当前结论)。
+`license_release_gate=BLOCKED` 不变。73 个 drivers/ 阻断路径已不在主线 HEAD，仍在 tag `innogpu-4x-frozen` 与 `deepin-4.0.2-i3` 及历史中。这不把 `main` 变成仓库级发布目标。权威记录见 [licensing.md §4.1](licensing.md#41-github-主分支发布面与发布决策-1c当前结论)。
 
 **历史决定 1C（2026-08-28，其中「不打 tag」已被上节推翻）**：
 
 - 当时不创建 GitHub Release、tag 或发布附件；`main` 作为研究开发仓库。
 - `license_release_gate=BLOCKED` 与 `driver-source=BLOCKED` 仍是当前事实；`project-tools=CLEARED`
   仍只表示候选制品机械门禁通过。
-- 不做 Release 不能消除 73 个阻断路径的风险。该句仍然有效。
+- 写下时 73 个阻断路径在 main。R55 批 2 起它们不在主线 HEAD，仍在 tag 与历史中。

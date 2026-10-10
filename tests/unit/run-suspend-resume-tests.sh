@@ -24,14 +24,17 @@ failures=0
 pass() { tests=$((tests + 1)); printf 'suspend_resume_t%02d=PASS # %s\n' "$tests" "$1"; }
 fail() { tests=$((tests + 1)); failures=$((failures + 1)); printf 'suspend_resume_t%02d=FAIL reason=%s\n' "$tests" "$1"; }
 
-mkdir -p "$TMP/tree/innogpu" "$TMP/tree/innosrvkm"
-cp "$ROOT/drivers/innogpu/hal.h" "$TMP/tree/innogpu/"
-cp "$ROOT/drivers/innogpu/innogpu_pci_drv.c" "$TMP/tree/innogpu/"
-cp "$ROOT/drivers/innosrvkm/pvr_dvfs_device.c" "$TMP/tree/innosrvkm/"
-cp "$ROOT/drivers/innosrvkm/innodpu_drm_pm.c" "$TMP/tree/innosrvkm/"
-cp "$ROOT/drivers/innosrvkm/pvr_drm.c" "$TMP/tree/innosrvkm/"
-cp "$ROOT/drivers/innosrvkm/innodpu_dp_debugfs.c" "$TMP/tree/innosrvkm/"
-cp "$ROOT/drivers/innosrvkm/innodpu_panel_backlight.c" "$TMP/tree/innosrvkm/"
+mkdir -p "$TMP/tree"
+git -C "$ROOT" archive innogpu-4x-frozen \
+    drivers/innogpu/hal.h \
+    drivers/innogpu/innogpu_pci_drv.c \
+    drivers/innosrvkm/pvr_dvfs_device.c \
+    drivers/innosrvkm/innodpu_drm_pm.c \
+    drivers/innosrvkm/pvr_drm.c \
+    drivers/innosrvkm/innodpu_dp_debugfs.c \
+    drivers/innosrvkm/innodpu_panel_backlight.c \
+    | tar -C "$TMP/tree" --strip-components=1 -x
+cp "$TMP/tree/innogpu/hal.h" "$TMP/hal.h.before"
 
 if patch --dry-run -s -d "$TMP/tree" -p1 < "$PATCH"; then
     pass patch_dry_run
@@ -275,7 +278,7 @@ else
     fail temperature_monitor_waits_for_all_pvr_children_per_parent
 fi
 
-if python3 - "$ROOT/drivers/innogpu/hal.h" "$temp_hal" <<'PY'
+if python3 - "$TMP/hal.h.before" "$temp_hal" <<'PY'
 import sys
 from pathlib import Path
 

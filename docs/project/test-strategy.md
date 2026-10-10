@@ -63,7 +63,7 @@ builder回归实际调用生产函数，验证唯一差异、输入漂移/重入
 
 以 [.github/workflows/ci.yml](../../.github/workflows/ci.yml) 的显式 runner 路径和
 Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
-`tests/unit/run-*-tests.sh` 共 40 个，其中 17 个未列入该 CI。入口存在不表示本轮执行通过，
+`tests/unit/run-*-tests.sh` 共 40 个，其中 17 个未列入该 CI。R55 批 2 删除 O 清单入口 `run-manifest-tests.sh` 与 `run-extractor-tests.sh`；该 2026-09-21 计数不改写。入口存在不表示本轮执行通过，
 也不表示其余 17 个适合 CI。本轮未重跑各套件，当前用例总数为 UNVERIFIED。
 `030-036` 的静态入口是 `tests/unit/run-030-036-bf-shf-rename-tests.sh`：只回放锁定 i6 快照里与 i12 相同的头文件，不编译、不安装、不改 i12 构建器门。上面的 2026-09-21 计数不因这条后续入口改写。
 

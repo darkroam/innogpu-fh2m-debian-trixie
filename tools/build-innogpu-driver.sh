@@ -219,9 +219,8 @@ if [[ "$FANT_LINEAGE" == 1 ]]; then
         echo "staging_fpayload_input=FAIL"; exit 1; }
     echo "staging_fpayload_input=PASS"
 else
-    [[ -f binary-manifest.json ]] || { echo "staging_manifest=FAIL"; exit 1; }
-    bash tools/extract-vendor-binaries.sh --check-only | grep -q 'vendor_extraction_overall=PASS' || {
-        echo "staging_vendor_check=FAIL"; exit 1; }
+    echo "O 线仅从 deepin-4.0.2-i3 tag 检出构建"
+    exit 1
 fi
 
 # 2) staging 源码树

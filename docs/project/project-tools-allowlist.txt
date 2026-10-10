@@ -27,7 +27,6 @@ baselines/phase4-baseline-20260821-142632.log
 baselines/post-reboot-hwgl-20260821-144338.txt
 baselines/runtime-results-20260824.txt
 binary-manifest-fantgpu.json
-binary-manifest.json
 components/fbterm/001-configurable-redraw-scrolling.patch
 components/linux/001-hygon-148c-xhci-reset-on-resume.patch
 components/linux/002-kaitian-x7h-battery-notification-delay.patch
@@ -243,13 +242,6 @@ docs/user/verification.md
 license-audit-policy.json
 tests/README.md
 tests/fbterm/run-static-tests.sh
-tests/fixtures/manifest-abs-path.json
-tests/fixtures/manifest-bad-kind.json
-tests/fixtures/manifest-dup-target.json
-tests/fixtures/manifest-link-escape.json
-tests/fixtures/manifest-missing-license.json
-tests/fixtures/manifest-missing-sha.json
-tests/fixtures/manifest-traversal.json
 tests/linux/run-battery-delay-static-tests.sh
 tests/linux/run-xhci-quirk-static-tests.sh
 tests/package/run-boundary-tests.sh
@@ -276,7 +268,6 @@ tests/unit/run-dmabuf-regression-tests.sh
 tests/unit/run-dri-repair-tests.sh
 tests/unit/run-drm-topology-tests.sh
 tests/unit/run-exec-probes-tests.sh
-tests/unit/run-extractor-tests.sh
 tests/unit/run-fantgpu-helper-transform-tests.sh
 tests/unit/run-fantgpu-maintainer-tests.py
 tests/unit/run-fantgpu-pm-probe-removal-tests.sh
@@ -286,7 +277,6 @@ tests/unit/run-gen-fantgpu-manifest-tests.sh
 tests/unit/run-gen-package-md5sums-tests.sh
 tests/unit/run-hygon-xhci-resume-fix-tests.sh
 tests/unit/run-license-audit-tests.sh
-tests/unit/run-manifest-tests.sh
 tests/unit/run-materialize-fantgpu-payload-tests.sh
 tests/unit/run-o-stage-materialize-tests.sh
 tests/unit/run-o4-f0-lock-tests.sh
@@ -342,7 +332,6 @@ tools/compare-module-symbols.sh
 tools/compare-oracle-candidates.sh
 tools/disable-incompatible-userspace.sh
 tools/display-recover-and-diagnose.sh
-tools/extract-vendor-binaries.sh
 tools/generate-fantgpu-maintainer-scripts.sh
 tools/install-deepin-desktop-hwgl-trial.sh
 tools/install-dri-node-repair-service.sh
@@ -365,7 +354,6 @@ tools/internal/d-stage-audit-gen.py
 tools/internal/finalize-suspend-resume-failure.py
 tools/internal/gen-fantgpu-manifest.py
 tools/internal/gen-package-md5sums.py
-tools/internal/generate-binary-manifest.py
 tools/internal/materialize-fantgpu-payload.py
 tools/internal/o4-f0-lock-gen.py
 tools/internal/p2-normalize-v3.py
@@ -396,7 +384,6 @@ tools/internal/run-vaapi-decode-test.sh
 tools/internal/trace-loader.c
 tools/internal/transform-fantgpu-helper.sh
 tools/internal/validate-binary-manifest-fantgpu.py
-tools/internal/validate-binary-manifest.py
 tools/internal/validate-collab.py
 tools/mark-patched17-soft-baseline.sh
 tools/materialize-d-stage.sh
