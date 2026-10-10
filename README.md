@@ -27,7 +27,7 @@
 1. **fork 起步**：fork 自 [timhant/innogpu-fh2m-debian-trixie](https://github.com/timhant/innogpu-fh2m-debian-trixie)，初始为 kernel 6.12 兼容补丁（v3.3.3.42 基线）。
 2. **适配本设备**：DPU/fbdev/connector/背光/GEM 系列修复（patched-8 → patched-27），本机稳定运行。
 3. **迁移 Deepin**：以 Deepin 202504 完整原包为唯一技术基线，统一用户态/固件/DDX 载荷，消除 ABI 混配。
-4. **完全重构**：取消历史补丁叠加模式 → `drivers/` 仓库内维护的导入源码树 + manifest 管理黑盒，新构建器从 `4.0.0-i1` 基线演进并保持可复现构建。
+4. **完全重构（历史）**：取消历史补丁叠加模式 → 当时的导入源码树在仓库内 `drivers/`，并用 manifest 管理黑盒；新构建器从 `4.0.0-i1` 演进。该树现不在主线，484 件在 tag `innogpu-4x-frozen`；O 线构建只从 `deepin-4.0.2-i3` 检出。
 5. **Deepin suspend/resume 历史交付**：R10 证明 patch-024 存在 TOCTOU；R11 的 i1 增加 devfreq/PVR 生命周期同步后，仍因独立温度 work 提前启动而失败；R12 的 i2 用 patch-028 等待 PVR 子设备恢复成功；R13 的 i3 让 DDCCI 回退模式创建 panel 以恢复 GPIO callback；R14 完成 6/6 deep 正式矩阵，display 025 保持独立实验状态。
 6. **fantgpu 主线（当前）**：F0 + 030 链已推进至 `5.0.0-i12`；R49 最终 3+1 验收通过，观察期无复发后用户已裁决 R5 通过；早期 OUTSIDE_COVERAGE 历史不重写，见 [status](docs/project/status.md)。
 

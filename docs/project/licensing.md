@@ -14,9 +14,9 @@
 
 | 层 | 范围 | 适用许可证 |
 | --- | --- | --- |
-| **原创层** | 本项目（darkroam fork）后续原创的框架、脚本、工具、测试、文档、配置和辅助代码，以及 `drivers/README.md`；不含从上游保留或派生的实质性内容，也不含 `drivers/` 厂商代码 | 根 [LICENSE](../../LICENSE) 的 **GPL-3.0-or-later** |
+| **原创层** | 本项目（darkroam fork）后续原创的框架、脚本、工具、测试、文档、配置和辅助代码；不含从上游保留或派生的实质性内容，也不含 O 线 `drivers/` 厂商代码。`drivers/README.md` 只在 tag 上 | 根 [LICENSE](../../LICENSE) 的 **GPL-3.0-or-later** |
 | **上游继承层** | fork 自 [timhant/innogpu-fh2m-debian-trixie](https://github.com/timhant/innogpu-fh2m-debian-trixie)（起点提交 `8be37ed`）；Tim Hant 原始代码及其仍存在的实质性派生内容 | **MIT**（`Copyright (c) 2026 Tim Hant`，全文见 [LICENSES/MIT.txt](../../LICENSES/MIT.txt) 与 [THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md)） |
-| **drivers/ 层** | `drivers/` 导入的厂商驱动源码（来源：Deepin 原包 `innogpu-fh2m_20250421190503-debug_amd64.deb` 内 `usr/src/innogpu-kernel-2.2/`） | **逐文件原声明**，见 §2 |
+| **drivers/ 层** | tag `innogpu-4x-frozen` 与 `deepin-4.0.2-i3` 上的 O 线厂商源码（来源：Deepin 原包 `innogpu-fh2m_20250421190503-debug_amd64.deb` 内 `usr/src/innogpu-kernel-2.2/`）。主线不含 `drivers/` | **逐文件原声明**，见 §2 |
 | **本地载荷** | `debs/`、`vendor/`、`.build/`、退役 `build/`、`third_party/`、`*.deb` | **不随公开制品发布**，不适用任何仓库许可证 |
 
 **换证不撤销既有授权**：此前已按 MIT 许可证发布的版本及副本继续保有原 MIT 权利；本仓库原创层

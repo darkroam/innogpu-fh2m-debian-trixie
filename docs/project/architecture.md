@@ -9,9 +9,9 @@
 ## 总体链路
 
 ```text
-当前诊断线：fantgpu 5.0.0-i6（F0 + O_stage / F manifest，非交付）
-Deepin 回退线：4.0.2-i3（drivers/ + Deepin manifest）
-  -> tools/build-innogpu-driver.sh 按版本分线构建 -> 经批准后 dpkg
+当前诊断线：fantgpu 5.0.0-i12（F0 + 030 链 / F manifest，非仓库级发布）
+Deepin 回退线：4.0.2-i3（源码不在主线；构建检出 tag deepin-4.0.2-i3）
+  -> tools/build-innogpu-driver.sh：主线仅 5.0.0-i*，O 线在主线直接退出 -> 经批准后 dpkg
        -> DKMS + 对应血缘的同源 DDX/GL/固件（禁止混配）
        -> /dev/dri/card*、renderD*、/dev/fb0
        -> X11 会话中的 dotconfig `xdisplay watch`
@@ -60,7 +60,7 @@ DKMS、DRM/fbdev 与 A1–A12 实机验收的版本（迁移源码树 + manifest
 [source-tree-migration.md](../design/source-tree-migration.md)）；`patched-27` 转为保留的回退基线；
 `patched-21` 是历史完整图形验收基线，`patched-17` 是深层回退包；它们不再是新设备默认入口。p25/p26/p27 分别增加 dma_resv usage 语义、未活动 CRTC vblank 守卫和 foreign DMA-BUF 生命周期修复，均已通过本机实机验收（见 [patch-025](../patches/patch-025-dma-resv-usage-rw.md)、[patch-026](../patches/patch-026-inactive-crtc-vblank-guard.md)、[patch-027](../patches/patch-027-foreign-dmabuf-lifecycle.md)）。p20 deb 是所有权收敛前的历史运行证据，包内辅助
 脚本不能代表当前源码，禁止重新部署或发布；运行时验收与 release 载荷合规是两个独立结论。
-Deepin 回退版本 `4.0.2-i3` 直接维护 `drivers/` 源码，并从固定 Deepin 202504 原包按 manifest 提取完整
+Deepin 回退版本 `4.0.2-i3` 在 tag 上维护 `drivers/` 源码，并从固定 Deepin 202504 原包按 manifest 提取完整
 同源用户态 ABI、固件和黑盒对象；其历史补丁不在构建时叠加。失败候选 `4.0.1-i1` 确定性
 应用 patch-024，s2idle 可见恢复已失败。`4.0.1-i2` 保留 patch-024 并增加
 patch-025-suspend-resume-display，R05 已完成一次 s2idle 可见恢复；R06 改用 i3/i4 做严格包级单变量
@@ -81,23 +81,22 @@ Deepin 202504 deb 同时提供硬件 GL/DDX 用户态。内核模块成功、DRM
 ### 分线构建基线
 
 fantgpu 分支使用 `binary-manifest-fantgpu.json`、`vendor/fantgpu/` 与锁定的 i6 O_stage 快照；
-构建器以 `tools/internal/materialize-fantgpu-payload.py` 物化并复验 trace。该快照已含 030 链 18 项，
+当前诊断线是 `5.0.0-i12`，不是仓库级发布。构建器以 `tools/internal/materialize-fantgpu-payload.py` 物化并复验 trace。该快照已含 030 链 18 项，
 不从 Deepin `drivers/` 拼接源码或载荷，也不重复应用补丁；详见 [O_stage 设计](../design/o-stage-integration-plan.md)。
-以下构建细节仅描述保留的 Deepin 分支。
+主线上非 `5.0.0-i*` 会打印「O 线仅从 deepin-4.0.2-i3 tag 检出构建」并退出。
+取回删除前的 O 线树用 tag `innogpu-4x-frozen`；要构建 O 线，先检出 `deepin-4.0.2-i3`。
+以下只保留 Deepin 分支的历史说明，不是主线现行步骤。
 
-当前 `4.0.2-i3` 构建由 `tools/build-innogpu-driver.sh` 统一编排：直接复制 Git 跟踪的
-`drivers/` 源码树，从 `vendor/` 取得 `binary-manifest.json` 校验过的黑盒对象、固件和用户态载荷，
-再使用本项目已审查的 Debian maintainer scripts 生成包。`vendor/` 由
-`tools/extract-vendor-binaries.sh` 从固定 SHA-256 的 Deepin 202504 原包幂等重建，不进入 Git。
+主线构建器不复制 `drivers/`，也不调用已删除的 `tools/extract-vendor-binaries.sh`。`binary-manifest.json` 不在主线。这两样都在 tag `innogpu-4x-frozen`。
 
-当前构建器默认接受 `4.0.2-i3` 与固定 epoch `1788796800`：在 patch-024 后应用
+tag `deepin-4.0.2-i3` 上的构建器接受 `4.0.2-i3` 与固定 epoch `1788796800`：在 patch-024 后应用
 patch-026-suspend-resume-dvfs-lifecycle、patch-028 与 patch-029，不含 UNVERIFIED 的 display 025。补丁同时
 应用到离线编译 staging 和最终包内 DKMS 源码，并拒绝 `.orig/.rej/.o.cmd` 产物。失败的
 `4.0.2-i1`（epoch `1788624000`）与 R06 `4.0.1-i3/i4` 仍可显式复现；更早 i1/i2 不再由当前
 源码复用。`4.0.2-i3` 已通过 R14 正式矩阵，现为回退基线；`4.0.0-i1` 是其下一层回退。
 
 Deepin 原包是该分支导入源码、用户态 ABI 和黑盒载荷的唯一技术来源。9 个历史启用补丁已转换为
-`drivers/` 中的源码提交；新行为修复必须先以独立补丁和升号候选验证。patch-024 的 i1
+tag 上 `drivers/` 中的源码提交；新行为修复必须先以独立补丁和升号候选验证。patch-024 的 i1
 真机验收未通过；patch-025-suspend-resume-display 的 i2 单次恢复通过，但严格因果验证仍使用
 i3/i4 对照；R11 lifecycle 026 用 Debian 6.12 devfreq 的同步 suspend 语义关闭 devfreq 并发源，
 但 R11 deep 揭示独立温度 work 的第二条入口；R12 patch-028 为此增加 PVR 子设备恢复门禁，R13
@@ -107,7 +106,7 @@ patch-029 为 DDCCI 回退模式恢复 panel GPIO callback；组合修复已通�
 
 因此：
 
-- Deepin 分支以 `drivers/` 为可修改源码权威，`binary-manifest.json` 为第三方载荷路径与哈希权威；
+- Deepin 分支在 tag `deepin-4.0.2-i3` 上以 `drivers/` 为源码权威，`binary-manifest.json` 为当时的载荷清单；两者都不在主线。删除前那棵树用 `innogpu-4x-frozen` 取回。
 - Deepin 202504 原包是二者的来源基线，DRI、GBM、GLAPI、GLVND 和 DDX 禁止跨版本混配；
 - `patched-8` 只是历史回滚点，`patched-17` 是一次不延续 patched-8 实现谱系的重建，两者都不是
   后续版本的实现父版本；

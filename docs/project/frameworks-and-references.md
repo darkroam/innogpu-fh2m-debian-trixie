@@ -12,8 +12,8 @@
 
 | 层 | 组件 | 使用方式 | 证据 |
 | --- | --- | --- | --- |
-| 内核模块 | Linux kernel module + Kbuild + DKMS | `drivers/` 由 DKMS（dkms.conf: innogpu-kernel 2.2）编译；Makefile/Kbuild 直编 | drivers/dkms.conf、Makefile |
-| 内核子系统 | DRM/KMS、fbdev、GEM、DMA-BUF、PCI、ALSA、dma_resv/fence | 驱动源码直接使用（inno_drm.c、inno_mm.c、innodpu_*、inno_audio.c 等） | drivers/innogpu/*、innosrvkm/* |
+| 内核模块 | Linux kernel module + Kbuild + DKMS | F 线由 O_stage 物化源树经 DKMS 编译。主线没有 `drivers/`。O 线源在 tag `deepin-4.0.2-i3`（dkms.conf: innogpu-kernel 2.2） | tag 上的 drivers/dkms.conf、Makefile |
+| 内核子系统 | DRM/KMS、fbdev、GEM、DMA-BUF、PCI、ALSA、dma_resv/fence | 驱动源码直接使用（inno_drm.c、inno_mm.c、innodpu_*、inno_audio.c 等） | tag 上的 drivers/innogpu/*、innosrvkm/* |
 | 用户态图形 | X.Org modesetting、Mesa GLX/EGL/GBM、DRI2/DRI3、GLVND、VA-API | 驱动包携带 Deepin 同源用户态（libVK_INNO/libINNOOCL/GL-MESA/GBM/DRI/DDX）；Xorg 用 modesetting+innogpu DRI | manifest userspace 条目、check-desktop-hwgl 输出（AIGLX innogpu） |
 | 计算 API | Vulkan 1.3.264（DRIVER_ID_IMAGINATION_PROPRIETARY）、OpenCL 3.0 | 预编译 ICD（libVK_INNO、libINNOOCL） | capability-survey.md（OBSERVED） |
 | 桌面/服务 | X11+dwm、Picom（patched）、PipeWire/WirePlumber、systemd、udev、initramfs | 项目维护 Picom patched 构建与设备钩子；音频由 PipeWire 管理 | tools/build-patched-picom.sh、compositor-management.md |
@@ -35,7 +35,7 @@
 
 ## 三、关键问题的结论
 
-1. **drivers/ 是否仍依赖旧 patch 叠加？** 否——已是**直接编译的源码树**（CONFIRMED：
+1. **drivers/ 是否仍依赖旧 patch 叠加？** 否——在 tag 上已是**直接编译的源码树**，不在主线（CONFIRMED：
    build-innogpu-driver.sh 无 patch 应用；9 个补丁已转提交）。
 2. **Deepin 的角色？** 三者同时：源码基线（drivers/ 导入）、用户态载荷来源（manifest 192 项）、
    打包参考（coherent 规则）。（CONFIRMED）

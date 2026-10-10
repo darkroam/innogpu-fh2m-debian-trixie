@@ -2,7 +2,7 @@
 
 ## 本地驱动包与来源
 
-当前 fantgpu `5.0.0-i6` 为诊断线，使用 F0 + 030 链 O_stage 和
+当前 fantgpu `5.0.0-i12` 为诊断线（非仓库级发布），使用 F0 + 030 链 O_stage 和
 [`binary-manifest-fantgpu.json`](../../binary-manifest-fantgpu.json) 锁定的同源载荷；
 同源 deb SHA-256 `6f0daaf79fb6b2a547138c17628bb990dff0d0c684ee1c13775bebc2d28fd11b`。
 来源、物化及门槛见 [O_stage 设计](../design/o-stage-integration-plan.md) 与 [当前状态](status.md)。
