@@ -82,9 +82,7 @@ GitHub 仓库 `main` 分支本身是公开分发面，clone / GitHub 源码归�
 
 **当前结论（2026-10-09，用户裁决「取消 1C，推进到打 tag」；本文为唯一权威记录，其他文档只引用）**：
 
-- 推翻范围只有 1C 里「不打 tag」这一条，而且只针对 fantgpu `5.0.0-i12`：validation-results
-  签署并且用户批准之后，可以打 annotated tag `fantgpu-5.0.0-i12`，再只推送这个 tag ref。
-- 本结论不授权现在打 tag。签署未完成时 tag 不得创建。
+- 推翻范围只有 1C 里「不打 tag」这一条，而且只针对 fantgpu `5.0.0-i12`。annotated tag `fantgpu-5.0.0-i12` 已指向 `079b179`。签署件 `signed=true`；件内 `tag_created=false` 是打 tag 前快照，不改。
 - 仍不创建 GitHub Release，不传发布附件。载荷权利链保持阻断。
 - `license_release_gate` 状态保持 `BLOCKED` 不变；`project-tools=CLEARED` 仍只表示候选制品机械
   门禁通过，`driver-source` 状态保持 `BLOCKED` 不变。`main` 仍不是仓库级发布目标。

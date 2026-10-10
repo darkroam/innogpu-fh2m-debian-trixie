@@ -55,7 +55,7 @@
 | --- | --- | --- |
 | 代一 | [legacy patched 阶段（3.3.3.42-patched-N）](baselines/baseline-legacy-patched.md) | 原包解包+补丁叠加；p27 已属 Deepin，0.5 非 p27 祖先 |
 | 代二 | [deepin 4.0.x 源码树迁移线](baselines/baseline-deepin-4.x.md) | 4.0.2-i3 为 Deepin 冻结终点与当前回滚卡 |
-| 代三 | [fantgpu 5.0.0-iN（当前诊断线）](baselines/baseline-fantgpu-5.x.md) | F0 + 030 链；R5=FAIL、未签发、未打 tag |
+| 代三 | [fantgpu 5.0.0-iN（当前诊断线）](baselines/baseline-fantgpu-5.x.md) | F0 + 030 链；现行 i12，R5 已通过，validation-results 已签署，tag 已打。事实表仍是 i6 记录 |
 
 历史页面里的“当前”只指其记录时点；今日结论统一回到 [status](project/status.md)。
 轮次阅读版：[R01–R16 批量索引](history/history.md#轮次公开阅读版索引)。

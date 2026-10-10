@@ -68,5 +68,4 @@ Debian 适配、设备修正、打包与回退约束；不能据此推断闭源�
 
 本轮只读核对 Git 对象和现有包，没有重建、安装或补做历史运行验收；tag 存在、
 文件存在及 SHA 一致分别证明身份和可追溯性，不证明当前设备验收或发布许可。
-当前冻结不变：`OUTSIDE_COVERAGE`、`R5=FAIL`、禁止重跑、U1/U2 未执行、
-validation-results 未签、签发冻结、fantgpu 5.0.0-iN 未打 tag。
+现行结论见 [status](../project/status.md)：R5 已通过，validation-results 已签署，tag `fantgpu-5.0.0-i12` 指向 `079b179`，不建 Release。早期 OUTSIDE_COVERAGE 与失败轮不重写。

@@ -13,7 +13,7 @@
 [i6 meta](../planning/evidence/o-stage/5.0.0-i6/5.0.0-i6.meta.json) 为准。
 030-032 探针破坏 shipped ABI、030-033 改用独立 devres 的经过见
 [i4 Oops 事故](../incidents/r5-i4-oops-dev-rsrc-abi.md)。ABI 修正不解除 R5=FAIL；
-OUTSIDE_COVERAGE、禁止重跑、U1/U2 未执行、validation-results 未签、未打 tag 均保持。
+该句是 030-032/033 当时的边界。现行 R5 已通过，签署与 tag 见 [status](../project/status.md)；本目录不改写该事故记录。
 
 `030-036` 是 i12 终树 `9a8d185f2a65` 之后的续编，不进入 i12 构建器，因此不改锁定终树门。
 它只把 `fantgpu/fant_math.h` 的私有 `__bf_shf` 改名为 `__fant_bf_shf`，移位表达式仍是

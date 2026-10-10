@@ -5,9 +5,7 @@
 本页只记录暂停事项和恢复条件，任务状态统一回到 [当前待办](current-work.md)，
 运行结论统一回到 [status](../project/status.md)，不另建第二份任务进度表。
 
-- [ ] **R5 下一方向待选**：依 [R5 当前待办](current-work.md#r5-悬案与-fantgpu-500-主线当前最高优先级)
-  选择后，须完成对应设计审查及独立执行放行才能恢复；当前 `OUTSIDE_COVERAGE`、`R5=FAIL`、
-  禁止重跑、U1/U2 未执行、validation-results 未签、签发冻结、未打 tag 均不变。
+- **R5 已闭合（非待选）**：见 [R5 闭合](current-work.md#r5-闭合与-fantgpu-500-主线当前最高优先级)。早期 `OUTSIDE_COVERAGE` 与失败轮不重写。U1/U2/R9 保持 unverified，validation-results 字段不改，R1 保持 fail。tag `fantgpu-5.0.0-i12` 指向 `079b179`。未另行授权不得执行 pm_test/watchdog。
 
 - [ ] xdisplay 适配器、manual marker、多外屏布局和自定义配置由 dotconfig 维护；本项目仅在 Innogpu
   设备环境变化时复核兼容环境变量和恢复钩子。

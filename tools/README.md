@@ -252,8 +252,7 @@ R47当前源码候选身份为`6.12.101-r5obs2-r47e`，LOCALVERSION须同步；�
 输入M1…M6、END；读取工具不创建实例、不加载模块、不触发PM。普通离线文件用`meter-check`
 重放；`--bounds`的L/R/C/B仅核显式来源声明的算术，不把自填上界视为实测证明。
 R47原始语义判读须带`--require-r47`和三份format；缺详细字典、回调元数据或worker关联不签完整。
-Windows脚本身份不变，上传工具零改动。OUTSIDE_COVERAGE、R5=FAIL、禁止重跑（pm_test/watchdog）、
-U1/U2、validation-results、未打 tag；1C不变，真实实占/吞吐与实验申请门仍未闭合。
+Windows脚本身份不变，上传工具零改动。以上是 R47 当时边界。现行结论见 docs/project/status.md：R5 已通过；U1/U2/R9 保持 unverified；validation-results 已签署且字段不改；tag `fantgpu-5.0.0-i12` 指向 `079b179`；不建 Release。真实实占/吞吐与实验申请门仍未闭合。
 
 R47b发射范围按R40：普通resume保留细粒度，其它阶段保留代次/complete及成对摘要。
 callback/worker原96B aux携入口，解析器按DETAIL_COUNTS_R40字典标志还原入口，exit仍原pair。

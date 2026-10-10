@@ -45,11 +45,7 @@ R49 最终 3/3 devices + 1/1 normal deep 验收通过，观察期无复发后用
   030-035 用既有 accessor 修正两处读取。R49 首轮另发现独立 Hygon xHCI 恢复缺陷，第三方 Linux
   001 为 `1d94:148c` 启用既有 `XHCI_RESET_ON_RESUME` 后，键盘/RTL8153 与最终 3+1 全通过。
   该翻转不改写早期 `OUTSIDE_COVERAGE` 或失败轮；未另行授权仍不得继续执行 pm_test/watchdog。
-- [ ] **发布阻断（fantgpu 5.0.0-iN 线）**：② `validation-results` 已定稿但 `signed=false`，等 C2 i12 新署名和用户批准；③ tag
-  `fantgpu-5.0.0-i12` 未打。① `postinst_current_kernel_only` 与④ R5 均已解除；前者由 dsh
-  在 R28 接受精确 i9 的真实八核安装证据后裁定解除；R49 已将安装后验覆盖至 i12，运行验收
-  与发布裁定仍分开。裁定来源见 [status](../project/status.md#r49-验收与-r5-观察期2026-10-01)。
-  用户 2026-10-09 推翻 1C 的「不打 tag」，只激活批准后的 annotated tag；同日豁免 hwinfo（R1 仍是 fail），R2 收 pass，R5 维持 pass。`license_release_gate=BLOCKED` 不变。
+- **发布签署（2026-10-09，非待办）**：validation-results `signed=true`，C2 i12 三方已署名。annotated tag `fantgpu-5.0.0-i12` 指向 `079b179`。签署件 `tag_created=false` 是打 tag 前快照，不改。① `postinst_current_kernel_only` 与④ R5 均已解除；前者由 dsh 在 R28 接受精确 i9 的真实八核安装证据后裁定解除。R1 保持 fail；U1/U2/R9 保持 unverified 且 closed。不建 Release。`license_release_gate=BLOCKED`。见 [status](../project/status.md#r49-验收与-r5-观察期2026-10-01)。
 
 - [ ] **温度 work 观察（未来，不阻塞本轮口径）**：用户 2026-10-09 裁决，验证计划 R5 按
   4.0.2-i3 观察口径记 PASS。`hal_temperature_monitor_work` 与 `recover gpu pll` 不在那份
@@ -77,8 +73,7 @@ R27 早期八核窗口的 `FAILED_OR_UNVERIFIED` 原记录保留，不通过删�
   需要，当前不作为发布目标。关闭 `license_release_gate=BLOCKED` 前不得发布完整源码树或载荷附件。
 - [ ] 完成研发验证矩阵：扩展坞/多屏/无盖桌面/其他机型，以及电源/合盖场景。该项用于提高研发结论的外推性，不是当前 release 工作。
 
-**发布周期前置（2026-10-09，用户推翻 1C）**：只激活 fantgpu `5.0.0-i12` 的 annotated tag。
-签署和用户批准之前不得打 tag，也不得把规划名写成已有发布标识。hwinfo 豁免、R2=pass、R5=pass 已入当前状态，不提前打 tag。不创建 GitHub Release，不传附件。
+**发布周期前置（2026-10-09，用户推翻 1C；tag 已于同日打出）**：annotated tag `fantgpu-5.0.0-i12` 指向 `079b179`。hwinfo 豁免不把 R1 改成 pass；R2=pass；R5=pass。不创建 GitHub Release，不传附件。
 不激活 `source-v4.0.0-i1`、Release 附件审查或 Phase 5 第二步。`license_release_gate=BLOCKED` 不变。
 权威决策见 [`licensing.md` §4.1](../project/licensing.md#41-github-主分支发布面与发布决策-1c当前结论)。
 

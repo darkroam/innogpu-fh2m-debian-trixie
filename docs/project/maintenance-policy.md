@@ -25,7 +25,7 @@
 - release wrapper 必须固定经过审阅的 `SOURCE_DATE_EPOCH`；同一源码、输入 deb、版本和开关重复构建
   必须生成逐字一致的包。哈希不一致时先定位构建环境或时间戳来源，禁止选择其中一个直接发布。
 - 当前诊断与回退角色见 [status](status.md)：`4.0.2-i3` 回滚卡不变，r5dpm1/r5dpm2 包保留待 dsh
-  裁定；OUTSIDE_COVERAGE、R5=FAIL、禁止重跑、U1/U2、validation-results、签发与 tag 冻结不因文档更新解除。
+  裁定。现行结论见 status：R5 已通过；validation-results 已签署且字段不改（R1 保持 fail，U1/U2/R9 保持 unverified）；tag `fantgpu-5.0.0-i12` 指向 `079b179`。OUTSIDE_COVERAGE 与失败轮不重写。未另行授权不得跑 pm_test/watchdog。不建 Release，`license_release_gate=BLOCKED`。
 - 补丁/变换边界：已迁入 O 线源码树的历史内核补丁在 `patches/` 保留作溯源与回退复现，不再
   重复叠加；新行为修复以独立补丁进入升号候选，验证通过后再决定是否迁入源码树。当前维护的
   第三方组件补丁与配置在 `components/`（picom、fbterm、Linux）；无法表示为源码 diff 的厂商对象变换使用

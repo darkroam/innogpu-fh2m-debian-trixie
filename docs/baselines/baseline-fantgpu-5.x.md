@@ -1,7 +1,7 @@
 # 代三：fantgpu 5.0.0-iN（当前诊断线）
 
-本代以 fantgpu `3.3.8.126` F0 源重新推导 030-NNN 链，当前为 `5.0.0-i6` 诊断线。
-构建可复现和首启健康均不等于发布验收；`R5=FAIL`，根因仍未定位。
+本代以 fantgpu `3.3.8.126` F0 源重新推导 030-NNN 链。本页事实表仍是 i6 代表物，不是现行状态。
+构建可复现和首启健康均不等于发布验收。现行诊断线是 `5.0.0-i12`，R5 已通过，validation-results 已签署，tag `fantgpu-5.0.0-i12` 指向 `079b179`。见 [status](../project/status.md)。本页不把 i12 写成已验收发布版。
 
 本目录 docs/baselines/ 与仓库根 baselines/（运行结果归档）同词异物、互不相关。
 本页已在 R17 第 2 轮经 qoder 初审、dsh 终审并提交（1bf294a）。代际事实基准为本机
@@ -67,7 +67,5 @@ R5 调查经历 marker、正常态探针、stop-stage、watchdog 和两轮诊断
 - `docs/planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-result.txt#L56-L66 @ b7cdeb4aa8c1`：复核判定及未定位边界；同文件 `#L111-L118` 为冻结与 dsh 边界。
 - `docs/incidents/r5-i4-oops-dev-rsrc-abi.md#L1-L53 @ b7cdeb4aa8c1`：ABI 因果链及证据限制。
 
-冻结：`OUTSIDE_COVERAGE`、`R5=FAIL`、禁止重跑、U1/U2 未执行、validation-results
-未签、签发冻结、未打 tag。`postinst_current_kernel_only=release_blocker` 和许可发布
-阻断不变。GRUB 恢复及诊断包保留状态由 [步骤 8 结果](../planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-result.txt)
+现行结论不在本页：R5 已通过，validation-results 已签署（R1 保持 fail，U1/U2/R9 保持 unverified，字段不改），tag `fantgpu-5.0.0-i12` 指向 `079b179`，不建 Release。见 [status](../project/status.md)。上文事实表是 i6 代际记录，不改。许可发布阻断 `license_release_gate=BLOCKED` 仍在。GRUB 恢复及诊断包保留状态由 [步骤 8 结果](../planning/evidence/o-stage/runtime-5.0.0-i6/r5-dpm-prepare-watchdog-step8-result.txt)
 记录；本页及其历史引用均不授权构建、安装、重启、测试或回退操作。

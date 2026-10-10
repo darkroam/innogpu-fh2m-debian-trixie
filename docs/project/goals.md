@@ -22,7 +22,7 @@
 ## 子目标与状态
 
 下表及后续「已完成阶段」「迁移阶段状态」保留 Deepin 迁移时点的结果；不代表当前 fantgpu
-已通过相同验收。当前 i6 诊断线仍为 R5=FAIL、OUTSIDE_COVERAGE，具体结论见 [status](status.md)，
+已通过相同验收。当前诊断线是 i12，R5 已通过；早期 OUTSIDE_COVERAGE 不重写。具体结论见 [status](status.md)，
 跨阶段演进见 [history](../history/history.md)。
 
 | 子目标 | 状态 | 证据 / 入口 |

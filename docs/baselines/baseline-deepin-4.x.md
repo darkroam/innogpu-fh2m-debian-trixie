@@ -67,6 +67,4 @@ PowerLock 时序竞态、s2idle 红屏及独立温度 work 过早启动；不能
 - `deepin-4.0.2-i3` tag 对象：目标 `b30c8071e595`、包 SHA、双构建及阶段二裁定；日期由 Git 对象只读取得。
 
 DDCCI 仍不提供亮度控制或 backlight device，`hwinfo_g0m.bin` 仍缺失，display 025
-为 UNVERIFIED 且未包含；本机矩阵不证明跨设备或长期压力。当前冻结继续适用：
-`OUTSIDE_COVERAGE`、`R5=FAIL`、禁止重跑、U1/U2 未执行、validation-results 未签、
-签发冻结、fantgpu 5.0.0-iN 未打 tag。回退须遵循既有回滚卡和独立授权。
+为 UNVERIFIED 且未包含；本机矩阵不证明跨设备或长期压力。现行 fantgpu 结论见 [status](../project/status.md)：R5 已通过，validation-results 已签署，tag `fantgpu-5.0.0-i12` 指向 `079b179`，不建 Release。早期 OUTSIDE_COVERAGE 不重写。回退须遵循既有回滚卡和独立授权。

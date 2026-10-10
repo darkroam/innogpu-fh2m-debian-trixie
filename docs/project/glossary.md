@@ -21,7 +21,7 @@
 | SOURCE_DATE_EPOCH / 可复现构建 | 固定发布时间戳，使同一源码和开关重复构建逐字一致 | 构建器必须在打包前把整树 mtime 归一化到该 epoch（2026-08-20 release 审阅修复）；哈希不一致禁止直接发布 |
 | `binary-manifest.json` | 原 Deepin 黑盒清单（192 项） | 主线已删除；在 tag `innogpu-4x-frozen`。`vendor-binary` 不是许可证 |
 | `binary-manifest-fantgpu.json` / F0 / O_stage | fantgpu 载荷清单 / F 原始源码基座 / F0 叠加 030 链的物化源码 | 与 O 线 tag 分开；以 [O_stage 设计](../design/o-stage-integration-plan.md) 和版本 meta 锁定来源 |
-| `OUTSIDE_COVERAGE` | 两轮诊断内核证据复核分类 | 兼容 watchdog 未覆盖区与 timer 不可触发；不定位根因、不排除所有回调挂死，不解除 R5=FAIL，见 [status](status.md) |
+| `OUTSIDE_COVERAGE` | 两轮诊断内核证据复核分类 | 兼容 watchdog 未覆盖区与 timer 不可触发；不定位当时根因，不排除所有回调挂死。该分类与失败轮不重写；现行 R5 已通过，见 [status](status.md) |
 | `vendor-binary` | manifest 中条目的许可证分类值 | 是**来源分类**，不是 SPDX/许可证名称，也不单独授予再分发权（见 [licensing.md](licensing.md)） |
 | dsh / codex / qoder | 本项目多 Agent 协作中的监督者 / 实现者 / 顾问 | dsh 终审与批准，codex 实现、自测与汇报，qoder 提建议并在参与轮次初审；用户对重大事项最终拍板（见 [multiagent-collab.md](multiagent-collab.md)） |
 | `collab/` | 多 Agent 轮次的本机存档；文件分工与串行写锁见 [协作规约](multiagent-collab.md) | 被 Git 忽略，不上传 GitHub、不自动重许可、不进公开制品 |
