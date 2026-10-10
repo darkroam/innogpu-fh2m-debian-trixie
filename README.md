@@ -33,14 +33,10 @@
 
 ## 主要修复的问题
 
-- Debian 6.12 内核接口兼容（PCI resize API、Kbuild）；DP 启动 fbcon fallback
-- fbdev `/dev/fb0` io mmap（ENODEV）；本机 connector/ACPI/eDP 映射
-- invisible READ mapping 逐页回写缺陷；`dma_resv` usage 语义；未活动 CRTC vblank 守卫
-- foreign DMA-BUF 生命周期；deb 构建可复现性（固定 epoch + 目录 mtime 归一化）
-- deep resume 的 PVR 电源时序与 DDCCI panel 修复（patch-024 快速门禁 + patch-026 devfreq 生命周期同步 + patch-028 温度 work 延后 + patch-029 DDCCI panel；`4.0.2-i3` 已通过 R14 6/6 deep）
-- s2idle 红屏的 post-atomic 重复光标恢复候选修复（patch-025-suspend-resume-display；当前桌面 cursor 分支未入组，保持 UNVERIFIED）
+- 6.12 接口与 DP fbcon；fbdev mmap；本机 connector/eDP；invisible READ、`dma_resv`、vblank 守卫、foreign DMA-BUF；固定 epoch 的可复现构建。
+- deep resume：patch-024/026/028/029 修 PVR 时序与 DDCCI panel，`4.0.2-i3` 已过 R14 6/6 deep。patch-025 的 s2idle 红屏修复保持 UNVERIFIED。
 
-补丁与事故详情见 [docs/patches/README.md](docs/patches/README.md)、[docs/incidents/README.md](docs/incidents/README.md)。
+详见 [status](docs/project/status.md) 与 [实施历史](docs/history/history.md)。补丁与事故：[docs/patches/README.md](docs/patches/README.md)、[docs/incidents/README.md](docs/incidents/README.md)。
 
 ## 快速安装
 
