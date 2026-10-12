@@ -1,0 +1,21 @@
+--- a/drivers/acpi/battery.c
++++ b/drivers/acpi/battery.c
+@@ -1171,6 +1171,18 @@
+ 		},
+ 	},
+ 	{
++		/*
++		 * Baseline: Debian linux-source-6.12 6.12.107-1.
++		 * Revalidate before applying to any other kernel version.
++		 * KaiTian X7h G1e: EC battery presence is unstable on power changes.
++		 */
++		.callback = battery_notification_delay_quirk,
++		.matches = {
++			DMI_MATCH(DMI_SYS_VENDOR, "KaiTian"),
++			DMI_MATCH(DMI_PRODUCT_NAME, "X7h G1e"),
++		},
++	},
++	{
+ 		/* Point of View mobii wintab p800w */
+ 		.callback = battery_ac_is_broken_quirk,
+ 		.matches = {

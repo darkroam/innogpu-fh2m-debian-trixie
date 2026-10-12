@@ -16,6 +16,8 @@
 | [fbterm YPan 显示错位](fbterm-ypan-rendering.md) | fbdev 快速平移会造成越界感和跨会话残留；强制 redraw 已在真实 VT 验证 |
 | [Hygon xHCI 恢复后输入失效](hygon-xhci-resume-input-loss.md) | `1d94:148c` 恢复状态不完整导致外接键盘失效与 RTL8153 `-71`；精确 ID reset-on-resume 后 3/3 devices 通过 |
 | [KaiTian X7h G1e 电池状态丢失](kaitian-x7h-battery-notification-loss.md) | 厂商 DSDT/EC 在电源切换时短暂报告 BAT0 不在位并丢失后续 BAT0 通知；002 已在 107 部署验收，并按 111 重编后由第 2 轮拔插保持 BAT0。其他内核版本不得直接套用 |
+| [Hygon GPIO 与触摸板](hygon-gpio-touchpad.md) | `HYGO0030` 不在 `amd_gpio` 匹配表时触摸板探测会停住；003 只加这个 ACPI ID。本机 6.12.111 已绑定，6.18 未在本批重打 |
+| [Hygon 板载声卡](hygon-hda-onboard-audio.md) | `1d94:14c9` 不在 `azx_ids` 时只剩 GPU HDMI 音频；004 只适用于 6.12 的 `hda_intel.c`，不能套 6.18 |
 | [suspend/resume deep 再现](suspend-resume-deep-reproduction-20260902.md) | s2idle 测试脚本过早恢复 deep，实际再次触发 S3 PowerLock 时序故障；s2idle 仍未有效测试 |
 | [suspend/resume s2idle 红屏](suspend-resume-s2idle-red-screen-20260902.md) | `4.0.1-i1` 的真实 s2idle 无 PowerLock/PVR 计数增长，但外屏整屏红色；候选失败并回退，deep 未测试 |
 | [2026-09-03 启动报错归因](boot-errors-attribution-20260903.md) | 10 类启动告警均为 pre-existing，`ours=0`；涉及系统/BIOS、厂商 hwinfo 缺失降级和 dmaengine debugfs 冲突 |

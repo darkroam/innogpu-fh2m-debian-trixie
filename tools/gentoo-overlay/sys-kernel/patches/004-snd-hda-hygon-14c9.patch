@@ -1,0 +1,11 @@
+--- a/sound/pci/hda/hda_intel.c
++++ b/sound/pci/hda/hda_intel.c
+@@ -2797,6 +2797,8 @@
+ 	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_ATI_HDMI },
+ 	/* Zhaoxin */
+ 	{ PCI_VDEVICE(ZHAOXIN, 0x3288), .driver_data = AZX_DRIVER_ZHAOXIN },
++	/* Hygon HDAudio */
++	{ PCI_VDEVICE(HYGON, 0x14c9), .driver_data = AZX_DRIVER_GENERIC },
+ 	/* Loongson HDAudio*/
+ 	{ PCI_VDEVICE(LOONGSON, PCI_DEVICE_ID_LOONGSON_HDA),
+ 	  .driver_data = AZX_DRIVER_LOONGSON },

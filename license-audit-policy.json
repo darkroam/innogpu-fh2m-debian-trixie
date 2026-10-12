@@ -143,6 +143,8 @@
       "components/fbterm/001-configurable-redraw-scrolling.patch": "GPL-2.0-only",
       "components/linux/001-hygon-148c-xhci-reset-on-resume.patch": "GPL-2.0-only",
       "components/linux/002-kaitian-x7h-battery-notification-delay.patch": "GPL-2.0-only",
+      "components/linux/003-pinctrl-amd-hygon-gpio.patch": "GPL-2.0-only",
+      "components/linux/004-snd-hda-hygon-14c9.patch": "GPL-2.0-only",
       "components/picom/001-probe-explicit-uniform-location.patch": "MPL-2.0",
       "components/picom/picom.conf": "GPL-3.0-or-later"
     }
@@ -176,7 +178,9 @@
       {
         "paths": [
           "components/linux/001-hygon-148c-xhci-reset-on-resume.patch",
-          "components/linux/002-kaitian-x7h-battery-notification-delay.patch"
+          "components/linux/002-kaitian-x7h-battery-notification-delay.patch",
+          "components/linux/003-pinctrl-amd-hygon-gpio.patch",
+          "components/linux/004-snd-hda-hygon-14c9.patch"
         ],
         "markers": [
           "Linux xHCI PCI",
@@ -184,7 +188,9 @@
           "Copyright (C) 2008 Intel Corp.",
           "GPL-2.0-only",
           "6.12.107-1",
-          "KaiTian X7h G1e"
+          "KaiTian X7h G1e",
+          "HYGO0030",
+          "1d94:14c9"
         ]
       },
       {

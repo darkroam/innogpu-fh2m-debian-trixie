@@ -30,6 +30,8 @@ binary-manifest-fantgpu.json
 components/fbterm/001-configurable-redraw-scrolling.patch
 components/linux/001-hygon-148c-xhci-reset-on-resume.patch
 components/linux/002-kaitian-x7h-battery-notification-delay.patch
+components/linux/003-pinctrl-amd-hygon-gpio.patch
+components/linux/004-snd-hda-hygon-14c9.patch
 components/picom/001-probe-explicit-uniform-location.patch
 components/picom/picom.conf
 docs/README.md
@@ -76,6 +78,8 @@ docs/incidents/README.md
 docs/incidents/boot-errors-attribution-20260903.md
 docs/incidents/design-phase-out-of-bounds-patch.md
 docs/incidents/fbterm-ypan-rendering.md
+docs/incidents/hygon-gpio-touchpad.md
+docs/incidents/hygon-hda-onboard-audio.md
 docs/incidents/hygon-xhci-resume-input-loss.md
 docs/incidents/kaitian-x7h-battery-notification-loss.md
 docs/incidents/patched-17-fbdev-mmap.md
@@ -234,6 +238,7 @@ docs/project/test-strategy.md
 docs/state/current-work.md
 docs/state/suspended.md
 docs/user/display-guide.md
+docs/user/gentoo.md
 docs/user/local-extractor.md
 docs/user/new-device-install.md
 docs/user/picom-install.md
@@ -251,6 +256,7 @@ tests/runtime/README.md
 tests/runtime/run-capability-baseline.sh
 tests/unit/d-stage-audit-fault-tests.py
 tests/unit/fantgpu_native.py
+tests/unit/gentoo-fh2m-check.sh
 tests/unit/run-030-031-pm-marker-tests.sh
 tests/unit/run-030-032-pm-probe-tests.sh
 tests/unit/run-030-033-shipped-abi-tests.sh
@@ -333,6 +339,19 @@ tools/compare-oracle-candidates.sh
 tools/disable-incompatible-userspace.sh
 tools/display-recover-and-diagnose.sh
 tools/generate-fantgpu-maintainer-scripts.sh
+tools/gentoo-check-kernel-patches.sh
+tools/gentoo-fh2m.sh
+tools/gentoo-install-kernel-patches.sh
+tools/gentoo-overlay/licenses/fantgpu-vendor
+tools/gentoo-overlay/metadata/layout.conf
+tools/gentoo-overlay/profiles/repo_name
+tools/gentoo-overlay/sys-kernel/patches/001-hygon-148c-xhci-reset-on-resume.patch
+tools/gentoo-overlay/sys-kernel/patches/002-kaitian-x7h-battery-notification-delay.patch
+tools/gentoo-overlay/sys-kernel/patches/003-pinctrl-amd-hygon-gpio.patch
+tools/gentoo-overlay/sys-kernel/patches/004-snd-hda-hygon-14c9.patch
+tools/gentoo-overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild
+tools/gentoo-r5-cycle.sh
+tools/gentoo-r5-observe.sh
 tools/install-deepin-desktop-hwgl-trial.sh
 tools/install-dri-node-repair-service.sh
 tools/install-experimental-hwgl.sh

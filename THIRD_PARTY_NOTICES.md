@@ -51,7 +51,7 @@ SOFTWARE.
 
 `components/` 是第三方开源组件的**派生修改/配置**，按上游组件许可分发，不视为本项目原创层。
 **固定上游版本与封存的许可材料**（随 `LICENSES/` 提供标准文本副本，审计器按路径组强制登记）：
-当前维护的第三方补丁共 4 个；完整路径、版本基线、验证状态和 DKMS/内核边界见
+当前维护的第三方补丁共 6 个；完整路径、版本基线、验证状态和 DKMS/内核边界见
 [`docs/patches/README.md`](docs/patches/README.md#当前第三方补丁台账)。这里的第三方分类按
 来源、许可和目标组件判定，不按是否使用 DKMS 判定。
 
@@ -70,6 +70,17 @@ SOFTWARE.
   **KaiTian X7h G1e** 复用既有电池通知延迟逻辑。目标文件 `drivers/acpi/battery.c` 按 Linux
   内核 GPL-2.0 语境分发，补丁按 **GPL-2.0-only** 分发，全文见
   `LICENSES/GPL-2.0-only.txt`。
+- `components/linux/003-pinctrl-amd-hygon-gpio.patch`：修改 **Linux pinctrl-amd
+  （Gentoo gentoo-sources 6.12.111）** 的 ACPI 匹配表，只增加海光 GPIO ID **HYGO0030**。
+  目标文件 `drivers/pinctrl/pinctrl-amd.c` 声明 `SPDX-License-Identifier: GPL-2.0-only`、
+  **Copyright (c) 2014,2015 AMD Corporation**；补丁按 **GPL-2.0-only** 分发，全文见
+  `LICENSES/GPL-2.0-only.txt`。不套用到尚未按本文件重打的其他内核版本。
+- `components/linux/004-snd-hda-hygon-14c9.patch`：修改 **Linux snd-hda-intel
+  （Gentoo gentoo-sources 6.12.111 的 `sound/pci/hda/hda_intel.c`）** 的 PCI ID 表，
+  为板载声卡 **1d94:14c9** 增加 `AZX_DRIVER_GENERIC`。该文件声明
+  `SPDX-License-Identifier: GPL-2.0-or-later`；本仓库补丁按 **GPL-2.0-only** 分发，全文见
+  `LICENSES/GPL-2.0-only.txt`。6.18 的控制器源码已搬到 `sound/hda/controllers/intel.c`，
+  本补丁不能直接套用。
 - `components/picom/001-probe-explicit-uniform-location.patch`：修改 **picom（固定 commit
   `6d676824c457a933c52e3e92c5a1856466f90545`，https://github.com/yshui/picom ）** 的
   `src/backend/gl/gl_common.c`。该目标文件声明 `SPDX-License-Identifier: MPL-2.0` 与

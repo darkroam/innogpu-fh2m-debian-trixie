@@ -37,7 +37,7 @@
 
 ## 当前第三方补丁台账
 
-截至 2026-10-02，仓库中**当前维护的第三方组件补丁共 4 个**。这里的“第三方”按
+截至 2026-10-12，仓库中**当前维护的第三方组件补丁共 6 个**。这里的“第三方”按
 **补丁修改的上游/厂商来源、许可和版本基线**判定，不按是否进入 DKMS 判定。DKMS 只是
 内核外部模块的构建/打包机制；一个补丁即使修改内核源码而不进入 DKMS，仍然可以是第三方
 补丁；反过来，DKMS 里的本项目修改也不因此成为第三方补丁。
@@ -47,6 +47,8 @@
 | `components/fbterm/001-configurable-redraw-scrolling.patch` | Debian fbterm | 1.7-5 | 用户态第三方派生补丁；真实 VT 验证通过 |
 | `components/linux/001-hygon-148c-xhci-reset-on-resume.patch` | Linux xHCI PCI | Debian `linux-source-6.12` `6.12.107-1` | 内核第三方派生补丁；107 基线已部署。111 已按该版本源码 no-fuzz 重编并验收 quirks=`0x90`，未复用 107 模块。其他内核版本仍须重验，不得直接套用 |
 | `components/linux/002-kaitian-x7h-battery-notification-delay.patch` | Linux ACPI battery | Debian `linux-source-6.12` `6.12.107-1` | 机型专用内核 workaround；107 基线已安装并一轮拔插通过。111 已按该版本源码 no-fuzz 重编，第 2 轮拔插 BAT0 保持。其他内核版本不得直接套用 |
+| `components/linux/003-pinctrl-amd-hygon-gpio.patch` | Linux pinctrl-amd | Gentoo `gentoo-sources` `6.12.111` | 只增加 ACPI ID `HYGO0030`。`CONFIG_PINCTRL_AMD=y`，生效必须整核重编并重启。6.18 未在本批重打。见 [GPIO 事故](../incidents/hygon-gpio-touchpad.md) |
+| `components/linux/004-snd-hda-hygon-14c9.patch` | Linux snd-hda-intel | Gentoo `gentoo-sources` `6.12.111` 的 `sound/pci/hda/hda_intel.c` | `1d94:14c9` 使用 `AZX_DRIVER_GENERIC`。不能套到 6.18。模块可热加载。见 [板载声卡事故](../incidents/hygon-hda-onboard-audio.md) |
 | `components/picom/001-probe-explicit-uniform-location.patch` | picom | 固定上游 commit `6d676824c457a933c52e3e92c5a1856466f90545` | 用户态第三方派生补丁；实机通过 |
 
 每个第三方补丁必须同时记录：目标组件、上游版本或 commit、目标文件、许可/NOTICE、适用

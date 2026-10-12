@@ -19,7 +19,7 @@
 12. [用户验证](user/verification.md)：安装或重启后的最小验收流程。
 13. [多 Agent 协作规约](project/multiagent-collab.md)：dsh 与 codex 的协作流程、审查门禁、git 纪律与定期文档梳理（唯一权威，不复制规则）。
 
-按需查阅：[依赖与外部文件](project/dependencies.md)、[显示接入使用](user/display-guide.md)、
+按需查阅：[Gentoo 现场](user/gentoo.md)、[依赖与外部文件](project/dependencies.md)、[显示接入使用](user/display-guide.md)、
 [许可证与再分发边界](project/licensing.md)（唯一权威文档）、[驱动源码许可证审计](project/source-license-audit.md)、
 [project-tools 允许清单](project/project-tools-allowlist.txt)、[driver-source 允许清单](project/driver-source-allowlist.txt)、
 [当前待办](state/current-work.md)、[已完成工作与时序](history/todo.md)、[实施历史](history/history.md)、

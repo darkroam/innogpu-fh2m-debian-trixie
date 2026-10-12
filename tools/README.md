@@ -36,6 +36,11 @@
 | `r50-storage-task5.py` | R50 r5dpm 构建物清理 | 普通用户启动；`--inventory` 用 sudo 只读锁定 119 项 content/metadata SHA 与保留证据；`--confirm` 强制物理 TTY 精确短语回执且不删除；`--apply RECEIPT` 仅在候选、保留集、107/101 内核与 GRUB 无漂移时，先记逐文件 SHA 再删除精确目标 |
 | `cleanup-linux-module-worktree.sh` | 源码工作树清理 | 只删除本轮展开源码和构建树，保留 `debs/` 源码包、模块与日志 |
 | `prune-kernel-source-cache.sh` | 旧源码包清理 | 默认只列出无对应已安装内核的源码 `.deb`；显式 `--delete` 才删除，当前实现面向 Debian |
+| `gentoo-fh2m.sh` | Gentoo 后备入口 | check/build/install/verify/rollback。借用构建器的 i12 派生后再打 `030-036`，不产 deb，不改构建器。install 只换磁盘文件，不热卸载；换模块后重启。overlay 在 `tools/gentoo-overlay` |
+| `gentoo-install-kernel-patches.sh` | Gentoo 内核补丁安装 | 把 overlay 里与 `components/linux` 同 SHA 的 001–004 拷到 `/etc/portage/patches/sys-kernel/gentoo-sources` 和 `gentoo-kernel`。不改补丁字节 |
+| `gentoo-check-kernel-patches.sh` | Gentoo 内核补丁核对 | 核对三处 SHA。默认再看 `/usr/src/linux` 是否已含 xHCI、电池、`HYGO0030` 与 `1d94:14c9`；`--files-only` 只核文件 |
+| `gentoo-r5-observe.sh` | Gentoo 一轮 deep 记录 | `before` 后由用户执行 `systemctl suspend`，唤醒后再 `after`。普通用户启动，脚本自行 sudo。不休眠，不写 `pm_test`。证据在 `.build/r57-r5-observe/`，`latest-run.txt` 指向本次 |
+| `gentoo-r5-cycle.sh` | Gentoo 一轮 deep 自动唤醒 | 调用上面的 before/after，中间 `rtcwake -m mem`。秒数 20–180，默认 45。不写 `pm_test`。证据目录多一个 `cycle-*`，`latest-cycle.txt` 指向本次 |
 | `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；R49 候选仅 `5.0.0-i12` + epoch `1790812800`：继承已审 i11，严格应用 `030-035` 私有对象 accessor 修复。编译/包内源共用最终派生树门 `9a8d185f2a65`；i1-i11/未知版本/错 epoch 拒绝，ABI 门保持。i12 A/B 与安装通过，运行验收首轮因外接输入未恢复失败停止；历史成绩不改 |
 | `generate-fantgpu-maintainer-scripts.sh` | F 构建器共用生成段 | 只向显式 PACKAGE_ROOT 的 DEBIAN/ 写 postinst/prerm/postrm，生产与回归共用。K 全集检查/失败传播；两调用点共用配置门，仅固定 autoinstall_all_kernels.conf 已审 30 字节 SHA 例外，其它有效配置与目录/文件符号链接拒绝，不 source 配置取值。回退丢弃未装包暂存根，已安装包另行批准恢复 |
 | `build-patched17-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝把 patched-17 作为后续构建父版本 |
