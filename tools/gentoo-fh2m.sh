@@ -1,5 +1,5 @@
 #!/bin/bash
-# Gentoo fallback for the i12 + 030-036 module. The Debian builder stays a deb builder.
+# Gentoo fallback for the i12 + 030-036 + 030-051 module. The Debian builder stays a deb builder.
 set -euo pipefail
 umask 022
 
@@ -12,6 +12,7 @@ VENDOR=${GENTOO_VENDOR:-$ROOT/vendor/fantgpu}
 SNAP=$ROOT/docs/planning/evidence/o-stage/5.0.0-i6/o-stage-snapshot.tar.zst
 I12=9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee
 TREE036=0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce
+TREE051=b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00
 PREFIX=/opt/fantgpu-fh2m
 
 log() { printf '%s %s\n' "$(date -Iseconds)" "$*"; }
@@ -30,7 +31,7 @@ PY
 
 need_repo() {
     [[ -f $SNAP ]] || die "missing i6 snapshot"
-    [[ -f $ROOT/patches/030-035.patch && -f $ROOT/patches/030-036.patch ]] || die "missing 030-035 or 030-036"
+    [[ -f $ROOT/patches/030-035.patch && -f $ROOT/patches/030-036.patch && -f $ROOT/patches/030-051.patch ]] || die "missing 030-035, 030-036 or 030-051"
     grep -q '^derive_fantgpu_source()' "$ROOT/tools/build-innogpu-driver.sh" || die "builder derive missing"
 }
 
@@ -100,10 +101,13 @@ cmd_build() {
     patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
         < "$ROOT/patches/030-036.patch"
     [[ $(tree_hash "$src") == "$TREE036" ]] || die "030-036 tree hash mismatch"
+    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
+        < "$ROOT/patches/030-051.patch"
+    [[ $(tree_hash "$src") == "$TREE051" ]] || die "030-051 tree hash mismatch"
     make -C "$src" KERNELDIR="$KERNELDIR"
     [[ -f $src/fantgpu.ko ]] || die "make produced no fantgpu.ko"
     install -m 0644 "$src/fantgpu.ko" "$WORK/fantgpu.ko"
-    log "built=$(sha256sum "$WORK/fantgpu.ko" | awk '{print $1}') srcversion=$(modinfo -F srcversion "$WORK/fantgpu.ko") tree=$TREE036"
+    log "built=$(sha256sum "$WORK/fantgpu.ko" | awk '{print $1}') srcversion=$(modinfo -F srcversion "$WORK/fantgpu.ko") tree=$TREE051"
     log "gentoo_fh2m_build=PASS"
 }
 
@@ -222,12 +226,39 @@ cmd_verify() {
     log "gentoo_fh2m_verify=PASS"
 }
 
-usage() { die "use check [--offline] | build | install | verify | rollback | warn-loaded"; }
+cmd_install_ko() {
+    [[ -f $WORK/fantgpu.ko ]] || die "build first"
+    local dest=${DESTDIR:-}
+    local moddir=$dest/lib/modules/$KERNEL/extra
+    local live=${GENTOO_LIVE_KO:-}
+    mkdir -p "$moddir" "$ROLLBACK"
+    if [[ -z $live ]]; then
+        live=/lib/modules/$KERNEL/extra/fantgpu.ko
+    fi
+    if [[ -f $ROLLBACK/fantgpu.ko ]]; then
+        log "rollback_kept=$(sha256sum "$ROLLBACK/fantgpu.ko" | awk '{print $1}')"
+    elif [[ -f $live ]]; then
+        install -m 0644 "$live" "$ROLLBACK/fantgpu.ko"
+        log "rollback_saved=$(sha256sum "$ROLLBACK/fantgpu.ko" | awk '{print $1}')"
+    fi
+    install -m 0644 "$WORK/fantgpu.ko" "$moddir/fantgpu.ko"
+    if [[ -z $dest ]]; then
+        depmod -a "$KERNEL"
+        log "installed_ko=$(sha256sum "$moddir/fantgpu.ko" | awk '{print $1}')"
+        log "reboot_required=yes hot_unplug=forbidden"
+    else
+        log "destdir=$dest"
+    fi
+    log "gentoo_fh2m_install_ko=PASS"
+}
+
+usage() { die "use check [--offline] | build | install | install-ko | verify | rollback | warn-loaded"; }
 
 case ${1:-} in
     check) cmd_check "${2:-}" ;;
     build) cmd_build ;;
     install) cmd_install ;;
+    install-ko) cmd_install_ko ;;
     verify) cmd_verify ;;
     rollback) cmd_rollback ;;
     warn-loaded) cmd_warn_loaded ;;

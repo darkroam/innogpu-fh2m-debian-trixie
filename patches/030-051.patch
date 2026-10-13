@@ -1,0 +1,114 @@
+diff --git a/fantsrvkm/fantdpu_connector.c b/fantsrvkm/fantdpu_connector.c
+--- a/fantsrvkm/fantdpu_connector.c
++++ b/fantsrvkm/fantdpu_connector.c
+@@ -2212,6 +2212,40 @@
+ 
+ extern int s_dp_vga;
+ extern int s_hdmi_dvi;
++
++static fant_dev *s_hwinfo_pdev;
++static bool s_hwinfo_ready;
++static int s_hwinfo_version;
++static unsigned int s_hwinfo_gen;
++static unsigned int s_output_gen[CONNECTOR_M_MAX];
++static int s_output_index[CONNECTOR_M_MAX];
++
++static int fantdpu_hwinfo_version_cached(fant_dev *dev, fant_dev *pdev)
++{
++	if (!s_hwinfo_ready || s_hwinfo_pdev != pdev) {
++		s_hwinfo_ready = true;
++		s_hwinfo_pdev = pdev;
++		s_hwinfo_version = fh2m_hal_hwinfo_version(pdev);
++		if (++s_hwinfo_gen == 0)
++			s_hwinfo_gen = 1;
++		if (s_hwinfo_version < 0) {
++			fant_printk_once(KERN_INFO
++				"fh2m: hwinfo version failed, using default output 0 and DDCCI\n");
++			conn_info(dev,
++				"hwinfo version failed, using default output 0 and DDCCI\n");
++		}
++	}
++
++	return s_hwinfo_version;
++}
++
++static int fantdpu_cache_output_index(enum connector_module conn_module, int index)
++{
++	s_output_index[conn_module] = index;
++	s_output_gen[conn_module] = s_hwinfo_gen;
++	return index;
++}
++
+ static int fantdpu_get_output_index(fant_dev *dev, enum connector_module conn_module)
+ {
+ 	fant_dev *pdev = NULL;
+@@ -2225,14 +2259,20 @@
+ 	if (!pdev)
+ 		return -EFAULT;
+ 
+-	version = fh2m_hal_hwinfo_version(pdev);
++	if ((unsigned int)conn_module >= CONNECTOR_M_MAX)
++		return -EINVAL;
++
++	version = fantdpu_hwinfo_version_cached(dev, pdev);
++	if (s_output_gen[conn_module] == s_hwinfo_gen)
++		return s_output_index[conn_module];
++
+ 	if (version < 0) {
+ 		if (fantdpu_local_internal_edp(conn_module)) {
+ 			conn_info(dev, "hwinfo unavailable; using local internal eDP output\n");
+-			return FANTGPU_LOCAL_INTERNAL_EDP_OUTPUT_INDEX;
++			return fantdpu_cache_output_index(conn_module,
++				FANTGPU_LOCAL_INTERNAL_EDP_OUTPUT_INDEX);
+ 		}
+-		fh2m_fantdpu_err(dev, "hwinfo version failed\n");
+-		return -EFAULT;
++		return fantdpu_cache_output_index(conn_module, 0);
+ 	}
+ 
+ 	if (version >= 0x7) {
+@@ -2246,9 +2286,10 @@
+ 		if (ret < 0) {
+ 			if (fantdpu_local_internal_edp(conn_module)) {
+ 				conn_info(dev, "output mode unavailable; using local internal eDP output\n");
+-				return FANTGPU_LOCAL_INTERNAL_EDP_OUTPUT_INDEX;
++				return fantdpu_cache_output_index(conn_module,
++					FANTGPU_LOCAL_INTERNAL_EDP_OUTPUT_INDEX);
+ 			}
+-			fh2m_fantdpu_err(dev, "fh2m_hal_get_output_mode failed, Using 0\n");
++			conn_info(dev, "fh2m_hal_get_output_mode failed, Using 0\n");
+ 			val = 0;
+ 		}
+ 	} else {
+@@ -2279,7 +2320,7 @@
+ 
+ 	conn_info(dev, "connector_id:%d output_id:%d\n", connector_id, val);
+ 
+-	return val;
++	return fantdpu_cache_output_index(conn_module, val);
+ }
+ 
+ struct connector_output_mode *fantdpu_get_connector_output_mode(fant_dev *dev,
+@@ -2293,7 +2334,7 @@
+ 
+ 	index = fantdpu_get_output_index(dev, conn_module);
+ 	if (index < 0) {
+-		fh2m_fantdpu_err(dev, "get_output_mode failed!!!, Using the default output:0\n");
++		conn_info(dev, "get_output_mode failed!!!, Using the default output:0\n");
+ 		index = 0;
+ 	}
+ 
+@@ -2328,11 +2369,9 @@
+ 	if (!pdev)
+ 		return -EFAULT;
+ 
+-	version = fh2m_hal_hwinfo_version(pdev);
+-	if (version < 0) {
+-		fh2m_fantdpu_err(dev, "hwinfo version failed, Use default DDCCI\n");
++	version = fantdpu_hwinfo_version_cached(dev, pdev);
++	if (version < 0)
+ 		return CONNECTOR_BACKLIGHT_DDCCI;
+-	}
+ 
+ 	if (version >= 0x7) {
+ 		connector_id = fantdpu_get_connector_id(pdev, conn_module);

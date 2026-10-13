@@ -2,6 +2,7 @@
 set -euo pipefail
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 bash -n "$root/tools/gentoo-fh2m.sh"
+bash -n "$root/tools/gentoo-lid-external.sh"
 bash -n "$root/tools/gentoo-install-kernel-patches.sh"
 bash -n "$root/tools/gentoo-overlay/sys-kernel/fantgpu-kernel-patches/files/install-patches.sh"
 bash -n "$root/tools/gentoo-check-kernel-patches.sh"
@@ -156,3 +157,32 @@ grep -q 'removed=7 kept=1' "$out"
 [[ $kept == $(sha256sum "$rmdest/etc/portage/patches/sys-kernel/gentoo-sources/003-pinctrl-amd-hygon-gpio.patch") ]]
 [[ ! -f $rmdest/etc/portage/patches/sys-kernel/gentoo-sources/001-hygon-148c-xhci-reset-on-resume.patch ]]
 grep -q 'pkg_prerm' "$root/tools/gentoo-overlay/sys-kernel/fantgpu-kernel-patches/fantgpu-kernel-patches-1.ebuild"
+
+lid=$(mktemp -d)
+trap 'rm -rf "$work" "$fix" "$out" "$fixdir" "$fake" "$rmdest" "$lid"' EXIT
+GENTOO_LID_CONF=$lid/90-lid-external.conf "$root/tools/gentoo-lid-external.sh" --apply >"$out"
+grep -q 'lid_conf=APPLIED' "$out"
+GENTOO_LID_CONF=$lid/90-lid-external.conf "$root/tools/gentoo-lid-external.sh" --apply >"$out"
+grep -q 'lid_conf=SKIP identical' "$out"
+printf 'local\n' >> "$lid/90-lid-external.conf"
+if GENTOO_LID_CONF=$lid/90-lid-external.conf "$root/tools/gentoo-lid-external.sh" --revert >"$out" 2>&1; then
+    echo "different lid conf was removed" >&2
+    exit 1
+fi
+grep -q 'lid_conf=FAIL differs' "$out"
+ko=$(mktemp -d)
+trap 'rm -rf "$work" "$fix" "$out" "$fixdir" "$fake" "$rmdest" "$lid" "$ko"' EXIT
+mkdir -p "$ko/work" "$ko/rollback" "$ko/live"
+printf 'built-ko\n' > "$ko/work/fantgpu.ko"
+printf 'old-ko\n' > "$ko/live/fantgpu.ko"
+GENTOO_WORK=$ko/work GENTOO_ROLLBACK=$ko/rollback GENTOO_LIVE_KO=$ko/live/fantgpu.ko \
+    DESTDIR=$ko/dest KERNEL=test "$root/tools/gentoo-fh2m.sh" install-ko >"$out"
+grep -q 'rollback_saved=' "$out"
+grep -q 'gentoo_fh2m_install_ko=PASS' "$out"
+[[ $(cat "$ko/dest/lib/modules/test/extra/fantgpu.ko") == built-ko ]]
+[[ ! -e $ko/dest/opt/fantgpu-fh2m ]]
+printf 'other-ko\n' > "$ko/live/fantgpu.ko"
+GENTOO_WORK=$ko/work GENTOO_ROLLBACK=$ko/rollback GENTOO_LIVE_KO=$ko/live/fantgpu.ko \
+    DESTDIR=$ko/dest KERNEL=test "$root/tools/gentoo-fh2m.sh" install-ko >"$out"
+grep -q 'rollback_kept=' "$out"
+[[ $(cat "$ko/rollback/fantgpu.ko") == old-ko ]]

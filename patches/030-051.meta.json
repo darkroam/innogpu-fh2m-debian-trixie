@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "id": "030-051",
+  "ledger_ref": {
+    "item": "030",
+    "neutral_record": "F-R58-hwinfo-fallback",
+    "mapping": "collab/R58-2026-10-09-fh2m初始modeset排查批/codex-report.md",
+    "description": "cache the missing-hwinfo connector fallback and stop repeating its errors"
+  },
+  "deepin_patch": {
+    "path": "patches/030-051.patch",
+    "sha256": "962beb650b6380c5358676ae2310b47d4f85975e95dfdf143550cb0f9db0e544",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "i12 derived tree after 030-036; not a new archived snapshot",
+      "sha256": "not-a-snapshot-file"
+    },
+    "tree_hash": "0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce",
+    "chain_base": {
+      "id": "030-036",
+      "after_tree_hash": "0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "connector-fallback-cache-only",
+      "summary": "Missing hwinfo still selects HDMI/DP table entry 0, and the local DP0 internal panel still selects index 9. Queries are cached per device and connector. Closed objects, encoder modeset, and the 117/207 call sites stay unchanged."
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "Edit in the existing vendor Dual MIT/GPLv2 connector file; no new dependency, binary or third-party code."
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "post-030-036-not-builder-input",
+      "summary": "Parent is the 030-036 tree 0eda30cd. 030-051 is not inserted into tools/build-innogpu-driver.sh. Gentoo fallback applies it only after the 030-036 hash matches."
+    },
+    "o_stage_adaptation": {
+      "status": "not-applicable",
+      "verdict": "post-i12-connector-log",
+      "summary": "No Deepin behavior change. The i6 snapshot connector file is the pre-image because 030-035 and 030-036 do not touch it."
+    },
+    "adjacent_code": {
+      "status": "reviewed",
+      "verdict": "single-file",
+      "summary": "Only fantsrvkm/fantdpu_connector.c. HDMI refclk and DP analog config queries remain in their own files."
+    }
+  },
+  "apply": {
+    "before_tree_hash": "0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce",
+    "after_tree_hash": "b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00",
+    "file_before_sha256": "4149e13ee9f3e0b21b571a585be489caf4d90800223170a2ebcccd63305c78a0",
+    "file_after_sha256": "ed4198ea88e828f1a09aa076f71d1d8d0124188f0af1f922333006435f6937fa",
+    "patch_sha256": "962beb650b6380c5358676ae2310b47d4f85975e95dfdf143550cb0f9db0e544",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <TREE036> < patches/030-051.patch",
+    "result": "One file. Strict replay on the 030-036 tree passes and reverse restores 0eda30cd. No .orig or .rej."
+  },
+  "rollback": {
+    "command": "patch --batch --reverse --fuzz=0 --no-backup-if-mismatch -p1 -d <TREE036> < patches/030-051.patch",
+    "target": "0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce"
+  },
+  "status": "pass",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "strict -p1 --fuzz=0 on the 030-036 tree",
+        "scope is only fantsrvkm/fantdpu_connector.c",
+        "local DP0 internal eDP index 9 remains",
+        "non-local version<0 returns 0 and does not return -EFAULT",
+        "i12 builder does not reference 030-051"
+      ]
+    },
+    "clean_build": {
+      "status": "pass",
+      "source_tree_hash": "b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00",
+      "kernel": "6.12.111-gentoo-x86_64",
+      "srcversion": "D579486A64C340B5178B66B",
+      "evidence": ".build/r58-051/build1.log and build2.log",
+      "checks": [
+        "two clean MAKEFLAGS=-j1 builds, both exit 0",
+        "both ko sha256 ea8c6c60d1132497177073d47ef490b1d206ecf8fa6cff1c6c0a8d41c0f2aeaa",
+        "both srcversion D579486A64C340B5178B66B",
+        "MODPOST and LD present; this kernel config has no BTF step",
+        "disk ko replaced, loaded module left at 370AB248D72951EF3C0C4BB until reboot"
+      ]
+    },
+    "runtime": {
+      "status": "pass",
+      "boot_id": "76762df2-07e4-49bd-9639-f60395b4b349",
+      "srcversion": "D579486A64C340B5178B66B",
+      "checks": [
+        "open per-connector hwinfo errors 0",
+        "probe 4.856 to fbcon 5.258 is 0.402s; first bind 5.025 to fbcon is 0.233s",
+        "external HDMI-2 initial 1920x1080; eDP-1 disabled by config",
+        "117 three times and 207 once inside the bind window; two later 117 lines recorded only",
+        "closed-source skip and register-no-pass still present",
+        "pre-login black interval is fbcon 5.258 to X 22.691, about 17.4s, outside this patch"
+      ]
+    }
+  }
+}

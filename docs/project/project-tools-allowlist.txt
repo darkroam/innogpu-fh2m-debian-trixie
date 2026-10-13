@@ -106,6 +106,7 @@ docs/patches/028-suspend-resume-hal-temp-monitor-delay.md
 docs/patches/029-suspend-resume-ddcci-panel.md
 docs/patches/030-035-private-accessor.md
 docs/patches/030-036-bf-shf-rename.md
+docs/patches/030-051-hwinfo-fallback.md
 docs/patches/README.md
 docs/patches/patch-000-skip-first-gpupll.md
 docs/patches/patch-001-kernel-6.12.md
@@ -264,6 +265,7 @@ tests/unit/run-030-033-shipped-abi-tests.sh
 tests/unit/run-030-034-stop-stage-tests.sh
 tests/unit/run-030-035-private-accessor-tests.sh
 tests/unit/run-030-036-bf-shf-rename-tests.sh
+tests/unit/run-030-051-hwinfo-fallback-tests.sh
 tests/unit/run-030-meta-tests.sh
 tests/unit/run-builder-fantgpu-gates-tests.sh
 tests/unit/run-capability-baseline-tests.sh
@@ -343,6 +345,8 @@ tools/generate-fantgpu-maintainer-scripts.sh
 tools/gentoo-check-kernel-patches.sh
 tools/gentoo-fh2m.sh
 tools/gentoo-install-kernel-patches.sh
+tools/gentoo-lid-external.conf
+tools/gentoo-lid-external.sh
 tools/gentoo-overlay/licenses/fantgpu-vendor
 tools/gentoo-overlay/metadata/layout.conf
 tools/gentoo-overlay/profiles/repo_name

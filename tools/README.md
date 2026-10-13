@@ -36,7 +36,8 @@
 | `r50-storage-task5.py` | R50 r5dpm 构建物清理 | 普通用户启动；`--inventory` 用 sudo 只读锁定 119 项 content/metadata SHA 与保留证据；`--confirm` 强制物理 TTY 精确短语回执且不删除；`--apply RECEIPT` 仅在候选、保留集、107/101 内核与 GRUB 无漂移时，先记逐文件 SHA 再删除精确目标 |
 | `cleanup-linux-module-worktree.sh` | 源码工作树清理 | 只删除本轮展开源码和构建树，保留 `debs/` 源码包、模块与日志 |
 | `prune-kernel-source-cache.sh` | 旧源码包清理 | 默认只列出无对应已安装内核的源码 `.deb`；显式 `--delete` 才删除，当前实现面向 Debian |
-| `gentoo-fh2m.sh` | Gentoo 后备入口 | check/build/install/verify/rollback。借用构建器的 i12 派生后再打 `030-036`，不产 deb，不改构建器。install 只换磁盘文件，不热卸载；换模块后重启。overlay 在 `tools/gentoo-overlay` |
+| `gentoo-fh2m.sh` | Gentoo 后备入口 | check/build/install/install-ko/verify/rollback。借用构建器的 i12 派生后再打 `030-036` 和 `030-051`，不产 deb，不改构建器。`install-ko` 只换磁盘模块；换模块后重启，不热卸载。overlay 在 `tools/gentoo-overlay` |
+| `gentoo-lid-external.sh` | 合盖外屏配置 | `--apply` / `--revert` 只处理与模板逐字节相同的 `90-lid-external.conf`。内容不同则失败，不覆盖 |
 | `gentoo-install-kernel-patches.sh` | Gentoo 内核补丁后备 | 无 portage 时使用。与 ebuild 同一规则：SHA 相同跳过，SHA 不同失败且不覆盖。正常路径是 `emerge sys-kernel/fantgpu-kernel-patches` |
 | `gentoo-check-kernel-patches.sh` | Gentoo 内核补丁核对 | 核对三处 SHA。默认再看 `/usr/src/linux` 是否已含 xHCI、电池、`HYGO0030` 与 `1d94:14c9`；`--files-only` 只核文件 |
 | `gentoo-r5-observe.sh` | Gentoo 一轮 deep 记录 | `before` 后由用户执行 `systemctl suspend`，唤醒后再 `after`。普通用户启动，脚本自行 sudo。不休眠，不写 `pm_test`。证据在 `.build/r57-r5-observe/`，`latest-run.txt` 指向本次 |

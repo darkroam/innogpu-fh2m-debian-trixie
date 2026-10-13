@@ -19,6 +19,8 @@
 它只把 `fantgpu/fant_math.h` 的私有 `__bf_shf` 改名为 `__fant_bf_shf`，移位表达式仍是
 `(__builtin_ffsll(x) - 1)`。见 [030-036](030-036-bf-shf-rename.md)。
 
+`030-051` 接在 `030-036` 树 `0eda30cd` 之后，只收敛 `fantdpu_connector.c` 的 hwinfo 回退。无固件时 HDMI 仍用表项 0，本机 DP0 内屏仍用 index 9。不进入 i12 构建器，不合并 modeset。见 [030-051](030-051-hwinfo-fallback.md)。
+
 **以下分类为 Deepin 补丁与组件的历史记录，计数不含 030 链**：
 
 - `patches/*.patch`（18 个源码 diff：001–009、023–029，以及显示恢复候选
