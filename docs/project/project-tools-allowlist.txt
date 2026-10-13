@@ -237,6 +237,7 @@ docs/project/status.md
 docs/project/test-strategy.md
 docs/state/current-work.md
 docs/state/suspended.md
+docs/user/debian.md
 docs/user/display-guide.md
 docs/user/gentoo.md
 docs/user/local-extractor.md
