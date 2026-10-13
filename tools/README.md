@@ -37,7 +37,7 @@
 | `cleanup-linux-module-worktree.sh` | 源码工作树清理 | 只删除本轮展开源码和构建树，保留 `debs/` 源码包、模块与日志 |
 | `prune-kernel-source-cache.sh` | 旧源码包清理 | 默认只列出无对应已安装内核的源码 `.deb`；显式 `--delete` 才删除，当前实现面向 Debian |
 | `gentoo-fh2m.sh` | Gentoo 后备入口 | check/build/install/verify/rollback。借用构建器的 i12 派生后再打 `030-036`，不产 deb，不改构建器。install 只换磁盘文件，不热卸载；换模块后重启。overlay 在 `tools/gentoo-overlay` |
-| `gentoo-install-kernel-patches.sh` | Gentoo 内核补丁安装 | 把 overlay 里与 `components/linux` 同 SHA 的 001–004 拷到 `/etc/portage/patches/sys-kernel/gentoo-sources` 和 `gentoo-kernel`。不改补丁字节 |
+| `gentoo-install-kernel-patches.sh` | Gentoo 内核补丁后备 | 无 portage 时使用。与 ebuild 同一规则：SHA 相同跳过，SHA 不同失败且不覆盖。正常路径是 `emerge sys-kernel/fantgpu-kernel-patches` |
 | `gentoo-check-kernel-patches.sh` | Gentoo 内核补丁核对 | 核对三处 SHA。默认再看 `/usr/src/linux` 是否已含 xHCI、电池、`HYGO0030` 与 `1d94:14c9`；`--files-only` 只核文件 |
 | `gentoo-r5-observe.sh` | Gentoo 一轮 deep 记录 | `before` 后由用户执行 `systemctl suspend`，唤醒后再 `after`。普通用户启动，脚本自行 sudo。不休眠，不写 `pm_test`。证据在 `.build/r57-r5-observe/`，`latest-run.txt` 指向本次 |
 | `gentoo-r5-cycle.sh` | Gentoo 一轮 deep 自动唤醒 | 调用上面的 before/after，中间 `rtcwake -m mem`。秒数 20–180，默认 45。不写 `pm_test`。证据目录多一个 `cycle-*`，`latest-cycle.txt` 指向本次 |

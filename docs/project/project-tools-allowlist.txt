@@ -345,6 +345,8 @@ tools/gentoo-install-kernel-patches.sh
 tools/gentoo-overlay/licenses/fantgpu-vendor
 tools/gentoo-overlay/metadata/layout.conf
 tools/gentoo-overlay/profiles/repo_name
+tools/gentoo-overlay/sys-kernel/fantgpu-kernel-patches/fantgpu-kernel-patches-1.ebuild
+tools/gentoo-overlay/sys-kernel/fantgpu-kernel-patches/files/install-patches.sh
 tools/gentoo-overlay/sys-kernel/patches/001-hygon-148c-xhci-reset-on-resume.patch
 tools/gentoo-overlay/sys-kernel/patches/002-kaitian-x7h-battery-notification-delay.patch
 tools/gentoo-overlay/sys-kernel/patches/003-pinctrl-amd-hygon-gpio.patch

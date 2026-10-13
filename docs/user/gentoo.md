@@ -32,15 +32,27 @@ Portage 每次下载源码都会以这个用户读每个 overlay 的 `profiles/t
 连无关的包也装不上。本机因此把 overlay 拷到 `/var/db/repos/fantgpu` 再登记。
 `tools/gentoo-overlay` 仍是源头，改完要再拷一次。
 
-然后接受 `~amd64` 和 `fantgpu-vendor`，再 `emerge x11-drivers/fantgpu-fh2m`。
-ebuild 调用 `tools/gentoo-fh2m.sh`。
+然后接受 `~amd64` 和 `fantgpu-vendor`。驱动 ebuild 调用 `tools/gentoo-fh2m.sh`。
 
 ```
 # /etc/portage/package.accept_keywords/fantgpu-fh2m
 x11-drivers/fantgpu-fh2m ~amd64
+sys-kernel/fantgpu-kernel-patches ~amd64
 
 # /etc/portage/package.license/fantgpu-fh2m
 x11-drivers/fantgpu-fh2m fantgpu-vendor
+```
+
+一条安装顺序：
+
+```
+emerge sys-kernel/fantgpu-kernel-patches
+emerge -u sys-kernel/gentoo-sources
+# 用现有内核构建方式编译并安装，然后重启。不要改 GRUB。
+emerge x11-drivers/fantgpu-fh2m
+# 再重启
+tools/gentoo-fh2m.sh verify
+tools/gentoo-check-kernel-patches.sh
 ```
 
 用户态和固件来自本机已经物化的 `vendor/fantgpu/`，不重新打包，也不进 git。
@@ -72,12 +84,16 @@ Gentoo 脚本只借用它的 `derive_fantgpu_source`，再打 `030-036`。不改
 
 ## 依赖
 
-`x11-drivers/fantgpu-fh2m` 现在拉齐这些包，可以从 `@world` 里去掉对应的手动条目：
+`x11-drivers/fantgpu-fh2m` 的 `RDEPEND` 来自 2026-10-13 对已安装 amd64 载荷的 `readelf -d` `NEEDED` 盘点，外加加载这些插件的包。`libva` 不在 `NEEDED` 里，它是打开 `fh2m_drv_video.so` 的加载器。`libgbm.so.1` 用包内那份，不另拉系统 gbm。`IUSE=+wayland` 默认打开；关掉它不会改已经链接好的 `libwayland-client.so.0` 和 `libwayland-server.so.0`。
 
 - `>=x11-base/xorg-server-21.1.20:0 <x11-base/xorg-server-22:0`。本机 slot 是 `0/21.1.25`，不能写成 `:0/21.1`。
-- `media-libs/libva:0/2`
-- `x11-libs/libdrm`
+- `media-libs/libva:0/2`、`media-libs/libglvnd`、`media-libs/libepoxy`
+- `x11-libs/libdrm`、`libX11`、`libXext`、`libXfixes`、`libXxf86vm`、`libxcb`、`libxshmfence`、`pixman`
+- `dev-libs/expat`、`sys-libs/zlib`、`virtual/libudev`、`sys-libs/glibc`、`sys-devel/gcc`
+- `wayland? ( dev-libs/wayland )`，这一个包同时提供 client 和 server
 - 构建依赖 `virtual/linux-sources`
+
+`sys-kernel/fantgpu-kernel-patches` 自己不拉这些包，也不拉内核源码。
 
 ## 内核补丁 001–004
 
@@ -87,11 +103,15 @@ Gentoo 脚本只借用它的 `derive_fantgpu_source`，再打 `030-036`。不改
 PCI `1d94:14c9`。004 不能套到 6.18：控制器源码已改到 `sound/hda/controllers/intel.c`，
 而且兆芯条目和龙芯条目之间多了 HDMI ID。
 
+正常路径是 `emerge sys-kernel/fantgpu-kernel-patches`。`pkg_postinst` 把四份补丁拷进
+`/etc/portage/patches/sys-kernel/gentoo-sources/` 和 `gentoo-kernel/`。SHA 相同就跳过。
+SHA 不同就失败，不覆盖已经改过的本地文件。没有 portage 时用同一规则的后备：
+
 ```
 sudo tools/gentoo-install-kernel-patches.sh
 ```
 
-这只把四个补丁放进 portage 的 user-patches，不改正在运行的内核。已经解包的树如果被手工改过，
+这不改正在运行的内核。已经解包的树如果被手工改过，
 先用四个补丁 `--fuzz=0 -R` 卸回，再从
 `/etc/portage/patches/sys-kernel/gentoo-sources/` 按文件名顺序 `--fuzz=0` 打回。
 现在不按内核版本拆目录。`emerge` 任何 gentoo-sources 都会尝试打这组补丁；6.18 的声卡补丁对不上时要停下来重做，不要带着失败继续编。
