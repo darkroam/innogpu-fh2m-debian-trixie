@@ -30,7 +30,15 @@ auto-sync = no
 Portage 每次下载源码都会以这个用户读每个 overlay 的 `profiles/thirdpartymirrors`。
 这个文件可以没有，没有就当空表。进不了目录则是权限错误，整次 emerge 失败，
 连无关的包也装不上。本机因此把 overlay 拷到 `/var/db/repos/fantgpu` 再登记。
-`tools/gentoo-overlay` 仍是源头，改完要再拷一次。
+`tools/gentoo-overlay` 仍是源头。部署时整目录同步到 `/var/db/repos/fantgpu`，
+再写一行 `repo-root`，内容是这个 git 仓库的根。家目录是 `700`，portage 用户进不去，
+所以 `x11-drivers/fantgpu-fh2m` 还要有一条 package.env：`FEATURES="-userpriv"`。
+编译阶段因此以 root 读仓库。不要改家目录权限。
+
+```
+rsync -a --delete tools/gentoo-overlay/ /var/db/repos/fantgpu/
+printf '%s\n' "$PWD" > /var/db/repos/fantgpu/repo-root
+```
 
 然后接受 `~amd64` 和 `fantgpu-vendor`。驱动 ebuild 调用 `tools/gentoo-fh2m.sh`。
 
@@ -72,6 +80,37 @@ sudo tools/gentoo-fh2m.sh verify
 
 构建器 `tools/build-innogpu-driver.sh` 仍只产 Debian deb，并且停在 `030-035`。
 Gentoo 脚本只借用它的 `derive_fantgpu_source`，再打 `030-036`。不改构建器。
+
+
+## 幂等
+
+`build` 重跑应得到同一份 `fantgpu.ko`。`install` 只在回滚件不存在时保存当前磁盘 ko。
+emerge 的回滚件在 `/var/lib/fantgpu/rollback/fantgpu.ko`，不放在 portage 的临时目录里。
+第二次安装看到这个文件就跳过，日志是 `rollback_kept`。不要热卸载。换上去的 ko 在重启后才是正在运行的那份。
+
+## 卸载
+
+`emerge --unmerge x11-drivers/fantgpu-fh2m` 会删掉包里登记的文件。模块如果还在 `lsmod` 里，
+`pkg_prerm` 只警告：模块已加载，不要热卸载，先重启，再把这次卸载当成完成。`pkg_postrm` 跑
+`depmod` 和 `ldconfig`，不执行 `rmmod`。
+
+手动 `tools/gentoo-fh2m.sh` 没有卸载。它只做 check、build、install、verify、rollback。
+`rollback` 把保存的 ko 写回磁盘，然后重启，同样不热卸载。没有 portage 时，补丁拷贝用
+`tools/gentoo-install-kernel-patches.sh`，它也不卸载。
+
+2026-10-13 本机已经 `emerge` 了 `sys-kernel/fantgpu-kernel-patches` 和 `x11-drivers/fantgpu-fh2m`。
+补丁包因为目标 SHA 相同，`installed=0 skipped=8`。驱动第一次装到已有手动文件上时，portage 报文件冲突；
+这些文件原来不属于任何包，合并后归这个包。没有 `rmmod`。磁盘上的 ko 要重启后才是正在运行的那份。
+回滚件在 `/var/lib/fantgpu/rollback/fantgpu.ko`。同一目录再编两次，ko 字节相同；换工作目录只会把路径编进调试信息。
+
+2026-10-13 对已安装 amd64 ELF 重跑 `readelf -d`。外部 `NEEDED` 都在 `RDEPEND` 里。`libgbm.so.1` 解析到包内，`libEGL.so.1` 解析到 `libglvnd`。因此已从 `@world` 去掉 `dev-libs/wayland`、`media-libs/libva`、`x11-base/xorg-server`、`media-libs/mesa`。不要 `depclean` 之前先看下面两条仍须留在 `package.use` 的项。不要开全局 `USE=wayland`。
+
+仍须手写，ebuild 没有表达：
+
+- `x11-base/xorg-server -minimal`。`minimal` 关掉 dri2、dri3、glamor、glx。DDX 用 `DRI2*` 和 `dri3_screen_init`。
+- `x11-base/xorg-drivers` 与 `media-libs/mesa` 的 `-video_cards_*`，以及 mesa 的 `-llvm`。这是这台机器不编其他显卡驱动，不是漏掉的包。`xorg-server` 会拉这两份包。
+
+没有声明、现在的 X/GL/VA 也不靠它们：Vulkan ICD 已安装，但没有 `media-libs/vulkan-loader`。OpenCL ICD 已安装，本机没有 `libOpenCL`。
 
 ## 不在本档案里
 

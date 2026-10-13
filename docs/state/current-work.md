@@ -65,7 +65,7 @@ R27 早期八核窗口的 `FAILED_OR_UNVERIFIED` 原记录保留，不通过删�
 [公开阅读版](../history/history.md#轮次公开阅读版索引)已由 `e520258` 收档，qoder 初审与 dsh 终审通过。
 运行冻结不随文档进度解除。
 
-## Gentoo 现场（R57，段 3 待审查）
+## Gentoo 现场（R57，段 4 待审查）
 
 本机 `6.12.111-gentoo` 已用 i12 加构建器外的 `030-036` 拉起。入口是
 [`gentoo-fh2m.sh`](../../tools/gentoo-fh2m.sh)，portage 包装在
@@ -80,6 +80,8 @@ R27 早期八核窗口的 `FAILED_OR_UNVERIFIED` 原记录保留，不通过删�
 2026-10-12 14:03 有一轮 deep，驱动恢复 rc=0，温度行和 pll 行没有，不算通过。
 2026-10-12 18:28 在 quirks=`0x90` 的同一启动上又跑了 `rtcwake -m mem -s 45`。驱动恢复 rc=0，温度行和 pll 行仍没有，判定 `RECORDED_OBSERVATION_ABSENT`，不是通过。闹钟 18:29:43，实际 18:29:19 醒来。外接键盘设备号保持，该口有一条 xHCI context 警告。
 段 3 把 001–004 收成 `sys-kernel/fantgpu-kernel-patches`。SHA 相同跳过，SHA 不同不覆盖。驱动 `RDEPEND` 按 amd64 `NEEDED` 补全，`wayland` 默认打开。R5 观察项仍不是通过。
+段 4 在本机用这份 overlay emerge 补丁包和驱动。安装不热卸载。回滚件只保存一次。卸载只警告，不 `rmmod`。
+段 4 已在本机装上这两个包。2026-10-13 10:12 重启 `d491b2ea` 后加载的就是磁盘 ko `70149a1c`。直接 `NEEDED` 已由 `RDEPEND` 覆盖。`wayland`、`libva`、`xorg-server`、`mesa` 已从 `@world` 去掉。`xorg-server -minimal` 和 video_cards 的 USE 仍要留。不要 `depclean`，不要开全局 wayland。
 
 ## 许可证与研发验证
 

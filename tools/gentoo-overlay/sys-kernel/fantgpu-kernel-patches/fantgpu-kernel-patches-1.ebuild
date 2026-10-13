@@ -32,3 +32,11 @@ pkg_postinst() {
 		|| die "kernel patch copy failed"
 	einfo "补丁已落位，重编/升级内核生效后再装驱动"
 }
+
+pkg_prerm() {
+	local root=${EROOT%/}
+	PATCH_REMOVE=1 PATCH_SRC="${root}/usr/share/fantgpu-kernel-patches" \
+		DESTDIR="${root}" \
+		"${root}/usr/libexec/fantgpu/install-patches.sh" \
+		|| die "kernel patch removal failed"
+}

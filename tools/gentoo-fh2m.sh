@@ -5,6 +5,7 @@ umask 022
 
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 WORK=${GENTOO_WORK:-$ROOT/.build/work/gentoo-fh2m}
+ROLLBACK=${GENTOO_ROLLBACK:-$ROOT/.build/work/gentoo-fh2m/rollback}
 KERNEL=${KERNEL:-$(uname -r)}
 KERNELDIR=${KERNELDIR:-/lib/modules/$KERNEL/build}
 VENDOR=${GENTOO_VENDOR:-$ROOT/vendor/fantgpu}
@@ -141,10 +142,16 @@ cmd_install() {
     [[ -f $WORK/fantgpu.ko ]] || die "build first"
     local dest=${DESTDIR:-}
     local moddir=$dest/lib/modules/$KERNEL/extra
-    mkdir -p "$moddir" "$WORK/rollback"
-    if [[ -z $dest && -f /lib/modules/$KERNEL/extra/fantgpu.ko ]]; then
-        install -m 0644 "/lib/modules/$KERNEL/extra/fantgpu.ko" "$WORK/rollback/fantgpu.ko"
-        log "rollback_saved=$(sha256sum "$WORK/rollback/fantgpu.ko" | awk '{print $1}')"
+    local live=${GENTOO_LIVE_KO:-}
+    mkdir -p "$moddir" "$ROLLBACK"
+    if [[ -z $live ]]; then
+        live=/lib/modules/$KERNEL/extra/fantgpu.ko
+    fi
+    if [[ -n $live && -f $ROLLBACK/fantgpu.ko ]]; then
+        log "rollback_kept=$(sha256sum "$ROLLBACK/fantgpu.ko" | awk '{print $1}')"
+    elif [[ -n $live && -f $live ]]; then
+        install -m 0644 "$live" "$ROLLBACK/fantgpu.ko"
+        log "rollback_saved=$(sha256sum "$ROLLBACK/fantgpu.ko" | awk '{print $1}')"
     fi
     install -m 0644 "$WORK/fantgpu.ko" "$moddir/fantgpu.ko"
     install_tree "$dest"
@@ -159,8 +166,17 @@ cmd_install() {
     log "gentoo_fh2m_install=PASS"
 }
 
+cmd_warn_loaded() {
+    local modules=${GENTOO_MODULES_FILE:-/proc/modules}
+    if [[ -f $modules ]] && grep -q '^fantgpu ' "$modules"; then
+        log "gentoo_fh2m_uninstall=WARN loaded; reboot before this counts as removed; do not rmmod"
+        return 0
+    fi
+    log "gentoo_fh2m_uninstall=loaded_no"
+}
+
 cmd_rollback() {
-    local saved=$WORK/rollback/fantgpu.ko
+    local saved=$ROLLBACK/fantgpu.ko
     [[ -f $saved ]] || die "no rollback ko at $saved"
     [[ ${EUID:-$(id -u)} -eq 0 ]] || die "rollback needs root"
     install -m 0644 "$saved" "/lib/modules/$KERNEL/extra/fantgpu.ko"
@@ -206,7 +222,7 @@ cmd_verify() {
     log "gentoo_fh2m_verify=PASS"
 }
 
-usage() { die "use check [--offline] | build | install | verify | rollback"; }
+usage() { die "use check [--offline] | build | install | verify | rollback | warn-loaded"; }
 
 case ${1:-} in
     check) cmd_check "${2:-}" ;;
@@ -214,5 +230,6 @@ case ${1:-} in
     install) cmd_install ;;
     verify) cmd_verify ;;
     rollback) cmd_rollback ;;
+    warn-loaded) cmd_warn_loaded ;;
     *) usage ;;
 esac

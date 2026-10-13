@@ -96,3 +96,63 @@ sed -e 's/suspend_entry=0/suspend_entry=1/' -e 's/suspend_exit=0/suspend_exit=1/
     "$fixdir/before-real" >"$fixdir/after-real"
 got=$("$root/tools/gentoo-r5-observe.sh" --judge "$fixdir/before-real" "$fixdir/after-real")
 [[ $got == r5_judge=RECORDED_OBSERVATION_ABSENT ]]
+
+fake=$(mktemp -d)
+trap 'rm -rf "$work" "$fix" "$out" "$fixdir" "$fake"' EXIT
+mkdir -p "$fake/vendor/usr/lib/x86_64-linux-gnu/fantgpu-fh2m" \
+    "$fake/vendor/usr/lib/x86_64-linux-gnu/dri" \
+    "$fake/vendor/opt/fantgpu-fh2m/usr/lib/xorg/modules/drivers" \
+    "$fake/vendor/lib/firmware/fantgpu" \
+    "$fake/vendor/usr/share/X11/xorg.conf.d" \
+    "$fake/vendor/usr/share/glvnd/egl_vendor.d" \
+    "$fake/vendor/etc/vulkan/icd.d" \
+    "$fake/vendor/etc/OpenCL/vendors" \
+    "$fake/vendor/usr/share/drirc.d" \
+    "$fake/live" "$fake/rollback"
+printf 'gbm\n' > "$fake/vendor/usr/lib/x86_64-linux-gnu/fantgpu-fh2m/libfh2m_gbm.so"
+printf 'dri\n' > "$fake/vendor/usr/lib/x86_64-linux-gnu/dri/fh2m_dri.so"
+printf 'video\n' > "$fake/vendor/usr/lib/x86_64-linux-gnu/dri/fh2m_drv_video.so"
+printf 'ddx\n' > "$fake/vendor/opt/fantgpu-fh2m/usr/lib/xorg/modules/drivers/fh2m_drv.so.1.21"
+printf 'fw\n' > "$fake/vendor/lib/firmware/fantgpu/fh2m.fw"
+printf 'conf\n' > "$fake/vendor/usr/share/X11/xorg.conf.d/10-fh2m.conf"
+printf '{}\n' > "$fake/vendor/usr/share/glvnd/egl_vendor.d/00_fh2m.json"
+printf '{}\n' > "$fake/vendor/etc/vulkan/icd.d/fh2m_conf.json"
+printf 'icd\n' > "$fake/vendor/etc/OpenCL/vendors/FANT_fh2m.icd"
+printf 'dri\n' > "$fake/vendor/usr/share/drirc.d/01-fh2m_drv.conf"
+mkdir -p "$fake/work"
+printf 'old-ko\n' > "$fake/live/fantgpu.ko"
+printf 'built-ko\n' > "$fake/work/fantgpu.ko"
+GENTOO_VENDOR=$fake/vendor GENTOO_WORK=$fake/work GENTOO_ROLLBACK=$fake/rollback \
+    GENTOO_LIVE_KO=$fake/live/fantgpu.ko DESTDIR=$fake/dest KERNEL=test \
+    "$root/tools/gentoo-fh2m.sh" install >"$out"
+grep -q 'rollback_saved=' "$out"
+first=$(sha256sum "$fake/rollback/fantgpu.ko")
+printf 'replaced-ko\n' > "$fake/live/fantgpu.ko"
+GENTOO_VENDOR=$fake/vendor GENTOO_WORK=$fake/work GENTOO_ROLLBACK=$fake/rollback \
+    GENTOO_LIVE_KO=$fake/live/fantgpu.ko DESTDIR=$fake/dest KERNEL=test \
+    "$root/tools/gentoo-fh2m.sh" install >"$out"
+grep -q 'rollback_kept=' "$out"
+[[ $first == $(sha256sum "$fake/rollback/fantgpu.ko") ]]
+[[ $(cat "$fake/dest/lib/modules/test/extra/fantgpu.ko") == built-ko ]]
+printf 'fantgpu 1 0 - Live\n' > "$fake/modules"
+GENTOO_MODULES_FILE=$fake/modules "$root/tools/gentoo-fh2m.sh" warn-loaded >"$out"
+grep -q 'do not rmmod' "$out"
+printf 'other 1 0 - Live\n' > "$fake/modules"
+GENTOO_MODULES_FILE=$fake/modules "$root/tools/gentoo-fh2m.sh" warn-loaded >"$out"
+grep -q 'loaded_no' "$out"
+grep -q '模块已加载。不要热卸载。先重启，再把这次卸载当成完成。' \
+    "$root/tools/gentoo-overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
+grep -q 'pkg_postrm' "$root/tools/gentoo-overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
+grep -q '不要热卸载。重启后才是正在运行的那份。' "$root/tools/gentoo-overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
+
+rmdest=$(mktemp -d)
+trap 'rm -rf "$work" "$fix" "$out" "$fixdir" "$fake" "$rmdest"' EXIT
+DESTDIR=$rmdest "$root/tools/gentoo-install-kernel-patches.sh" >/dev/null
+printf 'local\n' >> "$rmdest/etc/portage/patches/sys-kernel/gentoo-sources/003-pinctrl-amd-hygon-gpio.patch"
+kept=$(sha256sum "$rmdest/etc/portage/patches/sys-kernel/gentoo-sources/003-pinctrl-amd-hygon-gpio.patch")
+PATCH_REMOVE=1 DESTDIR=$rmdest "$root/tools/gentoo-install-kernel-patches.sh" >"$out"
+grep -q 'removed=7 kept=1' "$out"
+[[ -f $rmdest/etc/portage/patches/sys-kernel/gentoo-sources/003-pinctrl-amd-hygon-gpio.patch ]]
+[[ $kept == $(sha256sum "$rmdest/etc/portage/patches/sys-kernel/gentoo-sources/003-pinctrl-amd-hygon-gpio.patch") ]]
+[[ ! -f $rmdest/etc/portage/patches/sys-kernel/gentoo-sources/001-hygon-148c-xhci-reset-on-resume.patch ]]
+grep -q 'pkg_prerm' "$root/tools/gentoo-overlay/sys-kernel/fantgpu-kernel-patches/fantgpu-kernel-patches-1.ebuild"

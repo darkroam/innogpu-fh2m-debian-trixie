@@ -20,6 +20,25 @@ if [[ -z $src ]]; then
     done
 fi
 base=${DESTDIR:-}/etc/portage/patches/sys-kernel
+if [[ ${PATCH_REMOVE:-} == 1 ]]; then
+    removed=0
+    kept=0
+    for pkg in gentoo-sources gentoo-kernel; do
+        for name in "${names[@]}"; do
+            dest=$base/$pkg/$name
+            [[ -f $dest ]] || continue
+            if [[ $(sha256 "$dest") == $(sha256 "$src/$name") ]]; then
+                rm -f "$dest"
+                removed=$((removed + 1))
+            else
+                echo "gentoo_kernel_patches=KEEP local change $pkg/$name" >&2
+                kept=$((kept + 1))
+            fi
+        done
+    done
+    echo "gentoo_kernel_patches=REMOVED removed=$removed kept=$kept dest=$base"
+    exit 0
+fi
 for pkg in gentoo-sources gentoo-kernel; do
     for name in "${names[@]}"; do
         [[ -f $src/$name ]] || { echo "gentoo_kernel_patches=FAIL missing $name" >&2; exit 1; }

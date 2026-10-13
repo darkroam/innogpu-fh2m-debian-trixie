@@ -38,22 +38,50 @@ S="${WORKDIR}"
 
 repo_root() {
 	local overlay
-	overlay=$(portageq get_repo_path "${EROOT:-/}" fantgpu)
-	dirname "$(dirname "${overlay}")"
+	overlay=$(dirname "$(dirname "$(dirname "${EBUILD}")")")
+	if [[ -x ${overlay}/../../tools/gentoo-fh2m.sh ]]; then
+		dirname "$(dirname "${overlay}")"
+		return
+	fi
+	[[ -f ${overlay}/repo-root ]] || die "repo root not found"
+	cat "${overlay}/repo-root"
 }
 
 pkg_setup() {
 	[[ -d /lib/modules/$(uname -r)/build ]] || die "kernel build directory missing"
+	mkdir -p /var/lib/fantgpu/rollback || die "rollback dir"
 }
 
 src_compile() {
 	local root
 	root=$(repo_root)
-	GENTOO_WORK="${T}/gentoo-fh2m" "${root}/tools/gentoo-fh2m.sh" build
+	addread "${root}"
+	env -u ARCH KERNEL="$(uname -r)" GENTOO_WORK="${T}/gentoo-fh2m" "${root}/tools/gentoo-fh2m.sh" build || die "build failed"
 }
 
 src_install() {
 	local root
 	root=$(repo_root)
-	DESTDIR="${D}" GENTOO_WORK="${T}/gentoo-fh2m" "${root}/tools/gentoo-fh2m.sh" install
+	addread "${root}"
+	addwrite /var/lib/fantgpu
+	env -u ARCH DESTDIR="${D}" KERNEL="$(uname -r)" GENTOO_WORK="${T}/gentoo-fh2m" \
+		GENTOO_ROLLBACK=/var/lib/fantgpu/rollback \
+		"${root}/tools/gentoo-fh2m.sh" install || die "install failed"
+}
+
+pkg_postinst() {
+	depmod -a "$(uname -r)" || ewarn "depmod failed"
+	ldconfig || ewarn "ldconfig failed"
+	einfo "模块已写入磁盘。不要热卸载。重启后才是正在运行的那份。"
+}
+
+pkg_prerm() {
+	if grep -q '^fantgpu ' /proc/modules 2>/dev/null; then
+		ewarn "模块已加载。不要热卸载。先重启，再把这次卸载当成完成。"
+	fi
+}
+
+pkg_postrm() {
+	depmod -a "$(uname -r)" || ewarn "depmod failed"
+	ldconfig || ewarn "ldconfig failed"
 }
