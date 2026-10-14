@@ -47,7 +47,8 @@ patched-21 的完整候选定义见
 
 ```sh
 tests/package/run-boundary-tests.sh
-tools/build-patched21-deepin-release-candidate.sh
+# 当时路径。主线已删除，只从 tag innogpu-4x-frozen 检出：
+# tools/build-patched21-deepin-release-candidate.sh
 tools/check-release-package.sh \
   debs/innogpu-fh2m-trixie_3.3.3.42-patched-21.deb
 dpkg-deb -f debs/innogpu-fh2m-trixie_3.3.3.42-patched-21.deb \

@@ -25,14 +25,14 @@
 
 后续 coherent 构建以 Deepin 202504 原包为唯一技术基线。**当前新架构（4.0.0-i1）**由
 `tools/build-innogpu-driver.sh` 在主线上拒绝 O 分支（O 线仅从 deepin-4.0.2-i3 tag 检出构建）。历史 4.0.0-i1 曾用当时的 drivers/ 与 binary-manifest.json（epoch 1787342400）；`tools/build-deepin-coherent.sh` 为
-legacy patched 系构建器（保留作 p27 oracle 与版本护栏）。两者都以本目录的 Deepin 原包为输入：
+当时的 legacy patched 系构建器，2026-10-14 起主线已删除，只从 tag `innogpu-4x-frozen` 检出。两者都以本目录的 Deepin 原包为输入：
 
 ```text
 debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 ```
 
 新架构构建器经 manifest/提取器默认只读取上述 `debs/` 路径；其他位置必须显式设置
-`INNOGPU_DEEPIN_DEB`。`tools/build-deepin-coherent.sh` 与
+`INNOGPU_DEEPIN_DEB`。`tools/build-deepin-coherent.sh` 不在主线。
 `tools/prepare-deepin-userspace-root.sh` 仍保留仓库根旧路径兼容查找，但它只服务 legacy 流程。
 历史 patched 包只用于安装回退或复现记录，不能作为新包输入。
 
@@ -103,13 +103,15 @@ Debian 6.12 兼容基础始终应用，`patch-005` 当前关闭，`patch-008` �
 
 构建脚本要求显式设置大于 20 的新版本号，并默认把输出写入本目录，例如：
 
+当时路径，主线已删除，只从 tag `innogpu-4x-frozen` 检出：
+
 ```sh
 PATCH_VERSION=N SOURCE_DATE_EPOCH=<已审查的UTC时间戳> \
   [已审查的补丁开关...] tools/build-deepin-coherent.sh
 ```
 
-patched-21 已由 `tools/build-patched21-deepin-release-candidate.sh` 固定定义；不要手工复制上述
-示例并改变其开关。其设计和分阶段验收状态见
+patched-21 当时由 `tools/build-patched21-deepin-release-candidate.sh` 固定定义；不要手工复制上述
+示例并改变其开关。该 wrapper 同样不在主线。其设计和分阶段验收状态见
 [`docs/patches/patched-21-release-candidate.md`](../docs/patches/patched-21-release-candidate.md)。可通过
 `OUT_DEB` 指定其他输出路径。构建器会调用 `tools/check-release-package.sh`；提交前还需确认
 `git status --ignored` 中的包仍被忽略，release 上传不应反向修改源码目录。

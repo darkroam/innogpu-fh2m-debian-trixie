@@ -84,7 +84,7 @@ SHA-256：b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2
 
 ## 固定补丁矩阵
 
-入口 `tools/build-patched21-deepin-release-candidate.sh` 固定以下开关：
+当时入口 `tools/build-patched21-deepin-release-candidate.sh`（现从 tag `innogpu-4x-frozen` 取回）固定以下开关：
 
 | 阶段 | 开关 | p21 | 理由 |
 | --- | --- | --- | --- |
@@ -118,7 +118,7 @@ TTY 恢复、软件 Xorg 恢复和三个 xdisplay 设备接入文件。以下内
 
 ## 构建命令
 
-在仓库根目录执行：
+当时在仓库根目录执行。该脚本已从主线删除，只从 tag `innogpu-4x-frozen` 检出：
 
 ```sh
 tools/build-patched21-deepin-release-candidate.sh

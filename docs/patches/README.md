@@ -149,7 +149,7 @@ Deepin 202504 原 deb
   -> tools/check-release-package.sh
 ```
 
-**历史 patched 包（legacy，保留）**：
+**历史 patched 包（当时路径；这些构建脚本已从主线删除，只从 tag `innogpu-4x-frozen` 检出）**：
 
 ```text
 Deepin 202504 原 deb
@@ -167,31 +167,31 @@ Deepin 202504 原 deb
 历史 patched-8、patched-17、patched-18、patched-19 只可作为证据或回退物，不能作为后续载荷父版本。
 表中的“历史验证”不等于当前候选启用；复现具体包时以对应 wrapper 的环境变量为准。
 
-patched-19/20 的固定 wrapper 已改为拒绝执行，因为当前源码的辅助载荷边界与原历史 deb 不同；继续
+patched-19/20 的固定 wrapper 当时已改为拒绝执行，因为辅助载荷边界与原历史 deb 不同；继续
 使用相同版本号会制造“版本相同、包内容不同”的不可审计产物。表中的 p19/20 开关集合只记录当时
-实际启用的驱动补丁，不表示当前可以重建同名包。
+实际启用的驱动补丁。这些 wrapper 不在主线，不能用当前树重建同名包。
 
 ## 版本候选
 
 - [patched-21：所有权收敛后的首个 release candidate](patched-21-release-candidate.md)：固定启用
   stage-000、patch-001/002/006/007，关闭 patch-003/004/005/008；分开记录构建、包边界与运行
   验收。p21 已完成当前设备运行验收，仍不能继承 p20 的包或运行证据，也尚未完成跨硬件发布。
-- patched-22：`tools/build-patched22-local-lid.sh` 固定启用 patch-009，已从 Deepin 202504
+- patched-22：`tools/build-patched22-local-lid.sh`（当时路径，现从 tag `innogpu-4x-frozen` 取回）固定启用 patch-009，已从 Deepin 202504
   原包构建、通过包边界检查并在当前设备重启；它只修正本机内置 DP0/eDP 语义，电源与合盖实机矩阵仍待完成。
-- patched-23：`tools/build-patched23-invisible-read-fix.sh` 在 p22 开关集合上只增加 patch-023，修复
+- patched-23：`tools/build-patched23-invisible-read-fix.sh`（当时路径，现从 tag `innogpu-4x-frozen` 取回）在 p22 开关集合上只增加 patch-023，修复
   invisible READ mapping 释放时的无意义回写；历史上已安装、重启并完成基础图形与 Clash 启动态 A/B，
   当前只作 provenance/回退链证据。
-- patched-24：`tools/build-patched24-kernel-612101.sh` 沿用 p23 全部开关，增加 Debian
+- patched-24：`tools/build-patched24-kernel-612101.sh`（当时路径，现从 tag `innogpu-4x-frozen` 取回）沿用 p23 全部开关，增加 Debian
   `6.12.101` 及以后 headers 的 `pci_resize_resource(..., exclude_bars)` 兼容分支；构建和安装前
   必须重新执行对应内核的 DKMS 编译验证；2026-08-18 已重启并确认 p24、DKMS、Driver/Firmware
   和 DRM/fbdev 正常。
-- patched-25：`tools/build-patched25-dma-resv-fix.sh` 增加 patch-025（CPU_PREP 的 dma_resv
+- patched-25：`tools/build-patched25-dma-resv-fix.sh`（当时路径，现从 tag `innogpu-4x-frozen` 取回）增加 patch-025（CPU_PREP 的 dma_resv
   usage 语义修复）；已实机验证并合并、打 tag。
-- patched-26：`tools/build-patched26-vblank-guard.sh` 增加 patch-026（未活动 CRTC vblank 守卫）；
+- patched-26：`tools/build-patched26-vblank-guard.sh`（当时路径，现从 tag `innogpu-4x-frozen` 取回）增加 patch-026（未活动 CRTC vblank 守卫）；
   已实机验证并合并、打 tag。
-- patched-27：`tools/build-patched27-foreign-dmabuf.sh` 增加 patch-027（foreign DMA-BUF 生命周期
+- patched-27：`tools/build-patched27-foreign-dmabuf.sh`（当时路径，现从 tag `innogpu-4x-frozen` 取回）增加 patch-027（foreign DMA-BUF 生命周期
   修复）；已实机验证并合并、打 tag。
-- patched-28：`tools/build-patched28-suspend-resume.sh` 继承 p27 并增加 patch-024（resume 早期
+- patched-28：`tools/build-patched28-suspend-resume.sh`（当时路径，现从 tag `innogpu-4x-frozen` 取回）继承 p27 并增加 patch-024（resume 早期
   devfreq 电源状态门禁）；补丁编号 024 是空缺回填，包版本不复用历史 patched-24；仅作 legacy
   对照。新架构 `4.0.1-i1` 的 s2idle 可见恢复验收已失败，不再作为可安装候选。
 - `4.0.1-i2`：R05 完成一次 s2idle 可见恢复；是历史候选，不作为严格 A/B 包复用。

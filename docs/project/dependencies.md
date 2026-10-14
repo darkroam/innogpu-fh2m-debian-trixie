@@ -34,8 +34,8 @@
 | `debs/archive/legacy-build/innogpu-fh2m-trixie_4.0.2-i3.deb`（Deepin 历史交付、当前回退基线） | i2 + patch-029 DDCCI panel 创建恢复（继承 patch-024/026/028）；固定 epoch 1788796800；SHA `177133ee…`；R14 6/6 deep 通过；不含 display 025，DDCCI 无 backlight device，`hwinfo_g0m.bin` 仍缺失 |
 | `debs/innogpu-fh2m_20250421190503-debug_amd64.deb` | Deepin 202504 DKMS/GL/DDX 来源；SHA-256 `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2` |
 
-主线已删除 O 线提取器。该 deb 仍是 O 线历史输入，清单在 tag `innogpu-4x-frozen`。只有 legacy `build-deepin-coherent.sh` 与
-`prepare-deepin-userspace-root.sh` 仍保留仓库根旧路径的兼容查找；后者将 Deepin deb 解包到被 Git
+主线已删除 O 线提取器。该 deb 仍是 O 线历史输入，清单在 tag `innogpu-4x-frozen`。`build-deepin-coherent.sh` 已从主线删除，只从 tag `innogpu-4x-frozen` 检出。
+`prepare-deepin-userspace-root.sh` 仍保留仓库根旧路径的兼容查找，并将 Deepin deb 解包到被 Git
 忽略的 `third_party/innogpu-fh2m-deepin-202504/root/`。不得依赖该 legacy 回退构建新架构包。
 
 Deepin 202504 原包是 Deepin 分支的来源基线。该分支的源码树不在主线，在 tag `innogpu-4x-frozen` 与 `deepin-4.0.2-i3`。

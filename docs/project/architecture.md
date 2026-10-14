@@ -101,7 +101,7 @@ tag 上 `drivers/` 中的源码提交；新行为修复必须先以独立补丁�
 i3/i4 对照；R11 lifecycle 026 用 Debian 6.12 devfreq 的同步 suspend 语义关闭 devfreq 并发源，
 但 R11 deep 揭示独立温度 work 的第二条入口；R12 patch-028 为此增加 PVR 子设备恢复门禁，R13
 patch-029 为 DDCCI 回退模式恢复 panel GPIO callback；组合修复已通过 R14 真机 deep 验收。旧
-`build-deepin-coherent.sh` 和 patched wrapper 仅作为 p27 oracle、历史复现和回退证据保留。
+`build-deepin-coherent.sh` 和 patched wrapper 已于 2026-10-14 从主线删除，只从 tag `innogpu-4x-frozen` 检出。
 禁止从任一历史 patched 包复制用户态文件、对象或控制脚本后再局部替换源码。
 
 因此：
@@ -120,8 +120,7 @@ patch-029 为 DDCCI 回退模式恢复 panel GPIO callback；组合修复已通�
 - 历史 patched 包和 patch wrapper 不得作为新版本实现父版本。
 
 当前构建必须显式提供经过审阅的 `SOURCE_DATE_EPOCH`，并通过 manifest `--check-only`、
-`check-release-package.sh`、oracle/符号对比和可复现双构建门禁。旧 `build-deepin-coherent.sh` 仍保留
-历史版本号拒绝与 epoch 护栏，但不是新候选的构建入口。
+`check-release-package.sh`、oracle/符号对比和可复现双构建门禁。旧 `build-deepin-coherent.sh` 不在主线；历史版本号拒绝与 epoch 护栏只存在于 tag `innogpu-4x-frozen`。
 
 `4.0.0-i1` 的包内路径分为三层：manifest 导入的 vendor 载荷按映射安装（其中
 `sw-inno-gl.service` 保留为 `/lib/systemd/system/sw-inno-gl.service`，`sw-inno-gl` 安装到

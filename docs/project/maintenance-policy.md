@@ -16,7 +16,7 @@
   fantgpu `5.0.0-iN` 使用 F0 + [O_stage](../design/o-stage-integration-plan.md) 与
   `binary-manifest-fantgpu.json`。新增行为修复必须经独立补丁审查、升号，经对应物化/构建流程
   保证编译树与包内 DKMS 源码一致；fantgpu 构建器消费已锁定的 O_stage，不在快照外补丁。legacy
-  patched 系构建（`build-deepin-coherent.sh`）保留作 p27 oracle 与版本护栏。DRI、GBM、GLAPI、
+  patched 系构建（`build-deepin-coherent.sh` 及 patched17–28 wrapper）已从主线删除，只从 tag `innogpu-4x-frozen` 检出。DRI、GBM、GLAPI、
   GLVND、Xorg DDX、固件和 maintainer scripts 一律不得从历史 patched 包拼接。
 - `patched-8` 仅是历史回滚物，`patched-17/18/19` 是回退、故障或候选证据，不是后续实现父版本；
   已验证的 `patched-20` 仍属于诊断候选，不能把诊断日志当作长期默认行为。

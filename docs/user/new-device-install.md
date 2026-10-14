@@ -145,7 +145,7 @@ patched-20 仅保留运行证据，不提供重新部署或回退到该版本的
 `4.0.2-i3` 故障时先按 [`recovery.md`](recovery.md) 回退 `4.0.0-i1`，再回退 patched-27；
 只有深层恢复才使用 patched-17/patched-8。
 该 deb 生成于 xdisplay 所有权收敛前，包内仍有旧引擎/实验辅助文件，且 `patch-008` 会高频写日志。
-当前 `build-patched20-deepin-diagnostic.sh` 仅作为拒绝版本复用的兼容护栏，不再生成包。
+当时的 `build-patched20-deepin-diagnostic.sh` 只拒绝版本复用，不再生成包。该脚本已从主线删除，只从 tag `innogpu-4x-frozen` 检出。
 
 `4.0.1-i1` 已判定为失败候选；`4.0.1-i2` 是 R05 历史候选；R06 i3/i4 因果验证按停止条件
 中止，R10 又在 i3 上复现 deep PowerLock TOCTOU。R11 i1 在同步 DVFS 后仍因温度 work 提前

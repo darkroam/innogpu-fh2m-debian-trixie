@@ -44,7 +44,7 @@
 ## 构建开关
 
 `APPLY_DMA_RESV_USAGE_FIX=1`；候选包为 `3.3.3.42-patched-25`，构建入口
-`tools/build-patched25-dma-resv-fix.sh`（固定 SOURCE_DATE_EPOCH=1787184000）。
+`tools/build-patched25-dma-resv-fix.sh`（当时路径，现从 tag `innogpu-4x-frozen` 取回；固定 SOURCE_DATE_EPOCH=1787184000）。
 
 ## 验证与回退
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Static tests for patch-024/025/026/028/029 and current/legacy builder wiring.
+# Static tests for patch-024/025/026/028/029 and the current builder.
 # The suite copies tracked source files to /tmp; it does not read local
 # payload directories, build a package, install a module, or suspend the host.
 
@@ -11,8 +11,6 @@ DISPLAY_PATCH="$ROOT/patches/025-suspend-resume-display.patch"
 LIFECYCLE_PATCH="$ROOT/patches/026-suspend-resume-dvfs-lifecycle.patch"
 TEMP_MONITOR_PATCH="$ROOT/patches/028-suspend-resume-hal-temp-monitor-delay.patch"
 DDCCI_PANEL_PATCH="$ROOT/patches/029-suspend-resume-ddcci-panel.patch"
-BUILDER="$ROOT/tools/build-deepin-coherent.sh"
-WRAPPER="$ROOT/tools/build-patched28-suspend-resume.sh"
 CURRENT_BUILDER="$ROOT/tools/build-innogpu-driver.sh"
 OBSERVER="$ROOT/tools/internal/probe-suspend-resume-state.sh"
 OBSERVER_BT="$ROOT/tools/internal/probe-suspend-resume-observer.bt"
@@ -445,26 +443,10 @@ else
     fail ddcci_patch_application_leaves_no_artifacts
 fi
 
-if bash -n "$BUILDER" "$WRAPPER" "$CURRENT_BUILDER"; then
+if bash -n "$CURRENT_BUILDER"; then
     pass builder_shell_syntax
 else
     fail builder_shell_syntax
-fi
-
-if grep -Fq 'APPLY_SUSPEND_RESUME_FIX=${APPLY_SUSPEND_RESUME_FIX:-0}' "$BUILDER" &&
-   grep -Fq 'patches/024-suspend-resume.patch' "$BUILDER"; then
-    pass coherent_builder_switch
-else
-    fail coherent_builder_switch
-fi
-
-if grep -Fq 'PATCH_VERSION=28' "$WRAPPER" &&
-   grep -Fq 'APPLY_SUSPEND_RESUME_FIX=1' "$WRAPPER" &&
-   grep -Fq 'APPLY_FOREIGN_DMABUF_LIFECYCLE_FIX=1' "$WRAPPER" &&
-   grep -Fq 'patched-28.deb' "$WRAPPER"; then
-    pass patched28_inherits_p27_and_enables_fix
-else
-    fail patched28_inherits_p27_and_enables_fix
 fi
 
 if grep -Fq 'VERSION="${VERSION:-4.0.2-i3}"' "$CURRENT_BUILDER" &&

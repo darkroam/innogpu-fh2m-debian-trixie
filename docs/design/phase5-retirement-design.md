@@ -1,7 +1,7 @@
 # Phase 5 旧流程退役设计（两步方案，监督 2026-08-21 建议）
 
-**状态**：Step 1 已完成并通过复核；Step 2 的触发条件尚未全部满足，且未获执行批准。当前不移动、
-不删除任何旧文件。设备运行 `4.0.0-i1`，main 已合并并推送。
+**状态**：Step 1 已完成并通过复核；Step 2 的触发条件尚未全部满足，且未获执行批准。设备运行 `4.0.0-i1`，main 已合并并推送。
+2026-10-14 政策变更：D 线 14 个脚本（`build-patched17`–`28` 共 12 个，不是 13 个；另加 `build-deepin-coherent.sh` 与 `materialize-d-stage.sh`）已从主线删除，只从 tag `innogpu-4x-frozen` 检出，与 O 线只从 tag 检出同一条规则。`debs/` 与历史 tag 仍永久保留。下文「继续保留在 `tools/`」或「禁止物理删除」对这 14 个脚本不再有效。
 
 ## 一、目标
 
@@ -20,7 +20,7 @@
 | `components/picom/`、`components/fbterm/`（2026-08-21 由 `patches/picom/`、`patches/fbterm/`、`config/` 迁入，含补丁与 `picom.conf` 配置模板） | 当前维护的第三方组件补丁/配置，**历史内容永久保留**；路径变更已完成（原路径已清空） |
 | `debs/…patched-27.deb`（SHA `f3841597…`）、`patched-17.deb`、`patched-8.deb` | 回退链 `4.0.0-i1 → p27 → … → p17 → p8` 的物理载体；**不得移动或删除**，回退入口永久可用 |
 | 现有 git tag：`patched-17`、`patched-21` 至 `patched-27` | 可追溯回退点；**永久保留，不得移动或删除**。p18/19/20 按发布规则未创建 tag，不得把版本区间误写成全部存在 |
-| `tools/build-deepin-coherent.sh` | 旧构建器/oracle；check-docs 版本护栏依赖；**继续保留在 `tools/`，第二步也不移动** |
+| `tools/build-deepin-coherent.sh` | 旧构建器/oracle；2026-10-14 起主线已删除，只从 tag `innogpu-4x-frozen` 检出 |
 | `build-patchedNN-*.sh` wrapper 与历史安装/卸载/恢复入口（`install-patched17-and-check.sh`、`install-patched8-and-check.sh`、`uninstall-patched*.sh`） | **历史内容永久保留**；第二步允许改变工作路径移入 `legacy/`（或保持原路径仅标记 deprecated）；禁止物理删除或丢失任何历史 |
 | Deepin 202504 原 deb | 新构建器的唯一载荷基线；永久保留 |
 
@@ -57,7 +57,7 @@
 第二步动作（仅评估后执行，需监督批准）：
 
 - 旧 wrapper（`build-patchedNN-*.sh`、历史安装/卸载入口）移入 `legacy/` 或标记 deprecated；
-- `build-deepin-coherent.sh` 保留在 `tools/`（check-docs 护栏依赖），生命周期标记 legacy；
+- `build-deepin-coherent.sh` 与 `build-patched17`–`28` 已于 2026-10-14 从主线删除，只从 tag `innogpu-4x-frozen` 检出；
 - `patches/`、p27/17/8 deb、全部历史 tag 继续永久保留；
 - 文档同步更新并复跑 check-docs。
 
@@ -66,7 +66,7 @@
 - **不得物理删除或丢失历史**：`patches/`、历史 deb、历史 tag、旧 wrapper 的历史内容一律保留；
 - 第二步只允许**变更旧 wrapper 的工作路径**（移入 `legacy/`）或保持原路径标记 deprecated；
   `patches/`、p27/17/8 deb 与全部历史 tag **不得移动或删除**；
-- 不得在第二步条件未满足时把 `build-deepin-coherent.sh` 移出 `tools/`（check-docs 护栏依赖）；
+- 2026-10-14 已推翻「不得把 `build-deepin-coherent.sh` 移出 `tools/`」：该脚本、12 个 patched17–28 wrapper 与 `materialize-d-stage.sh` 从主线删除，取回点是 tag `innogpu-4x-frozen`；
 - 不得用新架构 deb 覆盖历史版本号（`4.0.x-iN` 与 `3.3.3.42-patched-N` 序列并行保留）；
 - 不得宣称 Phase 5 完成而设备/文档仍停留在旧状态。
 

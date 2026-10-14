@@ -116,42 +116,6 @@ if git ls-files drivers | grep -E '\.o_shipped$|\.o\.cmd$' >/dev/null; then
 fi
 
 [[ -r tools/internal/patch-gpupll-object.py ]] || fail "GPU PLL object patch tool is missing or unreadable"
-grep -Fq 'tools/internal/patch-gpupll-object.py' tools/build-deepin-coherent.sh ||
-    fail "coherent builder does not invoke the GPU PLL object patch tool"
-
-if ! grep -Eq 'PATCH_VERSION.*<= 20' tools/build-deepin-coherent.sh; then
-    fail "coherent builder does not reject historical version numbers through patched-20"
-fi
-grep -Fq 'export SOURCE_DATE_EPOCH' tools/build-deepin-coherent.sh ||
-    fail "coherent builder does not export a reviewed reproducible-build epoch"
-for expected_setting in \
-    'PATCH_VERSION=21' \
-    'SOURCE_DATE_EPOCH=1786665600' \
-    'APPLY_DP_FBCON_FALLBACK=1' \
-    'APPLY_PANEL_BACKLIGHT_FALLBACK=0' \
-    'APPLY_PANEL_PLATFORM_FALLBACK=0' \
-    'APPLY_BACKLIGHT_FORCE_INITIAL_ENABLE=0' \
-    'APPLY_LOCAL_CONNECTOR_ACPI_MAP=1' \
-    'APPLY_FBDEV_IO_MMAP=1' \
-    'APPLY_PVR_INIT_DIAGNOSTIC=0'; do
-    grep -Fq "$expected_setting" tools/build-patched21-deepin-release-candidate.sh ||
-        fail "patched-21 wrapper is missing $expected_setting"
-done
-
-for expected_setting in \
-    'PATCH_VERSION=23' \
-    'SOURCE_DATE_EPOCH=1786924800' \
-    'APPLY_DP_FBCON_FALLBACK=1' \
-    'APPLY_LOCAL_CONNECTOR_ACPI_MAP=1' \
-    'APPLY_LOCAL_INTERNAL_EDP=1' \
-    'APPLY_FBDEV_IO_MMAP=1' \
-    'APPLY_PVR_INIT_DIAGNOSTIC=0' \
-    'APPLY_INVISIBLE_READ_NO_WRITEBACK=1'; do
-    grep -Fq "$expected_setting" tools/build-patched23-invisible-read-fix.sh ||
-        fail "patched-23 wrapper is missing $expected_setting"
-done
-grep -Fq 'patches/023-invisible-read-no-writeback.patch' tools/build-deepin-coherent.sh ||
-    fail "coherent builder does not apply the patched-23 driver fix"
 
 # Current-state guards: changing the installed package or R14 conclusion
 # requires updating the summary and patch analysis together.
@@ -339,19 +303,6 @@ fi
 if rg -q 'baselines/latest-(desktop|ddx|current-xorg|post-reboot-hwgl)' docs/project/status.md; then
     fail "current status must not cite unversioned historical baseline files as p21 evidence"
 fi
-
-# Legacy retention guards (Phase 5 step 1): old patched wrappers stay in
-# tools/ as permanent version guards / rollback evidence; must NOT be
-# removed even after the new architecture becomes the default builder.
-for historical_wrapper in \
-    tools/build-patched17-deepin-local-display.sh \
-    tools/build-patched18-deepin-local-display.sh \
-    tools/build-patched19-deepin-coherent.sh \
-    tools/build-patched20-deepin-diagnostic.sh; do
-    if "$historical_wrapper" >/dev/null 2>&1; then
-        fail "historical builder still succeeds: $historical_wrapper"
-    fi
-done
 
 while IFS= read -r script; do
     name=${script##*/}

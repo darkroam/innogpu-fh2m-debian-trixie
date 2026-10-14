@@ -9,7 +9,7 @@
 
 - 目标是 Deepin 202504 原包中的 `innogpu/innogpu.o_shipped`，不是历史 patched 包中的 `.ko`。
 - `tools/internal/patch-gpupll-object.py` 要求目标调用字节 `e8 09 fd ff ff` 恰好出现一次，并替换为五个 NOP。
-- `tools/build-deepin-coherent.sh` 在应用源码补丁后、DKMS 打包前无条件执行该变换。
+- 当时 `tools/build-deepin-coherent.sh`（现从 tag `innogpu-4x-frozen` 取回）在应用源码补丁后、DKMS 打包前无条件执行该变换。
 - `tools/patch-skip-first-gpupll.sh` 复用同一工具，只用于受控修复源码对象或已安装模块。
 
 该阶段修改厂商预编译对象，无法表示为普通源码 diff，因此使用独立、可审查的确定性工具，并在补丁

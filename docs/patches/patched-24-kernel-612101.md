@@ -7,7 +7,7 @@
 
 ## 构建边界
 
-- 构建入口：`tools/build-patched24-kernel-612101.sh`。
+- 构建入口：`tools/build-patched24-kernel-612101.sh`（当时路径，现从 tag `innogpu-4x-frozen` 取回）。
 - 基线：Deepin 202504 原 deb。
 - 行为基线：patched-23 的 patch-000、patch-001/002/006/007/009/023 开关集合。
 - 新增兼容：patch-001 在 `6.12.101+` 传入 `exclude_bars=0`，旧内核仍走三参数接口。

@@ -33,9 +33,9 @@
 | --- | --- | --- |
 | `patches/*.patch`（18） | 13 个历史内核补丁原件 + patch-024/025-display/026-lifecycle/028-temp-monitor/029-ddcci-panel 行为候选 | 历史项仅作 provenance/回退复现；行为候选按版本接入新构建器 |
 | `components/picom|fbterm/` | 第三方组件补丁与配置 | 独立构建入口（`build-patched-*.sh`） |
-| `build-deepin-coherent.sh` | legacy patched 构建器 | p27 oracle + check-docs 版本护栏，保留 |
+| `build-deepin-coherent.sh` | legacy patched 构建器 | 2026-10-14 起主线已删除，只从 tag `innogpu-4x-frozen` 检出 |
 | `build-innogpu-driver.sh` | **当前新架构构建器** | 默认 i3 绑定 024+026+028+029；i1/i2 与 R06 i3/i4 仅供历史复现；拒绝未审版本/epoch 和 patch 备份/reject 产物 |
-| `build-patchedNN-*.sh` | legacy 包装/护栏 | 停用护栏（p17-20）与历史候选包装 |
+| `build-patched17`–`28` | legacy 包装/护栏 | 2026-10-14 起主线已删除（12 个），只从 tag `innogpu-4x-frozen` 检出；picom/fbterm 构建器仍在 |
 
 ### A3. 黑盒载荷生命周期
 

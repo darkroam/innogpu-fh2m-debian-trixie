@@ -6,21 +6,11 @@
 ## 构建与打包
 
 > **当前入口**：新架构构建器 `build-innogpu-driver.sh`（迁移源码树 + 经审查的新修复 + manifest
-> 黑盒载荷，产出 4.0.x-iN）。以下 `build-deepin-coherent.sh`、`build-patchedNN-*.sh` 与历史安装/卸载入口为
-> **legacy（保留）**：永久保留作 p27 oracle、版本护栏、回退包与事故证据；**不作为新工作入口**，
-> 不移动不删除（Phase 5 第二步后再评估，见 `docs/design/phase5-retirement-design.md`）。
+> 黑盒载荷，产出 4.0.x-iN）。D 线构建脚本已从主线删除，只从 tag `innogpu-4x-frozen` 检出，
+> 与 O 线只从 tag 检出同一条规则。`build-patched-picom.sh` 与 `build-patched-fbterm.sh` 仍是现行组件构建器。
 
 | 入口 | 生命周期 | 职责 |
 | --- | --- | --- |
-| `build-deepin-coherent.sh` | legacy 构建器（保留） | 从完整 Deepin 202504 原包构建 patched-N 系 coherent deb；p27 oracle 与 check-docs 版本护栏依赖，禁止删除；版本、release epoch 和所有功能均由显式参数控制 |
-| `build-patched21-deepin-release-candidate.sh` | legacy 包装（保留） | 以固定 p21 开关构建所有权收敛后的首个 release candidate；只构建，不安装 |
-| `build-patched22-local-lid.sh` | legacy 包装（保留） | 以 patch-009 修正本机内置 eDP connector；脚本只构建，安装和重启由操作者显式执行 |
-| `build-patched23-invisible-read-fix.sh` | legacy 包装（保留） | 在 p22 补丁集合上增加 invisible READ mapping 释放不回写修复；历史上只构建不安装，当前仅作 p23 复现/证据入口 |
-| `build-patched24-kernel-612101.sh` | legacy 包装（保留） | 在 p23 补丁集合上增加 `6.12.101+` 的 `pci_resize_resource()` 兼容修复；当前仅作 p24 复现/证据入口 |
-| `build-patched25-dma-resv-fix.sh` | legacy 包装（保留） | 在 p24 补丁集合上增加 patch-025 dma_resv usage 语义修复；当前仅作 p25 复现/证据入口 |
-| `build-patched26-vblank-guard.sh` | legacy 包装（保留） | 在 p25 补丁集合上增加 patch-026 未活动 CRTC vblank 守卫；当前仅作 p26 复现/证据入口 |
-| `build-patched27-foreign-dmabuf.sh` | legacy 包装（保留） | 在 p26 补丁集合上增加 patch-027 foreign DMA-BUF 生命周期修复；当前仅作 p27 oracle/复现入口 |
-| `build-patched28-suspend-resume.sh` | legacy 实验包装 | 在 p27 补丁集合上增加 patch-024 resume 期间 devfreq 电源状态门禁；只用于复现，`4.0.1-i1` 的 s2idle 可见恢复已失败 |
 | `check-deb-dkms-build.sh` | 离线编译检查 | 将指定候选 deb 解包到 `/tmp`，针对指定内核 headers 编译 `innogpu.ko` 并校验 vermagic；不注册或安装 DKMS |
 | `check-source-parity.sh` | 只读 parity 检查 | 对照对象 `drivers/` 已不在主线。要比较时先检出 tag `innogpu-4x-frozen`；本脚本不修改旧构建器或设备 |
 | `phase4-baseline-capture.sh` | 只读基线采集 | Phase 4 安装前 B1-B12 基线采集（dpkg/lsmod/DKMS/modprobe/initramfs/音频内核可见/Picom/用户态一致性/恢复通道），输出存 `baselines/phase4-baseline-<ts>.log`；真实会话项（/dev/dri、Xorg/GL、音频 sink、显示切换）由用户实机执行 |
@@ -44,10 +34,6 @@
 | `gentoo-r5-cycle.sh` | Gentoo 一轮 deep 自动唤醒 | 调用上面的 before/after，中间 `rtcwake -m mem`。秒数 20–180，默认 45。不写 `pm_test`。证据目录多一个 `cycle-*`，`latest-cycle.txt` 指向本次 |
 | `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；R49 候选仅 `5.0.0-i12` + epoch `1790812800`：继承已审 i11，严格应用 `030-035` 私有对象 accessor 修复。编译/包内源共用最终派生树门 `9a8d185f2a65`；i1-i11/未知版本/错 epoch 拒绝，ABI 门保持。i12 A/B 与安装通过，运行验收首轮因外接输入未恢复失败停止；历史成绩不改 |
 | `generate-fantgpu-maintainer-scripts.sh` | F 构建器共用生成段 | 只向显式 PACKAGE_ROOT 的 DEBIAN/ 写 postinst/prerm/postrm，生产与回归共用。K 全集检查/失败传播；两调用点共用配置门，仅固定 autoinstall_all_kernels.conf 已审 30 字节 SHA 例外，其它有效配置与目录/文件符号链接拒绝，不 source 配置取值。回退丢弃未装包暂存根，已安装包另行批准恢复 |
-| `build-patched17-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝把 patched-17 作为后续构建父版本 |
-| `build-patched18-deepin-local-display.sh` | legacy 护栏（保留） | 明确拒绝重建历史混合载荷 patched-18 |
-| `build-patched19-deepin-coherent.sh` | legacy 护栏（保留） | 明确拒绝用当前辅助载荷复用 patched-19 版本号 |
-| `build-patched20-deepin-diagnostic.sh` | legacy 护栏（保留） | 明确拒绝用当前辅助载荷复用已验收 patched-20 版本号 |
 | `prepare-deepin-userspace-root.sh` | 当前辅助 | 将 Deepin 原包解包到被忽略的 `third_party/` |
 | `build-patched-picom.sh` | 独立组件 | 构建/安装固定基线的 patched Picom，不进入驱动 deb |
 | `build-patched-fbterm.sh` | 独立组件 | 从 Debian fbterm 1.7-5 构建可配置 redraw 的用户本地版本，不进入驱动 deb |
@@ -97,7 +83,6 @@ xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项
 
 - `check-deepin-userspace-coherence.sh`
 - `check-docs.sh`
-- `materialize-d-stage.sh`
 - `materialize-o-stage.sh`
 - `check-desktop-hwgl.sh`
 - `check-innogpu-progress.sh`
@@ -141,9 +126,7 @@ runtime 统计、manifest 原包 SHA、过期状态断言和 Markdown 表格结�
 `tools/internal/audit-licenses.py` 校验逐文件许可证 inventory、策略、条款 hash、模块元数据和 manifest
 许可证证据语义；机械审计通过不解除 `license_release_gate=BLOCKED`。导入源码内容、内联代码路径、
 法律授权与文档语义仍须人工审查。
-`materialize-d-stage.sh` 是阶段一 D_stage 物化入口：只读 `third_party/` D 快照，按 4.0.2-i3
-配方（显式补丁文件名清单，builder 序 + suspend 组）重放补丁到 `/tmp/r16-d-stage/`，补丁失败或
-`.orig/.rej` 残留 fail-closed；只写 `/tmp/r16-d-stage/`，不修改仓库任何路径，不安装不 modeset。
+`materialize-d-stage.sh` 已从主线删除，只从 tag `innogpu-4x-frozen` 检出。
 `materialize-o-stage.sh` 是阶段三 O_stage 物化入口：只读 `docs/planning/evidence/o-stage/f0-snapshot.tar.zst`
 与 `patches/030-*`，按 18 条 030-NNN 链序（-p1 --fuzz=0，每链点 after_tree_hash 校验，最终树 hash
 5f6a5347…）物化 O_stage 源树，并以五件同代事务产物（o-stage-snapshot.tar.zst + 双 sidecar +

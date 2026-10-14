@@ -29,7 +29,7 @@
 ## 构建开关
 
 `APPLY_INACTIVE_CRTC_VBLANK_GUARD=1`；候选包 `3.3.3.42-patched-26`，构建入口
-`tools/build-patched26-vblank-guard.sh`（固定 SOURCE_DATE_EPOCH）。
+`tools/build-patched26-vblank-guard.sh`（当时路径，现从 tag `innogpu-4x-frozen` 取回；固定 SOURCE_DATE_EPOCH）。
 
 ## 验证与回退
 

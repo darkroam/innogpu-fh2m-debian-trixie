@@ -23,7 +23,7 @@
 
 ## 构建与状态
 
-patched-22 构建入口为：
+patched-22 当时的构建入口如下。该脚本已从主线删除，只从 tag `innogpu-4x-frozen` 检出：
 
 ```sh
 tools/build-patched22-local-lid.sh
