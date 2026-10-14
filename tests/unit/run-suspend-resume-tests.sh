@@ -475,8 +475,11 @@ else
     fail current_builder_patches_compile_and_package_trees
 fi
 
-# m-035-private-accessor is the seventh fuzz=0 apply; the other six stay inside apply_reviewed_source_fixes.
-if [[ "$(grep -c -- '--fuzz=0 --no-backup-if-mismatch' "$CURRENT_BUILDER")" -eq 7 ]] &&
+# m-035-private-accessor is the seventh fuzz=0 apply. It moved with derive_fantgpu_source; the other six stay in the builder.
+DERIVE_SOURCE="$ROOT/tools/internal/derive-fantgpu-source.sh"
+if [[ "$(grep -c -- '--fuzz=0 --no-backup-if-mismatch' "$CURRENT_BUILDER")" -eq 6 ]] &&
+   [[ "$(grep -c -- '--fuzz=0 --no-backup-if-mismatch' "$DERIVE_SOURCE")" -eq 1 ]] &&
+   grep -Fq 'patches/m-035-private-accessor.patch' "$DERIVE_SOURCE" &&
    grep -Fq -- "-name '*.orig' -o -name '*.rej'" "$CURRENT_BUILDER" &&
    grep -Fq 'apply_reviewed_source_fixes "$STAGE/source" compile-staging' "$CURRENT_BUILDER" &&
    grep -Fq 'apply_reviewed_source_fixes "$P/usr/src/innogpu-kernel-2.2" packaged-dkms' "$CURRENT_BUILDER" &&

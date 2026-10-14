@@ -32,7 +32,7 @@ PY
 need_repo() {
     [[ -f $SNAP ]] || die "missing i6 snapshot"
     [[ -f $ROOT/patches/m-035-private-accessor.patch && -f $ROOT/patches/m-036-bf-shf-rename.patch && -f $ROOT/patches/m-051-hwinfo-connector-fallback.patch ]] || die "missing m-035, m-036 or m-051"
-    grep -q '^derive_fantgpu_source()' "$ROOT/tools/build-innogpu-driver.sh" || die "builder derive missing"
+    [[ -f $ROOT/tools/internal/derive-fantgpu-source.sh ]] || die "derive source missing"
 }
 
 cmd_check() {
@@ -53,35 +53,6 @@ cmd_check() {
     log "gentoo_fh2m_check=PASS"
 }
 
-extract_derive() {
-    python3 - "$ROOT/tools/build-innogpu-driver.sh" "$1" << 'PY'
-import pathlib, sys
-src, dest = map(pathlib.Path, sys.argv[1:])
-lines = src.read_text().splitlines(True)
-start = next(i for i, line in enumerate(lines) if line.startswith("derive_fantgpu_source() {"))
-heredoc = None
-depth = 0
-end = None
-for i in range(start, len(lines)):
-    line = lines[i]
-    if heredoc:
-        if line.strip() == heredoc:
-            heredoc = None
-        continue
-    if "<<" in line:
-        token = line.split("<<", 1)[1].strip().strip("'\"")
-        heredoc = token
-        continue
-    depth += line.count("{") - line.count("}")
-    if i > start and depth == 0:
-        end = i
-        break
-if end is None:
-    sys.exit("derive extract failed")
-dest.write_text("".join(lines[start:end + 1]))
-PY
-}
-
 cmd_build() {
     need_repo
     [[ -d $KERNELDIR ]] || die "kernel headers missing: $KERNELDIR"
@@ -93,10 +64,9 @@ cmd_build() {
         mv "$WORK/o-stage" "$src"
     fi
     [[ -f $src/Makefile ]] || die "snapshot did not unpack a module tree"
-    extract_derive "$WORK/derive.fn.sh"
     # shellcheck disable=SC1091
-    source "$WORK/derive.fn.sh"
-    ROOT=$ROOT derive_fantgpu_source "$src"
+    source "$ROOT/tools/internal/derive-fantgpu-source.sh"
+    derive_fantgpu_source "$src"
     [[ $(tree_hash "$src") == "$I12" ]] || die "i12 tree hash mismatch"
     patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
         < "$ROOT/patches/m-036-bf-shf-rename.patch"

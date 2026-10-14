@@ -79,7 +79,7 @@ sudo tools/gentoo-fh2m.sh verify
 退回用 `sudo tools/gentoo-fh2m.sh rollback`，然后重启。
 
 构建器 `tools/build-innogpu-driver.sh` 仍只产 Debian deb，并且停在 `m-035-private-accessor`。
-Gentoo 脚本只借用它的 `derive_fantgpu_source`，再打 `m-036-bf-shf-rename`。不改构建器。
+Gentoo 与构建器共同 source `tools/internal/derive-fantgpu-source.sh`，再打 `m-036-bf-shf-rename`。不改构建器。
 
 
 ## 幂等

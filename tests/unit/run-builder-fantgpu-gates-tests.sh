@@ -250,14 +250,14 @@ if python3 - "$BUILDER" "$ROOT" "$PATCH_TREE/o-stage" "$TMP" <<'PY'
 import hashlib, os, pathlib, resource, subprocess, sys
 resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
 builder, repo, tree, tmp = map(pathlib.Path, sys.argv[1:])
-text = builder.read_text()
-func = text[text.index("derive_fantgpu_source() {"):text.index("\nAPPLIED_SOURCE_FIXES=")]
+assert 'source "$ROOT/tools/internal/derive-fantgpu-source.sh"' in builder.read_text()
+derive_sh = repo / "tools/internal/derive-fantgpu-source.sh"
 names = ["cfg_detect.sh", "test_item.sh", "fantsrvkm/fantdpu_drm_fb.c", "fantsrvkm/ft_drm.c", "fantpower/fant_input_event.c", "fantvpu/fantvpu_drv.c"]
 originals = {name: (tree / name).read_bytes() for name in names}
 before = originals["cfg_detect.sh"]
 env = dict(os.environ, ROOT=str(repo))
 def derive():
-    return subprocess.run(["bash", "-ec", func + '\nderive_fantgpu_source "$1"', "fixture", str(tree)], env=env, capture_output=True, text=True)
+    return subprocess.run(["bash", "-ec", 'source "$2"; derive_fantgpu_source "$1"', "fixture", str(tree), str(derive_sh)], env=env, capture_output=True, text=True)
 p = derive()
 assert p.returncode == 0, p.stderr
 after = (tree / "cfg_detect.sh").read_bytes()

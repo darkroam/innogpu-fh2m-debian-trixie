@@ -5,6 +5,7 @@
 
 | 工具 | 类型 | 用途与边界 |
 | --- | --- | --- |
+| `derive-fantgpu-source.sh` | 共享派生函数 | 由 `build-innogpu-driver.sh` 与 `gentoo-fh2m.sh` source，不是入口命令。调用方必须已设 `ROOT`。把 i6 父树派生到 i12 终树 `9a8d185f2a65`。不改 patch 字节。 |
 | `prepare-r5-observation.py` | R34–R47 离线源码准备 | 锁定源码/唯一锚、生成全新观测副本；当前身份 r5obs2-r47e（已获准安装/首启，非PM计量因日志丢失停止），联合字典容量由生产解析器契约提供，含成对与辅助事件、独立 88B allocator 日志接口及准入失败定位。`--export-module` 生成同核导出器与同源契约/预算；`--receiver-script` 保持 Windows 身份；`--lookup-benchmark` 抽取生产查找函数。生成不构建/安装/启动、不复制私钥。验证见 `tests/unit/run-r5-observation-tests.py` 与[实现说明](../../docs/design/r5-vpu-and-observation-implementation.md) |
 | `r5-observation.py` | R34–R47 证据解析与计量读取 | `check`/`wire-check`/`semantic-wire-check` 分层判读；R47 原始链需三份同 boot format 和 `--require-r47`，核函数/notifier 字典、callback 层、queue→worker、wake 摘要。`meter-check` 重放对象/物理背页分账，`event-budget` 核含 aux 总量；缺真实输入非零。`meter-session` 仅供另批授权的精确观测核物理机读取 `/dev/r5_meter`、推进 M0–M6/END；有界批量读取与写盘线程分离，队列满/写入失败非零，不执行矩阵动作或 PM。ALLOCATOR_UNVERIFIED 保留，不以日志重放或边界算术替代上界证明。 |
 | `r5-observation-upload.py` | R41 受限证据回传 | 指定peer/session、SHA核验、原件及短读保全、不覆盖旧attempt；`--unit <本机配置>`只生成独立systemd unit，`--serve`才监听，不安装/启用服务、不触发PM、不判覆盖通过。文件/回环HTTP及unit离线验证见同一观测测试；会话退出/冷启存活待现场验证，用法见[tools/README](../README.md) |

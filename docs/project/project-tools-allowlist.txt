@@ -365,6 +365,7 @@ tools/internal/audit-licenses.py
 tools/internal/build-release-archive.py
 tools/internal/check-fantgpu-shipped-abi.py
 tools/internal/d-stage-audit-gen.py
+tools/internal/derive-fantgpu-source.sh
 tools/internal/finalize-suspend-resume-failure.py
 tools/internal/gen-fantgpu-manifest.py
 tools/internal/gen-package-md5sums.py
