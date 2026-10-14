@@ -1,0 +1,21 @@
+diff --git a/fantgpu/fantgpu_pci_drv.c b/fantgpu/fantgpu_pci_drv.c
+--- a/fantgpu/fantgpu_pci_drv.c
++++ b/fantgpu/fantgpu_pci_drv.c
+@@ -1956,7 +1956,7 @@
+ 
+ 	fh2m_get_kallsyms_lookup_name_address();
+ 
+-	idx = ida_simple_get(&pcie_func_ida, 0, 0, GFP_KERNEL);
++	idx = ida_alloc(&pcie_func_ida, GFP_KERNEL);
+ 	if (idx < 0) {
+ 		pcie_error(&pdev->dev, "idx(%d) < 0!", idx);
+ 		return -EINVAL;
+@@ -2146,7 +2146,7 @@
+ 	fh2m_hal_display_interface_info_fini(pdev_rsrc->dev);
+ 	hal_module_loadtime_unregister_all(pdev_rsrc->dev);
+ 
+-	ida_simple_remove(&pcie_func_ida, pdev_rsrc->pcie_func_idx);
++	ida_free(&pcie_func_ida, pdev_rsrc->pcie_func_idx);
+ 	pcie_info(&pdev->dev, "fantgpu_pci_remove");
+ 	fantgpu_pm_probe_release(probe);
+ }

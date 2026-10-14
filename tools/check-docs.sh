@@ -364,6 +364,38 @@ for path in \
     [[ -f "$path" ]] || fail "required index is missing: $path"
 done
 
+
+if ! naming_err=$(python3 - << 'PY'
+import json, re, sys
+from pathlib import Path
+root = Path("patches")
+name_re = re.compile(r"^(m|g)-[0-9]{3}(-lifecycle)?-[a-z0-9-]+$")
+errors = []
+old = sorted(item.name for item in list(root.glob("030-*.patch")) + list(root.glob("030-*.meta.json")))
+if old:
+    errors.append("old 030 patch names remain: " + " ".join(old))
+stems = {}
+for item in list(root.glob("m-*.patch")) + list(root.glob("g-*.patch")) + list(root.glob("m-*.meta.json")) + list(root.glob("g-*.meta.json")):
+    stem = item.name[:-6] if item.name.endswith(".patch") else item.name[:-10]
+    kind = "patch" if item.name.endswith(".patch") else "meta.json"
+    stems.setdefault(stem, set()).add(kind)
+    if not name_re.fullmatch(stem):
+        errors.append("patch name does not match naming.md: " + item.name)
+for stem, kinds in sorted(stems.items()):
+    if kinds != {"patch", "meta.json"}:
+        errors.append("patch/meta pair incomplete: " + stem)
+        continue
+    meta = json.loads((root / (stem + ".meta.json")).read_text())
+    if meta.get("id") != stem:
+        errors.append("meta id != stem: " + stem + " id=" + str(meta.get("id")))
+if errors:
+    print("; ".join(errors))
+    sys.exit(1)
+PY
+); then
+    fail "patch naming gate failed: ${naming_err}"
+fi
+
 if (( failures > 0 )); then
     printf 'RESULT: FAIL_DOCS (%d issue(s))\n' "$failures" >&2
     exit 1

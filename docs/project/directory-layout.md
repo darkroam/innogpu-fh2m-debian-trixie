@@ -17,7 +17,7 @@
 - **F 线**是唯一开发主线。源码与黑盒载荷都来自
   `debs/fantgpu-fh2m_3.3.8.126-driver-linux-desktop-sp-generic_amd64.deb`
   （SHA-256 `6f0daaf79fb6b2a547138c17628bb990dff0d0c684ee1c13775bebc2d28fd11b`）：
-  F0 genesis、R16 整栈切换、冻结 O-stage 快照，再加上 030-035/030-036。
+  F0 genesis、R16 整栈切换、冻结 O-stage 快照，再加上 m-035-private-accessor/m-036-bf-shf-rename。
   载荷清单是 `binary-manifest-fantgpu.json`，物化目录是 `vendor/fantgpu/`。
 - **O 线**只维护，不接新功能。主线不含 `drivers/`。484 件在 tag `innogpu-4x-frozen`；
   相对 `deepin-4.0.2-i3` 只有 `drivers/README.md` 四行路径表述不同。构建器在主线拒绝 O 分支，

@@ -214,7 +214,7 @@
 - **目标**：把未来「更换基座」的成本从考古式逐文件归纳降为「全链 patch 重放 + 适配」。用户 2026-09-10 裁定，dsh 草拟确认。
 - **规则**：凡进入发布包（当前 5.0.0-iN fantgpu 血缘）的源树语义改动，必须双轨存在：
   1. **腿 A（直接修改）**：在工作树/编排树上直接修改（正常开发路径）；
-  2. **腿 B（patch 记录）**：同一改动同时落档为 `patches/030-NNN.{patch,meta.json}`（N 从 030 起续编，相对上一链基，-p1 --fuzz=0 可重放），meta 含 4 目评审、before/after tree hash、draft→verified 生命周期、rollback 字段与台账引用；台账（`030-mapping-table.md` 或 5.x 变更台账）同步登记来源、语义与验证状态。
+  2. **腿 B（patch 记录）**：同一改动同时落档为 `patches/{m|g}-NNN-主题.{patch,meta.json}`，名字必须符合 [naming.md](../patches/naming.md)；禁止再新建 `patches/030-NNN`。相对上一链基，-p1 --fuzz=0 可重放，meta 含 4 目评审、before/after tree hash、draft→verified 生命周期、rollback 字段与台账引用；台账（`030-mapping-table.md` 或 5.x 变更台账）同步登记来源、语义与验证状态。
 - **印证门禁**：发布前 O_stage 物化树 hash 必须等于「F0 快照 + 全链 030-NNN 重放」树 hash；不一致即阻塞发布（缺失腿 B 的改动 = 返工）。
 - **基座更换流程（未来）**：新 vendor 基座 = F0′ → O-4′ 锁定 → 全链 patch 逐项重放 + 适配（复用既有 4 目评审语义裁决，仅重适配上下文/命名）→ O_stage′；禁止回到考古式逐文件归纳。
 - **例外**：纯构建/打包/元数据配置（非源树语义）可不产 patch，但必须记入对应版本 meta.json 并说明。

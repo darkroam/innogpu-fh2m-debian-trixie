@@ -5,7 +5,7 @@
 #   - 前置校验（tar 1.35 / zstd 1.5.7 / f0 快照 SHA / 18 条 patch SHA）
 #   - 解包 F0 → 树 hash 校验（O-4 锁定 7219d817…）
 #   - 18 条 030-NNN 按链序 -p1 --fuzz=0 应用，每链点校验 after_tree_hash
-#   - 最终树 hash == 030-034.meta.json after_tree_hash（= 5f6a5347…）
+#   - 最终树 hash == m-034-stop-stage.meta.json after_tree_hash（= 5f6a5347…）
 #   - 五件同代事务产物（生成顺序：manifest → manifest.sha256 → tar →
 #     tar.sha256 → meta.json（引用四文件 SHA）；提交顺序 = 产物名固定序；
 #     每步 rename 后目录 fsync；journal + 恢复；禁止混代；fail-closed 统一 5）
@@ -13,7 +13,7 @@
 # tree hash 契约 = O-4 口径（复用 tools/internal/o4-f0-lock-gen.py 的 walk_rows /
 # manifest_text，SHA-256 of canonical manifest bytes）。
 #
-# 只读：f0-snapshot.tar.zst / patches/030-*；只写：--out-dir（默认
+# 只读：f0-snapshot.tar.zst / 18 条 m 链补丁；只写：--out-dir（默认
 # docs/planning/evidence/o-stage/5.0.0-i6，候选代隔离目录）与 /tmp 工作目录；
 # 绝不写任何保护区路径（debs/vendor/build/third_party 及 drivers/baselines）。
 #
@@ -77,24 +77,24 @@ JOURNAL="$OUT_DIR/.materialize.journal"
 
 # ---- 18 条 030-NNN 链（显式清单，禁止 glob） ----
 CHAIN=(
-  "030-001|patches/030-001.patch"
-  "030-002|patches/030-002.patch"
-  "030-006|patches/030-006.patch"
-  "030-009|patches/030-009.patch"
-  "030-007|patches/030-007.patch"
-  "030-023|patches/030-023.patch"
-  "030-025|patches/030-025.patch"
-  "030-024|patches/030-024.patch"
-  "030-026|patches/030-026.patch"
-  "030-027|patches/030-027.patch"
-  "030-026-lifecycle|patches/030-026-lifecycle.patch"
-  "030-028|patches/030-028.patch"
-  "030-029|patches/030-029.patch"
-  "030-030|patches/030-030.patch"
-  "030-031|patches/030-031.patch"
-  "030-032|patches/030-032.patch"
-  "030-033|patches/030-033.patch"
-  "030-034|patches/030-034.patch"
+  "m-001-kernel-6-12-compat|patches/m-001-kernel-6-12-compat.patch"
+  "m-002-dp-fbdev-fallback|patches/m-002-dp-fbdev-fallback.patch"
+  "m-006-local-connector-acpi-map|patches/m-006-local-connector-acpi-map.patch"
+  "m-009-local-internal-edp|patches/m-009-local-internal-edp.patch"
+  "m-007-fbdev-io-mmap|patches/m-007-fbdev-io-mmap.patch"
+  "m-023-invisible-read-no-writeback|patches/m-023-invisible-read-no-writeback.patch"
+  "m-025-dma-resv-usage-rw|patches/m-025-dma-resv-usage-rw.patch"
+  "m-024-suspend-resume|patches/m-024-suspend-resume.patch"
+  "m-026-inactive-crtc-vblank-guard|patches/m-026-inactive-crtc-vblank-guard.patch"
+  "m-027-foreign-dmabuf-lifecycle|patches/m-027-foreign-dmabuf-lifecycle.patch"
+  "m-026-lifecycle-suspend-dvfs|patches/m-026-lifecycle-suspend-dvfs.patch"
+  "m-028-hal-temp-monitor-delay|patches/m-028-hal-temp-monitor-delay.patch"
+  "m-029-ddcci-panel|patches/m-029-ddcci-panel.patch"
+  "m-030-hwinfo-audio-fallback|patches/m-030-hwinfo-audio-fallback.patch"
+  "m-031-pm-marker|patches/m-031-pm-marker.patch"
+  "m-032-pm-probe|patches/m-032-pm-probe.patch"
+  "m-033-shipped-abi-devres|patches/m-033-shipped-abi-devres.patch"
+  "m-034-stop-stage|patches/m-034-stop-stage.patch"
 )
 
 die() { echo "materialize=FAIL: $*" >&2; exit 1; }
@@ -633,7 +633,7 @@ done
 
 # 最终树 hash（= 链尾 meta after + 文档锁定值）
 got_final="$(tree_hash "$TREE")"
-last_after="$(meta_field "$PATCH_DIR/030-034.meta.json" "apply.after_tree_hash")"
+last_after="$(meta_field "$PATCH_DIR/m-034-stop-stage.meta.json" "apply.after_tree_hash")"
 if [[ "$got_final" != "$last_after" || "$got_final" != "$EXPECT_FINAL_TREE" ]]; then
     die "final tree hash mismatch: actual=$got_final last_after=$last_after expect=$EXPECT_FINAL_TREE"
 fi

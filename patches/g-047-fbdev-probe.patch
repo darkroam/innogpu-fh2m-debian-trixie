@@ -1,0 +1,49 @@
+diff --git a/fantsrvkm/fantdpu_drm_fb.c b/fantsrvkm/fantdpu_drm_fb.c
+--- a/fantsrvkm/fantdpu_drm_fb.c
++++ b/fantsrvkm/fantdpu_drm_fb.c
+@@ -246,6 +246,7 @@
+ 	.fb_debug_leave = drm_fb_helper_debug_leave,
+ };
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 18, 0)
+ static struct fb_info *fant_fbdev_helper_alloc(struct drm_fb_helper *helper)
+ {
+ #if (DRM_VERSION < KERNEL_VERSION(4, 3, 0))
+@@ -285,6 +286,7 @@
+ #endif
+ }
+ 
++#endif
+ static inline void
+ fant_fbdev_helper_fill_info(struct drm_fb_helper *helper,
+ 							struct drm_fb_helper_surface_size *sizes,
+@@ -321,7 +323,11 @@
+ 	mutex_lock(&dev->struct_mutex);
+ 
+ 	/* Create a framebuffer */
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 18, 0)
++	info = helper->info;
++#else
+ 	info = fant_fbdev_helper_alloc(helper);
++#endif
+ 	if (!info) {
+ 		err = -ENOMEM;
+ 		goto err_unlock_dev;
+@@ -433,11 +439,17 @@
+ }
+ 
+ static const struct drm_fb_helper_funcs s_fant_fbdev_helper_funcs = {
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ 	.fb_probe = fant_fbdev_probe,
++#endif
+ };
+ 
+ static struct fant_fbdev *fant_fbdev_create(struct fantdpu_drm_private *dev_priv)
+ {
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0)
++	extern struct drm_driver g_fantgpu_drm_driver;
++	g_fantgpu_drm_driver.fbdev_probe = fant_fbdev_probe;
++#endif
+ 	struct device *dev = dev_priv->drm_dev->dev;
+ 	struct fant_fbdev *fant_fbdev;
+ 	int err;

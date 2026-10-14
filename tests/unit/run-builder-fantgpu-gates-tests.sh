@@ -166,13 +166,13 @@ fi
 # t16 fallback semantics：先检查 hwinfo，再进入 HAL OS matcher；缺失 hwinfo
 # 时必须选择 NORMAL 模式并立即返回，不能只检查存在性而仍调用危险路径。
 guard_line=$(grep -nF 'if (!fh2m_hal_get_hwinfo_finished_status(chip->parent))' \
-    "$ROOT/patches/030-030.patch" | cut -d: -f1 || true)
+    "$ROOT/patches/m-030-hwinfo-audio-fallback.patch" | cut -d: -f1 || true)
 normal_line=$(grep -nF 'chip->dma_pointer_mode = DMA_POINTER_NORMAL;' \
-    "$ROOT/patches/030-030.patch" | head -1 | cut -d: -f1 || true)
-return_line=$(grep -nF $'+\t\treturn;' "$ROOT/patches/030-030.patch" |
+    "$ROOT/patches/m-030-hwinfo-audio-fallback.patch" | head -1 | cut -d: -f1 || true)
+return_line=$(grep -nF $'+\t\treturn;' "$ROOT/patches/m-030-hwinfo-audio-fallback.patch" |
     head -1 | cut -d: -f1 || true)
 matcher_line=$(grep -nF 'fh2m_hal_os_release_match' \
-    "$ROOT/patches/030-030.patch" | head -1 | cut -d: -f1 || true)
+    "$ROOT/patches/m-030-hwinfo-audio-fallback.patch" | head -1 | cut -d: -f1 || true)
 if [[ "$guard_line" =~ ^[0-9]+$ && "$normal_line" =~ ^[0-9]+$ &&
       "$return_line" =~ ^[0-9]+$ && "$matcher_line" =~ ^[0-9]+$ &&
       "$guard_line" -lt "$normal_line" && "$normal_line" -lt "$return_line" &&
@@ -189,7 +189,7 @@ mkdir -p "$PATCH_TREE"
 if tar --use-compress-program=zstd -xf \
        "$ROOT/docs/planning/evidence/o-stage/5.0.0-i6/o-stage-snapshot.tar.zst" -C "$PATCH_TREE" \
    && patch --batch --forward --fuzz=0 --no-backup-if-mismatch --dry-run -R -s \
-       -d "$PATCH_TREE/o-stage" -p1 < "$ROOT/patches/030-034.patch"; then
+       -d "$PATCH_TREE/o-stage" -p1 < "$ROOT/patches/m-034-stop-stage.patch"; then
     ok t17
 else
     bad t17 "030-034 not present in locked O_stage snapshot (reverse dry-run failed)"

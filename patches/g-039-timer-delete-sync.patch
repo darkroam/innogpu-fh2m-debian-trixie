@@ -1,0 +1,44 @@
+diff --git a/fantgpu/fant_timer.c b/fantgpu/fant_timer.c
+--- a/fantgpu/fant_timer.c
++++ b/fantgpu/fant_timer.c
+@@ -157,7 +157,11 @@
+ 
+ void fh2m_fant_timer_stop(struct fant_timer *fant_timer)
+ {
++	#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0)
++	timer_delete_sync(&fant_timer->timer);
++#else
+ 	del_timer_sync(&fant_timer->timer);
++#endif
+ }
+ FANT_EXT_SYM(fh2m_fant_timer_stop);
+ 
+diff --git a/fantvpu/fantvpu_drv.c b/fantvpu/fantvpu_drv.c
+--- a/fantvpu/fantvpu_drv.c
++++ b/fantvpu/fantvpu_drv.c
+@@ -2439,7 +2439,11 @@
+ 		if (g_vpu_drv_info != NULL && g_vpu_drv_info->workload_timer != NULL &&
+ 			g_vpu_drv_info->workload_timer->timer_suspend == false) {
+ 			while (1) {
+-				ret = del_timer_sync(&(g_vpu_drv_info->workload_timer->timer));
++				#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0)
++	ret = timer_delete_sync(&(g_vpu_drv_info->workload_timer->timer));
++#else
++	ret = del_timer_sync(&(g_vpu_drv_info->workload_timer->timer));
++#endif
+ 				if (ret == 0) {
+ 					break;
+ 				}
+@@ -2549,7 +2553,11 @@
+ 	}
+ 	drv_info->workload_timer->drv_info = NULL;
+ 	while (1) {
+-		ret = del_timer_sync(&(drv_info->workload_timer->timer));
++		#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0)
++	ret = timer_delete_sync(&(drv_info->workload_timer->timer));
++#else
++	ret = del_timer_sync(&(drv_info->workload_timer->timer));
++#endif
+ 		if (ret == 0) {
+ 			break;
+ 		}

@@ -1,0 +1,18 @@
+diff --git a/fantsrvkm/fantdpu_drm_fb.c b/fantsrvkm/fantdpu_drm_fb.c
+--- a/fantsrvkm/fantdpu_drm_fb.c
++++ b/fantsrvkm/fantdpu_drm_fb.c
+@@ -173,7 +173,14 @@
+ 	fb = to_drm_framebuffer(pdp_fb);
+ 	pdp_fb->obj[0] = obj;
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 17, 0)
++	drm_helper_mode_fill_fb_struct(dev_priv->drm_dev, fb,
++		drm_get_format_info(dev_priv->drm_dev, mode_cmd->pixel_format,
++			mode_cmd->modifier[0]),
++		mode_cmd);
++#else
+ 	drm_helper_mode_fill_fb_struct(dev_priv->drm_dev, fb, mode_cmd);
++#endif
+ 
+ 	return drm_framebuffer_init(dev_priv->drm_dev, fb, &s_fant_framebuffer_funcs);
+ }

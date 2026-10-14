@@ -1,4 +1,5 @@
 # 实施历史
+> 现行名见 [naming.md](../patches/naming.md)。下文旧名是当时路径。
 
 本页记录关键演进的原因、结果和证据；已完成事项索引见 [todo](todo.md)，
 待办见 [current-work](../state/current-work.md)，当前结论见 [status](../project/status.md)。

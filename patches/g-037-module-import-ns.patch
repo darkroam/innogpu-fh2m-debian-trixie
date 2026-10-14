@@ -1,0 +1,45 @@
+diff --git a/fantgpu/fant_dma_buf.c b/fantgpu/fant_dma_buf.c
+--- a/fantgpu/fant_dma_buf.c
++++ b/fantgpu/fant_dma_buf.c
+@@ -60,7 +60,11 @@
+ #include "kernel_compatibility.h"
+ 
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 13, 0)
++MODULE_IMPORT_NS("DMA_BUF");
++#else
+ MODULE_IMPORT_NS(DMA_BUF);
++#endif
+ 
+ int fh2m_fant_dma_buf_begin_cpu_access(fant_dma_buf *dmabuf, enum fant_dma_data_direction dir)
+ {
+diff --git a/fantsrvkm/fant_physmem_dmabuf_helper.c b/fantsrvkm/fant_physmem_dmabuf_helper.c
+--- a/fantsrvkm/fant_physmem_dmabuf_helper.c
++++ b/fantsrvkm/fant_physmem_dmabuf_helper.c
+@@ -60,7 +60,11 @@
+ #include "kernel_compatibility.h"
+ #include "physmem_dmabuf_internal.h"
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 13, 0)
++MODULE_IMPORT_NS("DMA_BUF");
++#else
+ MODULE_IMPORT_NS(DMA_BUF);
++#endif
+ 
+ /**************************************************************************************************
+  * dma_buf_ops (non-GEM)
+diff --git a/fantvpu/fantvpu_dmabuf.c b/fantvpu/fantvpu_dmabuf.c
+--- a/fantvpu/fantvpu_dmabuf.c
++++ b/fantvpu/fantvpu_dmabuf.c
+@@ -53,7 +53,11 @@
+ 
+ 
+ #if (DRM_VERSION >= KERNEL_VERSION(5, 19, 0))
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 13, 0)
++MODULE_IMPORT_NS("DMA_BUF");
++#else
+ MODULE_IMPORT_NS(DMA_BUF);
++#endif
+ #endif
+ 
+ static struct vpudrv_buffer_t *vpu_dmabuf_to_vpubuf(struct dma_buf *buf)

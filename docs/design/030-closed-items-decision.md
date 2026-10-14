@@ -1,4 +1,5 @@
 # 关闭项决策批：003 / 004 / 005 / 008 / 025-display + patch-000（F0 侧终判）
+> 现行名见 [naming.md](../patches/naming.md)。下文旧名是当时路径。
 
 - 日期：2026-09-10
 - 依据：030-mapping-table §三.3（D015-D019）+ §三.1（追溯 BC）+ P3c 裁决口径（retain / runtime-verify）+ dsh 放行规格（关闭依据逐项落档）

@@ -1,4 +1,5 @@
 # R16 · 基座迁移与 R5 悬案（2026-09-03，公开阅读版）
+> 现行名见 [naming.md](../../patches/naming.md)。下文旧名是当时路径。
 
 - 记录范围：来源轮次 `R16-2026-09-03-基座更新迭代评估`；下文历史“当前/本轮”指当时阶段。
 - 阅读版整理：2026-09-22，R21；原始记录、历史裁定与 R17 的复算声明各保留其时点。
@@ -427,8 +428,8 @@ q#L684-L943 是早期未审草稿，不拿来覆盖后续正式处置。上述�
 - [build-5.0.0-i6.sha256](../../planning/evidence/o-stage/build-5.0.0-i6.sha256)；历史版本锚：`docs/planning/evidence/o-stage/build-5.0.0-i6.sha256#L1-L3 @ 7665fda24623`
 - [boot-failure-summary.txt](../../planning/evidence/o-stage/runtime-5.0.0-i4/boot-failure-summary.txt)；历史版本锚：`docs/planning/evidence/o-stage/runtime-5.0.0-i4/boot-failure-summary.txt#L1-L14 @ 7665fda24623`
 - [raw-evidence-archive-summary.txt](../../planning/evidence/o-stage/runtime-5.0.0-i5/raw-evidence-archive-summary.txt)；历史版本锚：`docs/planning/evidence/o-stage/runtime-5.0.0-i5/raw-evidence-archive-summary.txt#L1-L19 @ 7665fda24623`
-- [030-033.meta.json](../../../patches/030-033.meta.json)；历史版本锚：`patches/030-033.meta.json#L1 @ 7665fda24623`
-- [030-034.meta.json](../../../patches/030-034.meta.json)；历史版本锚：`patches/030-034.meta.json#L1 @ 7665fda24623`
+- [030-033.meta.json](../../../patches/m-033-shipped-abi-devres.meta.json)；历史版本锚：`patches/030-033.meta.json#L1 @ 7665fda24623`
+- [030-034.meta.json](../../../patches/m-034-stop-stage.meta.json)；历史版本锚：`patches/030-034.meta.json#L1 @ 7665fda24623`
 
 **初始重放链与后续增量**：编号不是连续区间；13 项扩为 18 项，没有虚构 003–005、008 等 030 文件。
 下表 SHA 是本次读取 patch 实物所得；after 是逐项与 meta 链式比对的记录值，非本次执行重放所得。
@@ -900,8 +901,8 @@ i4 Oops/dev_rsrc ABI、030 链物化和构建属于切片二；r5dpm1/r5dpm2 诊
 - [r5-hal-o-vs-f-reverse-notes.txt](../../planning/evidence/o-stage/runtime-5.0.0-i3/r5-hal-o-vs-f-reverse-notes.txt)；历史版本锚：`docs/planning/evidence/o-stage/runtime-5.0.0-i3/r5-hal-o-vs-f-reverse-notes.txt#L17-L53 @ 7665fda24623`
 - [watchdog-round-1-result.txt](../../planning/evidence/o-stage/runtime-5.0.0-i6/watchdog-round-1-result.txt)；历史版本锚：`docs/planning/evidence/o-stage/runtime-5.0.0-i6/watchdog-round-1-result.txt#L1-L18 @ 7665fda24623`
 - [watchdog-round-1-archive-summary.txt](../../planning/evidence/o-stage/runtime-5.0.0-i6/watchdog-round-1-archive-summary.txt)；历史版本锚：`docs/planning/evidence/o-stage/runtime-5.0.0-i6/watchdog-round-1-archive-summary.txt#L1 @ 7665fda24623`
-- [030-030.meta.json](../../../patches/030-030.meta.json)；历史版本锚：`patches/030-030.meta.json#L1 @ 7665fda24623`
-- [030-034.meta.json](../../../patches/030-034.meta.json)；历史版本锚：`patches/030-034.meta.json#L1 @ 7665fda24623`
+- [030-030.meta.json](../../../patches/m-030-hwinfo-audio-fallback.meta.json)；历史版本锚：`patches/030-030.meta.json#L1 @ 7665fda24623`
+- [030-034.meta.json](../../../patches/m-034-stop-stage.meta.json)；历史版本锚：`patches/030-034.meta.json#L1 @ 7665fda24623`
 
 **本机唯一归档指针**（gitignored；SHA 本次实测，不能用文件存在代替其结论正确）：
 

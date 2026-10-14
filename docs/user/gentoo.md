@@ -6,7 +6,7 @@
 ## 这台机器
 
 - 内核 `6.12.111-gentoo-x86_64`。6.18 因封存对象的 `%gs:0x28` 栈金丝雀对不上，已放弃。
-- 模块是 i12 构建器树 `9a8d185f…`，再在构建器外打 `030-036`。整树
+- 模块是 i12 构建器树 `9a8d185f…`，再在构建器外打 `m-036-bf-shf-rename`。整树
   `0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce`。
 - 2026-10-12 启动 `c285b6cb-efcf-43f4-9f13-5c059c970c16`：srcversion
   `370AB248D72951EF3C0C4BB`，`card0` 在，dwm 在跑，glvnd 选到 `libGLX_fh2m.so.0`，
@@ -78,8 +78,8 @@ sudo tools/gentoo-fh2m.sh verify
 `install` 会先把当前 ko 存到 `.build/work/gentoo-fh2m/rollback/fantgpu.ko`。
 退回用 `sudo tools/gentoo-fh2m.sh rollback`，然后重启。
 
-构建器 `tools/build-innogpu-driver.sh` 仍只产 Debian deb，并且停在 `030-035`。
-Gentoo 脚本只借用它的 `derive_fantgpu_source`，再打 `030-036`。不改构建器。
+构建器 `tools/build-innogpu-driver.sh` 仍只产 Debian deb，并且停在 `m-035-private-accessor`。
+Gentoo 脚本只借用它的 `derive_fantgpu_source`，再打 `m-036-bf-shf-rename`。不改构建器。
 
 
 ## 幂等
@@ -114,7 +114,7 @@ emerge 的回滚件在 `/var/lib/fantgpu/rollback/fantgpu.ko`，不放在 portag
 
 ## 不在本档案里
 
-- `patches/030-037` 到 `030-050` 不入库。
+- `g-037` 到 `g-050` 已按命名规范入库。入库不等于升格：仍标 g，字节不变，不进 i12 构建器。`g-050-fb-helper-alloc` 是 6.12 胶水，不是 6.18。
 - 不跑 PM，不改 GRUB。
 - initramfs 不必重建。模块和固件都在根文件系统挂载之后加载。
 - Xorg 用 21.1 即可。这台机器后来装了 mesa 26，glvnd 仍选 fh2m，因为

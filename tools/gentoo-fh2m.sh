@@ -1,5 +1,5 @@
 #!/bin/bash
-# Gentoo fallback for the i12 + 030-036 + 030-051 module. The Debian builder stays a deb builder.
+# Gentoo fallback for the i12 + m-036-bf-shf-rename + m-051-hwinfo-connector-fallback module. The Debian builder stays a deb builder.
 set -euo pipefail
 umask 022
 
@@ -11,8 +11,8 @@ KERNELDIR=${KERNELDIR:-/lib/modules/$KERNEL/build}
 VENDOR=${GENTOO_VENDOR:-$ROOT/vendor/fantgpu}
 SNAP=$ROOT/docs/planning/evidence/o-stage/5.0.0-i6/o-stage-snapshot.tar.zst
 I12=9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee
-TREE036=0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce
-TREE051=b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00
+TREE_M036=0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce
+TREE_M051=b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00
 PREFIX=/opt/fantgpu-fh2m
 
 log() { printf '%s %s\n' "$(date -Iseconds)" "$*"; }
@@ -31,7 +31,7 @@ PY
 
 need_repo() {
     [[ -f $SNAP ]] || die "missing i6 snapshot"
-    [[ -f $ROOT/patches/030-035.patch && -f $ROOT/patches/030-036.patch && -f $ROOT/patches/030-051.patch ]] || die "missing 030-035, 030-036 or 030-051"
+    [[ -f $ROOT/patches/m-035-private-accessor.patch && -f $ROOT/patches/m-036-bf-shf-rename.patch && -f $ROOT/patches/m-051-hwinfo-connector-fallback.patch ]] || die "missing m-035, m-036 or m-051"
     grep -q '^derive_fantgpu_source()' "$ROOT/tools/build-innogpu-driver.sh" || die "builder derive missing"
 }
 
@@ -99,15 +99,15 @@ cmd_build() {
     ROOT=$ROOT derive_fantgpu_source "$src"
     [[ $(tree_hash "$src") == "$I12" ]] || die "i12 tree hash mismatch"
     patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
-        < "$ROOT/patches/030-036.patch"
-    [[ $(tree_hash "$src") == "$TREE036" ]] || die "030-036 tree hash mismatch"
+        < "$ROOT/patches/m-036-bf-shf-rename.patch"
+    [[ $(tree_hash "$src") == "$TREE_M036" ]] || die "m-036 tree hash mismatch"
     patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
-        < "$ROOT/patches/030-051.patch"
-    [[ $(tree_hash "$src") == "$TREE051" ]] || die "030-051 tree hash mismatch"
+        < "$ROOT/patches/m-051-hwinfo-connector-fallback.patch"
+    [[ $(tree_hash "$src") == "$TREE_M051" ]] || die "m-051 tree hash mismatch"
     make -C "$src" KERNELDIR="$KERNELDIR"
     [[ -f $src/fantgpu.ko ]] || die "make produced no fantgpu.ko"
     install -m 0644 "$src/fantgpu.ko" "$WORK/fantgpu.ko"
-    log "built=$(sha256sum "$WORK/fantgpu.ko" | awk '{print $1}') srcversion=$(modinfo -F srcversion "$WORK/fantgpu.ko") tree=$TREE051"
+    log "built=$(sha256sum "$WORK/fantgpu.ko" | awk '{print $1}') srcversion=$(modinfo -F srcversion "$WORK/fantgpu.ko") tree=$TREE_M051"
     log "gentoo_fh2m_build=PASS"
 }
 

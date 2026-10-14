@@ -1,0 +1,21 @@
+diff --git a/Kbuild b/Kbuild
+--- a/Kbuild
++++ b/Kbuild
+@@ -58,3 +58,17 @@
+ fantgpu-y += $(FANTGPU_INFO)
+ 
+ obj-m += fantgpu.o
++
++# 6.18: $(obj)/%.o: %.c outranks %: %_shipped, so a subdirectory blob is
++# never copied. Name the copy explicitly. The same rule is a no-op duplicate
++# on 6.12, where the generic shipped rule already matches.
++$(obj)/fantgpu/fantgpu.o: $(src)/fantgpu/fantgpu.o_shipped
++	$(call cmd,copy)
++$(obj)/fantdma/fantdma.o: $(src)/fantdma/fantdma.o_shipped
++	$(call cmd,copy)
++$(obj)/fantsmmu/fantsmmu.o: $(src)/fantsmmu/fantsmmu.o_shipped
++	$(call cmd,copy)
++$(obj)/fantsrvkm/fantsrvkm.o: $(src)/fantsrvkm/fantsrvkm.o_shipped
++	$(call cmd,copy)
++$(obj)/fantvpu/fantvpu.o: $(src)/fantvpu/fantvpu.o_shipped
++	$(call cmd,copy)

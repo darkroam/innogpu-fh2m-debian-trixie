@@ -1,0 +1,74 @@
+diff --git a/fantgpu/fant_mm.c b/fantgpu/fant_mm.c
+--- a/fantgpu/fant_mm.c
++++ b/fantgpu/fant_mm.c
+@@ -46,7 +46,51 @@
+ #include <linux/mm.h>
+ #include <linux/vmalloc.h>
+ #include <linux/sched.h>
+-#include <linux/pfn_t.h>
++#if defined(__has_include)
++#  if __has_include(<linux/pfn_t.h>)
++#    include <linux/pfn_t.h>
++#    define FANT_PFN_T_HEADER 1
++#  endif
++#else
++#  include <linux/pfn_t.h>
++#  define FANT_PFN_T_HEADER 1
++#endif
++#ifndef FANT_PFN_T_HEADER
++/* 6.16+ dropped pfn_t. Keep the old flagged .val layout for callers. */
++typedef struct { u64 val; } pfn_t;
++#define PFN_FLAGS_MASK (((u64)(~PAGE_MASK)) << (BITS_PER_LONG_LONG - PAGE_SHIFT))
++#define PFN_DEV (1ULL << (BITS_PER_LONG_LONG - 3))
++#define PFN_MAP (1ULL << (BITS_PER_LONG_LONG - 4))
++static inline pfn_t __fant_pfn_to_pfn_t(unsigned long nr, u64 flags)
++{
++	pfn_t out = { .val = ((u64)nr) | (flags & PFN_FLAGS_MASK) };
++	return out;
++}
++static inline pfn_t pfn_to_pfn_t(unsigned long nr)
++{
++	return __fant_pfn_to_pfn_t(nr, 0);
++}
++static inline unsigned long pfn_t_to_pfn(pfn_t pfn)
++{
++	return (unsigned long)(pfn.val & ~PFN_FLAGS_MASK);
++}
++static inline struct page *pfn_t_to_page(pfn_t pfn)
++{
++	return pfn_to_page(pfn_t_to_pfn(pfn));
++}
++static inline int pfn_t_valid(pfn_t pfn)
++{
++	return pfn_valid(pfn_t_to_pfn(pfn));
++}
++static inline pfn_t page_to_pfn_t(struct page *page)
++{
++	return pfn_to_pfn_t(page_to_pfn(page));
++}
++static inline pfn_t phys_to_pfn_t(phys_addr_t addr, u64 flags)
++{
++	return __fant_pfn_to_pfn_t(addr >> PAGE_SHIFT, flags);
++}
++#endif
+ #include <linux/dma-mapping.h>
+ #include <linux/uaccess.h>
+ #include <linux/slab.h>
+@@ -1022,7 +1066,17 @@
+ 	}
+ #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0))
+ 	pfn_t _pfn = { pfn };
++#ifndef FANT_PFN_T_HEADER
++	{
++		vm_fault_t vmf = vmf_insert_mixed((struct vm_area_struct *)vma, addr,
++						 pfn_t_to_pfn(_pfn));
++		if (vmf & VM_FAULT_ERROR)
++			return vm_fault_to_errno(vmf, 0);
++		return 0;
++	}
++#else
+ 	return vm_insert_mixed((struct vm_area_struct *)vma, addr, _pfn);
++#endif
+ #else
+ 	return vm_insert_mixed((struct vm_area_struct *)vma, addr, pfn);
+ #endif

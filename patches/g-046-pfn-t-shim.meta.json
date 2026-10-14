@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0",
+  "id": "g-046-pfn-t-shim",
+  "ledger_ref": {
+    "item": "030",
+    "neutral_record": "F-R57-618-030-046",
+    "mapping": "collab/R57-2026-10-09-Gentoo\u663e\u5361\u9a71\u52a8\u5b89\u88c5\u6279/s1-module-build.md",
+    "description": "linux/pfn_t.h is gone. Shim the old flagged pfn_t when the header is absent, and insert mixed pages with vmf_insert_mixed(pfn) plus vm_fault_to_errno. 6.12 still includes the header and keeps vm_insert_mixed."
+  },
+  "deepin_patch": {
+    "path": "patches/g-046-pfn-t-shim.patch",
+    "sha256": "26eba12b380701ba285a035111b0f23945bf7b51a116a4c2682306e8628e3645",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "i6 snapshot plus 030-035 and 030-036; not a new archived snapshot",
+      "sha256": "not-a-snapshot-file"
+    },
+    "tree_hash": "2c54c26ca96f7735b74704b60dc745dc6eafc8049f04651c7b44f14da4c16025",
+    "chain_base": {
+      "id": "030-036",
+      "after_tree_hash": "2c54c26ca96f7735b74704b60dc745dc6eafc8049f04651c7b44f14da4c16025"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "version-gated-source-compat",
+      "summary": "linux/pfn_t.h is gone. Shim the old flagged pfn_t when the header is absent, and insert mixed pages with vmf_insert_mixed(pfn) plus vm_fault_to_errno. 6.12 still includes the header and keeps vm_insert_mixed. No black-box, firmware or DDX byte changes."
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "Edits stay inside the existing Dual MIT/GPLv2 driver tree. No new dependency, binary or third-party code."
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "not-inserted-into-debian-builder",
+      "summary": "Parent is the i6 tree after 030-035 and 030-036. These patches are not inserted into the Debian 030 chain or the i12 builder gate."
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "post-i6-replay",
+      "summary": "Applied with --fuzz=0 -p1 onto the i6 replay that already contains 030-035 and 030-036."
+    },
+    "adjacent_code": {
+      "status": "reviewed",
+      "verdict": "one-cause",
+      "summary": "linux/pfn_t.h is gone. Shim the old flagged pfn_t when the header is absent, and insert mixed pages with vmf_insert_mixed(pfn) plus vm_fault_to_errno. 6.12 still includes the header and keeps vm_insert_mixed."
+    }
+  },
+  "apply": {
+    "before_tree_hash": "ebebda98341a42ca7186cc29c4be3b36ff7186bf53c623c937cf3d4a3857d390",
+    "after_tree_hash": "1d2f6452164ab0aabca5a2f1a45489fb082120ab9b49eb9e0f0252614d74cf0c",
+    "patch_sha256": "26eba12b380701ba285a035111b0f23945bf7b51a116a4c2682306e8628e3645",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <TREE> < patches/g-046-pfn-t-shim.patch",
+    "result": "strict replay on the i6+035+036 tree, in order 030-037 through 030-049, restored the same tree hash. No .orig or .rej."
+  },
+  "rollback": {
+    "command": "patch --batch --reverse --fuzz=0 --no-backup-if-mismatch -p1 -d <TREE> < patches/g-046-pfn-t-shim.patch",
+    "target": "ebebda98341a42ca7186cc29c4be3b36ff7186bf53c623c937cf3d4a3857d390"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "patch --fuzz=0 -p1 forward and reverse on the i6+035+036 tree",
+        "6.12 path kept behind LINUX_VERSION_CODE or __has_include gates",
+        "no black-box object edited"
+      ]
+    },
+    "clean_build": {
+      "status": "pass",
+      "kernel": "6.18.54-gentoo-x86_64",
+      "srcversion": "86EF87D942CC36C5AA9CAC0",
+      "vermagic": "6.18.54-gentoo-x86_64 SMP preempt mod_unload modversions",
+      "module": "fantgpu.ko built, not installed",
+      "note": "CONFIG_DEBUG_INFO_BTF is unset, so there is no BTF section. 6.12 was not rebuilt on this machine."
+    },
+    "runtime": {
+      "status": "pending",
+      "required": "Do not load the module until the userspace, firmware and acceptance steps of R57 segment 1. No PM."
+    }
+  }
+}

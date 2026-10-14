@@ -7,6 +7,8 @@
 
 ## fantgpu 030 链
 
+命名规则见 [naming.md](naming.md)。
+
 `5.0.0-i6` 的 O_stage 已含 030 链 18 项，编号非连续，不能把 `030-001..034` 当作 34 项。
 逐项对应以 [030 映射表](../planning/030-mapping-table.md)、
 [O_stage 设计](../design/o-stage-integration-plan.md) 和
@@ -15,11 +17,11 @@
 [i4 Oops 事故](../incidents/r5-i4-oops-dev-rsrc-abi.md)。ABI 修正不解除 R5=FAIL；
 该句是 030-032/033 当时的边界。现行 R5 已通过，签署与 tag 见 [status](../project/status.md)；本目录不改写该事故记录。
 
-`030-036` 是 i12 终树 `9a8d185f2a65` 之后的续编，不进入 i12 构建器，因此不改锁定终树门。
+`m-036-bf-shf-rename` 是 i12 终树 `9a8d185f2a65` 之后的续编，不进入 i12 构建器，因此不改锁定终树门。
 它只把 `fantgpu/fant_math.h` 的私有 `__bf_shf` 改名为 `__fant_bf_shf`，移位表达式仍是
-`(__builtin_ffsll(x) - 1)`。见 [030-036](030-036-bf-shf-rename.md)。
+`(__builtin_ffsll(x) - 1)`。见 [m-036-bf-shf-rename](m-036-bf-shf-rename.md)。
 
-`030-051` 接在 `030-036` 树 `0eda30cd` 之后，只收敛 `fantdpu_connector.c` 的 hwinfo 回退。无固件时 HDMI 仍用表项 0，本机 DP0 内屏仍用 index 9。不进入 i12 构建器，不合并 modeset。见 [030-051](030-051-hwinfo-fallback.md)。
+`m-051-hwinfo-connector-fallback` 接在 `m-036-bf-shf-rename` 树 `0eda30cd` 之后，只收敛 `fantdpu_connector.c` 的 hwinfo 回退。无固件时 HDMI 仍用表项 0，本机 DP0 内屏仍用 index 9。不进入 i12 构建器，不合并 modeset。见 [m-051-hwinfo-connector-fallback](m-051-hwinfo-fallback.md)。
 
 **以下分类为 Deepin 补丁与组件的历史记录，计数不含 030 链**：
 

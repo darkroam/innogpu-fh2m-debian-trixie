@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0",
+  "id": "g-050-fb-helper-alloc",
+  "ledger_ref": {
+    "item": "030",
+    "neutral_record": "F-R57-612-fb-helper",
+    "mapping": "collab/R57-2026-10-09-Gentoo显卡驱动安装批/s1-612-030-050.md",
+    "description": "stop calling static drm_fb_helper_alloc_info on Gentoo 6.12"
+  },
+  "deepin_patch": {
+    "path": "patches/g-050-fb-helper-alloc.patch",
+    "sha256": "c4d90066d12ee09659bbf7adffde6b80605f61306d48d4f0b27b1c8788fd381f",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "docs/planning/evidence/o-stage/5.0.0-i6/o-stage-snapshot.tar.zst",
+      "sha256": "a0828049010376d5f765cce56cb17cf0d548c295964a377ca18f31e233b2bac6"
+    },
+    "chain_base": {
+      "id": "5.0.0-i6",
+      "after": "030-035 then 030-036, both --fuzz=0 -p1"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "draft",
+      "verdict": "fb-helper-alloc-local",
+      "summary": "Gentoo 6.12.111 keeps drm_fb_helper_alloc_info static. The 6.2 branch now returns helper->info when the core already allocated it, otherwise framebuffer_alloc plus fb_alloc_cmap. Failure returns NULL because the caller tests the pointer, not ERR_PTR. The fallback does not set FBINFO_HIDE_SMEM_START or skip_panic."
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "Local change in the existing vendor Dual MIT/GPLv2 fb helper. No new dependency, binary, or third-party code."
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "after-030-036-not-037",
+      "summary": "Applies to the i6 snapshot after 030-035 and 030-036. Does not use 030-037 through 030-049."
+    }
+  },
+  "apply": {
+    "file_before_sha256": "6d77723b5826af66169ef1e1e106e2be3a4326ce835d435abe3d2f47fe2103ba",
+    "file_after_sha256": "00a8d7086e12433417e7dafee8e20866d873999194d8f09983fb61284d547a13",
+    "patch_sha256": "c4d90066d12ee09659bbf7adffde6b80605f61306d48d4f0b27b1c8788fd381f",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <I6_PLUS_035_036> < patches/g-050-fb-helper-alloc.patch",
+    "result": "One file. Forward and reverse --fuzz=0 both rc=0. Reverse restores the pre-patch file bytes. No .rej."
+  },
+  "rollback": {
+    "command": "patch --batch --reverse --fuzz=0 --no-backup-if-mismatch -p1 -d <TREE> < patches/g-050-fb-helper-alloc.patch",
+    "target": "i6 snapshot plus 030-035 and 030-036"
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "i6 snapshot sha256 a0828049010376d5f765cce56cb17cf0d548c295964a377ca18f31e233b2bac6",
+        "030-035 and 030-036 forward --fuzz=0 rc=0 before 030-050",
+        "030-050 forward --fuzz=0 rc=0 and byte-matches the edited file",
+        "030-050 reverse --fuzz=0 rc=0 and restores the pre-patch file"
+      ]
+    },
+    "clean_build": {
+      "status": "pass-srcversion-not-identity",
+      "kernel": "6.12.111-gentoo-x86_64",
+      "make_rc": 0,
+      "srcversion_build_1": "F39D7F5BF7FBFD9BB23FB5F",
+      "srcversion_build_2": "54EFA4FFBFA1A761D1A2805",
+      "srcversion_installed": "9F79A6B6A91C192617D44F7",
+      "installed_module": "not replaced",
+      "summary": "Two clean builds of this patch differ only by kernel_autocfg.h define order. cfg_detect.sh appends from parallel jobs. srcversion therefore cannot prove identity with the installed module. The installed ko was left in place."
+    },
+    "runtime": {
+      "status": "unchanged",
+      "summary": "No modprobe and no install in this step. The already-loaded module is the earlier hand build."
+    }
+  }
+}

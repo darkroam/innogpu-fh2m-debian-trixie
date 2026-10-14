@@ -187,7 +187,7 @@ if derived != "f0e5490ad2d14fb280ef0e3bf76018462143b9223a357e0699b1c0ed376980b5"
 print("builder_derived_source=PASS version=5.0.0-i11 tree=" + derived)
 PY
     patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$1" -p1 \
-        < "$ROOT/patches/030-035.patch"
+        < "$ROOT/patches/m-035-private-accessor.patch"
     python3 - "$ROOT" "$1" <<'PY'
 import hashlib, importlib.util, pathlib, sys
 repo, tree = map(pathlib.Path, sys.argv[1:])

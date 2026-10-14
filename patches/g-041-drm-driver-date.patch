@@ -1,0 +1,26 @@
+diff --git a/fantsrvkm/ft_drm.c b/fantsrvkm/ft_drm.c
+--- a/fantsrvkm/ft_drm.c
++++ b/fantsrvkm/ft_drm.c
+@@ -712,7 +712,9 @@
+ 
+ 	.name			= PVR_DRM_DRIVER_NAME,
+ 	.desc			= PVR_DRM_DRIVER_DESC,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 14, 0)
+ 	.date			= PVR_DRM_DRIVER_DATE,
++#endif
+ 	.major			= PVRVERSION_MAJ,
+ 	.minor			= PVRVERSION_MIN,
+ 	.patchlevel		= PVRVERSION_BUILD,
+diff --git a/fantsrvkm/fantgpu_drm.c b/fantsrvkm/fantgpu_drm.c
+--- a/fantsrvkm/fantgpu_drm.c
++++ b/fantsrvkm/fantgpu_drm.c
+@@ -613,7 +613,9 @@
+ 	// drm management
+ 	.name = FANTGPU_DRM_DRIVER_NAME,
+ 	.desc = FANTGPU_DRM_DRIVER_DESC,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 14, 0)
+ 	.date = FANTGPU_DRM_DRIVER_DATE,
++#endif
+ 	.major = FANTGPU_DRM_DRIVER_MAJ,
+ 	.minor = FANTGPU_DRM_DRIVER_MIN,
+ 	.patchlevel = FANTGPU_DRM_DRIVER_BUILD,

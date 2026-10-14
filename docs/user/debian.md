@@ -25,8 +25,8 @@ SHA-256: 6f0daaf79fb6b2a547138c17628bb990dff0d0c684ee1c13775bebc2d28fd11b
 FANT_LINEAGE=1 VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=1790812800 tools/build-innogpu-driver.sh
 ```
 
-产物是 `.build/work/driver-build/fantgpu-fh2m-trixie_5.0.0-i12.deb`。包内源码到 `030-035`。
-`030-036` 不在构建器里。当前 Debian `6.12.111` 上加载的模块是这份树再加构建器外的 `030-036`。
+产物是 `.build/work/driver-build/fantgpu-fh2m-trixie_5.0.0-i12.deb`。包内源码到 `m-035-private-accessor`。
+`m-036-bf-shf-rename` 不在构建器里。当前 Debian `6.12.111` 上加载的模块是这份树再加构建器外的 `m-036-bf-shf-rename`。
 只装这个 deb，不会得到那份已加载模块。
 
 构建不安装，不热切，不重启。

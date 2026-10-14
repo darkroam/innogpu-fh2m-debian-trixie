@@ -26,13 +26,13 @@
 | `r50-storage-task5.py` | R50 r5dpm 构建物清理 | 普通用户启动；`--inventory` 用 sudo 只读锁定 119 项 content/metadata SHA 与保留证据；`--confirm` 强制物理 TTY 精确短语回执且不删除；`--apply RECEIPT` 仅在候选、保留集、107/101 内核与 GRUB 无漂移时，先记逐文件 SHA 再删除精确目标 |
 | `cleanup-linux-module-worktree.sh` | 源码工作树清理 | 只删除本轮展开源码和构建树，保留 `debs/` 源码包、模块与日志 |
 | `prune-kernel-source-cache.sh` | 旧源码包清理 | 默认只列出无对应已安装内核的源码 `.deb`；显式 `--delete` 才删除，当前实现面向 Debian |
-| `gentoo-fh2m.sh` | Gentoo 后备入口 | check/build/install/install-ko/verify/rollback。借用构建器的 i12 派生后再打 `030-036` 和 `030-051`，不产 deb，不改构建器。`install-ko` 只换磁盘模块；换模块后重启，不热卸载。overlay 在 `tools/gentoo-overlay` |
+| `gentoo-fh2m.sh` | Gentoo 后备入口 | check/build/install/install-ko/verify/rollback。借用构建器的 i12 派生后再打 `m-036-bf-shf-rename` 和 `m-051-hwinfo-connector-fallback`，不产 deb，不改构建器。`install-ko` 只换磁盘模块；换模块后重启，不热卸载。overlay 在 `tools/gentoo-overlay` |
 | `gentoo-lid-external.sh` | 合盖外屏配置 | `--apply` / `--revert` 只处理与模板逐字节相同的 `90-lid-external.conf`。内容不同则失败，不覆盖 |
 | `gentoo-install-kernel-patches.sh` | Gentoo 内核补丁后备 | 无 portage 时使用。与 ebuild 同一规则：SHA 相同跳过，SHA 不同失败且不覆盖。正常路径是 `emerge sys-kernel/fantgpu-kernel-patches` |
 | `gentoo-check-kernel-patches.sh` | Gentoo 内核补丁核对 | 核对三处 SHA。默认再看 `/usr/src/linux` 是否已含 xHCI、电池、`HYGO0030` 与 `1d94:14c9`；`--files-only` 只核文件 |
 | `gentoo-r5-observe.sh` | Gentoo 一轮 deep 记录 | `before` 后由用户执行 `systemctl suspend`，唤醒后再 `after`。普通用户启动，脚本自行 sudo。不休眠，不写 `pm_test`。证据在 `.build/r57-r5-observe/`，`latest-run.txt` 指向本次 |
 | `gentoo-r5-cycle.sh` | Gentoo 一轮 deep 自动唤醒 | 调用上面的 before/after，中间 `rtcwake -m mem`。秒数 20–180，默认 45。不写 `pm_test`。证据目录多一个 `cycle-*`，`latest-cycle.txt` 指向本次 |
-| `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；R49 候选仅 `5.0.0-i12` + epoch `1790812800`：继承已审 i11，严格应用 `030-035` 私有对象 accessor 修复。编译/包内源共用最终派生树门 `9a8d185f2a65`；i1-i11/未知版本/错 epoch 拒绝，ABI 门保持。i12 A/B 与安装通过，运行验收首轮因外接输入未恢复失败停止；历史成绩不改 |
+| `build-innogpu-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；R49 候选仅 `5.0.0-i12` + epoch `1790812800`：继承已审 i11，严格应用 `m-035-private-accessor` 私有对象 accessor 修复。编译/包内源共用最终派生树门 `9a8d185f2a65`；i1-i11/未知版本/错 epoch 拒绝，ABI 门保持。i12 A/B 与安装通过，运行验收首轮因外接输入未恢复失败停止；历史成绩不改 |
 | `generate-fantgpu-maintainer-scripts.sh` | F 构建器共用生成段 | 只向显式 PACKAGE_ROOT 的 DEBIAN/ 写 postinst/prerm/postrm，生产与回归共用。K 全集检查/失败传播；两调用点共用配置门，仅固定 autoinstall_all_kernels.conf 已审 30 字节 SHA 例外，其它有效配置与目录/文件符号链接拒绝，不 source 配置取值。回退丢弃未装包暂存根，已安装包另行批准恢复 |
 | `prepare-deepin-userspace-root.sh` | 当前辅助 | 将 Deepin 原包解包到被忽略的 `third_party/` |
 | `build-patched-picom.sh` | 独立组件 | 构建/安装固定基线的 patched Picom，不进入驱动 deb |
@@ -128,7 +128,7 @@ runtime 统计、manifest 原包 SHA、过期状态断言和 Markdown 表格结�
 法律授权与文档语义仍须人工审查。
 `materialize-d-stage.sh` 已从主线删除，只从 tag `innogpu-4x-frozen` 检出。
 `materialize-o-stage.sh` 是阶段三 O_stage 物化入口：只读 `docs/planning/evidence/o-stage/f0-snapshot.tar.zst`
-与 `patches/030-*`，按 18 条 030-NNN 链序（-p1 --fuzz=0，每链点 after_tree_hash 校验，最终树 hash
+与 18 条 m 链补丁，按 18 条 030-NNN 链序（-p1 --fuzz=0，每链点 after_tree_hash 校验，最终树 hash
 5f6a5347…）物化 O_stage 源树，并以五件同代事务产物（o-stage-snapshot.tar.zst + 双 sidecar +
 5.0.0-i6.meta.json 不可变 provenance；版本族经 OSTAGE_* 注入，缺省 5.0.0-i6 代）写入 `docs/planning/evidence/o-stage/5.0.0-i6/`；i2/i3/i4/i5 五件保持失败档案锚点不覆盖（阶段三证据/产物目录；
 O-4 F0 输入只读）；tar 1.35/zstd 1.5.7 精确版本锁（不匹配 exit 7）、输出目录 realpath 边界（越界
@@ -138,10 +138,10 @@ exit 78）、排他锁（占用 exit 6）、journal+fsync+恢复、禁止混代�
 工具版本锁/事务故障注入（commit 与 staged_done）/恢复/幂等/链点 fail-closed/回滚失败
 rolling_back 保留现场/人工裁决后恢复/committed 写入失败自洽恢复/未知与损坏 journal
 fail-closed/恢复清理失败 fail-closed）+ `tests/unit/run-030-meta-tests.sh`
-（18 条 meta 链点校验）+ `tests/unit/run-030-031-pm-marker-tests.sh`（15 项 F PM marker 静态契约）+
-`tests/unit/run-030-032-pm-probe-tests.sh`（16 项诊断探针静态契约）+
-`tests/unit/run-030-033-shipped-abi-tests.sh`（i3 共享结构 ABI 与独立 devres 状态契约）+
-`tests/unit/run-030-034-stop-stage-tests.sh`（17 项检查点顺序/errno、re-arm、DMA variant、ABI 与真实逆序撤销静态契约）+
+（18 条 meta 链点校验）+ `tests/unit/run-m-031-pm-marker-tests.sh`（15 项 F PM marker 静态契约）+
+`tests/unit/run-m-032-pm-probe-tests.sh`（16 项诊断探针静态契约）+
+`tests/unit/run-m-033-shipped-abi-tests.sh`（i3 共享结构 ABI 与独立 devres 状态契约）+
+`tests/unit/run-m-034-stop-stage-tests.sh`（17 项检查点顺序/errno、re-arm、DMA variant、ABI 与真实逆序撤销静态契约）+
 `tests/unit/run-fantgpu-pm-probe-removal-tests.sh`（12 项发布移除门禁）。
 `check-release-package.sh` 只解包读取指定 deb，核对版本、关键载荷、禁止文件和设备接入脚本，
 不会安装包。发布包边界的可重复 fixture 见 `tests/package/run-boundary-tests.sh`。

@@ -1,0 +1,263 @@
+diff --git a/fantsrvkm/ft_fence.c b/fantsrvkm/ft_fence.c
+--- a/fantsrvkm/ft_fence.c
++++ b/fantsrvkm/ft_fence.c
+@@ -136,19 +136,25 @@
+ 		const char *timeline_value_str = "unknown timeline value";
+ 		const char *fence_value_str = "unknown fence value";
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ 		ft_fence->base.ops->fence_value_str(&ft_fence->base, value,
+ 						     sizeof(value));
++#else
++		snprintf(value, sizeof(value), "unknown");
++#endif
+ 		PVR_DUMPDEBUG_LOG(pfnDumpDebugPrintf, pvDumpDebugFile,
+ 				  " @%s", value);
+ 
+ 		if (is_ft_fence(fence))
+ 			continue;
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ 		if (fence->ops->timeline_value_str) {
+ 			fence->ops->timeline_value_str(fence, value,
+ 						       sizeof(value));
+ 			timeline_value_str = value;
+ 		}
++#endif
+ 
+ 		PVR_DUMPDEBUG_LOG(pfnDumpDebugPrintf, pvDumpDebugFile,
+ 				  " | %s: %s (driver: %s)",
+@@ -156,11 +162,13 @@
+ 				  timeline_value_str,
+ 				  fence->ops->get_driver_name(fence));
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ 		if (fence->ops->fence_value_str) {
+ 			fence->ops->fence_value_str(fence, value,
+ 						    sizeof(value));
+ 			fence_value_str = value;
+ 		}
++#endif
+ 
+ 		PVR_DUMPDEBUG_LOG(pfnDumpDebugPrintf, pvDumpDebugFile,
+ 				  " |  @%s (foreign)", fence_value_str);
+@@ -594,6 +602,7 @@
+ 	return NULL;
+ }
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ static
+ void ft_fence_fence_value_str(struct dma_fence *fence, char *str, int size)
+ {
+@@ -618,7 +627,9 @@
+ 		 (&ft_fence->base != ft_fence->fence) ?
+ 		 "(foreign)" : "");
+ }
+-
++#endif
++
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ static
+ void ft_fence_timeline_value_str(struct dma_fence *fence, char *str, int size)
+ {
+@@ -627,6 +638,7 @@
+ 	if (ft_fence)
+ 		ft_context_value_str(ft_fence->fctx, str, size);
+ }
++#endif
+ 
+ static bool
+ ft_fence_enable_signaling(struct dma_fence *fence)
+@@ -691,8 +703,10 @@
+ const struct dma_fence_ops ft_fence_ops = {
+ 	.get_driver_name = ft_fence_get_driver_name,
+ 	.get_timeline_name = ft_fence_get_timeline_name,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ 	.fence_value_str = ft_fence_fence_value_str,
+ 	.timeline_value_str = ft_fence_timeline_value_str,
++#endif
+ 	.enable_signaling = ft_fence_enable_signaling,
+ 	.signaled = ft_fence_is_signaled,
+ 	.wait = dma_fence_default_wait,
+@@ -786,6 +800,7 @@
+ 	return "foreign";
+ }
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ static
+ void ft_fence_foreign_fence_value_str(struct dma_fence *fence, char *str,
+ 				       int size)
+@@ -817,7 +832,9 @@
+ 		 sync_value_next,
+ 		 ft_fence->name);
+ }
+-
++#endif
++
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ static
+ void ft_fence_foreign_timeline_value_str(struct dma_fence *fence, char *str,
+ 					  int size)
+@@ -827,6 +844,7 @@
+ 	if (ft_fence)
+ 		ft_context_value_str(ft_fence->fctx, str, size);
+ }
++#endif
+ 
+ static bool
+ ft_fence_foreign_enable_signaling(struct dma_fence *fence)
+@@ -873,8 +891,10 @@
+ const struct dma_fence_ops ft_fence_foreign_ops = {
+ 	.get_driver_name = ft_fence_foreign_get_driver_name,
+ 	.get_timeline_name = ft_fence_foreign_get_timeline_name,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ 	.fence_value_str = ft_fence_foreign_fence_value_str,
+ 	.timeline_value_str = ft_fence_foreign_timeline_value_str,
++#endif
+ 	.enable_signaling = ft_fence_foreign_enable_signaling,
+ 	.wait = ft_fence_foreign_wait,
+ 	.release = ft_fence_foreign_release,
+diff --git a/fantsrvkm/ft_export_fence.c b/fantsrvkm/ft_export_fence.c
+--- a/fantsrvkm/ft_export_fence.c
++++ b/fantsrvkm/ft_export_fence.c
+@@ -107,6 +107,7 @@
+ 		return "***NO_TIMELINE***";
+ }
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ static void ft_exp_fence_value_str(struct dma_fence *fence, char *str, int size)
+ {
+ 	snprintf(str, size, "%llu", (u64) fence->seqno);
+@@ -121,6 +122,7 @@
+ 		ft_exp_fence_context_value_str(ft_exp_fence->fence_context, str, size);
+ }
+ 
++#endif
+ static bool ft_exp_fence_enable_signaling(struct dma_fence *fence)
+ {
+ 	return true;
+@@ -155,8 +157,10 @@
+ static const struct dma_fence_ops ft_exp_fence_ops = {
+ 	.get_driver_name = ft_exp_fence_get_driver_name,
+ 	.get_timeline_name = ft_exp_fence_get_timeline_name,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ 	.fence_value_str = ft_exp_fence_value_str,
+ 	.timeline_value_str = ft_exp_fence_timeline_value_str,
++#endif
+ 	.enable_signaling = ft_exp_fence_enable_signaling,
+ 	.wait = dma_fence_default_wait,
+ 	.release = ft_exp_fence_release,
+diff --git a/fantsrvkm/ft_sw_fence.c b/fantsrvkm/ft_sw_fence.c
+--- a/fantsrvkm/ft_sw_fence.c
++++ b/fantsrvkm/ft_sw_fence.c
+@@ -98,6 +98,7 @@
+ 	return ft_sw_fence_context_name(ft_sw_fence->fence_context);
+ }
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ static void ft_sw_fence_value_str(struct dma_fence *fence, char *str, int size)
+ {
+ 	snprintf(str, size, "%llu", (u64) fence->seqno);
+@@ -111,6 +112,7 @@
+ 	ft_sw_fence_context_value_str(ft_sw_fence->fence_context, str, size);
+ }
+ 
++#endif
+ static bool ft_sw_fence_enable_signaling(struct dma_fence *fence)
+ {
+ 	return true;
+@@ -143,8 +145,10 @@
+ static const struct dma_fence_ops ft_sw_fence_ops = {
+ 	.get_driver_name = ft_sw_fence_get_driver_name,
+ 	.get_timeline_name = ft_sw_fence_get_timeline_name,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ 	.fence_value_str = ft_sw_fence_value_str,
+ 	.timeline_value_str = ft_sw_fence_timeline_value_str,
++#endif
+ 	.enable_signaling = ft_sw_fence_enable_signaling,
+ 	.wait = dma_fence_default_wait,
+ 	.release = ft_sw_fence_release,
+diff --git a/fantsrvkm/ft_counting_timeline.c b/fantsrvkm/ft_counting_timeline.c
+--- a/fantsrvkm/ft_counting_timeline.c
++++ b/fantsrvkm/ft_counting_timeline.c
+@@ -128,8 +128,12 @@
+ 				  value, timeline->current_value);
+ 		list_for_each_entry(obj, &timeline->active_fences,
+ 				    active_list_entry) {
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ 			obj->fence->ops->fence_value_str(obj->fence,
+ 							 value, sizeof(value));
++#else
++			snprintf(value, sizeof(value), "unknown");
++#endif
+ 			PVR_DUMPDEBUG_LOG(pfnDumpDebugPrintf, pvDumpDebugFile,
+ 					  " @%s: val=%llu", value, obj->value);
+ 		}
+diff --git a/fantsrvkm/ft_sync_file.c b/fantsrvkm/ft_sync_file.c
+--- a/fantsrvkm/ft_sync_file.c
++++ b/fantsrvkm/ft_sync_file.c
+@@ -1709,7 +1709,11 @@
+ 	bool signaled = dma_fence_is_signaled(fence);
+ 	char time[16] = { '\0' };
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ 	fence_ops->timeline_value_str(fence, time, sizeof(time));
++#else
++	snprintf(time, sizeof(time), "unknown");
++#endif
+ 
+ 	PVR_DUMPDEBUG_LOG(dump_debug_printf,
+ 					  dump_debug_file,
+diff --git a/fantsrvkm/include/ft_fence_trace.h b/fantsrvkm/include/ft_fence_trace.h
+--- a/fantsrvkm/include/ft_fence_trace.h
++++ b/fantsrvkm/include/ft_fence_trace.h
+@@ -59,6 +59,7 @@
+ #define _TRACE_PVR_FENCE_H
+ 
+ #include <linux/tracepoint.h>
++#include <linux/version.h>
+ 
+ struct ft_fence;
+ struct ft_fence_context;
+@@ -121,8 +122,13 @@
+ 	TP_fast_assign(
+ 		__assign_str(driver);
+ 		__assign_str(timeline);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ 		fence->base.ops->fence_value_str(&fence->base,
+ 			__entry->val, sizeof(__entry->val));
++#else
++		(void) fh2m_fant_strlcpy(__entry->val, "unknown",
++			sizeof(__entry->val));
++#endif
+ 		__entry->context = fence->base.context;
+ 	),
+ 
+@@ -178,17 +184,27 @@
+ 	TP_fast_assign(
+ 		__assign_str(driver);
+ 		__assign_str(timeline);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ 		fence->base.ops->fence_value_str(&fence->base, __entry->val,
+ 			sizeof(__entry->val));
++#else
++		(void) fh2m_fant_strlcpy(__entry->val, "unknown",
++			sizeof(__entry->val));
++#endif
+ 		__entry->context = fence->base.context;
+ 		__assign_str(foreign_driver);
+ 		__assign_str(foreign_timeline);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
+ 		fence->fence->ops->fence_value_str ?
+ 			fence->fence->ops->fence_value_str(
+ 				fence->fence, __entry->foreign_val,
+ 				sizeof(__entry->foreign_val)) :
+ 			(void) fh2m_fant_strlcpy(__entry->foreign_val,
+ 				"unknown", sizeof(__entry->foreign_val));
++#else
++		(void) fh2m_fant_strlcpy(__entry->foreign_val,
++			"unknown", sizeof(__entry->foreign_val));
++#endif
+ 		__entry->foreign_context = fence->fence->context;
+ 	),
+ 

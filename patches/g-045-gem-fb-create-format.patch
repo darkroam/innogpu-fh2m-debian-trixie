@@ -1,0 +1,40 @@
+diff --git a/fantsrvkm/fantdpu_drm_fb.c b/fantsrvkm/fantdpu_drm_fb.c
+--- a/fantsrvkm/fantdpu_drm_fb.c
++++ b/fantsrvkm/fantdpu_drm_fb.c
+@@ -622,6 +622,9 @@
+ 
+ //mode config的回调接口,用于创建framebuffer object 并绑定gem objects
+ struct drm_framebuffer *fantdpu_fb_create(struct drm_device *drm_dev, struct drm_file *file,
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 17, 0)
++										  const struct drm_format_info *info,
++#endif
+ #if (DRM_VERSION >= KERNEL_VERSION(4, 5, 0)) || \
+ 		(defined(CHROMIUMOS_KERNEL) && (DRM_VERSION >= KERNEL_VERSION(3, 18, 0)))
+ 										  const
+@@ -637,7 +640,11 @@
+ 		return ERR_PTR(err);
+ 	}
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 17, 0)
++	fb = drm_gem_fb_create(drm_dev, file, info, mode_cmd);
++#else
+ 	fb = drm_gem_fb_create(drm_dev, file, mode_cmd);
++#endif
+ 	if (IS_ERR(fb)) {
+ 		fh2m_fantdpu_err(drm_dev->dev, "%s	%d ret:%p\n", __func__, __LINE__, fb);
+ 		goto out;
+diff --git a/fantsrvkm/include/fantdpu_drm_fb.h b/fantsrvkm/include/fantdpu_drm_fb.h
+--- a/fantsrvkm/include/fantdpu_drm_fb.h
++++ b/fantsrvkm/include/fantdpu_drm_fb.h
+@@ -81,7 +81,11 @@
+ extern int fantdpu_fbdev_init(struct drm_device *drm_dev);
+ extern void fantdpu_fbdev_fini(struct drm_device *drm_dev);
+ 
++struct drm_format_info;
+ extern struct drm_framebuffer *fantdpu_fb_create(struct drm_device *dev, struct drm_file *file,
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 17, 0)
++										 const struct drm_format_info *info,
++#endif
+ #if (DRM_VERSION >= KERNEL_VERSION(4, 5, 0)) || \
+ 	(defined(CHROMIUMOS_KERNEL) && \
+ 		  (DRM_VERSION >= KERNEL_VERSION(3, 18, 0)))

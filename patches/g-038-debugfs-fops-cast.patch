@@ -1,0 +1,13 @@
+diff --git a/fantgpu/fant_misc.c b/fantgpu/fant_misc.c
+--- a/fantgpu/fant_misc.c
++++ b/fantgpu/fant_misc.c
+@@ -635,7 +635,8 @@
+ fant_dentry* fh2m_fant_debugfs_or_procfs_create_file(fant_dev *dev, char *pszName, int uimode, fant_dentry* parent, const fant_file_operations *file_ops)
+ {
+ #if defined(CONFIG_DEBUG_FS)
+-	return debugfs_create_file(pszName, uimode, parent, dev, file_ops);
++	return debugfs_create_file(pszName, uimode, parent, dev,
++		(const struct file_operations *)file_ops);
+ #elif defined(CONFIG_PROC_FS)
+ 	return proc_create_data(pszName, uimode, parent, file_ops, dev);
+ #endif /* defined(CONFIG_DEBUG_FS) || defined(CONFIG_PROC_FS) */

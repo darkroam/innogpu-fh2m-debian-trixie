@@ -1,0 +1,31 @@
+diff --git a/fantsrvkm/fantdpu_drm_fb.c b/fantsrvkm/fantdpu_drm_fb.c
+--- a/fantsrvkm/fantdpu_drm_fb.c
++++ b/fantsrvkm/fantdpu_drm_fb.c
+@@ -271,7 +271,26 @@ err_release:
+ 	return ERR_PTR(ret);
+ #else
+ #if (DRM_VERSION >= KERNEL_VERSION(6,2,0))
+-	return drm_fb_helper_alloc_info(helper);
++	/* Some 6.12 trees allocate info first and keep drm_fb_helper_alloc_info static. */
++	if (helper->info)
++		return helper->info;
++	{
++		struct device *dev = helper->dev->dev;
++		struct fb_info *info;
++		int ret;
++
++		info = framebuffer_alloc(0, dev);
++		if (!info)
++			return NULL;
++		ret = fb_alloc_cmap(&info->cmap, 256, 0);
++		if (ret) {
++			framebuffer_release(info);
++			return NULL;
++		}
++		helper->info = info;
++		info->skip_vt_switch = true;
++		return info;
++	}
+ #else
+ 	return drm_fb_helper_alloc_fbi(helper);
+ #endif

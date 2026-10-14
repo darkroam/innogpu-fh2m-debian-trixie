@@ -475,7 +475,7 @@ else
     fail current_builder_patches_compile_and_package_trees
 fi
 
-# 030-035 is the seventh fuzz=0 apply; the other six stay inside apply_reviewed_source_fixes.
+# m-035-private-accessor is the seventh fuzz=0 apply; the other six stay inside apply_reviewed_source_fixes.
 if [[ "$(grep -c -- '--fuzz=0 --no-backup-if-mismatch' "$CURRENT_BUILDER")" -eq 7 ]] &&
    grep -Fq -- "-name '*.orig' -o -name '*.rej'" "$CURRENT_BUILDER" &&
    grep -Fq 'apply_reviewed_source_fixes "$STAGE/source" compile-staging' "$CURRENT_BUILDER" &&

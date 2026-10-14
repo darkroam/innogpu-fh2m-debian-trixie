@@ -1,0 +1,149 @@
+diff --git a/fantsrvkm/fantdpu_drm_fb.c b/fantsrvkm/fantdpu_drm_fb.c
+--- a/fantsrvkm/fantdpu_drm_fb.c
++++ b/fantsrvkm/fantdpu_drm_fb.c
+@@ -320,7 +320,7 @@
+ 	if (helper->fb)
+ 		return 0;
+ 
+-	mutex_lock(&dev->struct_mutex);
++	fantdpu_gem_lock(dev);
+ 
+ 	/* Create a framebuffer */
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 18, 0)
+@@ -419,7 +419,7 @@
+ 	info->apertures->ranges[0].base = fantdpu_obj->cpu_paddr;
+ 	info->apertures->ranges[0].size = obj_size;
+ #endif
+-	mutex_unlock(&dev->struct_mutex);
++	fantdpu_gem_unlock(dev);
+ 
+ 	fant_drm_info(dev->dev, "fbdev registered");
+ 
+@@ -432,7 +432,7 @@
+ 	fantdpu_gem_object_free(obj);
+ 
+ err_unlock_dev:
+-	mutex_unlock(&dev->struct_mutex);
++	fantdpu_gem_unlock(dev);
+ 
+ 	fant_drm_err(dev->dev, "failed(err=%d)", err);
+ 	return err;
+diff --git a/fantsrvkm/include/fantdpu_common.h b/fantsrvkm/include/fantdpu_common.h
+--- a/fantsrvkm/include/fantdpu_common.h
++++ b/fantsrvkm/include/fantdpu_common.h
+@@ -461,6 +461,9 @@
+ #endif
+ 	bool display_enabled;
+ 	struct mutex init_lock;
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 18, 0)
++	struct mutex gem_lock;
++#endif
+ 
+ 	/* TBD: db9000 interface */
+ 
+@@ -657,4 +660,23 @@
+ 	}
+ 	return fantdma_memcpy_for_smallbar(dev, srcs, dsts, lens, cnt, dir);
+ }
++void *fantgpu_drm_to_display_private(struct drm_device *drm_dev);
++static inline void fantdpu_gem_lock(struct drm_device *dev)
++{
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 18, 0)
++	struct fantdpu_drm_private *priv = fantgpu_drm_to_display_private(dev);
++	mutex_lock(&priv->gem_lock);
++#else
++	mutex_lock(&dev->struct_mutex);
++#endif
++}
++static inline void fantdpu_gem_unlock(struct drm_device *dev)
++{
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 18, 0)
++	struct fantdpu_drm_private *priv = fantgpu_drm_to_display_private(dev);
++	mutex_unlock(&priv->gem_lock);
++#else
++	mutex_unlock(&dev->struct_mutex);
++#endif
++}
+ #endif //__FANTDPU_COMMON_H
+diff --git a/fantsrvkm/fantdpu_drm_gem.c b/fantsrvkm/fantdpu_drm_gem.c
+--- a/fantsrvkm/fantdpu_drm_gem.c
++++ b/fantsrvkm/fantdpu_drm_gem.c
+@@ -1057,9 +1057,9 @@
+ 	struct drm_gem_object *obj = dma_buf->priv;
+ 	int err = 0;
+ 
+-	mutex_lock(&obj->dev->struct_mutex);
++	fantdpu_gem_lock(obj->dev);
+ 	err = fantdpu_drm_gem_obj_mmap(obj, obj->size, vma);
+-	mutex_unlock(&obj->dev->struct_mutex);
++	fantdpu_gem_unlock(obj->dev);
+ 
+ 	return err;
+ }
+@@ -2866,7 +2866,7 @@
+ 		return -EINVAL;
+ 	}
+ 
+-	mutex_lock(&dev->struct_mutex);
++	fantdpu_gem_lock(dev);
+ 	err = fantdpu_gem_lookup_our_object(drm_file, args->handle, &gem_obj);
+ 	if (err)
+ 		goto exit_unlock;
+@@ -2906,7 +2906,7 @@
+ exit_unref:
+ 	drm_gem_object_put(gem_obj);
+ exit_unlock:
+-	mutex_unlock(&dev->struct_mutex);
++	fantdpu_gem_unlock(dev);
+ 
+ 	return err;
+ }
+@@ -2923,7 +2923,7 @@
+ 		return -EINVAL;
+ 	}
+ 
+-	mutex_lock(&dev->struct_mutex);
++	fantdpu_gem_lock(dev);
+ 	err = fantdpu_gem_lookup_our_object(drm_file, args->handle, &gem_obj);
+ 	if (err)
+ 		goto exit_unlock;
+@@ -2946,7 +2946,7 @@
+ exit_unref:
+ 	drm_gem_object_put(gem_obj);
+ exit_unlock:
+-	mutex_unlock(&dev->struct_mutex);
++	fantdpu_gem_unlock(dev);
+ 
+ 	return err;
+ }
+@@ -2958,7 +2958,7 @@
+ 	fantdpu_gem_object *fantdpu_obj = NULL;
+ 	int err = 0;
+ 
+-	mutex_lock(&dev->struct_mutex);
++	fantdpu_gem_lock(dev);
+ 	err = fantdpu_gem_lookup_our_object(drm_file, args->handle, &gem_obj);
+ 	if (err)
+ 		goto exit_unlock;
+@@ -2969,7 +2969,7 @@
+ 
+ 	drm_gem_object_put(gem_obj);
+ exit_unlock:
+-	mutex_unlock(&dev->struct_mutex);
++	fantdpu_gem_unlock(dev);
+ 
+ 	return err;
+ }
+diff --git a/fantsrvkm/fantdpu_drm_drv.c b/fantsrvkm/fantdpu_drm_drv.c
+--- a/fantsrvkm/fantdpu_drm_drv.c
++++ b/fantsrvkm/fantdpu_drm_drv.c
+@@ -669,6 +669,9 @@
+ 	}
+ 
+ 	mutex_init(&dev_priv->init_lock);
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 18, 0)
++	mutex_init(&dev_priv->gem_lock);
++#endif
+ 	mutex_init(&dev_priv->logo_lock);
+ 
+ 	err = fantdpu_modeset_early_init(drm_dev, dev_priv);
