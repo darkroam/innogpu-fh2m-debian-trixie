@@ -77,8 +77,8 @@ else
 fi
 
 # t03 O 血统不动：tools/ 原始字节未被本工具改变（变换仅作用于打包副本）
-if cmp -s "tools/prepare-soft-xorg-dwm.sh" "tools/prepare-soft-xorg-dwm.sh" \
-   && grep -Fq "innogpu-disable-incompatible-userspace" "tools/prepare-soft-xorg-dwm.sh"; then
+if cmp -s "tools/debian/prepare-soft-xorg-dwm.sh" "tools/debian/prepare-soft-xorg-dwm.sh" \
+   && grep -Fq "innogpu-disable-incompatible-userspace" "tools/debian/prepare-soft-xorg-dwm.sh"; then
     ok t03
 else
     bad t03 "source helper unexpectedly modified"

@@ -36,7 +36,7 @@
     "dependencies": {
       "status": "reviewed",
       "verdict": "post-030-036-not-builder-input",
-      "summary": "Parent is the 030-036 tree 0eda30cd. 030-051 is not inserted into tools/build-innogpu-driver.sh. Gentoo fallback applies it only after the 030-036 hash matches."
+      "summary": "Parent is the 030-036 tree 0eda30cd. 030-051 is not inserted into tools/debian/build-driver.sh. Gentoo fallback applies it only after the 030-036 hash matches."
     },
     "o_stage_adaptation": {
       "status": "not-applicable",

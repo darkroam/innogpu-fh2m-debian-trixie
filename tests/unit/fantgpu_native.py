@@ -67,7 +67,7 @@ export VERSION=5.0.0-i11 SOURCE_DATE_EPOCH=1790208000
 export KERNELDIR_VER=6.12.101+deb13-amd64
 export KERNELDIR=/lib/modules/$KERNELDIR_VER/build
 export STAGE_ROOT=/candidate BUILD_LOG=/evidence/builder.log OUT_DEB=/candidate/i11.deb
-bash /repo/tools/build-innogpu-driver.sh
+bash /repo/tools/debian/build-driver.sh
 '''
 DENIED = "modprobe insmod rmmod systemctl service reboot shutdown halt poweroff update-grub grub-install update-secureboot-policy".split()
 GUARD = '''#!/bin/sh
@@ -443,7 +443,7 @@ def prepare_n0(root, lock, deadline):
     """One preparation shared by the formal preflight and its isolated regression."""
     setup(root, True)
     ledger = []
-    text = (ROOT / "tools/generate-fantgpu-maintainer-scripts.sh").read_text()
+    text = (ROOT / "tools/debian/generate-fantgpu-maintainer-scripts.sh").read_text()
     guard = text[text.index("dkms_policy_guard() {"):text.index("\nidentity=$(source_digest")]
     write(root, "fixture/probe.sh", "#!/bin/bash\nset -euo pipefail\n" + guard + '''
 dkms_policy_guard

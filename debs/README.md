@@ -18,13 +18,13 @@
 ```
 
 展开树和构建树属于本轮证据，审查完成后可清理。源码 `.deb` 不在一次验证完成后立即删除；只有
-对应内核版本不再保留时，才可通过 `tools/prune-kernel-source-cache.sh --delete` 明确清理。
+对应内核版本不再保留时，才可通过 `tools/debian/prune-kernel-source-cache.sh --delete` 明确清理。
 非 Debian 系统应使用自身包管理器的源码包并记录包名、版本、来源和 SHA-256。
 
 ## 输入包
 
 后续 coherent 构建以 Deepin 202504 原包为唯一技术基线。**当前新架构（4.0.0-i1）**由
-`tools/build-innogpu-driver.sh` 在主线上拒绝 O 分支（O 线仅从 deepin-4.0.2-i3 tag 检出构建）。历史 4.0.0-i1 曾用当时的 drivers/ 与 binary-manifest.json（epoch 1787342400）；`tools/build-deepin-coherent.sh` 为
+`tools/debian/build-driver.sh` 在主线上拒绝 O 分支（O 线仅从 deepin-4.0.2-i3 tag 检出构建）。历史 4.0.0-i1 曾用当时的 drivers/ 与 binary-manifest.json（epoch 1787342400）；`tools/build-deepin-coherent.sh` 为
 当时的 legacy patched 系构建器，2026-10-14 起主线已删除，只从 tag `innogpu-4x-frozen` 检出。两者都以本目录的 Deepin 原包为输入：
 
 ```text

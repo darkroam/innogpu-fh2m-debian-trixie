@@ -26,9 +26,9 @@ dotconfig 负责设计和验证。相关行为发生变化时，应在 dotconfig
 | 所有者 | 文件/接口 | 职责 |
 | --- | --- | --- |
 | dotconfig | `xdisplay`、`xdisplay.sh`、`displayselect`、`~/.local/lib/xdisplay/` | 通用状态计算、布局、锁、配置、适配器和用户命令 |
-| Innogpu | `tools/restore-dp1-mode-x11.sh` | 为本设备恢复固定 DP-1 modeline |
-| Innogpu | `tools/xdisplay-session.sh` | 注入内屏候选和恢复命令，然后启动已安装的 xdisplay |
-| Innogpu | `tools/install-xdisplay-user.sh` | 安装设备钩子和带边界标记的会话接入，不安装或覆盖显示引擎 |
+| Innogpu | `tools/debian/restore-dp1-mode-x11.sh` | 为本设备恢复固定 DP-1 modeline |
+| Innogpu | `tools/debian/xdisplay-session.sh` | 注入内屏候选和恢复命令，然后启动已安装的 xdisplay |
+| Innogpu | `tools/debian/install-xdisplay-user.sh` | 安装设备钩子和带边界标记的会话接入，不安装或覆盖显示引擎 |
 | Innogpu | `tests/xdisplay/run-install-tests.sh` | 只验证上述接入和所有权边界 |
 
 本项目删除了曾经吸纳的 `tools/xdisplay.sh`、`tools/displayselect` 和引擎 fixture，避免两个仓库
@@ -84,7 +84,7 @@ dotconfig。Innogpu 当前默认接入仍使用上述两个兼容环境变量，
 
 ## 安装行为
 
-`tools/install-xdisplay-user.sh` 的目标是“接入已有引擎”，而不是发布引擎：
+`tools/debian/install-xdisplay-user.sh` 的目标是“接入已有引擎”，而不是发布引擎：
 
 1. 要求目标用户已经从 dotconfig 安装 `~/.local/bin/xdisplay` 或兼容 `xdisplay.sh`；
 2. 安装 `~/.local/bin/innogpu-restore-dp1-mode-x11`；

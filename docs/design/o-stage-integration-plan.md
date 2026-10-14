@@ -100,7 +100,7 @@
 | 静态 | 17 条 meta + marker/probe 契约 + shipped-object ABI | `run-030-meta-tests.sh`、`run-030-031-pm-marker-tests.sh`、`run-030-032-pm-probe-tests.sh`、`run-030-033-shipped-abi-tests.sh`；builder 对真实 `.ko` 执行 `pahole` 大小/偏移门 |
 | 静态 | O_stage 编译通过 | gcc/clang 编译门禁（DKMS 构建即覆盖） |
 | 运行时 | DRM device open / fbdev mmap / DMA-BUF self-import / VA-API 解码 | run-capability-baseline.sh + run-dmabuf-regression-test.sh + run-vaapi-decode-test.sh |
-| 运行时前置 | F 显示健康门禁：特权 dmesg、固件请求、DRM card 注册、kernel fault | `tools/check-fantgpu-runtime-health.sh`；合成 fixture 只验证 fail-closed 控制流，不证明预编译 HAL bind 或真实硬件可用 |
+| 运行时前置 | F 显示健康门禁：特权 dmesg、固件请求、DRM card 注册、kernel fault | `tools/debian/check-fantgpu-runtime-health.sh`；合成 fixture 只验证 fail-closed 控制流，不证明预编译 HAL bind 或真实硬件可用 |
 | 运行时 | suspend/resume（024 + 026-lifecycle + 028 合并覆盖） | probe-suspend-resume-state.sh |
 | 运行时 | inactive CRTC vblank 快速 EINVAL（026） | probe-drm-vblank.c |
 | 运行时 | DDCCI panel 显式逻辑（029）+ 2880x1800 刷新率（006）+ 2560 base-vs-base 观察（006 登记） | probe-drm-topology.c + 实机面板 |

@@ -67,7 +67,7 @@
   保留的包才归档到 `debs/`；legacy patched 构建输出默认写入 `debs/`。均不得因本地构建把
   二进制产物重新加入 Git。
 - release 前必须先通过 `python3 tools/internal/audit-licenses.py --artifact project-tools --require-releasable`
-  （或对应制品），再运行 `tools/check-release-package.sh`。xdisplay 引擎副本、
+  （或对应制品），再运行 `tools/debian/check-release-package.sh`。xdisplay 引擎副本、
   历史 Kylin/实验安装器和直接二进制热补丁入口不得出现在 coherent 发布包中。
 
 ### 文档与验证

@@ -22,7 +22,7 @@ SHA-256: 6f0daaf79fb6b2a547138c17628bb990dff0d0c684ee1c13775bebc2d28fd11b
 `VERSION=5.0.0-i12` 时脚本自己把血统设成 fantgpu。`FANT_LINEAGE=1` 与这个版本一致；换版本时以脚本覆盖后的值为准。
 
 ```sh
-FANT_LINEAGE=1 VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=1790812800 tools/build-innogpu-driver.sh
+FANT_LINEAGE=1 VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=1790812800 tools/debian/build-driver.sh
 ```
 
 产物是 `.build/work/driver-build/fantgpu-fh2m-trixie_5.0.0-i12.deb`。包内源码到 `m-035-private-accessor`。
@@ -52,7 +52,7 @@ sudo dpkg -i .build/work/driver-build/fantgpu-fh2m-trixie_5.0.0-i12.deb
 
 ## 内核补丁
 
-`tools/build-linux-patched-modules.sh` 和 `tools/install-linux-patched-modules.sh` 现在只处理
+`tools/debian/build-linux-patched-modules.sh` 和 `tools/debian/install-kernel-patches.sh` 现在只处理
 `components/linux` 的 001 和 002，产物是 `xhci-pci.ko` 与 `battery.ko`，装到 `updates/r51`。
 003 是内建 `pinctrl-amd`，004 是 `snd-hda-intel` 模块。这两个脚本不编译、不安装 003/004。
 001/002 的基线是 Debian `linux-source-6.12` `6.12.107-1`。换内核必须重打、重编，禁止复用另一内核的模块。
@@ -61,8 +61,8 @@ sudo dpkg -i .build/work/driver-build/fantgpu-fh2m-trixie_5.0.0-i12.deb
 构建用普通用户。安装脚本要求物理 TTY 和交流电在线，并且不重启。
 
 ```sh
-tools/build-linux-patched-modules.sh --kernel-release "$(uname -r)"
-sudo tools/install-linux-patched-modules.sh --evidence .build/linux-patched-modules/<本次目录>
+tools/debian/build-linux-patched-modules.sh --kernel-release "$(uname -r)"
+sudo tools/debian/install-kernel-patches.sh --evidence .build/linux-patched-modules/<本次目录>
 ```
 
 先 `--preflight` 也可以，它只做只读准入。模块进 initramfs 之后，要下次启动才替换已经加载的内核内模块。
@@ -72,12 +72,12 @@ sudo tools/install-linux-patched-modules.sh --evidence .build/linux-patched-modu
 
 重启后、不触发 PM：
 
-- `tools/check-fantgpu-runtime-health.sh --dmesg <本次 dmesg> --status-file <Driver/Firmware 状态>`。
+- `tools/debian/check-fantgpu-runtime-health.sh --dmesg <本次 dmesg> --status-file <Driver/Firmware 状态>`。
   这个脚本不数八项计数。八项是 `Server`、`HWR`、`CRR`、`SLR`、`WGP`、`TRP`、`FWF`、`APM`，八行都要在，而且都是 0。缺行不是 0。
 - 本次 Xorg 日志有 glamor 和 AIGLX。旧启动的日志不算。
 - `/proc/bus/input/devices` 是 18 个设备，18 行 Handlers 含 `fant_input`。这只是挂接，不是逐项击键。
-- `BAT0` 在。丢失时用 `tools/restore-bat0.sh` 恢复并留下它自己的证据，再判定。
-- `tools/check-hygon-xhci-resume-fix.sh` 看 reset-on-resume 位。本机判据仍是两个控制器都是 `0x90`。
+- `BAT0` 在。丢失时用 `tools/debian/restore-bat0.sh` 恢复并留下它自己的证据，再判定。
+- `tools/debian/check-hygon-xhci-resume-fix.sh` 看 reset-on-resume 位。本机判据仍是两个控制器都是 `0x90`。
 
 R5 的 3 次 devices 加 1 次 normal deep 没有包含在本页。要跑须另获授权。不写 `pm_test`，不跑 watchdog。
 `hwinfo_g0m.bin` 仍缺，不把这项写成通过。

@@ -16,7 +16,7 @@
 
 父树是 `m-036-bf-shf-rename` 之后的 i12 树 `0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce`。
 严格应用后的树哈希是 `b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00`。
-本补丁不进入 `tools/build-innogpu-driver.sh`。Gentoo 后备构建在 `m-036-bf-shf-rename` 哈希通过后应用它。
+本补丁不进入 `tools/debian/build-driver.sh`。Gentoo 后备构建在 `m-036-bf-shf-rename` 哈希通过后应用它。
 
 ## 证据与边界
 

@@ -35,9 +35,9 @@
   legacy 回退包复现依据。
 - `components/picom/`、`components/fbterm/`——**当前维护的第三方组件补丁与配置**（2026-08-21 由
   `patches/picom/`、`patches/fbterm/`、`config/` 迁入，历史内容保留）：补丁由
-  `tools/build-patched-picom.sh`、`tools/build-patched-fbterm.sh` 在构建对应组件时应用，
+  `tools/debian/build-patched-picom.sh`、`tools/debian/build-patched-fbterm.sh` 在构建对应组件时应用，
   与驱动包构建无关；`components/picom/picom.conf` 是项目维护的配置模板，由
-  `tools/install-picom-user.sh` 作为默认配置源安装。
+  `tools/debian/install-picom-user.sh` 作为默认配置源安装。
 
 ## 当前第三方补丁台账
 
@@ -142,13 +142,13 @@ patched-24 不增加新的设备行为补丁；它沿用 patched-23 的补丁集
 
 ```text
 Deepin 202504 原 deb
-  -> tools/build-innogpu-driver.sh（drivers/ 源码树 + 版本绑定补丁 + manifest 黑盒 + 确定性变换）
+  -> tools/debian/build-driver.sh（drivers/ 源码树 + 版本绑定补丁 + manifest 黑盒 + 确定性变换）
   -> 4.0.1-i3：patch-024；4.0.1-i4：patch-024 + patch-025-suspend-resume-display（历史实验）
   -> 4.0.2-i1：patch-024 + patch-026-suspend-resume-dvfs-lifecycle（R11 deep 失败）
   -> 4.0.2-i2：i1 + patch-028-suspend-resume-hal-temp-monitor-delay（历史未安装候选）
   -> 4.0.2-i3：i2 + patch-029-suspend-resume-ddcci-panel（R14 6/6 deep 正式交付）
   -> 离线 DKMS 编译 + 完整包组装
-  -> tools/check-release-package.sh
+  -> tools/debian/check-release-package.sh
 ```
 
 **历史 patched 包（当时路径；这些构建脚本已从主线删除，只从 tag `innogpu-4x-frozen` 检出）**：
@@ -159,7 +159,7 @@ Deepin 202504 原 deb
   -> tools/build-deepin-coherent.sh
        -> stage-000 GPU PLL 对象变换和 patch-001 始终应用
        -> wrapper 显式选择 patch-002 至 patch-007
-       -> tools/check-release-package.sh
+       -> tools/debian/check-release-package.sh
   -> 打包、DKMS、固件完整性检查
   -> 隔离 Xorg/GLX
   -> 重启后 PVR/DRM/fbdev/fbterm

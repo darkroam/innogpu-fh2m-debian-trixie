@@ -11,7 +11,7 @@ i10父树`c08b2bd426bcceba2853eb0767994875b3080cfaf4d5a1afcff821f3092aa67e`之�
 退出条件从`ret == 0`改为`ret == 0 || ret == 1`。派生整树实测：
 `f0e5490ad2d14fb280ef0e3bf76018462143b9223a357e0699b1c0ed376980b5`。
 
-[生产builder](../../tools/build-innogpu-driver.sh)编译与包内源码共用派生函数；版本窄门仅i11，
+[生产builder](../../tools/debian/build-driver.sh)编译与包内源码共用派生函数；版本窄门仅i11，
 i1–i10、未知版本、错epoch、输入漂移继续拒绝。默认Deepin版本不变，不回写任何原物。
 没有改shared dev_rsrc、宏配置、回调路由、锁、POST次序或对象发布/注销时序。
 

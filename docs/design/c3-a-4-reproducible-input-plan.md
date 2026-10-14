@@ -121,7 +121,7 @@ F manifest（`binary-manifest-fantgpu.json`，git 追踪）顶层 schema 同 O�
 - **条目字段补充（codex re-review#5 P1-3：mode 锁定）**：常规文件条目增加 `mode`（4 位八进制，取自 ③ `f-payload.manifest.tsv` mode 列）；符号链接条目记录 `target` + `mode`（Linux 符号链接 mode 恒 0777，记录仅作一致性锁定）；目录不入条目但 restore/预检按 **固定目录 mode 0755** 校验。可复现性声明因此同时锁定**内容（SHA）、布局（路径）、类型（file/link/dir）、权限（mode）**——chmod 漂移不改 SHA 但改变 deb 字节，必须被检出。
 - **生成工具** `tools/internal/gen-fantgpu-manifest.py`：读 ③ `f-payload.manifest.tsv` → 生成 manifest + sidecar 计数（`input_entries`/`locked_reference_entries`/按预选参数的 **`f_materialized_entries`** 期望值 + **`f_dir_entries=87`**；O_stage 侧计数 `ostage_materialized_entries`/`ostage_dir_entries=16` 由 builder 侧常量断言，不入 F sidecar）；校验 S_INPUT 与 ③ 清单**严格双射**（零多写/漏写，含 mode 逐值）、变体组完备（每个 `/opt` 条目已分类、每个 ABI/UCM 组非空）。
 
-## 三、builder 8 点改造（`tools/build-innogpu-driver.sh`，FANT_LINEAGE=1 分支）
+## 三、builder 8 点改造（`tools/debian/build-driver.sh`，FANT_LINEAGE=1 分支）
 
 | # | 位置（现状） | 改法 |
 | --- | --- | --- |

@@ -33,7 +33,7 @@ mapping 在逐页读取后，三轮 `munmap` 分别消耗 71.915、119.357 和 9
 候选包生成后使用以下只读包/临时目录检查，不注册 DKMS、不安装模块：
 
 ```sh
-tools/check-deb-dkms-build.sh \
+tools/debian/check-deb-dkms-build.sh \
   debs/innogpu-fh2m-trixie_3.3.3.42-patched-23.deb
 ```
 
@@ -82,7 +82,7 @@ sudo reboot
 
 ```sh
 sudo dpkg -i debs/innogpu-fh2m-trixie_3.3.3.42-patched-23.deb
-tools/verify-install-status.sh 3.3.3.42-patched-23
+tools/debian/verify.sh 3.3.3.42-patched-23
 sudo reboot
 ```
 

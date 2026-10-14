@@ -36,7 +36,9 @@
 | `components/` | 第三方组件的固定来源说明、最小 patch、meta 与静态回归 | tracked | 随上游版本升级审查；不放展开源码 |
 | `drivers/` | O 线源码；主线不含 | 不在主线；tag `innogpu-4x-frozen` 可取回 484 件 | 不在主线重建。构建只从 `deepin-4.0.2-i3` 检出 |
 | `patches/` | 历史/当前驱动补丁及溯源材料 | tracked | 已迁入源码的补丁仍保留作复现锚 |
-| `tools/` | 操作者与 CI 的稳定命令入口 | tracked | 在 `tools/README.md` 登记 |
+| `tools/` | 门禁与跨系统入口：`check-docs.sh`、`materialize-o-stage.sh` | tracked | 在 `tools/README.md` 登记 |
+| `tools/debian/` | Debian 构建、安装、验收与历史操作脚本 | tracked | 同名动作与 Gentoo 对齐：`build-driver.sh`、`verify.sh`、`install-kernel-patches.sh` |
+| `tools/gentoo/` | Gentoo 驱动与内核补丁入口；overlay 在 `overlay/` | tracked | `build-driver.sh`、`install-driver.sh`、`verify.sh`、`rollback.sh`、`install-kernel-patches.sh` |
 | `tools/internal/` | 构建期变换、审计与诊断；不是给人记的命令名 | tracked | 门禁与测试直接调用；与 allowlist 同步 |
 | `tests/` | fixture、静态与单元回归 | tracked | 与对应行为同批更新 |
 | `docs/` | 当前状态、设计、事故、用户指南和历史 | tracked | 同一事实只设一个权威页 |

@@ -33,7 +33,7 @@ assert hashlib.sha256(header).hexdigest() == meta["apply"]["file_before_sha256"]
 assert meta["apply"]["before_tree_hash"] == "9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee"
 assert meta["apply"]["after_tree_hash"] == "0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce"
 assert meta["apply"]["i6_replay_after_tree_hash"] != meta["apply"]["after_tree_hash"]
-builder = Path("tools/build-innogpu-driver.sh").read_text()
+builder = Path("tools/debian/build-driver.sh").read_text()
 assert "030-036" not in builder
 assert meta["apply"]["before_tree_hash"] in builder
 print("PASS: 030-036 patch contract")

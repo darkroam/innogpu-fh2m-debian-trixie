@@ -47,11 +47,11 @@ patch-029 DDCCI panel 创建恢复，
 
 历史 p19/p20 deb 的驱动/用户态结论仍可作为证据，但其辅助文件清单不符合当前所有权边界。当前
 新构建器只接受按 Debian 版本排序高于 `3.3.3.42-patched-27` 的版本，并必须运行
-`tools/check-release-package.sh`；版本号、包清单和运行证据必须一起更新，不能覆盖旧 deb。
+`tools/debian/check-release-package.sh`；版本号、包清单和运行证据必须一起更新，不能覆盖旧 deb。
 
 ## Debian 包
 
-基础构建与运行依赖由 `tools/install-prereqs-debian.sh` 安装，主要包括：
+基础构建与运行依赖由 `tools/debian/install-prereqs-debian.sh` 安装，主要包括：
 
 - `build-essential`、`dkms`、当前内核 headers、`kmod`、`initramfs-tools`；
 - `xserver-xorg-core`、`xinit`、`x11-xserver-utils`、`x11-utils`、`dwm`；
@@ -103,8 +103,8 @@ Picom 源码不复制进本仓库。当前基线为上游 `yshui/picom` 的 `nex
 6d676824c457a933c52e3e92c5a1856466f90545
 ```
 
-构建依赖和安装命令由 `tools/install-picom-prereqs-debian.sh` 与
-`tools/build-patched-picom.sh` 管理。`xcompmgr` 是 Picom 二进制不存在时的轻量回退，不用于验证
+构建依赖和安装命令由 `tools/debian/install-picom-prereqs-debian.sh` 与
+`tools/debian/build-patched-picom.sh` 管理。`xcompmgr` 是 Picom 二进制不存在时的轻量回退，不用于验证
 GLX 补丁。
 
 ## fbterm 外部源码
@@ -113,8 +113,8 @@ fbterm 源码不复制进本仓库。兼容补丁固定面向 Debian `fbterm 1.7
 `~/src/fbterm-1.7`。使用 Debian source repository 取得源码后，通过以下入口构建和安装：
 
 ```sh
-tools/build-patched-fbterm.sh
-tools/build-patched-fbterm.sh --install
+tools/debian/build-patched-fbterm.sh
+tools/debian/build-patched-fbterm.sh --install
 ```
 
 构建需要 C/C++ 工具链、`patch`、pkg-config、FreeType 和 Fontconfig 开发文件；已验证变体关闭当前

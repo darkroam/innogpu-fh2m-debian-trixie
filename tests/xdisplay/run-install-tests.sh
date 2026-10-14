@@ -4,7 +4,7 @@ set -eu
 
 fixture_dir=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 project_root=$(CDPATH= cd -- "$fixture_dir/../.." && pwd)
-installer=${XDISPLAY_INSTALLER_UNDER_TEST:-$project_root/tools/install-xdisplay-user.sh}
+installer=${XDISPLAY_INSTALLER_UNDER_TEST:-$project_root/tools/debian/install-xdisplay-user.sh}
 source_dir=${XDISPLAY_SOURCE_DIR_UNDER_TEST:-$project_root/tools}
 runtime=$(mktemp -d "${TMPDIR:-/tmp}/innogpu-xdisplay-install.XXXXXX")
 tests=0

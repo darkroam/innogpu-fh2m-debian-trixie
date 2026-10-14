@@ -485,7 +485,7 @@ sudo reboot
 
 ```bash
 cd ~/src/innogpu-fh2m-debian-trixie
-tools/verify-install-status.sh --require-reboot 4.0.2-i3
+tools/debian/verify.sh --require-reboot 4.0.2-i3
 startx
 ```
 

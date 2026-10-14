@@ -1,27 +1,31 @@
 #!/bin/bash
 set -euo pipefail
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
-bash -n "$root/tools/gentoo-fh2m.sh"
-bash -n "$root/tools/gentoo-lid-external.sh"
-bash -n "$root/tools/gentoo-install-kernel-patches.sh"
-bash -n "$root/tools/gentoo-overlay/sys-kernel/fantgpu-kernel-patches/files/install-patches.sh"
-bash -n "$root/tools/gentoo-check-kernel-patches.sh"
-"$root/tools/gentoo-fh2m.sh" check --offline
+bash -n "$root/tools/gentoo/fh2m-lib.sh"
+bash -n "$root/tools/gentoo/build-driver.sh"
+bash -n "$root/tools/gentoo/install-driver.sh"
+bash -n "$root/tools/gentoo/verify.sh"
+bash -n "$root/tools/gentoo/rollback.sh"
+bash -n "$root/tools/gentoo/lid-external.sh"
+bash -n "$root/tools/gentoo/install-kernel-patches.sh"
+bash -n "$root/tools/gentoo/overlay/sys-kernel/fantgpu-kernel-patches/files/install-patches.sh"
+bash -n "$root/tools/gentoo/check-kernel-patches.sh"
+"$root/tools/gentoo/check.sh" --offline
 
 work=$(mktemp -d)
 fix=$(mktemp)
 out=$(mktemp)
 trap 'rm -rf "$work" "$fix" "$out"' EXIT
-DESTDIR=$work/dest "$root/tools/gentoo-install-kernel-patches.sh" >"$out"
+DESTDIR=$work/dest "$root/tools/gentoo/install-kernel-patches.sh" >"$out"
 grep -q 'installed=8 skipped=0' "$out"
 before=$(sha256sum "$work/dest/etc/portage/patches/sys-kernel/gentoo-sources/001-hygon-148c-xhci-reset-on-resume.patch")
-DESTDIR=$work/dest "$root/tools/gentoo-install-kernel-patches.sh" >"$out"
+DESTDIR=$work/dest "$root/tools/gentoo/install-kernel-patches.sh" >"$out"
 grep -q 'installed=0 skipped=8' "$out"
 after=$(sha256sum "$work/dest/etc/portage/patches/sys-kernel/gentoo-sources/001-hygon-148c-xhci-reset-on-resume.patch")
 [[ $before == "$after" ]]
 printf 'local\n' >> "$work/dest/etc/portage/patches/sys-kernel/gentoo-kernel/004-snd-hda-hygon-14c9.patch"
 changed=$(sha256sum "$work/dest/etc/portage/patches/sys-kernel/gentoo-kernel/004-snd-hda-hygon-14c9.patch")
-if DESTDIR=$work/dest "$root/tools/gentoo-install-kernel-patches.sh" >"$out" 2>&1; then
+if DESTDIR=$work/dest "$root/tools/gentoo/install-kernel-patches.sh" >"$out" 2>&1; then
     echo "different sha was overwritten" >&2
     exit 1
 fi
@@ -29,13 +33,13 @@ grep -q 'sha differs' "$out"
 [[ $changed == $(sha256sum "$work/dest/etc/portage/patches/sys-kernel/gentoo-kernel/004-snd-hda-hygon-14c9.patch") ]]
 cp "$work/dest/etc/portage/patches/sys-kernel/gentoo-sources/004-snd-hda-hygon-14c9.patch" \
     "$work/dest/etc/portage/patches/sys-kernel/gentoo-kernel/004-snd-hda-hygon-14c9.patch"
-PORTAGE_PATCH_BASE=$work/dest/etc/portage/patches/sys-kernel "$root/tools/gentoo-check-kernel-patches.sh" --files-only >/dev/null
-grep -q '补丁已落位，重编/升级内核生效后再装驱动' "$root/tools/gentoo-overlay/sys-kernel/fantgpu-kernel-patches/fantgpu-kernel-patches-1.ebuild"
-grep -q 'RESTRICT="bindist"' "$root/tools/gentoo-overlay/sys-kernel/fantgpu-kernel-patches/fantgpu-kernel-patches-1.ebuild"
-grep -q 'IUSE="+wayland"' "$root/tools/gentoo-overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
-grep -q 'dev-libs/wayland' "$root/tools/gentoo-overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
-grep -q 'media-libs/libglvnd' "$root/tools/gentoo-overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
-if PORTAGE_PATCH_BASE=$work/missing "$root/tools/gentoo-check-kernel-patches.sh" --files-only >"$out" 2>&1; then
+PORTAGE_PATCH_BASE=$work/dest/etc/portage/patches/sys-kernel "$root/tools/gentoo/check-kernel-patches.sh" --files-only >/dev/null
+grep -q '补丁已落位，重编/升级内核生效后再装驱动' "$root/tools/gentoo/overlay/sys-kernel/fantgpu-kernel-patches/fantgpu-kernel-patches-1.ebuild"
+grep -q 'RESTRICT="bindist"' "$root/tools/gentoo/overlay/sys-kernel/fantgpu-kernel-patches/fantgpu-kernel-patches-1.ebuild"
+grep -q 'IUSE="+wayland"' "$root/tools/gentoo/overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
+grep -q 'dev-libs/wayland' "$root/tools/gentoo/overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
+grep -q 'media-libs/libglvnd' "$root/tools/gentoo/overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
+if PORTAGE_PATCH_BASE=$work/missing "$root/tools/gentoo/check-kernel-patches.sh" --files-only >"$out" 2>&1; then
     echo "absent portage patches were accepted" >&2
     exit 1
 fi
@@ -50,16 +54,16 @@ TRP Error Count: 0
 FWF Event Count: 0
 APM Event Count: 0
 EOF
-GENTOO_COUNTERS_ONLY=1 GENTOO_STATUS_FILE=$fix "$root/tools/gentoo-fh2m.sh" verify >/dev/null
+GENTOO_COUNTERS_ONLY=1 GENTOO_STATUS_FILE=$fix "$root/tools/gentoo/verify.sh" >/dev/null
 sed -i '/^APM /d' "$fix"
-if GENTOO_COUNTERS_ONLY=1 GENTOO_STATUS_FILE=$fix "$root/tools/gentoo-fh2m.sh" verify >"$out" 2>&1; then
+if GENTOO_COUNTERS_ONLY=1 GENTOO_STATUS_FILE=$fix "$root/tools/gentoo/verify.sh" >"$out" 2>&1; then
     echo "missing row was accepted" >&2
     exit 1
 fi
 grep -q counters_rows_missing "$out"
 printf '%s\n' 'Server Errors:   1' 'HWR Event Count: 0' 'CRR Event Count: 0' 'SLR Event Count: 0' \
     'WGP Error Count: 0' 'TRP Error Count: 0' 'FWF Event Count: 0' 'APM Event Count: 0' > "$fix"
-if GENTOO_COUNTERS_ONLY=1 GENTOO_STATUS_FILE=$fix "$root/tools/gentoo-fh2m.sh" verify >"$out" 2>&1; then
+if GENTOO_COUNTERS_ONLY=1 GENTOO_STATUS_FILE=$fix "$root/tools/gentoo/verify.sh" >"$out" 2>&1; then
     echo "nonzero counter was accepted" >&2
     exit 1
 fi
@@ -68,9 +72,9 @@ if grep -q counters_rows_missing "$out"; then
     exit 1
 fi
 
-bash -n "$root/tools/gentoo-r5-observe.sh"
-bash -n "$root/tools/gentoo-r5-cycle.sh"
-if "$root/tools/gentoo-r5-cycle.sh" 5 >"$out" 2>&1; then
+bash -n "$root/tools/gentoo/r5-observe.sh"
+bash -n "$root/tools/gentoo/r5-cycle.sh"
+if "$root/tools/gentoo/r5-cycle.sh" 5 >"$out" 2>&1; then
     echo "short wake was accepted" >&2
     exit 1
 fi
@@ -83,9 +87,9 @@ printf '%s\n' \
     'temp_work=0' 'pll=0' 'oops=0' >"$fixdir/before"
 sed -e 's/suspend_entry=1/suspend_entry=2/' -e 's/suspend_exit=1/suspend_exit=2/' \
     "$fixdir/before" >"$fixdir/after"
-got=$("$root/tools/gentoo-r5-observe.sh" --judge "$fixdir/before" "$fixdir/after")
+got=$("$root/tools/gentoo/r5-observe.sh" --judge "$fixdir/before" "$fixdir/after")
 [[ $got == r5_judge=RECORDED_OBSERVATION_ABSENT ]]
-if "$root/tools/gentoo-r5-observe.sh" --judge "$fixdir/before" "$fixdir/before" >"$out"; then
+if "$root/tools/gentoo/r5-observe.sh" --judge "$fixdir/before" "$fixdir/before" >"$out"; then
     echo "unchanged cycle was accepted" >&2
     exit 1
 fi
@@ -95,7 +99,7 @@ sed -e 's/^pm_test=.*/pm_test=[none] core processors platform devices freezer/' 
     "$fixdir/before" >"$fixdir/before-real"
 sed -e 's/suspend_entry=0/suspend_entry=1/' -e 's/suspend_exit=0/suspend_exit=1/' \
     "$fixdir/before-real" >"$fixdir/after-real"
-got=$("$root/tools/gentoo-r5-observe.sh" --judge "$fixdir/before-real" "$fixdir/after-real")
+got=$("$root/tools/gentoo/r5-observe.sh" --judge "$fixdir/before-real" "$fixdir/after-real")
 [[ $got == r5_judge=RECORDED_OBSERVATION_ABSENT ]]
 
 fake=$(mktemp -d)
@@ -125,47 +129,47 @@ printf 'old-ko\n' > "$fake/live/fantgpu.ko"
 printf 'built-ko\n' > "$fake/work/fantgpu.ko"
 GENTOO_VENDOR=$fake/vendor GENTOO_WORK=$fake/work GENTOO_ROLLBACK=$fake/rollback \
     GENTOO_LIVE_KO=$fake/live/fantgpu.ko DESTDIR=$fake/dest KERNEL=test \
-    "$root/tools/gentoo-fh2m.sh" install >"$out"
+    "$root/tools/gentoo/install-driver.sh" >"$out"
 grep -q 'rollback_saved=' "$out"
 first=$(sha256sum "$fake/rollback/fantgpu.ko")
 printf 'replaced-ko\n' > "$fake/live/fantgpu.ko"
 GENTOO_VENDOR=$fake/vendor GENTOO_WORK=$fake/work GENTOO_ROLLBACK=$fake/rollback \
     GENTOO_LIVE_KO=$fake/live/fantgpu.ko DESTDIR=$fake/dest KERNEL=test \
-    "$root/tools/gentoo-fh2m.sh" install >"$out"
+    "$root/tools/gentoo/install-driver.sh" >"$out"
 grep -q 'rollback_kept=' "$out"
 [[ $first == $(sha256sum "$fake/rollback/fantgpu.ko") ]]
 [[ $(cat "$fake/dest/lib/modules/test/extra/fantgpu.ko") == built-ko ]]
 printf 'fantgpu 1 0 - Live\n' > "$fake/modules"
-GENTOO_MODULES_FILE=$fake/modules "$root/tools/gentoo-fh2m.sh" warn-loaded >"$out"
+GENTOO_MODULES_FILE=$fake/modules "$root/tools/gentoo/warn-loaded.sh" >"$out"
 grep -q 'do not rmmod' "$out"
 printf 'other 1 0 - Live\n' > "$fake/modules"
-GENTOO_MODULES_FILE=$fake/modules "$root/tools/gentoo-fh2m.sh" warn-loaded >"$out"
+GENTOO_MODULES_FILE=$fake/modules "$root/tools/gentoo/warn-loaded.sh" >"$out"
 grep -q 'loaded_no' "$out"
 grep -q '模块已加载。不要热卸载。先重启，再把这次卸载当成完成。' \
-    "$root/tools/gentoo-overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
-grep -q 'pkg_postrm' "$root/tools/gentoo-overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
-grep -q '不要热卸载。重启后才是正在运行的那份。' "$root/tools/gentoo-overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
+    "$root/tools/gentoo/overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
+grep -q 'pkg_postrm' "$root/tools/gentoo/overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
+grep -q '不要热卸载。重启后才是正在运行的那份。' "$root/tools/gentoo/overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
 
 rmdest=$(mktemp -d)
 trap 'rm -rf "$work" "$fix" "$out" "$fixdir" "$fake" "$rmdest"' EXIT
-DESTDIR=$rmdest "$root/tools/gentoo-install-kernel-patches.sh" >/dev/null
+DESTDIR=$rmdest "$root/tools/gentoo/install-kernel-patches.sh" >/dev/null
 printf 'local\n' >> "$rmdest/etc/portage/patches/sys-kernel/gentoo-sources/003-pinctrl-amd-hygon-gpio.patch"
 kept=$(sha256sum "$rmdest/etc/portage/patches/sys-kernel/gentoo-sources/003-pinctrl-amd-hygon-gpio.patch")
-PATCH_REMOVE=1 DESTDIR=$rmdest "$root/tools/gentoo-install-kernel-patches.sh" >"$out"
+PATCH_REMOVE=1 DESTDIR=$rmdest "$root/tools/gentoo/install-kernel-patches.sh" >"$out"
 grep -q 'removed=7 kept=1' "$out"
 [[ -f $rmdest/etc/portage/patches/sys-kernel/gentoo-sources/003-pinctrl-amd-hygon-gpio.patch ]]
 [[ $kept == $(sha256sum "$rmdest/etc/portage/patches/sys-kernel/gentoo-sources/003-pinctrl-amd-hygon-gpio.patch") ]]
 [[ ! -f $rmdest/etc/portage/patches/sys-kernel/gentoo-sources/001-hygon-148c-xhci-reset-on-resume.patch ]]
-grep -q 'pkg_prerm' "$root/tools/gentoo-overlay/sys-kernel/fantgpu-kernel-patches/fantgpu-kernel-patches-1.ebuild"
+grep -q 'pkg_prerm' "$root/tools/gentoo/overlay/sys-kernel/fantgpu-kernel-patches/fantgpu-kernel-patches-1.ebuild"
 
 lid=$(mktemp -d)
 trap 'rm -rf "$work" "$fix" "$out" "$fixdir" "$fake" "$rmdest" "$lid"' EXIT
-GENTOO_LID_CONF=$lid/90-lid-external.conf "$root/tools/gentoo-lid-external.sh" --apply >"$out"
+GENTOO_LID_CONF=$lid/90-lid-external.conf "$root/tools/gentoo/lid-external.sh" --apply >"$out"
 grep -q 'lid_conf=APPLIED' "$out"
-GENTOO_LID_CONF=$lid/90-lid-external.conf "$root/tools/gentoo-lid-external.sh" --apply >"$out"
+GENTOO_LID_CONF=$lid/90-lid-external.conf "$root/tools/gentoo/lid-external.sh" --apply >"$out"
 grep -q 'lid_conf=SKIP identical' "$out"
 printf 'local\n' >> "$lid/90-lid-external.conf"
-if GENTOO_LID_CONF=$lid/90-lid-external.conf "$root/tools/gentoo-lid-external.sh" --revert >"$out" 2>&1; then
+if GENTOO_LID_CONF=$lid/90-lid-external.conf "$root/tools/gentoo/lid-external.sh" --revert >"$out" 2>&1; then
     echo "different lid conf was removed" >&2
     exit 1
 fi
@@ -176,13 +180,13 @@ mkdir -p "$ko/work" "$ko/rollback" "$ko/live"
 printf 'built-ko\n' > "$ko/work/fantgpu.ko"
 printf 'old-ko\n' > "$ko/live/fantgpu.ko"
 GENTOO_WORK=$ko/work GENTOO_ROLLBACK=$ko/rollback GENTOO_LIVE_KO=$ko/live/fantgpu.ko \
-    DESTDIR=$ko/dest KERNEL=test "$root/tools/gentoo-fh2m.sh" install-ko >"$out"
+    DESTDIR=$ko/dest KERNEL=test "$root/tools/gentoo/install-ko.sh" >"$out"
 grep -q 'rollback_saved=' "$out"
 grep -q 'gentoo_fh2m_install_ko=PASS' "$out"
 [[ $(cat "$ko/dest/lib/modules/test/extra/fantgpu.ko") == built-ko ]]
 [[ ! -e $ko/dest/opt/fantgpu-fh2m ]]
 printf 'other-ko\n' > "$ko/live/fantgpu.ko"
 GENTOO_WORK=$ko/work GENTOO_ROLLBACK=$ko/rollback GENTOO_LIVE_KO=$ko/live/fantgpu.ko \
-    DESTDIR=$ko/dest KERNEL=test "$root/tools/gentoo-fh2m.sh" install-ko >"$out"
+    DESTDIR=$ko/dest KERNEL=test "$root/tools/gentoo/install-ko.sh" >"$out"
 grep -q 'rollback_kept=' "$out"
 [[ $(cat "$ko/rollback/fantgpu.ko") == old-ko ]]

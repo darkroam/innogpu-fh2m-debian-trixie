@@ -33,8 +33,8 @@ assert "fant_printk_once" in added
 assert "fantdpu_cache_output_index(conn_module, 0)" in added
 assert "FANTGPU_LOCAL_INTERNAL_EDP_OUTPUT_INDEX" in added
 assert "s_hdmi_dvi" not in added
-assert "030-051" not in Path("tools/build-innogpu-driver.sh").read_text()
-builder = Path("tools/gentoo-fh2m.sh").read_text()
+assert "030-051" not in Path("tools/debian/build-driver.sh").read_text()
+builder = Path("tools/gentoo/fh2m-lib.sh").read_text()
 assert meta["apply"]["after_tree_hash"] in builder
 assert builder.index("m-036-bf-shf-rename.patch") < builder.index("m-051-hwinfo-connector-fallback.patch")
 raw = subprocess.check_output([

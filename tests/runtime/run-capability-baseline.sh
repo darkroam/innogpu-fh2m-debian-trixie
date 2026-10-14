@@ -374,7 +374,7 @@ if [[ "$HAS_DRI" == "yes" && -f "$ROOT/tools/internal/probe-egl-gbm.c" && "$(com
 else
     record egl_gbm_probe SKIP "no /dev/dri or gcc/probe missing; compile and run tools/internal/probe-egl-gbm.c on device session"
 fi
-record egl_x11_probe SKIP "manual-execution-required: tools/test-current-xorg-hwgl-runtime.sh on device session"
+record egl_x11_probe SKIP "manual-execution-required: tools/debian/test-current-xorg-hwgl-runtime.sh on device session"
 
 # =====================================================================
 # 5. OpenGL / GLX / GLES
@@ -396,7 +396,7 @@ else
         record gl_enumeration SKIP "no DISPLAY in this session"
     fi
 fi
-record gl_execution SKIP "manual-execution-required: tools/check-desktop-hwgl.sh on device session"
+record gl_execution SKIP "manual-execution-required: tools/debian/check-desktop-hwgl.sh on device session"
 
 # =====================================================================
 # 6. Vulkan（枚举 vs 实际执行）

@@ -111,7 +111,7 @@ tests/package/run-boundary-tests.sh
 
 该测试在 `/tmp` 中生成最小 fixture deb，验证新版本清洁包通过，以及私有 xdisplay 副本、复用
 patched-20 版本号、过期设备接入脚本、不完整 shader、错误架构和缺失 `Installed-Size` 会被
-`tools/check-release-package.sh` 拒绝。它不读取或安装本机 `debs/` 中的真实驱动包，不运行 DKMS，
+`tools/debian/check-release-package.sh` 拒绝。它不读取或安装本机 `debs/` 中的真实驱动包，不运行 DKMS，
 也不改变活动 Xorg。
 
 单元测试（manifest 恶意输入、版本排序契约、提取器隔离、collab 结构，CI 可跑、无设备依赖）：

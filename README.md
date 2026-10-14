@@ -42,10 +42,10 @@
 
 ```sh
 git clone https://github.com/darkroam/innogpu-fh2m-debian-trixie.git && cd innogpu-fh2m-debian-trixie
-sudo tools/install-prereqs-debian.sh                        # 基础构建/运行依赖
+sudo tools/debian/install-prereqs-debian.sh                        # 基础构建/运行依赖
 # 最小化系统还须确认 python3、dpkg-deb 等新构建器直接命令（见 dependencies.md）
 # F 线。不设 VERSION 时构建器仍按 4.0.2-i3 进入 O 分支并拒绝。
-VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=1790812800 bash tools/build-innogpu-driver.sh
+VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=1790812800 bash tools/debian/build-driver.sh
 # O 线仅从 deepin-4.0.2-i3 tag 检出构建
 ```
 

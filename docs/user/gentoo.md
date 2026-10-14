@@ -17,12 +17,12 @@
 
 ## 安装
 
-正式入口是本仓库里的 portage overlay：`tools/gentoo-overlay`。
+正式入口是本仓库里的 portage overlay：`tools/gentoo/overlay`。
 
 ```
 # /etc/portage/repos.conf/fantgpu.conf
 [fantgpu]
-location = /path/to/innogpu-fh2m-debian-trixie/tools/gentoo-overlay
+location = /path/to/innogpu-fh2m-debian-trixie/tools/gentoo/overlay
 auto-sync = no
 ```
 
@@ -30,17 +30,17 @@ auto-sync = no
 Portage 每次下载源码都会以这个用户读每个 overlay 的 `profiles/thirdpartymirrors`。
 这个文件可以没有，没有就当空表。进不了目录则是权限错误，整次 emerge 失败，
 连无关的包也装不上。本机因此把 overlay 拷到 `/var/db/repos/fantgpu` 再登记。
-`tools/gentoo-overlay` 仍是源头。部署时整目录同步到 `/var/db/repos/fantgpu`，
+`tools/gentoo/overlay` 仍是源头。部署时整目录同步到 `/var/db/repos/fantgpu`，
 再写一行 `repo-root`，内容是这个 git 仓库的根。家目录是 `700`，portage 用户进不去，
 所以 `x11-drivers/fantgpu-fh2m` 还要有一条 package.env：`FEATURES="-userpriv"`。
 编译阶段因此以 root 读仓库。不要改家目录权限。
 
 ```
-rsync -a --delete tools/gentoo-overlay/ /var/db/repos/fantgpu/
+rsync -a --delete tools/gentoo/overlay/ /var/db/repos/fantgpu/
 printf '%s\n' "$PWD" > /var/db/repos/fantgpu/repo-root
 ```
 
-然后接受 `~amd64` 和 `fantgpu-vendor`。驱动 ebuild 调用 `tools/gentoo-fh2m.sh`。
+然后接受 `~amd64` 和 `fantgpu-vendor`。驱动 ebuild 调用 `tools/gentoo/build-driver.sh` 和 `tools/gentoo/install-driver.sh`。
 
 ```
 # /etc/portage/package.accept_keywords/fantgpu-fh2m
@@ -59,8 +59,8 @@ emerge -u sys-kernel/gentoo-sources
 # 用现有内核构建方式编译并安装，然后重启。不要改 GRUB。
 emerge x11-drivers/fantgpu-fh2m
 # 再重启
-tools/gentoo-fh2m.sh verify
-tools/gentoo-check-kernel-patches.sh
+tools/gentoo/verify.sh
+tools/gentoo/check-kernel-patches.sh
 ```
 
 用户态和固件来自本机已经物化的 `vendor/fantgpu/`，不重新打包，也不进 git。
@@ -69,16 +69,16 @@ tools/gentoo-check-kernel-patches.sh
 没有 portage 时用同一脚本：
 
 ```
-tools/gentoo-fh2m.sh check
-tools/gentoo-fh2m.sh build
-sudo tools/gentoo-fh2m.sh install
-sudo tools/gentoo-fh2m.sh verify
+tools/gentoo/check.sh
+tools/gentoo/build-driver.sh
+sudo tools/gentoo/install-driver.sh
+sudo tools/gentoo/verify.sh
 ```
 
 `install` 会先把当前 ko 存到 `.build/work/gentoo-fh2m/rollback/fantgpu.ko`。
-退回用 `sudo tools/gentoo-fh2m.sh rollback`，然后重启。
+退回用 `sudo tools/gentoo/rollback.sh`，然后重启。
 
-构建器 `tools/build-innogpu-driver.sh` 仍只产 Debian deb，并且停在 `m-035-private-accessor`。
+构建器 `tools/debian/build-driver.sh` 仍只产 Debian deb，并且停在 `m-035-private-accessor`。
 Gentoo 与构建器共同 source `tools/internal/derive-fantgpu-source.sh`，再打 `m-036-bf-shf-rename`。不改构建器。
 
 
@@ -94,9 +94,9 @@ emerge 的回滚件在 `/var/lib/fantgpu/rollback/fantgpu.ko`，不放在 portag
 `pkg_prerm` 只警告：模块已加载，不要热卸载，先重启，再把这次卸载当成完成。`pkg_postrm` 跑
 `depmod` 和 `ldconfig`，不执行 `rmmod`。
 
-手动 `tools/gentoo-fh2m.sh` 没有卸载。它只做 check、build、install、verify、rollback。
+手动入口没有卸载。它只做 check、build、install、verify、rollback。
 `rollback` 把保存的 ko 写回磁盘，然后重启，同样不热卸载。没有 portage 时，补丁拷贝用
-`tools/gentoo-install-kernel-patches.sh`，它也不卸载。
+`tools/gentoo/install-kernel-patches.sh`，它也不卸载。
 
 2026-10-13 本机已经 `emerge` 了 `sys-kernel/fantgpu-kernel-patches` 和 `x11-drivers/fantgpu-fh2m`。
 补丁包因为目标 SHA 相同，`installed=0 skipped=8`。驱动第一次装到已有手动文件上时，portage 报文件冲突；
@@ -136,7 +136,7 @@ emerge 的回滚件在 `/var/lib/fantgpu/rollback/fantgpu.ko`，不放在 portag
 
 ## 内核补丁 001–004
 
-权威文件在 `tools/gentoo-overlay/sys-kernel/patches/`，字节与 `components/linux` 的同名补丁一致。
+权威文件在 `tools/gentoo/overlay/sys-kernel/patches/`，字节与 `components/linux` 的同名补丁一致。
 001/002 的基线仍是 Debian `linux-source-6.12` `6.12.107-1`，换内核必须重验。
 003 只给 `pinctrl-amd` 增加 ACPI ID `HYGO0030`。004 只给 6.12 的 `snd-hda-intel` 增加
 PCI `1d94:14c9`。004 不能套到 6.18：控制器源码已改到 `sound/hda/controllers/intel.c`，
@@ -147,7 +147,7 @@ PCI `1d94:14c9`。004 不能套到 6.18：控制器源码已改到 `sound/hda/co
 SHA 不同就失败，不覆盖已经改过的本地文件。没有 portage 时用同一规则的后备：
 
 ```
-sudo tools/gentoo-install-kernel-patches.sh
+sudo tools/gentoo/install-kernel-patches.sh
 ```
 
 这不改正在运行的内核。已经解包的树如果被手工改过，
@@ -158,7 +158,7 @@ sudo tools/gentoo-install-kernel-patches.sh
 ```
 emerge -u sys-kernel/gentoo-sources
 # 用现有内核构建方式编译并安装，然后重启。不要改 GRUB。
-tools/gentoo-check-kernel-patches.sh
+tools/gentoo/check-kernel-patches.sh
 ```
 
 check 要同时看到 xHCI Hygon quirk、KaiTian 电池条目、`HYGO0030` 和 `1d94:14c9` 才返回 0。
@@ -171,11 +171,11 @@ check 要同时看到 xHCI Hygon quirk、KaiTian 电池条目、`HYGO0030` 和 `
 一轮采集用自动唤醒，不写 `pm_test`。屏幕会灭，到时自己醒来。默认 45 秒，可改成 20 到 180：
 
 ```
-tools/gentoo-r5-cycle.sh
-tools/gentoo-r5-cycle.sh 60
+tools/gentoo/r5-cycle.sh
+tools/gentoo/r5-cycle.sh 60
 ```
 
-它先跑 `gentoo-r5-observe.sh before`，再用 `rtcwake -m mem` 休眠并唤醒，然后跑 `after`。
+它先跑 `tools/gentoo/r5-observe.sh before`，再用 `rtcwake -m mem` 休眠并唤醒，然后跑 `after`。
 手点休眠仍可用 `before` / `systemctl suspend` / `after`。
 
 普通用户启动，脚本自己要求 sudo，并把提权记进 `.build/r57-r5-observe/launcher.log`。

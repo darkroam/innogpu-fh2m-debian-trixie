@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
-CHECK="$ROOT/tools/check-release-package.sh"
+CHECK="$ROOT/tools/debian/check-release-package.sh"
 runtime=$(mktemp -d "${TMPDIR:-/tmp}/innogpu-package-tests.XXXXXX")
 tests=0
 skipped=0

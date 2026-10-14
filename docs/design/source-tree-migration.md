@@ -10,7 +10,7 @@
   p27 回退演练 PASS，设备已推进至 4.0.0-i1 作为最终运行态；阶段 5 Step 1 已完成，Step 2 待条件
   满足并单独批准。
 - 阶段 3 评审整改（2026-08-21 监督意见）：
-  - `module_symbols` 不再 SKIP——`tools/compare-module-symbols.sh` 离线构建候选与 p27 两包
+  - `module_symbols` 不再 SKIP——`tools/debian/compare-module-symbols.sh` 离线构建候选与 p27 两包
     DKMS 源码，逐模块对比 vermagic/depends/导出符号/导入符号（见 §七）；
   - `.o.cmd` 定为**构建产物**，从 manifest 与发布包排除（196→192 项），oracle 对比按构建产物
     排除（见 §四 边界裁定）；
@@ -71,7 +71,7 @@ patches/                         历史 provenance 永久保留，不得移动�
 
 实际测试入口不是单一 `run-dev-tests.sh`：CI 顺序由 `.github/workflows/ci.yml` 定义，可重复套件及
 计数由 `tests/README.md` 和 `docs/project/test-strategy.md` 登记；完整 DKMS integration 由
-`tools/check-deb-dkms-build.sh`、`tools/compare-module-symbols.sh` 等独立入口承担。
+`tools/debian/check-deb-dkms-build.sh`、`tools/debian/compare-module-symbols.sh` 等独立入口承担。
 
 ## 三、14 个 patch 的 provenance 与分类
 
@@ -145,7 +145,7 @@ body 引用 `docs/patches/patch-*.md`；记录原 patch hash、目标文件、�
 - 临时目录 + 原子 rename，中途失败不留伪完整文件；
 - 输出机器可读 PASS/FAIL 摘要；二次执行必须证明幂等。
 
-## 六、staging 构建树与新构建器（`tools/build-innogpu-driver.sh`）
+## 六、staging 构建树与新构建器（`tools/debian/build-driver.sh`）
 
 构建流程（历史 4.0.0-i1 不叠加补丁；当前 R06 i3/i4 按版本应用经审查的新行为修复）：
 
@@ -195,7 +195,7 @@ rollback=PASS
 binary、package、runtime parity 验证。禁止用单项编译成功替代完整 parity。
 
 **module_vermagic 与关键符号（阶段 3 门槛）**：vermagic 单独不足以证明模块 ABI 一致。
-`tools/compare-module-symbols.sh` 对候选与 p27 两包的 DKMS 源码在同一内核头下离线编译，
+`tools/debian/compare-module-symbols.sh` 对候选与 p27 两包的 DKMS 源码在同一内核头下离线编译，
 对每个产出的 `.ko` 逐项比较：vermagic、`modinfo depends`、完整定义符号表
 （`nm --defined-only`，内核模块无 `.dynsym`，必须用常规 `.symtab`）、导入符号表
 （`nm --undefined-only`）、`.ksymtab_strings` 导出符号（存在时）与 `__versions`

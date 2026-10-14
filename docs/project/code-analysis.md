@@ -161,7 +161,7 @@ R15 对 6 个启动 journal（2026-09-02 11:50 至 2026-09-03 16:13）做了逐�
 
 ## 证据索引
 
-- 构建链：`tools/build-innogpu-driver.sh`、`compare-oracle-candidates.sh`、`extract-vendor-binaries.sh`
+- 构建链：`tools/debian/build-driver.sh`、`compare-oracle-candidates.sh`、`extract-vendor-binaries.sh`
 - 运行链：`build-innogpu-driver.sh` postinst 段、`docs/user/recovery.md`、`docs/archive/phase4-device-validation.md`
 - 边界：`binary-manifest.json`、`docs/project/licensing.md`、`maintenance-policy.md`
 - 测试：`tests/README.md`、`tools/check-docs.sh`

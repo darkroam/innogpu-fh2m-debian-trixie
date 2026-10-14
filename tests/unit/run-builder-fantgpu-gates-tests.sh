@@ -13,8 +13,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-BUILDER="$ROOT/tools/build-innogpu-driver.sh"
-F_GENERATOR="$ROOT/tools/generate-fantgpu-maintainer-scripts.sh"
+BUILDER="$ROOT/tools/debian/build-driver.sh"
+F_GENERATOR="$ROOT/tools/debian/generate-fantgpu-maintainer-scripts.sh"
 cd "$ROOT"
 export LC_ALL=C
 
@@ -146,7 +146,7 @@ else
 fi
 
 # t14 静态契约：release-audit 门禁无条件调用恢复（批 3 C1-②；无跳过行）
-if grep -Fq 'tools/check-release-package.sh "$OUT_DEB" || { echo "builder_package_boundary=FAIL"; exit 1; }' "$BUILDER" \
+if grep -Fq 'tools/debian/check-release-package.sh "$OUT_DEB" || { echo "builder_package_boundary=FAIL"; exit 1; }' "$BUILDER" \
    && ! grep -Fq 'release-audit gate pending' "$BUILDER"; then
     ok t14
 else

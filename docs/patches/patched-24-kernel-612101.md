@@ -18,8 +18,8 @@
 构建后必须运行：
 
 ```sh
-tools/check-release-package.sh debs/innogpu-fh2m-trixie_3.3.3.42-patched-24.deb
-tools/check-deb-dkms-build.sh debs/innogpu-fh2m-trixie_3.3.3.42-patched-24.deb 6.12.101+deb13-amd64
+tools/debian/check-release-package.sh debs/innogpu-fh2m-trixie_3.3.3.42-patched-24.deb
+tools/debian/check-deb-dkms-build.sh debs/innogpu-fh2m-trixie_3.3.3.42-patched-24.deb 6.12.101+deb13-amd64
 ```
 
 构建结果：

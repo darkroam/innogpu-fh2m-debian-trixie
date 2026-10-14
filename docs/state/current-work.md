@@ -68,8 +68,8 @@ R27 早期八核窗口的 `FAILED_OR_UNVERIFIED` 原记录保留，不通过删�
 ## Gentoo 现场（R57，段 4 待审查）
 
 本机 `6.12.111-gentoo` 已用 i12 加构建器外的 `m-036-bf-shf-rename` 拉起。入口是
-[`gentoo-fh2m.sh`](../../tools/gentoo-fh2m.sh)，portage 包装在
-`tools/gentoo-overlay`。档案见 [Gentoo](../user/gentoo.md)。
+[`gentoo-fh2m.sh`](../../tools/gentoo/fh2m-lib.sh)，portage 包装在
+`tools/gentoo/overlay`。档案见 [Gentoo](../user/gentoo.md)。
 这不改 Debian 侧当前内核结论。`hwinfo_g0m.bin` 仍缺，不升格。
 `g-037` 到 `g-050` 已按命名规范入库。入库不等于升格：仍标 g，字节不变，不进 i12 构建器。`g-050-fb-helper-alloc` 是 6.12 胶水，不是 6.18。
 001–004 放在不按版本拆分的 portage user-patches，与 `components/linux` 同 SHA，并已按这组文件重打进 6.12.111 源码树。

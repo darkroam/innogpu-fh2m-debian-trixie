@@ -40,7 +40,7 @@ cd "$INNOGPU_ROOT"
 sha256sum debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 # O 线仅从 deepin-4.0.2-i3 tag 检出构建
 # 主线默认版本 4.0.2-i3 会走这条拒绝。F 线要显式：
-# VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=1790812800 bash tools/build-innogpu-driver.sh
+# VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=1790812800 bash tools/debian/build-driver.sh
 ```
 
 > O 线清单与提取器不在主线，在 tag `innogpu-4x-frozen`。不要在主线上运行已删除的提取器。
@@ -49,7 +49,7 @@ sha256sum debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 
 ```sh
 echo '177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662  .build/work/driver-build/innogpu-fh2m-trixie_4.0.2-i3.deb' | sha256sum -c -
-tools/check-release-package.sh .build/work/driver-build/innogpu-fh2m-trixie_4.0.2-i3.deb
+tools/debian/check-release-package.sh .build/work/driver-build/innogpu-fh2m-trixie_4.0.2-i3.deb
 sudo apt install ./.build/work/driver-build/innogpu-fh2m-trixie_4.0.2-i3.deb
 # 禁止热切模块；重启后再做包/DKMS/模块/显示基线和受控 suspend 验收
 ```
@@ -77,7 +77,7 @@ debs/innogpu-fh2m-trixie_3.3.3.42-patched-8.deb
 ```sh
 export INNOGPU_ROOT="$HOME/src/innogpu-fh2m-debian-trixie"
 cd "$INNOGPU_ROOT"
-sudo tools/install-prereqs-debian.sh
+sudo tools/debian/install-prereqs-debian.sh
 ```
 
 该入口安装当前列出的基础构建/运行包，但尚未显式安装新构建器直接调用的 `python3`。最小化 Debian
@@ -101,7 +101,7 @@ xdisplay 的唯一源码权威是 dotconfig。本仓库不携带 `xdisplay`、`d
 
 ```sh
 sudo INNOGPU_X_USER="$USER" INNOGPU_X_HOME="$HOME" \
-  tools/install-xdisplay-user.sh
+  tools/debian/install-xdisplay-user.sh
 ```
 
 该命令只安装 Innogpu 模式恢复钩子和 X11 会话接入，不会覆盖 dotconfig 的显示引擎。
@@ -125,14 +125,14 @@ sudo apt install ./debs/archive/legacy-build/innogpu-fh2m-trixie_4.0.0-i1.deb
 
 ```sh
 cd "$INNOGPU_ROOT"
-sudo tools/install-patched17-and-check.sh
+sudo tools/debian/install-patched17-and-check.sh
 ```
 
 目标桌面用户不是 `SUDO_USER` 时，显式指定用户和主目录：
 
 ```sh
 sudo INNOGPU_X_USER="$USER" INNOGPU_X_HOME="$HOME" \
-  tools/install-patched17-and-check.sh
+  tools/debian/install-patched17-and-check.sh
 ```
 
 安装器保持软件 Xorg 用户态，并准备 DKMS、模块自加载和 initramfs。重启后先验证 TTY、驱动节点和
@@ -155,7 +155,7 @@ patched-20 仅保留运行证据，不提供重新部署或回退到该版本的
 作为源码或载荷基线，也不得从不同版本挑选 DRI、GBM、GLAPI、DDX 或固件拼装。新包还必须通过：
 
 ```sh
-tools/check-release-package.sh .build/work/<round>/packages/<new-package>.deb
+tools/debian/check-release-package.sh .build/work/<round>/packages/<new-package>.deb
 ```
 
 `4.0.1-i1` 已完成离线构建、安装与 s2idle 验收，但因红屏失败；`4.0.1-i2` 已完成一次
@@ -181,10 +181,10 @@ patched-21 已完成当前设备的构建、包边界、部署、重启和运行
 ## 内置喇叭
 
 ```sh
-sudo tools/install-hygon-hda-audio.sh
+sudo tools/debian/install-hygon-hda-audio.sh
 ```
 
-需要测试音时使用 `sudo tools/install-hygon-hda-audio.sh --test-sound`。音频恢复不要求重装
+需要测试音时使用 `sudo tools/debian/install-hygon-hda-audio.sh --test-sound`。音频恢复不要求重装
 Innogpu DKMS。
 
 ## 可选 Picom

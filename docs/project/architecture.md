@@ -11,7 +11,7 @@
 ```text
 当前诊断线：fantgpu 5.0.0-i12（F0 + 030 链 / F manifest，非仓库级发布）
 Deepin 回退线：4.0.2-i3（源码不在主线；构建检出 tag deepin-4.0.2-i3）
-  -> tools/build-innogpu-driver.sh：主线仅 5.0.0-i*，O 线在主线直接退出 -> 经批准后 dpkg
+  -> tools/debian/build-driver.sh：主线仅 5.0.0-i*，O 线在主线直接退出 -> 经批准后 dpkg
        -> DKMS + 对应血缘的同源 DDX/GL/固件（禁止混配）
        -> /dev/dri/card*、renderD*、/dev/fb0
        -> X11 会话中的 dotconfig `xdisplay watch`
@@ -180,7 +180,7 @@ Picom 属于独立用户态组件，不进入显卡驱动 deb。项目固定上�
 
 驱动包负责提供可映射的 `/dev/fb0` 和准确的 fbdev 能力；fbterm 是独立用户态组件，不进入驱动 deb。
 当前驱动的 mmap 已通过，但其 YPan 快速滚动与 fbterm 1.7 的偏移管理不兼容，因此本项目保存
-`components/fbterm/` 补丁和独立构建入口（`tools/build-patched-fbterm.sh`），以
+`components/fbterm/` 补丁和独立构建入口（`tools/debian/build-patched-fbterm.sh`），以
 `scrolling=redraw` 保证正确显示。该规避不改变 framebuffer
 可见/虚拟尺寸，也不代表驱动 YPan 已修复；根因、对照证据和回归门槛见
 [`../incidents/fbterm-ypan-rendering.md`](../incidents/fbterm-ypan-rendering.md)。

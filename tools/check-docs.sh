@@ -359,7 +359,7 @@ for path in \
     tools/internal/README.md \
     tests/README.md \
     tests/package/run-boundary-tests.sh \
-    tools/check-release-package.sh \
+    tools/debian/check-release-package.sh \
     debs/README.md; do
     [[ -f "$path" ]] || fail "required index is missing: $path"
 done
