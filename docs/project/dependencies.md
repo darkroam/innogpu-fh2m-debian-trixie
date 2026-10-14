@@ -35,8 +35,7 @@
 | `debs/innogpu-fh2m_20250421190503-debug_amd64.deb` | Deepin 202504 DKMS/GL/DDX 来源；SHA-256 `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2` |
 
 主线已删除 O 线提取器。该 deb 仍是 O 线历史输入，清单在 tag `innogpu-4x-frozen`。`build-deepin-coherent.sh` 已从主线删除，只从 tag `innogpu-4x-frozen` 检出。
-`prepare-deepin-userspace-root.sh` 仍保留仓库根旧路径的兼容查找，并将 Deepin deb 解包到被 Git
-忽略的 `third_party/innogpu-fh2m-deepin-202504/root/`。不得依赖该 legacy 回退构建新架构包。
+`prepare-deepin-userspace-root.sh` 已从主线删除，只从 tag `innogpu-4x-frozen` 检出。D 线解包树按 [`directory-layout.md`](directory-layout.md) 的 `dpkg-deb -x` 重建。不得依赖该 legacy 回退构建新架构包。
 
 Deepin 202504 原包是 Deepin 分支的来源基线。该分支的源码树不在主线，在 tag `innogpu-4x-frozen` 与 `deepin-4.0.2-i3`。
 `4.0.1-i1`/`i2` 是历史实验候选；R06 的 i3/i4 和失败的 R11 `4.0.2-i1` 保留作复现。当前
@@ -103,8 +102,8 @@ Picom 源码不复制进本仓库。当前基线为上游 `yshui/picom` 的 `nex
 6d676824c457a933c52e3e92c5a1856466f90545
 ```
 
-构建依赖和安装命令由 `tools/debian/install-picom-prereqs-debian.sh` 与
-`tools/debian/build-patched-picom.sh` 管理。`xcompmgr` 是 Picom 二进制不存在时的轻量回退，不用于验证
+构建依赖和安装命令由 `components/picom/debian/install-prereqs.sh` 与
+`components/picom/build.sh` 管理。`xcompmgr` 是 Picom 二进制不存在时的轻量回退，不用于验证
 GLX 补丁。
 
 ## fbterm 外部源码
@@ -113,8 +112,8 @@ fbterm 源码不复制进本仓库。兼容补丁固定面向 Debian `fbterm 1.7
 `~/src/fbterm-1.7`。使用 Debian source repository 取得源码后，通过以下入口构建和安装：
 
 ```sh
-tools/debian/build-patched-fbterm.sh
-tools/debian/build-patched-fbterm.sh --install
+components/fbterm/build.sh
+components/fbterm/build.sh --install
 ```
 
 构建需要 C/C++ 工具链、`patch`、pkg-config、FreeType 和 Fontconfig 开发文件；已验证变体关闭当前

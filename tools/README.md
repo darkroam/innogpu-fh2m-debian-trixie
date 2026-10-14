@@ -7,15 +7,12 @@
 
 > **当前入口**：新架构构建器 `tools/debian/build-driver.sh`（迁移源码树 + 经审查的新修复 + manifest
 > 黑盒载荷，产出 4.0.x-iN）。D 线构建脚本已从主线删除，只从 tag `innogpu-4x-frozen` 检出，
-> 与 O 线只从 tag 检出同一条规则。`build-patched-picom.sh` 与 `build-patched-fbterm.sh` 仍是现行组件构建器。
+> 与 O 线只从 tag 检出同一条规则。现行组件构建器是 `components/picom/build.sh` 与 `components/fbterm/build.sh`。
 
 | 入口 | 生命周期 | 职责 |
 | --- | --- | --- |
 | `check-deb-dkms-build.sh` | 离线编译检查 | 将指定候选 deb 解包到 `/tmp`，针对指定内核 headers 编译 `innogpu.ko` 并校验 vermagic；不注册或安装 DKMS |
 | `check-source-parity.sh` | 只读 parity 检查 | 对照对象 `drivers/` 已不在主线。要比较时先检出 tag `innogpu-4x-frozen`；本脚本不修改旧构建器或设备 |
-| `phase4-baseline-capture.sh` | 只读基线采集 | Phase 4 安装前 B1-B12 基线采集（dpkg/lsmod/DKMS/modprobe/initramfs/音频内核可见/Picom/用户态一致性/恢复通道），输出存 `baselines/phase4-baseline-<ts>.log`；真实会话项（/dev/dri、Xorg/GL、音频 sink、显示切换）由用户实机执行 |
-| `compare-oracle-candidates.sh` | oracle 对比 | 新架构候选包 vs patched-27：对比 control（除 Version/Description/Installed-Size）、文件清单、载荷哈希、DKMS 源码、黑盒对象、maintainer 脚本（版本归一）、版本排序与 module_symbols（调用 compare-module-symbols.sh）；构建产物（.o.cmd/.o/.ko/modules.order/Module.symvers/.mod）统一按 ARTIFACT_RE 排除；输出机器可读 PASS/FAIL |
-| `compare-module-symbols.sh` | 只读符号对比 | 离线构建候选与 patched-27 两包 DKMS 源码（同一内核头），逐 .ko 对比 vermagic/depends/导出符号/导入符号；构建于 `$ROOT/.build/`，不安装不重启；module_symbols=PASS/FAIL/UNCOMPARABLE |
 | `build-linux-patched-modules.sh` | Linux 第三方补丁构建 | 从 `debs/` 复用或通过 APT 下载精确源码 `.deb`，临时展开并严格应用 001/002，针对已安装内核只构建 `xhci-pci.ko` 与 `battery.ko`；不安装、不重启 |
 | `tools/debian/install-kernel-patches.sh` | 受监督模块安装 | 校验构建证据，备份原始模块/initramfs，安装到 `updates/r51/` 并刷新 depmod/initramfs；不自动重启 |
 | `rollback-linux-patched-modules.sh` | 模块回退 | 删除 `updates/r51/` 覆盖模块并恢复安装前 initramfs；需要 root，不自动重启 |
@@ -34,21 +31,15 @@
 | `tools/gentoo/r5-cycle.sh` | Gentoo 一轮 deep 自动唤醒 | 调用上面的 before/after，中间 `rtcwake -m mem`。秒数 20–180，默认 45。不写 `pm_test`。证据目录多一个 `cycle-*`，`latest-cycle.txt` 指向本次 |
 | `tools/debian/build-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；R49 候选仅 `5.0.0-i12` + epoch `1790812800`：继承已审 i11，严格应用 `m-035-private-accessor` 私有对象 accessor 修复。编译/包内源共用最终派生树门 `9a8d185f2a65`；i1-i11/未知版本/错 epoch 拒绝，ABI 门保持。i12 A/B 与安装通过，运行验收首轮因外接输入未恢复失败停止；历史成绩不改 |
 | `generate-fantgpu-maintainer-scripts.sh` | F 构建器共用生成段 | 只向显式 PACKAGE_ROOT 的 DEBIAN/ 写 postinst/prerm/postrm，生产与回归共用。K 全集检查/失败传播；两调用点共用配置门，仅固定 autoinstall_all_kernels.conf 已审 30 字节 SHA 例外，其它有效配置与目录/文件符号链接拒绝，不 source 配置取值。回退丢弃未装包暂存根，已安装包另行批准恢复 |
-| `prepare-deepin-userspace-root.sh` | 当前辅助 | 将 Deepin 原包解包到被忽略的 `third_party/` |
-| `build-patched-picom.sh` | 独立组件 | 构建/安装固定基线的 patched Picom，不进入驱动 deb |
-| `build-patched-fbterm.sh` | 独立组件 | 从 Debian fbterm 1.7-5 构建可配置 redraw 的用户本地版本，不进入驱动 deb |
+| `components/picom/build.sh` | 独立组件 | 构建/安装固定基线的 patched Picom，不进入驱动 deb |
+| `components/fbterm/build.sh` | 独立组件 | 从 Debian fbterm 1.7-5 构建可配置 redraw 的用户本地版本，不进入驱动 deb |
 
 ## 支持的安装与恢复
 
 | 入口 | 风险 | 说明 |
 | --- | --- | --- |
 | `install-prereqs-debian.sh` | 修改软件包 | 安装 Debian 基础构建和运行依赖；当前未显式安装新构建器直接使用的 `python3`，最小系统须按 `docs/project/dependencies.md` 补充核对 |
-| `install.sh` | 修改驱动、需重启 | 只调度 patched-8/17；不把 patched-20 诊断候选设为默认 |
-| `install-patched17-and-check.sh` | 修改驱动、需重启 | legacy 深层回退入口；新设备默认入口是 4.0.0-i1 |
-| `install-patched8-and-check.sh` | 修改驱动、需重启 | 更早的历史恢复入口 |
-| `uninstall-innogpu.sh` | 卸载驱动、需重启 | 通用卸载器；版本包装见 `uninstall-patched*.sh`。会安全清理源码 fallback 创建的 `/usr/local/sbin` helper 符号链接（仅当指向本项目 `tools/debian/repair-dri-nodes.sh`，用户/包文件不删）并移除 repair unit；其内置恢复提示仍固定指向 patched-17，当前应以 `docs/user/recovery.md` 的 p27 首选链为准 |
-| `uninstall-patched17.sh` | 卸载驱动、需重启 | 仅允许卸载版本精确匹配 patched-17 的兼容包装 |
-| `uninstall-patched8.sh` | 卸载驱动、需重启 | 仅允许卸载版本精确匹配 patched-8 的兼容包装 |
+| `uninstall-innogpu.sh` | 卸载驱动、需重启 | 通用卸载器。`uninstall-patched*.sh` 已从主线删除，只从 tag `innogpu-4x-frozen` 检出。会安全清理源码 fallback 创建的 `/usr/local/sbin` helper 符号链接（仅当指向本项目 `tools/debian/repair-dri-nodes.sh`，用户/包文件不删）并移除 repair unit；其内置恢复提示仍固定指向 patched-17，当前应以 `docs/user/recovery.md` 的 p27 首选链为准 |
 | `disable-incompatible-userspace.sh` | 修改 `/usr` 和 Xorg 配置 | 恢复软件渲染/兼容用户态边界 |
 | `restore-tty1-login.sh` | 修改系统服务 | 优先恢复可见 TTY 登录 |
 | `prepare-soft-xorg-dwm.sh` | 修改 Xorg/会话 | 准备软件 Xorg；若 dotconfig xdisplay 已存在则接入，否则保留软件路径并警告 |
@@ -60,9 +51,9 @@
 
 | 入口 | 状态改变范围 | 说明 |
 | --- | --- | --- |
-| `install-picom-prereqs-debian.sh` | 安装软件包 | 安装固定 Picom 基线的 Debian 构建依赖 |
-| `install-picom-user.sh` | 修改目标用户配置 | 安装项目 Picom 配置（模板 `components/picom/picom.conf`）和单一 xprofile 会话入口 |
-| `picom-session.sh` | 启动用户进程 | 优先启动 patched Picom，缺失时回退 xcompmgr，并避免重复实例 |
+| `components/picom/debian/install-prereqs.sh` | 安装软件包 | 安装固定 Picom 基线的 Debian 构建依赖 |
+| `components/picom/install-user.sh` | 修改目标用户配置 | 安装项目 Picom 配置（模板 `components/picom/picom.conf`）和单一 xprofile 会话入口 |
+| `components/picom/session.sh` | 启动用户进程 | 优先启动 patched Picom，缺失时回退 xcompmgr，并避免重复实例 |
 
 ## 显示接入
 
@@ -81,23 +72,14 @@ xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项
 以下入口默认只读，或只创建 `/tmp`/`baselines/` 下的测试环境；带 VT/Xorg 的脚本仍可能短暂切换
 控制台，运行前必须阅读输出中的恢复命令：
 
-- `check-deepin-userspace-coherence.sh`
 - `check-docs.sh`
 - `materialize-o-stage.sh`
 - `check-desktop-hwgl.sh`
-- `check-innogpu-progress.sh`
-- `check-patched17-baseline.sh`
 - `check-post-reboot-hwgl.sh`
 - `check-soft-xorg-dwm.sh`
 - `check-release-package.sh`
 - `test-current-xorg-hwgl-runtime.sh`
-- `test-isolated-deepin-egl-gbm.sh`
-- `test-isolated-deepin-hwgl.sh`
-- `test-isolated-deepin-xorg-ddx.sh`
 - `test-xorg-once.sh`
-- `run-local-ddx-vt-test.sh`
-- `run-deepin-gbm-egl.sh`
-- `run-deepin-surfaceless-egl.sh`
 - `tools/debian/verify.sh`
 - `check-fantgpu-runtime-health.sh`
 - `check-fantgpu-pm-probe-removed.sh`
@@ -154,23 +136,18 @@ fail-closed/恢复清理失败 fail-closed）+ `tests/unit/run-030-meta-tests.sh
 
 | 入口 | 状态与风险 |
 | --- | --- |
-| `install-kylin-userspace.sh` | 历史 Kylin/UOS 用户态实验，存在 Xorg ABI 24/25 混配风险 |
-| `install-experimental-hwgl.sh` | 历史完整 vendor GBM/EGL/GLX 实验，已知错误组合可令 Xorg 崩溃 |
 | `patch-skip-first-gpupll.sh` | 直接修改预编译对象或已安装模块；只用于受控构建/恢复 |
-| `try-hotload-patched17.sh` | 尝试热替换内核模块，图形会话繁忙时必须停止 |
 | `start-soft-xorg-dwm-from-ssh.sh` | 从 SSH 启动临时图形链路，必须保留 TTY 恢复手段 |
 | `display-recover-and-diagnose.sh` | 故障恢复编排，会修改显示/Xorg 状态 |
 | `r51-battery-task2.sh` | R51 受授权现场恢复与拔插补证；从普通用户 shell 启动，特权动作由脚本自动 `sudo` 提示密码；仅操作 `PNP0C0A:00` 的 battery unbind/bind，读取 DSDT 并采集 udev/journal/sysfs；不重启、不触发 PM/watchdog；恢复失败时不进入拔插测试；完整输出、真实 rc、时间戳和 `result.txt` 自动落到 `.build/r51-battery-observation-20261002-01/task2-run-<ts>/`，`latest-run.txt` 指向最近一次执行 |
 | `restore-bat0.sh` | 现场 BAT0 恢复；从普通用户 shell 启动并自动 `sudo`；不依赖 AC 是否在线，枚举 `PNP0C0A:*` 后执行 battery unbind/bind，必要时只请求一次 `modprobe battery`；不卸载模块、不重启、不触发 PM/watchdog；完整输出、步骤 rc、时间戳和 `result.txt` 自动落到 `.build/bat0-recovery/run-<ts>/`，`latest-run.txt` 指向最近一次执行 |
-| `install-deepin-desktop-hwgl-trial.sh` | 仅在本地 DDX 门槛通过后启用硬件 GL 试验 |
-| `mark-patched17-soft-baseline.sh` | 只适用于 patched-17 历史软渲染基线 |
 
 这些入口保留用于追溯或受控排障，但不得被描述为当前推荐安装方式。
 
 ## 包载荷规则
 
 coherent 驱动 deb 只携带运行和恢复所需的 Innogpu 辅助脚本。历史 Kylin 用户态安装器、实验 HWGL
-安装器和直接二进制热补丁不得暴露为系统命令。仓库保留它们不等于 release 支持它们。
+安装器已从主线删除，只从 tag `innogpu-4x-frozen` 检出，不得暴露为系统命令。
 
 当前 `4.0.0-i1` 把 12 个项目 helper 实体安装到 `/usr/share/innogpu-fh2m-trixie/`，并为其中 10 个
 提供 `/usr/bin/innogpu-*` 与 `/usr/sbin/innogpu-*` 双链接。manifest 还原样导入 vendor 的

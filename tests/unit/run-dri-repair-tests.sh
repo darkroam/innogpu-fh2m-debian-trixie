@@ -21,7 +21,6 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 INSTALLER="$ROOT/tools/debian/install-dri-node-repair-service.sh"
 UNINSTALL="$ROOT/tools/debian/uninstall-innogpu.sh"
 CHECK_X="$ROOT/tools/debian/check-soft-xorg-dwm.sh"
-HOTLOAD="$ROOT/tools/debian/try-hotload-patched17.sh"
 T="$(mktemp -d "${TMPDIR:-/tmp}/inno-dri-repair-tests.XXXXXX")"
 trap 'rm -rf "$T"' EXIT
 export TMPDIR="$T/tmp"
@@ -420,8 +419,6 @@ fi
 if grep -Eq 'USER_NAME=.*(ok|[A-Za-z])|:[[:space:]]*ok([^A-Za-z]|$)' "$CHECK_X"; then
     fail no_hardcoded_user_in_check_x
 else pass no_hardcoded_user_in_check_x; fi
-if grep -Fq 'log in as ok' "$HOTLOAD"; then fail no_hardcoded_user_in_hotload;
-else pass no_hardcoded_user_in_hotload; fi
 if grep -Fq '"${INNOGPU_X_USER:-${SUDO_USER:-${USER:-}}}"' "$CHECK_X"; then
     pass user_resolution_order_present
 else fail user_resolution_order_present; fi

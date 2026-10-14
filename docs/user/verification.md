@@ -141,12 +141,11 @@ xrandr --current
 
 ## Xorg 与硬件 GL
 
-前三个检查只读取当前状态或查询现有桌面。最后一个命令会以 root 在 `:9`/`vt8` 启动临时 Xorg；它不写入
+前两个检查只读取当前状态或查询现有桌面。最后一个命令会以 root 在 `:9`/`vt8` 启动临时 Xorg；它不写入
 持久配置，但可能短暂切换控制台。只在 SSH 或已确认可登录的真实 TTY 可用时执行，并先阅读脚本打印的
-恢复命令；当前已验收设备不需要为了日常健康检查反复运行此测试。
+恢复命令；当前已验收设备不需要为了日常健康检查反复运行此测试。`check-innogpu-progress.sh` 已从主线删除。
 
 ```sh
-tools/debian/check-innogpu-progress.sh
 tools/debian/check-desktop-hwgl.sh
 sudo tools/debian/check-post-reboot-hwgl.sh
 sudo tools/debian/test-current-xorg-hwgl-runtime.sh

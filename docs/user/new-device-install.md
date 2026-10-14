@@ -71,8 +71,8 @@ debs/innogpu-fh2m-trixie_3.3.3.42-patched-8.deb
 `patched-27` 是 `4.0.0-i1` 的首选回退包，`patched-17`/`patched-8` 是深层回退包。没有 release
 记录时应停止并向维护者取得包；不得以未知来源 deb 或禁止部署的 patched-20 替代。
 
-这些文件和本地构建出的 deb 均被 `.gitignore` 忽略。`third_party/` 由脚本从 Deepin 原包重建，
-也不进入 Git。
+这些文件和本地构建出的 deb 均被 `.gitignore` 忽略。D 线解包树不进 Git。
+重建方法在 [`directory-layout.md`](../project/directory-layout.md)，用 `dpkg-deb -x`，不用已删除的解包脚本。
 
 ```sh
 export INNOGPU_ROOT="$HOME/src/innogpu-fh2m-debian-trixie"
@@ -125,14 +125,16 @@ sudo apt install ./debs/archive/legacy-build/innogpu-fh2m-trixie_4.0.0-i1.deb
 
 ```sh
 cd "$INNOGPU_ROOT"
-sudo tools/debian/install-patched17-and-check.sh
+git show innogpu-4x-frozen:tools/install-patched17-and-check.sh > tools/install-patched17-and-check.sh
+sudo tools/install-patched17-and-check.sh
 ```
 
+该脚本不在主线。检出位置必须是仓库根下的 `tools/`，脚本用自身上一级当仓库根。
 目标桌面用户不是 `SUDO_USER` 时，显式指定用户和主目录：
 
 ```sh
 sudo INNOGPU_X_USER="$USER" INNOGPU_X_HOME="$HOME" \
-  tools/debian/install-patched17-and-check.sh
+  tools/install-patched17-and-check.sh
 ```
 
 安装器保持软件 Xorg 用户态，并准备 DKMS、模块自加载和 initramfs。重启后先验证 TTY、驱动节点和

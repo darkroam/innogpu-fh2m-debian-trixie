@@ -12,7 +12,7 @@ install_binary=0
 
 usage() {
     cat <<'USAGE'
-Usage: tools/debian/build-patched-fbterm.sh [options]
+Usage: components/fbterm/build.sh [options]
 
 Options:
   --source DIR      Debian fbterm 1.7-5 source tree (default: $HOME/src/fbterm-1.7)

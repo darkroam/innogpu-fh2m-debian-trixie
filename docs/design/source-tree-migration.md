@@ -71,7 +71,7 @@ patches/                         历史 provenance 永久保留，不得移动�
 
 实际测试入口不是单一 `run-dev-tests.sh`：CI 顺序由 `.github/workflows/ci.yml` 定义，可重复套件及
 计数由 `tests/README.md` 和 `docs/project/test-strategy.md` 登记；完整 DKMS integration 由
-`tools/debian/check-deb-dkms-build.sh`、`tools/debian/compare-module-symbols.sh` 等独立入口承担。
+`tools/debian/check-deb-dkms-build.sh` 承担。
 
 ## 三、14 个 patch 的 provenance 与分类
 

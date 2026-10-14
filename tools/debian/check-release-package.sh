@@ -345,14 +345,14 @@ for helper in restore-dp1-mode-x11.sh xdisplay-session.sh install-xdisplay-user.
     if [[ "$helper_cmp_mode" == "fantgpu" ]]; then
         # F 包内 helper 是 transform-fantgpu-helper.sh 的输出（builder 同
         # 管线），cmp 必须对照变换后字节而非 tools/ 原始字节。
-        bash "$ROOT/tools/internal/transform-fantgpu-helper.sh" < "$ROOT/tools/$helper" \
+        bash "$ROOT/tools/internal/transform-fantgpu-helper.sh" < "$ROOT/tools/debian/$helper" \
             > "$runtime/helpers/$helper.expected"
         cmp -s "$runtime/helpers/$helper.expected" "$runtime/helpers/$helper" || {
             echo "ERROR: packaged integration helper differs from transformed source: $helper" >&2
             exit 1
         }
     else
-        cmp -s "$ROOT/tools/$helper" "$runtime/helpers/$helper" || {
+        cmp -s "$ROOT/tools/debian/$helper" "$runtime/helpers/$helper" || {
             echo "ERROR: packaged integration helper differs from current source: $helper" >&2
             exit 1
         }

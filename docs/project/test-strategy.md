@@ -106,7 +106,6 @@ Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
 | runtime 能力基线 | tests/runtime/run-capability-baseline.sh | 12 能力域、35 项；默认只读，人工结果显式合并 | 沙箱/真机授权 | 授权项可能有副作用 |
 
 另：`tools/check-docs.sh`（静态，链接/登记/隐私/版本/边界）、`check-source-parity.sh`（只读 parity）、
-`compare-oracle-candidates.sh` + `compare-module-symbols.sh`（integration oracle）、
 `check-deb-dkms-build.sh`（integration 离线编译，需本机内核头）。
 
 **盘点结论**：unit、fixture、static、integration 和 runtime 五层均已有入口；当前入口数与历史

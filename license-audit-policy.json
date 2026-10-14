@@ -134,7 +134,6 @@
       ".gitattributes": "GPL-3.0-or-later",
       ".gitignore": "MIT",
       "README.md": "MIT",
-      "tools/debian/install.sh": "MIT",
       "patches/024-suspend-resume.patch": "MIT OR GPL-2.0-only",
       "patches/025-suspend-resume-display.patch": "MIT OR GPL-2.0-only",
       "patches/026-suspend-resume-dvfs-lifecycle.patch": "MIT OR GPL-2.0-only",
@@ -146,7 +145,12 @@
       "components/linux/003-pinctrl-amd-hygon-gpio.patch": "GPL-2.0-only",
       "components/linux/004-snd-hda-hygon-14c9.patch": "GPL-2.0-only",
       "components/picom/001-probe-explicit-uniform-location.patch": "MPL-2.0",
-      "components/picom/picom.conf": "GPL-3.0-or-later"
+      "components/picom/picom.conf": "GPL-3.0-or-later",
+      "components/picom/build.sh": "GPL-3.0-or-later",
+      "components/picom/install-user.sh": "GPL-3.0-or-later",
+      "components/picom/session.sh": "GPL-3.0-or-later",
+      "components/picom/debian/install-prereqs.sh": "GPL-3.0-or-later",
+      "components/fbterm/build.sh": "GPL-3.0-or-later"
     }
   },
   "notice_gate": {
@@ -157,8 +161,7 @@
       {
         "paths": [
           ".gitignore",
-          "README.md",
-          "tools/debian/install.sh"
+          "README.md"
         ],
         "markers": [
           "Copyright (c) 2026 Tim Hant",

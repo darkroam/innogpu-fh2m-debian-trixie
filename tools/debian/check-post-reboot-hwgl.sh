@@ -41,8 +41,6 @@ fi
     echo "timestamp=$(date -Is)"
     echo "boot_time=$boot_time"
     echo
-    "$ROOT/tools/debian/check-innogpu-progress.sh"
-    echo
     echo "===== Existing Post-Reboot Desktop Evidence ====="
     echo "latest_desktop_result=${latest_desktop_result:-missing}"
     echo "latest_desktop_report=${latest_desktop_report:-missing}"

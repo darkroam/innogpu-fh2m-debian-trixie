@@ -33,7 +33,7 @@ debs/innogpu-fh2m_20250421190503-debug_amd64.deb
 
 新架构构建器经 manifest/提取器默认只读取上述 `debs/` 路径；其他位置必须显式设置
 `INNOGPU_DEEPIN_DEB`。`tools/build-deepin-coherent.sh` 不在主线。
-`tools/prepare-deepin-userspace-root.sh` 仍保留仓库根旧路径兼容查找，但它只服务 legacy 流程。
+解包脚本已从主线删除。D 线解包树按 [`directory-layout.md`](../docs/project/directory-layout.md) 的 `dpkg-deb -x` 重建。
 历史 patched 包只用于安装回退或复现记录，不能作为新包输入。
 
 本机保存的 patched-19/20 deb 生成于 xdisplay 所有权收敛之前，包内仍有旧显示引擎和实验辅助文件。

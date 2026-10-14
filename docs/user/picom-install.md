@@ -3,7 +3,7 @@
 ## 安装依赖
 
 ```sh
-sudo tools/debian/install-picom-prereqs-debian.sh
+sudo components/picom/debian/install-prereqs.sh
 ```
 
 ## 准备固定源码
@@ -18,9 +18,9 @@ git -C "$HOME/src/picom" checkout 6d676824c457a933c52e3e92c5a1856466f90545
 ## 构建和安装
 
 ```sh
-tools/debian/build-patched-picom.sh --source "$HOME/src/picom"
-tools/debian/build-patched-picom.sh --source "$HOME/src/picom" --install
-tools/debian/install-picom-user.sh
+components/picom/build.sh --source "$HOME/src/picom"
+components/picom/build.sh --source "$HOME/src/picom" --install
+components/picom/install-user.sh
 ```
 
 `--install` 只将已构建的 Picom 二进制安装到 `/usr/local/bin/picom`，首次覆盖前保存

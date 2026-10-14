@@ -40,7 +40,7 @@ CMDS=(disable-incompatible-userspace repair-dri-nodes test-xorg-once
 FAKE="$TMP/tree"
 mkdir -p "$FAKE/usr/share/fantgpu-fh2m-trixie" "$FAKE/usr/bin" "$FAKE/usr/sbin"
 for h in "${HELPERS[@]}"; do
-    bash "$XF" < "tools/$h" > "$FAKE/usr/share/fantgpu-fh2m-trixie/$h"
+    bash "$XF" < "tools/debian/$h" > "$FAKE/usr/share/fantgpu-fh2m-trixie/$h"
     chmod 0755 "$FAKE/usr/share/fantgpu-fh2m-trixie/$h"
 done
 for c in "${CMDS[@]}"; do

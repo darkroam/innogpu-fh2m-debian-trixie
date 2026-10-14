@@ -345,11 +345,11 @@ for h in "${helpers[@]}"; do
     if [[ "$FANT_LINEAGE" == 1 ]]; then
         # F 血统：变换 helper 内部调用链 token（命令名/share 路径/模块条件）；
         # O 血统保持脚本原始字节（check-release-package cmp 契约）
-        bash tools/internal/transform-fantgpu-helper.sh < "tools/$h" \
+        bash tools/internal/transform-fantgpu-helper.sh < "tools/debian/$h" \
             > "$P/usr/share/$SHARE_DIR/$h"
         chmod 0755 "$P/usr/share/$SHARE_DIR/$h"
     else
-        install -m 0755 "tools/$h" "$P/usr/share/$SHARE_DIR/$h"
+        install -m 0755 "tools/debian/$h" "$P/usr/share/$SHARE_DIR/$h"
     fi
 done
 declare -A cmds=( [${CMD_PREFIX}disable-incompatible-userspace]=disable-incompatible-userspace.sh

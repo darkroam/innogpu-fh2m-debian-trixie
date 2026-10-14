@@ -265,7 +265,7 @@ mkfdeb() {  # mkfdeb <name> <mode: full|forbidden|rawhelper|dirtype|dangling|dro
             printf '%s\n' '#!/bin/bash' 'innogpu-repair-dri-nodes placeholder' \
                 > "$root/usr/share/$pkg/$h"
         else
-            bash "$ROOT/tools/internal/transform-fantgpu-helper.sh" < "$ROOT/tools/$h" \
+            bash "$ROOT/tools/internal/transform-fantgpu-helper.sh" < "$ROOT/tools/debian/$h" \
                 > "$root/usr/share/$pkg/$h"
         fi
         chmod 0755 "$root/usr/share/$pkg/$h"

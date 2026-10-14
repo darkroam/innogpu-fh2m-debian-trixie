@@ -50,7 +50,7 @@ staging）；`.build/evidence/` = 本机验证证据；`debs/` = 不可变输入
 
 ### A4. 所有权边界（CONFIRMED）
 
-- Picom/fbterm：外部组件，本项目维护 patched 构建（components/ + tools/build-patched-*）。
+- Picom/fbterm：外部组件，本项目维护 patched 构建（`components/picom/`、`components/fbterm/`）。
 - dotconfig/xdisplay：独立仓库，本项目只维护设备钩子/会话接入/恢复命令（`CONFIRMED`：check-docs
   拒绝仓库内出现 xdisplay 引擎副本）。
 - 音频：HDA 内置（Conexant SN6180）+ FH2M HDMI 音频 + PipeWire；本仓库维护修复脚本与接入。
@@ -64,7 +64,6 @@ Deepin deb(校验 SHA) → generate-binary-manifest(校验+生成) → validate-
     → 离线 DKMS 编译(make KERNELDIR) → vermagic 校验 → 包装配(vendor payload 按 case-map、
     helpers、maintainer scripts、ld.so.conf) → [.o.cmd 守卫] → mtime 归一化
     → dpkg-deb --build → check-release-package → 可复现双构建 SHA 对比
- → compare-oracle-candidates.sh(8+module_symbols 项 vs patched-27)
 ```
 
 - 门禁逐项核实：版本排序（`dpkg --compare-versions`）、manifest check-only 失败即停、
@@ -161,7 +160,7 @@ R15 对 6 个启动 journal（2026-09-02 11:50 至 2026-09-03 16:13）做了逐�
 
 ## 证据索引
 
-- 构建链：`tools/debian/build-driver.sh`、`compare-oracle-candidates.sh`、`extract-vendor-binaries.sh`
+- 构建链：`tools/debian/build-driver.sh`、`extract-vendor-binaries.sh`
 - 运行链：`build-innogpu-driver.sh` postinst 段、`docs/user/recovery.md`、`docs/archive/phase4-device-validation.md`
 - 边界：`binary-manifest.json`、`docs/project/licensing.md`、`maintenance-policy.md`
 - 测试：`tests/README.md`、`tools/check-docs.sh`

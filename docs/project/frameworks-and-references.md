@@ -16,7 +16,7 @@
 | 内核子系统 | DRM/KMS、fbdev、GEM、DMA-BUF、PCI、ALSA、dma_resv/fence | 驱动源码直接使用（inno_drm.c、inno_mm.c、innodpu_*、inno_audio.c 等） | tag 上的 drivers/innogpu/*、innosrvkm/* |
 | 用户态图形 | X.Org modesetting、Mesa GLX/EGL/GBM、DRI2/DRI3、GLVND、VA-API | 驱动包携带 Deepin 同源用户态（libVK_INNO/libINNOOCL/GL-MESA/GBM/DRI/DDX）；Xorg 用 modesetting+innogpu DRI | manifest userspace 条目、check-desktop-hwgl 输出（AIGLX innogpu） |
 | 计算 API | Vulkan 1.3.264（DRIVER_ID_IMAGINATION_PROPRIETARY）、OpenCL 3.0 | 预编译 ICD（libVK_INNO、libINNOOCL） | capability-survey.md（OBSERVED） |
-| 桌面/服务 | X11+dwm、Picom（patched）、PipeWire/WirePlumber、systemd、udev、initramfs | 项目维护 Picom patched 构建与设备钩子；音频由 PipeWire 管理 | tools/debian/build-patched-picom.sh、compositor-management.md |
+| 桌面/服务 | X11+dwm、Picom（patched）、PipeWire/WirePlumber、systemd、udev、initramfs | 项目维护 Picom patched 构建与设备钩子；音频由 PipeWire 管理 | components/picom/build.sh、compositor-management.md |
 | 构建/测试 | Bash（67 脚本）、Python 3（tools/）、dpkg/apt、DKMS、shell fixture | 构建器/清单/提取器/校验全为 Bash+Python；测试为 shell fixture | tools/、tools/、tests/ |
 
 ## 二、来源基线与参考模型（事实/证据/限制）
@@ -28,7 +28,7 @@
 | Innosilicon/FH2M 厂商内容 | 导入源码、黑盒对象、固件和用户态 | 随 Deepin 包 | 源码头包含 Dual MIT/GPL 引用、BSD/LGPL 和 `Strictly Confidential`；黑盒不可读；逐项许可 UNVERIFIED | CONFIRMED(存在与头部)/UNVERIFIED(再分发权) |
 | PowerVR DDK V119 RTM | 谱系/参考 | BVNC 35.V.1632.23、G0M_SOC、META MTP219 | ddk-v119-mapping.md；与主线 drm/imagination + Mesa pvr 对照 | OBSERVED(特征)/INFERRED(谱系) |
 | Linux DRM/Mesa/PVR 主线 | **行为/语义对照**（非直接依赖） | 内核 6.12.101 | ddk-v119-mapping、patch 兼容层（drm_edid_block_valid stub 等） | INFERRED(用途)/CONFIRMED(存在) |
-| Picom（yshui/picom） | 外部组件 + 本项目 patched 构建 | commit `6d676824c457a933c52e3e92c5a1856466f90545` 固定 | build-patched-picom.sh、GLX 扩展缺失 patch | CONFIRMED |
+| Picom（yshui/picom） | 外部组件 + 本项目 patched 构建 | commit `6d676824c457a933c52e3e92c5a1856466f90545` 固定 | components/picom/build.sh、GLX 扩展缺失 patch | CONFIRMED |
 | fbterm（Debian 1.7-5） | 外部组件 + patched 构建 | Debian 源 | components/fbterm/ 补丁、redraw 模式 | CONFIRMED |
 | dotconfig xdisplay | 集成目标（独立仓库） | 不固定在本仓库 | 仅设备钩子/会话接入/恢复命令；引擎不入库 | CONFIRMED |
 | X.Org/modesetting/Mesa | 运行时集成目标 | 系统包 | AIGLX innogpu、DRI2 driver innogpu（OBSERVED） | CONFIRMED/OBSERVED |

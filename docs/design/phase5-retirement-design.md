@@ -1,7 +1,7 @@
 # Phase 5 旧流程退役设计（两步方案，监督 2026-08-21 建议）
 
 **状态**：Step 1 已完成并通过复核；Step 2 的触发条件尚未全部满足，且未获执行批准。设备运行 `4.0.0-i1`，main 已合并并推送。
-2026-10-14 政策变更：D 线 14 个脚本（`build-patched17`–`28` 共 12 个，不是 13 个；另加 `build-deepin-coherent.sh` 与 `materialize-d-stage.sh`）已从主线删除，只从 tag `innogpu-4x-frozen` 检出，与 O 线只从 tag 检出同一条规则。`debs/` 与历史 tag 仍永久保留。下文「继续保留在 `tools/`」或「禁止物理删除」对这 14 个脚本不再有效。
+2026-10-14 政策变更：D 线 14 个脚本（`build-patched17`–`28` 共 12 个，不是 13 个；另加 `build-deepin-coherent.sh` 与 `materialize-d-stage.sh`）已从主线删除，只从 tag `innogpu-4x-frozen` 检出，与 O 线只从 tag 检出同一条规则。`debs/` 与历史 tag 仍永久保留。下文「继续保留在 `tools/`」或「禁止物理删除」对这 14 个脚本不再有效。同日又删 23 个 D/早期线脚本，只从 tag `innogpu-4x-frozen` 检出；表内「禁止物理删除」对它们不再有效。
 
 ## 一、目标
 

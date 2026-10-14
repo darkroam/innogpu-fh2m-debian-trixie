@@ -49,7 +49,7 @@ make_package() {
     : > "$root/usr/lib/xorg/modules/drivers/innogpu_drv.so"
     : > "$root/usr/share/glvnd/egl_vendor.d/00_inno.json"
     for helper in restore-dp1-mode-x11.sh xdisplay-session.sh install-xdisplay-user.sh; do
-        cp "$ROOT/tools/$helper" "$root/usr/share/innogpu-fh2m-trixie/$helper"
+        cp "$ROOT/tools/debian/$helper" "$root/usr/share/innogpu-fh2m-trixie/$helper"
     done
     case "$variant" in
         legacy)

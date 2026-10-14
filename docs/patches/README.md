@@ -35,11 +35,13 @@
   legacy 回退包复现依据。
 - `components/picom/`、`components/fbterm/`——**当前维护的第三方组件补丁与配置**（2026-08-21 由
   `patches/picom/`、`patches/fbterm/`、`config/` 迁入，历史内容保留）：补丁由
-  `tools/debian/build-patched-picom.sh`、`tools/debian/build-patched-fbterm.sh` 在构建对应组件时应用，
+  `components/picom/build.sh`、`components/fbterm/build.sh` 在构建对应组件时应用，
   与驱动包构建无关；`components/picom/picom.conf` 是项目维护的配置模板，由
-  `tools/debian/install-picom-user.sh` 作为默认配置源安装。
+  `components/picom/install-user.sh` 作为默认配置源安装。
 
 ## 当前第三方补丁台账
+
+`components/linux/` 的适用内核以目录规划的系统层为准，矩阵另批。
 
 截至 2026-10-12，仓库中**当前维护的第三方组件补丁共 6 个**。这里的“第三方”按
 **补丁修改的上游/厂商来源、许可和版本基线**判定，不按是否进入 DKMS 判定。DKMS 只是

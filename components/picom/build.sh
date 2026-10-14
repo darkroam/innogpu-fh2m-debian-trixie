@@ -13,7 +13,7 @@ install_binary=0
 
 usage() {
     cat <<'USAGE'
-Usage: tools/debian/build-patched-picom.sh [options]
+Usage: components/picom/build.sh [options]
 
 Options:
   --source DIR      Pinned Picom source checkout (default: $HOME/src/picom)

@@ -42,9 +42,9 @@
 | `tools/internal/` | 构建期变换、审计与诊断；不是给人记的命令名 | tracked | 门禁与测试直接调用；与 allowlist 同步 |
 | `tests/` | fixture、静态与单元回归 | tracked | 与对应行为同批更新 |
 | `docs/` | 当前状态、设计、事故、用户指南和历史 | tracked | 同一事实只设一个权威页 |
-| `third_party/` | 可入库的第三方源码/说明；指定的大型解包目录除外 | 混合 | 每项必须有来源、版本、许可和适用条件；解包树由 `.gitignore` 排除 |
+| `third_party/` | 可入库的第三方源码/说明；指定的大型解包目录除外 | 混合 | 解包树由 `.gitignore` 排除。D 线 202504 树的重建见下节 |
 | `vendor/` | manifest 管理的本地二进制 payload 物化区 | ignored | 不入库；可由锁定输入恢复后才可重建/清理 |
-| `debs/` | 包管理或人工取得的不可变 `.deb`/源码包/回滚实物 | 内容 ignored，`README.md` tracked | 当前内核版源码包和有效回滚包保留；升级稳定后再清前版 |
+| `debs/` | 本地输入仓库：不可变 `.deb`/源码包/回滚实物 | 内容 ignored，只跟踪 `README.md` | 不进 git，不随仓库分发。D 线旧包与现行输入包留在本机 |
 | `.build/work/` | 展开源码、对象、stage、临时构建与可重建工具 | ignored | 对应任务闭链且权威输入存在后可清 |
 | `.build/evidence/` | 本机 SHA、日志、回执、安装和验收证据 | ignored | 按轮次保留/清理裁决；禁止与 work 一起整根删除 |
 | `.build/tools/` | 可重建工具展开树与 cache | ignored | 原始 archive 完整且校验通过后可清 |
@@ -56,6 +56,35 @@
 | `.agents/`、`.codex/`、`.qoder/` | Agent/工具本机会话状态 | ignored | 不属于项目交付，可由对应工具管理 |
 | `.shaders/` | 驱动生成的 shader cache | ignored | 可随时清理 |
 | `.git/` | Git 内部数据库 | Git 自管 | 禁止由项目清理脚本操作 |
+
+## components 层级
+
+第三方补丁、软件、系统三层。软件在上，系统在下。先问改的是哪个软件，放该软件目录。再问只服务哪个系统，放该软件目录下的系统子层。跨系统操作不进系统子层。
+
+`components/picom/build.sh` 与 `components/picom/session.sh` 是软件层。`components/picom/debian/install-prereqs.sh` 是软件下的 Debian 层。`components/linux/` 是内核补丁的系统层；适用内核进系统×内核矩阵。矩阵另批，本提交不建表。
+
+## 本地输入与 D 线解包树
+
+`debs/` 是本地输入仓库。除 `README.md` 外不进 git，也不随仓库分发。D 线旧 deb、
+`innogpu-fh2m_20250421190503-debug_amd64.deb` 与 F 线输入包都留在本机。公开分发另走发布审阅。
+
+`third_party/innogpu-fh2m-deepin-202504/` 已被 `.gitignore` 排除，不在任何 tag。它是上述 D 线 deb 的解包树，
+不是 `materialize-d-stage.sh` 的产物。主线工作树不保留这棵树。重建：
+
+```bash
+mkdir -p third_party/innogpu-fh2m-deepin-202504
+dpkg-deb -x debs/innogpu-fh2m_20250421190503-debug_amd64.deb \
+  third_party/innogpu-fh2m-deepin-202504/root
+```
+
+输入 SHA-256 是 `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2`。
+哨兵 `usr/src/innogpu-kernel-2.2/Makefile` 与包内同路径一致，SHA-256
+`9e35f6f8dfaac015210b1704daca6cda1b8ff27e07c20e41109bd79b597bb68d`。
+
+tag `innogpu-4x-frozen` 的 `tools/materialize-d-stage.sh`（SHA-256
+`428d5f7bcb167c9d8f7da52e6c789e77888a260509c3896e40cfbfed81ace0ed`）只读
+`third_party/innogpu-fh2m-deepin-202504/root/usr/src/innogpu-kernel-2.2`，写出 `/tmp/r16-d-stage`。
+它不能代替上面的解包。
 
 `.build/work/`、`.build/evidence/` 和 `.build/tools/` 是当前布局；既有轮次目录可继续存在，
 但所有新脚本必须采用目标布局。证据目录名称必须包含轮次或稳定主题，不能使用无语义的
