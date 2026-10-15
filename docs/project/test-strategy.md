@@ -237,7 +237,7 @@ Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
   - 枚举成功 ≠ execution PASS；无设备时探针返回可解释失败（rc=2/3）；
   - 真机 execution 证据（2026-08-24 用户实测已 PASS）：vulkan exec 5000（queue+fence submit+wait）
     与 opencl exec 1024（add kernel+读回逐元素校验）均在 Fantasy II-M 上执行并验证；
-    runtime_vulkan_execution/opencl_execution=PASS（evidence: baselines/runtime-results-20260824.txt）。
+    runtime_vulkan_execution/opencl_execution=PASS（evidence: baselines/runtime/runtime-results-20260824.txt）。
   - 测试：tests/unit/run-exec-probes-tests.sh（CI 无 /dev/dri 可跑）覆盖编译/缺 loader/
     无设备/枚举回归/超时清理/机器格式。
 - VA-API H.264/HEVC 实际解码（2026-08-24）：`tools/internal/run-vaapi-decode-test.sh --codec h264|hevc|all`
@@ -258,7 +258,7 @@ Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
   HEVC 均完成真实硬解+输出校验后升级 PASS——2026-08-24 真机执行（监督者于 c7b3a40 上沙箱外运行
   `bash tools/internal/run-vaapi-decode-test.sh --codec all`）：H264 Main 与 HEVC Main 均强制 VA-API 硬解、各 30 帧
   320x240 NV12 framemd5 hash 与软件参考一致、Driver/Firmware 状态门禁通过 → 升级 PASS
-  （evidence: baselines/runtime-results-20260824.txt）；**能力边界**：仅 Main/Main 8-bit 4:2:0，H.264 High/
+  （evidence: baselines/runtime/runtime-results-20260824.txt）；**能力边界**：仅 Main/Main 8-bit 4:2:0，H.264 High/
   Constrained Baseline、HEVC Main10、编码、播放/长时/并发/4K/性能功耗均未验证；枚举
   profile/entrypoint 或 ffmpeg 退出 0 不等于实际解码成功；测试：tests/unit/run-vaapi-decode-tests.sh
   （fake fixture，CI 无 /dev/dri）。
@@ -274,7 +274,7 @@ Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
   FAIL 2=参数/工具/编译或整体 SKIP 3=设备/能力缺失或整体 UNVERIFIED 5=超时/清理；fixture 模式独立命名
   空间 fixture_dmabuf_*/fixture_tests_*，零权威 dmabuf_* 行；`runtime_dmabuf_regression` 已由 2026-08-26
   真机运行升级为 **PASS**（同设备 PRIME self-import/READ/WRITE/active vblank/状态门禁全 PASS，inactive guard 按
-  拓扑通过，kernel_log=clean；证据见 `baselines/runtime-results-20260824.txt`）；**能力边界不变**：仅同设备
+  拓扑通过，kernel_log=clean；证据见 `baselines/runtime/runtime-results-20260824.txt`）；**能力边界不变**：仅同设备
   PRIME self-import，foreign import/跨设备 GTT export/GBM/V4L2/第二 GPU/长期压力/并发仍 UNVERIFIED；探针：
   probe-dmabuf-self-import.c（新）、probe-pdp-invisible-read.c、
   probe-drm-topology.c、probe-drm-vblank.c（失败行加 errno）；测试：tests/unit/run-dmabuf-regression-tests.sh

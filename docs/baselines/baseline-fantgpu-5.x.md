@@ -3,7 +3,7 @@
 本代以 fantgpu `3.3.8.126` F0 源重新推导 030-NNN 链。本页事实表仍是 i6 代表物，不是现行状态。
 构建可复现和首启健康均不等于发布验收。现行诊断线是 `5.0.0-i12`，R5 已通过，validation-results 已签署，tag `fantgpu-5.0.0-i12` 指向 `079b179`。见 [status](../project/status.md)。本页不把 i12 写成已验收发布版。
 
-本目录 docs/baselines/ 与仓库根 baselines/（运行结果归档）同词异物、互不相关。
+代际事实在这三页，运行 marker 在仓库根 `baselines/` 的子目录，两者不互相证明。
 本页已在 R17 第 2 轮经 qoder 初审、dsh 终审并提交（1bf294a）。代际事实基准为本机
 `collab/R17-2026-09-19-文档优化迭代/report.md#L359-L380 @ b5816b7c5a41`（§21）。
 当前结论见 [status](../project/status.md)，前代见 [deepin 4.0.x](baseline-deepin-4.x.md)。

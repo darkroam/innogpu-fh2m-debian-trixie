@@ -9,7 +9,7 @@
 #   tools/debian/run-capability-survey.sh [--out DIR] [--vaapi-only]
 #
 #   --out DIR     write the log to DIR/capability-survey-<ts>.log (default:
-#                 baselines/capability-survey-<ts>.log under the repo root)
+#                 baselines/capability/capability-survey-<ts>.log under the repo root)
 #   --vaapi-only  run only the VA-API section (fast retest after probe changes)
 #
 # In a session with /dev/dri access (real desktop or TTY) the survey reports the
@@ -21,7 +21,7 @@ set -euo pipefail
 ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 cd "$ROOT"
 
-OUT_DIR="$ROOT/baselines"
+OUT_DIR="$ROOT/baselines/capability"
 VAAPI_ONLY=0
 while [[ $# -gt 0 ]]; do
     case "$1" in

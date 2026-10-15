@@ -13,7 +13,7 @@
 #
 # No deb install, no module switch, no reboot, no Xorg/PipeWire/display config
 # change. Privacy: all output goes to a temp RAW_LOG; on exit it is redacted
-# into baselines/runtime-baseline-<ts>.txt (personal paths/XAUTHORITY stripped),
+# into baselines/runtime/runtime-baseline-<ts>.txt (personal paths/XAUTHORITY stripped),
 # so abnormal termination still leaves only a redacted artifact.
 #
 # Output per test: runtime_<name>=PASS|FAIL reason=...|SKIP reason=...|UNVERIFIED reason=...
@@ -107,7 +107,7 @@ fi
 RUNTIME_TMP="${TMPDIR:-/tmp}"
 RUNTIME_DIR="$(mktemp -d "$RUNTIME_TMP/runtime-baseline.XXXXXX")"
 TS="$(date +%Y%m%d-%H%M%S)"
-BASELINE_DIR="${RUNTIME_BASELINE_DIR:-$ROOT/baselines}"
+BASELINE_DIR="${RUNTIME_BASELINE_DIR:-$ROOT/baselines/runtime}"
 FULL_LOG="$BASELINE_DIR/runtime-baseline-$TS.txt"
 LATEST="$BASELINE_DIR/latest-runtime-baseline.txt"
 RAW_LOG="$RUNTIME_DIR/raw.log"

@@ -292,7 +292,7 @@ GEM，执行 READ CPU_PREP、逐页读取、CPU_FINI 和 `munmap`。它不加载
   跨设备 GTT export、V4L2/第二 GPU、长期压力与并发流仍 UNVERIFIED；vblank 是独立同步子项，不是
   DMA-BUF export/import 证据；invisible GEM READ/WRITE 是 PDP 私有语义，不是 DMA-BUF 生命周期测试。
 - fixture 测试 147 项（tests/unit/run-dmabuf-regression-tests.sh），CI 无 /dev/dri 可跑；真机证据已由
-  2026-08-26 root 权限运行采集并封存（`baselines/runtime-results-20260824.txt`），`runtime_dmabuf_regression`
+  2026-08-26 root 权限运行采集并封存（`baselines/runtime/runtime-results-20260824.txt`），`runtime_dmabuf_regression`
   已升级为 PASS（仅同设备 PRIME self-import；foreign/跨设备/GBM/V4L2/长期压力/并发仍 UNVERIFIED）。
 
 ## 风险与回退

@@ -9,7 +9,7 @@ DISPLAY_NUM="${INNOGPU_X_DISPLAY:-:0}"
 X_USER="${INNOGPU_X_USER:-${SUDO_USER:-${USER:-}}}"
 USER_HOME="${INNOGPU_X_HOME:-$(getent passwd "$X_USER" 2>/dev/null | cut -d: -f6)}"
 USER_HOME="${USER_HOME:-$HOME}"
-REPORT_DIR="$ROOT/baselines"
+REPORT_DIR="$ROOT/baselines/desktop-hwgl"
 REPORT="$REPORT_DIR/desktop-hwgl-$(date +%Y%m%d-%H%M%S).txt"
 
 section() {

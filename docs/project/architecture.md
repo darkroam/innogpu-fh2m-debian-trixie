@@ -40,7 +40,7 @@ PCI 0000:06:00.6 [1d94:14c9]
 | `tests/` | 本项目脚本、fbterm/Picom 和显示接入边界测试；xdisplay 引擎测试留在 dotconfig |
 | `collab/` | dsh/codex 本机协作轮次；`.gitignore` 排除，不属于 Git 或公开分发面 |
 | `docs/` | 文档职责、迁移后目录及保留原位清单见 [文档导航](../README.md)，此处不重复维护目录表 |
-| `baselines/` | 精简运行证据；`latest-runtime-baseline.txt` 的 35 项结果归属 Deepin `4.0.0-i1`，不得当作 fantgpu i6 验收；与 `docs/baselines/` 代际叙述区分 |
+| `baselines/` | 精简运行证据；`baselines/runtime/latest-runtime-baseline.txt` 的 35 项结果归属 Deepin `4.0.0-i1`，不得当作 fantgpu i6 验收；与 `docs/baselines/` 代际叙述区分 |
 | `vendor/fantgpu/` | F manifest 锁定的本机载荷，不进入 Git；F0 + 030 链物化源码由 O_stage 快照锁定 |
 | `third_party/` | 从外部 Deepin deb 生成的解包目录，不进入 git |
 
@@ -191,7 +191,7 @@ Picom 属于独立用户态组件，不进入显卡驱动 deb。项目固定上�
 - 活动 `/etc/X11`、logind、udev 状态必须先记录和审查，不能从本机直接整份复制进仓库。
 - 用户完整 `xprofile` 包含输入法、Picom、代理等无关设置，不能整体吸纳；只提取显示启动契约。
 - 外部 `.deb`、原始日志、EDID、序列号、用户名和绝对 home 路径不得提交。
-- `baselines/latest-runtime-baseline.txt` 是当前 runtime 汇总权威，但其 `tested_commit` 与证据边界必须
+- `baselines/runtime/latest-runtime-baseline.txt` 的 `tested_commit` 与证据边界必须
   保留；其他 `latest-*` 只有在文件名或内容带版本身份时才能证明对应版本。改变当前机器前仍需本地
   运行时验证，任何摘要都不能替代授权后的设备检查。
 

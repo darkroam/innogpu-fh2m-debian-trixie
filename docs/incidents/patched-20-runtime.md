@@ -15,4 +15,4 @@ PVR services 初始化诊断。诊断只记录 ioctl 前后状态和返回码，
 
 PVR 诊断会重复写内核日志，属于诊断候选而非长期发布配置。正式版本应移除、限速或只记录首次
 失败，然后重复 PVR、Xorg/GLX、正常桌面和真实 VT 全部门槛。原始日志放在用户本机；仓库只保留
-`baselines/latest-current-xorg-hwgl-test/result.txt` 等精简证据。
+`baselines/desktop-hwgl/latest-current-xorg-hwgl-test/result.txt` 等精简证据。

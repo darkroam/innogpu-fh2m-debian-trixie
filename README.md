@@ -55,6 +55,12 @@ VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=1790812800 bash tools/debian/build-driver.sh
 回退到保留基线：`sudo apt install --allow-downgrades ./debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb`
 （详见 [docs/user/recovery.md](docs/user/recovery.md)）。
 
+## 目录
+
+- 二级规划见 [docs/project/directory-layout.md](docs/project/directory-layout.md)。
+- `baselines/current.txt` 指向 status。`baselines/runtime/latest-runtime-baseline.txt` 是 `4.0.0-i1` 的历史摘要，不是 i12 验收。
+- 代际事实在 [docs/baselines/](docs/baselines/)。
+
 ## 文档结构
 
 | 目标 | 文档 |

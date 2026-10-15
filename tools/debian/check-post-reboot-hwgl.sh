@@ -5,15 +5,15 @@
 set -euo pipefail
 
 ROOT="${INNOGPU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
-REPORT="$ROOT/baselines/post-reboot-hwgl-$(date +%Y%m%d-%H%M%S).txt"
+REPORT="$ROOT/baselines/desktop-hwgl/post-reboot-hwgl-$(date +%Y%m%d-%H%M%S).txt"
 
-mkdir -p "$ROOT/baselines"
+mkdir -p "$ROOT/baselines/desktop-hwgl"
 
 boot_time="$(uptime -s)"
 boot_epoch="$(date -d "$boot_time" +%s)"
-latest_desktop_result="$ROOT/baselines/latest-desktop-hwgl-result.txt"
+latest_desktop_result="$ROOT/baselines/desktop-hwgl/latest-desktop-hwgl-result.txt"
 latest_desktop_report="$(
-    find "$ROOT/baselines" -maxdepth 1 -type f -name 'desktop-hwgl-*.txt' -printf '%T@ %p\n' 2>/dev/null |
+    find "$ROOT/baselines/desktop-hwgl" -maxdepth 1 -type f -name 'desktop-hwgl-*.txt' -printf '%T@ %p\n' 2>/dev/null |
         sort -nr |
         head -1 |
         cut -d' ' -f2-
@@ -62,10 +62,10 @@ echo "post_reboot_report=$REPORT"
 
 if [[ "$existing_post_boot_pass" == "1" ]] || grep -qx 'RESULT: PASS_DESKTOP_HWGL' "$REPORT"; then
     echo "RESULT: PASS_POST_REBOOT_HWGL"
-    printf '%s\n' "PASS_POST_REBOOT_HWGL" > "$ROOT/baselines/latest-post-reboot-hwgl-result.txt"
+    printf '%s\n' "PASS_POST_REBOOT_HWGL" > "$ROOT/baselines/desktop-hwgl/latest-post-reboot-hwgl-result.txt"
     exit 0
 fi
 
 echo "RESULT: FAIL_POST_REBOOT_HWGL"
-printf '%s\n' "FAIL_POST_REBOOT_HWGL" > "$ROOT/baselines/latest-post-reboot-hwgl-result.txt"
+printf '%s\n' "FAIL_POST_REBOOT_HWGL" > "$ROOT/baselines/desktop-hwgl/latest-post-reboot-hwgl-result.txt"
 exit 1

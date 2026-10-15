@@ -187,7 +187,7 @@
 | `tools/` 探针参数、输出、退出码或能力边界 | `tools/internal/README.md`、`test-strategy.md` | `tests/README.md`、runtime README、能力调查；真实状态变化还需证据/摘要流程 |
 | 测试入口、用例数或 CI 顺序 | `tests/README.md`、`test-strategy.md`、`.github/workflows/ci.yml` | status/todo 中的当前统计；历史计数不回写 |
 | patch、`drivers/` 转换提交或外部载荷分类 | `docs/patches/README.md`、对应 patch 文档、`patch-provenance.md` | architecture、manifest、许可证审计；不得擅自关闭 BLOCKED |
-| runtime 真机结论 | `baselines/latest-runtime-baseline.txt`（按授权流程生成）和 `status.md` | test-strategy/goals/todo/能力文档；证据文件只追加经审查结果 |
+| runtime 真机结论 | `baselines/runtime/latest-runtime-baseline.txt`（按授权流程生成，不是现行 F 线）和 `status.md` | test-strategy/goals/todo/能力文档；证据文件只追加经审查结果 |
 
 `docs/history/history.md`、`docs/incidents/`、`docs/archive/` 和历史 baseline 只保存时点事实。发现其中
 与当前态不同，应链接当前权威或增加新时点记录，不能重写旧结论。`tools/check-docs.sh` 是必要护栏，

@@ -788,9 +788,9 @@ env $GOOD INNOGPU_DMABUF_FORCE_CLEANUP_FAIL=1 TMPDIR=$runtime/scratch bash "$SCR
 if [ "$rc" -eq 5 ] && grep -q 'fixture_dmabuf_regression_overall=FAIL reason=cleanup_failed' "$O" && ! grep -q 'fixture_dmabuf_regression_overall=PASS' "$O"; then pass cleanup_failure_fails; else fail cleanup_failure_fails "rc=$rc out=$(tail -2 "$O" | tr '\n' ';')"; fi
 
 # ================= 13. 不污染 baseline =================
-BASELINE_BEFORE="$(sha256sum "$ROOT/baselines/latest-runtime-baseline.txt" 2>/dev/null | cut -d' ' -f1)"
+BASELINE_BEFORE="$(sha256sum "$ROOT/baselines/runtime/latest-runtime-baseline.txt" 2>/dev/null | cut -d' ' -f1)"
 env $GOOD TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 >/dev/null 2>&1
-BASELINE_AFTER="$(sha256sum "$ROOT/baselines/latest-runtime-baseline.txt" 2>/dev/null | cut -d' ' -f1)"
+BASELINE_AFTER="$(sha256sum "$ROOT/baselines/runtime/latest-runtime-baseline.txt" 2>/dev/null | cut -d' ' -f1)"
 if [ "$BASELINE_BEFORE" == "$BASELINE_AFTER" ]; then pass baseline_untouched; else fail baseline_untouched "baseline changed"; fi
 
 # ================= 14. 汇总恒等式 =================

@@ -17,12 +17,19 @@ third_party/innogpu-fh2m-deepin-202504/
 !/baselines/latest-current-xorg-hwgl-test/result.txt
 /baselines/latest-ddx-test/*
 !/baselines/latest-ddx-test/result.txt
+/baselines/desktop-hwgl/latest-current-xorg-hwgl-test/*
+!/baselines/desktop-hwgl/latest-current-xorg-hwgl-test/result.txt
+/baselines/desktop-hwgl/latest-ddx-test/*
+!/baselines/desktop-hwgl/latest-ddx-test/result.txt
 
 # Local runtime diagnostics can contain host paths, display cookies, and large logs.
 /.runtime-archive/
 /baselines/capability-survey-*.log
+/baselines/capability/capability-survey-*.log
 /baselines/runtime-baseline-*.txt
+/baselines/runtime/runtime-baseline-*.txt
 !/baselines/latest-runtime-baseline.txt
+!/baselines/runtime/latest-runtime-baseline.txt
 # Migrated black-box payload and staging build area (F: binary-manifest-fantgpu.json; O manifest is on tag innogpu-4x-frozen).
 /vendor/
 /build/
@@ -34,6 +41,8 @@ __pycache__/
 /desktop-hwgl-*.txt
 /post-reboot-hwgl-*.txt
 /baselines/desktop-hwgl-*.txt
+/baselines/desktop-hwgl/desktop-hwgl-*.txt
+/baselines/desktop-hwgl/post-reboot-hwgl-*.txt
 /ddx-vt-test-*.log
 /ddx-test-*/
 

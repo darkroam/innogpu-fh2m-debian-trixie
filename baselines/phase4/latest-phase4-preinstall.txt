@@ -1,5 +1,5 @@
 phase4_preinstall_baseline=PASS (all B1-B12)
-capture_log=baselines/phase4-baseline-20260821-142632.log
+capture_log=baselines/phase4/phase4-baseline-20260821-142632.log
 B1_package=3.3.3.42-patched-27 PASS
 B2_modules=innogpu loaded PASS
 B3_module_file=innogpu.ko.xz present PASS

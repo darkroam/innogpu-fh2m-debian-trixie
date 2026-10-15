@@ -145,7 +145,7 @@ status_date="$(sed -n 's/^最后更新：\([0-9-]*\).*/\1/p' docs/project/status
 
 # Runtime documentation derives its counts from the committed authority rather
 # than maintaining an independent total.
-runtime_summary="$(grep '^runtime_total=' baselines/latest-runtime-baseline.txt | tail -1 || true)"
+runtime_summary="$(grep '^runtime_total=' baselines/runtime/latest-runtime-baseline.txt | tail -1 || true)"
 runtime_passed="$(sed -n 's/.*runtime_passed=\([0-9][0-9]*\).*/\1/p' <<<"$runtime_summary")"
 runtime_skipped="$(sed -n 's/.*runtime_skipped=\([0-9][0-9]*\).*/\1/p' <<<"$runtime_summary")"
 runtime_unverified="$(sed -n 's/.*runtime_unverified=\([0-9][0-9]*\).*/\1/p' <<<"$runtime_summary")"
@@ -157,11 +157,11 @@ else
     require_text docs/project/test-strategy.md "$runtime_text"
     require_text docs/state/current-work.md "$runtime_text"
 fi
-require_text baselines/latest-runtime-baseline.txt 'runtime_vulkan_execution=PASS'
-require_text baselines/latest-runtime-baseline.txt 'runtime_opencl_execution=PASS'
-require_text baselines/latest-runtime-baseline.txt 'runtime_vaapi_decode=PASS'
-require_text baselines/latest-runtime-baseline.txt 'bash tools/run-dmabuf-regression-test.sh'   # DMA-BUF 回归人工命令指向聚合入口（工具代码已提交后从干净提交重新生成的基线）
-require_text baselines/latest-runtime-baseline.txt 'runtime_dmabuf_regression=PASS'   # DMA-BUF 真机 PASS 证据已封存（2026-08-26）
+require_text baselines/runtime/latest-runtime-baseline.txt 'runtime_vulkan_execution=PASS'
+require_text baselines/runtime/latest-runtime-baseline.txt 'runtime_opencl_execution=PASS'
+require_text baselines/runtime/latest-runtime-baseline.txt 'runtime_vaapi_decode=PASS'
+require_text baselines/runtime/latest-runtime-baseline.txt 'bash tools/run-dmabuf-regression-test.sh'   # DMA-BUF 回归人工命令指向聚合入口（工具代码已提交后从干净提交重新生成的基线）
+require_text baselines/runtime/latest-runtime-baseline.txt 'runtime_dmabuf_regression=PASS'   # DMA-BUF 真机 PASS 证据已封存（2026-08-26）
 
 # The source deb identity is owned by the manifest and must be repeated exactly
 # in the user-facing acquisition documents.
@@ -300,7 +300,7 @@ if grep -Fq '3.3.3.42-patched-20` 是当前已安装' docs/project/architecture.
     fail "project architecture still describes historical patched-20 as the current installation"
 fi
 
-if rg -q 'baselines/latest-(desktop|ddx|current-xorg|post-reboot-hwgl)' docs/project/status.md; then
+if rg -q 'baselines/(desktop-hwgl/)?latest-(desktop|ddx|current-xorg|post-reboot-hwgl)' docs/project/status.md; then
     fail "current status must not cite unversioned historical baseline files as p21 evidence"
 fi
 

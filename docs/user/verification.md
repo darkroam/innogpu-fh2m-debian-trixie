@@ -29,7 +29,7 @@ ls -l /dev/dri /dev/fb0
 ## Deepin 历史能力证据
 
 Deepin `4.0.0-i1` 的 35 项 runtime 能力摘要为
-[`baselines/latest-runtime-baseline.txt`](../../baselines/latest-runtime-baseline.txt)：22 PASS / 9 SKIP /
+[`baselines/runtime/latest-runtime-baseline.txt`](../../baselines/runtime/latest-runtime-baseline.txt)：22 PASS / 9 SKIP /
 4 UNVERIFIED，overall 为 UNVERIFIED；不代表 fantgpu i6 验收。VA-API H.264 Main + HEVC Main 实际解码与 DMA-BUF 同设备
 PRIME self-import 回归的真机证据已合并；后者不证明 foreign、跨设备、GBM 或 V4L2 导入。
 日常验证先读取摘要；需重新采集或运行有副作用探针时，按

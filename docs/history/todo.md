@@ -116,7 +116,7 @@
     PASS——fixture overall PASS 仅表示控制流通过）。
   - [x] 真机执行并合并证据（2026-08-24 监督者于 c7b3a40 上沙箱外运行 `--codec all`）：H.264 Main 与
     HEVC Main 均强制 VA-API 硬解，各 30 帧 320x240 NV12 framemd5 hash 与软件参考一致，Driver/Firmware
-    状态门禁通过 → runtime_vaapi_decode 升级 PASS（证据 baselines/runtime-results-20260824.txt）；能力边界
+    状态门禁通过 → runtime_vaapi_decode 升级 PASS（证据 baselines/runtime/runtime-results-20260824.txt）；能力边界
     仅 Main/Main 8-bit 4:2:0，H.264 High/Constrained Baseline、HEVC Main10、编码未验证。
   - [x] 测试 tests/unit/run-vaapi-decode-tests.sh（52 项，fake fixture，CI 无 /dev/dri：参数/工具缺失/设备/
     身份/输入/参考/硬解/超时/帧数/hash/真实格式负例/聚合/硬解参数断言/状态门禁严格解析（pre 缺失/非

@@ -1,0 +1,3 @@
+F 线没有新的 35 项 runtime 捕获。
+现行状态见 docs/project/status.md。
+baselines/runtime/latest-runtime-baseline.txt 仍是 4.0.0-i1 的 22/9/4，不是 i12 验收。

@@ -101,7 +101,7 @@ xdisplay 引擎不属于本仓库，源码和测试以 dotconfig 为准。本项
 `tests/linux/run-battery-delay-static-tests.sh` 锁定 002 补丁的 SHA、KaiTian/X7h G1e 双 DMI 匹配、
 既有 delay callback 和 107 基线声明；它只验证补丁形状，不替代安装后的拔插测试。
 
-`run-capability-survey.sh` 编译并运行 Vulkan/OpenCL/VA-API 最小枚举探针并抓取 sysfs 环境快照，输出保存到 `baselines/capability-survey-<ts>.log`（可用 `--out DIR` 改位置）；只读，不 modeset、不改配置。设备无 DRM render 节点时（如无特权容器）优雅降级并记录失败本身。
+`run-capability-survey.sh` 编译并运行 Vulkan/OpenCL/VA-API 最小枚举探针并抓取 sysfs 环境快照，输出保存到 `baselines/capability/capability-survey-<ts>.log`（可用 `--out DIR` 改位置）；只读，不 modeset、不改配置。设备无 DRM render 节点时（如无特权容器）优雅降级并记录失败本身。
 其中 `check-docs.sh` 检查根入口、`LICENSES/`、`docs/`、`tools/`、`baselines/`、
 `tests/`、`tools/` 下的 Markdown 链接，并对受跟踪文档目录与本机 `collab/` 执行隐私扫描，同时检查稳定入口登记、当前版本、
 runtime 统计、manifest 原包 SHA、过期状态断言和 Markdown 表格结构。它还调用

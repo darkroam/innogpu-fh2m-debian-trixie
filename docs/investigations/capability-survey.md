@@ -2,7 +2,7 @@
 
 ## 状态
 
-本文记录 2026-08 的 Deepin 能力调查；[runtime 摘要](../../baselines/latest-runtime-baseline.txt)
+本文记录 2026-08 的 Deepin 能力调查；[runtime 摘要](../../baselines/runtime/latest-runtime-baseline.txt)
 归属 `4.0.0-i1`，不证明当前 fantgpu `5.0.0-i6` 的能力。当前结论见
 [status](../project/status.md)，本页历史探针命令不构成新的执行授权。
 
@@ -15,10 +15,10 @@
   Baseline、HEVC Main10 仅枚举未执行。
 - **DMA-BUF 回归**（2026-08-26 root 权限真机执行）：`tools/run-dmabuf-regression-test.sh` 同设备
   PRIME self-import、invisible GEM READ/WRITE、vblank 守卫与状态/日志门禁全部 PASS，`runtime_dmabuf_regression`
-  升级为 PASS（证据 `baselines/runtime-results-20260824.txt`）；边界：仅同设备 PRIME self-import，
+  升级为 PASS（证据 `baselines/runtime/runtime-results-20260824.txt`）；边界：仅同设备 PRIME self-import，
   foreign/cross-device/GBM/V4L2/长期压力/并发未验证。
 - 其余 DVFS/功耗、CORE_ID 和私有 codec 编码接口见"运行时待办"。
-- 原始探针输出保留在 `baselines/capability-survey-*.log`（被 .gitignore 忽略），不进入 Git；
+- 原始探针输出保留在 `baselines/capability/capability-survey-*.log`（被 .gitignore 忽略），不进入 Git；
   本文件只记录精简结论。
 
 ## 方法与环境边界
@@ -132,7 +132,7 @@
 结论：**Vulkan ICD 本身有效且与标准 loader 兼容，容器失败仅因无 DRM render 节点**。后续真实会话
 已用 `scripts/run-capability-survey.sh` 确认 Fantasy II-M 枚举，结果见下节。
 
-## 运行时结果（2026-08-20 真实会话，多份 baselines/capability-survey-*.log，最新 135901）
+## 运行时结果（2026-08-20 真实会话，多份 baselines/capability/capability-survey-*.log，最新 135901）
 
 ### GLX（用户 glxinfo -B）
 
@@ -168,7 +168,7 @@
 - **实际解码执行（2026-08-24 真机 PASS）**：`tools/run-vaapi-decode-test.sh --codec all` 强制 VA-API
   硬解 H.264 Main 与 HEVC Main（lavfi testsrc2 恰好 30 帧 320x240 → libx264/libx265 编码 → NV12
   framemd5），两 profile 的逐帧 hash 与软件参考一致、Driver/Firmware 状态门禁通过
-  （evidence: baselines/runtime-results-20260824.txt）；H.264 High/Constrained Baseline、HEVC Main10
+  （evidence: baselines/runtime/runtime-results-20260824.txt）；H.264 High/Constrained Baseline、HEVC Main10
   与编码仍未实际执行。
 - **后处理**：VAProfileNone 提供 VideoProc + Stats
 - **编码**：无任何 EncSlice 或 EncPicture entrypoint——**VA-API 只暴露解码**；编码符号
@@ -200,5 +200,5 @@
 ## 证据保留
 
 - 静态证据全部来自仓库内 Deepin 202504 解包树与 sysfs，可复现；
-- 原始探针日志在 `baselines/capability-survey-*.log`（gitignore），不入 Git；
+- 原始探针日志在 `baselines/capability/capability-survey-*.log`（gitignore），不入 Git；
 - 本文件的结论不修改任何驱动或用户态载荷。

@@ -383,9 +383,9 @@ else
     fail no_residue "leftover process or vaapi-decode temp dir"
 fi
 
-BASELINE_BEFORE="$(sha256sum "$ROOT/baselines/latest-runtime-baseline.txt" 2>/dev/null | cut -d' ' -f1)"
+BASELINE_BEFORE="$(sha256sum "$ROOT/baselines/runtime/latest-runtime-baseline.txt" 2>/dev/null | cut -d' ' -f1)"
 env $GOOD bash "$SCRIPT" --codec all --device /dev/dri/renderD128 >/dev/null 2>&1
-BASELINE_AFTER="$(sha256sum "$ROOT/baselines/latest-runtime-baseline.txt" 2>/dev/null | cut -d' ' -f1)"
+BASELINE_AFTER="$(sha256sum "$ROOT/baselines/runtime/latest-runtime-baseline.txt" 2>/dev/null | cut -d' ' -f1)"
 if [ "$BASELINE_BEFORE" == "$BASELINE_AFTER" ]; then pass baseline_untouched; else fail baseline_untouched "baseline changed"; fi
 
 # ---- F7 静态断言（dsh 返工批 R-2）----

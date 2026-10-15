@@ -29,39 +29,135 @@
 
 ## 目录职责
 
-| 目录 | 用途与写入者 | Git 状态 | 生命周期与清理条件 |
-|---|---|---|---|
-| `.github/` | CI 与仓库托管配置 | tracked | 随代码审查维护 |
-| `LICENSES/` | 项目使用的标准许可证文本 | tracked | 许可证策略变更时同步 |
-| `components/` | 第三方组件的固定来源说明、最小 patch、meta 与静态回归 | tracked | 随上游版本升级审查；不放展开源码 |
-| `drivers/` | O 线源码；主线不含 | 不在主线；tag `innogpu-4x-frozen` 可取回 484 件 | 不在主线重建。构建只从 `deepin-4.0.2-i3` 检出 |
-| `patches/` | 历史/当前驱动补丁及溯源材料 | tracked | 已迁入源码的补丁仍保留作复现锚 |
-| `tools/` | 门禁与跨系统入口：`check-docs.sh`、`materialize-o-stage.sh` | tracked | 在 `tools/README.md` 登记 |
-| `tools/debian/` | Debian 构建、安装、验收与历史操作脚本 | tracked | 同名动作与 Gentoo 对齐：`build-driver.sh`、`verify.sh`、`install-kernel-patches.sh` |
-| `tools/gentoo/` | Gentoo 驱动与内核补丁入口；overlay 在 `overlay/` | tracked | `build-driver.sh`、`install-driver.sh`、`verify.sh`、`rollback.sh`、`install-kernel-patches.sh` |
-| `tools/internal/` | 构建期变换、审计与诊断；不是给人记的命令名 | tracked | 门禁与测试直接调用；与 allowlist 同步 |
-| `tests/` | fixture、静态与单元回归 | tracked | 与对应行为同批更新 |
-| `docs/` | 当前状态、设计、事故、用户指南和历史 | tracked | 同一事实只设一个权威页 |
-| `third_party/` | 可入库的第三方源码/说明；指定的大型解包目录除外 | 混合 | 解包树由 `.gitignore` 排除。D 线 202504 树的重建见下节 |
-| `vendor/` | manifest 管理的本地二进制 payload 物化区 | ignored | 不入库；可由锁定输入恢复后才可重建/清理 |
-| `debs/` | 本地输入仓库：不可变 `.deb`/源码包/回滚实物 | 内容 ignored，只跟踪 `README.md` | 不进 git，不随仓库分发。D 线旧包与现行输入包留在本机 |
-| `.build/work/` | 展开源码、对象、stage、临时构建与可重建工具 | ignored | 对应任务闭链且权威输入存在后可清 |
-| `.build/evidence/` | 本机 SHA、日志、回执、安装和验收证据 | ignored | 按轮次保留/清理裁决；禁止与 work 一起整根删除 |
-| `.build/tools/` | 可重建工具展开树与 cache | ignored | 原始 archive 完整且校验通过后可清 |
-| `.build/r*-*` | 既有轮次目录 | ignored | 依目录内 work/evidence 分类，不能仅凭顶层名称整根删除 |
-| `.runtime-archive/` | watchdog、启动、PM 与事故现场原始采集 | ignored、冻结 | 默认只读；删除/迁移需精确清单、SHA 和用户确认 |
-| `build/` | 已退役的 R3–R16 旧混合区 | ignored、禁止复生 | R50 已迁空并删除；check-docs 对目录重新出现 fail-closed |
-| `baselines/` | 精简运行基线和 PASS/FAIL marker | 混合 allowlist | 原始日志转本地证据区，只跟踪已定义 marker |
-| `collab/` | 多 Agent 轮次请求、流水、审查与交接 | ignored、本机私有 | 按协作规约保留；不得混入非 Markdown payload |
-| `.agents/`、`.codex/`、`.qoder/` | Agent/工具本机会话状态 | ignored | 不属于项目交付，可由对应工具管理 |
-| `.shaders/` | 驱动生成的 shader cache | ignored | 可随时清理 |
-| `.git/` | Git 内部数据库 | Git 自管 | 禁止由项目清理脚本操作 |
+每个二级条目五列：用途、读写者、跟踪、生命周期、冻结。冻结写「否」或冻结原因。没有二级子目录的，写本目录用法。
 
-## components 层级
+### 根文件
 
-第三方补丁、软件、系统三层。软件在上，系统在下。先问改的是哪个软件，放该软件目录。再问只服务哪个系统，放该软件目录下的系统子层。跨系统操作不进系统子层。
+根上只留门面和身份，不新增第二层。
 
-`components/picom/build.sh` 与 `components/picom/session.sh` 是软件层。`components/picom/debian/install-prereqs.sh` 是软件下的 Debian 层。`components/linux/` 是内核补丁的系统层；适用内核进系统×内核矩阵。矩阵另批，本提交不建表。
+| 路径 | 用途 | 读写者 | 跟踪 | 生命周期 | 冻结 |
+|---|---|---|---|---|---|
+| `README.md` | 入口。指向 status 与本页 | 文档批 | 是 | 与 status 同日更新 | 否 |
+| `LICENSE` | 原创层 GPL-3.0-or-later | 许可批 | 是 | 许可策略变更时 | 文本冻结 |
+| `THIRD_PARTY_NOTICES.md` | 第三方声明 | 许可批 | 是 | 新第三方路径同批 | 否 |
+| `license-audit-policy.json` | 许可分类策略 | audit | 是 | 与 inventory 同批 | 否 |
+| `binary-manifest-fantgpu.json` | F 线载荷清单 | 构建器只读 | 是 | 载荷变更才改 | 是，权利链未闭 |
+
+### `.github/`
+
+| 路径 | 用途 | 读写者 | 跟踪 | 生命周期 | 冻结 |
+|---|---|---|---|---|---|
+| `.github/workflows/` | CI。现只 `ci.yml` | 仓库维护 | 是 | 路径或门禁变更时 | 否 |
+
+### `LICENSES/`
+
+无子目录。标准许可证文本。audit 按路径组引用。不放项目说明。
+
+### `components/`
+
+软件在上，系统在下。先问改哪个软件，再问只服务哪个系统。跨系统操作不进系统子层。
+
+| 路径 | 用途 | 读写者 | 跟踪 | 生命周期 | 冻结 |
+|---|---|---|---|---|---|
+| `components/picom/` | Picom 补丁、配置、`build.sh`、`install-user.sh`、`session.sh` | 组件维护 | 是 | 上游 commit 变了才改 | 补丁字节随审查 |
+| `components/picom/debian/` | 只服务 Debian 的 `install-prereqs.sh` | Debian 安装 | 是 | 依赖变了才改 | 否 |
+| `components/fbterm/` | fbterm 补丁与 `build.sh` | 组件维护 | 是 | Debian fbterm 1.7-5 基线变了才改 | 补丁字节随审查 |
+| `components/linux/` | 内核补丁 001–004。适用内核以本层为准 | 内核补丁维护 | 是 | 新内核必须重验，不得套旧模块 | 补丁字节随审查。矩阵另批 |
+
+### `drivers/`
+
+主线无此目录。O 线 484 件在 tag `innogpu-4x-frozen`，构建只从 `deepin-4.0.2-i3` 检出。不在主线重建。
+
+### `patches/`
+
+无子目录。文件名是第二层：`m-` 必须打上，`g-` 胶水。计数以 `docs/patches/naming.md` 为准。D 线数字名 patch 留作 meta 对照，不改字节。不把组件补丁放回这里。
+
+### `tools/`
+
+顶层只留 `check-docs.sh`、`materialize-o-stage.sh`、`README.md`。系统操作不放顶层。
+
+| 路径 | 用途 | 读写者 | 跟踪 | 生命周期 | 冻结 |
+|---|---|---|---|---|---|
+| `tools/debian/` | Debian 的 check/build/install/verify/rollback 与驱动自身脚本 | Debian 维护 | 是 | 与 Gentoo 同名动作对齐 | 否 |
+| `tools/gentoo/` | Gentoo 同名动作，外加本机观察脚本 | Gentoo 维护 | 是 | 同上 | 否 |
+| `tools/gentoo/overlay/` | portage overlay。其下是 ebuild 类别，不是本仓库的第二层动作名 | emerge | 是 | ebuild 与仓库脚本同提交 | 否 |
+| `tools/internal/` | 不是给人记的命令名。门禁和测试直接调用 | 门禁 | 是 | 与 allowlist 同步 | 否 |
+
+`tools/gentoo/overlay/` 现有 `metadata/`、`profiles/`、`licenses/`、`x11-drivers/fantgpu-fh2m/`、`sys-kernel/fantgpu-kernel-patches/`。新 ebuild 进对应类别，不在 `tools/gentoo/` 根再造一套。
+
+### `tests/`
+
+| 路径 | 用途 | 读写者 | 跟踪 | 生命周期 | 冻结 |
+|---|---|---|---|---|---|
+| `tests/unit/` | 无设备 fixture | 对应行为同批 | 是 | 行为变了就改 | 否 |
+| `tests/runtime/` | 真机能力脚本。默认只读，授权项另说 | 授权后运行 | 是 | 与 runtime marker 同批 | 否 |
+| `tests/package/` | deb 边界 | 打包变更同批 | 是 | 同上 | 否 |
+| `tests/picom/` | Picom 安装与会话 | 组件同批 | 是 | 同上 | 否 |
+| `tests/fbterm/` | fbterm 静态 | 组件同批 | 是 | 同上 | 否 |
+| `tests/linux/` | 001/002 补丁形状 | 内核补丁同批 | 是 | 不代替拔插 | 否 |
+| `tests/xdisplay/` | 显示接入安装 | 接入变更同批 | 是 | 引擎不入库 | 否 |
+
+`tests/README.md` 留在 `tests/` 根。
+
+### `docs/`
+
+同一事实只设一个权威页。`docs/` 根只留 `README.md`。现有 `new-device-install.md` 与 `cleanup-20260708.md` 是历史散文件，本段不搬。
+
+| 路径 | 用途 | 读写者 | 跟踪 | 生命周期 | 冻结 |
+|---|---|---|---|---|---|
+| `docs/project/` | 现状、架构、许可、目录、规约 | 文档批 | 是 | status 是运行状态唯一摘要 | 规约除授权节外只读 |
+| `docs/user/` | 安装、验证、恢复、Debian、Gentoo | 用户文档 | 是 | 命令必须指向现存脚本 | 否 |
+| `docs/design/` | 未过期的设计 | 设计批 | 是 | 执行后改状态，不删设计 | 否 |
+| `docs/patches/` | 补丁说明与验收记录 | 补丁批 | 是 | 与 `patches/` 文件名同步 | 历史验收不改结论 |
+| `docs/incidents/` | 事故 | 事故闭合时 | 是 | 只追加结论 | 已闭合正文不改 |
+| `docs/history/` | 当时记录。`rounds/` 是轮次叙事 | 不改当时事实 | 是 | 不把现在时写进旧轮 | 是 |
+| `docs/investigations/` | 调查笔记 | 调查批 | 是 | 现行路径可改，调查事实不改 | 否 |
+| `docs/archive/` | 已完结阶段的阅读页 | 只读引用 | 是 | 路径可改，结论不改 | 结论冻结 |
+| `docs/baselines/` | 三代事实表。不是运行 marker | R17 已审 | 是 | 事实表不在本段改 | 事实表冻结 |
+| `docs/state/` | `current-work.md`、`suspended.md` | 当轮 | 是 | 不与 status 争权威 | 否 |
+| `docs/planning/` | 进行中的设计与映射 | 设计批 | 是 | 闭合后不把证据搬出 evidence | 否 |
+| `docs/planning/evidence/` | 阶段证据。含 `o-stage/`、`4.0.2-i3/`、d-stage 清单 | 物化工具 | 是 | 不重写哈希 | 是 |
+
+### `baselines/`
+
+运行结果。不是 `docs/baselines/`。
+
+| 路径 | 用途 | 读写者 | 跟踪 | 生命周期 | 冻结 |
+|---|---|---|---|---|---|
+| `baselines/current.txt` | 现行指针。只指 status，不造 PASS | 本段写入，之后只在有新捕获时改 | 是 | 有 i12 的 35 项捕获才改内容 | 否 |
+| `baselines/runtime/` | 35 项摘要与 `runtime-results-20260824.txt`。带日期的 `runtime-baseline-*.txt` 不跟踪 | 能力脚本 | 摘要跟踪，原始 ignore | 新捕获不覆盖 4.0.0-i1 文件 | 已跟踪字节冻结，除本段路径迁移 |
+| `baselines/capability/` | survey 日志 | survey 脚本 | 否 | 可清，不入库 | 否 |
+| `baselines/desktop-hwgl/` | 一行 PASS、xorg/ddx 的 `result.txt`、已跟踪的 post-reboot 捕获 | HWGL 脚本 | marker 跟踪，原始 ignore | 脚本可重写一行 marker。已跟踪捕获不改字节 | 捕获冻结 |
+| `baselines/phase4/` | 4.0.0-i1 的 phase4 结论与一份审计日志 | 不再生成 | 是 | 只证明该版本 | 是 |
+| `baselines/legacy/` | patched-17 的 `final-summary.md` | 不再生成 | 是 | 不引用为新包证据 | 是 |
+
+### `debs/`
+
+无跟踪子目录。只跟踪 `README.md`。本地可以有 `archive/`，不进 git，不随仓库分发。输入包 SHA 以 README 和 manifest 为准。
+
+### `vendor/`
+
+整目录 ignore。本地物化可见 `firmware/`、`opt/`、`kernel/`。这不是跟踪布局。重建走 manifest，不手改字节。
+
+### `third_party/`
+
+整目录原则上 ignore。D 线解包树不在主线工作树。重建用 `dpkg-deb -x`，与 tag 上的 `materialize-d-stage.sh` 分成两段。
+
+### `collab/`
+
+ignore，本机私有。二级是 `R{编号}-{日期}-{主题}/`。只放 Markdown。不进发布。
+
+### 本地区
+
+| 路径 | 用途 | 读写者 | 跟踪 | 生命周期 | 冻结 |
+|---|---|---|---|---|---|
+| `.build/work/` | 展开与临时构建 | 脚本 | 否 | 任务闭链后可清 | 否 |
+| `.build/evidence/` | 本机回执与日志 | 脚本 | 否 | 按轮次裁决，不与 work 整根删除 | 否 |
+| `.build/tools/` | 工具展开 | 脚本 | 否 | archive 完整后可清 | 否 |
+| `.runtime-archive/` | 现场原始采集 | 只读 | 否 | 删除要清单和 SHA | 是 |
+| `build/` | 已退役 | 无 | 否 | 禁止复生 | 是 |
+| `.agents/` `.codex/` `.qoder/` | 工具会话 | 工具 | 否 | 不属于交付 | 否 |
+| `.shaders/` | 驱动 shader cache | 驱动 | 否 | 可清 | 否 |
 
 ## 本地输入与 D 线解包树
 
