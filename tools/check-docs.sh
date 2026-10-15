@@ -365,6 +365,153 @@ for path in \
 done
 
 
+# shortcut: checks cited paths and meta_kernel, not that the build script applies those ids. Upgrade when a row's builder list is machine-readable.
+if ! matrix_err=$(python3 - << 'PY'
+import hashlib, json, re, sys
+from pathlib import Path
+
+errors = []
+path = Path("docs/patches/system-kernel-matrix.json")
+try:
+    doc = json.loads(path.read_text(encoding="utf-8"))
+except (OSError, json.JSONDecodeError) as exc:
+    print("system-kernel matrix: unreadable: %s" % exc)
+    sys.exit(1)
+if doc.get("schema") != "system-kernel-matrix/2":
+    errors.append("schema must be system-kernel-matrix/2")
+if doc.get("meta_applicability_field") is not False:
+    errors.append("do not pretend meta applicability exists")
+for key in ("current", "in_progress", "history"):
+    if not isinstance(doc.get(key), list):
+        errors.append(key + " must be a list")
+raw = path.read_text(encoding="utf-8")
+if "patches/m-*" in raw or "patches/g-*" in raw:
+    errors.append("wildcard patch list is forbidden")
+
+patch_id = re.compile(r"^(m|g)-[0-9]{3}(-lifecycle)?-[a-z0-9-]+$")
+linux_names = (
+    "001-hygon-148c-xhci-reset-on-resume",
+    "002-kaitian-x7h-battery-notification-delay",
+    "003-pinctrl-amd-hygon-gpio",
+    "004-snd-hda-hygon-14c9",
+)
+states = {"applied", "not-in-install-path", "do-not-reuse"}
+
+def sha256(rel):
+    return hashlib.sha256(Path(rel).read_bytes()).hexdigest()
+
+def check_meta(item, row_kernel, where):
+    ident = item.get("id")
+    if not patch_id.fullmatch(str(ident)):
+        return
+    patch = Path("patches") / (ident + ".patch")
+    meta_path = Path("patches") / (ident + ".meta.json")
+    if not patch.is_file() or not meta_path.is_file():
+        errors.append("%s missing patch/meta: %s" % (where, ident))
+        return
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    if meta.get("id") != ident:
+        errors.append("%s meta id != %s" % (where, ident))
+    recorded = meta.get("verified", {}).get("clean_build", {}).get("kernel")
+    cited = item.get("meta_kernel")
+    if cited is not None and cited != recorded:
+        errors.append("%s meta_kernel != verified.clean_build.kernel: %s" % (where, ident))
+    applicability = meta.get("applicability")
+    if applicability is not None and row_kernel not in applicability:
+        errors.append("%s kernel not in meta applicability: %s" % (where, ident))
+
+def check_paths(values, where):
+    if not isinstance(values, list) or not values:
+        errors.append(where + " must be a non-empty path list")
+        return
+    for rel in values:
+        if not isinstance(rel, str) or not Path(rel).exists():
+            errors.append("missing path %s" % rel)
+
+def builder_ids(row):
+    return tuple(item.get("id") for item in row.get("m_base", []) if item.get("in_i12_builder") is True)
+
+seen = {}
+for table in ("current", "in_progress"):
+    for index, row in enumerate(doc.get(table) or []):
+        key = (row.get("system"), row.get("kernel"))
+        if not key[0] or not key[1]:
+            errors.append("%s row %d missing system or kernel" % (table, index))
+            continue
+        if key in seen:
+            errors.append("duplicate system+kernel %s %s" % key)
+        seen[key] = table
+
+for index, row in enumerate(doc.get("current") or []):
+    where = "current[%d]" % index
+    if row.get("acceptance") != "accepted":
+        errors.append(where + " acceptance must be accepted")
+    if not isinstance(row.get("m_base"), list) or not isinstance(row.get("g_set"), list):
+        errors.append(where + " m_base and g_set must be lists")
+        continue
+    for item in row["m_base"]:
+        if not isinstance(item, dict):
+            errors.append(where + " m_base entry must be an object")
+            continue
+        check_meta(item, row.get("kernel"), where)
+    for ident in row["g_set"]:
+        check_meta({"id": ident}, row.get("kernel"), where)
+    linux = row.get("linux_patches")
+    if not isinstance(linux, dict) or set(linux) != set(linux_names):
+        errors.append(where + " linux_patches must name 001-004 exactly")
+    else:
+        for name, cell in linux.items():
+            rel = "components/linux/%s.patch" % name
+            if not isinstance(cell, dict) or cell.get("state") not in states:
+                errors.append(where + " bad linux state " + name)
+            elif not Path(rel).is_file() or cell.get("sha256") != sha256(rel):
+                errors.append(where + " linux sha mismatch " + name)
+    check_paths(row.get("install"), where + " install")
+    check_paths(row.get("verify"), where + " verify")
+    check_paths(row.get("rollback"), where + " rollback")
+    for command in row.get("commands") or []:
+        if not isinstance(command, str) or "/" in command:
+            errors.append(where + " command is not an external command")
+    doc_path = row.get("install_doc")
+    if not isinstance(doc_path, str) or not Path(doc_path).is_file():
+        errors.append(where + " install_doc missing")
+    identity = row.get("build_identity") or {}
+    if not identity.get("tree_hash") or not identity.get("srcversion"):
+        errors.append(where + " build identity incomplete")
+
+by_in = {}
+for row in doc.get("current") or []:
+    revision = (row.get("version_revision") or {}).get("iN")
+    by_in.setdefault(revision, set()).add(builder_ids(row))
+for revision, chains in by_in.items():
+    if len(chains) != 1:
+        errors.append("same iN has different in-builder m chain: %s" % revision)
+
+for index, row in enumerate(doc.get("in_progress") or []):
+    where = "in_progress[%d]" % index
+    if row.get("acceptance") == "accepted":
+        errors.append(where + " accepted row belongs in current")
+    point = row.get("breakpoint")
+    if not row.get("stage") or not row.get("next") or not isinstance(point, dict):
+        errors.append(where + " needs stage, breakpoint, next")
+        continue
+    if not point.get("ko_status") or not isinstance(point.get("patches_applied"), list) or not isinstance(point.get("pending"), list):
+        errors.append(where + " breakpoint incomplete")
+    for ident in point.get("patches_applied") or []:
+        check_meta({"id": ident}, row.get("kernel"), where)
+
+for index, row in enumerate(doc.get("history") or []):
+    if not row.get("system") or not row.get("kernel") or not row.get("reason"):
+        errors.append("history[%d] needs system, kernel, reason" % index)
+
+if errors:
+    print("system-kernel matrix: " + "; ".join(errors))
+    sys.exit(1)
+PY
+); then
+    fail "system-kernel matrix gate failed: ${matrix_err}"
+fi
+
 if ! naming_err=$(python3 - << 'PY'
 import json, re, sys
 from pathlib import Path

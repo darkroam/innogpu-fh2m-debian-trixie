@@ -54,3 +54,18 @@ D 线 `patches/001`–`029` 不改名。历史文件里的 `030-NNN` 是当时�
 | `030-049` | `g-049-shipped-obj-copy` |
 | `030-050` | `g-050-fb-helper-alloc` |
 | `030-051` | `m-051-hwinfo-connector-fallback` |
+
+## 系统×内核矩阵
+
+机器可读表是 [system-kernel-matrix.json](system-kernel-matrix.json)。人读规程在这里，不把行抄进 status。
+
+两张表：
+
+- `current`：已验收的系统×内核。字段是 m 基座、g 集、内核补丁 001–004、安装/验收/回滚入口、版本修订号、构建身份（树哈希 + srcversion）、安装说明。
+- `in_progress`：未完成的系统×内核。字段是阶段、断点（已打补丁、ko 状态、待验证项）、下一步。空表合法。中断后只读这一行就能接着做。
+
+互转：进行中行的待验证项清空，并补齐当前表字段后，移入 `current`，同时从 `in_progress` 删除。当前行被新工作替代时移入 `history`。替代工作未完成则另开进行中行。同一 system+kernel 不能同时在 `current` 和 `in_progress`。
+
+新增行：谁加系统或内核，谁在同一批改这张表、构建脚本和安装说明。先有该内核的干净编译和验收，再写入 `current`。没做完就只写 `in_progress`。`m_base` 和 `g_set` 只列构建脚本实际打上的补丁，不从 meta 的记录内核反推。001–004 逐个重验，禁止复用另一内核的模块。002 是机型 workaround，换内核版本必须重适配。不为填列而加转发脚本。
+
+版本：iN 只随 m 链实质变更。g 集、构建器外补丁、内核补丁和构建目录不同，都不加 iN，只改 `build_identity`。`check-docs` 核对引用路径存在；补丁若写了 `meta_kernel`，必须等于该 meta 的 `verified.clean_build.kernel`。meta 没有 applicability 字段时不失败；将来有了，行内核必须落在该字段里。

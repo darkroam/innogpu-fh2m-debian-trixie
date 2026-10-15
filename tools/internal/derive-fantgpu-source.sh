@@ -5,11 +5,12 @@
 # Body hashes are slice-dependent. Do not mix them.
 # 2cbebaa71abca1bdb924db8831573a48ef357d6acd2904227447d507a3684cf4
 #   = `git show e562053:tools/build-innogpu-driver.sh`, from the line
-#   "# Same transformation for compile staging" through the newline before
-#   "APPLIED_SOURCE_FIXES=".
+#   "# Same transformation for compile staging" through the newline of the
+#   closing-brace line. Do not include the blank line after that brace.
 # a83b02988364081cfb4eb65abfb791e4fbf2e5bceb5968181a53942631fe8fe4
-#   = this file from the derive_fantgpu_source() line through its closing
-#   brace, heredoc-aware, including both lines. Header comments are outside.
+#   = this file from the derive_fantgpu_source() line through the newline of
+#   its closing-brace line, heredoc-aware, including both lines. Do not include
+#   a blank line after that brace. Header comments are outside.
 derive_fantgpu_source() {
     python3 - "$ROOT" "$1" <<'PY'
 import hashlib, importlib.util, pathlib, sys

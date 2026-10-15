@@ -63,4 +63,16 @@ for path in docs/history/display-integration.md docs/design/source-tree-migratio
     mv "$fixture/missing-document" "$path"
 done
 
+cp docs/patches/system-kernel-matrix.json "$fixture/matrix.before"
+python3 - << 'PY'
+import json
+from pathlib import Path
+path = Path("docs/patches/system-kernel-matrix.json")
+data = json.loads(path.read_text())
+data["current"][0]["install"].append("tools/debian/missing-matrix-fixture.sh")
+path.write_text(json.dumps(data))
+PY
+check 1 'system-kernel matrix'
+cp "$fixture/matrix.before" docs/patches/system-kernel-matrix.json
+
 printf 'check_docs_total=%s check_docs_failed=0\n' "$checks"

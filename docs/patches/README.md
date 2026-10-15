@@ -7,7 +7,7 @@
 
 ## fantgpu 030 链
 
-命名规则见 [naming.md](naming.md)。
+命名规则见 [naming.md](naming.md)。系统×内核的当前表与进行中表见 [system-kernel-matrix.json](system-kernel-matrix.json)。
 
 `5.0.0-i6` 的 O_stage 已含 030 链 18 项，编号非连续，不能把 `030-001..034` 当作 34 项。
 逐项对应以 [030 映射表](../planning/030-mapping-table.md)、

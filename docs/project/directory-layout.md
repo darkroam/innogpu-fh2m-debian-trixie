@@ -62,7 +62,7 @@
 | `components/picom/` | Picom 补丁、配置、`build.sh`、`install-user.sh`、`session.sh` | 组件维护 | 是 | 上游 commit 变了才改 | 补丁字节随审查 |
 | `components/picom/debian/` | 只服务 Debian 的 `install-prereqs.sh` | Debian 安装 | 是 | 依赖变了才改 | 否 |
 | `components/fbterm/` | fbterm 补丁与 `build.sh` | 组件维护 | 是 | Debian fbterm 1.7-5 基线变了才改 | 补丁字节随审查 |
-| `components/linux/` | 内核补丁 001–004。适用内核以本层为准 | 内核补丁维护 | 是 | 新内核必须重验，不得套旧模块 | 补丁字节随审查。矩阵另批 |
+| `components/linux/` | 内核补丁 001–004。适用内核以 [系统×内核矩阵](../patches/system-kernel-matrix.json) 为准 | 内核补丁维护 | 是 | 新内核必须重验，不得套旧模块 | 补丁字节随审查 |
 
 ### `drivers/`
 
@@ -70,7 +70,7 @@
 
 ### `patches/`
 
-无子目录。文件名是第二层：`m-` 必须打上，`g-` 胶水。计数以 `docs/patches/naming.md` 为准。D 线数字名 patch 留作 meta 对照，不改字节。不把组件补丁放回这里。
+无子目录。文件名是第二层：`m-` 必须打上，`g-` 胶水。计数以 `docs/patches/naming.md` 为准。系统×内核的当前表和进行中表在 `docs/patches/system-kernel-matrix.json`，新增行规程在 naming.md。D 线数字名 patch 留作 meta 对照，不改字节。不把组件补丁放回这里。
 
 ### `tools/`
 
@@ -108,7 +108,7 @@
 | `docs/project/` | 现状、架构、许可、目录、规约 | 文档批 | 是 | status 是运行状态唯一摘要 | 规约除授权节外只读 |
 | `docs/user/` | 安装、验证、恢复、Debian、Gentoo | 用户文档 | 是 | 命令必须指向现存脚本 | 否 |
 | `docs/design/` | 未过期的设计 | 设计批 | 是 | 执行后改状态，不删设计 | 否 |
-| `docs/patches/` | 补丁说明与验收记录 | 补丁批 | 是 | 与 `patches/` 文件名同步 | 历史验收不改结论 |
+| `docs/patches/` | 补丁说明、验收记录、系统×内核矩阵 | 补丁批 | 是 | 与 `patches/` 文件名同步；矩阵随验收行更新 | 历史验收不改结论 |
 | `docs/incidents/` | 事故 | 事故闭合时 | 是 | 只追加结论 | 已闭合正文不改 |
 | `docs/history/` | 当时记录。`rounds/` 是轮次叙事 | 不改当时事实 | 是 | 不把现在时写进旧轮 | 是 |
 | `docs/investigations/` | 调查笔记 | 调查批 | 是 | 现行路径可改，调查事实不改 | 否 |

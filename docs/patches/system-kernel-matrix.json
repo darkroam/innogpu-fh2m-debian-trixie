@@ -1,0 +1,150 @@
+{
+  "schema": "system-kernel-matrix/2",
+  "meta_applicability_field": false,
+  "conversion": {
+    "promote": "进行中行的 pending 清空，并且补齐当前表必填字段、acceptance=accepted 后，移入 current，同时从 in_progress 删除。同一 system+kernel 不能两表并存。",
+    "demote": "当前行被新工作替代时移入 history。替代工作未完成则另写 in_progress 行，不把未完成行留在 current。"
+  },
+  "current": [
+    {
+      "system": "debian",
+      "kernel": "6.12.111+deb13-amd64",
+      "acceptance": "accepted",
+      "m_base": [
+        {
+          "id": "i12-builder-through-m-035",
+          "in_i12_builder": true,
+          "tree_hash": "9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee"
+        },
+        {
+          "id": "m-036-bf-shf-rename",
+          "in_i12_builder": false,
+          "tree_hash": "0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce",
+          "meta_kernel": "6.12.111+deb13-amd64"
+        }
+      ],
+      "g_set": [],
+      "linux_patches": {
+        "001-hygon-148c-xhci-reset-on-resume": {
+          "state": "applied",
+          "sha256": "299eb3f3d688a48518278c1ac5c6e97be89c8cc8f2c50bdcbfc4881bd47a5614",
+          "note": "按 111 源码重编。验收 quirks=0x90。禁止复用其他内核的模块。"
+        },
+        "002-kaitian-x7h-battery-notification-delay": {
+          "state": "applied",
+          "sha256": "d7d6740eaab078eeaa40d87306c4d77fc61436f50ef31061416f0d1689899e1a",
+          "note": "机型 workaround。换内核版本必须重适配，不得直接套用。"
+        },
+        "003-pinctrl-amd-hygon-gpio": {
+          "state": "not-in-install-path",
+          "sha256": "2f6676f38175a709bb71488de5caa7e8490bf75e17d3a4e21c2b0f4b286ced0e",
+          "note": "内建。Debian 安装脚本不编它。"
+        },
+        "004-snd-hda-hygon-14c9": {
+          "state": "not-in-install-path",
+          "sha256": "08dc3079d5b6d8d698afe321b957ae17ec410f269ab379ab1673c67e1891a229",
+          "note": "只对 6.12 的 snd-hda-intel。不能套 6.18。Debian 安装脚本不编它。"
+        }
+      },
+      "install": [
+        "tools/debian/build-driver.sh",
+        "tools/debian/build-linux-patched-modules.sh",
+        "tools/debian/install-kernel-patches.sh"
+      ],
+      "commands": [
+        "dpkg -i"
+      ],
+      "verify": [
+        "tools/debian/verify.sh",
+        "tools/debian/check-fantgpu-runtime-health.sh",
+        "tools/debian/check-hygon-xhci-resume-fix.sh"
+      ],
+      "rollback": [
+        "tools/debian/uninstall-innogpu.sh",
+        "tools/debian/rollback-linux-patched-modules.sh"
+      ],
+      "version_revision": {
+        "package": "5.0.0-i12",
+        "iN": "i12",
+        "note": "m-036 不进包版本"
+      },
+      "build_identity": {
+        "tree_hash": "0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce",
+        "srcversion": "370AB248D72951EF3C0C4BB"
+      },
+      "install_doc": "docs/user/debian.md"
+    },
+    {
+      "system": "gentoo",
+      "kernel": "6.12.111-gentoo-x86_64",
+      "acceptance": "accepted",
+      "m_base": [
+        {
+          "id": "i12-builder-through-m-035",
+          "in_i12_builder": true,
+          "tree_hash": "9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee"
+        },
+        {
+          "id": "m-036-bf-shf-rename",
+          "in_i12_builder": false,
+          "tree_hash": "0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce"
+        },
+        {
+          "id": "m-051-hwinfo-connector-fallback",
+          "in_i12_builder": false,
+          "tree_hash": "b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00",
+          "meta_kernel": "6.12.111-gentoo-x86_64"
+        }
+      ],
+      "g_set": [],
+      "linux_patches": {
+        "001-hygon-148c-xhci-reset-on-resume": {
+          "state": "applied",
+          "sha256": "299eb3f3d688a48518278c1ac5c6e97be89c8cc8f2c50bdcbfc4881bd47a5614",
+          "note": "按该内核源码重编。禁止复用其他内核的模块。"
+        },
+        "002-kaitian-x7h-battery-notification-delay": {
+          "state": "applied",
+          "sha256": "d7d6740eaab078eeaa40d87306c4d77fc61436f50ef31061416f0d1689899e1a",
+          "note": "机型 workaround。换内核版本必须重适配，不得直接套用。"
+        },
+        "003-pinctrl-amd-hygon-gpio": {
+          "state": "applied",
+          "sha256": "2f6676f38175a709bb71488de5caa7e8490bf75e17d3a4e21c2b0f4b286ced0e",
+          "note": "内建。改后要整核重编并重启。"
+        },
+        "004-snd-hda-hygon-14c9": {
+          "state": "applied",
+          "sha256": "08dc3079d5b6d8d698afe321b957ae17ec410f269ab379ab1673c67e1891a229",
+          "note": "只对 6.12 的 snd-hda-intel。不能套 6.18。"
+        }
+      },
+      "install": [
+        "tools/gentoo/overlay",
+        "tools/gentoo/build-driver.sh",
+        "tools/gentoo/install-driver.sh",
+        "tools/gentoo/install-kernel-patches.sh"
+      ],
+      "verify": [
+        "tools/gentoo/verify.sh",
+        "tools/gentoo/check-kernel-patches.sh"
+      ],
+      "rollback": [
+        "tools/gentoo/rollback.sh"
+      ],
+      "note": "内核补丁没有单独回滚脚本。按 docs/user/gentoo.md 用 --fuzz=0 -R 卸回。",
+      "version_revision": {
+        "package": "5.0.0_p12",
+        "iN": "i12",
+        "note": "p12 是 portage 修订，不是新 iN。m-051 不进 i12 构建器。"
+      },
+      "build_identity": {
+        "tree_hash": "b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00",
+        "srcversion": "D579486A64C340B5178B66B"
+      },
+      "install_doc": "docs/user/gentoo.md"
+    }
+  ],
+  "in_progress": [],
+  "history": []
+}
