@@ -1,20 +1,22 @@
 # innogpu-fh2m-debian-trixie
 
-让 Innosilicon **Fantasy II-M（FH2M，风华2号-M）** GPU 在 **Debian Trixie (13)** 上稳定可用、
+让 Innosilicon **Fantasy II-M（FH2M，风华2号-M）** GPU 在 **Debian Trixie (13)** 与 **Gentoo** 上稳定可用、
 能力可知、可维护可演进的适配与验证项目：内核驱动、显示输出、硬件 GL、音频与全套验收证据。
 本项目自有工作采用 GPL-3.0-or-later；fork 上游 MIT 内容与导入源码/厂商载荷按各自声明处理，
 当前再分发边界见[许可证与再分发边界](docs/project/licensing.md)（唯一权威文档）。
 
-> 最后更新：2026-10-10 —— 当前主线为 fantgpu 5.0.0-iN（运行内核 `6.12.111+deb13-amd64`，i12+m-036-bf-shf-rename 与 001/002 已按 111 验收；R51 三段与 R5 均已通过，见
-> [status.md](docs/project/status.md)）。历史（2026-09-03 记录）：当前驱动包和正式交付版本为 `4.0.2-i3`（patch-024 + patch-026 +
-> patch-028 + patch-029）；R14 在当前设备完成 6/6 deep 验收。patch-025-display 继续保持
+> 最后更新：2026-10-10 —— 当前主线为 fantgpu 5.0.0-iN，Debian Trixie 与 Gentoo 并列。Debian 运行内核 `6.12.111+deb13-amd64`，i12+m-036-bf-shf-rename 与 001/002 已按 111 验收；Gentoo 现场见 [gentoo.md](docs/user/gentoo.md)。R51 三段与 R5 均已通过，见
+> [status.md](docs/project/status.md)。历史（2026-09-03 记录，不是现行 F 线）：当前驱动包和正式交付版本为 `4.0.2-i3`（patch-024 + patch-026 +
+> patch-028 + patch-029）；R14 在当时设备完成 6/6 deep 验收。patch-025-display 当时继续保持
 > UNVERIFIED，不进入 i3；DDCCI 不提供亮度控制，`hwinfo_g0m.bin` 仍缺失。
 
 ## 适配的当前系统
 
 | 项 | 值 |
 | --- | --- |
-| 发行版 / 内核 | Debian Trixie (13)，当前 kernel `6.12.111+deb13-amd64`（运行状态以 [status](docs/project/status.md) 为准） |
+| 发行版 | Debian Trixie (13) 与 Gentoo。运行状态以 [status](docs/project/status.md) 为准 |
+| Debian 内核 | `6.12.111+deb13-amd64` |
+| Gentoo | 内核 `6.12.111-gentoo`（uname `6.12.111-gentoo-x86_64`）；overlay 部署 `tools/gentoo/overlay`；m-051 后加载 srcversion `D579486A64C340B5178B66B` |
 | CPU 平台 | Hygon x86_64 |
 | GPU | Innosilicon Fantasy II-M，PCI `1ec8:9810`，2 GiB VRAM（PowerVR DDK V119 RTM 谱系） |
 | 回退基线（历史交付） | `4.0.2-i3`：固定 epoch `1788796800`，SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；R14 接电/电池、无外屏/外屏 6/6 deep 通过；R16 起主线为 fantgpu 5.0.0-iN |
@@ -25,16 +27,16 @@
 ## 版本演进
 
 1. **fork 起步**：fork 自 [timhant/innogpu-fh2m-debian-trixie](https://github.com/timhant/innogpu-fh2m-debian-trixie)，初始为 kernel 6.12 兼容补丁（v3.3.3.42 基线）。
-2. **适配本设备**：DPU/fbdev/connector/背光/GEM 系列修复（patched-8 → patched-27），本机稳定运行。
+2. **适配本设备（历史）**：DPU/fbdev/connector/背光/GEM 系列修复（patched-8 → patched-27），当时本机稳定运行。
 3. **迁移 Deepin**：以 Deepin 202504 完整原包为唯一技术基线，统一用户态/固件/DDX 载荷，消除 ABI 混配。
 4. **完全重构（历史）**：取消历史补丁叠加模式 → 当时的导入源码树在仓库内 `drivers/`，并用 manifest 管理黑盒；新构建器从 `4.0.0-i1` 演进。该树现不在主线，484 件在 tag `innogpu-4x-frozen`；O 线构建只从 `deepin-4.0.2-i3` 检出。
 5. **Deepin suspend/resume 历史交付**：R10 证明 patch-024 存在 TOCTOU；R11 的 i1 增加 devfreq/PVR 生命周期同步后，仍因独立温度 work 提前启动而失败；R12 的 i2 用 patch-028 等待 PVR 子设备恢复成功；R13 的 i3 让 DDCCI 回退模式创建 panel 以恢复 GPIO callback；R14 完成 6/6 deep 正式矩阵，display 025 保持独立实验状态。
-6. **fantgpu 主线（当前）**：F0 + 030 链已推进至 `5.0.0-i12`；R49 最终 3+1 验收通过，观察期无复发后用户已裁决 R5 通过；早期 OUTSIDE_COVERAGE 历史不重写，见 [status](docs/project/status.md)。
+6. **fantgpu 主线（当前）**：现行诊断线是 `5.0.0-i12`。R49 最终 3+1 验收通过，观察期无复发后用户已裁决 R5 通过。`m-051-hwinfo-connector-fallback`（原 `030-051`）收敛无固件时的连接器回退，不进 i12 构建器。R57 与 R58 已闭合。D 线与 O 线只从 tag 检出，不在主线。早期 OUTSIDE_COVERAGE 历史不重写，见 [status](docs/project/status.md)。
 
 ## 主要修复的问题
 
 - 6.12 接口与 DP fbcon；fbdev mmap；本机 connector/eDP；invisible READ、`dma_resv`、vblank 守卫、foreign DMA-BUF；固定 epoch 的可复现构建。
-- deep resume：patch-024/026/028/029 修 PVR 时序与 DDCCI panel，`4.0.2-i3` 已过 R14 6/6 deep。patch-025 的 s2idle 红屏修复保持 UNVERIFIED。
+- 历史：deep resume 的 patch-024/026/028/029 修的是当时的 PVR 时序与 DDCCI panel，`4.0.2-i3` 已过 R14 6/6 deep。patch-025 的 s2idle 红屏修复当时保持 UNVERIFIED，不外推为现行 F 线。
 
 详见 [status](docs/project/status.md) 与 [实施历史](docs/history/history.md)。补丁与事故：[docs/patches/README.md](docs/patches/README.md)、[docs/incidents/README.md](docs/incidents/README.md)。
 
@@ -47,17 +49,23 @@ sudo tools/debian/install-prereqs-debian.sh                        # 基础构�
 # F 线。不设 VERSION 时构建器仍按 4.0.2-i3 进入 O 分支并拒绝。
 VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=1790812800 bash tools/debian/build-driver.sh
 # O 线仅从 deepin-4.0.2-i3 tag 检出构建
+
+# Gentoo：先注册 overlay，再装补丁包和驱动包。权限与重启见 docs/user/gentoo.md。
+# /etc/portage/repos.conf/fantgpu.conf 的 location 指向 tools/gentoo/overlay，且 portage 用户可读。
+emerge sys-kernel/fantgpu-kernel-patches
+emerge x11-drivers/fantgpu-fh2m
 ```
 
 > 主线不含 `drivers/` 与 `binary-manifest.json`。O 线 484 件在 tag `innogpu-4x-frozen`
 > （相对 `deepin-4.0.2-i3` 仅 README 四行）。F 线载荷见 `binary-manifest-fantgpu.json`。
 
-回退到保留基线：`sudo apt install --allow-downgrades ./debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb`
+Debian 回退到保留基线：`sudo apt install --allow-downgrades ./debs/innogpu-fh2m-trixie_3.3.3.42-patched-27.deb`
 （详见 [docs/user/recovery.md](docs/user/recovery.md)）。
 
 ## 目录
 
-- 二级规划见 [docs/project/directory-layout.md](docs/project/directory-layout.md)。
+- 二级规划见 [docs/project/directory-layout.md](docs/project/directory-layout.md)。软件在上、系统在下。`tools/debian/` 与 `tools/gentoo/` 是同名动作，不是两套事实。
+- 安装档案：[Debian](docs/user/debian.md)、[Gentoo](docs/user/gentoo.md)。
 - `baselines/current.txt` 指向 status。`baselines/runtime/latest-runtime-baseline.txt` 是 `4.0.0-i1` 的历史摘要，不是 i12 验收。
 - 代际事实在 [docs/baselines/](docs/baselines/)。
 
@@ -71,6 +79,7 @@ VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=1790812800 bash tools/debian/build-driver.sh
 | 整体目标与路线 | [docs/project/goals.md](docs/project/goals.md) |
 | 架构与组件边界 | [architecture.md](docs/project/architecture.md)、[code-analysis.md](docs/project/code-analysis.md) |
 | 技术栈/参考模型 / 测试策略 | [frameworks-and-references.md](docs/project/frameworks-and-references.md)、[test-strategy.md](docs/project/test-strategy.md) |
+| 目录二级规划 | [docs/project/directory-layout.md](docs/project/directory-layout.md) |
 | 新设备安装 / 验证 / 恢复 | [docs/user/new-device-install.md](docs/user/new-device-install.md)、[docs/user/verification.md](docs/user/verification.md)、[docs/user/recovery.md](docs/user/recovery.md) |
 | Debian / Gentoo 安装档案 | [docs/user/debian.md](docs/user/debian.md)、[docs/user/gentoo.md](docs/user/gentoo.md) |
 | 补丁与验收 / 事故 | [docs/patches/README.md](docs/patches/README.md)、[docs/incidents/README.md](docs/incidents/README.md) |
