@@ -170,7 +170,7 @@ GEM，执行 READ CPU_PREP、逐页读取、CPU_FINI 和 `munmap`。它不加载
 
 ## patched-23 实机验证
 
-2026-08-17 重启后，`scripts/verify-install-status.sh --require-reboot 3.3.3.42-patched-23`
+2026-08-17 重启后，`scripts/verify-install-status.sh --require-reboot 3.3.3.42-patched-23`（当时路径；现行文件是 `tools/debian/verify.sh`，命令原文不改）
 返回 `PASS_INSTALL_STATUS`。DKMS、模块加载、Driver/Firmware、DRM 节点、Xorg、GLX 加速和 DRI3
 均通过；桌面硬件 GL 检查返回 `PASS_DESKTOP_HWGL`，Picom、dwm 和 st 正常运行。
 

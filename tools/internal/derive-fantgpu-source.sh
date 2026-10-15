@@ -2,6 +2,14 @@
 # Caller must set ROOT before calling derive_fantgpu_source.
 # Same transformation for compile staging and packaged DKMS source. The parent
 # trace stays historical; the final derivative has its own exact whole-tree gate.
+# Body hashes are slice-dependent. Do not mix them.
+# 2cbebaa71abca1bdb924db8831573a48ef357d6acd2904227447d507a3684cf4
+#   = `git show e562053:tools/build-innogpu-driver.sh`, from the line
+#   "# Same transformation for compile staging" through the newline before
+#   "APPLIED_SOURCE_FIXES=".
+# a83b02988364081cfb4eb65abfb791e4fbf2e5bceb5968181a53942631fe8fe4
+#   = this file from the derive_fantgpu_source() line through its closing
+#   brace, heredoc-aware, including both lines. Header comments are outside.
 derive_fantgpu_source() {
     python3 - "$ROOT" "$1" <<'PY'
 import hashlib, importlib.util, pathlib, sys

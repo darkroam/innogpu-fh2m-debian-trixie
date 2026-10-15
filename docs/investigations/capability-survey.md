@@ -9,7 +9,7 @@
 - 本记录对应 [reverse-engineering-assessment.md](reverse-engineering-assessment.md) 的"能力挖掘任务"
   P0/P1 项。**静态分析与运行时枚举已执行**：静态部分在本容器内完成；运行时部分由真实会话运行
   `scripts/run-capability-survey.sh` 完成（vulkaninfo/clinfo/vainfo/drm_info 权威工具 + 最小探针
-  交叉验证），结果见"运行时结果"节。
+  交叉验证），结果见"运行时结果"节。当时路径；现行文件是 `tools/debian/run-capability-survey.sh`。
 - Vulkan/OpenCL 最小执行已由独立探针验证；VA-API 已确认 profile/entrypoint 枚举，且 H.264 Main 与
   HEVC Main 实际码流解码验证 PASS（30 帧 320x240 NV12 framemd5 输出校验）；H.264 High/Constrained
   Baseline、HEVC Main10 仅枚举未执行。
@@ -26,7 +26,7 @@
 - 静态勘察对象：Deepin 202504 原包解包树 `third_party/innogpu-fh2m-deepin-202504/root`、
   系统 `/usr/lib/x86_64-linux-gnu/innogpu-fh2m/`、`/sys/class/drm/card0`、`lspci`。
 - 探针工具：`tools/probe-vulkan-devices.c`（dlopen loader 枚举）、`tools/probe-opencl-devices.c`
-  （dlopen ICD loader 枚举），运行入口 `scripts/run-capability-survey.sh`。
+  （dlopen ICD loader 枚举），运行入口 `tools/debian/run-capability-survey.sh`（当时路径 `scripts/run-capability-survey.sh`）。
 - 容器内所有探针只读、不 modeset、不修改系统配置。
 
 ## 硬件架构（sysfs/PCI 证据）
@@ -130,7 +130,7 @@
    `VK_ERROR_INITIALIZATION_FAILED`，loader 据此丢弃该 ICD 并报 `Found no drivers`。
 
 结论：**Vulkan ICD 本身有效且与标准 loader 兼容，容器失败仅因无 DRM render 节点**。后续真实会话
-已用 `scripts/run-capability-survey.sh` 确认 Fantasy II-M 枚举，结果见下节。
+已用 `scripts/run-capability-survey.sh`（当时路径；现行文件是 `tools/debian/run-capability-survey.sh`）确认 Fantasy II-M 枚举，结果见下节。
 
 ## 运行时结果（2026-08-20 真实会话，多份 baselines/capability/capability-survey-*.log，最新 135901）
 

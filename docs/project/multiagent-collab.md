@@ -49,7 +49,7 @@
   - **绝对禁止**（没有任务内精确授权不得修改）：本地载荷 `debs/`、`vendor/`、`.build/`、退役 `build/`、
     `third_party/`，以及监督分支 `migration/supervised-source-tree`。
   - **默认保护**（默认不可修改；仅当用户在提示词中明确批准**精确路径范围**后才可改）：
-    `drivers/`、`baselines/`、`binary-manifest.json`。
+    `baselines/` 仍保护。`drivers/` 与 `binary-manifest.json` 不在主线，只在 tag `innogpu-4x-frozen`，tag 上不改。
   - **自由范围**：其余文件，但须遵守仓库门禁（见 §六）。
 - **明确交付物**：文件路径、格式、登记要求（新脚本/测试需同步 tools/README、tests/README、
   test-strategy 与 project-tools allowlist）。
