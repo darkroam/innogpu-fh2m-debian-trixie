@@ -6,12 +6,14 @@
 ## 这台机器
 
 - 内核 `6.12.111-gentoo-x86_64`。6.18 因封存对象的 `%gs:0x28` 栈金丝雀对不上，已放弃。
-- 模块是 i12 构建器树 `9a8d185f…`，再在构建器外打 `m-036-bf-shf-rename`。整树
-  `0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce`。
-- 2026-10-12 启动 `c285b6cb-efcf-43f4-9f13-5c059c970c16`：srcversion
+- 模块基座是 i12 构建器树 `9a8d185f…`。构建器外先打 `m-036-bf-shf-rename`，该层整树
+  `0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce`，再打
+  `m-051-hwinfo-connector-fallback`。m-051 不进 i12 构建器。
+- 2026-10-12 启动 `c285b6cb-efcf-43f4-9f13-5c059c970c16`：当时 srcversion
   `370AB248D72951EF3C0C4BB`，`card0` 在，dwm 在跑，glvnd 选到 `libGLX_fh2m.so.0`，
   渲染器 `Fantasy II-M`。VA-API 打开 `fh2m_drv_video.so`，`va_openDriver()` 返回 0。
   八项计数为 0。oops 为 0。签名 taint 是 `OE`。
+- 现行加载 srcversion 是 `D579486A64C340B5178B66B`（2026-10-15 本机实读）。这不是 Debian 111 的 `370AB248D72951EF3C0C4BB`。
 - `hwinfo_g0m.bin` 仍缺。这不是通过。
 - 热卸载会在 `hwinfo_unregister` 里 oops。换模块只改磁盘上的 ko，然后重启。不要 unbind。
 
@@ -79,7 +81,7 @@ sudo tools/gentoo/verify.sh
 退回用 `sudo tools/gentoo/rollback.sh`，然后重启。
 
 构建器 `tools/debian/build-driver.sh` 仍只产 Debian deb，并且停在 `m-035-private-accessor`。
-Gentoo 与构建器共同 source `tools/internal/derive-fantgpu-source.sh`，再打 `m-036-bf-shf-rename`。不改构建器。
+Gentoo 与构建器共同 source `tools/internal/derive-fantgpu-source.sh`，再打 `m-036-bf-shf-rename` 和 `m-051-hwinfo-connector-fallback`。不改构建器。
 
 
 ## 幂等

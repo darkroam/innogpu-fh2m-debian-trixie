@@ -14,7 +14,7 @@ R49 最终 3/3 devices + 1/1 normal deep 验收通过，观察期无复发后用
 任务段 5 已卸载 r5dpm1/r5dpm2，并按独立物理 TTY 回执删除 119 项退役构建物；完成时宿主
 保留 107 默认与 101 回退，该后验已随后收档。当前保留集见下条。
 
-**接续（2026-10-08）**：运行内核为 `6.12.111+deb13-amd64`。内核保留集是 111 默认，
+**接续（2026-10-08，Debian 主机）**：运行内核为 `6.12.111+deb13-amd64`。内核保留集是 111 默认，
 107 与 101 备用。`GRUB_DEFAULT` 为精确子菜单字符串
 `Advanced options for Debian GNU/Linux>Debian GNU/Linux, with Linux 6.12.111+deb13-amd64`，
 不是数字 0；`saved_entry` 已清，107/101 菜单条目保留。详见
@@ -29,7 +29,7 @@ R49 最终 3/3 devices + 1/1 normal deep 验收通过，观察期无复发后用
   阻断 fantgpu DKMS，当时驱动栈未拉起。修复段以 030-036 改名私有宏，并按 111 重编
   001/002；重启后驱动栈 PASS。第 1 轮非预期 deep S3 不作 PM 验收。GRUB 段把默认项
   固定为 111 精确子菜单字符串，并清除悬空 `saved_entry`。任务段 4 只同步当前状态文档。
-  1C、validation-results 与 tag 不变。
+  当时 1C、validation-results 与 tag 未改。现行见 [status](../project/status.md)。
 
 **目录（2026-10-09，R55 批 1）**：`tools/` 是稳定命令入口；`tools/internal/` 不是给人记的命令名，
 门禁和测试直接调用。F 线是唯一开发主线，O 线只维护。R55 批 2 已从主线删除 `drivers/`（484 件）及 O 线清单/提取器；取回点是 tag `innogpu-4x-frozen`，构建提示检出 `deepin-4.0.2-i3`。
@@ -65,9 +65,11 @@ R27 早期八核窗口的 `FAILED_OR_UNVERIFIED` 原记录保留，不通过删�
 [公开阅读版](../history/history.md#轮次公开阅读版索引)已由 `e520258` 收档，qoder 初审与 dsh 终审通过。
 运行冻结不随文档进度解除。
 
-## Gentoo 现场（R57，段 4 待审查）
+## Gentoo 现场（R57 已通过）
 
-本机 `6.12.111-gentoo` 已用 i12 加构建器外的 `m-036-bf-shf-rename` 拉起。入口是
+R57 已通过，与 INDEX 一致，不是待审查。现行加载是 i12 构建器树加构建器外的 `m-036-bf-shf-rename` 与 `m-051-hwinfo-connector-fallback`，srcversion `D579486A64C340B5178B66B`（2026-10-15 本机实读）。这不是 Debian 的 `370AB248D72951EF3C0C4BB`。`hwinfo_g0m.bin` 仍缺。温度行与 pll 行未出现，不是通过。
+
+本机 `6.12.111-gentoo` 曾用 i12 加构建器外的 `m-036-bf-shf-rename` 拉起。入口是
 [`gentoo-fh2m.sh`](../../tools/gentoo/fh2m-lib.sh)，portage 包装在
 `tools/gentoo/overlay`。档案见 [Gentoo](../user/gentoo.md)。
 这不改 Debian 侧当前内核结论。`hwinfo_g0m.bin` 仍缺，不升格。

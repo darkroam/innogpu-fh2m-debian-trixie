@@ -67,9 +67,8 @@
 
 - `components/`：当前维护的第三方组件派生补丁；每个新增文件必须进入上述台账和许可审计。
 - `patches/`：Deepin/fantgpu 阶段补丁、迁移补丁、诊断候选和历史实验。它们按项目血缘、
-  目标树和许可状态单独记录，**不因位于仓库且不在 DKMS 中就自动算第三方**；其中部分已
-  迁入 `drivers/`，部分是混合/未决许可并排除出公开制品。
-- `drivers/` 与 DKMS：这是厂商驱动源码和其构建/打包路径。是否第三方取决于源码来源和
+  目标树和许可状态单独记录，**不因位于仓库且不在 DKMS 中就自动算第三方**；O 线源码曾在 `drivers/`，R55 批 2 起不在主线，只从 tag `innogpu-4x-frozen` 取回。部分是混合/未决许可并排除出公开制品。
+- `drivers/` 与 DKMS：O 线厂商驱动源码和其构建/打包路径，不在主线。是否第三方取决于源码来源和
   许可声明，不取决于 DKMS 这个包装机制。
 - Linux `components/linux/*.patch`：修改发行版内核源码，不会因为 DKMS 自动应用，也不会随普通
   内核升级自动保留。长期部署优先从当前系统包管理器获取与目标内核匹配的源码包；当前 Debian
@@ -85,17 +84,18 @@
 | Linux xHCI reset-on-resume | 包管理器提供的匹配源码包、目标内核 headers/build tree、`CONFIG_USB_XHCI_PCI=m` 和构建依赖 | 不使用该内核候选或设备不需要该 Hygon quirk 时不应用；普通 DKMS 构建不会自动接入 |
 | Linux ACPI battery workaround | 包管理器提供的匹配源码包、目标内核 headers/build tree、`CONFIG_ACPI_BATTERY=m` 和构建依赖 | 不使用该机型电池 workaround 时不应用；普通 DKMS 构建不会自动接入 |
 
-Linux 两个补丁是“内核源码补丁”，不是 DKMS 模块补丁。若发行版已经提供包含同等修改的内核
-包，直接安装该包即可；否则从包管理器取得匹配的完整源码包并在证据目录临时展开。当前 107
-配置中两个目标均为模块，因此长期部署只重编 `battery.ko` 和 `xhci-pci.ko`，不重建 `bzImage`。
+001/002 是内核源码补丁，不是 DKMS 模块补丁。若发行版已经提供包含同等修改的内核
+包，直接安装该包即可；否则从包管理器取得匹配的完整源码包并在证据目录临时展开。Debian 107
+当时配置中这两个目标均为模块，因此该路径只重编 `battery.ko` 和 `xhci-pci.ko`，不重建 `bzImage`。
+003 是内建 `pinctrl-amd`，004 是 `snd-hda-intel` 模块。下面的 Debian 脚本不编译、不安装 003/004。
 源码包提供目标 `.c`，headers/build tree 提供已安装内核的生成头、符号和 `vermagic`；两者不能
 相互替代。
 
 源码 `.deb` 持久保存在 `debs/`；每次构建重新展开干净工作树。工作树、构建输出及安装证据位于
 本轮 `.build/` 证据目录，审查后可只清理工作树。源码 `.deb` 只有在对应内核版本不再保留且用户
-明确执行清理时才删除。入口为 `build-linux-patched-modules.sh`、
-`install-linux-patched-modules.sh`、`rollback-linux-patched-modules.sh`、
-`cleanup-linux-module-worktree.sh` 和 `prune-kernel-source-cache.sh`。
+明确执行清理时才删除。Debian 入口为 `tools/debian/build-linux-patched-modules.sh`、
+`tools/debian/install-kernel-patches.sh`、`tools/debian/rollback-linux-patched-modules.sh`、
+`tools/debian/cleanup-linux-module-worktree.sh` 和 `tools/debian/prune-kernel-source-cache.sh`。
 
 脚本对未知包管理器、源码版本不匹配、补丁 fuzz、非模块配置及 `vermagic` 不匹配 fail-closed。
 未来 RPM 系统应接入其包管理器的源码包，不得把 Debian 包名硬套到其他发行版。

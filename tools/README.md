@@ -5,8 +5,7 @@
 
 ## 构建与打包
 
-> **当前入口**：新架构构建器 `tools/debian/build-driver.sh`（迁移源码树 + 经审查的新修复 + manifest
-> 黑盒载荷，产出 4.0.x-iN）。D 线构建脚本已从主线删除，只从 tag `innogpu-4x-frozen` 检出，
+> **当前入口**：`tools/debian/build-driver.sh`。不设 `VERSION` 时默认 `4.0.2-i3`，主线上进入 O 分支并拒绝。F 线显式 `VERSION=5.0.0-i12`。D 线构建脚本已从主线删除，只从 tag `innogpu-4x-frozen` 检出，
 > 与 O 线只从 tag 检出同一条规则。现行组件构建器是 `components/picom/build.sh` 与 `components/fbterm/build.sh`。
 
 | 入口 | 生命周期 | 职责 |
@@ -29,7 +28,7 @@
 | `tools/gentoo/check-kernel-patches.sh` | Gentoo 内核补丁核对 | 核对三处 SHA。默认再看 `/usr/src/linux` 是否已含 xHCI、电池、`HYGO0030` 与 `1d94:14c9`；`--files-only` 只核文件 |
 | `tools/gentoo/r5-observe.sh` | Gentoo 一轮 deep 记录 | `before` 后由用户执行 `systemctl suspend`，唤醒后再 `after`。普通用户启动，脚本自行 sudo。不休眠，不写 `pm_test`。证据在 `.build/r57-r5-observe/`，`latest-run.txt` 指向本次 |
 | `tools/gentoo/r5-cycle.sh` | Gentoo 一轮 deep 自动唤醒 | 调用上面的 before/after，中间 `rtcwake -m mem`。秒数 20–180，默认 45。不写 `pm_test`。证据目录多一个 `cycle-*`，`latest-cycle.txt` 指向本次 |
-| `tools/debian/build-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；R49 候选仅 `5.0.0-i12` + epoch `1790812800`：继承已审 i11，严格应用 `m-035-private-accessor` 私有对象 accessor 修复。编译/包内源共用最终派生树门 `9a8d185f2a65`；i1-i11/未知版本/错 epoch 拒绝，ABI 门保持。i12 A/B 与安装通过，运行验收首轮因外接输入未恢复失败停止；历史成绩不改 |
+| `tools/debian/build-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；R49 候选仅 `5.0.0-i12` + epoch `1790812800`：继承已审 i11，严格应用 `m-035-private-accessor` 私有对象 accessor 修复。编译/包内源共用最终派生树门 `9a8d185f2a65`；i1-i11/未知版本/错 epoch 拒绝，ABI 门保持。i12 A/B 与安装通过。运行验收首轮因外接输入未恢复失败停止，该轮不追认为 PASS；其后 R49 最终 3+1 与 Debian R52 驱动栈 PASS。R1 保持 fail。历史成绩不改 |
 | `generate-fantgpu-maintainer-scripts.sh` | F 构建器共用生成段 | 只向显式 PACKAGE_ROOT 的 DEBIAN/ 写 postinst/prerm/postrm，生产与回归共用。K 全集检查/失败传播；两调用点共用配置门，仅固定 autoinstall_all_kernels.conf 已审 30 字节 SHA 例外，其它有效配置与目录/文件符号链接拒绝，不 source 配置取值。回退丢弃未装包暂存根，已安装包另行批准恢复 |
 | `components/picom/build.sh` | 独立组件 | 构建/安装固定基线的 patched Picom，不进入驱动 deb |
 | `components/fbterm/build.sh` | 独立组件 | 从 Debian fbterm 1.7-5 构建可配置 redraw 的用户本地版本，不进入驱动 deb |

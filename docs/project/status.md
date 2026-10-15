@@ -1,6 +1,6 @@
 # 当前状态与问题清单
 
-最后更新：2026-10-10
+最后更新：2026-10-15
 
 本文件是项目当前运行状态的唯一摘要。历史过程、补丁细节和故障推导分别见
 [阶段补丁](../patches/README.md) 与 [事故和经验](../incidents/README.md)。
@@ -9,13 +9,14 @@
 
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
-| 当前运行驱动 | **fantgpu 5.0.0-i12（干净候选，非发布）** 加未进入 i12 构建器的 `m-036-bf-shf-rename`，运行于 `6.12.111+deb13-amd64`。R49 的 3/3 devices + 1/1 normal deep 与用户裁决 R5 通过保持原边界。R51 三段已通过。R52 将 i12+m-036-bf-shf-rename、001 xHCI 与 002 battery 按 111 重建并验收，驱动栈 PASS | [R52 111 内核与驱动栈](#r52-111-内核与驱动栈2026-10-08) |
-| 当前磁盘安装 | **fantgpu 5.0.0-i12** 包仍是 R49 的干净候选；111 上已加载模块是该树加 `m-036-bf-shf-rename` 后的 DKMS 构建，srcversion `370AB248D72951EF3C0C4BB`，与 `updates/dkms` 磁盘模块一致。重装未带 m-036-bf-shf-rename 的旧 DKMS 包会退回头文件 | [R52 111 内核与驱动栈](#r52-111-内核与驱动栈2026-10-08) |
+| Debian 当前运行驱动 | **fantgpu 5.0.0-i12（干净候选，非发布）** 加未进入 i12 构建器的 `m-036-bf-shf-rename`，运行于 `6.12.111+deb13-amd64`。R49 的 3/3 devices + 1/1 normal deep 与用户裁决 R5 通过保持原边界。R51 三段已通过。R52 将 i12+m-036-bf-shf-rename、001 xHCI 与 002 battery 按 111 重建并验收，驱动栈 PASS | [R52 111 内核与驱动栈](#r52-111-内核与驱动栈2026-10-08) |
+| Debian 当前磁盘安装 | **fantgpu 5.0.0-i12** 包仍是 R49 的干净候选；111 上已加载模块是该树加 `m-036-bf-shf-rename` 后的 DKMS 构建，srcversion `370AB248D72951EF3C0C4BB`，与 `updates/dkms` 磁盘模块一致。重装未带 m-036-bf-shf-rename 的旧 DKMS 包会退回头文件 | [R52 111 内核与驱动栈](#r52-111-内核与驱动栈2026-10-08) |
+| Gentoo 当前运行 | 内核 `6.12.111-gentoo-x86_64`。加载模块是 i12 构建器树加构建器外的 `m-036-bf-shf-rename` 与 `m-051-hwinfo-connector-fallback`，srcversion `D579486A64C340B5178B66B`（2026-10-15 本机实读）。overlay 在 `tools/gentoo/overlay`。`hwinfo_g0m.bin` 仍缺，不升格。温度行与 pll 行未出现，不是通过 | [Gentoo 档案](../user/gentoo.md)、[脚本索引](../../tools/README.md) |
 | 回退基线 | `4.0.2-i3`（deepin 血缘最终交付）：R14 6/6 deep 矩阵通过；包 SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；回滚卡见 r5dpm2 设计 §8，执行须另行授权 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md)、[回滚卡](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
 | 当前主线目标 | `5.0.0-i12`（annotated tag `fantgpu-5.0.0-i12` 指向 `079b179`）；R5 已通过。validation-results `signed=true`：R1=fail 且 hwinfo 豁免不改判，R2=pass，R5=pass，U1/U2/R9=unverified 且 closed。C2 i12 三方已署名。件内 `tag_created=false` 不改。`license_release_gate=BLOCKED`。不建 Release、不传附件 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01)、[030 映射表](../planning/030-mapping-table.md) |
 | 历史当前态（2026-09-03 记录） | `4.0.2-i3` 已安装并重启至 `6.12.101+deb13-amd64`；R16 迁移后降为回退基线 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | R5 状态 | **已解决**：R48 闭合 accessor 错布局根因链，R49 修复后最终 3+1 验收通过，观察期无复发后用户裁决 R5 通过；早期 `OUTSIDE_COVERAGE` 与失败记录不重写 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01)、[r5 调查计划](../design/r5-suspend-investigation-plan.md) |
-| 内核保留集 | 当前为 `6.12.111+deb13-amd64`（运行；`GRUB_DEFAULT` 是 111 精确子菜单字符串，`saved_entry` 已清）、`6.12.107+deb13-amd64` 与 `6.12.101+deb13-amd64`（备用，菜单保留）。R50 当时的 107/101 清理结论不改写；111 是此后安装并被选为默认的内核。63/90/95/96 与 r47b-r47f/r48 六个 r5obs2 过程内核仍已清理 | [R52 111 内核与驱动栈](#r52-111-内核与驱动栈2026-10-08) |
+| 内核保留集 | Debian 主机为 `6.12.111+deb13-amd64`（运行；`GRUB_DEFAULT` 是 111 精确子菜单字符串，`saved_entry` 已清）、`6.12.107+deb13-amd64` 与 `6.12.101+deb13-amd64`（备用，菜单保留）。R50 当时的 107/101 清理结论不改写；111 是此后安装并被选为默认的内核。63/90/95/96 与 r47b-r47f/r48 六个 r5obs2 过程内核仍已清理 | [R52 111 内核与驱动栈](#r52-111-内核与驱动栈2026-10-08) |
 | 稳定图形历史基线 | 历史记录：`3.3.3.42-patched-21` 已安装、重启并完成本机 PVR、Xorg/GLX、fbdev、真实 VT、显示与 Picom 验收；不是当前运行包 | [`patched-21` 验收](../patches/patched-21-release-candidate.md) |
 | 历史运行基线 | `3.3.3.42-patched-20` 曾完成运行验收，但 deb 含收敛前辅助载荷，仅保留为历史证据 | [`patched-20` 验收](../incidents/patched-20-runtime.md) |
 | 包载荷边界 | 已验收 p20 deb 生成于 xdisplay 所有权收敛前，含旧引擎/实验辅助文件，不可发布或同版本重建 | [`patched-20` 载荷审计](../incidents/patched-20-legacy-helper-payload.md) |
@@ -41,7 +42,7 @@
 
 ## R52 111 内核与驱动栈（2026-10-08）
 
-当前运行内核是 `6.12.111+deb13-amd64`。已加载 fantgpu 来自该内核的
+Debian 主机运行内核是 `6.12.111+deb13-amd64`。已加载 fantgpu 来自该内核的
 `updates/dkms/fantgpu.ko.xz`，vermagic 与之相同，srcversion 为
 `370AB248D72951EF3C0C4BB`。包版本仍是 R49 的 **5.0.0-i12** 干净候选；111 上的运行树
 另加 `m-036-bf-shf-rename`。该补丁只把私有宏 `__bf_shf` 改名为 `__fant_bf_shf`，表达式仍是
@@ -70,7 +71,7 @@ deep S3 打断，不作 PM 验收，恢复脚本未执行。
 R51 三段闭环已通过，不再待审查：排查、现场恢复与插拔补证、002 部署验收均已收档。
 107 上的那次拔插验收不改写成 111 的结果。
 
-不变项：1C 不变，`license_release_gate=BLOCKED`，validation-results 未签，tag 未打。
+2026-10-08 当时不变项：1C 未动，`license_release_gate=BLOCKED`，validation-results 未签，tag 未打。现行见同文件「发布判断」。
 早期 `OUTSIDE_COVERAGE` 不重写。本机证据位于
 `.build/r52-111-verify-20261008-01/`、`.build/r52-111-fix-20261008-02/`、
 `.build/r52-111-postreboot-20261008-03/` 与 `.build/r52-grub-default-20261008-04/`

@@ -39,5 +39,5 @@ BAT0 全程 `present=1`；插回后 `ADP1 online=1`、BAT0 capacity=95，电池�
 把源码 `.deb` 保留在 `debs/`，每次临时展开，严格应用 001/002，并只重编当前配置为模块的
 `xhci-pci.ko` 和 `battery.ko`。源码 `.deb` 保留到对应内核版本退役。
 
-安装后验收入口为 `scripts/r51-battery-task3-verify.sh`；它从普通用户启动、自动 sudo 并将
+安装后验收入口为 `tools/debian/r51-battery-task3-verify.sh`；它从普通用户启动、自动 sudo 并将
 完整时间线保存到 `.build/r51-module-deploy-20261002-10/runtime/`。

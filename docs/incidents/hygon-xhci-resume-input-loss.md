@@ -34,12 +34,12 @@ SHA-256 为 `bb092bf391e4f937d6126d1c687855899b6fb4588a80665583ef99e9c23a40dc`�
 原始证据留在本机 `.build/r49-xhci-fix-20261001/`，不随 Git 分发。归档只保存 GPL-2.0-only
 派生补丁与必要摘要，不保存完整 Linux 源码、模块、initramfs、签名材料或安装脚本。正常 deep
 在该分支未运行，因此这项修复及 3/3 devices 结果不能单独完成 R49 原定的 3+1 验收，也不改变
-R5 的 `FAIL` 状态。
+R5 的 `FAIL` 状态。当时结论；现行见 [status](../project/status.md)。
 
 ## 内核与系统升级检查
 
 该修复目前不是发行版内核的一部分。每次安装新内核、升级系统或迁移机器后，必须在任何 suspend
-验收前运行 `sudo scripts/check-hygon-xhci-resume-fix.sh`。脚本只读检查目标 PCI ID 和当前 boot 的
+验收前运行 `sudo tools/debian/check-hygon-xhci-resume-fix.sh`。脚本只读检查目标 PCI ID 和当前 boot 的
 xHCI quirk 日志：`PASS` 才证明 `0x80` reset-on-resume 位生效；`FAIL` 表示新内核未包含修复；
 `UNVERIFIED` 表示日志不足，二者都不得继续 PM 验收。升级后的内核若已由上游包含等价 quirk，
 可直接通过该检查，不要求继续使用本地 `updates/r49` 模块。

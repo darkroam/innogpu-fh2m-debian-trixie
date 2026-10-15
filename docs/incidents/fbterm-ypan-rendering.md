@@ -30,7 +30,7 @@ Innogpu fbdev 对 ioctl 返回成功，但该路径在持续滚动和重新进�
 - `redraw` 模式跳过 YPan/YWrap 探测，并在进入时把遗留 `yoffset` 归零；
 - 使用加速滚动时，析构前也把 `yoffset` 复位为 0，避免偏移跨进程遗留。
 
-本机 `~/.fbtermrc` 使用 `scrolling=redraw`。`scripts/build-patched-fbterm.sh` 从固定的 Debian
+本机 `~/.fbtermrc` 使用 `scrolling=redraw`。`components/fbterm/build.sh` 从固定的 Debian
 1.7-5 源码构建用户本地版本；默认关闭未使用的 GPM 和 legacy VESA 支持，系统
 `/usr/bin/fbterm` 保持不变，可直接作为回退。
 
