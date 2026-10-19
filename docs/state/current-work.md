@@ -87,10 +87,10 @@ R57 已通过，与 INDEX 一致，不是待审查。现行加载是 i12 构建�
 
 ## 许可证与研发验证
 
-- [ ] **发布阻断：权利链人工审查**。3 个 `Strictly Confidential` 文件与 70 个无许可文件已从公开
-  制品排除（不从 Git 历史删除）；driver-source 制品因排除后无法独立构建且 408+2 个已有声明文件
-  的授权链未闭合保持 BLOCKED（不假 PASS）；192 项 manifest 载荷权利链**仅在计划公开二进制制品时**
-  需要，当前不作为发布目标。关闭 `license_release_gate=BLOCKED` 前不得发布完整源码树或载荷附件。
+- [ ] **发布阻断**。主线现行审计：`strict_confidential=0`、`unclassified=0`、
+  `dual_mit_gpl=0`、`manifest_entries=660`。`driver-source` 已退役，不再计入阻断。
+  阻断理由是已推送历史（提交 `18a2e39845d4`）含阻断 blob；tag ref 推送状态与阻断事实无关。
+  关闭 `license_release_gate=BLOCKED` 前不得把仓库整体当发布目标。
 - [ ] 完成研发验证矩阵：扩展坞/多屏/无盖桌面/其他机型，以及电源/合盖场景。该项用于提高研发结论的外推性，不是当前 release 工作。
 
 **发布周期前置（2026-10-09，用户推翻 1C；tag 已于同日打出）**：annotated tag `fantgpu-5.0.0-i12` 指向 `079b179`。hwinfo 豁免不把 R1 改成 pass；R2=pass；R5=pass。不创建 GitHub Release，不传附件。

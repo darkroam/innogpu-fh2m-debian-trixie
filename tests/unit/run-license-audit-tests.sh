@@ -722,9 +722,10 @@ if [[ -e "$F/vendor" || -e "$F/build" || -e "$F/third_party" ]]; then
 else
     pass audit_runs_without_local_payloads
 fi
-# P1/P2: the default fixture allowlist excludes numeric patches/ and the whole debs/ dir
-if grep -Eq '^(patches/|debs/)' "$F/docs/project/project-tools-allowlist.txt"; then
-    fail "project-tools allowlist contains excluded dirs"
+# m-/g- patches may be listed. Numeric and any other patches/ names, and all of debs/, stay out.
+allow="$F/docs/project/project-tools-allowlist.txt"
+if grep -Eq '^debs/|^patches/[^mg]|^patches/[mg][^-]|^patches/[mg]$' "$allow"; then
+    fail "project-tools allowlist contains numeric patches or debs"
 else
     pass project_tools_excludes_patches_debs
 fi
