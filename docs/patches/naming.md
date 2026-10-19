@@ -66,6 +66,6 @@ D 线 `patches/001`–`029` 不改名。历史文件里的 `030-NNN` 是当时�
 
 互转：进行中行的待验证项清空，并补齐当前表字段后，移入 `current`，同时从 `in_progress` 删除。当前行被新工作替代时移入 `history`。替代工作未完成则另开进行中行。同一 system+kernel 不能同时在 `current` 和 `in_progress`。
 
-新增行：谁加系统或内核，谁在同一批改这张表、构建脚本和安装说明。先有该内核的干净编译和验收，再写入 `current`。没做完就只写 `in_progress`。`m_base` 和 `g_set` 只列构建脚本实际打上的补丁，不从 meta 的记录内核反推。001–004 逐个重验，禁止复用另一内核的模块。002 是机型 workaround，换内核版本必须重适配。不为填列而加转发脚本。
+新增行：谁加系统或内核，谁在同一批改这张表、构建脚本和安装说明。先有该内核的干净编译和验收，再写入 `current`。没做完就只写 `in_progress`。`m_base` 和 `g_set` 只列构建脚本实际打上的补丁，不从 meta 的记录内核反推。001–004 逐个重验，禁止复用另一内核的模块。`005-drm-display-hdmi-helper-prompt` 已入库但未验收，不写入 `current`；`current` 的内核补丁集合仍正好是 001–004。002 是机型 workaround，换内核版本必须重适配。不为填列而加转发脚本。
 
 版本：iN 只随 m 链实质变更。g 集、构建器外补丁、内核补丁和构建目录不同，都不加 iN，只改 `build_identity`。`check-docs` 核对引用路径存在；补丁若写了 `meta_kernel`，必须等于该 meta 的 `verified.clean_build.kernel`。meta 没有 applicability 字段时不失败；将来有了，行内核必须落在该字段里。

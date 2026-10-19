@@ -62,7 +62,7 @@
 | `components/picom/` | Picom 补丁、配置、`build.sh`、`install-user.sh`、`session.sh` | 组件维护 | 是 | 上游 commit 变了才改 | 补丁字节随审查 |
 | `components/picom/debian/` | 只服务 Debian 的 `install-prereqs.sh` | Debian 安装 | 是 | 依赖变了才改 | 否 |
 | `components/fbterm/` | fbterm 补丁与 `build.sh` | 组件维护 | 是 | Debian fbterm 1.7-5 基线变了才改 | 补丁字节随审查 |
-| `components/linux/` | 内核补丁 001–004。适用内核以 [系统×内核矩阵](../patches/system-kernel-matrix.json) 为准 | 内核补丁维护 | 是 | 新内核必须重验，不得套旧模块 | 补丁字节随审查 |
+| `components/linux/` | 内核补丁 001–005。005 已入库未验收，不在矩阵 current。适用内核以 [系统×内核矩阵](../patches/system-kernel-matrix.json) 为准 | 内核补丁维护 | 是 | 新内核必须重验，不得套旧模块 | 补丁字节随审查 |
 
 ### `drivers/`
 

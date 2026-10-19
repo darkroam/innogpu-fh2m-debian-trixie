@@ -6,7 +6,7 @@ EAPI=8
 DESCRIPTION="Machine patches for gentoo-sources and gentoo-kernel user-patches"
 HOMEPAGE="https://github.com/timhant/innogpu-fh2m-debian-trixie"
 SRC_URI=""
-LICENSE="GPL-2"
+LICENSE="GPL-2 MIT"
 SLOT="0"
 KEYWORDS="~amd64"
 RESTRICT="bindist"
@@ -19,7 +19,8 @@ src_install() {
 		"${src}/001-hygon-148c-xhci-reset-on-resume.patch" \
 		"${src}/002-kaitian-x7h-battery-notification-delay.patch" \
 		"${src}/003-pinctrl-amd-hygon-gpio.patch" \
-		"${src}/004-snd-hda-hygon-14c9.patch"
+		"${src}/004-snd-hda-hygon-14c9.patch" \
+		"${src}/005-drm-display-hdmi-helper-prompt.patch"
 	exeinto /usr/libexec/fantgpu
 	doexe "${FILESDIR}/install-patches.sh"
 }

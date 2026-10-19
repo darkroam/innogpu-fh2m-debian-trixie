@@ -17,10 +17,10 @@ fix=$(mktemp)
 out=$(mktemp)
 trap 'rm -rf "$work" "$fix" "$out"' EXIT
 DESTDIR=$work/dest "$root/tools/gentoo/install-kernel-patches.sh" >"$out"
-grep -q 'installed=8 skipped=0' "$out"
+grep -q 'installed=10 skipped=0' "$out"
 before=$(sha256sum "$work/dest/etc/portage/patches/sys-kernel/gentoo-sources/001-hygon-148c-xhci-reset-on-resume.patch")
 DESTDIR=$work/dest "$root/tools/gentoo/install-kernel-patches.sh" >"$out"
-grep -q 'installed=0 skipped=8' "$out"
+grep -q 'installed=0 skipped=10' "$out"
 after=$(sha256sum "$work/dest/etc/portage/patches/sys-kernel/gentoo-sources/001-hygon-148c-xhci-reset-on-resume.patch")
 [[ $before == "$after" ]]
 printf 'local\n' >> "$work/dest/etc/portage/patches/sys-kernel/gentoo-kernel/004-snd-hda-hygon-14c9.patch"
@@ -156,7 +156,7 @@ DESTDIR=$rmdest "$root/tools/gentoo/install-kernel-patches.sh" >/dev/null
 printf 'local\n' >> "$rmdest/etc/portage/patches/sys-kernel/gentoo-sources/003-pinctrl-amd-hygon-gpio.patch"
 kept=$(sha256sum "$rmdest/etc/portage/patches/sys-kernel/gentoo-sources/003-pinctrl-amd-hygon-gpio.patch")
 PATCH_REMOVE=1 DESTDIR=$rmdest "$root/tools/gentoo/install-kernel-patches.sh" >"$out"
-grep -q 'removed=7 kept=1' "$out"
+grep -q 'removed=9 kept=1' "$out"
 [[ -f $rmdest/etc/portage/patches/sys-kernel/gentoo-sources/003-pinctrl-amd-hygon-gpio.patch ]]
 [[ $kept == $(sha256sum "$rmdest/etc/portage/patches/sys-kernel/gentoo-sources/003-pinctrl-amd-hygon-gpio.patch") ]]
 [[ ! -f $rmdest/etc/portage/patches/sys-kernel/gentoo-sources/001-hygon-148c-xhci-reset-on-resume.patch ]]

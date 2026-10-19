@@ -1,11 +1,12 @@
 #!/bin/bash
-# Copy 001-004 into portage user-patches. Same SHA skips. Different SHA does not overwrite.
+# Copy 001-005 into portage user-patches. Same SHA skips. Different SHA does not overwrite.
 set -euo pipefail
 names=(
     001-hygon-148c-xhci-reset-on-resume.patch
     002-kaitian-x7h-battery-notification-delay.patch
     003-pinctrl-amd-hygon-gpio.patch
     004-snd-hda-hygon-14c9.patch
+    005-drm-display-hdmi-helper-prompt.patch
 )
 sha256() { sha256sum "$1" | awk '{print $1}'; }
 src=${PATCH_SRC:-}

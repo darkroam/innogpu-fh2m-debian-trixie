@@ -1,0 +1,11 @@
+--- a/drivers/gpu/drm/display/Kconfig
++++ b/drivers/gpu/drm/display/Kconfig
+@@ -70,7 +70,7 @@
+ 	  DRM display helpers for HDCP.
+ 
+ config DRM_DISPLAY_HDMI_HELPER
+-	bool
++	bool "DRM HDMI display helpers"
+ 	help
+ 	  DRM display helpers for HDMI.
+ 

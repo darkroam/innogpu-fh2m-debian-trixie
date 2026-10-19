@@ -55,6 +55,7 @@ sudo dpkg -i .build/work/driver-build/fantgpu-fh2m-trixie_5.0.0-i12.deb
 `tools/debian/build-linux-patched-modules.sh` 和 `tools/debian/install-kernel-patches.sh` 现在只处理
 `components/linux` 的 001 和 002，产物是 `xhci-pci.ko` 与 `battery.ko`，装到 `updates/r51`。
 003 是内建 `pinctrl-amd`，004 是 `snd-hda-intel` 模块。这两个脚本不编译、不安装 003/004。
+005 只给 `CONFIG_DRM_DISPLAY_HDMI_HELPER` 加菜单提示，要打进内核源码后整核重编。这两个脚本也不处理 005。
 001/002 的基线是 Debian `linux-source-6.12` `6.12.107-1`。换内核必须重打、重编，禁止复用另一内核的模块。
 002 是机型专用 workaround，不能直接套到别的内核版本。
 

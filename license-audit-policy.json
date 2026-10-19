@@ -145,6 +145,7 @@
       "components/linux/002-kaitian-x7h-battery-notification-delay.patch": "GPL-2.0-only",
       "components/linux/003-pinctrl-amd-hygon-gpio.patch": "GPL-2.0-only",
       "components/linux/004-snd-hda-hygon-14c9.patch": "GPL-2.0-only",
+      "components/linux/005-drm-display-hdmi-helper-prompt.patch": "MIT",
       "components/picom/001-probe-explicit-uniform-location.patch": "MPL-2.0",
       "components/picom/picom.conf": "GPL-3.0-or-later",
       "components/picom/build.sh": "GPL-3.0-or-later",
@@ -199,6 +200,17 @@
           "KaiTian X7h G1e",
           "HYGO0030",
           "1d94:14c9"
+        ]
+      },
+      {
+        "paths": [
+          "components/linux/005-drm-display-hdmi-helper-prompt.patch"
+        ],
+        "markers": [
+          "CONFIG_DRM_DISPLAY_HDMI_HELPER",
+          "drivers/gpu/drm/display/Kconfig",
+          "SPDX-License-Identifier: MIT",
+          "6.12.111"
         ]
       },
       {
