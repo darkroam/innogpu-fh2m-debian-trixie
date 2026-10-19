@@ -128,8 +128,30 @@ patch-029 为 DDCCI 回退模式恢复 panel GPIO callback；组合修复已通�
 稳定命令同时从 `/usr/bin/innogpu-*` 与 `/usr/sbin/innogpu-*` 链接到实体。包的 `postinst` 只写入
 `/etc/modprobe.d/innogpu.conf`、执行 DKMS build/install、校验 coherent DRI、运行
 `ldconfig`/`depmod`/`update-initramfs`，不会 enable 或 start `sw-inno-gl.service`。因此“文件随包存在”
-不能写成“服务已启用”。当前 release gate 也尚未覆盖该 vendor unit/helper 组合及全部 10 个命令链接，
-该缺口记录在 `code-analysis.md` 与 `../planning/current-work.md`。
+不能写成“服务已启用”。当前 release gate 也尚未覆盖该 vendor unit/helper 组合及全部 10 个命令链接。
+
+2026-10-19 裁定：vendor 软件 GL 单元保留，默认屏蔽，maintainer scripts 不 `enable`、不 `start`。
+现行 F 包把 `sw-fant-gl.service` 和 `sw-fant-gl` 标成 `locked-reference`，不装进系统。
+历史包里的 `sw-inno-gl.service` 可以留在 `/lib/systemd/system/`，平时就是装而不启。
+只有救援（驱动升级失败，要进桌面修）或硬件 GL 故障兜底时才手动打开：
+
+```sh
+sudo systemctl unmask sw-inno-gl.service
+sudo systemctl enable --now sw-inno-gl.service
+```
+
+恢复屏蔽：
+
+```sh
+sudo systemctl disable --now sw-inno-gl.service
+sudo systemctl mask sw-inno-gl.service
+```
+
+`tools/debian/disable-incompatible-userspace.sh` 不是这条服务的专用开关。它会把
+`sw-inno-gl.service` 指到 `/dev/null`（同样是 mask），并且搬走冲突的 vendor GL/GBM。
+从软件 GL 退回系统 GL 时用它。只想重新屏蔽服务时用上面的 `disable` + `mask`，不要靠它顺手删库。
+F 包没有安装 `sw-fant-gl.service`，对这个名字执行 `systemctl` 没有服务可启。
+不因此给 control 加 `systemd` 依赖，也不把 release gate 扩到这个 unit。
 
 patched-21 是 coherent 历史规则的首个实际输出：离线包边界、重复构建和当前设备运行验收均已通过，
 但尚未完成跨硬件发布。它的固定补丁矩阵和证据见

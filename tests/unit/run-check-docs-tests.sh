@@ -5,7 +5,7 @@ export LC_ALL=C
 
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 fixture=$(mktemp -d)
-trap 'rm -rf "$fixture"' EXIT
+trap '[[ -f $fixture/matrix.before ]] && cp "$fixture/matrix.before" "$fixture/docs/patches/system-kernel-matrix.json" || true; rm -rf "$fixture"' EXIT
 
 # Include pending additions/renames without staging anything in the source repo.
 cd "$ROOT"

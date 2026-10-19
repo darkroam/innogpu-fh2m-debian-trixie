@@ -59,16 +59,18 @@ patch-029 DDCCI panel 创建恢复，
 - Innogpu 显示接入要求目标用户已经从 dotconfig 安装 xdisplay；本项目设备钩子使用 `xrandr`，
   会话接入使用 POSIX shell。
 
-当前新构建器还直接调用 `python3`、`dpkg`/`dpkg-deb`、`sha256sum`、`realpath`、`make` 和
-`/usr/sbin/modinfo`。其中 `install-prereqs-debian.sh` 当前没有显式安装 `python3`；最小化 Debian
-环境必须在构建前另行确认这些命令可用。该事实是现有前置依赖脚本的覆盖缺口，不得把脚本运行成功
-等同于完整工具链已安装。
+当前新构建器在通过版本、epoch 和源身份门之后、编译之前核对直接调用的命令：
+`python3`、`dpkg`、`dpkg-deb`、`sha256sum`、`awk`、`tar`、`zstd`、`make`、`nproc`、`install`、
+`find`、`grep`、`du`、`touch`、`pahole` 和 `/usr/sbin/modinfo`。缺任何一个就
+`builder_prereq=FAIL` 退出。构建器不调用 `realpath`。`install-prereqs-debian.sh` 仍然不单独安装
+`python3`；它退出 0 不表示这些命令已经齐。
 
 当前新架构 deb 的实际 control 字段为：`Depends: dkms, build-essential, libdrm2, libepoxy0,
 libpixman-1-0, libwayland-server0, libxcb-randr0`，`Recommends: linux-headers-amd64, libegl1,
-libgles2, libgl1, libglx0, libgles1, libglvnd0`。包内虽然从 vendor 载荷导入
-`/lib/systemd/system/sw-inno-gl.service`，但 control 当前没有显式 `systemd` 依赖，maintainer scripts
-也不 enable/start 该单元；这是一项待单独修正和补 release fixture 的实现缺口，而不是服务已激活的证据。
+libgles2, libgl1, libglx0, libgles1, libglvnd0`。历史包从 vendor 载荷导入过
+`/lib/systemd/system/sw-inno-gl.service`。现行 F 包不安装 `sw-fant-gl.service`
+（manifest `locked-reference`）。2026-10-19 裁定是保留并屏蔽：maintainer scripts 不 enable、不 start，
+也不为此补 `systemd` 依赖或 release fixture。见 [architecture.md](architecture.md)。
 
 runtime 能力基线另有可选诊断依赖：`pciutils`（`lspci`）、`drm-info`（`drm_info`）、
 `vulkan-tools`（`vulkaninfo`）、`clinfo`、`vainfo` 所属发行版包及 `wpctl`。这些工具缺失时对应能力项

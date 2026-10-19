@@ -188,8 +188,8 @@ Git 跟踪清单核对：CI 有 23 个 unit + 5 个其他 runner，共 28 个；
 
 **构建测试至少覆盖**：headers 缺失、`SOURCE_DATE_EPOCH` 缺失、版本低于 patched-27、helper 缺失、
 `.o.cmd` 进入包、双构建哈希一致、oracle 文件清单/载荷/DKMS 源码/模块符号一致。
-→ 大部分由构建器门禁 + oracle 脚本覆盖（CONFIRMED）；**补"helper 缺失"与"headers 缺失"的
-失败用例**（fixture，不实际构建）。
+→ headers 缺失、`SOURCE_DATE_EPOCH` 缺失和 helper 缺失由
+`tests/unit/run-builder-fantgpu-gates-tests.sh` 覆盖，不实际编译。其余项仍由构建器门禁与 oracle 覆盖。
 
 **文档/许可证测试至少覆盖**：链接存在、脚本登记完整、README 当前版本准确、runtime 权威统计一致、
 无个人路径/token/serverauth、历史版本不冒充当前、Markdown 表格结构、许可证逐路径分类/manifest

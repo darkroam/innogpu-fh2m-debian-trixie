@@ -171,9 +171,9 @@
   helper，`ExecStart=$helper`，enable/start 失败退出并回滚；`uninstall-innogpu.sh` 只移除确属
   本项目的 fallback 链接。修复记录见 [status](status.md)，离线边界见
   [test-strategy](test-strategy.md)；这不证明所有 systemd 规范或 fantgpu 服务路径均已验收。
-- 当前 deb 从 vendor manifest 导入 `/lib/systemd/system/sw-inno-gl.service` 与 `/usr/sbin/sw-inno-gl`，
-  但 control 未声明 `systemd` 依赖，maintainer scripts 也不 enable/start 该单元。它是既有包载荷，
-  不是本节规范的合规示例；后续版本必须先决定其保留和生命周期策略，并补包边界测试。
+- 历史 deb 可以带上 vendor 的 `sw-inno-gl.service` 与 `/usr/sbin/sw-inno-gl`。2026-10-19 裁定保留并默认屏蔽：
+  maintainer scripts 不 enable、不 start。现行 F 包用 `locked-reference`，不把 `sw-fant-gl.service` 装进系统。
+  启停见 [architecture.md](architecture.md)。本裁定不补 `systemd` 依赖，也不补 release fixture。
 
 ## 实现与文档同步矩阵
 

@@ -249,9 +249,9 @@ R31 已从实际 i9 的血缘隔离 prerm 升级至 i10：八核 dpkg/postinst r
     码 5），新增忽略 TERM→SIGKILL fixture；新增 `tests/unit/run-dri-repair-tests.sh`（helper
     路径/ExecStart/PATH 注入忽略/失败回滚只删本次新建/外国文件拒绝/版本不匹配零副作用/package-absent
     只清 DRI 自有路径/幂等安装卸载/不删除非本项目文件 + 无硬编码用户名静态
-    反例）。`check-docs.sh` 已覆盖全部 tracked Markdown 和本机 `collab/` 隐私扫描。仍在待办：音频安装器对称卸载与 fixture、构建依赖门禁、
-    vendor `sw-inno-gl.service` 生命周期，见 [代码分析](code-analysis.md) 与
-    [当前待办](../state/current-work.md)。
+    反例）。`check-docs.sh` 已覆盖全部 tracked Markdown 和本机 `collab/` 隐私扫描。构建依赖门禁与
+    vendor GL 单元策略已于 2026-10-19 收口。仍在待办：音频安装器对称卸载与 fixture，见
+    [代码分析](code-analysis.md) 与 [当前待办](../state/current-work.md)。
 
 ## 证据保留规则
 

@@ -113,7 +113,7 @@ emerge 的回滚件在 `/var/lib/fantgpu/rollback/fantgpu.ko`，不放在 portag
 - `x11-base/xorg-server -minimal`。`minimal` 关掉 dri2、dri3、glamor、glx。DDX 用 `DRI2*` 和 `dri3_screen_init`。
 - `x11-base/xorg-drivers` 与 `media-libs/mesa` 的 `-video_cards_*`，以及 mesa 的 `-llvm`。这是这台机器不编其他显卡驱动，不是漏掉的包。`xorg-server` 会拉这两份包。
 
-没有声明、现在的 X/GL/VA 也不靠它们：Vulkan ICD 已安装，但没有 `media-libs/vulkan-loader`。OpenCL ICD 已安装，本机没有 `libOpenCL`。
+2026-10-19 对 `/opt/fantgpu-fh2m` 下 22 个 amd64 ELF 重跑 `readelf -d`。没有一条 `NEEDED` 是 `libvulkan.so` 或 `libOpenCL.so`。`libVK_FANT_fh2m.so.1` 和 `libFTOCL_fh2m.so.1` 是 ICD。打开它们的 loader 照 `libva` 的规则写进 `RDEPEND`：`media-libs/vulkan-loader` 读 `/usr/share/vulkan/icd.d/fh2m_conf.json`，`virtual/opencl` 拉 Khronos ICD loader（`libOpenCL.so`）读 `/etc/OpenCL/vendors/FANT_fh2m.icd`。这不是再装一套 mesa/pocl 硬件运行时。改完 ebuild 之后要重新 `emerge` 驱动包才会装上 loader；本段没有执行 emerge。
 
 ## 不在本档案里
 
@@ -133,6 +133,7 @@ emerge 的回滚件在 `/var/lib/fantgpu/rollback/fantgpu.ko`，不放在 portag
 - `x11-libs/libdrm`、`libX11`、`libXext`、`libXfixes`、`libXxf86vm`、`libxcb`、`libxshmfence`、`pixman`
 - `dev-libs/expat`、`sys-libs/zlib`、`virtual/libudev`、`sys-libs/glibc`、`sys-devel/gcc`
 - `wayland? ( dev-libs/wayland )`，这一个包同时提供 client 和 server
+- `media-libs/vulkan-loader`、`virtual/opencl`。不是 ELF `NEEDED`，是打开 Vulkan/OpenCL ICD 的 loader
 - 构建依赖 `virtual/linux-sources`
 
 `sys-kernel/fantgpu-kernel-patches` 自己不拉这些包，也不拉内核源码。

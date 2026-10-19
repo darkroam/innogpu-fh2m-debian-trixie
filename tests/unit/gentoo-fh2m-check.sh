@@ -39,6 +39,8 @@ grep -q 'RESTRICT="bindist"' "$root/tools/gentoo/overlay/sys-kernel/fantgpu-kern
 grep -q 'IUSE="+wayland"' "$root/tools/gentoo/overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
 grep -q 'dev-libs/wayland' "$root/tools/gentoo/overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
 grep -q 'media-libs/libglvnd' "$root/tools/gentoo/overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
+grep -q 'media-libs/vulkan-loader' "$root/tools/gentoo/overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
+grep -q 'virtual/opencl' "$root/tools/gentoo/overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
 if PORTAGE_PATCH_BASE=$work/missing "$root/tools/gentoo/check-kernel-patches.sh" --files-only >"$out" 2>&1; then
     echo "absent portage patches were accepted" >&2
     exit 1

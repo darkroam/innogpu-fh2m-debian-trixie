@@ -33,6 +33,9 @@ RDEPEND="
 	sys-libs/glibc
 	sys-devel/gcc
 	wayland? ( dev-libs/wayland )
+	# Not DT_NEEDED. These loaders open the vendor Vulkan/OpenCL ICDs, same as libva.
+	media-libs/vulkan-loader
+	virtual/opencl
 "
 S="${WORKDIR}"
 

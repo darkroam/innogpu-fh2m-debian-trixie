@@ -43,7 +43,7 @@ else
     bad t01 "rc=$RC"
 fi
 
-# t02 i12 仅通过版本/epoch门，未通过源身份门，更不代表实际构建通过。
+# fixture: kernel headers missing. i12 passes version/epoch only.
 run_builder VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=1790812800
 if [ "$RC" -eq 1 ] && grep -Fq "staging_kernel_headers=FAIL" "$TMP/b.out"; then
     ok t02
@@ -225,6 +225,7 @@ for version in 5.0.0-i{1..11}; do
         bad "archived-$version" "rc=$RC or staging was written"
     fi
 done
+# fixture: SOURCE_DATE_EPOCH missing.
 run_builder VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=
 if [[ "$RC" == 1 ]] && grep -Fq builder_repro=FAIL "$TMP/b.out"; then
     ok empty-epoch
@@ -244,6 +245,45 @@ if [[ "$RC" == 1 && ! -d "$TMP/stage" ]] && grep -Fq 'source meta identity drift
     ok source-drift
 else
     bad source-drift "rc=$RC"
+fi
+
+# fixture: packaged helper missing. Real meta hash, one helper removed, no compile.
+helper_root="$TMP/helper-root"
+mkdir -p "$helper_root/docs/planning/evidence/o-stage/5.0.0-i6" "$helper_root/tools/debian" "$TMP/kheaders"
+cp "$ROOT/docs/planning/evidence/o-stage/5.0.0-i6/5.0.0-i6.meta.json" \
+    "$helper_root/docs/planning/evidence/o-stage/5.0.0-i6/"
+cp -a "$ROOT/tools/debian/." "$helper_root/tools/debian/"
+rm "$helper_root/tools/debian/repair-dri-nodes.sh"
+rm -rf "$TMP/stage"
+set +e
+INNOGPU_ROOT="$helper_root" VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=1790812800 \
+    KERNELDIR="$TMP/kheaders" STAGE_ROOT="$TMP/stage" \
+    bash "$BUILDER" > "$TMP/b.out" 2> "$TMP/b.err"
+RC=$?
+set -e
+if [[ "$RC" == 1 && ! -d "$TMP/stage" ]] && grep -Fq 'builder_helper=FAIL missing tools/debian/repair-dri-nodes.sh' "$TMP/b.out"; then
+    ok missing-helper
+else
+    bad missing-helper "rc=$RC"
+fi
+
+# fixture: python3 missing. PATH has only the commands used before the prereq gate.
+prereq_bin="$TMP/prereq-bin"
+mkdir -p "$prereq_bin" "$TMP/kheaders-prereq"
+ln -s "$(command -v uname)" "$prereq_bin/uname"
+ln -s "$(command -v sha256sum)" "$prereq_bin/sha256sum"
+bash_bin=$(command -v bash)
+rm -rf "$TMP/stage"
+set +e
+PATH="$prereq_bin" INNOGPU_ROOT="$ROOT" VERSION=5.0.0-i12 SOURCE_DATE_EPOCH=1790812800 \
+    KERNELDIR="$TMP/kheaders-prereq" STAGE_ROOT="$TMP/stage" \
+    "$bash_bin" "$BUILDER" > "$TMP/b.out" 2> "$TMP/b.err"
+RC=$?
+set -e
+if [[ "$RC" == 1 && ! -d "$TMP/stage" ]] && grep -Fq 'builder_prereq=FAIL missing command: python3' "$TMP/b.out"; then
+    ok missing-python3
+else
+    bad missing-python3 "rc=$RC"
 fi
 
 if python3 - "$BUILDER" "$ROOT" "$PATCH_TREE/o-stage" "$TMP" <<'PY'

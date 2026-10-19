@@ -104,11 +104,11 @@ R57 已通过，与 INDEX 一致，不是待审查。现行加载是 i12 构建�
 - [ ] 为每次新候选包建立独立的 `docs/patches/` 说明和 `docs/incidents/` 验收记录。
 - [ ] 将长期维护所需的脚本参数逐步收敛为可审查的配置，入口保持为 `tools/<name>`。
 - [ ] 补齐音频安装器的写入冲突/备份保护、`systemd-analyze verify`、对称卸载与 fixture，并明确用户服务管理失败策略。
-- [ ] 为最小化 Debian 环境补齐新构建器前置依赖门禁（至少显式核对/安装 `python3` 及当前直接调用的
-  dpkg/coreutils/kmod 工具），避免把 `install-prereqs-debian.sh` 成功误认为完整构建工具链可用。
-- [ ] 明确包内 vendor `sw-inno-gl.service`/`sw-inno-gl` 的保留与生命周期策略；若保留，补齐 control
-  依赖、enable/start/卸载边界，并让 release gate fixture 校验 unit、helper 及 10 个 `/usr/bin`+
-  `/usr/sbin` 稳定命令链接；若移除，更新 manifest 与包载荷审计后再构建新版本。
+- [x] 最小化 Debian 构建器前置依赖（2026-10-19）：`tools/debian/build-driver.sh` 在编译前核对直接调用的命令，
+  缺则 `builder_prereq=FAIL`。`install-prereqs-debian.sh` 仍不单独安装 `python3`；它退出 0 不等于工具链齐。
+- [x] vendor `sw-inno-gl` / `sw-fant-gl` 生命周期（2026-10-19）：保留并屏蔽。装而不启；maintainer 不 enable、不 start。
+  启停和 `disable-incompatible-userspace.sh` 的边界见 [architecture.md](../project/architecture.md)。
+  不补 control 的 `systemd` 依赖，不扩 release gate。
 
 ## 运行时、测试与上游报告
 
@@ -144,7 +144,7 @@ R57 已通过，与 INDEX 一致，不是待审查。现行加载是 i12 构建�
   不代表 fantgpu 5.0.0-i6 已取得同样能力结论。
 - [ ] VA-API 未测 profile（H.264 High/Constrained Baseline、HEVC Main10）、编码能力和多屏矩阵继续
   按独立能力项补证据。
-- [ ] 构建失败用例补齐（headers 缺失、helper 缺失、SOURCE_DATE_EPOCH 缺失）为 fixture。
+- [x] 构建失败 fixture（2026-10-19）：headers 缺失、helper 缺失、`SOURCE_DATE_EPOCH` 缺失。见 `tests/unit/run-builder-fantgpu-gates-tests.sh`。
 
 ## 逆向工程与能力挖掘
 

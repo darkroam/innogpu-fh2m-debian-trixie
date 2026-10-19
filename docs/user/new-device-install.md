@@ -80,9 +80,9 @@ cd "$INNOGPU_ROOT"
 sudo tools/debian/install-prereqs-debian.sh
 ```
 
-该入口安装当前列出的基础构建/运行包，但尚未显式安装新构建器直接调用的 `python3`。最小化 Debian
-环境继续构建前，按 [`dependencies.md`](../project/dependencies.md) 核对 `python3`、`dpkg-deb`、
-`sha256sum`、`realpath`、`make` 与 `modinfo`；不能只凭前置脚本退出 0 判断完整工具链已经就绪。
+该入口安装当前列出的基础构建/运行包，仍然不单独安装 `python3`。构建器在编译前核对直接调用的命令，
+缺则 `builder_prereq=FAIL`。不能只凭前置脚本退出 0 判断工具链已经就绪。清单见
+[`dependencies.md`](../project/dependencies.md)。
 
 ## 显示引擎前置条件
 

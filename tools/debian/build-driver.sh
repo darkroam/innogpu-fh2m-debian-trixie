@@ -69,6 +69,23 @@ if [[ "$FANT_LINEAGE" == 1 ]]; then
         echo 'builder_maintainer_policy=FAIL source meta identity drift'; exit 1; }
 fi
 
+# python3 stays first: the missing-command fixture only puts uname and sha256sum on PATH.
+packaged_helpers=(
+    disable-incompatible-userspace.sh repair-dri-nodes.sh test-xorg-once.sh
+    restore-dp1-mode-x11.sh xdisplay-session.sh install-xdisplay-user.sh
+    restore-tty1-login.sh display-recover-and-diagnose.sh prepare-soft-xorg-dwm.sh
+    start-soft-xorg-dwm-from-ssh.sh check-soft-xorg-dwm.sh install-dri-node-repair-service.sh)
+for helper in "${packaged_helpers[@]}"; do
+    [[ -f tools/debian/$helper ]] || {
+        echo "builder_helper=FAIL missing tools/debian/$helper"; exit 1; }
+done
+for prereq in python3 dpkg dpkg-deb sha256sum awk tar zstd make nproc install find grep du touch pahole; do
+    command -v "$prereq" >/dev/null 2>&1 || {
+        echo "builder_prereq=FAIL missing command: $prereq"; exit 1; }
+done
+[[ -x /usr/sbin/modinfo ]] || {
+    echo "builder_prereq=FAIL missing command: /usr/sbin/modinfo"; exit 1; }
+
 # 0) 版本排序必须高于 p27
 dpkg --compare-versions "$VERSION" gt 3.3.3.42-patched-27 || {
     echo "builder_version_ordering=FAIL $VERSION is not > patched-27"; exit 1; }
@@ -337,11 +354,7 @@ else
     printf '%s\n' '/usr/lib/x86_64-linux-gnu/innogpu-fh2m' > "$P/etc/ld.so.conf.d/0-innogpu-hwgl.conf"
 fi
 
-helpers=(disable-incompatible-userspace.sh repair-dri-nodes.sh test-xorg-once.sh
-    restore-dp1-mode-x11.sh xdisplay-session.sh install-xdisplay-user.sh
-    restore-tty1-login.sh display-recover-and-diagnose.sh prepare-soft-xorg-dwm.sh
-    start-soft-xorg-dwm-from-ssh.sh check-soft-xorg-dwm.sh install-dri-node-repair-service.sh)
-for h in "${helpers[@]}"; do
+for h in "${packaged_helpers[@]}"; do
     if [[ "$FANT_LINEAGE" == 1 ]]; then
         # F 血统：变换 helper 内部调用链 token（命令名/share 路径/模块条件）；
         # O 血统保持脚本原始字节（check-release-package cmp 契约）

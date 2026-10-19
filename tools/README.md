@@ -151,7 +151,9 @@ coherent 驱动 deb 只携带运行和恢复所需的 Innogpu 辅助脚本。历
 当前 `4.0.0-i1` 把 12 个项目 helper 实体安装到 `/usr/share/innogpu-fh2m-trixie/`，并为其中 10 个
 提供 `/usr/bin/innogpu-*` 与 `/usr/sbin/innogpu-*` 双链接。manifest 还原样导入 vendor 的
 `/lib/systemd/system/sw-inno-gl.service` 与 `/usr/sbin/sw-inno-gl`；maintainer scripts 不会启用或
-启动该单元。`check-release-package.sh` 当前只强制 3 个显示接入 helper 与若干关键载荷，尚未验证
+启动该单元。2026-10-19 起现行策略是保留并屏蔽，见
+[`docs/project/architecture.md`](../docs/project/architecture.md)；F 包不安装 `sw-fant-gl.service`。
+`check-release-package.sh` 当前只强制 3 个显示接入 helper 与若干关键载荷，尚未验证
 vendor unit/helper 和全部命令链接，不能把 `PASS_RELEASE_PACKAGE_BOUNDARIES` 扩写为这些路径均已受门禁。
 
 ## 修改规则

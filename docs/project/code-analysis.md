@@ -110,7 +110,7 @@ Deepin deb(校验 SHA) → generate-binary-manifest(校验+生成) → validate-
 | ~~P2~~ 已修复 | VA-API runner 只把 GNU timeout rc=124 识别为超时，rc=137 误归普通失败 | `run-vaapi-decode-test.sh` | 2026-08-28 已修复：三个阶段统一 `timeout_rc`（124/137 → 整体退出码 5）；`tests/unit/run-vaapi-decode-tests.sh` 增加忽略 TERM→SIGKILL fixture |
 | P2 | 音频安装器创建系统/用户 unit、helper 和配置并修改旧用户配置，但没有对称卸载入口或 fixture；多条写入无原文件备份，未运行 `systemd-analyze verify`，用户服务管理失败被忽略 | `install-hygon-hda-audio.sh` | 当前只能人工审阅有限备份后回退；需补冲突检测、幂等卸载、所有权/备份恢复及 systemd fixture |
 | ~~P2~~ 已修复 | `check-docs.sh` 的 Markdown 链接与隐私扫描目录集合曾未覆盖全部受跟踪文档 | `check-docs.sh` | 2026-08-31 已修复：链接从 `git ls-files -z -- '*.md'` 枚举，隐私扫描覆盖 tracked 文档目录和本机 `collab/`，两个消费者共用 `tools/internal/private-data-patterns.txt`；内联路径语义仍需人工审查 |
-| P2 | 包导入 `sw-inno-gl.service`/helper，但 control 无 `systemd` 依赖，maintainer scripts 不管理单元；release gate 也未校验该组合和全部 10 个 `/usr/bin`+`/usr/sbin` 命令链接 | `build-innogpu-driver.sh`、`check-release-package.sh` | 文件存在不等于服务启用；需决定保留/移除策略，再补依赖、生命周期和包边界 fixture |
+| P2 | 包导入 `sw-inno-gl.service`/helper，但 control 无 `systemd` 依赖，maintainer scripts 不管理单元；release gate 也未校验该组合和全部 10 个 `/usr/bin`+`/usr/sbin` 命令链接 | `build-innogpu-driver.sh`、`check-release-package.sh` | 2026-10-19 裁定保留并屏蔽，见 architecture.md。不补 `systemd` 依赖，不扩 release gate。F 包的 `sw-fant-gl` 是 `locked-reference`，不安装 |
 | P3 | 文档/脚本登记完整性由 check-docs 强制（tools/README 全量登记，CONFIRMED 通过） | — | 无行动项 |
 
 > 未发现 P0（数据破坏/提权/路径穿越/热切换）问题：提取器拒绝路径穿越、构建器原子 temp+rename、
@@ -146,15 +146,15 @@ R15 对 6 个启动 journal（2026-09-02 11:50 至 2026-09-03 16:13）做了逐�
 ## 风险与优化候选
 
 1. 构建环境依赖本机 `/lib/modules/$(uname -r)/build`（P2）：CI 无法跑完整 DKMS 构建，需
-   linux-headers 预装；可增加"headers 缺失即清晰报错"的 fixture 测试。
+   linux-headers 预装。headers 缺失已有 fixture（`staging_kernel_headers=FAIL`），不实际编译。
 2. 设备节点/TTY/X 相关验证只能实机（P2）：测试体系需把 runtime 与 offline 分层隔离（见
    test-strategy.md）。
 3. 源码与载荷再分发许可未完成逐项核实（P0 发布阻断）：见 `source-license-audit.md`。
 4. 黑盒符号级分析未完成（远期候选 9）：依赖可观察符号，不修改黑盒。
 5. 能力深挖（DVFS/codec 编码/CORE_ID）为未实施项（见 `../planning/current-work.md`），非本阶段范围。
 6. 运维与包生命周期闭环：DRI service 路径/失败传播、固定用户名、VA-API rc=137 三项已于
-   2026-08-28 修复并加 fixture（见上表）；check-docs 全量 Markdown/隐私覆盖已于 2026-08-31 完成；音频卸载、构建依赖门禁以及 vendor
-   systemd/helper 包边界缺口保留为后续批次。
+   2026-08-28 修复并加 fixture（见上表）；check-docs 全量 Markdown/隐私覆盖已于 2026-08-31 完成。
+   构建依赖门禁与 vendor GL 单元策略已于 2026-10-19 收口。音频卸载仍缺对称入口和 fixture。
 7. 参考模型版本漂移风险：上游 Picom commit 固定 `6d676824`（CONFIRMED）；Deepin 包 SHA 固定；
    DRM/Mesa 主线仅作行为对照（INFERRED 用途，见 frameworks-and-references.md）。
 
