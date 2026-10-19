@@ -725,7 +725,7 @@ fi
 # m-/g- patches may be listed. Numeric and any other patches/ names, and all of debs/, stay out.
 allow="$F/docs/project/project-tools-allowlist.txt"
 if grep -Eq '^debs/|^patches/[^mg]|^patches/[mg][^-]|^patches/[mg]$' "$allow"; then
-    fail "project-tools allowlist contains numeric patches or debs"
+    fail "project-tools allowlist contains debs/ or a patches/ path outside the m-/g- prefix"
 else
     pass project_tools_excludes_patches_debs
 fi
