@@ -137,17 +137,18 @@ emerge 的回滚件在 `/var/lib/fantgpu/rollback/fantgpu.ko`，不放在 portag
 
 `sys-kernel/fantgpu-kernel-patches` 自己不拉这些包，也不拉内核源码。
 
-## 内核补丁 001–005
+## 内核补丁 001–006
 
 权威文件在 `tools/gentoo/overlay/sys-kernel/patches/`，字节与 `components/linux` 的同名补丁一致。
 005 只给隐藏项 `CONFIG_DRM_DISPLAY_HDMI_HELPER` 加菜单提示，不改变默认值。
-正在运行的 6.12.111 还没打上 005，所以它不在矩阵 `current`。下次整核重编前要把提示补丁打进源码树，并在 `.config` 写 `CONFIG_DRM_DISPLAY_HDMI_HELPER=y`。
+006 只给隐藏项 `CONFIG_VMAP_PFN` 加菜单提示 `Vmap an array of PFNs`，不改变默认值。目标文件是 GPL-2.0-only。不在矩阵 `current`。
+2026-10-19 本机启动的 `#8` 已带 `CONFIG_DRM_DISPLAY_HDMI_HELPER=y` 和 `CONFIG_VMAP_PFN=y`，并加载了按该树重编的 fantgpu。这不是矩阵验收。
 001/002 的基线仍是 Debian `linux-source-6.12` `6.12.107-1`，换内核必须重验。
 003 只给 `pinctrl-amd` 增加 ACPI ID `HYGO0030`。004 只给 6.12 的 `snd-hda-intel` 增加
 PCI `1d94:14c9`。004 不能套到 6.18：控制器源码已改到 `sound/hda/controllers/intel.c`，
 而且兆芯条目和龙芯条目之间多了 HDMI ID。
 
-正常路径是 `emerge sys-kernel/fantgpu-kernel-patches`。`pkg_postinst` 把五份补丁拷进
+正常路径是 `emerge sys-kernel/fantgpu-kernel-patches`。`pkg_postinst` 把六份补丁拷进
 `/etc/portage/patches/sys-kernel/gentoo-sources/` 和 `gentoo-kernel/`。SHA 相同就跳过。
 SHA 不同就失败，不覆盖已经改过的本地文件。没有 portage 时用同一规则的后备：
 
@@ -166,7 +167,7 @@ emerge -u sys-kernel/gentoo-sources
 tools/gentoo/check-kernel-patches.sh
 ```
 
-check 要同时看到 xHCI Hygon quirk、KaiTian 电池条目、`HYGO0030`、`1d94:14c9` 和 HDMI helper 提示才返回 0。
+check 要同时看到 xHCI Hygon quirk、KaiTian 电池条目、`HYGO0030`、`1d94:14c9`、HDMI helper 提示和 `Vmap an array of PFNs` 才返回 0。
 005 没打进当前源码树时，这项检查是 `kernel_tree=NOT_APPLIED`。
 003 是内建项（`CONFIG_PINCTRL_AMD=y`），源码重打后必须整核重编并重启才进正在运行的内核。
 004 是模块（`CONFIG_SND_HDA_INTEL=m`），可以只编译 `sound/pci/hda` 再热加载。

@@ -35,6 +35,7 @@ components/linux/002-kaitian-x7h-battery-notification-delay.patch
 components/linux/003-pinctrl-amd-hygon-gpio.patch
 components/linux/004-snd-hda-hygon-14c9.patch
 components/linux/005-drm-display-hdmi-helper-prompt.patch
+components/linux/006-vmap-pfn-prompt.patch
 components/picom/001-probe-explicit-uniform-location.patch
 components/picom/build.sh
 components/picom/debian/install-prereqs.sh
@@ -446,6 +447,7 @@ tools/gentoo/overlay/sys-kernel/patches/002-kaitian-x7h-battery-notification-del
 tools/gentoo/overlay/sys-kernel/patches/003-pinctrl-amd-hygon-gpio.patch
 tools/gentoo/overlay/sys-kernel/patches/004-snd-hda-hygon-14c9.patch
 tools/gentoo/overlay/sys-kernel/patches/005-drm-display-hdmi-helper-prompt.patch
+tools/gentoo/overlay/sys-kernel/patches/006-vmap-pfn-prompt.patch
 tools/gentoo/overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild
 tools/gentoo/r5-cycle.sh
 tools/gentoo/r5-observe.sh

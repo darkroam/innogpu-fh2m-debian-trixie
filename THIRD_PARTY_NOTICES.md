@@ -51,7 +51,7 @@ SOFTWARE.
 
 `components/` 是第三方开源组件的**派生修改/配置**，按上游组件许可分发，不视为本项目原创层。
 **固定上游版本与封存的许可材料**（随 `LICENSES/` 提供标准文本副本，审计器按路径组强制登记）：
-当前维护的第三方补丁共 7 个；完整路径、版本基线、验证状态和 DKMS/内核边界见
+当前维护的第三方补丁共 8 个；完整路径、版本基线、验证状态和 DKMS/内核边界见
 [`docs/patches/README.md`](docs/patches/README.md#当前第三方补丁台账)。这里的第三方分类按
 来源、许可和目标组件判定，不按是否使用 DKMS 判定。
 
@@ -80,6 +80,11 @@ SOFTWARE.
   `CONFIG_DRM_DISPLAY_HDMI_HELPER` 增加菜单提示 `DRM HDMI display helpers`。该文件声明
   `SPDX-License-Identifier: MIT`；补丁按 **MIT** 分发，全文见 `LICENSES/MIT.txt`。
   提示不改变默认值。未打进正在运行的内核，不在矩阵 `current`。
+- `components/linux/006-vmap-pfn-prompt.patch`：修改 **Linux mm
+  （Gentoo gentoo-sources 6.12.111）** 的 `mm/Kconfig`，只给隐藏项
+  `CONFIG_VMAP_PFN` 增加菜单提示 `Vmap an array of PFNs`。该文件声明
+  `SPDX-License-Identifier: GPL-2.0-only`；补丁按 **GPL-2.0-only** 分发，全文见
+  `LICENSES/GPL-2.0-only.txt`。提示不改变默认值。未打进正在运行的内核，不在矩阵 `current`。
 - `components/linux/004-snd-hda-hygon-14c9.patch`：修改 **Linux snd-hda-intel
   （Gentoo gentoo-sources 6.12.111 的 `sound/pci/hda/hda_intel.c`）** 的 PCI ID 表，
   为板载声卡 **1d94:14c9** 增加 `AZX_DRIVER_GENERIC`。该文件声明

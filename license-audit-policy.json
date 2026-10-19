@@ -146,6 +146,7 @@
       "components/linux/003-pinctrl-amd-hygon-gpio.patch": "GPL-2.0-only",
       "components/linux/004-snd-hda-hygon-14c9.patch": "GPL-2.0-only",
       "components/linux/005-drm-display-hdmi-helper-prompt.patch": "MIT",
+      "components/linux/006-vmap-pfn-prompt.patch": "GPL-2.0-only",
       "components/picom/001-probe-explicit-uniform-location.patch": "MPL-2.0",
       "components/picom/picom.conf": "GPL-3.0-or-later",
       "components/picom/build.sh": "GPL-3.0-or-later",
@@ -210,6 +211,17 @@
           "CONFIG_DRM_DISPLAY_HDMI_HELPER",
           "drivers/gpu/drm/display/Kconfig",
           "SPDX-License-Identifier: MIT",
+          "6.12.111"
+        ]
+      },
+      {
+        "paths": [
+          "components/linux/006-vmap-pfn-prompt.patch"
+        ],
+        "markers": [
+          "CONFIG_VMAP_PFN",
+          "mm/Kconfig",
+          "SPDX-License-Identifier: GPL-2.0-only",
           "6.12.111"
         ]
       },

@@ -20,7 +20,8 @@ src_install() {
 		"${src}/002-kaitian-x7h-battery-notification-delay.patch" \
 		"${src}/003-pinctrl-amd-hygon-gpio.patch" \
 		"${src}/004-snd-hda-hygon-14c9.patch" \
-		"${src}/005-drm-display-hdmi-helper-prompt.patch"
+		"${src}/005-drm-display-hdmi-helper-prompt.patch" \
+		"${src}/006-vmap-pfn-prompt.patch"
 	exeinto /usr/libexec/fantgpu
 	doexe "${FILESDIR}/install-patches.sh"
 }

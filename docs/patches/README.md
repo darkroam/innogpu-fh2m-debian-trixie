@@ -43,7 +43,7 @@
 
 `components/linux/` 的适用内核以目录规划的系统层为准，矩阵另批。
 
-截至 2026-10-19，仓库中**当前维护的第三方组件补丁共 7 个**。这里的“第三方”按
+截至 2026-10-19，仓库中**当前维护的第三方组件补丁共 8 个**。这里的“第三方”按
 **补丁修改的上游/厂商来源、许可和版本基线**判定，不按是否进入 DKMS 判定。DKMS 只是
 内核外部模块的构建/打包机制；一个补丁即使修改内核源码而不进入 DKMS，仍然可以是第三方
 补丁；反过来，DKMS 里的本项目修改也不因此成为第三方补丁。
@@ -56,6 +56,7 @@
 | `components/linux/003-pinctrl-amd-hygon-gpio.patch` | Linux pinctrl-amd | Gentoo `gentoo-sources` `6.12.111` | 只增加 ACPI ID `HYGO0030`。`CONFIG_PINCTRL_AMD=y`，生效必须整核重编并重启。6.18 未在本批重打。见 [GPIO 事故](../incidents/hygon-gpio-touchpad.md) |
 | `components/linux/004-snd-hda-hygon-14c9.patch` | Linux snd-hda-intel | Gentoo `gentoo-sources` `6.12.111` 的 `sound/pci/hda/hda_intel.c` | `1d94:14c9` 使用 `AZX_DRIVER_GENERIC`。不能套到 6.18。模块可热加载。见 [板载声卡事故](../incidents/hygon-hda-onboard-audio.md) |
 | `components/linux/005-drm-display-hdmi-helper-prompt.patch` | Linux DRM display | Gentoo `gentoo-sources` `6.12.111` 的 `drivers/gpu/drm/display/Kconfig` | 给隐藏项 `CONFIG_DRM_DISPLAY_HDMI_HELPER` 加菜单提示。目标文件头是 MIT，补丁按 MIT 分发。未打进正在运行的内核，不在矩阵 `current`。提示本身不打开该选项，配置仍要写 `=y` |
+| `components/linux/006-vmap-pfn-prompt.patch` | Linux mm | Gentoo `gentoo-sources` `6.12.111` 的 `mm/Kconfig` | 给隐藏项 `CONFIG_VMAP_PFN` 加菜单提示。目标文件头是 GPL-2.0-only，补丁按 GPL-2.0-only 分发。未打进正在运行的内核，不在矩阵 `current`。提示本身不打开该选项，配置仍要写 `=y` |
 | `components/picom/001-probe-explicit-uniform-location.patch` | picom | 固定上游 commit `6d676824c457a933c52e3e92c5a1856466f90545` | 用户态第三方派生补丁；实机通过 |
 
 每个第三方补丁必须同时记录：目标组件、上游版本或 commit、目标文件、许可/NOTICE、适用
