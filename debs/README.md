@@ -2,7 +2,7 @@
 
 `debs/` 是**本地存档/构建/回退目录**：存放 Deepin 原包与本地构建产物。目录中的 `.deb` 文件
 全部不进入 Git，也**不随公开制品发布**；任何公开分发必须单独通过发布审阅与对应制品门禁
-（`project-tools` / `driver-source`，见 [docs/project/licensing.md](../docs/project/licensing.md)）。
+（发布制品只有 `project-tools`，见 [docs/project/licensing.md](../docs/project/licensing.md)）。
 本目录存在不等于可发布。仓库只跟踪本说明文件，避免把大体积二进制包和本机版本状态混入源码历史。
 
 ## 内核源码包缓存

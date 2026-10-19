@@ -31,10 +31,11 @@ Checks (all mechanical; the auditor is read-only against .git: only
    and bidirectionally complete against the mechanically derived set.
 6. The authority doc (docs/project/licensing.md) carries the same release gate
    status as the policy.
-7. Manifest license values are either the unresolved marker (`vendor-binary`,
-   a provenance classification, never a license) or an exact allowed SPDX
-   expression. Malformed expressions, `NOASSERTION`, and pending LicenseRef
-   values are never releasable licenses.
+7. Manifest license values are either the local-input record marker
+   (`vendor-binary`, a provenance classification, never a license and not an
+   open rights question) or an exact allowed SPDX expression. Malformed
+   expressions, `NOASSERTION`, and pending LicenseRef values are never
+   releasable licenses.
 
 status=CLEARED is never an authorization by itself: artifact clearance is only
 reported after the whole mechanical pipeline above passes, and `--require-
@@ -63,7 +64,7 @@ INVENTORY_COLUMNS = (
     "module_license_metadata",
     "copyright_notices",
 )
-ARTIFACT_NAMES = ("project-tools", "driver-source")
+ARTIFACT_NAMES = ("project-tools",)
 # Valid SPDX identifiers for license-text labels (a label is not a releasable
 # expression; the pinned SHA-256 is the authoritative text check).
 KNOWN_SPDX_IDENTIFIERS = {
@@ -356,15 +357,28 @@ def validate_policy(policy, problems):
         problems.append("policy_notice_gate_invalid")
 
 
-def _resolve_non_drivers_license(rel, original_roots, original, mapped):
+def in_original_patch_layer(rel):
+    return rel.startswith(("patches/m-", "patches/g-"))
+
+
+def project_tools_skipped(rel):
+    if rel.startswith(("drivers/", "debs/", "collab/")):
+        return True
+    return rel.startswith("patches/") and not in_original_patch_layer(rel)
+
+
+def _resolve_non_drivers_license(rel, original_roots, original, mapped, original_prefixes=()):
     """Fail-closed per-path resolution for project-tools paths.
 
-    Explicit path mapping wins; otherwise the path must live under an
-    approved original root. Any other path is unknown and rejected — there is
-    no global default license.
+    Explicit path mapping wins; otherwise an original prefix (patches/m-,
+    patches/g-) or an approved original root. Any other path is unknown and
+    rejected — there is no global default license.
     """
     if rel in mapped:
         return mapped[rel]
+    for prefix in original_prefixes:
+        if rel.startswith(prefix):
+            return original
     for prefix in original_roots:
         if rel.startswith(prefix):
             return original
@@ -399,6 +413,13 @@ def validate_non_drivers_licenses(root, policy, allowlist_paths, problems):
     original = cfg.get("original", "GPL-3.0-or-later")
     if original not in allowed:
         problems.append(f"non_drivers_original_license_invalid:{original}")
+    prefixes = cfg.get("original_prefixes", [])
+    if not isinstance(prefixes, list) or not all(
+        isinstance(item, str) and item and not item.endswith("/") and ".." not in item
+        for item in prefixes
+    ):
+        problems.append("policy_non_drivers_original_prefixes_invalid")
+        prefixes = []
     roots = cfg.get("original_roots")
     if not isinstance(roots, list) or not roots or not all(
         isinstance(item, str) and item.endswith("/") for item in roots
@@ -425,7 +446,7 @@ def validate_non_drivers_licenses(root, policy, allowlist_paths, problems):
         mapped[rel] = expr
     resolved = {}
     for rel in allowlist_paths:
-        expr = _resolve_non_drivers_license(rel, roots, original, mapped)
+        expr = _resolve_non_drivers_license(rel, roots, original, mapped, prefixes)
         if expr is None:
             problems.append(f"non_drivers_unclassified:{rel}")
             continue
@@ -663,7 +684,7 @@ def validate_allowlist(root, policy, name, inventory_rows, all_tracked, index, p
     if not isinstance(rel, str) or not rel:
         problems.append(f"{name}_allowlist_path_missing")
         return
-    listed = read_allowlist(root, rel, problems, allow_empty=(name == "driver-source"))
+    listed = read_allowlist(root, rel, problems, allow_empty=False)
     if listed is None:
         return
     tracked_set = set(all_tracked)
@@ -698,10 +719,7 @@ def validate_allowlist(root, policy, name, inventory_rows, all_tracked, index, p
         self_rel = safe_repo_path(rel, "allowlist_path")
         expected = {
             p for p in all_tracked
-            if not p.startswith("drivers/")
-            and not p.startswith("patches/")
-            and not p.startswith("debs/")
-            and not p.startswith("collab/")
+            if not project_tools_skipped(p)
         }
         expected.discard(self_rel)
         if seen != expected:
@@ -713,24 +731,6 @@ def validate_allowlist(root, policy, name, inventory_rows, all_tracked, index, p
                 )
             )
         validate_non_drivers_licenses(root, policy, sorted(seen), problems)
-    elif name == "driver-source":
-        expected = {
-            row["path"]
-            for row in inventory_rows
-            if row["content_class"] in ("dual-mit-gpl", "bsd-lgpl-dual", "project-doc")
-        }
-        if seen != expected:
-            missing = sorted(expected - seen)
-            extra = sorted(seen - expected)
-            problems.append(
-                "allowlist_incomplete:{}:missing={}:extra={}".format(
-                    name, ",".join(missing[:5]) or "-", ",".join(extra[:5]) or "-"
-                )
-            )
-        for rel_path in seen:
-            row = next((r for r in inventory_rows if r["path"] == rel_path), None)
-            if row is None or row["content_class"] in ("strict-confidential", "unclassified"):
-                problems.append(f"driver_source_restricted_leak:{rel_path}")
 
 
 def validate_artifacts(root, policy, inventory_rows, all_tracked, index, problems):
@@ -813,7 +813,7 @@ def run_full_audit(root, policy, inventory_rel, write_inventory, check_inventory
 
 
 def write_allowlists(root, policy, inventory_rows, all_tracked, problems):
-    """Write both artifact allowlists deterministically from the audit state."""
+    """Write the project-tools allowlist from the audit state."""
     for name in ARTIFACT_NAMES:
         cfg = policy.get("artifacts", {}).get(name, {})
         rel = cfg.get("allowlist_file")
@@ -821,28 +821,16 @@ def write_allowlists(root, policy, inventory_rows, all_tracked, problems):
             problems.append(f"{name}_allowlist_path_missing")
             continue
         path = root / safe_repo_path(rel, "allowlist_path")
-        if name == "project-tools":
-            self_rel = safe_repo_path(rel, "allowlist_path")
-            paths = sorted(
-                p for p in all_tracked
-                if not p.startswith("drivers/")
-                and not p.startswith("patches/")
-                and not p.startswith("debs/")
-                and not p.startswith("collab/")
-                and p != self_rel
-            )
-            header = (
-                "# project-tools 候选制品允许清单（按权利边界生成）：原创层 GPL-3.0-or-later + "
-                "上游继承层 MIT + components/ 第三方派生分类；"
-                "不含 patches/、debs/、collab/、drivers/、vendor/、.build/、退役 build/、third_party/"
-            )
-        else:
-            paths = sorted(
-                row["path"]
-                for row in inventory_rows
-                if row["content_class"] in ("dual-mit-gpl", "bsd-lgpl-dual", "project-doc")
-            )
-            header = "# driver-source 允许清单：drivers/ 中具有明确许可声明的路径（confidential 与无许可路径已排除）"
+        self_rel = safe_repo_path(rel, "allowlist_path")
+        paths = sorted(
+            p for p in all_tracked
+            if not project_tools_skipped(p) and p != self_rel
+        )
+        header = (
+            "# project-tools 发布制品允许清单（按权利边界生成）：原创层 GPL-3.0-or-later + "
+            "上游继承层 MIT + components/ 第三方派生分类 + patches/m- 与 patches/g-；"
+            "不含数字名 D 线补丁、debs/、collab/、drivers/、vendor/、.build/、退役 build/、third_party/"
+        )
         path.parent.mkdir(parents=True, exist_ok=True)
         body = "\n".join(paths)
         path.write_text(header + "\n" + (body + "\n" if body else ""), encoding="utf-8")

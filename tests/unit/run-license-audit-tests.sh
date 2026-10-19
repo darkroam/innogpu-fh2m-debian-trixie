@@ -3,12 +3,12 @@
 # artifact allowlists, commit-based archive building, and release gating.
 #
 # Negative cases: root GPLv3 scope overreach, missing upstream MIT notice,
-# project-tools/driver-source allowlist leaks (drivers/confidential/vendor/deb/
+# project-tools allowlist leaks (drivers/confidential/vendor/deb/numeric patches/
 # no-license), vendor-binary/NOASSERTION treated as a license, malformed or
 # disallowed SPDX, dirty-tree release, allowlist traversal/duplicate/symlink,
 # archive content not from HEAD.
 # Positive cases: project-tools builds from a clean commit, upstream MIT ships
-# with its notice, driver-source with only explicit-license files passes, audit
+# with its notice, a retired driver-source artifact name is rejected, m/g patch
 # runs without local debs/vendor, audit passes with a read-only .git.
 
 set -u -o pipefail
@@ -186,6 +186,7 @@ policy = {
     "license_authority_doc": {"path": "docs/project/licensing.md", "status_marker_prefix": "license_release_gate="},
     "non_drivers_licenses": {
         "original_roots": [".github/", "baselines/", "docs/", "scripts/", "tests/", "tools/"],
+        "original_prefixes": ["patches/m-", "patches/g-"],
         "original": "GPL-3.0-or-later",
         "paths": {
             "LICENSE": "GPL-3.0-or-later",
@@ -225,15 +226,9 @@ policy = {
     "artifacts": {
         "project-tools": {"status": "CLEARED",
                           "allowlist_file": "docs/project/project-tools-allowlist.txt",
-                          "denylist": [r"^drivers/", r"^patches/", r"^debs/", r"^vendor/",
+                          "denylist": [r"^drivers/", r"^patches/(?![mg]-)", r"^debs/", r"^vendor/",
                                        r"^build/", r"^third_party/", r"^collab/",
                                        r"\.deb$", r"\.o_shipped$", r"\.o(\.cmd)?$", r"\.ko$",
-                                       r"\.so(\.\d+)*$", r"\.fw$"],
-                          "reason": "fixture"},
-        "driver-source": {"status": "BLOCKED",
-                          "allowlist_file": "docs/project/driver-source-allowlist.txt",
-                          "denylist": [r"^vendor/", r"^build/", r"^third_party/", r"\.deb$",
-                                       r"\.o_shipped$", r"\.o(\.cmd)?$", r"\.ko$",
                                        r"\.so(\.\d+)*$", r"\.fw$"],
                           "reason": "fixture"},
     },
@@ -338,11 +333,18 @@ elif mode == "licenses-unmapped":
     policy["non_drivers_licenses"]["paths"].pop("LICENSES/MIT.txt", None)
     save_policy()
 elif mode == "ds-leak-confidential":
-    aw = root / "docs/project/driver-source-allowlist.txt"
-    aw.write_text(aw.read_text(encoding="utf-8") + "drivers/source.c\n", encoding="utf-8")
-elif mode == "ds-leak-unclassified":
-    aw = root / "docs/project/driver-source-allowlist.txt"
-    aw.write_text(aw.read_text(encoding="utf-8") + "drivers/source.c\n", encoding="utf-8")
+    policy["artifacts"]["driver-source"] = {
+        "status": "BLOCKED",
+        "allowlist_file": "docs/project/driver-source-allowlist.txt",
+        "denylist": [],
+        "reason": "retired",
+    }
+    save_policy()
+elif mode == "mg-patch-included":
+    (root / "patches/m-001-glue.patch").write_text("diff -ruN glue\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(root), "add", "patches/m-001-glue.patch"], check=True)
+    subprocess.run(["git", "-C", str(root), "-c", "user.email=t@t", "-c", "user.name=t",
+                    "commit", "-q", "-m", "mg-patch"], check=True)
 elif mode == "manifest-noassertion-license":
     (root / "binary-manifest.json").write_text(
         '{"entries":[{"source_path":"payload.bin","kind":"kernel-black-box","license":"NOASSERTION"}]}\n',
@@ -393,12 +395,6 @@ elif mode == "module-metadata-drift":
     subprocess.run(["git", "-C", str(root), "add", "-A"], check=True)
     subprocess.run(["git", "-C", str(root), "-c", "user.email=t@t", "-c", "user.name=t",
                     "commit", "-q", "-m", "drift"], check=True)
-elif mode == "positive-driver-source":
-    policy["artifacts"]["driver-source"]["status"] = "CLEARED"
-    save_policy()
-    subprocess.run(["git", "-C", str(root), "add", "-A"], check=True)
-    subprocess.run(["git", "-C", str(root), "-c", "user.email=t@t", "-c", "user.name=t",
-                    "commit", "-q", "-m", "cleared"], check=True)
 elif mode == "authority-status-mismatch":
     (root / "docs/project/licensing.md").write_text("license_release_gate=CLEARED\n", encoding="utf-8")
 PY
@@ -566,14 +562,20 @@ make_fixture "$F" '/* Strictly Confidential */' yes
 mutate_fixture "$F" ds-leak-confidential
 python3 "$AUDITOR" --root "$F" --policy policy.json --inventory inventory.tsv > "$O" 2>&1
 rc=$?
-expect driver_source_confidential_leak_rejected "$rc" "$O" 'reason=driver_source_restricted_leak:drivers/source.c' 1
+expect retired_driver_source_artifact_rejected "$rc" "$O" 'reason=artifacts_key_mismatch:extra=driver-source' 1
 
-F="$TMP/ds-leak-unclassified"
+F="$TMP/mg-patch-included"
 make_fixture "$F" '/* no license declaration */'
-mutate_fixture "$F" ds-leak-unclassified
-python3 "$AUDITOR" --root "$F" --policy policy.json --inventory inventory.tsv > "$O" 2>&1
+mutate_fixture "$F" mg-patch-included
+python3 "$AUDITOR" --root "$F" --policy policy.json --inventory inventory.tsv --write-allowlists > "$O" 2>&1
 rc=$?
-expect driver_source_unclassified_leak_rejected "$rc" "$O" 'reason=driver_source_restricted_leak:drivers/source.c' 1
+if [[ "$rc" -eq 0 ]] \
+    && grep -qx 'patches/m-001-glue.patch' "$F/docs/project/project-tools-allowlist.txt" \
+    && ! grep -qx 'patches/001-test.patch' "$F/docs/project/project-tools-allowlist.txt"; then
+    pass mg_patch_included_numeric_patch_excluded
+else
+    fail "mg_patch_included_numeric_patch_excluded:rc=$rc"
+fi
 
 # ---- negative: vendor-binary / NOASSERTION / disallowed SPDX as license ----
 F="$TMP/manifest-noassertion"
@@ -697,22 +699,20 @@ else
     fail "upstream_mit_ships_with_notice"
 fi
 
-# ---- positive: driver-source with only explicit-license files ----
-F="$TMP/positive-ds"
-make_fixture "$F" '/* Dual MIT/GPLv2 GPL-COPYING MIT-COPYING */'
-mutate_fixture "$F" positive-driver-source
-python3 "$AUDITOR" --root "$F" --policy policy.json --inventory inventory.tsv > "$O" 2>&1
+# ---- negative: retired artifact name is not a CLI choice ----
+python3 "$AUDITOR" --root "$ROOT" --artifact driver-source > "$O" 2>&1
 rc=$?
-expect positive_driver_source_audit "$rc" "$O" 'license_artifact_driver-source_gate=CLEARED'
+expect driver_source_auditor_choice_rejected "$rc" "$O" 'invalid choice' 2
 
-python3 "$AUDITOR" --root "$F" --policy policy.json --inventory inventory.tsv --artifact driver-source --require-releasable > "$O" 2>&1
+python3 "$BUILDER" --root "$ROOT" --artifact driver-source --out "$TMP/retired.tar.gz" > "$O" 2>&1
 rc=$?
-expect positive_driver_source_release "$rc" "$O" 'license_release_readiness=PASS'
+expect driver_source_builder_choice_rejected "$rc" "$O" 'invalid choice' 2
 
-python3 "$BUILDER" --root "$F" --policy policy.json --artifact driver-source \
-    --out "$TMP/p3.tar.gz" > "$O" 2>&1
-rc=$?
-expect positive_driver_source_archive "$rc" "$O" 'archive_build=PASS'
+if ! grep -q 'patches/001-' "$TMP/p1.list"; then
+    pass project_tools_archive_omits_numeric_patches
+else
+    fail "project_tools_archive_omits_numeric_patches"
+fi
 
 # ---- positive: audit runs without local deb/vendor payloads; read-only .git ----
 F="$TMP/no-local"
@@ -722,7 +722,7 @@ if [[ -e "$F/vendor" || -e "$F/build" || -e "$F/third_party" ]]; then
 else
     pass audit_runs_without_local_payloads
 fi
-# P1/P2: the generated project-tools allowlist excludes patches/ and the whole debs/ dir
+# P1/P2: the default fixture allowlist excludes numeric patches/ and the whole debs/ dir
 if grep -Eq '^(patches/|debs/)' "$F/docs/project/project-tools-allowlist.txt"; then
     fail "project-tools allowlist contains excluded dirs"
 else

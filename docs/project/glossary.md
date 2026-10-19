@@ -25,7 +25,7 @@
 | `vendor-binary` | manifest 中条目的许可证分类值 | 是**来源分类**，不是 SPDX/许可证名称，也不单独授予再分发权（见 [licensing.md](licensing.md)） |
 | dsh / codex / qoder | 本项目多 Agent 协作中的监督者 / 实现者 / 顾问 | dsh 终审与批准，codex 实现、自测与汇报，qoder 提建议并在参与轮次初审；用户对重大事项最终拍板（见 [multiagent-collab.md](multiagent-collab.md)） |
 | `collab/` | 多 Agent 轮次的本机存档；文件分工与串行写锁见 [协作规约](multiagent-collab.md) | 被 Git 忽略，不上传 GitHub、不自动重许可、不进公开制品 |
-| `CLEARED` / `BLOCKED` | 某个机械发布门禁通过 / 不可发布 | `project-tools=CLEARED` 只表示候选制品通过机械检查；整仓 `license_release_gate=BLOCKED` 与 `driver-source=BLOCKED` 仍保持，不可互相替代 |
+| `CLEARED` / `BLOCKED` | 某个机械发布门禁通过 / 不可发布 | `project-tools=CLEARED` 表示发布制品通过机械检查，不是整仓放行；`license_release_gate=BLOCKED` 仍保持，因为历史含阻断 blob。`driver-source` 已退役 |
 | `4.0.0-i1` | 新架构历史回退基线（drivers/ 源码树 + manifest 黑盒载荷） | Phase 4 已验证；当前作为 `4.0.2-i3` 的首层回退，`3.3.3.42-patched-27` 为下一层回退 |
 | `4.0.1-i1` | patch-024 suspend/resume 修复的失败候选 | 独立升号，固定 epoch 1788278400；已构建/安装，s2idle 唤醒红屏后回退，deep 未测试，禁止安装 |
 | `4.0.1-i2` | patch-024 + patch-025 历史候选 | R05 一次 s2idle 可见恢复通过；不复用为严格 A/B，因果仍 UNVERIFIED |

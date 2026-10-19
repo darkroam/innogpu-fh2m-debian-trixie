@@ -1,1 +1,4 @@
-# driver-source 允许清单：drivers/ 中具有明确许可声明的路径（confidential 与无许可路径已排除）
+# driver-source 制品已退役（2026-10-16）。
+# 这不是允许清单，也不是空清单 PASS。
+# O 线源码只在 tag innogpu-4x-frozen、deepin-4.0.2-i3，以及历史提交 18a2e39845d4。
+# 现行发布制品是 project-tools。见 docs/project/licensing.md。

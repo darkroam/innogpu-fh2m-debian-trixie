@@ -90,16 +90,15 @@ SOFTWARE.
 - 上述路径的逐路径分类以 `license-audit-policy.json` 的 `non_drivers_licenses` 为机器权威；
   审计器的 NOTICE 门禁（notice_gate）按**路径组**绑定上述版权/许可标记，缺失即审计失败。
 
-## 4. patches/（驱动层派生补丁，不随公开制品发布）
+## 4. patches/
 
-`patches/` 是驱动源码层的补丁文件，**不随 project-tools / driver-source 发布**：
+`patches/m-` 与 `patches/g-`（35 对）的补丁文本按原创层进入 `project-tools`，表达式是 GPL-3.0-or-later。这不把内核模块改成 GPL-3.0-only。
+
+数字名 D 线补丁不进入发布制品：
 
 - `patches/001-kernel-6.12-compat.patch` 继承自上游 fork（Tim Hant MIT），并含 darkroam 扩展；
-- `patches/002-…-027` 是**混合/未决许可**内容：部分为内核驱动源码（GPL-2.0-only 语境）的
-  派生修改，部分为 inventory 判定为无许可（unclassified）的驱动源码片段（如 `hal_power.c`、
-  `Kbuild`、`compat_kernel6.h`、`inno_devfreq_gov.c` 等）——**不给未分类片段推定 GPL-2.0-only**；
-  因此**整体排除**，不随任何公开制品发布；
-- 它们在仓库中保留（仓库级发布仍 BLOCKED），未取得权利确认前不进入任何归档。
+- 其余数字名补丁含内核或驱动源码片段，其中有 inventory 当时判定为无许可的片段（如 `hal_power.c`、`Kbuild`）。不给这些片段推定 GPL。其中 5 个文件仍映射为 `MIT OR GPL-2.0-only`。
+- 这些文件留在仓库里。仓库级发布仍是 BLOCKED。
 
 ## 5. 本地载荷与 debs/（不随公开制品发布）
 
@@ -111,8 +110,7 @@ Deepin 官方渠道）取得原包并在本地使用；本项目不托管、不�
 ## 6. GitHub 主分支发布面
 
 本仓库 GitHub 主分支（main）公开分发主线 HEAD 的跟踪路径。3 个 `Strictly Confidential` 与
-70 个无许可文件已不在主线 HEAD，仍在 tag `innogpu-4x-frozen`、`deepin-4.0.2-i3` 和历史中；**仓库级发布未闭环**。本声明随 `project-tools` 候选制品分发时只描述该制品
-的实际内容；项目-tools 归档是**候选制品**，不构成许可证发布闭环。
+70 个无许可文件已不在主线 HEAD，仍在 tag `innogpu-4x-frozen`、`deepin-4.0.2-i3` 和历史中；**仓库级发布未闭环**。本声明随 `project-tools` 发布制品分发时只描述该制品的实际内容。该归档不是仓库级许可证发布闭环。
 
 ## 7. 免责声明
 

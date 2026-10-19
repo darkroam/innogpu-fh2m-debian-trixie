@@ -35,7 +35,7 @@
 | Vulkan/OpenCL 执行 | 探针 exec 模式 + 真机验证通过（2026-08-24）：Vulkan queue+fence submit+wait、OpenCL add kernel+读回逐元素校验均在 Fantasy II-M 上执行成功；`runtime_vulkan_execution`/`runtime_opencl_execution`=PASS（证据 `baselines/runtime/runtime-results-20260824.txt`）；离线失败路径已有 fixture | [probe-vulkan-devices.c](../../tools/internal/probe-vulkan-devices.c)、[probe-opencl-devices.c](../../tools/internal/probe-opencl-devices.c)、[test-strategy](test-strategy.md) |
 | VA-API 实际解码 | `tools/internal/run-vaapi-decode-test.sh --codec all` 真机执行（2026-08-24）：H.264 Main 与 HEVC Main 强制 VA-API 硬解，各 30 帧 320x240 NV12 framemd5 与软件参考逐帧 hash 一致，Driver/Firmware 状态门禁通过；`runtime_vaapi_decode`=PASS（证据 `baselines/runtime/runtime-results-20260824.txt`）；能力边界仅 Main/Main 8-bit 4:2:0 | [run-vaapi-decode-test.sh](../../tools/internal/run-vaapi-decode-test.sh)、[test-strategy](test-strategy.md) |
 | DMA-BUF 回归工具 | `tools/internal/run-dmabuf-regression-test.sh` 已实现（2026-08-24）：同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 + 状态门禁聚合，配套离线 fixture；**真机 PASS（2026-08-26 root 权限运行，证据已封存）**：self-import/READ/WRITE/vblank/状态门禁/内核日志全部通过；能力边界不变：仅同设备 PRIME self-import，foreign/cross-device、GBM、V4L2、长期压力与并发仍 UNVERIFIED | [run-dmabuf-regression-test.sh](../../tools/internal/run-dmabuf-regression-test.sh)、[test-strategy](test-strategy.md)、[webkit 调查](../investigations/webkit-dmabuf-investigation.md) |
-| 发布边界 | 三层许可模型（原创层 GPL-3.0-or-later / 上游 MIT / drivers/ 逐文件）；`project-tools` 为**候选制品**（机械门禁 CLEARED，当前不作为发布目标；**失败关闭分类**——已批准原创前缀 + 显式映射，未知路径拒绝，无默认 GPL；排除 patches/、debs/、collab/（本机私有目录，不跟踪）、drivers/、vendor/、build/、third_party/；**路径绑定 NOTICE 门禁**，components/ 许可材料已封存：picom 补丁为文件级 MPL-2.0、`picom.conf` 为原创 GPLv3、fbterm 1.7-5 (C) 2008 dragchan GPL-2.0-only）；`driver-source` 排除 confidential ×3 与无许可 ×70 后非完整驱动（BLOCKED，不假 PASS）；**GitHub 主分支仍公开分发阻断路径，仓库级发布未闭环**；二进制 deb 与 vendor 载荷不作为当前发布目标；patched-1.deb 为上游历史非阻断；本地 debs/ 与 vendor/ 不参与发布；**发布决策（见 licensing.md §4.1）：2026-08-28 的 1C 已于 2026-10-09 被用户部分推翻，只激活签署后的 annotated tag；Release/附件仍不创建，BLOCKED 不变，R55 批 2 已把 73 个 drivers/ 阻断路径移出主线 HEAD（仍在 tag 与历史，不重写）** | [licensing.md](licensing.md)（唯一权威文档）、[source-license-audit.md](source-license-audit.md) |
+| 发布边界 | 三层许可模型（原创层 GPL-3.0-or-later / 上游 MIT / drivers/ 逐文件）；`project-tools` 为**发布制品**（机械门禁 CLEARED，不是整仓放行；**失败关闭分类**——已批准原创前缀 + `patches/m-`/`patches/g-` + 显式映射，未知路径拒绝，无默认 GPL；排除数字名 D 线补丁、debs/、collab/（本机私有目录，不跟踪）、drivers/、vendor/、build/、third_party/；**路径绑定 NOTICE 门禁**，components/ 许可材料已封存：picom 补丁为文件级 MPL-2.0、`picom.conf` 为原创 GPLv3、fbterm 1.7-5 (C) 2008 dragchan GPL-2.0-only）；`driver-source` 已退役（不把空清单记成 PASS）；confidential ×3 与无许可 ×70 不在主线 HEAD。已推送历史（提交 18a2e39845d4）含阻断 blob；tag ref 推送状态与阻断事实无关；**GitHub 主分支仍公开分发阻断路径，仓库级发布未闭环**；二进制 deb 与 vendor 载荷不作为当前发布目标；patched-1.deb 为上游历史非阻断；本地 debs/ 与 vendor/ 不参与发布；**发布决策（见 licensing.md §4.1）：2026-08-28 的 1C 已于 2026-10-09 被用户部分推翻，只激活签署后的 annotated tag；Release/附件仍不创建，BLOCKED 不变，R55 批 2 已把 73 个 drivers/ 阻断路径移出主线 HEAD（仍在 tag 与历史，不重写）** | [licensing.md](licensing.md)（唯一权威文档）、[source-license-audit.md](source-license-audit.md) |
 
 以上引用 Phase 4、2026-08 runtime、patched 或 `4.0.x` 的验收均保留其原版本边界；
 `latest-*` 文件名不表示已验证当前 fantgpu。当前待办见 [current-work](../state/current-work.md)。
@@ -267,12 +267,11 @@ p21/p22 的电源、合盖、拔屏和跨硬件限制仍按历史记录保留。
 `4.0.0-i1`/`patched-27` 回退链及 Phase 5 状态为准；公开发布仍被许可证审计阻断。
 `patched-17`/`patched-8` 仅作深层回退。
 
-**发布决策（当前，2026-10-10）**：1C 里「不打 tag」只对 fantgpu `5.0.0-i12` 放开，并且已经执行。annotated tag 指向 `079b179`。validation-results `signed=true`。hwinfo 豁免不把 R1 改成 pass；R2=pass；R5=pass；U1/U2/R9 保持 unverified。不创建 GitHub Release，不传附件。
-`license_release_gate=BLOCKED` 不变。73 个 drivers/ 阻断路径已不在主线 HEAD，仍在 tag `innogpu-4x-frozen` 与 `deepin-4.0.2-i3` 及历史中。这不把 `main` 变成仓库级发布目标。权威记录见 [licensing.md §4.1](licensing.md#41-github-主分支发布面与发布决策-1c当前结论)。
+**发布决策（当前，2026-10-10；发布面见 2026-10-16）**：1C 里「不打 tag」只对 fantgpu `5.0.0-i12` 放开，并且已经执行。annotated tag 指向 `079b179`。validation-results `signed=true`。hwinfo 豁免不把 R1 改成 pass；R2=pass；R5=pass；U1/U2/R9 保持 unverified。不创建 GitHub Release，不传附件。
+`license_release_gate=BLOCKED` 不变：已推送历史（提交 18a2e39845d4）含阻断 blob；tag ref 推送状态与阻断事实无关。73 个 drivers/ 阻断路径已不在主线 HEAD。`project-tools` 是发布制品。`driver-source` 已退役。这不把 `main` 变成仓库级发布目标。权威记录见 [licensing.md §4.1](licensing.md#41-github-主分支发布面与发布决策-1c当前结论)。
 
 **历史决定 1C（2026-08-28，其中「不打 tag」已被上节推翻）**：
 
 - 当时不创建 GitHub Release、tag 或发布附件；`main` 作为研究开发仓库。
-- `license_release_gate=BLOCKED` 与 `driver-source=BLOCKED` 仍是当前事实；`project-tools=CLEARED`
-  仍只表示候选制品机械门禁通过。
+- 当时 `driver-source=BLOCKED`，`project-tools=CLEARED` 只表示候选制品机械门禁。现行发布面见 [licensing.md §4.1](licensing.md#41-github-主分支发布面与发布决策-1c当前结论)。
 - 写下时 73 个阻断路径在 main。R55 批 2 起它们不在主线 HEAD，仍在 tag 与历史中。

@@ -36,4 +36,4 @@
 
 - 提取产物只供**本地**构建、安装与回退使用；未经对应权利方授权不得再次公开分发。
 - 本功能不授予任何第三方内容的许可证；第三方条款以权利方文件为准（见 `THIRD_PARTY_NOTICES.md`）。
-- 主线不含 `drivers/`。O 线源码在 tag `innogpu-4x-frozen`。`driver-source` 在主线上为空清单，状态仍是 BLOCKED，不是完整驱动。
+- 主线不含 `drivers/`。O 线源码在 tag `innogpu-4x-frozen` 与 `deepin-4.0.2-i3`。`driver-source` 制品已退役，不留空清单。

@@ -106,5 +106,5 @@ Debian 回退到保留基线：`sudo apt install --allow-downgrades ./debs/innog
 - 三层模型、阻断路径、制品范围和排除清单只以
   [许可证与再分发边界](docs/project/licensing.md) 为准。机械审计见
   [源码许可证审计](docs/project/source-license-audit.md)。
-- `project-tools` 是候选制品，当前不作为发布目标。`driver-source` 不是完整驱动，状态为 BLOCKED。
-  仓库级发布未闭环。
+- `project-tools` 是发布制品（原创层，含 `patches/m-` 与 `patches/g-` 的补丁文本）。`driver-source` 已退役。仓库级发布仍是 BLOCKED：已推送历史（提交 18a2e39845d4）含阻断 blob；tag ref 推送状态与阻断事实无关。
+- 使用者另行取得驱动后，即视为已获使用本项目工具链的授权。这是项目政策记录，不是法律意见。

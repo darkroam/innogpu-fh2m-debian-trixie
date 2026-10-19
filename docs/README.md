@@ -21,7 +21,7 @@
 
 按需查阅：[Debian 安装](user/debian.md)、[Gentoo 现场](user/gentoo.md)、[依赖与外部文件](project/dependencies.md)、[显示接入使用](user/display-guide.md)、
 [许可证与再分发边界](project/licensing.md)（唯一权威文档）、[驱动源码许可证审计](project/source-license-audit.md)、
-[project-tools 允许清单](project/project-tools-allowlist.txt)、[driver-source 允许清单](project/driver-source-allowlist.txt)、
+[project-tools 允许清单](project/project-tools-allowlist.txt)、[driver-source 已退役](project/driver-source-allowlist.txt)、
 [当前待办](state/current-work.md)、[已完成工作与时序](history/todo.md)、[实施历史](history/history.md)、
 [逆向工程与能力挖掘评估](investigations/reverse-engineering-assessment.md)、
 [FH2M 能力普查记录](investigations/capability-survey.md)、[release 审阅记录](archive/release-review-2026-08-20.md)、

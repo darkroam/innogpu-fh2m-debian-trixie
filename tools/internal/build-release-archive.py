@@ -2,12 +2,10 @@
 """Deterministic release archive builder from artifact allowlists (HEAD-bound).
 
 Supported artifacts (the only ones this tool can actually build):
-- project-tools  — original GPL-3.0-or-later layer plus necessary upstream MIT
-                   content (with the MIT notice); no drivers/vendor/debs/build.
-- driver-source  — drivers/ paths that carry an explicit, redistributable
-                   license declaration only; confidential and no-license paths
-                   are excluded by the allowlist; the bundle is NOT a complete
-                   driver and its README says so.
+- project-tools  — original GPL-3.0-or-later layer, including patches/m- and
+                   patches/g- text, plus necessary upstream MIT content (with
+                   the MIT notice). Numeric D-line patches, drivers/, vendor/,
+                   debs/ and build/ stay out. driver-source is retired.
 
 Every allowlist entry is read from the blob store of HEAD (the working tree
 must be clean, so working == index == commit); the working tree is never read
@@ -195,7 +193,7 @@ def main(argv=None):
     parser.add_argument("--root", default=".")
     parser.add_argument("--policy", default="license-audit-policy.json")
     parser.add_argument("--artifact", default="project-tools",
-                        choices=("project-tools", "driver-source"))
+                        choices=("project-tools",))
     parser.add_argument("--out", required=True)
     parser.add_argument("--epoch", type=int, default=None)
     parser.add_argument("--draft", action="store_true",

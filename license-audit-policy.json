@@ -4,7 +4,7 @@
   "layers": {
     "original": {
       "license": "GPL-3.0-or-later",
-      "scope": "本项目原创层：darkroam fork 后续原创的框架、脚本、工具、测试、文档、配置和辅助代码；不含从上游保留或派生的实质性内容，也不含 O 线厂商代码。O 线 drivers/README.md 不在主线，留在 tag innogpu-4x-frozen 与 deepin-4.0.2-i3。此前按 MIT 发布的版本继续保有原 MIT 授权。"
+      "scope": "本项目原创层：darkroam fork 后续原创的框架、脚本、工具、测试、文档、配置和辅助代码，以及 patches/m- 与 patches/g- 的补丁文本。不含从上游保留或派生的实质性内容，不含数字名 D 线补丁，也不含 O 线厂商代码。补丁文本的 GPL-3.0-or-later 不把内核模块改成 GPL-3.0-only。O 线 drivers/README.md 不在主线，留在 tag innogpu-4x-frozen 与 deepin-4.0.2-i3。此前按 MIT 发布的版本继续保有原 MIT 授权。"
     },
     "upstream_mit": {
       "license": "MIT",
@@ -104,7 +104,8 @@
   "known_declaration_conflicts": [],
   "manifest": {
     "path": "binary-manifest-fantgpu.json",
-    "unresolved_marker": "vendor-binary"
+    "unresolved_marker": "vendor-binary",
+    "record_role": "local-input-record"
   },
   "license_authority_doc": {
     "path": "docs/project/licensing.md",
@@ -151,7 +152,11 @@
       "components/picom/session.sh": "GPL-3.0-or-later",
       "components/picom/debian/install-prereqs.sh": "GPL-3.0-or-later",
       "components/fbterm/build.sh": "GPL-3.0-or-later"
-    }
+    },
+    "original_prefixes": [
+      "patches/m-",
+      "patches/g-"
+    ]
   },
   "notice_gate": {
     "path": "THIRD_PARTY_NOTICES.md",
@@ -215,7 +220,7 @@
       "allowlist_file": "docs/project/project-tools-allowlist.txt",
       "denylist": [
         "^drivers/",
-        "^patches/",
+        "^patches/(?![mg]-)",
         "^debs/",
         "^collab/",
         "^vendor/",
@@ -229,24 +234,7 @@
         "\\.so(\\.\\d+)*$",
         "\\.fw$"
       ],
-      "reason": "候选制品（机械门禁 CLEARED，当前不作为发布目标（发布决策 1C））：失败关闭分类——允许清单 = 已批准原创前缀（.github/baselines/docs/tests/tools，GPL-3.0-or-later）+ 显式路径映射（上游继承层 MIT、LICENSES/ 标准文本组、components/ 第三方派生组）；任何不在前缀/映射内的路径一律拒绝（non_drivers_unclassified），无全局默认 GPL；components/ 许可材料已封存（picom 固定 commit 6d676824…：目标文件级 MPL-2.0，Copyright (c) Yuxuan Shui，文本见 LICENSES/MPL-2.0.txt；picom.conf 为项目原创 GPL-3.0-or-later；fbterm Debian 1.7-5：(C) 2008 dragchan，GPL-2.0-only；Linux xHCI Debian 6.12.107-1：Copyright (C) 2008 Intel Corp.，GPL-2.0-only），NOTICE 按路径组绑定版权/许可标记（notice_gate）；排除 patches/（混合/未决许可，含未分类驱动源码片段，整体排除）、debs/（整目录）、collab/（多 Agent 协作记录：本机私有目录，.gitignore 排除、不跟踪，不自动重许可、不进发布候选，denylist 防御性保留）、drivers/、vendor/、build/、third_party/ 与载荷；主线不再跟踪 drivers/ 阻断路径（留在 tag innogpu-4x-frozen 与 deepin-4.0.2-i3）；仓库级发布未闭环，本归档仅为候选制品。"
-    },
-    "driver-source": {
-      "status": "BLOCKED",
-      "allowlist_file": "docs/project/driver-source-allowlist.txt",
-      "denylist": [
-        "^vendor/",
-        "^\\.build/",
-        "^build/",
-        "^third_party/",
-        "\\.deb$",
-        "\\.o_shipped$",
-        "\\.o(\\.cmd)?$",
-        "\\.ko$",
-        "\\.so(\\.\\d+)*$",
-        "\\.fw$"
-      ],
-      "reason": "主线不含 drivers/，本清单为空，不假 PASS。O 线 484 件在 tag innogpu-4x-frozen；相对 deepin-4.0.2-i3 仅 README 四行。历史上明确许可文件为 408 dual + 2 BSD/LGPL + drivers/README.md，confidential x3 与无许可 x70 仍在 tag 上且排除出制品；再分发权利链未闭合。"
+      "reason": "发布制品（机械门禁 CLEARED，不是整仓放行）：失败关闭分类——允许清单 = 已批准原创前缀（.github/baselines/docs/tests/tools，GPL-3.0-or-later）+ original_prefixes patches/m- 与 patches/g-（补丁文本按原创层，不把内核模块改成 GPL-3.0-only）+ 显式路径映射（上游继承层 MIT、LICENSES/ 标准文本组、components/ 第三方派生组）。数字名 D 线补丁不在前缀内，denylist ^patches/(?![mg]-) 拒绝。未知路径拒绝（non_drivers_unclassified），无全局默认 GPL。components/ 许可材料已封存。排除 debs/、collab/、drivers/、vendor/、build/、third_party/ 与载荷。driver-source 制品已退役。仓库级 license_release_gate 仍是 BLOCKED：已推送历史（提交 18a2e39845d4）含阻断 blob；tag ref 推送状态与阻断事实无关。"
     }
   },
   "expected_summary": {
