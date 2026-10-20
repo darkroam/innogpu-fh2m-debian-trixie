@@ -117,7 +117,7 @@ emerge 的回滚件在 `/var/lib/fantgpu/rollback/fantgpu.ko`，不放在 portag
 
 `emerge --unmerge x11-drivers/fantgpu-fh2m` 会删掉包里登记的文件。模块如果还在 `lsmod` 里，
 `pkg_prerm` 只警告：模块已加载，不要热卸载，先重启，再把这次卸载当成完成。`pkg_postrm` 跑
-`depmod` 和 `ldconfig`，不执行 `rmmod`。登记的 `extra/fantgpu.ko` 随包删除。
+`depmod` 和 `ldconfig`，不执行 `rmmod`。目标 build 目录缺失时只警告并跳过 `depmod`，不阻断卸载。登记的 `extra/fantgpu.ko` 随包删除。
 
 `/var/lib/fantgpu/rollback/fantgpu.ko` 不在包里，卸载不删。Debian 的 `postrm` 只跑 `ldconfig`，
 `/var/lib/dkms` 和 `updates/dkms` 残留留场。Debian 回滚卡是 `4.0.2-i3`；这边回滚只把保存的 ko 写回当前内核的 `extra/`，然后重启。

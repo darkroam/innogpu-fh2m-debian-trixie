@@ -98,7 +98,7 @@ purge 不删除 `/var/lib/dkms/fantgpu-fh2m-kernel`（101、107、111 三份构�
 要清就先看 `dkms status`，再 `sudo dkms remove -m fantgpu-fh2m-kernel -v <版本> --all`。
 `updates/dkms` 里剩下的 fantgpu 模块删掉后跑 `depmod -a`。不加载的话留着无害。
 
-Gentoo 卸包会删掉登记的 `extra/fantgpu.ko`，`pkg_postrm` 再 `depmod` 和 `ldconfig`，没有 DKMS 树。
+Gentoo 卸包会删掉登记的 `extra/fantgpu.ko`，`pkg_postrm` 再 `depmod` 和 `ldconfig`；目标 build 目录缺失则跳过 `depmod`，不阻断卸载。没有 DKMS 树。
 `/var/lib/fantgpu/rollback/fantgpu.ko` 不在包里，卸载不删。
 
 ## 升级与回滚

@@ -98,7 +98,12 @@ pkg_prerm() {
 }
 
 pkg_postrm() {
-	fantgpu_target_kernel
-	depmod -a "${KV_FULL}" || ewarn "depmod failed"
+	get_version || die "KV_FULL empty"
+	[[ -n ${KV_FULL} ]] || die "KV_FULL empty"
+	if [[ -d /lib/modules/${KV_FULL}/build ]]; then
+		depmod -a "${KV_FULL}" || ewarn "depmod failed"
+	else
+		ewarn "target build dir missing; skipping depmod"
+	fi
 	ldconfig || ewarn "ldconfig failed"
 }

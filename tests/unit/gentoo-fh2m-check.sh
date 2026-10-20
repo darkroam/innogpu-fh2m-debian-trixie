@@ -238,3 +238,29 @@ if PORTAGE_PATCH_BASE=$empty/portage KERNEL_TREE=$empty/tree "$root/tools/gentoo
     exit 1
 fi
 grep -q 'module_file=MISSING' "$out"
+
+awk '/^pkg_postrm\(\)/{p=1} p{print} p && /^}$/{exit}' "$ebuild" > "$empty/postrm.sh"
+grep -q 'depmod -a "${KV_FULL}" || ewarn "depmod failed"' "$empty/postrm.sh"
+if grep -q 'fantgpu_target_kernel' "$empty/postrm.sh"; then
+    echo "postrm still dies through fantgpu_target_kernel" >&2
+    exit 1
+fi
+if ! bash -c '
+set -euo pipefail
+get_version() { KV_FULL=r65-postrm-missing; }
+die() { printf "die:%s\n" "$*"; exit 1; }
+ewarn() { printf "ewarn:%s\n" "$*"; }
+depmod() { printf "depmod-called\n"; return 1; }
+ldconfig() { printf "ldconfig-ok\n"; }
+source "$1"
+pkg_postrm
+' bash "$empty/postrm.sh" >"$out"; then
+    echo "postrm blocked on missing build dir" >&2
+    exit 1
+fi
+grep -q 'ewarn:target build dir missing; skipping depmod' "$out"
+grep -q 'ldconfig-ok' "$out"
+if grep -q 'depmod-called' "$out"; then
+    echo "depmod ran without build dir" >&2
+    exit 1
+fi
