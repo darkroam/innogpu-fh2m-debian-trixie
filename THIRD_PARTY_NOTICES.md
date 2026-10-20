@@ -79,12 +79,12 @@ SOFTWARE.
   （Gentoo gentoo-sources 6.12.111）** 的 `drivers/gpu/drm/display/Kconfig`，只给隐藏项
   `CONFIG_DRM_DISPLAY_HDMI_HELPER` 增加菜单提示 `DRM HDMI display helpers`。该文件声明
   `SPDX-License-Identifier: MIT`；补丁按 **MIT** 分发，全文见 `LICENSES/MIT.txt`。
-  提示不改变默认值。未打进正在运行的内核，不在矩阵 `current`。
+  提示不改变默认值。2026-10-20 已打进 Gentoo 6.12.111 运行内核，并在 Gentoo 矩阵 `current`。Debian `current` 不含它。
 - `components/linux/006-vmap-pfn-prompt.patch`：修改 **Linux mm
   （Gentoo gentoo-sources 6.12.111）** 的 `mm/Kconfig`，只给隐藏项
   `CONFIG_VMAP_PFN` 增加菜单提示 `Vmap an array of PFNs`。该文件声明
   `SPDX-License-Identifier: GPL-2.0-only`；补丁按 **GPL-2.0-only** 分发，全文见
-  `LICENSES/GPL-2.0-only.txt`。提示不改变默认值。未打进正在运行的内核，不在矩阵 `current`。
+  `LICENSES/GPL-2.0-only.txt`。提示不改变默认值。2026-10-20 已打进 Gentoo 6.12.111 运行内核，并在 Gentoo 矩阵 `current`。Debian `current` 不含它。
 - `components/linux/004-snd-hda-hygon-14c9.patch`：修改 **Linux snd-hda-intel
   （Gentoo gentoo-sources 6.12.111 的 `sound/pci/hda/hda_intel.c`）** 的 PCI ID 表，
   为板载声卡 **1d94:14c9** 增加 `AZX_DRIVER_GENERIC`。该文件声明

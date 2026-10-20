@@ -389,12 +389,22 @@ if "patches/m-*" in raw or "patches/g-*" in raw:
     errors.append("wildcard patch list is forbidden")
 
 patch_id = re.compile(r"^(m|g)-[0-9]{3}(-lifecycle)?-[a-z0-9-]+$")
-linux_names = (
-    "001-hygon-148c-xhci-reset-on-resume",
-    "002-kaitian-x7h-battery-notification-delay",
-    "003-pinctrl-amd-hygon-gpio",
-    "004-snd-hda-hygon-14c9",
-)
+linux_by_system = {
+    "debian": (
+        "001-hygon-148c-xhci-reset-on-resume",
+        "002-kaitian-x7h-battery-notification-delay",
+        "003-pinctrl-amd-hygon-gpio",
+        "004-snd-hda-hygon-14c9",
+    ),
+    "gentoo": (
+        "001-hygon-148c-xhci-reset-on-resume",
+        "002-kaitian-x7h-battery-notification-delay",
+        "003-pinctrl-amd-hygon-gpio",
+        "004-snd-hda-hygon-14c9",
+        "005-drm-display-hdmi-helper-prompt",
+        "006-vmap-pfn-prompt",
+    ),
+}
 states = {"applied", "not-in-install-path", "do-not-reuse"}
 
 def sha256(rel):
@@ -457,8 +467,9 @@ for index, row in enumerate(doc.get("current") or []):
     for ident in row["g_set"]:
         check_meta({"id": ident}, row.get("kernel"), where)
     linux = row.get("linux_patches")
-    if not isinstance(linux, dict) or set(linux) != set(linux_names):
-        errors.append(where + " linux_patches must name 001-004 exactly")
+    expected = linux_by_system.get(row.get("system"))
+    if expected is None or not isinstance(linux, dict) or set(linux) != set(expected):
+        errors.append("%s linux_patches must match %s" % (where, row.get("system")))
     else:
         for name, cell in linux.items():
             rel = "components/linux/%s.patch" % name

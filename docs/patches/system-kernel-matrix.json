@@ -117,6 +117,16 @@
           "state": "applied",
           "sha256": "08dc3079d5b6d8d698afe321b957ae17ec410f269ab379ab1673c67e1891a229",
           "note": "只对 6.12 的 snd-hda-intel。不能套 6.18。"
+        },
+        "005-drm-display-hdmi-helper-prompt": {
+          "state": "applied",
+          "sha256": "f2a8ad5f767177d6ffae02ba048dd8b9f9df1424f29ea8ddab27c91f65a581af",
+          "note": "2026-10-20 三证：kernel_tree=APPLIED，运行内核 CONFIG_DRM_DISPLAY_HDMI_HELPER=y，加载模块 srcversion D579486A64C340B5178B66B。只加菜单提示。Debian current 不含。"
+        },
+        "006-vmap-pfn-prompt": {
+          "state": "applied",
+          "sha256": "ff129b4a9b04b48b76f78bb6e91707b9010a9db63c26820d4c350ea3bc1e4544",
+          "note": "2026-10-20 三证：kernel_tree=APPLIED，运行内核 CONFIG_VMAP_PFN=y，加载模块 srcversion D579486A64C340B5178B66B。只加菜单提示。Debian current 不含。"
         }
       },
       "install": [

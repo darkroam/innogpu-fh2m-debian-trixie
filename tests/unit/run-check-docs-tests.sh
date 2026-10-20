@@ -75,4 +75,28 @@ PY
 check 1 'system-kernel matrix'
 cp "$fixture/matrix.before" docs/patches/system-kernel-matrix.json
 
+python3 - << 'PY'
+import json
+from pathlib import Path
+path = Path("docs/patches/system-kernel-matrix.json")
+data = json.loads(path.read_text())
+gentoo = next(row for row in data["current"] if row["system"] == "gentoo")
+del gentoo["linux_patches"]["006-vmap-pfn-prompt"]
+path.write_text(json.dumps(data))
+PY
+check 1 'linux_patches must match gentoo'
+cp "$fixture/matrix.before" docs/patches/system-kernel-matrix.json
+
+python3 - << 'PY'
+import json
+from pathlib import Path
+path = Path("docs/patches/system-kernel-matrix.json")
+data = json.loads(path.read_text())
+debian = next(row for row in data["current"] if row["system"] == "debian")
+debian["linux_patches"]["005-drm-display-hdmi-helper-prompt"] = {"state": "applied", "sha256": "unused"}
+path.write_text(json.dumps(data))
+PY
+check 1 'linux_patches must match debian'
+cp "$fixture/matrix.before" docs/patches/system-kernel-matrix.json
+
 printf 'check_docs_total=%s check_docs_failed=0\n' "$checks"

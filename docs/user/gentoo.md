@@ -142,8 +142,8 @@ emerge 的回滚件在 `/var/lib/fantgpu/rollback/fantgpu.ko`，不放在 portag
 
 权威文件在 `tools/gentoo/overlay/sys-kernel/patches/`，字节与 `components/linux` 的同名补丁一致。
 005 只给隐藏项 `CONFIG_DRM_DISPLAY_HDMI_HELPER` 加菜单提示，不改变默认值。
-006 只给隐藏项 `CONFIG_VMAP_PFN` 加菜单提示 `Vmap an array of PFNs`，不改变默认值。目标文件是 GPL-2.0-only。不在矩阵 `current`。
-2026-10-19 本机启动的 `#8` 已带 `CONFIG_DRM_DISPLAY_HDMI_HELPER=y` 和 `CONFIG_VMAP_PFN=y`，并加载了按该树重编的 fantgpu。这不是矩阵验收。
+006 只给隐藏项 `CONFIG_VMAP_PFN` 加菜单提示 `Vmap an array of PFNs`，不改变默认值。目标文件是 GPL-2.0-only。Gentoo current 含 005 与 006；Debian current 仍是 001–004。
+2026-10-20 三证后 Gentoo current 收入 005 与 006：check 为 PASS / PASS / APPLIED，运行内核两项均为 `=y`，加载模块 srcversion `D579486A64C340B5178B66B`。2026-10-19 的 `#8` 启动本身不是这次验收。
 001/002 的基线仍是 Debian `linux-source-6.12` `6.12.107-1`，换内核必须重验。
 003 只给 `pinctrl-amd` 增加 ACPI ID `HYGO0030`。004 只给 6.12 的 `snd-hda-intel` 增加
 PCI `1d94:14c9`。004 不能套到 6.18：控制器源码已改到 `sound/hda/controllers/intel.c`，
