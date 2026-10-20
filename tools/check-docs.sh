@@ -365,7 +365,6 @@ for path in \
 done
 
 
-# shortcut: checks cited paths and meta_kernel, not that the build script applies those ids. Upgrade when a row's builder list is machine-readable.
 if ! matrix_err=$(python3 - << 'PY'
 import hashlib, json, re, sys
 from pathlib import Path
@@ -441,6 +440,150 @@ def check_paths(values, where):
 def builder_ids(row):
     return tuple(item.get("id") for item in row.get("m_base", []) if item.get("in_i12_builder") is True)
 
+SYNTHETIC = "i12-builder-through-m-035"
+DERIVE_PATCH = "m-035-private-accessor"
+I12_TREE = "9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee"
+REDIRECT = re.compile(r'< "\$ROOT/patches/([^"]+)\.patch"')
+
+def applied_redirects(blob):
+    found = []
+    for ident in REDIRECT.findall(blob or ""):
+        if ident not in found:
+            found.append(ident)
+    return found
+
+def bash_function(blob, name):
+    match = re.search(r"(?m)^%s\(\) \{" % re.escape(name), blob or "")
+    if not match:
+        return None
+    depth = 0
+    for index in range(match.end() - 1, len(blob)):
+        char = blob[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return blob[match.end():index]
+    return None
+
+def load_builders():
+    try:
+        derive_text = Path("tools/internal/derive-fantgpu-source.sh").read_text(encoding="utf-8")
+    except OSError:
+        derive_text = None
+    try:
+        lib_text = Path("tools/gentoo/fh2m-lib.sh").read_text(encoding="utf-8")
+    except OSError:
+        lib_text = None
+    derive_ids = applied_redirects(derive_text) if derive_text is not None else None
+    body = bash_function(lib_text, "cmd_build") if lib_text is not None else None
+    cmd_ids = applied_redirects(body) if body is not None else None
+    return derive_ids, cmd_ids, derive_text is not None and I12_TREE in derive_text
+
+def split_base(row):
+    true, false, bad = [], [], []
+    for item in row["m_base"]:
+        ident = item.get("id")
+        flag = item.get("in_i12_builder")
+        if flag is True:
+            true.append(ident)
+        elif flag is False:
+            false.append(ident)
+        else:
+            bad.append(ident)
+    return true, false, bad
+
+def join_ids(items):
+    chosen = sorted(set(items))
+    return ",".join(chosen) if chosen else "-"
+
+def builder_error(row, missing, extra, flag, tree_ok):
+    if not missing and not extra and not flag and tree_ok:
+        return
+    errors.append(
+        "%s %s builder missing=%s extra=%s flag=%s tree=%s"
+        % (row.get("system"), row.get("kernel"), join_ids(missing), join_ids(extra), join_ids(flag), "ok" if tree_ok else "missing")
+    )
+
+derive_applied, cmd_applied, tree_literal_ok = load_builders()
+
+def check_debian_builder(row):
+    missing, extra, flag = [], [], []
+    if derive_applied is None:
+        missing.append("derive-fantgpu-source")
+    else:
+        true, false, bad = split_base(row)
+        if true != [SYNTHETIC]:
+            if SYNTHETIC not in true:
+                missing.append(SYNTHETIC)
+            flag.extend(ident for ident in true if ident != SYNTHETIC)
+        if DERIVE_PATCH not in derive_applied:
+            missing.append(DERIVE_PATCH)
+        for ident in derive_applied:
+            if ident == DERIVE_PATCH:
+                continue
+            if ident in true or ident in false:
+                flag.append(ident)
+            else:
+                extra.append(ident)
+        flag.extend(ident for ident in false if ident in derive_applied)
+        flag.extend(bad)
+        extra.extend(row.get("g_set") or [])
+    builder_error(row, missing, extra, flag, tree_literal_ok)
+
+def check_gentoo_builder(row):
+    missing, extra, flag = [], [], []
+    if derive_applied is None:
+        missing.append("derive-fantgpu-source")
+    if cmd_applied is None:
+        missing.append("cmd_build")
+    if derive_applied is None or cmd_applied is None:
+        builder_error(row, missing, extra, flag, tree_literal_ok)
+        return
+    true, false, bad = split_base(row)
+    if true != [SYNTHETIC]:
+        if SYNTHETIC not in true:
+            missing.append(SYNTHETIC)
+        flag.extend(ident for ident in true if ident != SYNTHETIC)
+    flag.extend(bad)
+    applied = []
+    for ident in derive_applied + cmd_applied:
+        if ident not in applied:
+            applied.append(ident)
+    applied_m = [ident for ident in applied if not str(ident).startswith("g-")]
+    cmd_g = [ident for ident in cmd_applied if str(ident).startswith("g-")]
+    accounted = []
+    if SYNTHETIC in true and DERIVE_PATCH in derive_applied:
+        accounted.append(DERIVE_PATCH)
+    accounted.extend(ident for ident in false if not str(ident).startswith("g-"))
+    for ident in accounted:
+        if ident not in applied_m:
+            missing.append(ident)
+    for ident in applied_m:
+        if ident in accounted:
+            continue
+        if ident in true:
+            flag.append(ident)
+        else:
+            extra.append(ident)
+    for ident in applied:
+        if str(ident).startswith("g-") and ident not in cmd_g:
+            extra.append(ident)
+    g_set = list(row.get("g_set") or [])
+    missing.extend(ident for ident in cmd_g if ident not in g_set)
+    extra.extend(ident for ident in g_set if ident not in cmd_g)
+    builder_error(row, missing, extra, flag, tree_literal_ok)
+
+def check_builder_row(row):
+    install = row.get("install") or []
+    if not isinstance(install, list):
+        return
+    if "tools/debian/build-driver.sh" in install:
+        check_debian_builder(row)
+    if "tools/gentoo/build-driver.sh" in install or "tools/gentoo/fh2m-lib.sh" in install:
+        check_gentoo_builder(row)
+
 seen = {}
 for table in ("current", "in_progress"):
     for index, row in enumerate(doc.get(table) or []):
@@ -489,6 +632,7 @@ for index, row in enumerate(doc.get("current") or []):
     identity = row.get("build_identity") or {}
     if not identity.get("tree_hash") or not identity.get("srcversion"):
         errors.append(where + " build identity incomplete")
+    check_builder_row(row)
 
 by_in = {}
 for row in doc.get("current") or []:

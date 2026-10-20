@@ -99,4 +99,99 @@ PY
 check 1 'linux_patches must match debian'
 cp "$fixture/matrix.before" docs/patches/system-kernel-matrix.json
 
+cp tools/internal/derive-fantgpu-source.sh "$fixture/derive.before"
+cp tools/gentoo/fh2m-lib.sh "$fixture/lib.before"
+
+write_derive() {
+    local extra="$1"
+    local tree="$2"
+    cat > tools/internal/derive-fantgpu-source.sh << EOF
+need_repo() {
+    [[ -f \$ROOT/patches/m-099-not-applied.patch ]] || true
+}
+patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "\$1" -p1 \\
+    < "\$ROOT/patches/m-035-private-accessor.patch"
+${extra}
+EOF
+    if [[ -n "$tree" ]]; then
+        printf 'expected = "%s"\n' "$tree" >> tools/internal/derive-fantgpu-source.sh
+    fi
+}
+write_cmd() {
+    local extra="$1"
+    cat > tools/gentoo/fh2m-lib.sh << EOF
+need_repo() {
+    [[ -f \$ROOT/patches/m-099-not-applied.patch ]] || true
+}
+cmd_build() {
+    [[ -f \$ROOT/patches/m-098-not-applied.patch ]] || true
+${extra}}
+EOF
+}
+base_cmd='    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
+        < "$ROOT/patches/m-036-bf-shf-rename.patch"
+    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
+        < "$ROOT/patches/m-051-hwinfo-connector-fallback.patch"
+'
+write_derive '' '9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee'
+write_cmd "$base_cmd"
+check 0 'RESULT: PASS_DOCS'
+
+write_cmd '    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
+        < "$ROOT/patches/m-036-bf-shf-rename.patch"
+'
+check 1 'missing=m-051-hwinfo-connector-fallback'
+write_cmd "$base_cmd"
+
+python3 - << 'PY'
+import json
+from pathlib import Path
+path = Path("docs/patches/system-kernel-matrix.json")
+data = json.loads(path.read_text())
+gentoo = next(row for row in data["current"] if row["system"] == "gentoo")
+for item in gentoo["m_base"]:
+    if item["id"] == "m-036-bf-shf-rename":
+        item["in_i12_builder"] = True
+path.write_text(json.dumps(data))
+PY
+check 1 'flag=m-036-bf-shf-rename'
+cp "$fixture/matrix.before" docs/patches/system-kernel-matrix.json
+
+python3 - << 'PY'
+import json
+from pathlib import Path
+path = Path("docs/patches/system-kernel-matrix.json")
+data = json.loads(path.read_text())
+debian = next(row for row in data["current"] if row["system"] == "debian")
+for item in debian["m_base"]:
+    if item["id"] == "i12-builder-through-m-035":
+        item["in_i12_builder"] = False
+path.write_text(json.dumps(data))
+PY
+check 1 'missing=i12-builder-through-m-035'
+cp "$fixture/matrix.before" docs/patches/system-kernel-matrix.json
+
+write_derive 'patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$1" -p1 \
+    < "$ROOT/patches/m-036-bf-shf-rename.patch"
+' '9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee'
+check 1 'debian 6.12.111+deb13-amd64 builder missing=- extra=- flag=m-036-bf-shf-rename'
+write_derive '' '9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee'
+
+python3 - << 'PY'
+import json
+from pathlib import Path
+path = Path("docs/patches/system-kernel-matrix.json")
+data = json.loads(path.read_text())
+gentoo = next(row for row in data["current"] if row["system"] == "gentoo")
+gentoo["g_set"] = ["g-001-not-built"]
+path.write_text(json.dumps(data))
+PY
+check 1 'extra=g-001-not-built'
+cp "$fixture/matrix.before" docs/patches/system-kernel-matrix.json
+
+write_derive '' ''
+check 1 'tree=missing'
+cp "$fixture/derive.before" tools/internal/derive-fantgpu-source.sh
+cp "$fixture/lib.before" tools/gentoo/fh2m-lib.sh
+
 printf 'check_docs_total=%s check_docs_failed=0\n' "$checks"
