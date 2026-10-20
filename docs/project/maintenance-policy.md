@@ -175,6 +175,7 @@
   [test-strategy](test-strategy.md)；这不证明所有 systemd 规范或 fantgpu 服务路径均已验收。
 - 历史 deb 可以带上 vendor 的 `sw-inno-gl.service` 与 `/usr/sbin/sw-inno-gl`。2026-10-19 裁定保留并默认屏蔽：
   maintainer scripts 不 enable、不 start。现行 F 包用 `locked-reference`，不把 `sw-fant-gl.service` 装进系统。
+  Gentoo overlay 不装这两个单元，与 Debian `locked-reference` 不装是同一结果。
   启停见 [architecture.md](architecture.md)。本裁定不补 `systemd` 依赖，也不补 release fixture。
 
 ## 实现与文档同步矩阵

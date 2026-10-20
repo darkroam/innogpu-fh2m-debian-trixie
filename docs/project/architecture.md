@@ -132,6 +132,7 @@ patch-029 为 DDCCI 回退模式恢复 panel GPIO callback；组合修复已通�
 
 2026-10-19 裁定：vendor 软件 GL 单元保留，默认屏蔽，maintainer scripts 不 `enable`、不 `start`。
 现行 F 包把 `sw-fant-gl.service` 和 `sw-fant-gl` 标成 `locked-reference`，不装进系统。
+Gentoo overlay 也不装这两个单元。本机没有这份服务，结果相同。
 历史包里的 `sw-inno-gl.service` 可以留在 `/lib/systemd/system/`，平时就是装而不启。
 只有救援（驱动升级失败，要进桌面修）或硬件 GL 故障兜底时才手动打开：
 

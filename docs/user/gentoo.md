@@ -90,6 +90,8 @@ Gentoo 与构建器共同 source `tools/internal/derive-fantgpu-source.sh`，再
 
 `001`–`006` 仍由 portage user-patches 打进内核源码。`fantgpu.ko` 不随内核包安装，要另编进该版本的 `extra/`。本包已经拥有 `extra/fantgpu.ko`，所以 `emerge @module-rebuild` 能列出它，不必再做 `MODULESD_*` 注册。genkernel 4.3.17 没有 `post.d`，内核装完后不会自动重编模块。ebuild 不 strip、不压缩、不签名。
 
+Debian 靠 `/etc/kernel/postinst.d/dkms` 在安装新内核包时自动重编已注册模块。这边没有这个钩子。
+
 重编写入当前 `KV_FULL` 的 `extra/`。两颗内核的 ko 不能对拷。不要改 GRUB。不要热卸载。
 
 ```
@@ -115,7 +117,10 @@ emerge 的回滚件在 `/var/lib/fantgpu/rollback/fantgpu.ko`，不放在 portag
 
 `emerge --unmerge x11-drivers/fantgpu-fh2m` 会删掉包里登记的文件。模块如果还在 `lsmod` 里，
 `pkg_prerm` 只警告：模块已加载，不要热卸载，先重启，再把这次卸载当成完成。`pkg_postrm` 跑
-`depmod` 和 `ldconfig`，不执行 `rmmod`。
+`depmod` 和 `ldconfig`，不执行 `rmmod`。登记的 `extra/fantgpu.ko` 随包删除。
+
+`/var/lib/fantgpu/rollback/fantgpu.ko` 不在包里，卸载不删。Debian 的 `postrm` 只跑 `ldconfig`，
+`/var/lib/dkms` 和 `updates/dkms` 残留留场。Debian 回滚卡是 `4.0.2-i3`；这边回滚只把保存的 ko 写回当前内核的 `extra/`，然后重启。
 
 手动入口没有卸载。它只做 check、build、install、verify、rollback。
 `rollback` 把保存的 ko 写回磁盘，然后重启，同样不热卸载。没有 portage 时，补丁拷贝用
@@ -139,6 +144,7 @@ emerge 的回滚件在 `/var/lib/fantgpu/rollback/fantgpu.ko`，不放在 portag
 
 - `g-037` 到 `g-050` 已按命名规范入库。入库不等于升格：仍标 g，字节不变，不进 i12 构建器。`g-050-fb-helper-alloc` 是 6.12 胶水，不是 6.18。
 - 不跑 PM，不改 GRUB。
+- overlay 不装 `sw-inno-gl` 或 `sw-fant-gl`。本机没有这两份服务，与 Debian 现行包 `locked-reference` 不装是同一结果。
 - initramfs 不必重建。模块和固件都在根文件系统挂载之后加载。
 - Xorg 用 21.1 即可。这台机器后来装了 mesa 26，glvnd 仍选 fh2m，因为
   `00_fh2m.json` 排在 mesa 前面，并且 `/etc/ld.so.conf.d/0-fantgpu-hwgl.conf`
@@ -189,7 +195,7 @@ tools/gentoo/check-kernel-patches.sh
 ```
 
 check 要同时看到 xHCI Hygon quirk、KaiTian 电池条目、`HYGO0030`、`1d94:14c9`、HDMI helper 提示和 `Vmap an array of PFNs` 才返回 0。
-005 没打进当前源码树时，这项检查是 `kernel_tree=NOT_APPLIED`。
+缺任一项时这项检查是 `kernel_tree=NOT_APPLIED`。2026-10-20 本机已是 `APPLIED`。
 003 是内建项（`CONFIG_PINCTRL_AMD=y`），源码重打后必须整核重编并重启才进正在运行的内核。
 004 是模块（`CONFIG_SND_HDA_INTEL=m`），可以只编译 `sound/pci/hda` 再热加载。
 触摸板还需要 `CONFIG_I2C_HID_ACPI=m` 和 `CONFIG_HID_MULTITOUCH=m`。

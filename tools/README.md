@@ -14,7 +14,7 @@
 | `check-source-parity.sh` | 只读 parity 检查 | 对照对象 `drivers/` 已不在主线。要比较时先检出 tag `innogpu-4x-frozen`；本脚本不修改旧构建器或设备 |
 | `build-linux-patched-modules.sh` | Linux 第三方补丁构建 | 从 `debs/` 复用或通过 APT 下载精确源码 `.deb`，临时展开并严格应用 001/002，针对已安装内核只构建 `xhci-pci.ko` 与 `battery.ko`；不安装、不重启 |
 | `tools/debian/install-kernel-patches.sh` | 受监督模块安装 | 校验构建证据，备份原始模块/initramfs，安装到 `updates/r51/` 并刷新 depmod/initramfs；不自动重启 |
-| `rollback-linux-patched-modules.sh` | 模块回退 | 删除 `updates/r51/` 覆盖模块并恢复安装前 initramfs；需要 root，不自动重启 |
+| `rollback-linux-patched-modules.sh` | 模块回退 | 删除 `updates/r51/` 覆盖模块并恢复安装前 initramfs；需要 root，不自动重启。本机 111 的 001/002 在 `updates/r52`，这个脚本清不到 |
 | `r51-battery-task3-verify.sh` | R51 安装后验收 | 核对已加载 battery/xHCI Build ID 与 `0x90` quirk，指引一轮拔电/插电并自动保存 sysfs/udev/journal 时间线；不触发 PM |
 | `r50-grub-task2-audit.sh` | R50 GRUB 只读排查 | 从普通用户自动 sudo，采集 UEFI 变量、ESP/主 GRUB 配置、菜单与加载链到 R50 证据根；不修改宿主 |
 | `r50-storage-task3.sh` | R50 大目录盘点与清理 | `--inventory` 只读分类、`--self-test` 复核 80 个目标/三区独立键/无重叠/重建来源；`--confirm` 强制普通用户在物理 TTY 对 `.runtime-archive/.build/build` 逐区确认并留回执；`--apply RECEIPT` 仅按回执绑定的精确清单先生成内容 SHA 再删除，并核对保留集 |
@@ -22,10 +22,10 @@
 | `r50-storage-task5.py` | R50 r5dpm 构建物清理 | 普通用户启动；`--inventory` 用 sudo 只读锁定 119 项 content/metadata SHA 与保留证据；`--confirm` 强制物理 TTY 精确短语回执且不删除；`--apply RECEIPT` 仅在候选、保留集、107/101 内核与 GRUB 无漂移时，先记逐文件 SHA 再删除精确目标 |
 | `cleanup-linux-module-worktree.sh` | 源码工作树清理 | 只删除本轮展开源码和构建树，保留 `debs/` 源码包、模块与日志 |
 | `prune-kernel-source-cache.sh` | 旧源码包清理 | 默认只列出无对应已安装内核的源码 `.deb`；显式 `--delete` 才删除，当前实现面向 Debian |
-| `tools/gentoo/build-driver.sh` | Gentoo 后备入口 | check/build/install/install-ko/verify/rollback。与构建器共同 source `tools/internal/derive-fantgpu-source.sh`，再打 `m-036-bf-shf-rename` 和 `m-051-hwinfo-connector-fallback`，不产 deb，不改构建器。`install-ko` 只换磁盘模块；换模块后重启，不热卸载。overlay 在 `tools/gentoo/overlay` |
+| `tools/gentoo/build-driver.sh` | Gentoo 后备入口 | check/build/install/install-ko/verify/rollback。与构建器共同 source `tools/internal/derive-fantgpu-source.sh`，再打 `m-036-bf-shf-rename` 和 `m-051-hwinfo-connector-fallback`，不产 deb，不改构建器。`install-ko` 只换磁盘模块；换模块后重启，不热卸载。目标内核是源码树的 `KV_FULL`，不是 `uname -r`。overlay 在 `tools/gentoo/overlay` |
 | `tools/gentoo/lid-external.sh` | 合盖外屏配置 | `--apply` / `--revert` 只处理与模板逐字节相同的 `90-lid-external.conf`。内容不同则失败，不覆盖 |
 | `tools/gentoo/install-kernel-patches.sh` | Gentoo 内核补丁后备 | 无 portage 时使用。与 ebuild 同一规则：SHA 相同跳过，SHA 不同失败且不覆盖。正常路径是 `emerge sys-kernel/fantgpu-kernel-patches` |
-| `tools/gentoo/check-kernel-patches.sh` | Gentoo 内核补丁核对 | 核对三处 SHA。默认再看 `/usr/src/linux` 是否已含 xHCI、电池、`HYGO0030` 与 `1d94:14c9`；`--files-only` 只核文件 |
+| `tools/gentoo/check-kernel-patches.sh` | Gentoo 内核补丁核对 | 核对三处 SHA。默认再看 `/usr/src/linux` 是否已含 xHCI、电池、`HYGO0030`、`1d94:14c9`、HDMI helper 提示与 `Vmap an array of PFNs`。缺 `extra/fantgpu.ko` 则 `module_file=MISSING` 并失败。`--files-only` 只核文件，不看模块 |
 | `tools/gentoo/r5-observe.sh` | Gentoo 一轮 deep 记录 | `before` 后由用户执行 `systemctl suspend`，唤醒后再 `after`。普通用户启动，脚本自行 sudo。不休眠，不写 `pm_test`。证据在 `.build/r57-r5-observe/`，`latest-run.txt` 指向本次 |
 | `tools/gentoo/r5-cycle.sh` | Gentoo 一轮 deep 自动唤醒 | 调用上面的 before/after，中间 `rtcwake -m mem`。秒数 20–180，默认 45。不写 `pm_test`。证据目录多一个 `cycle-*`，`latest-cycle.txt` 指向本次 |
 | `tools/debian/build-driver.sh` | **新架构当前构建器** | 默认 `4.0.2-i3`；R49 候选仅 `5.0.0-i12` + epoch `1790812800`：继承已审 i11，严格应用 `m-035-private-accessor` 私有对象 accessor 修复。编译/包内源共用最终派生树门 `9a8d185f2a65`；i1-i11/未知版本/错 epoch 拒绝，ABI 门保持。i12 A/B 与安装通过。运行验收首轮因外接输入未恢复失败停止，该轮不追认为 PASS；其后 R49 最终 3+1 与 Debian R52 驱动栈 PASS。R1 保持 fail。历史成绩不改 |

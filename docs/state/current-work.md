@@ -69,12 +69,12 @@ R27 早期八核窗口的 `FAILED_OR_UNVERIFIED` 原记录保留，不通过删�
 
 R57 已通过，与 INDEX 一致，不是待审查。现行加载是 i12 构建器树加构建器外的 `m-036-bf-shf-rename` 与 `m-051-hwinfo-connector-fallback`，srcversion `D579486A64C340B5178B66B`（2026-10-15 本机实读）。这不是 Debian 的 `370AB248D72951EF3C0C4BB`。`hwinfo_g0m.bin` 仍缺。温度行与 pll 行未出现，不是通过。
 
-本机 `6.12.111-gentoo` 曾用 i12 加构建器外的 `m-036-bf-shf-rename` 拉起。入口是
-[`gentoo-fh2m.sh`](../../tools/gentoo/fh2m-lib.sh)，portage 包装在
+本机 `6.12.111-gentoo` 曾用 i12 加构建器外的 `m-036-bf-shf-rename` 拉起。当时入口记为
+`gentoo-fh2m.sh`（现为 [`fh2m-lib.sh`](../../tools/gentoo/fh2m-lib.sh) 与 `tools/gentoo/build-driver.sh`），portage 包装在
 `tools/gentoo/overlay`。档案见 [Gentoo](../user/gentoo.md)。
 这不改 Debian 侧当前内核结论。`hwinfo_g0m.bin` 仍缺，不升格。
 `g-037` 到 `g-050` 已按命名规范入库。入库不等于升格：仍标 g，字节不变，不进 i12 构建器。`g-050-fb-helper-alloc` 是 6.12 胶水，不是 6.18。
-001–004 放在不按版本拆分的 portage user-patches，与 `components/linux` 同 SHA，并已按这组文件重打进 6.12.111 源码树。
+当时（2026-10-12）001–004 放在不按版本拆分的 portage user-patches，与 `components/linux` 同 SHA，并已按这组文件重打进 6.12.111 源码树。现行补丁包是 001–006。
 003 是内建 GPIO，004 是 6.12 板载声卡模块，不能套到 6.18。
 正在运行的内核里 `HYGO0030` 与 `1d94:14c9` 已绑定。
 2026-10-12 17:42 的启动 `65132a3d-a3ed-41f0-a609-fc41a17dd183` 已换上新 initramfs，两个 `1d94:148c` 的 quirks 都是 `0x90`，模块 `E549503D` 与 initramfs 一致。

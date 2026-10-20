@@ -145,7 +145,7 @@ R15 对 6 个启动 journal（2026-09-02 11:50 至 2026-09-03 16:13）做了逐�
 
 ## 风险与优化候选
 
-1. 构建环境依赖本机 `/lib/modules/$(uname -r)/build`（P2）：CI 无法跑完整 DKMS 构建，需
+1. Debian DKMS 构建依赖本机 `/lib/modules/$(uname -r)/build`（P2）。`uname -r` 只描述这条路径；Gentoo 目标内核是源码树的 `KV_FULL`，不是正在运行的内核。CI 无法跑完整 DKMS 构建，需
    linux-headers 预装。headers 缺失已有 fixture（`staging_kernel_headers=FAIL`），不实际编译。
 2. 设备节点/TTY/X 相关验证只能实机（P2）：测试体系需把 runtime 与 offline 分层隔离（见
    test-strategy.md）。
