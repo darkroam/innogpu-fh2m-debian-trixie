@@ -64,6 +64,7 @@ sudo dpkg -i .build/work/driver-build/fantgpu-fh2m-trixie_5.0.0-i12.deb
 
 构建用普通用户。安装脚本要求物理 TTY 和交流电在线，并且不重启。
 磁盘上若还有 `updates/r51`，先用当时安装留下的证据目录跑回滚，再安装。回滚现清 r51 与 r52 两槽。没有残留就直接安装。不要拿尚未安装的新构建目录去回滚。
+证据目录没有 `install-backup/` 时，脚本不会清槽。按升级与回滚节手工清两槽，再 `update-initramfs`。
 
 ```sh
 tools/debian/build-linux-patched-modules.sh --kernel-release "$(uname -r)"
@@ -111,4 +112,17 @@ Gentoo 没有这个钩子，要先把 `/usr/src/linux` 指到目标内核，再 
 `6.12.101+deb13-amd64` 和 `6.12.107+deb13-amd64` 保留，DKMS 里已有对应构建。
 回滚卡仍是安装节的 `4.0.2-i3`，现场只剩配置文件。
 Gentoo 回滚只把保存的那一份 ko 写回当前内核的 `extra/`，然后重启。
-`tools/debian/rollback-linux-patched-modules.sh` 删除 `updates/r51` 与 `updates/r52` 的 `battery.ko` 和 `xhci-pci.ko`。本轮未实机验证。
+`tools/debian/rollback-linux-patched-modules.sh` 删除 `updates/r51` 与 `updates/r52` 的 `battery.ko` 和 `xhci-pci.ko`，并恢复保存的 initramfs。本轮未实机验证。
+证据目录没有 `install-backup/` 时，脚本停在备份缺失，两槽 ko 还在。手工只删这两槽的 `battery.ko` 和 `xhci-pci.ko`，再 `depmod` 和 `update-initramfs`。这不是脚本回滚：没有保存的 initramfs 可恢复，只是让新 initramfs 不再打包这两槽。目录里还有别的文件就不要删。不要改 GRUB。本轮未实机验证。
+
+```sh
+KERNEL_RELEASE=<目标内核>
+sudo rm -f \
+  "/lib/modules/$KERNEL_RELEASE/updates/r51/battery.ko" \
+  "/lib/modules/$KERNEL_RELEASE/updates/r51/xhci-pci.ko" \
+  "/lib/modules/$KERNEL_RELEASE/updates/r52/battery.ko" \
+  "/lib/modules/$KERNEL_RELEASE/updates/r52/xhci-pci.ko"
+sudo rmdir "/lib/modules/$KERNEL_RELEASE/updates/r51" "/lib/modules/$KERNEL_RELEASE/updates/r52" || true
+sudo depmod -a "$KERNEL_RELEASE"
+sudo update-initramfs -u -k "$KERNEL_RELEASE"
+```

@@ -23,7 +23,7 @@ Enforced contract
 - INDEX data rows and round directories correspond one-to-one by round id
   using exact trimmed equality (R01 never matches R010); the row date and topic
   must equal the directory date and topic; status must be one of 待开发/开发中/
-  待审查/通过/返工/已提交/执行中.
+  待审查/通过/返工/已提交/执行中/挂起.
 - Every Markdown file (including collab/INDEX.md and hidden Markdown files
   that ordinary ignore-aware scans can skip) is checked case-insensitively
   against the shared pattern source tools/internal/private-data-patterns.txt.
@@ -38,7 +38,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
-VALID_STATUS = ("待开发", "开发中", "待审查", "通过", "返工", "已提交", "执行中")
+VALID_STATUS = ("待开发", "开发中", "待审查", "通过", "返工", "已提交", "执行中", "挂起")
 ROUND_RE = re.compile(r"R(\d+)-(\d{4}-\d{2}-\d{2})-(.+)")
 HEADER = ["轮次", "日期", "主题", "状态"]
 def _load_private_patterns():

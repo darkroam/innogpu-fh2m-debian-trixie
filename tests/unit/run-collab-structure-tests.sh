@@ -153,6 +153,12 @@ seed "$root"
 sed -i 's/待开发/已完成/' "$root/collab/INDEX.md"
 expect "invalid_status_rejected" "$root" 1 "状态不在白名单"
 
+# suspended is legal. Unfinished rounds stay on the same id.
+root="$WORK/t16b"
+seed "$root"
+sed -i 's/待开发/挂起/' "$root/collab/INDEX.md"
+expect "suspended_status_accepted" "$root" 0
+
 # t17: INDEX header is not 轮次/日期/主题/状态.
 root="$WORK/t17"
 seed "$root"
