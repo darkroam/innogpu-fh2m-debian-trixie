@@ -162,10 +162,12 @@
 ### 现有实例与已知例外
 
 - `install-hygon-hda-audio.sh` 是本机安装器，系统 unit 位于 `/etc/systemd/system/`，用户 unit 位于
-  `~/.config/systemd/user/`，符合 local/admin 所有权；其用户 helper 历史上安装到
-  `~/.local/bin/hygon-hda-audio-user-apply`。该路径是现有兼容接口，新服务不得照抄；若迁移到
-  `~/.local/lib/<项目>/`，必须同步 unit、卸载清单和回退步骤。当前实现没有对所有被覆盖路径做备份，
-  未运行 `systemd-analyze verify`，且用户服务管理失败被忽略；它只满足目录所有权部分，不是完整合规示例。
+  `~/.config/systemd/user/`，符合 local/admin 所有权；其用户 helper 仍在
+  `~/.local/bin/hygon-hda-audio-user-apply`。该路径是现有兼容接口，新服务不得照抄。覆盖前备份不同内容；
+  备份失败不写。启用前跑 `systemd-analyze verify`（有用户会话时用户单元用 `--user verify`，没有会话时只核
+  对单元文件）。用户会话不在则 SKIP，不把缺会话当成安装失败；会话在且 daemon-reload/enable/restart 失败则
+  回滚本次写入并退出非 0。`--uninstall` 先停用户单元再停系统单元，只删除本安装器文件，不恢复备份，也不把
+  profile / PipeWire 改名撤回去。
 - `install-dri-node-repair-service.sh` 曾存在 fallback helper 与 unit 路径不一致、启动失败被忽略、
   卸载遗留链接三项缺陷。现实现按包内 `/usr/sbin/` 或源码 fallback `/usr/local/sbin/` 选择
   helper，`ExecStart=$helper`，enable/start 失败退出并回滚；`uninstall-innogpu.sh` 只移除确属

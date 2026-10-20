@@ -186,7 +186,7 @@ patched-21 已完成当前设备的构建、包边界、部署、重启和运行
 sudo tools/debian/install-hygon-hda-audio.sh
 ```
 
-需要测试音时使用 `sudo tools/debian/install-hygon-hda-audio.sh --test-sound`。音频恢复不要求重装
+需要测试音时使用 `sudo tools/debian/install-hygon-hda-audio.sh --test-sound`。撤销用同一脚本的 `--uninstall`。音频恢复不要求重装
 Innogpu DKMS。
 
 ## 可选 Picom

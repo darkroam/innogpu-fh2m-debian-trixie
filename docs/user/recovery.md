@@ -114,6 +114,6 @@ XDISPLAY_RESTORE_COMMAND=innogpu-restore-dp1-mode-x11
 sudo tools/debian/install-hygon-hda-audio.sh
 ```
 
-该操作不需要重装显卡 DKMS，但它是重应用持久化配置，不是卸载或恢复安装前文件。需要撤销该音频
-接入时先阅读 [`audio-management.md`](../project/audio-management.md) 的文件清单和人工回退边界；
-当前没有自动音频卸载器。
+该操作不需要重装显卡 DKMS，但它是重应用持久化配置，不是恢复安装前文件。撤销用
+`sudo tools/debian/install-hygon-hda-audio.sh --uninstall`。它只删除本安装器的文件，不自动恢复
+`.bak-hygon-hda-*`。边界见 [`audio-management.md`](../project/audio-management.md)。

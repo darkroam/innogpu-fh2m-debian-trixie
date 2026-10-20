@@ -103,7 +103,7 @@ R57 已通过，与 INDEX 一致，不是待审查。现行加载是 i12 构建�
 
 - [ ] 为每次新候选包建立独立的 `docs/patches/` 说明和 `docs/incidents/` 验收记录。
 - [ ] 将长期维护所需的脚本参数逐步收敛为可审查的配置，入口保持为 `tools/<name>`。
-- [ ] 补齐音频安装器的写入冲突/备份保护、`systemd-analyze verify`、对称卸载与 fixture，并明确用户服务管理失败策略。
+- [x] 补齐音频安装器的写入冲突/备份保护、`systemd-analyze verify`、对称卸载与 fixture，并明确用户服务管理失败策略（2026-10-20）。冲突文件先备份，备份失败不覆盖；无用户会话则用户服务 SKIP，会话在且管理失败则整次回滚。`--uninstall` 不自动恢复备份。
 - [x] 最小化 Debian 构建器前置依赖（2026-10-19）：`tools/debian/build-driver.sh` 在编译前核对直接调用的命令，
   缺则 `builder_prereq=FAIL`。`install-prereqs-debian.sh` 仍不单独安装 `python3`；它退出 0 不等于工具链齐。
 - [x] vendor `sw-inno-gl` / `sw-fant-gl` 生命周期（2026-10-19）：保留并屏蔽。装而不启；maintainer 不 enable、不 start。

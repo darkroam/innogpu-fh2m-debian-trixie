@@ -127,6 +127,7 @@ bash tests/unit/run-vaapi-decode-tests.sh
 bash tests/unit/run-dmabuf-regression-tests.sh
 bash tests/unit/run-drm-topology-tests.sh
 bash tests/unit/run-dri-repair-tests.sh
+bash tests/unit/run-hygon-hda-audio-tests.sh
 bash tests/unit/run-collab-structure-tests.sh
 bash tests/unit/run-check-docs-tests.sh
 bash tests/unit/run-suspend-resume-tests.sh
@@ -154,6 +155,7 @@ bash tests/unit/run-hygon-xhci-resume-fix-tests.sh
 ```
 
 - O 线 `run-manifest-tests.sh` / `run-extractor-tests.sh` 已随 `binary-manifest.json` 从主线删除。F 线清单测试仍是 `run-validate-fantgpu-manifest-tests.sh`。
+- Hygon HDA 安装器 fixture（无 root、无 systemd）：`run-hygon-hda-audio-tests.sh` 覆盖冲突备份、verify 先于 enable、备份/校验/用户 enable 失败回滚、无会话 SKIP、`--uninstall` 与外来文件拒绝。
 - suspend/resume 静态测试把跟踪的 HAL/PCI/PVR/DVFS/显示相关源码复制到 `/tmp`，验证
   patch-024/patch-025-display/patch-026-lifecycle/patch-028-temp-monitor/patch-029-ddcci-panel dry-run/应用、025 三行上下文、PowerLock 门禁顺序、
   post-atomic 重复光标恢复移除、单文件范围、`4.0.1-i3`/`4.0.1-i4` 同 epoch 与旧迭代失败关闭、

@@ -44,7 +44,7 @@
 | `prepare-soft-xorg-dwm.sh` | 修改 Xorg/会话 | 准备软件 Xorg；若 dotconfig xdisplay 已存在则接入，否则保留软件路径并警告 |
 | `repair-dri-nodes.sh` | 修改 `/dev` 节点 | 根据 sysfs 设备号临时恢复缺失的 DRM/fbdev 节点 |
 | `install-dri-node-repair-service.sh` | 安装系统服务 | 固化 DRM/fbdev 节点权限恢复；helper 仅从受信来源解析（包 `/usr/sbin`→源码 fallback `/usr/local/sbin`，任意 PATH 命中被拒绝），unit `ExecStart` 始终指向实际安装的 helper；`/usr/bin` 为**可选**便利链接（创建失败仅告警不阻断）；`enable/start` 失败传播并统一事务回滚（含恢复既有 unit 字节/权限与 systemd enable 状态）。测试钩子 `INNOGPU_DRI_TEST_ROOT`（默认关闭）供 fixture 无 root 验证 |
-| `install-hygon-hda-audio.sh` | 安装系统/用户服务 | 固化本机 HDA 和 PipeWire 恢复；创建系统/用户 unit、helper、modules-load 与 ALSA 配置并可能改写 profile/PipeWire 旧配置；仅部分文件有条件性备份，当前无 systemd-analyze 门禁、对称自动卸载器或 fixture，人工回退边界见 `docs/project/audio-management.md` |
+| `install-hygon-hda-audio.sh` | 安装系统/用户服务 | 固化本机 HDA 和 PipeWire 恢复。覆盖前先把不同内容备份为 `.bak-hygon-hda-*`，备份失败不写。`systemd-analyze verify` 通过后才 enable。无用户会话则用户服务 SKIP；会话在且用户服务管理失败则本次安装回滚。`--uninstall` 只删除本安装器的文件，不恢复备份。fixture：`tests/unit/run-hygon-hda-audio-tests.sh` |
 
 ## Picom 接入
 

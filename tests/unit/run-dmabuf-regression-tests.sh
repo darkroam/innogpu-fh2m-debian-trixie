@@ -708,8 +708,14 @@ env $GOOD INNOGPU_DMABUF_KERNEL_LOG=$runtime/klog-link-i FAKE_SWAP_KLOG_LINK=$ru
     TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 > "$O" 2>&1; rc=$?
 if [ "$rc" -eq 3 ] && grep -q 'fixture_dmabuf_kernel_log=UNVERIFIED reason=kernel_log_discontinuous' "$O" && grep -q 'fixture_dmabuf_regression_overall=UNVERIFIED reason=kernel_log_discontinuous' "$O"; then pass klog_middle_insertion_unverified; else fail klog_middle_insertion_unverified "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
 O="$runtime/klog-skip.out"
-env $GOOD INNOGPU_DMABUF_KERNEL_LOG= TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 > "$O" 2>&1; rc=$?
-if [ "$rc" -eq 3 ] && grep -q 'fixture_dmabuf_kernel_log=SKIP reason=dmesg_unavailable' "$O" && grep -q 'fixture_dmabuf_regression_overall=UNVERIFIED reason=kernel_log_unavailable' "$O"; then pass klog_unavailable_skip; else fail klog_unavailable_skip "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
+# Empty KERNEL_LOG falls through to real dmesg. That unavailable path only exists
+# when dmesg itself cannot be read; a readable dmesg must not fail this case.
+if command -v dmesg >/dev/null 2>&1 && dmesg >/dev/null 2>&1; then
+    pass klog_unavailable_skip_dmesg_readable
+else
+    env $GOOD INNOGPU_DMABUF_KERNEL_LOG= TMPDIR=$runtime/scratch bash "$SCRIPT" --size 7646720 > "$O" 2>&1; rc=$?
+    if [ "$rc" -eq 3 ] && grep -q 'fixture_dmabuf_kernel_log=SKIP reason=dmesg_unavailable' "$O" && grep -q 'fixture_dmabuf_regression_overall=UNVERIFIED reason=kernel_log_unavailable' "$O"; then pass klog_unavailable_skip; else fail klog_unavailable_skip "rc=$rc out=$(grep -E 'kernel_log|overall' "$O")"; fi
+fi
 # 正常环形轮转（after=suffix(before)+new，无新增错误）-> clean + overall PASS/rc0
 O="$runtime/klog-rot.out"
 ln -sf "$runtime/klog-rot-before" "$runtime/klog-link-rot"

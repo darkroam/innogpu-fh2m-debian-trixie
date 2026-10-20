@@ -357,6 +357,7 @@ tests/unit/run-fantgpu-runtime-health-tests.sh
 tests/unit/run-fbdev-mmap-tests.sh
 tests/unit/run-gen-fantgpu-manifest-tests.sh
 tests/unit/run-gen-package-md5sums-tests.sh
+tests/unit/run-hygon-hda-audio-tests.sh
 tests/unit/run-hygon-xhci-resume-fix-tests.sh
 tests/unit/run-license-audit-tests.sh
 tests/unit/run-m-031-pm-marker-tests.sh

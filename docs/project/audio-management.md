@@ -22,11 +22,9 @@ Debian 内核包含 `snd_hda_intel`，但其 PCI alias 不自动匹配 `1d94:14c
 ~/.asoundrc -> ~/.config/alsa/asoundrc
 ```
 
-若对应文件原已存在，安装器还会按时间戳保留 `asoundrc.bak-*`、`.profile.bak-hygon-hda-*` 或
-`.zprofile.bak-hygon-hda-*`；检测到旧 `~/.config/pipewire/pipewire.conf` 启动覆盖时会改名为
-`pipewire.conf.disabled-*`。这些是条件性回退副本，不是第二套活动配置。备份范围并不覆盖全部写入：
-系统 unit、modules-load 文件、用户 helper/unit 与 `~/.asoundrc` 当前会被直接创建或替换，安装器不会
-为它们保留原文件；执行前必须由操作者另行确认这些路径没有需要保留的本机配置。
+若对应文件已存在且内容不同，安装器先 `cp -a` 到同目录的 `.bak-hygon-hda-<时间戳>`。
+备份失败则不覆盖并退出。内容相同则不另做备份。profile 里那条全局 `ALSA_CONFIG_PATH` 仍是先备份再注释；
+旧 `pipewire.conf` 启动覆盖仍改名为 `pipewire.conf.disabled-*`。这些副本不是第二套活动配置。
 
 系统服务在启动时加载并绑定 HDA。用户服务在 PipeWire/WirePlumber 启动后设置 HDA Intel 为默认
 sink、取消静音并恢复 mixer，避免 WirePlumber route 恢复把 Speaker 重新关闭。
@@ -52,16 +50,16 @@ ALSA_CONFIG_PATH="$XDG_CONFIG_HOME/alsa/asoundrc"
 当前状态不能只看 mixer。必须同时确认 PCI 驱动、ALSA 设备、Speaker switch、PipeWire sink 和
 WirePlumber 默认节点。完整命令见 `../user/verification.md`。
 
-## 回退与卸载边界
+## 回退与卸载
 
-当前仓库只有安装/重应用入口，没有与 `install-hygon-hda-audio.sh` 对称的自动卸载器。安装器会创建
-系统 unit、用户 unit、helper、modules-load 配置和 ALSA 配置，还可能修改 profile 并重命名旧
-PipeWire 配置；因此不能把“再次运行安装器”描述为卸载或完整回退。
+`sudo tools/debian/install-hygon-hda-audio.sh --uninstall` 先停用用户单元（有会话时），再停用系统单元，
+然后删除 unit、modules-load、helper、指向本 ALSA 配置的 `~/.asoundrc`，以及带本安装器标记的 ALSA 配置。
+随后 `daemon-reload`。它不恢复 `.bak-hygon-hda-*`，也不把 profile 注释或 `pipewire.conf.disabled-*` 改回去。
+外来内容占着这些路径时卸载直接失败，不先删别的文件。
 
-需要撤销时必须先核对目标用户和时间戳备份，再分别停用系统/用户 unit，删除安装器创建的活动文件、
-执行对应的 `daemon-reload`，并按需恢复 `asoundrc.bak-*`、`.profile.bak-hygon-hda-*`、
-`.zprofile.bak-hygon-hda-*` 和 `pipewire.conf.disabled-*`。在独立卸载脚本及 fixture 测试落地前，
-该流程属于人工维护项；不要无条件选择“最新备份”覆盖现有配置，也不要假定没有备份的
-`~/.asoundrc`、unit、helper 或 modules-load 原内容能够由安装器恢复。当前安装器也没有在写入后运行
-`systemd-analyze verify`；服务成功 restart 只能证明当前 systemd 接受并启动了系统 unit，用户 unit
-的 daemon-reload/enable/restart 失败则会被降级忽略，仍需在目标用户会话中单独验证。
+启用前会跑 `systemd-analyze verify`。有用户会话时，用户单元是 `systemd-analyze --user verify`；没有会话时
+只核对单元文件。没有用户会话不是失败：`hygon_hda_user_service=SKIP reason=no_session`，文件仍装上。
+会话在时，用户单元的 daemon-reload、enable、restart 失败会回滚这一次安装并退出非 0。
+PipeWire 重启和 mixer 仍是尽力而为，不代表用户单元已经成功。
+
+不要把“再跑一次安装”当成卸载。要回到安装前的配置，自己核对时间戳备份再拷回去，不要无条件用最新备份覆盖。
