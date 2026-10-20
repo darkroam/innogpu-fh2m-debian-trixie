@@ -63,6 +63,7 @@ sudo dpkg -i .build/work/driver-build/fantgpu-fh2m-trixie_5.0.0-i12.deb
 002 是机型专用 workaround，不能直接套到别的内核版本。
 
 构建用普通用户。安装脚本要求物理 TTY 和交流电在线，并且不重启。
+磁盘上若还有 `updates/r51`，先用当时安装留下的证据目录跑回滚，再安装。回滚现清 r51 与 r52 两槽。没有残留就直接安装。不要拿尚未安装的新构建目录去回滚。
 
 ```sh
 tools/debian/build-linux-patched-modules.sh --kernel-release "$(uname -r)"

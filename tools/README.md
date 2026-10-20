@@ -15,7 +15,7 @@
 | `build-linux-patched-modules.sh` | Linux 第三方补丁构建 | 从 `debs/` 复用或通过 APT 下载精确源码 `.deb`，临时展开并严格应用 001/002，针对已安装内核只构建 `xhci-pci.ko` 与 `battery.ko`；不安装、不重启 |
 | `tools/debian/install-kernel-patches.sh` | 受监督模块安装 | 校验构建证据，备份原始模块/initramfs，安装到 `updates/r52/` 并刷新 depmod/initramfs；不删除残留的 `updates/r51/`；不自动重启。本轮未实机验证 |
 | `rollback-linux-patched-modules.sh` | 模块回退 | 删除 `updates/r51/` 与 `updates/r52/` 的覆盖模块并恢复安装前 initramfs；需要 root，不自动重启。本轮未实机验证 |
-| `r51-battery-task3-verify.sh` | R51 安装后验收 | 核对已加载 battery/xHCI Build ID 与 `0x90` quirk，指引一轮拔电/插电并自动保存 sysfs/udev/journal 时间线；不触发 PM |
+| `r51-battery-task3-verify.sh` | R51 轮次工具 | 非现行 r52 验收入口。核对当时已加载的 battery/xHCI Build ID 与 `0x90` quirk，指引一轮拔电/插电并保存时间线。将来需要 r52 验收入口时新建或参数化，不改本脚本；不触发 PM |
 | `r50-grub-task2-audit.sh` | R50 GRUB 只读排查 | 从普通用户自动 sudo，采集 UEFI 变量、ESP/主 GRUB 配置、菜单与加载链到 R50 证据根；不修改宿主 |
 | `r50-storage-task3.sh` | R50 大目录盘点与清理 | `--inventory` 只读分类、`--self-test` 复核 80 个目标/三区独立键/无重叠/重建来源；`--confirm` 强制普通用户在物理 TTY 对 `.runtime-archive/.build/build` 逐区确认并留回执；`--apply RECEIPT` 仅按回执绑定的精确清单先生成内容 SHA 再删除，并核对保留集 |
 | `r50-storage-task4.py` | R50 `build/` 迁移 | 普通用户启动；`--confirm` 在物理 TTY 用 sudo 只读生成 45 项 content/metadata SHA 并绑定回执，不移动；`--apply RECEIPT` 由受限 sudo 子模式逐项复核并同盘 rename，可在验证已完成项后续跑，拒绝覆盖、双份、缺失和漂移；`--self-test` 验证 rename 身份与 moved/already-moved 语义 |

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# R51 round tool, not the current r52 acceptance entry.
+# A later r52 entry must be a new script or a parameter; do not retarget this one.
 # Verify the installed R51 battery/xHCI modules with one AC unplug/replug cycle.
 set -u -o pipefail
 umask 022
