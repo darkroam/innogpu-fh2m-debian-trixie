@@ -392,8 +392,6 @@ linux_by_system = {
     "debian": (
         "001-hygon-148c-xhci-reset-on-resume",
         "002-kaitian-x7h-battery-notification-delay",
-        "003-pinctrl-amd-hygon-gpio",
-        "004-snd-hda-hygon-14c9",
     ),
     "gentoo": (
         "001-hygon-148c-xhci-reset-on-resume",

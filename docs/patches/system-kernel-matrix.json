@@ -34,18 +34,9 @@
           "state": "applied",
           "sha256": "d7d6740eaab078eeaa40d87306c4d77fc61436f50ef31061416f0d1689899e1a",
           "note": "机型 workaround。换内核版本必须重适配，不得直接套用。"
-        },
-        "003-pinctrl-amd-hygon-gpio": {
-          "state": "not-in-install-path",
-          "sha256": "2f6676f38175a709bb71488de5caa7e8490bf75e17d3a4e21c2b0f4b286ced0e",
-          "note": "内建。Debian 安装脚本不编它。"
-        },
-        "004-snd-hda-hygon-14c9": {
-          "state": "not-in-install-path",
-          "sha256": "08dc3079d5b6d8d698afe321b957ae17ec410f269ab379ab1673c67e1891a229",
-          "note": "只对 6.12 的 snd-hda-intel。不能套 6.18。Debian 安装脚本不编它。"
         }
       },
+      "note": "001/002 已装在 updates/r52。003/004 未实装且实测不必要（触摸板 HYGO0010 正常、板载声卡 SN6180 出声正常）；005/006 不适用（符号已=y）。不补装。",
       "install": [
         "tools/debian/build-driver.sh",
         "tools/debian/build-linux-patched-modules.sh",
