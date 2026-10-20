@@ -53,10 +53,10 @@ sudo dpkg -i .build/work/driver-build/fantgpu-fh2m-trixie_5.0.0-i12.deb
 ## 内核补丁
 
 `tools/debian/build-linux-patched-modules.sh` 和 `tools/debian/install-kernel-patches.sh` 现在只处理
-`components/linux` 的 001 和 002，产物是 `xhci-pci.ko` 与 `battery.ko`，装到 `updates/r51`。
+`components/linux` 的 001 和 002，产物是 `xhci-pci.ko` 与 `battery.ko`，装到 `updates/r52`。安装不删除残留的 `updates/r51`。
 003 是内建 `pinctrl-amd`，004 是 `snd-hda-intel` 模块。这两个脚本不编译、不安装 003/004。
 005 只给 `CONFIG_DRM_DISPLAY_HDMI_HELPER` 加菜单提示，006 只给 `CONFIG_VMAP_PFN` 加菜单提示。都要打进内核源码后整核重编。这两个脚本也不处理 005 和 006。
-2026-10-20 实测：111 上的 001/002 在 `updates/r52`，脚本下次仍写入 `updates/r51`。
+2026-10-20 实测：111 上的 001/002 在 `updates/r52`。脚本现写入 `updates/r52`。本轮未实机验证。
 003 未装，触摸板走 HYGO0010，正常。004 未装，板载 SN6180（`1d94:14c9`）没有 quirk 也能出声。
 005/006 的符号在发行版 config 里已经是 y，提示补丁不适用。不补装。
 001/002 的基线是 Debian `linux-source-6.12` `6.12.107-1`。换内核必须重打、重编，禁止复用另一内核的模块。
@@ -110,4 +110,4 @@ Gentoo 没有这个钩子，要先把 `/usr/src/linux` 指到目标内核，再 
 `6.12.101+deb13-amd64` 和 `6.12.107+deb13-amd64` 保留，DKMS 里已有对应构建。
 回滚卡仍是安装节的 `4.0.2-i3`，现场只剩配置文件。
 Gentoo 回滚只把保存的那一份 ko 写回当前内核的 `extra/`，然后重启。
-`tools/debian/rollback-linux-patched-modules.sh` 只删 `updates/r51`。本机正在用的是 `updates/r52`，这个脚本清不到它。
+`tools/debian/rollback-linux-patched-modules.sh` 删除 `updates/r51` 与 `updates/r52` 的 `battery.ko` 和 `xhci-pci.ko`。本轮未实机验证。

@@ -13,9 +13,11 @@ usage() {
     cat <<'EOF'
 Usage: tools/debian/install-kernel-patches.sh --evidence DIR [--preflight]
 
-Installs battery.ko and xhci-pci.ko into updates/r51 for the exact kernel
+Installs battery.ko and xhci-pci.ko into updates/r52 for the exact kernel
 recorded by the build evidence. It backs up the original modules and initramfs,
 refreshes depmod/initramfs, and never reboots.
+It does not delete a leftover updates/r51. If depmod still selects that
+leftover, installation fails and rolls back r52. Rollback removes both slots.
 With --preflight it performs all read-only admission checks and stops.
 EOF
 }
@@ -73,10 +75,10 @@ for supply in /sys/class/power_supply/*; do
 done
 ((AC_ONLINE)) || die "trusted AC power is not online"
 
-TARGET="$MODULE_ROOT/updates/r51"
+TARGET="$MODULE_ROOT/updates/r52"
 BACKUP="$EVIDENCE_ROOT/install-backup"
 [[ ! -e "$TARGET/battery.ko" && ! -e "$TARGET/xhci-pci.ko" ]] || \
-    die "r51 override already exists; refuse to overwrite"
+    die "r52 override already exists; refuse to overwrite"
 
 {
     printf 'preflight=PASS\n'
@@ -158,17 +160,17 @@ else
 fi
 depmod -a "$KERNEL_RELEASE"
 [[ $(modinfo -k "$KERNEL_RELEASE" -n battery) == "$TARGET/battery.ko" ]] || \
-    die "depmod did not select r51 battery module"
+    die "depmod did not select r52 battery module"
 [[ $(modinfo -k "$KERNEL_RELEASE" -n xhci_pci) == "$TARGET/xhci-pci.ko" ]] || \
-    die "depmod did not select r51 xHCI module"
+    die "depmod did not select r52 xHCI module"
 update-initramfs -u -k "$KERNEL_RELEASE"
 lsinitramfs "/boot/initrd.img-$KERNEL_RELEASE" >"$EVIDENCE_ROOT/initramfs.list"
-grep -Fqx "usr/lib/modules/$KERNEL_RELEASE/updates/r51/battery.ko" \
+grep -Fqx "usr/lib/modules/$KERNEL_RELEASE/updates/r52/battery.ko" \
     "$EVIDENCE_ROOT/initramfs.list" || \
-    die "r51 battery module missing from initramfs"
-grep -Fqx "usr/lib/modules/$KERNEL_RELEASE/updates/r51/xhci-pci.ko" \
+    die "r52 battery module missing from initramfs"
+grep -Fqx "usr/lib/modules/$KERNEL_RELEASE/updates/r52/xhci-pci.ko" \
     "$EVIDENCE_ROOT/initramfs.list" || \
-    die "r51 xHCI module missing from initramfs"
+    die "r52 xHCI module missing from initramfs"
 
 [[ $(sha256sum /etc/default/grub | awk '{print $1}') == "$GRUB_DEFAULT_BEFORE" ]] || \
     die "/etc/default/grub changed unexpectedly"

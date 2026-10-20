@@ -13,8 +13,8 @@
 | `check-deb-dkms-build.sh` | 离线编译检查 | 将指定候选 deb 解包到 `/tmp`，针对指定内核 headers 编译 `innogpu.ko` 并校验 vermagic；不注册或安装 DKMS |
 | `check-source-parity.sh` | 只读 parity 检查 | 对照对象 `drivers/` 已不在主线。要比较时先检出 tag `innogpu-4x-frozen`；本脚本不修改旧构建器或设备 |
 | `build-linux-patched-modules.sh` | Linux 第三方补丁构建 | 从 `debs/` 复用或通过 APT 下载精确源码 `.deb`，临时展开并严格应用 001/002，针对已安装内核只构建 `xhci-pci.ko` 与 `battery.ko`；不安装、不重启 |
-| `tools/debian/install-kernel-patches.sh` | 受监督模块安装 | 校验构建证据，备份原始模块/initramfs，安装到 `updates/r51/` 并刷新 depmod/initramfs；不自动重启 |
-| `rollback-linux-patched-modules.sh` | 模块回退 | 删除 `updates/r51/` 覆盖模块并恢复安装前 initramfs；需要 root，不自动重启。本机 111 的 001/002 在 `updates/r52`，这个脚本清不到 |
+| `tools/debian/install-kernel-patches.sh` | 受监督模块安装 | 校验构建证据，备份原始模块/initramfs，安装到 `updates/r52/` 并刷新 depmod/initramfs；不删除残留的 `updates/r51/`；不自动重启。本轮未实机验证 |
+| `rollback-linux-patched-modules.sh` | 模块回退 | 删除 `updates/r51/` 与 `updates/r52/` 的覆盖模块并恢复安装前 initramfs；需要 root，不自动重启。本轮未实机验证 |
 | `r51-battery-task3-verify.sh` | R51 安装后验收 | 核对已加载 battery/xHCI Build ID 与 `0x90` quirk，指引一轮拔电/插电并自动保存 sysfs/udev/journal 时间线；不触发 PM |
 | `r50-grub-task2-audit.sh` | R50 GRUB 只读排查 | 从普通用户自动 sudo，采集 UEFI 变量、ESP/主 GRUB 配置、菜单与加载链到 R50 证据根；不修改宿主 |
 | `r50-storage-task3.sh` | R50 大目录盘点与清理 | `--inventory` 只读分类、`--self-test` 复核 80 个目标/三区独立键/无重叠/重建来源；`--confirm` 强制普通用户在物理 TTY 对 `.runtime-archive/.build/build` 逐区确认并留回执；`--apply RECEIPT` 仅按回执绑定的精确清单先生成内容 SHA 再删除，并核对保留集 |
