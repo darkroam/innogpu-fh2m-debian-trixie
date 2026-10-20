@@ -551,6 +551,8 @@ def check_gentoo_builder(row):
             applied.append(ident)
     applied_m = [ident for ident in applied if not str(ident).startswith("g-")]
     cmd_g = [ident for ident in cmd_applied if str(ident).startswith("g-")]
+    if SYNTHETIC in true and DERIVE_PATCH not in derive_applied:
+        missing.append(DERIVE_PATCH)
     accounted = []
     if SYNTHETIC in true and DERIVE_PATCH in derive_applied:
         accounted.append(DERIVE_PATCH)

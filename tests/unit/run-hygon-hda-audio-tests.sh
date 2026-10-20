@@ -20,6 +20,10 @@ if [[ "${FAKE_SYSTEMCTL_USER_FAIL:-0}" == 1 && "$1" == "--user" && "$2" == "enab
     echo "fake: user enable failed" >&2
     exit 1
 fi
+if [[ "${FAKE_SYSTEMCTL_USER_RESTART_FAIL:-0}" == 1 && "$1" == "--user" && "$2" == "restart" ]]; then
+    echo "fake: user restart failed" >&2
+    exit 1
+fi
 exit 0
 END_SYSTEMCTL
 cat > "$T/bin/systemd-analyze" << 'END_ANALYZE'
@@ -157,6 +161,21 @@ else
         ok user_fail_rolls_back
     else
         bad user_fail_rolls_back "log=$(cat "$LOG") err=$(cat "$U/err") out=$(cat "$U/out")"
+    fi
+fi
+
+S="$T/userrestart"
+fresh "$S"
+if FAKE_SYSTEMCTL_USER_RESTART_FAIL=1 INNOGPU_HDA_ASSUME_USER_BUS=1 run_install "$S" >"$S/out" 2>"$S/err"; then
+    bad user_restart_fail "rc=0"
+else
+    if [[ ! -e "$S/etc/systemd/system/hygon-hda-audio.service" ]] \
+        && [[ ! -e "$S/hda-user/.config/systemd/user/hygon-hda-audio-user.service" ]] \
+        && grep -q -- '--user disable' "$LOG" \
+        && ! grep -q 'hygon_hda_user_service=PASS' "$S/out"; then
+        ok user_restart_fail_rolls_back
+    else
+        bad user_restart_fail_rolls_back "log=$(cat "$LOG") err=$(cat "$S/err") out=$(cat "$S/out")"
     fi
 fi
 

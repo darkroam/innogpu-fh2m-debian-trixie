@@ -191,6 +191,24 @@ cp "$fixture/matrix.before" docs/patches/system-kernel-matrix.json
 
 write_derive '' ''
 check 1 'tree=missing'
+
+write_derive '' '9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee'
+g_cmd="$base_cmd"'    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
+        < "$ROOT/patches/g-037-module-import-ns.patch"
+'
+write_cmd "$g_cmd"
+python3 -c 'import json; from pathlib import Path; p=Path("docs/patches/system-kernel-matrix.json"); d=json.loads(p.read_text()); g=next(r for r in d["current"] if r["system"]=="gentoo"); g["g_set"]=["g-037-module-import-ns"]; p.write_text(json.dumps(d))'
+check 0 'RESULT: PASS_DOCS'
+cp "$fixture/matrix.before" docs/patches/system-kernel-matrix.json
+write_cmd "$base_cmd"
+python3 -c 'import json; from pathlib import Path; p=Path("docs/patches/system-kernel-matrix.json"); d=json.loads(p.read_text()); row=next(r for r in d["current"] if r["system"]=="debian"); row["install"]=[i for i in row["install"] if i!="tools/debian/build-driver.sh"]; p.write_text(json.dumps(d))'
+printf '%s\n' 'need_repo() { [[ -f $ROOT/patches/m-099-not-applied.patch ]] || true; }' 'expected = "9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee"' > tools/internal/derive-fantgpu-source.sh
+check 1 'gentoo 6.12.111-gentoo-x86_64 builder missing=m-035-private-accessor'
+if grep -q 'debian 6.12.111+deb13-amd64 builder' "$fixture/check.log"; then
+    echo "gentoo assertion still depended on the debian builder check" >&2
+    exit 1
+fi
+cp "$fixture/matrix.before" docs/patches/system-kernel-matrix.json
 cp "$fixture/derive.before" tools/internal/derive-fantgpu-source.sh
 cp "$fixture/lib.before" tools/gentoo/fh2m-lib.sh
 
