@@ -84,6 +84,26 @@ sudo tools/gentoo/verify.sh
 构建器 `tools/debian/build-driver.sh` 仍只产 Debian deb，并且停在 `m-035-private-accessor`。
 Gentoo 与构建器共同 source `tools/internal/derive-fantgpu-source.sh`，再打 `m-036-bf-shf-rename` 和 `m-051-hwinfo-connector-fallback`。不改构建器。
 
+## 升级内核
+
+目标内核是 `/usr/src/linux`（或 `KERNEL_DIR`）指向的源码，不是正在运行的内核。多内核先 `eselect kernel`。版本用这份树的 `include/config/kernel.release`，也就是 `linux-info` 的 `KV_FULL`（含 localversion）。`/lib/modules/<KV_FULL>/build` 不存在就停，不退回正在运行的内核。
+
+`001`–`006` 仍由 portage user-patches 打进内核源码。`fantgpu.ko` 不随内核包安装，要另编进该版本的 `extra/`。本包已经拥有 `extra/fantgpu.ko`，所以 `emerge @module-rebuild` 能列出它，不必再做 `MODULESD_*` 注册。genkernel 4.3.17 没有 `post.d`，内核装完后不会自动重编模块。ebuild 不 strip、不压缩、不签名。
+
+重编写入当前 `KV_FULL` 的 `extra/`。两颗内核的 ko 不能对拷。不要改 GRUB。不要热卸载。
+
+```
+emerge sys-kernel/fantgpu-kernel-patches
+# /usr/src/linux 指向目标内核
+emerge -u sys-kernel/gentoo-sources
+# 用现有方式编译并安装内核，然后重启。不要改 GRUB。
+emerge @module-rebuild
+# 再重启
+tools/gentoo/check-kernel-patches.sh
+tools/gentoo/verify.sh
+```
+
+`check-kernel-patches.sh` 不加 `--files-only` 时，还要求该 `kernel.release` 的 `extra/fantgpu.ko` 存在，没有就打印 `module_file=MISSING` 并失败。`verify` 先看这份 ko，缺了报 `module file missing`，不会先报 `no gpu status`。
 
 ## 幂等
 

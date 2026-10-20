@@ -60,5 +60,17 @@ if (( files_only == 0 )); then
         echo "kernel_tree=NOT_APPLIED tree=$LINUX"
         fail=1
     fi
+    release=
+    if [[ -s $LINUX/include/config/kernel.release ]]; then
+        IFS= read -r release <"$LINUX/include/config/kernel.release"
+    elif [[ -s $LINUX/.kernelrelease ]]; then
+        IFS= read -r release <"$LINUX/.kernelrelease"
+    fi
+    if [[ -n $release && -f /lib/modules/$release/extra/fantgpu.ko ]]; then
+        echo module_file=OK
+    else
+        echo module_file=MISSING
+        fail=1
+    fi
 fi
 exit "$fail"

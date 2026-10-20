@@ -6,8 +6,6 @@ umask 022
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 WORK=${GENTOO_WORK:-$ROOT/.build/work/gentoo-fh2m}
 ROLLBACK=${GENTOO_ROLLBACK:-$ROOT/.build/work/gentoo-fh2m/rollback}
-KERNEL=${KERNEL:-$(uname -r)}
-KERNELDIR=${KERNELDIR:-/lib/modules/$KERNEL/build}
 VENDOR=${GENTOO_VENDOR:-$ROOT/vendor/fantgpu}
 SNAP=$ROOT/docs/planning/evidence/o-stage/5.0.0-i6/o-stage-snapshot.tar.zst
 I12=9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee
@@ -17,6 +15,40 @@ PREFIX=/opt/fantgpu-fh2m
 
 log() { printf '%s %s\n' "$(date -Iseconds)" "$*"; }
 die() { printf 'gentoo_fh2m=FAIL %s\n' "$*" >&2; exit 1; }
+
+kv_text() {
+    local file=$1 text
+    [[ -s $file ]] || return 1
+    IFS= read -r text <"$file" || return 1
+    [[ -n $text ]] || return 1
+    printf '%s\n' "$text"
+}
+
+# Preset KERNEL is used as-is. Otherwise KV_FULL, else kernel.release of KERNEL_DIR.
+# shortcut: not a separate KBUILD_OUTPUT; the ebuild get_version path covers that.
+resolve_kernel() {
+    if [[ -n ${KERNEL:-} ]]; then
+        KERNELDIR=${KERNELDIR:-/lib/modules/$KERNEL/build}
+        return 0
+    fi
+    if [[ -z ${KV_FULL:-} ]]; then
+        local src=${KERNEL_DIR:-/usr/src/linux} text
+        text=$(kv_text "$src/include/config/kernel.release") \
+            || text=$(kv_text "$src/.kernelrelease") \
+            || die "KV_FULL empty"
+        KV_FULL=$text
+    fi
+    [[ -n $KV_FULL ]] || die "KV_FULL empty"
+    KERNEL=$KV_FULL
+    KERNELDIR=/lib/modules/$KERNEL/build
+    [[ -d $KERNELDIR ]] || die "kernel build directory missing"
+}
+
+need_kernel_build() {
+    resolve_kernel
+    KERNELDIR=${KERNELDIR:-/lib/modules/$KERNEL/build}
+    [[ -d $KERNELDIR ]] || die "kernel build directory missing"
+}
 
 tree_hash() {
     python3 - "$ROOT" "$1" << 'PY'
@@ -41,8 +73,8 @@ cmd_check() {
     need_repo
     log "repo_inputs=PASS snapshot=$(sha256sum "$SNAP" | awk '{print $1}')"
     if [[ $offline -eq 0 ]]; then
-        [[ -d $KERNELDIR ]] || die "kernel headers missing: $KERNELDIR"
-        log "kernel=$KERNEL headers=PASS"
+        need_kernel_build
+        log "kernel=$KERNEL build=PASS"
     fi
     if [[ -d $VENDOR/usr/lib/x86_64-linux-gnu/fantgpu-fh2m ]]; then
         log "vendor=PASS"
@@ -55,7 +87,7 @@ cmd_check() {
 
 cmd_build() {
     need_repo
-    [[ -d $KERNELDIR ]] || die "kernel headers missing: $KERNELDIR"
+    need_kernel_build
     local src=$WORK/src
     rm -rf "$src"
     mkdir -p "$WORK"
@@ -113,6 +145,7 @@ install_tree() {
 }
 
 cmd_install() {
+    resolve_kernel
     [[ -f $WORK/fantgpu.ko ]] || die "build first"
     local dest=${DESTDIR:-}
     local moddir=$dest/lib/modules/$KERNEL/extra
@@ -150,6 +183,7 @@ cmd_warn_loaded() {
 }
 
 cmd_rollback() {
+    resolve_kernel
     local saved=$ROLLBACK/fantgpu.ko
     [[ -f $saved ]] || die "no rollback ko at $saved"
     [[ ${EUID:-$(id -u)} -eq 0 ]] || die "rollback needs root"
@@ -178,15 +212,17 @@ check_counters() {
 }
 
 cmd_verify() {
-    local srcversion ko=/lib/modules/$KERNEL/extra/fantgpu.ko
-    local status=${GENTOO_STATUS_FILE:-/proc/driver/fantgpu/gpu00/status}
-    [[ -f $status ]] || die "no gpu status"
+    local srcversion status=${GENTOO_STATUS_FILE:-/proc/driver/fantgpu/gpu00/status} ko
     if [[ ${GENTOO_COUNTERS_ONLY:-} == 1 ]]; then
+        [[ -f $status ]] || die "no gpu status"
         check_counters "$status"
         log "eight_counters=0"
         exit 0
     fi
+    resolve_kernel
+    ko=/lib/modules/$KERNEL/extra/fantgpu.ko
     [[ -f $ko ]] || die "module file missing"
+    [[ -f $status ]] || die "no gpu status"
     srcversion=$(modinfo -F srcversion "$ko")
     log "ko_srcversion=$srcversion"
     [[ -e /dev/dri/card0 ]] || die "no DRM card"
@@ -197,6 +233,7 @@ cmd_verify() {
 }
 
 cmd_install_ko() {
+    resolve_kernel
     [[ -f $WORK/fantgpu.ko ]] || die "build first"
     local dest=${DESTDIR:-}
     local moddir=$dest/lib/modules/$KERNEL/extra

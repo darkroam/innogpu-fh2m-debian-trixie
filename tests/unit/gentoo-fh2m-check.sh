@@ -33,7 +33,12 @@ grep -q 'sha differs' "$out"
 [[ $changed == $(sha256sum "$work/dest/etc/portage/patches/sys-kernel/gentoo-kernel/004-snd-hda-hygon-14c9.patch") ]]
 cp "$work/dest/etc/portage/patches/sys-kernel/gentoo-sources/004-snd-hda-hygon-14c9.patch" \
     "$work/dest/etc/portage/patches/sys-kernel/gentoo-kernel/004-snd-hda-hygon-14c9.patch"
-PORTAGE_PATCH_BASE=$work/dest/etc/portage/patches/sys-kernel "$root/tools/gentoo/check-kernel-patches.sh" --files-only >/dev/null
+PORTAGE_PATCH_BASE=$work/dest/etc/portage/patches/sys-kernel "$root/tools/gentoo/check-kernel-patches.sh" --files-only >"$out"
+grep -q 'portage_patches=PASS' "$out"
+if grep -q 'module_file=' "$out"; then
+    echo "files-only checked the module" >&2
+    exit 1
+fi
 grep -q '补丁已落位，重编/升级内核生效后再装驱动' "$root/tools/gentoo/overlay/sys-kernel/fantgpu-kernel-patches/fantgpu-kernel-patches-1.ebuild"
 grep -q 'RESTRICT="bindist"' "$root/tools/gentoo/overlay/sys-kernel/fantgpu-kernel-patches/fantgpu-kernel-patches-1.ebuild"
 grep -q 'IUSE="+wayland"' "$root/tools/gentoo/overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
@@ -41,6 +46,17 @@ grep -q 'dev-libs/wayland' "$root/tools/gentoo/overlay/x11-drivers/fantgpu-fh2m/
 grep -q 'media-libs/libglvnd' "$root/tools/gentoo/overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
 grep -q 'media-libs/vulkan-loader' "$root/tools/gentoo/overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
 grep -q 'virtual/opencl' "$root/tools/gentoo/overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild"
+ebuild=$root/tools/gentoo/overlay/x11-drivers/fantgpu-fh2m/fantgpu-fh2m-5.0.0_p12.ebuild
+grep -q 'inherit linux-info' "$ebuild"
+grep -q 'KV_FULL' "$ebuild"
+if grep -q 'uname -r' "$ebuild" || grep -q 'MODULESD_' "$ebuild"; then
+    echo "ebuild still keys off uname -r or MODULESD_" >&2
+    exit 1
+fi
+if grep -q 'uname -r' "$root/tools/gentoo/fh2m-lib.sh"; then
+    echo "fh2m-lib still uses uname -r" >&2
+    exit 1
+fi
 if PORTAGE_PATCH_BASE=$work/missing "$root/tools/gentoo/check-kernel-patches.sh" --files-only >"$out" 2>&1; then
     echo "absent portage patches were accepted" >&2
     exit 1
@@ -192,3 +208,33 @@ GENTOO_WORK=$ko/work GENTOO_ROLLBACK=$ko/rollback GENTOO_LIVE_KO=$ko/live/fantgp
     DESTDIR=$ko/dest KERNEL=test "$root/tools/gentoo/install-ko.sh" >"$out"
 grep -q 'rollback_kept=' "$out"
 [[ $(cat "$ko/rollback/fantgpu.ko") == old-ko ]]
+if KERNEL=r65-missing-ko "$root/tools/gentoo/verify.sh" >"$out" 2>&1; then
+    echo "missing ko was accepted" >&2
+    exit 1
+fi
+grep -q 'module file missing' "$out"
+if grep -q 'no gpu status' "$out"; then
+    echo "missing ko reported no gpu status" >&2
+    exit 1
+fi
+nobuild=$(mktemp -d)
+empty=$(mktemp -d)
+trap 'rm -rf "$work" "$fix" "$out" "$fixdir" "$fake" "$rmdest" "$lid" "$ko" "$nobuild" "$empty"' EXIT
+if KERNEL=r65-no-build GENTOO_WORK=$nobuild/work "$root/tools/gentoo/build-driver.sh" >"$out" 2>&1; then
+    echo "missing build dir was accepted" >&2
+    exit 1
+fi
+grep -q 'kernel build directory missing' "$out"
+[[ ! -e $nobuild/work ]]
+if env -u KERNEL KERNEL_DIR=$empty GENTOO_WORK=$nobuild/kv "$root/tools/gentoo/build-driver.sh" >"$out" 2>&1; then
+    echo "empty kernel tree was accepted" >&2
+    exit 1
+fi
+grep -q 'KV_FULL empty' "$out"
+[[ ! -e $nobuild/kv ]]
+mkdir -p "$empty/tree"
+if PORTAGE_PATCH_BASE=$empty/portage KERNEL_TREE=$empty/tree "$root/tools/gentoo/check-kernel-patches.sh" >"$out" 2>&1; then
+    echo "missing module file was accepted" >&2
+    exit 1
+fi
+grep -q 'module_file=MISSING' "$out"

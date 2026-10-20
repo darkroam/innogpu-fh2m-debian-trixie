@@ -3,6 +3,8 @@
 
 EAPI=8
 
+inherit linux-info
+
 DESCRIPTION="Fantasy II-M fantgpu module, firmware, and userspace"
 HOMEPAGE="https://github.com/timhant/innogpu-fh2m-debian-trixie"
 SRC_URI=""
@@ -50,8 +52,15 @@ repo_root() {
 	cat "${overlay}/repo-root"
 }
 
+fantgpu_target_kernel() {
+	# KV_FULL is the selected source tree, not the running kernel.
+	get_version || die "KV_FULL empty"
+	[[ -n ${KV_FULL} ]] || die "KV_FULL empty"
+	[[ -d /lib/modules/${KV_FULL}/build ]] || die "kernel build directory missing"
+}
+
 pkg_setup() {
-	[[ -d /lib/modules/$(uname -r)/build ]] || die "kernel build directory missing"
+	fantgpu_target_kernel
 	mkdir -p /var/lib/fantgpu/rollback || die "rollback dir"
 }
 
@@ -59,7 +68,8 @@ src_compile() {
 	local root
 	root=$(repo_root)
 	addread "${root}"
-	env -u ARCH KERNEL="$(uname -r)" GENTOO_WORK="${T}/gentoo-fh2m" "${root}/tools/gentoo/build-driver.sh" || die "build failed"
+	fantgpu_target_kernel
+	env -u ARCH KERNEL="${KV_FULL}" GENTOO_WORK="${T}/gentoo-fh2m" "${root}/tools/gentoo/build-driver.sh" || die "build failed"
 }
 
 src_install() {
@@ -67,15 +77,18 @@ src_install() {
 	root=$(repo_root)
 	addread "${root}"
 	addwrite /var/lib/fantgpu
-	env -u ARCH DESTDIR="${D}" KERNEL="$(uname -r)" GENTOO_WORK="${T}/gentoo-fh2m" \
+	fantgpu_target_kernel
+	env -u ARCH DESTDIR="${D}" KERNEL="${KV_FULL}" GENTOO_WORK="${T}/gentoo-fh2m" \
 		GENTOO_ROLLBACK=/var/lib/fantgpu/rollback \
 		"${root}/tools/gentoo/install-driver.sh" || die "install failed"
 }
 
 pkg_postinst() {
-	depmod -a "$(uname -r)" || ewarn "depmod failed"
+	fantgpu_target_kernel
+	depmod -a "${KV_FULL}" || ewarn "depmod failed"
 	ldconfig || ewarn "ldconfig failed"
-	einfo "模块已写入磁盘。不要热卸载。重启后才是正在运行的那份。"
+	einfo "模块已写入 /lib/modules/${KV_FULL}。不要热卸载。重启后才是正在运行的那份。"
+	einfo "换内核前把 /usr/src/linux 指到目标源码，多内核先 eselect kernel，再 emerge @module-rebuild。目标 build 目录不在就停。genkernel 4.3.17 没有 post.d。"
 }
 
 pkg_prerm() {
@@ -85,6 +98,7 @@ pkg_prerm() {
 }
 
 pkg_postrm() {
-	depmod -a "$(uname -r)" || ewarn "depmod failed"
+	fantgpu_target_kernel
+	depmod -a "${KV_FULL}" || ewarn "depmod failed"
 	ldconfig || ewarn "ldconfig failed"
 }
