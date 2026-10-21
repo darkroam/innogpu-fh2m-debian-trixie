@@ -63,6 +63,7 @@ D 线 `patches/001`–`029` 不改名。历史文件里的 `030-NNN` 是当时�
 
 - `current`：已验收的系统×内核。字段是 m 基座、g 集、该行的内核补丁、安装/验收/回滚入口、版本修订号、构建身份（树哈希 + srcversion）、安装说明。Debian 当前是 001–002，Gentoo 当前是 001–006。
 - `in_progress`：未完成的系统×内核。字段是阶段、断点（已打补丁、ko 状态、待验证项）、下一步。空表合法。中断后只读这一行就能接着做。
+P6.18 现停在该表：Gentoo 内核键 `6.18`，阶段 `suspended`。人读记录是 [6.18-coverage](../planning/6.18-coverage/README.md)。不升 iN，不进 `current`。
 
 互转：进行中行的待验证项清空，并补齐当前表字段后，移入 `current`，同时从 `in_progress` 删除。当前行被新工作替代时移入 `history`。替代工作未完成则另开进行中行。同一 system+kernel 不能同时在 `current` 和 `in_progress`。
 

@@ -137,6 +137,7 @@ docs/patches/picom/patch-picom-001-explicit-uniform-location.md
 docs/patches/system-kernel-matrix.json
 docs/planning/030-mapping-table.md
 docs/planning/030-patch-rederivation-design.md
+docs/planning/6.18-coverage/README.md
 docs/planning/evidence/4.0.2-i3/4.0.2-i3.meta.json
 docs/planning/evidence/4.0.2-i3/build-A.sha256
 docs/planning/evidence/4.0.2-i3/build-B.sha256

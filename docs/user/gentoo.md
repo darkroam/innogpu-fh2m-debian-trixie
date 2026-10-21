@@ -5,7 +5,7 @@
 
 ## 这台机器
 
-- 内核 `6.12.111-gentoo-x86_64`。6.18 因封存对象的 `%gs:0x28` 栈金丝雀对不上，已放弃。
+- 内核 `6.12.111-gentoo-x86_64`。6.18 因封存对象金丝雀硬阻断挂起，见 [6.18-coverage](../planning/6.18-coverage/README.md)。新封存对象出现前不加载。
 - 模块基座是 i12 构建器树 `9a8d185f…`。构建器外先打 `m-036-bf-shf-rename`，该层整树
   `0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce`，再打
   `m-051-hwinfo-connector-fallback`。m-051 不进 i12 构建器。

@@ -146,6 +146,20 @@
       "install_doc": "docs/user/gentoo.md"
     }
   ],
-  "in_progress": [],
+  "in_progress": [
+    {
+      "system": "gentoo",
+      "kernel": "6.18",
+      "stage": "suspended",
+      "next": "等厂商新封存对象。执行门：干净树重算 2284，仍在即停。新对象出现前不在 6.18 加载。",
+      "breakpoint": {
+        "ko_status": "not-installed",
+        "patches_applied": [],
+        "pending": [
+          "封存对象 2284 处 %gs:0x28 与 6.18 无条件 guard-symbol 不兼容（硬阻断）"
+        ]
+      }
+    }
+  ],
   "history": []
 }
