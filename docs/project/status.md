@@ -11,7 +11,7 @@
 | --- | --- | --- |
 | Debian 当前运行驱动 | **fantgpu 5.0.0-i12（干净候选，非发布）** 加未进入 i12 构建器的 `m-036-bf-shf-rename`，运行于 `6.12.111+deb13-amd64`。R49 的 3/3 devices + 1/1 normal deep 与用户裁决 R5 通过保持原边界。R51 三段已通过。R52 将 i12+m-036-bf-shf-rename、001 xHCI 与 002 battery 按 111 重建并验收，驱动栈 PASS | [R52 111 内核与驱动栈](#r52-111-内核与驱动栈2026-10-08) |
 | Debian 当前磁盘安装 | **fantgpu 5.0.0-i12** 包仍是 R49 的干净候选；111 上已加载模块是该树加 `m-036-bf-shf-rename` 后的 DKMS 构建，srcversion `370AB248D72951EF3C0C4BB`，与 `updates/dkms` 磁盘模块一致。重装未带 m-036-bf-shf-rename 的旧 DKMS 包会退回头文件 | [R52 111 内核与驱动栈](#r52-111-内核与驱动栈2026-10-08) |
-| Gentoo 当前运行 | 内核 `6.12.111-gentoo-x86_64`。加载模块是 i12 构建器树加构建器外的 `m-036-bf-shf-rename` 与 `m-051-hwinfo-connector-fallback`，srcversion `D579486A64C340B5178B66B`（2026-10-15 本机实读）。overlay 在 `tools/gentoo/overlay`。`hwinfo_g0m.bin` 仍缺，不升格。温度行与 pll 行未出现，不是通过 | [Gentoo 档案](../user/gentoo.md)、[脚本索引](../../tools/README.md) |
+| Gentoo 当前运行 | 内核 `6.12.111-gentoo-x86_64`。加载模块是 i12 构建器树加构建器外的 `m-036-bf-shf-rename` 与 `m-051-hwinfo-connector-fallback`，srcversion `D579486A64C340B5178B66B`（2026-10-15 本机实读）。overlay 在 `tools/gentoo/overlay`。`firmware_en=0`。`hwinfo_g0m.bin` 只在值为 1 时被请求，非必需。温度行与 pll 行未出现，不是通过 | [Gentoo 档案](../user/gentoo.md)、[脚本索引](../../tools/README.md) |
 | 回退基线 | `4.0.2-i3`（deepin 血缘最终交付）：R14 6/6 deep 矩阵通过；包 SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；回滚卡见 r5dpm2 设计 §8，执行须另行授权 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md)、[回滚卡](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
 | 当前主线目标 | `5.0.0-i12`（annotated tag `fantgpu-5.0.0-i12` 指向 `079b179`）；R5 已通过。validation-results `signed=true`：R1=fail 且 hwinfo 豁免不改判，R2=pass，R5=pass，U1/U2/R9=unverified 且 closed。C2 i12 三方已署名。件内 `tag_created=false` 不改。`license_release_gate=BLOCKED`。不建 Release、不传附件 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01)、[030 映射表](../planning/030-mapping-table.md) |
 | 历史当前态（2026-09-03 记录） | `4.0.2-i3` 已安装并重启至 `6.12.101+deb13-amd64`；R16 迁移后降为回退基线 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
@@ -23,7 +23,7 @@
 | 历史运行验收 | p21 完整图形验收通过；p22 完成 connector 分类和开盖桌面烟测，但电源/合盖/拔屏矩阵未完成 | [`patch-009` 验收](../patches/patch-009-local-internal-edp-connector.md) |
 | 源码/用户态基线 | F 线（唯一开发主线）的源码与黑盒载荷都来自 `debs/fantgpu-fh2m_3.3.8.126-driver-linux-desktop-sp-generic_amd64.deb`（SHA-256 `6f0daaf79fb6b2a547138c17628bb990dff0d0c684ee1c13775bebc2d28fd11b`），经 F0、冻结 O-stage 与 m-035-private-accessor/m-036-bf-shf-rename。O 线只维护：源码不在主线，在 tag `innogpu-4x-frozen` 与 `deepin-4.0.2-i3`；载荷来自 `debs/innogpu-fh2m_20250421190503-debug_amd64.deb`（SHA-256 `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2`）。两线输入不混用。稳定命令入口是 `tools/`；`tools/internal/` 不是给人记的命令名 | [架构](architecture.md)、[目录规范](directory-layout.md) |
 | Deepin 源码树迁移 | 阶段 0–4 完成；该线已交付 4.0.2-i3，4.0.0-i1 保留为其首层回退；阶段 5 第一步完成，第二步待条件满足 + 监督批准；不代表 fantgpu 验收 | [phase5-retirement-design](../design/phase5-retirement-design.md) |
-| 固件与 PVR | `4.0.2-i3` R14 每轮 PVR 八项计数均为 0 且不增长；`hwinfo_g0m.bin` 缺失为已知厂商载荷边界 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
+| 固件与 PVR | `4.0.2-i3` R14 每轮 PVR 八项计数均为 0 且不增长；当时 `firmware_en=1` 会请求 `hwinfo_g0m.bin`；R70 起这不是现行缺口 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | DRM/fbdev | `4.0.2-i3` R14 内屏及外屏恢复通过；`card0`、`renderD128`、`fb0` 基线继续可用 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |
 | Xorg/GLX 历史验收 | Deepin `4.0.0-i1` 桌面和隔离 Xorg 的硬件加速验收通过；不外推到 fantgpu i6 | [Phase 4 验收](../archive/phase4-device-validation.md) |
 | 真实 VT | 普通用户 fbterm 可绘制和退出；禁用 YPan 后长输出、清屏及跨会话显示正常 | [`fbterm YPan 记录`](../incidents/fbterm-ypan-rendering.md) |
@@ -207,8 +207,7 @@ R31 已从实际 i9 的血缘隔离 prerm 升级至 i10：八核 dpkg/postinst r
   重查询；画面最终恢复。该问题由 dotconfig/xdisplay 独立跟踪，本项目不在线修改会话配置。
 1. p20 的 `patch-008` 历史诊断会对每次 services ioctl 写日志；p21 已关闭它，后续版本不得重新
    启用高频日志而不同时定义限速、证据和回退策略。
-2. `hwinfo_g0m.bin` 仍缺失，但本次不阻止 PVR 进入 `ACTIVE`；是否需要该固件由后续硬件能力需求
-   决定，不能仅凭缺失日志推断为故障。
+2. 当时 `hwinfo_g0m.bin` 会被请求，但本次不阻止 PVR 进入 `ACTIVE`。R70 起该文件只在 `firmware_en=1` 时被请求，非必需。
 3. 普通用户运行 `fbterm` 时不能修改内核键盘表，内置滚屏和切换 VT 快捷键不可用；这不是
    framebuffer 映射故障，不应直接授予全局特权。
 4. 历史 p22 仅完成当前设备、当前内核的 connector/桌面烟测；电池合盖、外屏热插拔、不同扩展坞、

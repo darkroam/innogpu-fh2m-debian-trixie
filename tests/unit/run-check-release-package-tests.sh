@@ -184,8 +184,8 @@ mkfdeb() {  # mkfdeb <name> <mode: full|forbidden|rawhelper|dirtype|dangling|dro
         mkdir -p "$root/$(dirname "$p")"
         touch "$root/$p"
     done
-    # C2 write-options=1 精确内容（codex re-review P1：逐字节断言）
-    printf '%s\n' 'options fantgpu firmware_en=1' \
+    # R70：活配置逐字节等于注释加 firmware_en=0 这两行
+    printf '%s\n' '# 厂商默认。hwinfo 在硬件里。设为 1 才会请求未随包提供的 hwinfo_g0m.bin' 'options fantgpu firmware_en=0' \
         > "$root/etc/modprobe.d/fantgpu.conf"
     # ELF 真身条目写入 \x7fELF magic（codex 复审#2 P1：空文件必须被内容断言拒绝）
     # gbm/fh2m_gbm.so 与真品一致是 M2 shim symlink，不入 ELF 清单（见 links）。
@@ -246,8 +246,8 @@ mkfdeb() {  # mkfdeb <name> <mode: full|forbidden|rawhelper|dirtype|dangling|dro
         ln -s libEGL_fh2m.so.1 \
             "$root/usr/lib/x86_64-linux-gnu/fantgpu-fh2m/libVK_FANT_fh2m.so"
     elif [[ "$mode" == confbad ]]; then
-        # C2 write-options 内容断言负向：firmware_en=0 → FAIL
-        printf '%s\n' 'options fantgpu firmware_en=0' \
+        # R70 负向：写回 firmware_en=1 → 精确内容拒绝
+        printf '%s\n' 'options fantgpu firmware_en=1' \
             > "$root/etc/modprobe.d/fantgpu.conf"
     elif [[ "$mode" == confdangling ]]; then
         # C2 write-options 类型断言负向：有效 symlink → FAIL
@@ -395,7 +395,7 @@ else
     bad t21 "rc=$RC err=[$(head -1 "$TMP/g.err")]"
 fi
 
-# t22 F 负向：fantgpu.conf 内容为 firmware_en=0（codex re-review P1）→ 精确内容拒绝
+# t22 F 负向：fantgpu.conf 内容为 firmware_en=1 → 精确内容拒绝
 eval "$(mkfdeb t22 confbad)"
 run_gate "$DEB"
 if [ "$RC" -eq 1 ] && grep -Fq 'content mismatch' "$TMP/g.err" \

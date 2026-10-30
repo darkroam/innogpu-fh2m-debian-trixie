@@ -15,7 +15,10 @@
   八项计数为 0。oops 为 0。签名 taint 是 `OE`。
 - 现行加载 srcversion 是 `D579486A64C340B5178B66B`（2026-10-15 本机实读）。这不是 Debian 111 的 `370AB248D72951EF3C0C4BB`。
 - 磁盘 ko `f888e32ecaed`（66606896 字节）与工作树 `.build/work/gentoo-fh2m/fantgpu.ko` 的 `ea8c6c60d113`（66606760 字节）不同。两者 srcversion 都是上面这一条。构建门是同一棵 m-051 树 `b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00`；本机没有重走两份源树。`.text`、`.data`、`.rodata`、`.modinfo` 逐节相同。整文件多出的 136 字节都在 `.rodata.str1.8`：路径长度差 125，对齐填充 11。磁盘模块嵌 `/var/tmp/portage/x11-drivers/fantgpu-fh2m-5.0.0_p12/temp/gentoo-fh2m/src/`，工作树模块嵌 `.build/work/gentoo-fh2m/src/`。这是构建目录嵌入，不是换源。
-- `hwinfo_g0m.bin` 仍缺。这不是通过。
+- `firmware_en=0`。源码默认是 0（`fantgpu_pci_drv.c` 的 `int firmware_en = 0`），消费点在封闭对象的 hwinfo 注册。2026-09-13 的 C2 为了对齐 O 血统写成 1，Gentoo 安装脚本照抄了这一行。
+- `hwinfo_g0m.bin` 只在值为 1 时被请求。包里没有，也不是必需。hwinfo 在硬件里。2026-10-30 拿掉 1 之后请求行为 0，画面正常，`panel_backlight` 出现且亮度可调。6.6 对照取消。
+- 还剩封闭对象查表：`hwinfo_get_val` 的 `117 not found` 五次，`hwinfo_get_item` 的 `195 not found in memory` 一次。不是请求行，先观察。
+- 活配置与安装脚本相同：上一行是注释，下一行是 `options fantgpu firmware_en=0`。试验副本 `.s1bak`、`.disabled` 删除。回退是把这一行改回 `firmware_en=1` 再重启，不热卸。
 - 热卸载会在 `hwinfo_unregister` 里 oops。换模块只改磁盘上的 ko，然后重启。不要 unbind。
 
 ## 安装

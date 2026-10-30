@@ -45,8 +45,8 @@ shopt -u nullglob
 
 # A successful compute-side status is not sufficient: reject the exact boot
 # failures that previously reached the R-item stage or crashed in component bind.
-# hwinfo_g0m.bin is an optional board-info input handled by the F-only audio
-# fallback. Other firmware failures remain a hard stop.
+# hwinfo_g0m.bin is requested only when firmware_en=1. It is not required.
+# Other firmware failures remain a hard stop.
 firmware_failures=$(grep -Ei 'firmware:[[:space:]]+(failed to load|direct-loading failed)|request_firmware[^[:cntrl:]]*failed' "$DMESG" || true)
 if [[ -n "$firmware_failures" ]] &&
    grep -Eiv 'hwinfo_g0m\.bin' <<<"$firmware_failures" | grep -q .; then

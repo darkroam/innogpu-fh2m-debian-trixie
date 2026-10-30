@@ -148,7 +148,7 @@ def make_root(directory):
     put(directory, "fixture/running", KERNELS[0] + "\n")
     put(directory, "fixture/packages", "".join(f"installed\tlinux-image-{k}\n" for k in reversed(KERNELS)))
     put(directory, "usr/lib/x86_64-linux-gnu/dri/fh2m_dri.so", "fixture userspace\n")
-    put(directory, "etc/modprobe.d/fantgpu.conf", "options fantgpu firmware_en=1\n")
+    put(directory, "etc/modprobe.d/fantgpu.conf", "# 厂商默认。hwinfo 在硬件里。设为 1 才会请求未随包提供的 hwinfo_g0m.bin\noptions fantgpu firmware_en=0\n")
     put(directory, SOURCE + "/dkms.conf", 'PACKAGE_NAME="fantgpu-fh2m-kernel"\nPACKAGE_VERSION="2.2"\n')
     put(directory, SOURCE + "/Makefile", "fixture, never compiled\n")
     put(directory, SOURCE + "/driver.c", "fixture source, never compiled\n")

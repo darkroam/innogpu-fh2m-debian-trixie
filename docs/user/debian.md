@@ -86,7 +86,7 @@ sudo tools/debian/install-kernel-patches.sh --evidence .build/linux-patched-modu
 - `tools/debian/check-hygon-xhci-resume-fix.sh` 看 reset-on-resume 位。本机判据仍是两个控制器都是 `0x90`。
 
 R5 的 3 次 devices 加 1 次 normal deep 没有包含在本页。要跑须另获授权。不写 `pm_test`，不跑 watchdog。
-`hwinfo_g0m.bin` 仍缺，不把这项写成通过。
+`hwinfo_g0m.bin` 只在 `firmware_en=1` 时被请求，不是必需。包内 `fantgpu.conf` 写 `firmware_en=0`。已经装过旧包的机器要等下次安装覆盖这行，再重启才离开 1。O 血统 `innogpu.conf` 仍是历史的 `firmware_en=1`。
 
 ## 卸载
 

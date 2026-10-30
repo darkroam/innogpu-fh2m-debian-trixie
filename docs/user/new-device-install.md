@@ -57,7 +57,7 @@ sudo apt install ./.build/work/driver-build/innogpu-fh2m-trixie_4.0.2-i3.deb
 R14 只证明当前 FH2M 设备在接电/电池、无外屏/单外屏矩阵中的 6 次 deep 恢复。新设备不得
 直接继承该运行结论；至少保留 `4.0.0-i1` 和 patched-27 回退包，并按
 [`verification.md`](verification.md) 与 [`recovery.md`](recovery.md) 完成独立验收。i3 的已知边界是
-DDCCI 不注册 backlight device、没有 brightness sysfs，`hwinfo_g0m.bin` 仍缺失，display patch-025
+当时 DDCCI 不注册 backlight device、没有 brightness sysfs，`hwinfo_g0m.bin` 在 `firmware_en=1` 下被请求，display patch-025
 仍为 UNVERIFIED 且未包含。
 
 同时保留深层回退包（按 release 记录核对 SHA-256 后放入 `debs/`）：

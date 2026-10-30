@@ -147,7 +147,8 @@ done
 (( missing == 0 )) || die 'incomplete target kernels; no DKMS write attempted'
 DRI_SO=/usr/lib/x86_64-linux-gnu/dri/fh2m_dri.so
 [[ -s "$DRI_SO" ]] || die 'coherent fh2m_dri.so is missing'
-[[ $(</etc/modprobe.d/fantgpu.conf) == 'options fantgpu firmware_en=1' ]] || die 'unexpected packaged fantgpu options'
+[[ $(</etc/modprobe.d/fantgpu.conf) == '# 厂商默认。hwinfo 在硬件里。设为 1 才会请求未随包提供的 hwinfo_g0m.bin
+options fantgpu firmware_en=0' ]] || die 'unexpected packaged fantgpu options'
 actual=$(source_digest "$source_dir")
 [[ ${actual%% *} == "$expected_source_sha" ]] || die 'packaged DKMS source identity mismatch'
 registration=$(dkms status -m "$module" -v "$version")

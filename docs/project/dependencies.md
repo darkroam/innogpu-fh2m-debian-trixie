@@ -31,7 +31,7 @@
 | `debs/archive/legacy-build/innogpu-fh2m-trixie_4.0.1-i4.deb`（R06 B 归档） | patch-024 + patch-025-suspend-resume-display；固定 epoch 1788451200；SHA `085e06844607a9973a6d5e3c1e3c4ec986a1cdf6903e6a9169b68285e39969a7`；严格对照准备通过，尚未安装 |
 | `debs/archive/legacy-build/innogpu-fh2m-trixie_4.0.2-i1.deb`（R11 失败候选归档） | patch-024 + patch-026 DVFS/PVR 生命周期同步；固定 epoch 1788624000；双构建 SHA `e115bdcd…`；deep 时温度 work 提前触发 PowerLock/POWERED_OFF，只供历史复现，禁止安装或交付 |
 | `debs/archive/legacy-build/innogpu-fh2m-trixie_4.0.2-i2.deb`（R12 历史归档） | i1 + patch-028 温度 work 恢复时序门禁；固定 epoch 1788710400；不含 display 025；仅静态/离线验证，尚未安装 |
-| `debs/archive/legacy-build/innogpu-fh2m-trixie_4.0.2-i3.deb`（Deepin 历史交付、当前回退基线） | i2 + patch-029 DDCCI panel 创建恢复（继承 patch-024/026/028）；固定 epoch 1788796800；SHA `177133ee…`；R14 6/6 deep 通过；不含 display 025，DDCCI 无 backlight device，`hwinfo_g0m.bin` 仍缺失 |
+| `debs/archive/legacy-build/innogpu-fh2m-trixie_4.0.2-i3.deb`（Deepin 历史交付、当前回退基线） | i2 + patch-029 DDCCI panel 创建恢复（继承 patch-024/026/028）；固定 epoch 1788796800；SHA `177133ee…`；R14 6/6 deep 通过；不含 display 025，当时 DDCCI 无 backlight device，`hwinfo_g0m.bin` 在 `firmware_en=1` 下被请求 |
 | `debs/innogpu-fh2m_20250421190503-debug_amd64.deb` | Deepin 202504 DKMS/GL/DDX 来源；SHA-256 `b5a70e7854db6e199d208ff31296ff637f59b5731d31e8123f95c39009f6f5b2` |
 
 主线已删除 O 线提取器。该 deb 仍是 O 线历史输入，清单在 tag `innogpu-4x-frozen`。`build-deepin-coherent.sh` 已从主线删除，只从 tag `innogpu-4x-frozen` 检出。

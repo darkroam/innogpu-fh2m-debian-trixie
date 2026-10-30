@@ -52,7 +52,7 @@
 | --- | --- | --- |
 | DDK 基线 | Imagination PowerVR DDK **V119 RTM** 构建管线 | `innovpu.o_shipped` 内嵌路径 `DDK_V119RTM_RELEASE_BUILD_PIPELINE_DDK/ddk/kmd/...` |
 | BVNC | **35 / V / 1632 / 23** | `innosrvkm/include/configs/rgxconfig_km_35.V.1632.23.h`：`RGX_BNC_KM_B 35`、`RGX_BNC_KM_N 1632`、`RGX_BNC_KM_C 23` |
-| 芯片变体 | **G0M_SOC**（1 SPU / 2 clusters） | `config_kernel.h` 第 14 行 `#define __G0M_SOC__`；shipped 对象含 `CHIP_G0M_SOC/NE/PAL`；与缺失的 `hwinfo_g0m.bin` 线索一致 |
+| 芯片变体 | **G0M_SOC**（1 SPU / 2 clusters） | `config_kernel.h` 第 14 行 `#define __G0M_SOC__`；shipped 对象含 `CHIP_G0M_SOC/NE/PAL`；与当时被请求的 `hwinfo_g0m.bin` 同名；该文件不是必需 |
 | 固件处理器 | META MTP219 | `RGX_FEATURE_META (MTP219)`，META_COREMEM 8 banks × 96，DMA 4 通道 |
 | 特性定义 | **90 个 RGX_FEATURE 宏**（含数值） | 同一 config 头文件 |
 

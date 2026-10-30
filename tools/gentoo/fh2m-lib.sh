@@ -141,7 +141,7 @@ install_tree() {
     install -m 0644 "$VENDOR/etc/OpenCL/vendors/FANT_fh2m.icd" "$dest/etc/OpenCL/vendors/FANT_fh2m.icd"
     install -m 0644 "$VENDOR/usr/share/drirc.d/01-fh2m_drv.conf" "$dest/usr/share/drirc.d/01-fh2m_drv.conf"
     printf '%s\n' "$PREFIX/lib" > "$dest/etc/ld.so.conf.d/0-fantgpu-hwgl.conf"
-    printf '%s\n' 'options fantgpu firmware_en=1' > "$dest/etc/modprobe.d/fantgpu.conf"
+    printf '%s\n' '# 厂商默认。hwinfo 在硬件里。设为 1 才会请求未随包提供的 hwinfo_g0m.bin' 'options fantgpu firmware_en=0' > "$dest/etc/modprobe.d/fantgpu.conf"
 }
 
 cmd_install() {

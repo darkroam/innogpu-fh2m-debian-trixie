@@ -176,10 +176,9 @@ EOF
         'usr/share/glvnd/egl_vendor.d/00_fh2m.json	libEGL_fh2m.so.0' \
         'etc/OpenCL/vendors/FANT_fh2m.icd	libFTOCL_fh2m.so' \
         > "$runtime/cfgrefs.tsv"
-    # C2 write-options=1 精确内容断言（codex re-review P1：必须普通文件 +
-    # 逐字节 == "options fantgpu firmware_en=1\n"；symlink/其他内容均 FAIL）
+    # R70：必须是普通文件，逐字节等于注释加 firmware_en=0 这两行。symlink 或其他内容 FAIL。
     printf '%s\n' \
-        'etc/modprobe.d/fantgpu.conf	options fantgpu firmware_en=1' \
+        'etc/modprobe.d/fantgpu.conf	# 厂商默认。hwinfo 在硬件里。设为 1 才会请求未随包提供的 hwinfo_g0m.bin\noptions fantgpu firmware_en=0' \
         > "$runtime/confexact.tsv"
     # codex 复审#4 P1：required symlink 的期望 target 映射（与真品逐字节一致，
     # 从 build-A typed 清单核对）——target 错误或链成员被换成普通文件均 fail。
@@ -324,11 +323,11 @@ with open(required_path, encoding="utf-8", errors="surrogateescape") as f:
                     "ERROR: required release file content does not reference "
                     "expected library: %s (missing: %s)" % (p, ",".join(missing)))
         if p in confexact:
-            expected = confexact[p].encode("utf-8") + b"\n"
+            expected = confexact[p].replace("\\n", "\n").encode("utf-8") + b"\n"
             if content.get(p) != expected:
                 errors.append(
                     "ERROR: required release file content mismatch: %s "
-                    "(C2 write-options expects exactly: %r)" % (p, expected))
+                    "(expects exactly: %r)" % (p, expected))
 with open(forbidden_path, encoding="utf-8", errors="surrogateescape") as f:
     for p in (line.rstrip("\n") for line in f if line.strip()):
         if p in entries:

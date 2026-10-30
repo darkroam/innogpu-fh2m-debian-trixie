@@ -91,7 +91,7 @@ if grep -Fq 'DRI_SO=/usr/lib/x86_64-linux-gnu/dri/fh2m_dri.so' "$F_GENERATOR" \
    && grep -Fq 'lspci -n -d 1ec8:9810' "$F_GENERATOR" \
    && grep -Fq 'lspci unavailable; 1ec8:9810 device gate not executed' "$F_GENERATOR" \
    && grep -Fq "'options innogpu firmware_en=1' > /etc/modprobe.d/innogpu.conf" "$BUILDER" \
-   && grep -Fq "'options fantgpu firmware_en=1' > \"\$P/etc/modprobe.d/fantgpu.conf\"" "$BUILDER" \
+   && grep -Fq "'# 厂商默认。hwinfo 在硬件里。设为 1 才会请求未随包提供的 hwinfo_g0m.bin' 'options fantgpu firmware_en=0' > \"\$P/etc/modprobe.d/fantgpu.conf\"" "$BUILDER" \
    && ! grep -Fq "'options fantgpu firmware_en=1' > /etc/modprobe.d/fantgpu.conf" "$F_GENERATOR"; then
     ok t07
 else

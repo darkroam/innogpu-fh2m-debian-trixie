@@ -67,12 +67,12 @@ R27 早期八核窗口的 `FAILED_OR_UNVERIFIED` 原记录保留，不通过删�
 
 ## Gentoo 现场（R57 已通过）
 
-R57 已通过，与 INDEX 一致，不是待审查。现行加载是 i12 构建器树加构建器外的 `m-036-bf-shf-rename` 与 `m-051-hwinfo-connector-fallback`，srcversion `D579486A64C340B5178B66B`（2026-10-15 本机实读）。这不是 Debian 的 `370AB248D72951EF3C0C4BB`。`hwinfo_g0m.bin` 仍缺。温度行与 pll 行未出现，不是通过。
+R57 已通过，与 INDEX 一致，不是待审查。现行加载是 i12 构建器树加构建器外的 `m-036-bf-shf-rename` 与 `m-051-hwinfo-connector-fallback`，srcversion `D579486A64C340B5178B66B`（2026-10-15 本机实读）。这不是 Debian 的 `370AB248D72951EF3C0C4BB`。`firmware_en=0`。`hwinfo_g0m.bin` 只在值为 1 时被请求，非必需。温度行与 pll 行未出现，不是通过。
 
 本机 `6.12.111-gentoo` 曾用 i12 加构建器外的 `m-036-bf-shf-rename` 拉起。当时入口记为
 `gentoo-fh2m.sh`（现为 [`fh2m-lib.sh`](../../tools/gentoo/fh2m-lib.sh) 与 `tools/gentoo/build-driver.sh`），portage 包装在
 `tools/gentoo/overlay`。档案见 [Gentoo](../user/gentoo.md)。
-这不改 Debian 侧当前内核结论。`hwinfo_g0m.bin` 仍缺，不升格。
+这不改 Debian 侧当前内核结论。`hwinfo_g0m.bin` 不是现行缺口。
 `g-037` 到 `g-050` 已按命名规范入库。入库不等于升格：仍标 g，字节不变，不进 i12 构建器。`g-050-fb-helper-alloc` 是 6.12 胶水，不是 6.18。
 当时（2026-10-12）001–004 放在不按版本拆分的 portage user-patches，与 `components/linux` 同 SHA，并已按这组文件重打进 6.12.111 源码树。现行补丁包是 001–006。
 003 是内建 GPIO，004 是 6.12 板载声卡模块，不能套到 6.18。
@@ -121,7 +121,8 @@ R57 已通过，与 INDEX 一致，不是待审查。现行加载是 i12 构建�
   让 DDCCI 回退模式创建 panel 但不注册 backlight device。R13 阶段 2 通过，R14 随后完成
   D1-D6 共 6/6 deep 正式矩阵（接电/电池、无外屏/外屏），当前设备正式交付 `4.0.2-i3`。
   P3 回传建议为“已修复，待 dotfiles 复核”；display 025 仍为独立 UNVERIFIED 实验，不进入
-  i1/i2/i3。DDCCI 无亮度控制，`hwinfo_g0m.bin` 仍缺失。
+  i1/i2/i3。当时 DDCCI 无亮度控制，`hwinfo_g0m.bin` 在 `firmware_en=1` 下被请求。
+  2026-10-30 Gentoo 现行是 `firmware_en=0`，`panel_backlight` 在，亮度可调。
   **2026-09-20 对齐注**：R16 起主线已切至 fantgpu 血缘（5.0.0-iN，当前 i6 诊断线）；本条
   deepin 血缘结论作为历史与回退基线保留，4.0.2-i3 现为回滚卡（SHA `177133ee…`）。见
   [`026-suspend-resume-dvfs-lifecycle.md`](../patches/026-suspend-resume-dvfs-lifecycle.md)、
@@ -136,10 +137,8 @@ R57 已通过，与 INDEX 一致，不是待审查。现行加载是 i12 构建�
   在负载下偶发 1–2 项失败（qoder 初审与 dsh 复跑均见过两种状态），非 028 回归；
   排查前 CI 结果解释需注意"偶发"口径。
 - [ ] 将可复现的热点、perf 数据和应用级 workaround 整理为上游/厂商修复报告。
-- [ ] **R15 启动告警上游/厂商报告**：整理 `hwinfo_g0m.bin` 未随厂商载荷分发导致的
-  hwinfo 注册失败、DP/HDMI/VGA 默认降级与 DDCCI fallback，以及 `dmaengine` 下 AXI
-  DMA/PCIe DMA 同设备名冲突；AMD-Vi、microcode、SRSO、ACPI `_DOD/_DOS` 另列为平台/BIOS
-  侧事项。详见 [启动报错归因记录](../incidents/boot-errors-attribution-20260903.md)。
+- [x] **R15 hwinfo 上游/厂商报告**（2026-10-30 撤回）：请求行是自配置 `firmware_en=1` 诱发，不是厂商漏发 `hwinfo_g0m.bin`。该文件只在值为 1 时被请求，非必需。按「缺失固件」写的报告初稿作废。`117`/`195` 是封闭对象查表，先观察，不进这份报告。
+- [ ] **R15 其余**：`dmaengine` 下 AXI DMA 与 PCIe DMA 同设备名冲突仍待整理。AMD-Vi、microcode、SRSO、ACPI `_DOD/_DOS` 仍是平台/BIOS 侧。详见 [启动报错归因记录](../incidents/boot-errors-attribution-20260903.md)。
 - [ ] runtime 剩余真实能力证据：modeset/热插拔/合盖、Picom GLX backend、
   音频听感确认；现有 Deepin 4.0.0-i1 历史汇总为 22 PASS / 9 SKIP / 4 UNVERIFIED，
   不代表 fantgpu 5.0.0-i6 已取得同样能力结论。

@@ -8,7 +8,7 @@
 > 最后更新：2026-10-15 —— 当前主线为 fantgpu 5.0.0-iN，Debian Trixie 与 Gentoo 并列。Debian 运行内核 `6.12.111+deb13-amd64`，i12+m-036-bf-shf-rename 与 001/002 已按 111 验收；Gentoo 现场见 [gentoo.md](docs/user/gentoo.md)。R51 三段与 R5 均已通过，见
 > [status.md](docs/project/status.md)。历史（2026-09-03 记录，不是现行 F 线）：当前驱动包和正式交付版本为 `4.0.2-i3`（patch-024 + patch-026 +
 > patch-028 + patch-029）；R14 在当时设备完成 6/6 deep 验收。patch-025-display 当时继续保持
-> UNVERIFIED，不进入 i3；DDCCI 不提供亮度控制，`hwinfo_g0m.bin` 仍缺失。
+> UNVERIFIED，不进入 i3；当时 DDCCI 不提供亮度控制，`hwinfo_g0m.bin` 在 `firmware_en=1` 下被请求。
 
 ## 适配的当前系统
 
@@ -16,12 +16,12 @@
 | --- | --- |
 | 发行版 | Debian Trixie (13) 与 Gentoo。运行状态以 [status](docs/project/status.md) 为准 |
 | Debian 内核 | `6.12.111+deb13-amd64` |
-| Gentoo | 内核 `6.12.111-gentoo`（uname `6.12.111-gentoo-x86_64`）；overlay 部署 `tools/gentoo/overlay`；m-051 后加载 srcversion `D579486A64C340B5178B66B` |
+| Gentoo | 内核 `6.12.111-gentoo`（uname `6.12.111-gentoo-x86_64`）；overlay 部署 `tools/gentoo/overlay`；m-051 后加载 srcversion `D579486A64C340B5178B66B`；`firmware_en=0` |
 | CPU 平台 | Hygon x86_64 |
 | GPU | Innosilicon Fantasy II-M，PCI `1ec8:9810`，2 GiB VRAM（PowerVR DDK V119 RTM 谱系） |
 | 回退基线（历史交付） | `4.0.2-i3`：固定 epoch `1788796800`，SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；R14 接电/电池、无外屏/外屏 6/6 deep 通过；R16 起主线为 fantgpu 5.0.0-iN |
 | 最近失败候选 | `4.0.2-i1`：patch-024 + patch-026；R11 deep 恢复时温度 work 在 PVR 上电前触发 PowerLock/POWERED_OFF，已回退，仅供历史复现 |
-| Deepin suspend 历史交付 | `4.0.2-i3`：i2 + patch-029 DDCCI panel 创建恢复（继承 024/026/028），不含 display 025；DDCCI 无 backlight device，`hwinfo_g0m.bin` 缺失不阻断 R14 矩阵 |
+| Deepin suspend 历史交付 | `4.0.2-i3`：i2 + patch-029 DDCCI panel 创建恢复（继承 024/026/028），不含 display 025；当时 DDCCI 无 backlight device，`hwinfo_g0m.bin` 在 `firmware_en=1` 下被请求，不阻断 R14 矩阵 |
 | 历史已验证能力（适用版本见 [status](docs/project/status.md)，非当前 F 基线运行验收） | Vulkan 1.3.264 枚举及队列提交 / OpenCL 3.0 枚举及 kernel 读回 / GL 4.3 core + GLES 3.2 / VA-API H.264 Main + HEVC Main 实际硬解（30 帧 320x240 NV12 输出校验）/ DMA-BUF 同设备 PRIME self-import + invisible GEM READ/WRITE + vblank 守卫 / DRM+fbdev / 桌面硬件 GL / HDA 与 PipeWire 枚举 |
 
 ## 版本演进

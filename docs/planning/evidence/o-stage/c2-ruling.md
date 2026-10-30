@@ -1,3 +1,5 @@
+> 2026-10-30 R70：fantgpu 现行改为 `firmware_en=0`。下面是 2026-09-13 的定案原文，不改。当时写 1 是为了和 O 血统对齐。R70 实测这一行会请求包里没有的 `hwinfo_g0m.bin`。O 血统 postinst 仍写 `options innogpu firmware_en=1`。
+
 # C2 三方定案记录：fantgpu 模块 modprobe options
 
 - 文件：docs/planning/evidence/o-stage/c2-ruling.md

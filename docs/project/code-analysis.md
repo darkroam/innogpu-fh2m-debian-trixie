@@ -138,8 +138,9 @@ R15 对 6 个启动 journal（2026-09-02 11:50 至 2026-09-03 16:13）做了逐�
 
 - AMD-Vi southbridge IOAPIC、microcode vendor、SRSO 和 ACPI `_DOD/_DOS` 是系统/BIOS/CPU
   microcode 边界，不属于本仓库 GPU 驱动修复范围。
-- `hwinfo_g0m.bin` 缺失及 hwinfo register/DP-HDMI-VGA 默认降级是厂商固件载荷/驱动降级路径；
-  DDCCI 的 panel 可达性由 patch-029 处理，但不伪造 backlight device。
+- 当时把 `hwinfo_g0m.bin` 缺失及 hwinfo register/DP-HDMI-VGA 默认降级记成厂商固件载荷/驱动降级路径。
+  2026-10-30 R70：请求行的根因改为自配置 `firmware_en=1`。上面的 2026-09-03 现象保留。
+  DDCCI 的 panel 可达性由 patch-029 处理。Gentoo 现行在 `firmware_en=0` 下有 `panel_backlight`。
 - journal 的 debugfs 消息实际属于 `dmaengine`，不是用户 OCR 的 `drmengine`；AXI DMA 与
   PCIe DMA 的注册冲突属于厂商 DMA 驱动边界，patch-029 不涉及该路径。
 

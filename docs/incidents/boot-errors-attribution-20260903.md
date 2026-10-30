@@ -58,3 +58,7 @@ early-return；它不会消除启动时的 hwinfo 缺失消息，也不会注册
 
 R15 不新增补丁。现有证据足以将用户报告及 journal 中补充发现的 10 类启动
 告警全部归入 pre-existing；后续工作是厂商/平台报告和可验证固件来源调查。
+
+## 2026-10-30 订正
+
+上表的 hwinfo 请求行是当时 `firmware_en=1` 下的现象，表本身不改。`hwinfo_g0m.bin` 不是必需，只在这个值为 1 时被请求。按「厂商漏发这个文件」写的报告初稿作废。`dmaengine` 项不动。Gentoo 现行背光见 [gentoo.md](../user/gentoo.md)。

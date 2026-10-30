@@ -232,7 +232,7 @@ unassessable。跨树混装 unsupported/unassessable，默认采用同代完整 
 | fh2c.sh | `lib/firmware/innogpu/fh2c.sh` | `f2b0ead7…` | `lib/firmware/fantgpu/fh2m/fh2c.sh` | `f2b0ead7…` | **相同** |
 
 **hwinfo_g0m.bin**：**两包均不含**。D 日志中的加载请求失败是文件不存在的证据，
-不是文件存在的证据。hwinfo_g0m.bin 来源 unassessable。
+不是文件存在的证据。hwinfo_g0m.bin 来源 unassessable。R70：该文件不是必需，只在 `firmware_en=1` 时被请求。
 
 **结论**：固件拆为两个维度——
 1. GPU 固件载荷：两包均有 4 文件，安装路径不同（`innogpu/` vs `fantgpu/fh2m/`），

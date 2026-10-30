@@ -3,10 +3,9 @@
 #
 # 契约（validation-plan §〇 F1 自测行）：fake root fixture 以 lineage=fantgpu
 # 参数族生成假包名/模块名/sysfs/proc 路径 → 断言全部走 fantgpu 路径（用
-# innogpu 诱饵路径反向证明：firmware_en 两血统同口径期望 1（C2 终裁修订
-# write-options=1——O builder 写 options innogpu firmware_en=1 + 真机实测 1，
-# F postinst 同构写 options fantgpu firmware_en=1），诱饵=0，PASS 即证明读的
-# 是对应血统路径）；非法 lineage / 非法 fake root fail-closed。
+# 诱饵路径反向证明：fantgpu 期望 firmware_en=0，innogpu 期望 1。
+# 另一血统写成相反值。PASS 即证明读的是对应血统路径。
+# 非法 lineage / 非法 fake root fail-closed。
 # 退出码：0=全过 1=用例失败 2=环境错误。
 
 set -euo pipefail
@@ -60,8 +59,9 @@ make_fakeroot() {  # make_fakeroot <dir> <lineage-good: fantgpu|innogpu>
              "$root/sys/module/$other/parameters" \
              "$root/proc/driver/$good/gpu00" \
              "$root/dev/dri"
-    printf '1\n' > "$root/sys/module/$good/parameters/firmware_en"
-    printf '0\n' > "$root/sys/module/$other/parameters/firmware_en"
+    if [[ "$good" == "fantgpu" ]]; then good_en=0; other_en=1; else good_en=1; other_en=0; fi
+    printf '%s\n' "$good_en" > "$root/sys/module/$good/parameters/firmware_en"
+    printf '%s\n' "$other_en" > "$root/sys/module/$other/parameters/firmware_en"
     printf 'Driver Status: OK\nFirmware Status: OK\nServer Errors: 0\n' \
         > "$root/proc/driver/$good/gpu00/status"
     touch "$root/dev/dri/card0" "$root/dev/dri/renderD128"
@@ -80,7 +80,7 @@ run_baseline() {  # run_baseline <lineage> <expect_pkg> <fakeroot>
 }
 
 # t01 fantgpu lineage：模块/固件参数/proc/包版本全部走 fantgpu 路径
-# （firmware_en 期望 1 = C2 终裁修订 write-options；innogpu 诱饵=0 反证路径）
+# （firmware_en 期望 0；innogpu 诱饵=1 反证路径）
 make_fakeroot "$TMP/fk-fant" fantgpu
 run_baseline fantgpu 5.0.0-i2 "$TMP/fk-fant"
 if grep -Fq 'runtime_module_loaded=PASS' "$TMP/b.out" \
@@ -165,13 +165,12 @@ else
     bad t07 "lineage-aware lib path missing"
 fi
 
-# t08 负向（C2 终裁修订 strictness）：fantgpu 血统 firmware_en=0（漏写 options
-# 或残留声明默认值）→ module_param_firmware_en 必须 FAIL，不得放宽为 0/1 皆可
+# t08 负向：fantgpu 血统 firmware_en=1（自配置请求）必须 FAIL
 make_fakeroot "$TMP/fk-fen0" fantgpu
-printf '0\n' > "$TMP/fk-fen0/sys/module/fantgpu/parameters/firmware_en"
+printf '1\n' > "$TMP/fk-fen0/sys/module/fantgpu/parameters/firmware_en"
 run_baseline fantgpu 5.0.0-i2 "$TMP/fk-fen0"
 if grep -Fq 'runtime_module_param_firmware_en=FAIL' "$TMP/b.out" \
-   && grep -Fq 'C2 write-options expects 1' "$TMP/b.out"; then
+   && grep -Fq 'expects 0' "$TMP/b.out"; then
     ok t08
 else
     bad t08 "out=[$(grep 'runtime_module_param_firmware_en' "$TMP/b.out")]"

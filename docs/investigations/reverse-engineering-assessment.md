@@ -97,7 +97,7 @@
 | P1 | 视频编解码能力确认 | 部分达成 | VA-API profile/entrypoint 已实机枚举（H264/HEVC 解码 profile 存在，编码 entrypoint 缺失）；**H.264 Main 与 HEVC Main 实际码流硬解已实机 PASS**（30 帧 320x240 NV12 framemd5 输出校验，证据 baselines/runtime/runtime-results-20260824.txt）；H.264 High/Constrained Baseline、HEVC Main10 仅枚举未执行；编码符号在私有 codec 库，实机未验证 |
 | P1 | IFBC 验证 | 静态确认 | `libifbc.so` 函数存在；扫描路径是否启用未实机验证 |
 | P1 | DVFS/功耗实测 | 待执行 | `pvr_dvfs_device.c` 为源码；`BMC_GPU_FREQ/POWER/VOLTAGE` 符号可读 |
-| P2 | 未完成矩阵 | 待执行 | `hwinfo_g0m.bin` 影响、电源/合盖/拔屏/多屏矩阵、跨硬件验证（见 [status.md](../project/status.md)） |
+| P2 | 未完成矩阵 | 待执行 | `117`/`195` 查表残留（请求行已由 R70 解释）、电源/合盖/拔屏/多屏矩阵、跨硬件验证（见 [status.md](../project/status.md)） |
 
 ## 优化候选
 
