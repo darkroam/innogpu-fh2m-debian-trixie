@@ -86,7 +86,15 @@ sudo tools/debian/install-kernel-patches.sh --evidence .build/linux-patched-modu
 - `tools/debian/check-hygon-xhci-resume-fix.sh` 看 reset-on-resume 位。本机判据仍是两个控制器都是 `0x90`。
 
 R5 的 3 次 devices 加 1 次 normal deep 没有包含在本页。要跑须另获授权。不写 `pm_test`，不跑 watchdog。
-`hwinfo_g0m.bin` 只在 `firmware_en=1` 时被请求，不是必需。包内 `fantgpu.conf` 写 `firmware_en=0`。已经装过旧包的机器要等下次安装覆盖这行，再重启才离开 1。O 血统 `innogpu.conf` 仍是历史的 `firmware_en=1`。
+`hwinfo_g0m.bin` 只在 `firmware_en=1` 时被请求，不是必需。请求行根因是自配置 `firmware_en=1`，不是缺文件。包内 `fantgpu.conf` 写 `firmware_en=0`，注释一行、参数一行；modprobe 不剥行尾 `#`。已经装过旧包的机器要等下次安装覆盖这行，再重启才离开 1。背光随这行一起回来。O 血统 `innogpu.conf` 仍是历史的 `firmware_en=1`，本轮不改。封闭对象还可能打出 `hwinfo_get_val` 的 `117 not found` 和 `hwinfo_get_item` 的 `195 not found in memory`。这是查表，不是请求行，先记录。
+
+2026-10-31：Debian `6.12.111+deb13-amd64` 上 `firmware_en=0` 已启动。DKMS 把 `fantgpu.ko` 放进 initramfs，根文件系统挂载前就初始化。值为 0 时封闭对象仍报 hwinfo 完成，`m-030` 挡不住，`fh2m_hal_os_release_match()` 在 initramfs 里读发行文件失败后空指针崩溃。早载来自厂商钩子 `vendor/fantgpu/usr/share/initramfs-tools/hooks/fantgpu`，内容是 `manual_add_modules fantgpu`。已装源码在 `init_os_name()` 加了 `!firmware_en` 直接返回，没有挪原校验位置，也没有收成仓库 patch。重编后的现场 srcversion 是 `71E8B0D938D845DE8C1B136`。矩阵可复现身份仍是 `370AB248D72951EF3C0C4BB`。重启后请求行全 0，无驱动崩溃，`panel_backlight` 在。另有 1 条 `think_lmi/wmi` 平台 Call Trace，不是本驱动。`117 not found` 六次、`195 not found in memory` 一次仍在。这处改动还没进仓库补丁。`GRUB_DEFAULT` 仍是 `Gentoo`。
+
+重装这个 deb 会覆盖已装源码里的现场守卫。DKMS 随后按无守卫源码重编，早载加 `firmware_en=0` 可能再次崩溃。重装前先恢复守卫，或等守卫收成仓库补丁。
+
+2026-10-31 已用同一份守卫源码重编 101 与 107，并重建这两核的 initramfs。101 的磁盘模块与 initramfs 都是 `3F4865B566A457EAAB1093B`，107 的两边都是 `71E8B0D938D845DE8C1B136`。两核都没有重启验证。
+
+Gentoo 没撞上，是因为模块在 `extra/`，根文件系统挂载后才加载，发行文件已经可读。Gentoo 现场只剩 `fantgpu.ko`，没有可改的源码树，所以现在不加同一处守卫。以后若把 Gentoo 模块放进 initramfs，必须先加这处守卫再重编。
 
 ## 卸载
 

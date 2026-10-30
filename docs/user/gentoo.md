@@ -149,6 +149,7 @@ emerge 的回滚件在 `/var/lib/fantgpu/rollback/fantgpu.ko`，不放在 portag
 - 不跑 PM，不改 GRUB。
 - overlay 不装 `sw-inno-gl` 或 `sw-fant-gl`。本机没有这两份服务，与 Debian 现行包 `locked-reference` 不装是同一结果。
 - initramfs 不必重建。模块和固件都在根文件系统挂载之后加载。
+- 2026-10-31：Debian 的 `firmware_en=0` 崩溃只出现在 initramfs 提前加载时。Gentoo 现场只剩 `extra/fantgpu.ko`，没有可改源码树；当前不重编。若以后把本模块放进 initramfs，先在 `init_os_name()` 加 `!firmware_en` 守卫再编。
 - Xorg 用 21.1 即可。这台机器后来装了 mesa 26，glvnd 仍选 fh2m，因为
   `00_fh2m.json` 排在 mesa 前面，并且 `/etc/ld.so.conf.d/0-fantgpu-hwgl.conf`
   指向 `/opt/fantgpu-fh2m/lib`。

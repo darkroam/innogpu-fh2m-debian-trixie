@@ -36,7 +36,7 @@
           "note": "机型 workaround。换内核版本必须重适配，不得直接套用。"
         }
       },
-      "note": "001/002 已装在 updates/r52。003/004 未实装且实测不必要（触摸板 HYGO0010 正常、板载声卡 SN6180 出声正常）；005/006 不适用（符号已=y）。不补装。",
+      "note": "001/002 已装在 updates/r52。003/004 未实装且实测不必要（触摸板 HYGO0010 正常、板载声卡 SN6180 出声正常）；005/006 不适用（符号已=y）。不补装。firmware_en=0。仓库身份仍是 370AB248。现场 71E8B0D9 含未入库守卫，见 debian.md。请求行全 0，无驱动崩溃。117/195 查表仍在。",
       "install": [
         "tools/debian/build-driver.sh",
         "tools/debian/build-linux-patched-modules.sh",
