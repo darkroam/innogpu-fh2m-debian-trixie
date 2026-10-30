@@ -9,8 +9,8 @@
 
 | 项目 | 当前结论 | 证据 |
 | --- | --- | --- |
-| Debian 当前运行驱动 | **fantgpu 5.0.0-i12（干净候选，非发布）** 加未进入 i12 构建器的 `m-036-bf-shf-rename`，运行于 `6.12.111+deb13-amd64`。R49 的 3/3 devices + 1/1 normal deep 与用户裁决 R5 通过保持原边界。R51 三段已通过。R52 将 i12+m-036-bf-shf-rename、001 xHCI 与 002 battery 按 111 重建并验收，驱动栈 PASS | [R52 111 内核与驱动栈](#r52-111-内核与驱动栈2026-10-08) |
-| Debian 当前磁盘安装 | **fantgpu 5.0.0-i12**。仓库可复现身份仍是 `370AB248D72951EF3C0C4BB`。2026-10-31 现场 `firmware_en=0`，srcversion `71E8B0D938D845DE8C1B136`，含未入库守卫。请求行全 0，无驱动崩溃，`panel_backlight` 在。`117/195` 查表仍在。重装未带 m-036 的旧包会退回头文件 | [Debian 档案](../user/debian.md) |
+| Debian 当前运行驱动 | 当前实际内核是 `6.12.101+deb13-amd64`，加载现场守卫，srcversion `3F4865B566A457EAAB1093B`。`51EF2B9AEC2C29D01AFE76E` 尚未安装。111 行是历史验收记录，仓库身份 `370AB248D72951EF3C0C4BB`，不是当前运行 | [R52 111 内核与驱动栈](#r52-111-内核与驱动栈2026-10-08) |
+| Debian 当前磁盘安装 | 当前运行内核是 `6.12.101+deb13-amd64`，加载的是现场守卫，srcversion `3F4865B566A457EAAB1093B`。`51EF2B9AEC2C29D01AFE76E` 只是 Debian 101 的未安装构建身份。111 的仓库身份仍是 `370AB248D72951EF3C0C4BB`。`117/195` 查表仍单列 | [Debian 档案](../user/debian.md) |
 | Gentoo 当前运行 | 内核 `6.12.111-gentoo-x86_64`。加载模块是 i12 构建器树加构建器外的 `m-036-bf-shf-rename` 与 `m-051-hwinfo-connector-fallback`，srcversion `D579486A64C340B5178B66B`（2026-10-15 本机实读）。overlay 在 `tools/gentoo/overlay`。`firmware_en=0`。`hwinfo_g0m.bin` 只在值为 1 时被请求，非必需。温度行与 pll 行未出现，不是通过 | [Gentoo 档案](../user/gentoo.md)、[脚本索引](../../tools/README.md) |
 | 回退基线 | `4.0.2-i3`（deepin 血缘最终交付）：R14 6/6 deep 矩阵通过；包 SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；回滚卡见 r5dpm2 设计 §8，执行须另行授权 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md)、[回滚卡](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
 | 当前主线目标 | `5.0.0-i12`（annotated tag `fantgpu-5.0.0-i12` 指向 `079b179`）；R5 已通过。validation-results `signed=true`：R1=fail 且 hwinfo 豁免不改判，R2=pass，R5=pass，U1/U2/R9=unverified 且 closed。C2 i12 三方已署名。件内 `tag_created=false` 不改。`license_release_gate=BLOCKED`。不建 Release、不传附件 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01)、[030 映射表](../planning/030-mapping-table.md) |

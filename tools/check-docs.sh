@@ -450,6 +450,28 @@ def applied_redirects(blob):
             found.append(ident)
     return found
 
+def fant_branches(blob):
+    if not blob:
+        return ""
+    lines = blob.splitlines(keepends=True)
+    chunks = []
+    depth = 0
+    for line in lines:
+        stripped = line.strip()
+        if depth == 0:
+            if stripped.startswith('if [[ "$FANT_LINEAGE" == 1 ]]; then'):
+                depth = 1
+            continue
+        if stripped.startswith("if ") or stripped.startswith("if\t"):
+            depth += 1
+        if stripped == "fi" or stripped.startswith("fi ") or stripped.startswith("fi;"):
+            depth -= 1
+            if depth == 0:
+                continue
+        if depth > 0:
+            chunks.append(line)
+    return "".join(chunks)
+
 def bash_function(blob, name):
     match = re.search(r"(?m)^%s\(\) \{" % re.escape(name), blob or "")
     if not match:
@@ -471,13 +493,18 @@ def load_builders():
     except OSError:
         derive_text = None
     try:
+        builder_text = Path("tools/debian/build-driver.sh").read_text(encoding="utf-8")
+    except OSError:
+        builder_text = None
+    try:
         lib_text = Path("tools/gentoo/fh2m-lib.sh").read_text(encoding="utf-8")
     except OSError:
         lib_text = None
     derive_ids = applied_redirects(derive_text) if derive_text is not None else None
     body = bash_function(lib_text, "cmd_build") if lib_text is not None else None
     cmd_ids = applied_redirects(body) if body is not None else None
-    return derive_ids, cmd_ids, derive_text is not None and I12_TREE in derive_text
+    package_ids = applied_redirects(fant_branches(builder_text)) if builder_text is not None else None
+    return derive_ids, cmd_ids, package_ids, derive_text is not None and I12_TREE in derive_text
 
 def split_base(row):
     true, false, bad = [], [], []
@@ -504,7 +531,7 @@ def builder_error(row, missing, extra, flag, tree_ok):
         % (row.get("system"), row.get("kernel"), join_ids(missing), join_ids(extra), join_ids(flag), "ok" if tree_ok else "missing")
     )
 
-derive_applied, cmd_applied, tree_literal_ok = load_builders()
+derive_applied, cmd_applied, debian_applied, tree_literal_ok = load_builders()
 
 def check_debian_builder(row):
     missing, extra, flag = [], [], []
@@ -525,7 +552,21 @@ def check_debian_builder(row):
                 flag.append(ident)
             else:
                 extra.append(ident)
-        flag.extend(ident for ident in false if ident in derive_applied)
+        applied = []
+        for ident in derive_applied + (debian_applied or []):
+            if ident not in applied:
+                applied.append(ident)
+        for ident in false:
+            if ident not in applied:
+                missing.append(ident)
+        for ident in debian_applied or []:
+            if ident in false or ident == DERIVE_PATCH:
+                continue
+            if ident in true:
+                flag.append(ident)
+            else:
+                extra.append(ident)
+        flag.extend(ident for ident in false if ident in derive_applied and ident != DERIVE_PATCH)
         flag.extend(bad)
         extra.extend(row.get("g_set") or [])
     builder_error(row, missing, extra, flag, tree_literal_ok)
@@ -595,17 +636,16 @@ for table in ("current", "in_progress"):
             errors.append("duplicate system+kernel %s %s" % key)
         seen[key] = table
 
-for index, row in enumerate(doc.get("current") or []):
-    where = "current[%d]" % index
-    if row.get("acceptance") != "accepted":
+def check_row_body(row, where, require_accepted):
+    if require_accepted and row.get("acceptance") != "accepted":
         errors.append(where + " acceptance must be accepted")
     if not isinstance(row.get("m_base"), list) or not isinstance(row.get("g_set"), list):
         errors.append(where + " m_base and g_set must be lists")
-        continue
+        return
     for item in row["m_base"]:
         if not isinstance(item, dict):
             errors.append(where + " m_base entry must be an object")
-            continue
+            return
         check_meta(item, row.get("kernel"), where)
     for ident in row["g_set"]:
         check_meta({"id": ident}, row.get("kernel"), where)
@@ -633,6 +673,14 @@ for index, row in enumerate(doc.get("current") or []):
     if not identity.get("tree_hash") or not identity.get("srcversion"):
         errors.append(where + " build identity incomplete")
     check_builder_row(row)
+
+for index, row in enumerate(doc.get("current") or []):
+    check_row_body(row, "current[%d]" % index, True)
+
+for index, row in enumerate(doc.get("in_progress") or []):
+    if row.get("m_base") is None:
+        continue
+    check_row_body(row, "in_progress[%d]" % index, False)
 
 by_in = {}
 for row in doc.get("current") or []:

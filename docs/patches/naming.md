@@ -8,7 +8,7 @@ D 线 `patches/001`–`029` 不改名。历史文件里的 `030-NNN` 是当时�
 
 | 类 | 数量 | 说明 |
 |---|---|---|
-| m | 21 | 18 链 + `m-035-private-accessor` + `m-036-bf-shf-rename` + `m-051-hwinfo-connector-fallback` |
+| m | 22 | 18 链 + `m-035-private-accessor` + `m-036-bf-shf-rename` + `m-051-hwinfo-connector-fallback` + `m-052-firmware-en-early-guard` |
 | g | 14 | `g-037`–`g-050`。本提交入库。入库不等于升格：仍标 g，字节不变，不进 i12 构建器 |
 | D | 18 | `patches/001`–`029`，不改名 |
 | 未入库 | 0 | 原 14 对 `030-037`–`050` 随本提交改名入库。变更理由是编号规范统一，不是把胶水升成主线 |
@@ -54,6 +54,7 @@ D 线 `patches/001`–`029` 不改名。历史文件里的 `030-NNN` 是当时�
 | `030-049` | `g-049-shipped-obj-copy` |
 | `030-050` | `g-050-fb-helper-alloc` |
 | `030-051` | `m-051-hwinfo-connector-fallback` |
+| 无旧名 | `m-052-firmware-en-early-guard` |
 
 ## 系统×内核矩阵
 

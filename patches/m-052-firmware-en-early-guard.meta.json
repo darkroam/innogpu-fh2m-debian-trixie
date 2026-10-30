@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.0",
+  "id": "m-052-firmware-en-early-guard",
+  "applicability": [
+    "6.12.101+deb13-amd64",
+    "6.12.107+deb13-amd64",
+    "6.12.111+deb13-amd64",
+    "6.12.111-gentoo-x86_64"
+  ],
+  "ledger_ref": {
+    "item": "052",
+    "neutral_record": "F-R67-firmware-en-early-guard",
+    "mapping": "collab/R67-2026-10-20-仓库四件收口批/qoder-review-m052.md",
+    "description": "skip the closed OS matcher when firmware_en=0"
+  },
+  "deepin_patch": {
+    "path": "patches/m-052-firmware-en-early-guard.patch",
+    "sha256": "fe1acee1edd5df8626650db6d7edec75a2bda8e77e75ff388486b7946c2fe0bb",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "i6 snapshot audio file; m-030 already present",
+      "sha256": "not-a-snapshot-file"
+    },
+    "tree_hash": "not-rehashed-whole-tree",
+    "chain_base": {
+      "id": "m-030",
+      "after_file_sha256": "f08d9a31a158a7d7b902374c249516d3ee5bce1f64f522f143be257490365b7f"
+    }
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "firmware-en-zero-skips-closed-matcher",
+      "summary": "firmware_en=0 still reports hwinfo finished, so m-030 does not stop init_os_name. The closed matcher then reads the OS release file. Debian's vendor initramfs hook loads fantgpu before root is mounted, and that read crashes. This patch returns DMA_POINTER_NORMAL before the matcher when firmware_en is 0. It does not move the existing hwinfo check. When firmware_en=0 and the OS would match NFSDesktop or SeewoOs, the mode is NORMAL instead of DMAIRQ or HWTIMER. The project default is 0 and the targets are Debian and Gentoo, so that difference is accepted and recorded. The closed object body, including the bad-pointer path, was not reviewed line by line. The basis is the live crash chain and three Debian kernels booting after the same guard."
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "Edit in the existing vendor Dual MIT/GPLv2 audio file; no new dependency, binary or third-party code."
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "post-m-030-not-i12-builder",
+      "summary": "Parent file already contains m-030. m-052 is not inserted into derive_fantgpu_source. Debian applies it to the packaged DKMS tree after derive. Gentoo applies it after m-051."
+    },
+    "o_stage_adaptation": {
+      "status": "reviewed",
+      "verdict": "f-only-guard",
+      "summary": "No Deepin behavior change. m-030 bytes are unchanged."
+    },
+    "adjacent_code": {
+      "status": "reviewed",
+      "verdict": "single-file",
+      "summary": "Only fantsrvkm/fantaudio_drv.c. firmware_en remains declared in fantgpu_pci_drv.c."
+    }
+  },
+  "apply": {
+    "file_before_sha256": "f08d9a31a158a7d7b902374c249516d3ee5bce1f64f522f143be257490365b7f",
+    "file_after_sha256": "6a42dc5cf0e45209210ba44fc88b40c29f3f2211060d65d49637d9d316c8a642",
+    "patch_sha256": "fe1acee1edd5df8626650db6d7edec75a2bda8e77e75ff388486b7946c2fe0bb",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <TREE> < patches/m-052-firmware-en-early-guard.patch",
+    "result": "One file. Strict replay on the i6 audio file passes and reverse restores f08d9a31. No .orig or .rej. Whole-tree hash is recorded after the clean builds.",
+    "after_tree_hash": "7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243",
+    "before_tree_hash": "b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00"
+  },
+  "rollback": {
+    "command": "patch --batch --reverse --fuzz=0 --no-backup-if-mismatch -p1 -d <TREE> < patches/m-052-firmware-en-early-guard.patch",
+    "target": "file sha256 f08d9a31a158a7d7b902374c249516d3ee5bce1f64f522f143be257490365b7f"
+  },
+  "status": "pass",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "strict -p1 --fuzz=0 on the i6 audio file",
+        "scope is only fantsrvkm/fantaudio_drv.c",
+        "m-030 patch bytes unchanged",
+        "firmware_en=0 returns before fh2m_hal_os_release_match",
+        "derive_fantgpu_source does not reference m-052"
+      ]
+    },
+    "clean_build": {
+      "status": "pass",
+      "source_tree_hash": "7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243",
+      "kernel": "6.12.101+deb13-amd64",
+      "srcversion": "51EF2B9AEC2C29D01AFE76E",
+      "evidence": ".build/work/m052-srcversion/run1 and run2; official builder .build/work/driver-build/m052-official.log",
+      "checks": [
+        "two clean builds on 6.12.101+deb13-amd64, both exit 0",
+        "both srcversion 51EF2B9AEC2C29D01AFE76E",
+        "before tree b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00",
+        "after tree 7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243",
+        "ko bytes differ in .rodata.str1.8 (366519 bytes, build paths), .note.gnu.build-id, .rela.debug_info (38637432 bytes, section [82] in both builds), and .debug_line_str",
+        "path-only normalization does not make the two ko files equal",
+        "shipped ABI size=140536 members=115 pvr_resume_count offset=140528",
+        "this identity is Debian 101 only and is not installed",
+        "official builder staging_dkms_build=PASS builder_firmware_en_guard=PASS",
+        "deb sha256 dccfce24e43efb221ead2e145b0ea20738f9562120d6221c66af9358ee28d6f8",
+        "packaged fantaudio_drv.c contains !firmware_en",
+        "Gentoo chain is wired and has not been built"
+      ]
+    },
+    "runtime": {
+      "status": "recorded-field-guard",
+      "checks": [
+        "field guard booted 111 e623c081 srcversion 71E8B0D938D845DE8C1B136",
+        "field guard booted 107 344f5c63 srcversion 71E8B0D938D845DE8C1B136",
+        "field guard booted 101 e74efa78 srcversion 3F4865B566A457EAAB1093B",
+        "those srcversions are not this repository identity",
+        "request lines, BUG and Oops were 0; 117 six times and 195 once remain separate"
+      ]
+    }
+  }
+}

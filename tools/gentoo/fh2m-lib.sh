@@ -1,5 +1,5 @@
 #!/bin/bash
-# Gentoo fallback for the i12 + m-036-bf-shf-rename + m-051-hwinfo-connector-fallback module. The Debian builder stays a deb builder.
+# Gentoo fallback for i12 plus m-036, m-051 and m-052. m-052 is also in the Debian package source, not in derive.
 set -euo pipefail
 umask 022
 
@@ -63,7 +63,7 @@ PY
 
 need_repo() {
     [[ -f $SNAP ]] || die "missing i6 snapshot"
-    [[ -f $ROOT/patches/m-035-private-accessor.patch && -f $ROOT/patches/m-036-bf-shf-rename.patch && -f $ROOT/patches/m-051-hwinfo-connector-fallback.patch ]] || die "missing m-035, m-036 or m-051"
+    [[ -f $ROOT/patches/m-035-private-accessor.patch && -f $ROOT/patches/m-036-bf-shf-rename.patch && -f $ROOT/patches/m-051-hwinfo-connector-fallback.patch && -f $ROOT/patches/m-052-firmware-en-early-guard.patch ]] || die "missing m-035, m-036, m-051 or m-052"
     [[ -f $ROOT/tools/internal/derive-fantgpu-source.sh ]] || die "derive source missing"
 }
 
@@ -106,6 +106,9 @@ cmd_build() {
     patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
         < "$ROOT/patches/m-051-hwinfo-connector-fallback.patch"
     [[ $(tree_hash "$src") == "$TREE_M051" ]] || die "m-051 tree hash mismatch"
+    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
+        < "$ROOT/patches/m-052-firmware-en-early-guard.patch"
+    grep -Fq '!firmware_en' "$src/fantsrvkm/fantaudio_drv.c" || die "firmware_en guard missing"
     make -C "$src" KERNELDIR="$KERNELDIR"
     [[ -f $src/fantgpu.ko ]] || die "make produced no fantgpu.ko"
     install -m 0644 "$src/fantgpu.ko" "$WORK/fantgpu.ko"

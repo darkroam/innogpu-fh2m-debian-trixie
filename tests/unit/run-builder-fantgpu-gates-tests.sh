@@ -182,6 +182,15 @@ else
     bad t16 "fallback guard/normal-return/matcher ordering is not fail-safe"
 fi
 
+# t16b m-052 is outside derive, and the packaged source must contain the guard.
+if ! grep -Fq 'm-052-firmware-en-early-guard.patch' "$ROOT/tools/internal/derive-fantgpu-source.sh" \
+   && grep -Fq 'm-052-firmware-en-early-guard.patch' "$BUILDER" \
+   && grep -Fq "'!firmware_en'" "$BUILDER"; then
+    ok t16b
+else
+    bad t16b "m-052 wiring or packaged !firmware_en assertion missing"
+fi
+
 # t17 入链印证：锁定的 O_stage 快照必须已含 030-034——reverse dry-run 成功
 # 证明补丁已随链入树且可干净反转（正向 dry-run 必然失败：已应用）。
 PATCH_TREE="$TMP/patch-tree"

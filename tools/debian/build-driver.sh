@@ -204,6 +204,12 @@ PY
     rm -rf "$STAGE/source"
     mv "$STAGE/source.tree" "$STAGE/source"
     derive_fantgpu_source "$STAGE/source"
+    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$STAGE/source" -p1 \
+        < "$ROOT/patches/m-036-bf-shf-rename.patch"
+    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$STAGE/source" -p1 \
+        < "$ROOT/patches/m-051-hwinfo-connector-fallback.patch"
+    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$STAGE/source" -p1 \
+        < "$ROOT/patches/m-052-firmware-en-early-guard.patch"
 	APPLIED_SOURCE_FIXES="o-stage-materialized-030-chain-18 (incl. 030-030 audio fallback, 030-031 PM markers, 030-032 PM probe, 030-033 shipped-object ABI correction and 030-034 diagnostic stop-stage; patch-000 no-transform)"
     APPLIED_SOURCE_FIXES+=" i8-cfg-detect-output-order i9-drm-fb-info-ownership i10-input-failure-cleanup i11-vpu-timer-contract 030-035-private-accessor"
     echo "staging_deterministic_transform=PASS (no-transform: fantgpu objects used as-is)"
@@ -302,6 +308,15 @@ if [[ "$FANT_LINEAGE" == 1 ]]; then
     echo "builder_materialize_trace=PASS trace_entries=$trace_rows"
     echo "builder_materialize_trace_scope=i6-parent-before-i12-derivation"
     derive_fantgpu_source "$P/usr/src/$DKMS_SRC_NAME"
+    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$P/usr/src/$DKMS_SRC_NAME" -p1 \
+        < "$ROOT/patches/m-036-bf-shf-rename.patch"
+    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$P/usr/src/$DKMS_SRC_NAME" -p1 \
+        < "$ROOT/patches/m-051-hwinfo-connector-fallback.patch"
+    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$P/usr/src/$DKMS_SRC_NAME" -p1 \
+        < "$ROOT/patches/m-052-firmware-en-early-guard.patch"
+    grep -Fq '!firmware_en' "$P/usr/src/$DKMS_SRC_NAME/fantsrvkm/fantaudio_drv.c" \
+        || { echo "builder_firmware_en_guard=FAIL"; exit 1; }
+    echo "builder_firmware_en_guard=PASS"
 else
     while IFS= read -r vp; do
         case "$vp" in

@@ -23,6 +23,8 @@
 
 `m-051-hwinfo-connector-fallback` 接在 `m-036-bf-shf-rename` 树 `0eda30cd` 之后，只收敛 `fantdpu_connector.c` 的 hwinfo 回退。无固件时 HDMI 仍用表项 0，本机 DP0 内屏仍用 index 9。不进入 i12 构建器，不合并 modeset。见 [m-051-hwinfo-connector-fallback](m-051-hwinfo-fallback.md)。
 
+`m-052-firmware-en-early-guard` 不改 m-030 字节。`firmware_en=0` 时在进入封闭 OS matcher 前返回。见 [m-052-firmware-en-early-guard](m-052-firmware-en-early-guard.md)。
+
 **以下分类为 Deepin 补丁与组件的历史记录，计数不含 030 链**：
 
 - `patches/*.patch`（18 个源码 diff：001–009、023–029，以及显示恢复候选

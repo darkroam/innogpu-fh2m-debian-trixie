@@ -21,6 +21,11 @@
           "in_i12_builder": false,
           "tree_hash": "0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce",
           "meta_kernel": "6.12.111+deb13-amd64"
+        },
+        {
+          "id": "m-051-hwinfo-connector-fallback",
+          "in_i12_builder": false,
+          "tree_hash": "b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00"
         }
       ],
       "g_set": [],
@@ -36,9 +41,8 @@
           "note": "机型 workaround。换内核版本必须重适配，不得直接套用。"
         }
       },
-      "note": "001/002 已装在 updates/r52。003/004 未实装且实测不必要（触摸板 HYGO0010 正常、板载声卡 SN6180 出声正常）；005/006 不适用（符号已=y）。不补装。firmware_en=0。仓库身份仍是 370AB248。现场 71E8B0D9 含未入库守卫，见 debian.md。请求行全 0，无驱动崩溃。117/195 查表仍在。",
+      "note": "001/002 已装在 updates/r52。003/004 未实装且实测不必要（触摸板 HYGO0010 正常、板载声卡 SN6180 出声正常）；005/006 不适用（符号已=y）。不补装。firmware_en=0。本行身份仍是 370AB248。m-052 的 Debian 101 构建身份在 in_progress，不能顶替本行。现场 71E8B0D9 是未入库守卫。117/195 查表仍单列。 111 的 current 安装入口不再指向现已打 m-052 的 deb 构建器；那个构建器由 Debian 101 的 in_progress 行核对。",
       "install": [
-        "tools/debian/build-driver.sh",
         "tools/debian/build-linux-patched-modules.sh",
         "tools/debian/install-kernel-patches.sh"
       ],
@@ -85,6 +89,11 @@
           "in_i12_builder": false,
           "tree_hash": "b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00",
           "meta_kernel": "6.12.111-gentoo-x86_64"
+        },
+        {
+          "id": "m-052-firmware-en-early-guard",
+          "in_i12_builder": false,
+          "tree_hash": "7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243"
         }
       ],
       "g_set": [],
@@ -133,7 +142,7 @@
       "rollback": [
         "tools/gentoo/rollback.sh"
       ],
-      "note": "内核补丁没有单独回滚脚本。按 docs/user/gentoo.md 用 --fuzz=0 -R 卸回。firmware_en=0。hwinfo_g0m.bin 只在值为 1 时被请求，非必需。",
+      "note": "内核补丁没有单独回滚脚本。按 docs/user/gentoo.md 用 --fuzz=0 -R 卸回。firmware_en=0。hwinfo_g0m.bin 只在值为 1 时被请求，非必需。m-052 已接到构建链，Gentoo 尚未构建。现场身份仍是 D579486A，不用 Debian 101 的 51EF 顶替。",
       "version_revision": {
         "package": "5.0.0_p12",
         "iN": "i12",
@@ -157,6 +166,88 @@
         "patches_applied": [],
         "pending": [
           "封存对象 2284 处 %gs:0x28 与 6.18 无条件 guard-symbol 不兼容（硬阻断）"
+        ]
+      }
+    },
+    {
+      "system": "debian",
+      "kernel": "6.12.101+deb13-amd64",
+      "acceptance": "pending",
+      "m_base": [
+        {
+          "id": "i12-builder-through-m-035",
+          "in_i12_builder": true,
+          "tree_hash": "9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee"
+        },
+        {
+          "id": "m-036-bf-shf-rename",
+          "in_i12_builder": false,
+          "tree_hash": "0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce",
+          "meta_kernel": "6.12.111+deb13-amd64"
+        },
+        {
+          "id": "m-051-hwinfo-connector-fallback",
+          "in_i12_builder": false,
+          "tree_hash": "b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00"
+        },
+        {
+          "id": "m-052-firmware-en-early-guard",
+          "in_i12_builder": false,
+          "tree_hash": "7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243",
+          "meta_kernel": "6.12.101+deb13-amd64"
+        }
+      ],
+      "g_set": [],
+      "linux_patches": {
+        "001-hygon-148c-xhci-reset-on-resume": {
+          "state": "applied",
+          "sha256": "299eb3f3d688a48518278c1ac5c6e97be89c8cc8f2c50bdcbfc4881bd47a5614",
+          "note": "按 111 源码重编。验收 quirks=0x90。禁止复用其他内核的模块。"
+        },
+        "002-kaitian-x7h-battery-notification-delay": {
+          "state": "applied",
+          "sha256": "d7d6740eaab078eeaa40d87306c4d77fc61436f50ef31061416f0d1689899e1a",
+          "note": "机型 workaround。换内核版本必须重适配，不得直接套用。"
+        }
+      },
+      "note": "m-052 已接线。两次干净构建 srcversion 51EF2B9AEC2C29D01AFE76E，树 7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243。模块未安装。当前运行仍是现场守卫 3F4865B566A457EAAB1093B。这个身份不顶替 111 或 Gentoo。 官方 builder：staging_dkms_build=PASS，builder_firmware_en_guard=PASS，deb sha256 dccfce24e43efb221ead2e145b0ea20738f9562120d6221c66af9358ee28d6f8。",
+      "install": [
+        "tools/debian/build-driver.sh",
+        "tools/debian/build-linux-patched-modules.sh",
+        "tools/debian/install-kernel-patches.sh"
+      ],
+      "commands": [
+        "dpkg -i"
+      ],
+      "verify": [
+        "tools/debian/verify.sh",
+        "tools/debian/check-fantgpu-runtime-health.sh",
+        "tools/debian/check-hygon-xhci-resume-fix.sh"
+      ],
+      "rollback": [
+        "tools/debian/uninstall-innogpu.sh",
+        "tools/debian/rollback-linux-patched-modules.sh"
+      ],
+      "version_revision": {
+        "package": "5.0.0-i12",
+        "iN": "i12",
+        "note": "101 构建身份，不是新 iN"
+      },
+      "build_identity": {
+        "tree_hash": "7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243",
+        "srcversion": "51EF2B9AEC2C29D01AFE76E"
+      },
+      "install_doc": "docs/user/debian.md",
+      "stage": "built-not-installed",
+      "next": "安装和重启另批。",
+      "breakpoint": {
+        "ko_status": "built-not-installed",
+        "patches_applied": [
+          "m-052-firmware-en-early-guard"
+        ],
+        "pending": [
+          "not installed",
+          "running module is 3F4865B566A457EAAB1093B"
         ]
       }
     }

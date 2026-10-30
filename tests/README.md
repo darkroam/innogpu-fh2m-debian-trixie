@@ -136,6 +136,7 @@ bash tests/unit/run-m-032-pm-probe-tests.sh
 bash tests/unit/run-m-033-shipped-abi-tests.sh
 bash tests/unit/run-m-034-stop-stage-tests.sh
 bash tests/unit/run-m-036-bf-shf-rename-tests.sh
+bash tests/unit/run-m-052-firmware-en-early-guard-tests.sh
 bash tests/unit/run-fantgpu-pm-probe-removal-tests.sh
 bash tests/unit/run-p2-normalize-tests.sh
 bash tests/unit/run-r16-gate-tests.sh
@@ -185,6 +186,7 @@ bash tests/unit/run-hygon-xhci-resume-fix-tests.sh
   不进入 PM；真实恢复仍须监督测试及完整健康门；
 - m-036-bf-shf-rename 只在锁定 i6 快照上回放与 i12 相同的 `fant_math.h`：三处私有宏改名、原移位表达式、
   禁止 undef/ifndef、反向恢复 i6 树，并确认 i12 构建器未引用本补丁、终树门未改；不编译、不安装、不触发 PM；
+- m-052-firmware-en-early-guard 在已含 m-030 的音频文件上回放 `!firmware_en` 守卫，确认它在封闭 matcher 之前返回，并确认派生函数不引用它、构建器与 Gentoo 链引用它；不编译、不安装、不触发 PM；
 - PM 探针发布移除 fixture 门禁覆盖发布源码、snapshot/manifest、builder 树、DKMS 树、模块字符串与
   deb 解包载荷；任一层残留诊断符号、确认 token 或状态字段即失败关闭；
 - 许可证审计测试覆盖当前逐文件 inventory 一致性、发布门禁保持 BLOCKED、确定性重建、

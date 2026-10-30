@@ -117,6 +117,7 @@ docs/patches/README.md
 docs/patches/m-035-private-accessor.md
 docs/patches/m-036-bf-shf-rename.md
 docs/patches/m-051-hwinfo-fallback.md
+docs/patches/m-052-firmware-en-early-guard.md
 docs/patches/naming.md
 docs/patches/patch-000-skip-first-gpupll.md
 docs/patches/patch-001-kernel-6.12.md
@@ -329,6 +330,8 @@ patches/m-036-bf-shf-rename.meta.json
 patches/m-036-bf-shf-rename.patch
 patches/m-051-hwinfo-connector-fallback.meta.json
 patches/m-051-hwinfo-connector-fallback.patch
+patches/m-052-firmware-en-early-guard.meta.json
+patches/m-052-firmware-en-early-guard.patch
 tests/README.md
 tests/fbterm/run-static-tests.sh
 tests/linux/run-battery-delay-static-tests.sh
@@ -369,6 +372,7 @@ tests/unit/run-m-034-stop-stage-tests.sh
 tests/unit/run-m-035-private-accessor-tests.sh
 tests/unit/run-m-036-bf-shf-rename-tests.sh
 tests/unit/run-m-051-hwinfo-fallback-tests.sh
+tests/unit/run-m-052-firmware-en-early-guard-tests.sh
 tests/unit/run-materialize-fantgpu-payload-tests.sh
 tests/unit/run-o-stage-materialize-tests.sh
 tests/unit/run-o4-f0-lock-tests.sh
