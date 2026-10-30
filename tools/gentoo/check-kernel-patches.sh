@@ -19,7 +19,7 @@ declare -A expect=(
     [002-kaitian-x7h-battery-notification-delay.patch]=d7d6740eaab078eeaa40d87306c4d77fc61436f50ef31061416f0d1689899e1a
     [003-pinctrl-amd-hygon-gpio.patch]=2f6676f38175a709bb71488de5caa7e8490bf75e17d3a4e21c2b0f4b286ced0e
     [004-snd-hda-hygon-14c9.patch]=08dc3079d5b6d8d698afe321b957ae17ec410f269ab379ab1673c67e1891a229
-    [005-drm-display-hdmi-helper-prompt.patch]=f2a8ad5f767177d6ffae02ba048dd8b9f9df1424f29ea8ddab27c91f65a581af
+    [005-drm-display-hdmi-helper-prompt.patch]=dcb49a6ab33bbb0ee0f5efdd23d0ab3d76bf338f012aab8ac2c79f5a311851ff
     [006-vmap-pfn-prompt.patch]=ff129b4a9b04b48b76f78bb6e91707b9010a9db63c26820d4c350ea3bc1e4544
 )
 sha256() { sha256sum "$1" | awk '{print $1}'; }

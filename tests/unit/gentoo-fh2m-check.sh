@@ -18,6 +18,10 @@ out=$(mktemp)
 trap 'rm -rf "$work" "$fix" "$out"' EXIT
 DESTDIR=$work/dest "$root/tools/gentoo/install-kernel-patches.sh" >"$out"
 grep -q 'installed=12 skipped=0' "$out"
+GENTOO_SOURCES_PV=6.18.57 DESTDIR=$work/dest "$root/tools/gentoo/install-kernel-patches.sh" >"$out"
+grep -q 'installed=2 skipped=12' "$out"
+cmp "$work/dest/etc/portage/patches/sys-kernel/gentoo-sources-6.18.57/004-snd-hda-hygon-14c9.patch"     "$root/components/linux/6.18/004-snd-hda-hygon-14c9.patch"
+cmp "$work/dest/etc/portage/patches/sys-kernel/gentoo-sources/004-snd-hda-hygon-14c9.patch"     "$root/components/linux/004-snd-hda-hygon-14c9.patch"
 before=$(sha256sum "$work/dest/etc/portage/patches/sys-kernel/gentoo-sources/001-hygon-148c-xhci-reset-on-resume.patch")
 DESTDIR=$work/dest "$root/tools/gentoo/install-kernel-patches.sh" >"$out"
 grep -q 'installed=0 skipped=12' "$out"

@@ -66,4 +66,27 @@ for pkg in gentoo-sources gentoo-kernel; do
         installed=$((installed + 1))
     done
 done
+
+pv=${GENTOO_SOURCES_PV:-}
+if [[ -n $pv ]]; then
+    over=$ROOT/components/linux/6.18/004-snd-hda-hygon-14c9.patch
+    [[ -f $over ]] || { echo "gentoo_kernel_patches=FAIL missing 6.18 004" >&2; exit 1; }
+    for pkg in gentoo-sources gentoo-kernel; do
+        dest=$base/$pkg-$pv/004-snd-hda-hygon-14c9.patch
+        if [[ -f $dest ]] && [[ $(sha256 "$dest") != $(sha256 "$over") ]]; then
+            echo "gentoo_kernel_patches=FAIL sha differs $pkg-$pv/004-snd-hda-hygon-14c9.patch" >&2
+            exit 1
+        fi
+    done
+    for pkg in gentoo-sources gentoo-kernel; do
+        dest=$base/$pkg-$pv/004-snd-hda-hygon-14c9.patch
+        mkdir -p "${dest%/*}"
+        if [[ -f $dest ]]; then
+            skipped=$((skipped + 1))
+            continue
+        fi
+        install -m 0644 "$over" "$dest"
+        installed=$((installed + 1))
+    done
+fi
 echo "gentoo_kernel_patches=INSTALLED installed=$installed skipped=$skipped dest=$base"

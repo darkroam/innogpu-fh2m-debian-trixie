@@ -90,7 +90,7 @@ SOFTWARE.
   为板载声卡 **1d94:14c9** 增加 `AZX_DRIVER_GENERIC`。该文件声明
   `SPDX-License-Identifier: GPL-2.0-or-later`；本仓库补丁按 **GPL-2.0-only** 分发，全文见
   `LICENSES/GPL-2.0-only.txt`。6.18 的控制器源码已搬到 `sound/hda/controllers/intel.c`，
-  本补丁不能直接套用。
+  本补丁不能直接套用。6.18 的同名覆盖是 `components/linux/6.18/004-snd-hda-hygon-14c9.patch`，插在兆芯 HDMI ID 与龙芯条目之间，同样只加 `1d94:14c9`，按 **GPL-2.0-only** 分发。
 - `components/picom/001-probe-explicit-uniform-location.patch`：修改 **picom（固定 commit
   `6d676824c457a933c52e3e92c5a1856466f90545`，https://github.com/yshui/picom ）** 的
   `src/backend/gl/gl_common.c`。该目标文件声明 `SPDX-License-Identifier: MPL-2.0` 与

@@ -23,7 +23,7 @@ HDMI 音频，板载扬声器、耳机和麦克风都不出现。
 SHA-256 为 `08dc3079d5b6d8d698afe321b957ae17ec410f269ab379ab1673c67e1891a229`。
 
 6.18 不能套用这份补丁。控制器源码改到了 `sound/hda/controllers/intel.c`，而且兆芯
-`0x3288` 和龙芯条目之间多了几条 HDMI ID。要支持 6.18 必须按那棵树重做 hunk。
+`0x3288` 和龙芯条目之间多了几条 HDMI ID。要支持 6.18 必须按那棵树重做 hunk。重做的文件是 `components/linux/6.18/004-snd-hda-hygon-14c9.patch`，不替换这份 6.12 补丁。
 
 ## 本机观察（2026-10-12，boot `0add59db-b33f-450a-9c07-efee7df6bef6`）
 
