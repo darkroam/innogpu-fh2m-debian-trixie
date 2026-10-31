@@ -214,4 +214,27 @@ cp "$fixture/matrix.before" docs/patches/system-kernel-matrix.json
 cp "$fixture/derive.before" tools/internal/derive-fantgpu-source.sh
 cp "$fixture/lib.before" tools/gentoo/fh2m-lib.sh
 
+python3 - << 'PY'
+import json
+from pathlib import Path
+path = Path("docs/patches/system-kernel-matrix.json")
+data = json.loads(path.read_text())
+row = next(item for item in data["current"] if item["kernel"] == "6.12.111+deb13-amd64")
+row["linux_patches"]["001-hygon-148c-xhci-reset-on-resume"]["state"] = "not-applied"
+path.write_text(json.dumps(data))
+PY
+check 0 'RESULT: PASS_DOCS'
+cp "$fixture/matrix.before" docs/patches/system-kernel-matrix.json
+python3 - << 'PY'
+import json
+from pathlib import Path
+path = Path("docs/patches/system-kernel-matrix.json")
+data = json.loads(path.read_text())
+row = next(item for item in data["current"] if item["kernel"] == "6.12.111+deb13-amd64")
+row["linux_patches"]["001-hygon-148c-xhci-reset-on-resume"]["state"] = "nope"
+path.write_text(json.dumps(data))
+PY
+check 1 'bad linux state 001-hygon-148c-xhci-reset-on-resume'
+cp "$fixture/matrix.before" docs/patches/system-kernel-matrix.json
+
 printf 'check_docs_total=%s check_docs_failed=0\n' "$checks"

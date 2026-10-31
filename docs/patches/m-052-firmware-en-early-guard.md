@@ -11,7 +11,7 @@ Debian 的厂商 initramfs 钩子会在根文件系统挂载前加载 `fantgpu`�
 封闭对象内部没有逐行复核。依据是现场崩溃链，以及同一守卫后三核启动通过。
 
 本补丁不进入 `derive_fantgpu_source`。Debian 包源在派生后打 `m-036`、`m-051`、`m-052`。
-Gentoo 在 `m-051` 之后打它。i12 tag 与签署件不动。`117/195` 仍单列。
+Gentoo 在 `m-051` 之后打它。2026-10-31 在 `6.12.111-gentoo-x86_64` 干净构建两次，srcversion 都是 `57FE1935E2D4FA68E637455`，未安装。现场模块仍是 `D579486A64C340B5178B66B`。i12 tag 与签署件不动。`117/195` 仍单列。
 
 ```
 bash tests/unit/run-m-052-firmware-en-early-guard-tests.sh

@@ -10,7 +10,7 @@
   "ledger_ref": {
     "item": "052",
     "neutral_record": "F-R67-firmware-en-early-guard",
-    "mapping": "collab/R67-2026-10-20-仓库四件收口批/qoder-review-m052.md",
+    "mapping": "docs/patches/m-052-firmware-en-early-guard.md",
     "description": "skip the closed OS matcher when firmware_en=0"
   },
   "deepin_patch": {
@@ -20,10 +20,10 @@
   },
   "f0_base": {
     "snapshot": {
-      "path": "i6 snapshot audio file; m-030 already present",
+      "path": "parent tree is the m-051 tree, not a new archived snapshot. chain_base is the m-030 file hash, not the tree parent.",
       "sha256": "not-a-snapshot-file"
     },
-    "tree_hash": "not-rehashed-whole-tree",
+    "tree_hash": "b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00",
     "chain_base": {
       "id": "m-030",
       "after_file_sha256": "f08d9a31a158a7d7b902374c249516d3ee5bce1f64f522f143be257490365b7f"
@@ -37,7 +37,7 @@
     },
     "license": {
       "status": "pending-audit",
-      "evidence": "Edit in the existing vendor Dual MIT/GPLv2 audio file; no new dependency, binary or third-party code."
+      "evidence": "Same pending-audit rule as m-036 and m-051. The license gate already accepts this m- patch. The edit stays in the existing vendor Dual MIT/GPLv2 audio file; no new dependency, binary or third-party code. pending-audit is not an unreviewed patch."
     },
     "dependencies": {
       "status": "reviewed",
@@ -98,7 +98,10 @@
         "official builder staging_dkms_build=PASS builder_firmware_en_guard=PASS",
         "deb sha256 dccfce24e43efb221ead2e145b0ea20738f9562120d6221c66af9358ee28d6f8",
         "packaged fantaudio_drv.c contains !firmware_en",
-        "Gentoo chain is wired and has not been built"
+        "Gentoo 6.12.111-gentoo-x86_64 two clean builds both srcversion 57FE1935E2D4FA68E637455",
+        "ko sha256 run1 a8354aa051c94ac02b3e4a4ea6fe8e57c6893135127be10748ec7ba313adb7f4 run2 ceed0ffdd5cbd6dc30b71be8e569a9a6b9eb0e055db55ac8d066f8bc14d65196",
+        "srcversion string matches Debian 107/111 DKMS modules and is not Debian 101 51EF2B9AEC2C29D01AFE76E",
+        "not installed; running Gentoo module remains D579486A64C340B5178B66B"
       ]
     },
     "runtime": {

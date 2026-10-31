@@ -57,6 +57,10 @@ after = tree_hash(src)
 meta = json.loads((root / "patches/m-052-firmware-en-early-guard.meta.json").read_text())
 assert before == meta["apply"]["before_tree_hash"] == "b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00"
 assert after == meta["apply"]["after_tree_hash"] == "7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243"
+assert meta["f0_base"]["tree_hash"] == before
+assert meta["ledger_ref"]["mapping"] == "docs/patches/m-052-firmware-en-early-guard.md"
+assert meta["review"]["license"]["status"] == "pending-audit"
+assert "m-036" in meta["review"]["license"]["evidence"]
 print("PASS: m-052 whole-tree hash")
 PY
 
