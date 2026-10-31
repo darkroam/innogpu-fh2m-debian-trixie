@@ -402,7 +402,7 @@ linux_by_system = {
         "006-vmap-pfn-prompt",
     ),
 }
-states = {"applied", "not-in-install-path", "do-not-reuse"}
+states = {"applied", "not-applied", "not-in-install-path", "do-not-reuse"}
 
 def sha256(rel):
     return hashlib.sha256(Path(rel).read_bytes()).hexdigest()

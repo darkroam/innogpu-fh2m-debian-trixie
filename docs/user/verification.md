@@ -1,5 +1,25 @@
 # 状态验证
 
+## Debian 101 上的 m-052（2026-10-31）
+
+已安装包 `fantgpu-fh2m-trixie` `5.0.0-i12`，deb SHA-256 `dccfce24e43efb221ead2e145b0ea20738f9562120d6221c66af9358ee28d6f8`。
+重启后内核 `6.12.101+deb13-amd64`，boot `41c84925-6907-4131-8f3f-56a3e8cc1dde`。
+加载模块 srcversion `51EF2B9AEC2C29D01AFE76E`，`firmware_en=0`，`/sys/class/backlight/panel_backlight` 在。
+请求行 0，`BUG`/`Oops` 0。`117 not found` 六次，`195 not found in memory` 一次，仍单列。
+101 磁盘模块与那次加载身份相同。当时 107 与 111 的磁盘模块都是 `57FE1935E2D4FA68E637455`，那次没有启动。
+111 的已验收身份仍是 `370AB248D72951EF3C0C4BB`。这次只确认模块身份，不是完整 R5 或显示复验。
+
+随后进入 `6.12.107+deb13-amd64`，boot `b44fd36f-a481-461f-bf50-298d93883ed0`。
+加载 srcversion `57FE1935E2D4FA68E637455`，与 107 磁盘模块一致，`firmware_en=0`，`panel_backlight` 在。
+请求行 0，`BUG`/`Oops` 0。`117 not found` 六次，`195 not found in memory` 一次，仍单列。
+`57FE` 不顶替 101 的 `51EF2B9AEC2C29D01AFE76E`，也不顶替 111 的 `370AB248D72951EF3C0C4BB`。当时 111 没有启动。
+
+再进入 `6.12.111+deb13-amd64`，boot `744b7017-9878-40de-a602-6cb6a068ca4d`。
+加载 srcversion `57FE1935E2D4FA68E637455`，与 111 磁盘模块一致，`firmware_en=0`，`panel_backlight` 在。
+请求行 0，`BUG`/`Oops` 0。`117 not found` 六次，`195 not found in memory` 一次，仍单列。
+加载身份不改矩阵里的 111 验收身份 `370AB248D72951EF3C0C4BB`。
+`GRUB_DEFAULT` 仍是 `Gentoo`。
+
 ## 驱动、DKMS 与节点
 
 本文的 `innogpu` 命令与 Phase 4/patched 验收记录适用于 Deepin 线：历史上 `4.0.0-i1`
