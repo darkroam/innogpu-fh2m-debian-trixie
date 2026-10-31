@@ -142,8 +142,8 @@ R57 已通过，与 INDEX 一致，不是待审查。现行加载是 i12 构建�
 - [ ] runtime 剩余真实能力证据：modeset/热插拔/合盖、Picom GLX backend、
   音频听感确认；现有 Deepin 4.0.0-i1 历史汇总为 22 PASS / 9 SKIP / 4 UNVERIFIED，
   不代表 fantgpu 5.0.0-i6 已取得同样能力结论。
-- [ ] VA-API 未测 profile（H.264 High/Constrained Baseline、HEVC Main10）、编码能力和多屏矩阵继续
-  按独立能力项补证据。
+- [x] VA-API 编码与原先未测 profile（2026-11-01 Gentoo）：ffmpeg 8.1.3 原为 `--disable-vaapi`，`init_hw_device vaapi` 返回 -12，ldd 无 libva。`package.use` 只加 `vaapi`，以及 portage 因此要求的 `libva X`。重编后 ldd 有 `libva`、`libva-drm`、`libva-x11`。libva 打开 `/usr/lib64/dri/fh2m_drv_video.so`；安装器只链到 `va/drivers` 和 Debian 多架构 `dri`，本机补了 `/usr/lib64/dri` 这一条。vainfo 只有 VLD，没有编码入口。`baseline` 不是 `h264_vaapi` 的档名。constrained_baseline、main、high、HEVC main、main10 都是 `No usable encoding entrypoint`，产物 0 字节。另用 libx264 High 码流做 VA-API 硬解，rc=0。多屏矩阵仍未测。证据在本机 R57 verification，不入 Git。
+- [ ] 多屏矩阵继续按独立能力项补证据。
 - [x] 构建失败 fixture（2026-10-19）：headers 缺失、helper 缺失、`SOURCE_DATE_EPOCH` 缺失。见 `tests/unit/run-builder-fantgpu-gates-tests.sh`。
 
 ## 逆向工程与能力挖掘
