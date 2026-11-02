@@ -134,6 +134,8 @@ base_cmd='    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$s
         < "$ROOT/patches/m-051-hwinfo-connector-fallback.patch"
     patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
         < "$ROOT/patches/m-052-firmware-en-early-guard.patch"
+    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
+        < "$ROOT/patches/g-053-fbdev-restore-force.patch"
 '
 write_derive '' '9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee'
 write_cmd "$base_cmd"
@@ -199,7 +201,7 @@ g_cmd="$base_cmd"'    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -
         < "$ROOT/patches/g-037-module-import-ns.patch"
 '
 write_cmd "$g_cmd"
-python3 -c 'import json; from pathlib import Path; p=Path("docs/patches/system-kernel-matrix.json"); d=json.loads(p.read_text()); g=next(r for r in d["current"] if r["system"]=="gentoo"); g["g_set"]=["g-037-module-import-ns"]; p.write_text(json.dumps(d))'
+python3 -c 'import json; from pathlib import Path; p=Path("docs/patches/system-kernel-matrix.json"); d=json.loads(p.read_text()); g=next(r for r in d["current"] if r["system"]=="gentoo"); g["g_set"]=["g-053-fbdev-restore-force", "g-037-module-import-ns"]; p.write_text(json.dumps(d))'
 check 0 'RESULT: PASS_DOCS'
 cp "$fixture/matrix.before" docs/patches/system-kernel-matrix.json
 write_cmd "$base_cmd"

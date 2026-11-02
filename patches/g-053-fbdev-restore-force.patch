@@ -1,0 +1,15 @@
+diff --git a/fantsrvkm/fantdpu_drm_fb.c b/fantsrvkm/fantdpu_drm_fb.c
+--- a/fantsrvkm/fantdpu_drm_fb.c
++++ b/fantsrvkm/fantdpu_drm_fb.c
+@@ -683,7 +683,11 @@ int fantdpu_fbdev_init(struct drm_device *drm_dev)
+ 	fant_drm_info(drm_dev->dev, "drm_fb_helper_restore_fbdev_mode_unlocked\n");
+ 
+ 	do {
++#if (DRM_VERSION >= KERNEL_VERSION(6, 12, 112))
++		err = drm_fb_helper_restore_fbdev_mode_unlocked(&fbdev->helper, false);
++#else
+ 		err = drm_fb_helper_restore_fbdev_mode_unlocked(&fbdev->helper);
++#endif
+ 		if (err) {
+ 			fant_drm_err(drm_dev->dev, "failed to set mode (err=%d), master %#llx, retry-%d\n",
+ 					err, drm_dev->master, retry);

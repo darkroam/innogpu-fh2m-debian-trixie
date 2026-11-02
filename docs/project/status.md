@@ -1,6 +1,6 @@
 # 当前状态与问题清单
 
-最后更新：2026-10-15
+最后更新：2026-11-02
 
 本文件是项目当前运行状态的唯一摘要。历史过程、补丁细节和故障推导分别见
 [阶段补丁](../patches/README.md) 与 [事故和经验](../incidents/README.md)。
@@ -11,7 +11,7 @@
 | --- | --- | --- |
 | Debian 当前运行驱动 | 当前实际内核是 `6.12.111+deb13-amd64`，加载 `57FE1935E2D4FA68E637455`（同一 m-052 包的 DKMS 构建，`firmware_en=0`，boot `744b7017-9878-40de-a602-6cb6a068ca4d`）。这不是该行验收身份 `370AB248D72951EF3C0C4BB`，也不是 101 的干净构建身份 `51EF2B9AEC2C29D01AFE76E`，也不是完整 R5/显示复验 | [R52 111 内核与驱动栈](#r52-111-内核与驱动栈2026-10-08) |
 | Debian 当前磁盘安装 | 101 磁盘模块是 `51EF2B9AEC2C29D01AFE76E`，已在该核启动。107 与 111 磁盘模块都是 `57FE1935E2D4FA68E637455`，两核都已加载这个身份。它不顶替 111 的验收身份 `370AB248D72951EF3C0C4BB`。`117/195` 查表仍单列 | [Debian 档案](../user/debian.md) |
-| Gentoo 当前运行 | 内核 `6.12.111-gentoo-x86_64`。加载模块是 i12 构建器树加构建器外的 `m-036-bf-shf-rename` 与 `m-051-hwinfo-connector-fallback`，srcversion `D579486A64C340B5178B66B`（2026-10-15 本机实读）。overlay 在 `tools/gentoo/overlay`。`firmware_en=0`。`hwinfo_g0m.bin` 只在值为 1 时被请求，非必需。温度行与 pll 行未出现，不是通过 | [Gentoo 档案](../user/gentoo.md)、[脚本索引](../../tools/README.md) |
+| Gentoo 当前运行 | 运行内核 `6.12.113-gentoo-x86_64`，加载 `9D9C40B4CD70C06B6AD673F`（`g-053-fbdev-restore-force` 已应用，未验收，`firmware_en=0`）。111 磁盘 ko 是 `57FE1935E2D4FA68E637455`。111 行验收身份仍是 `D579486A64C340B5178B66B`。overlay 在 `tools/gentoo/overlay`。温度行与 pll 行未出现，不是通过 | [Gentoo 档案](../user/gentoo.md)、[脚本索引](../../tools/README.md) |
 | 回退基线 | `4.0.2-i3`（deepin 血缘最终交付）：R14 6/6 deep 矩阵通过；包 SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；回滚卡见 r5dpm2 设计 §8，执行须另行授权 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md)、[回滚卡](../design/r5-dpm-prepare-watchdog-diagnostic-kernel-design.md) |
 | 当前主线目标 | `5.0.0-i12`（annotated tag `fantgpu-5.0.0-i12` 指向 `079b179`）；R5 已通过。validation-results `signed=true`：R1=fail 且 hwinfo 豁免不改判，R2=pass，R5=pass，U1/U2/R9=unverified 且 closed。C2 i12 三方已署名。件内 `tag_created=false` 不改。`license_release_gate=BLOCKED`。不建 Release、不传附件 | [R49验收与R5观察期](#r49-验收与-r5-观察期2026-10-01)、[030 映射表](../planning/030-mapping-table.md) |
 | 历史当前态（2026-09-03 记录） | `4.0.2-i3` 已安装并重启至 `6.12.101+deb13-amd64`；R16 迁移后降为回退基线 | [patch-029](../patches/029-suspend-resume-ddcci-panel.md) |

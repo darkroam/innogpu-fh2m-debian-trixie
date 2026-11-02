@@ -172,7 +172,9 @@
           "tree_hash": "7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243"
         }
       ],
-      "g_set": [],
+      "g_set": [
+        "g-053-fbdev-restore-force"
+      ],
       "linux_patches": {
         "001-hygon-148c-xhci-reset-on-resume": {
           "state": "applied",
@@ -218,7 +220,7 @@
       "rollback": [
         "tools/gentoo/rollback.sh"
       ],
-      "note": "内核补丁没有单独回滚脚本。按 docs/user/gentoo.md 用 --fuzz=0 -R 卸回。firmware_en=0。hwinfo_g0m.bin 只在值为 1 时被请求，非必需。m-052 已在 6.12.111-gentoo 干净构建两次，srcversion 都是 57FE1935E2D4FA68E637455。两次 ko 字节不同。该字符串与 Debian 107/111 的 DKMS 模块相同，不是 101 的 51EF。未换盘、未重启。现场身份仍是 D579486A。",
+      "note": "内核补丁没有单独回滚脚本。按 docs/user/gentoo.md 用 --fuzz=0 -R 卸回。firmware_en=0。hwinfo_g0m.bin 只在值为 1 时被请求，非必需。m-052 已在 6.12.111-gentoo 干净构建两次，srcversion 都是 57FE1935E2D4FA68E637455。两次 ko 字节不同。该字符串与 Debian 107/111 的 DKMS 模块相同，不是 101 的 51EF。本行验收身份仍是 D579486A64C340B5178B66B，不改。2026-11-01 20:11 emerge 写入的 111 磁盘 ko 已是 57FE1935E2D4FA68E637455。运行内核是 6.12.113-gentoo-x86_64，模块 9D9C40B4CD70C06B6AD673F 只记在 in_progress。g-053 是内核 API 胶水，已接入 Gentoo 构建，force=false，未验收。",
       "version_revision": {
         "package": "5.0.0_p12",
         "iN": "i12",
@@ -242,6 +244,23 @@
         "patches_applied": [],
         "pending": [
           "封存对象 2284 处 %gs:0x28 与 6.18 无条件 guard-symbol 不兼容（硬阻断）"
+        ]
+      }
+    },
+    {
+      "system": "gentoo",
+      "kernel": "6.12.113-gentoo-x86_64",
+      "stage": "loaded-not-accepted",
+      "next": "两次干净构建得到同一 srcversion 后才能升 current。g-053 未验收。",
+      "breakpoint": {
+        "ko_status": "loaded",
+        "patches_applied": [
+          "g-053-fbdev-restore-force"
+        ],
+        "pending": [
+          "运行模块与磁盘 ko 都是 9D9C40B4CD70C06B6AD673F，firmware_en=0，用户确认画面正常",
+          "只编过一次，不能当验收身份",
+          "不顶替 111 行的 D579486A64C340B5178B66B"
         ]
       }
     }

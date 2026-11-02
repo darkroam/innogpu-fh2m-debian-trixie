@@ -288,6 +288,8 @@ patches/g-049-shipped-obj-copy.meta.json
 patches/g-049-shipped-obj-copy.patch
 patches/g-050-fb-helper-alloc.meta.json
 patches/g-050-fb-helper-alloc.patch
+patches/g-053-fbdev-restore-force.meta.json
+patches/g-053-fbdev-restore-force.patch
 patches/m-001-kernel-6-12-compat.meta.json
 patches/m-001-kernel-6-12-compat.patch
 patches/m-002-dp-fbdev-fallback.meta.json

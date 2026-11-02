@@ -22,7 +22,7 @@
 | `r50-storage-task5.py` | R50 r5dpm 构建物清理 | 普通用户启动；`--inventory` 用 sudo 只读锁定 119 项 content/metadata SHA 与保留证据；`--confirm` 强制物理 TTY 精确短语回执且不删除；`--apply RECEIPT` 仅在候选、保留集、107/101 内核与 GRUB 无漂移时，先记逐文件 SHA 再删除精确目标 |
 | `cleanup-linux-module-worktree.sh` | 源码工作树清理 | 只删除本轮展开源码和构建树，保留 `debs/` 源码包、模块与日志 |
 | `prune-kernel-source-cache.sh` | 旧源码包清理 | 默认只列出无对应已安装内核的源码 `.deb`；显式 `--delete` 才删除，当前实现面向 Debian |
-| `tools/gentoo/build-driver.sh` | Gentoo 后备入口 | check/build/install/install-ko/verify/rollback。与构建器共同 source `tools/internal/derive-fantgpu-source.sh`，再打 `m-036-bf-shf-rename` 和 `m-051-hwinfo-connector-fallback`，不产 deb，不改构建器。`install-ko` 只换磁盘模块；换模块后重启，不热卸载。目标内核是源码树的 `KV_FULL`，不是 `uname -r`。overlay 在 `tools/gentoo/overlay` |
+| `tools/gentoo/build-driver.sh` | Gentoo 后备入口 | check/build/install/install-ko/verify/rollback。与构建器共同 source `tools/internal/derive-fantgpu-source.sh`，再打 `m-036-bf-shf-rename`、`m-051-hwinfo-connector-fallback`、`m-052-firmware-en-early-guard` 和 `g-053-fbdev-restore-force`，不产 deb，不改构建器。`g-053` 是胶水，不进 i12 构建器。`install-ko` 只换磁盘模块；换模块后重启，不热卸载。目标内核是源码树的 `KV_FULL`，不是 `uname -r`。overlay 在 `tools/gentoo/overlay` |
 | `tools/gentoo/lid-external.sh` | 合盖外屏配置 | `--apply` / `--revert` 只处理与模板逐字节相同的 `90-lid-external.conf`。内容不同则失败，不覆盖 |
 | `tools/gentoo/install-kernel-patches.sh` | Gentoo 内核补丁后备 | 无 portage 时使用。与 ebuild 同一规则：SHA 相同跳过，SHA 不同失败且不覆盖。正常路径是 `emerge sys-kernel/fantgpu-kernel-patches` |
 | `tools/gentoo/check-kernel-patches.sh` | Gentoo 内核补丁核对 | 核对三处 SHA。默认再看 `/usr/src/linux` 是否已含 xHCI、电池、`HYGO0030`、`1d94:14c9`、HDMI helper 提示与 `Vmap an array of PFNs`。缺 `extra/fantgpu.ko` 则 `module_file=MISSING` 并失败。`--files-only` 只核文件，不看模块 |

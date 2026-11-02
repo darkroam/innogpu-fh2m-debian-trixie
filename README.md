@@ -5,7 +5,7 @@
 本项目自有工作采用 GPL-3.0-or-later；fork 上游 MIT 内容与导入源码/厂商载荷按各自声明处理，
 当前再分发边界见[许可证与再分发边界](docs/project/licensing.md)（唯一权威文档）。
 
-> 最后更新：2026-10-15 —— 当前主线为 fantgpu 5.0.0-iN，Debian Trixie 与 Gentoo 并列。Debian 运行内核 `6.12.111+deb13-amd64`，i12+m-036-bf-shf-rename 与 001/002 已按 111 验收；Gentoo 现场见 [gentoo.md](docs/user/gentoo.md)。R51 三段与 R5 均已通过，见
+> 最后更新：2026-11-02 —— 当前主线为 fantgpu 5.0.0-iN，Debian Trixie 与 Gentoo 并列。Debian 运行内核 `6.12.111+deb13-amd64`，i12+m-036-bf-shf-rename 与 001/002 已按 111 验收；Gentoo 现场见 [gentoo.md](docs/user/gentoo.md)。R51 三段与 R5 均已通过，见
 > [status.md](docs/project/status.md)。历史（2026-09-03 记录，不是现行 F 线）：当前驱动包和正式交付版本为 `4.0.2-i3`（patch-024 + patch-026 +
 > patch-028 + patch-029）；R14 在当时设备完成 6/6 deep 验收。patch-025-display 当时继续保持
 > UNVERIFIED，不进入 i3；当时 DDCCI 不提供亮度控制，`hwinfo_g0m.bin` 在 `firmware_en=1` 下被请求。
@@ -16,7 +16,7 @@
 | --- | --- |
 | 发行版 | Debian Trixie (13) 与 Gentoo。运行状态以 [status](docs/project/status.md) 为准 |
 | Debian 内核 | `6.12.111+deb13-amd64` |
-| Gentoo | 内核 `6.12.111-gentoo`（uname `6.12.111-gentoo-x86_64`）；overlay 部署 `tools/gentoo/overlay`；m-051 后加载 srcversion `D579486A64C340B5178B66B`；`firmware_en=0` |
+| Gentoo | 运行内核 `6.12.113-gentoo-x86_64`，加载 `9D9C40B4CD70C06B6AD673F`（`g-053` 已应用，未验收）。111 磁盘 ko `57FE1935E2D4FA68E637455`。111 行验收身份仍是 `D579486A64C340B5178B66B`。`firmware_en=0`。overlay 在 `tools/gentoo/overlay` |
 | CPU 平台 | Hygon x86_64 |
 | GPU | Innosilicon Fantasy II-M，PCI `1ec8:9810`，2 GiB VRAM（PowerVR DDK V119 RTM 谱系） |
 | 回退基线（历史交付） | `4.0.2-i3`：固定 epoch `1788796800`，SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；R14 接电/电池、无外屏/外屏 6/6 deep 通过；R16 起主线为 fantgpu 5.0.0-iN |

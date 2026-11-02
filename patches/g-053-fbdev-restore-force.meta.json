@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "id": "g-053-fbdev-restore-force",
+  "ledger_ref": {
+    "item": "053",
+    "neutral_record": "F-R67-612113-fbdev-restore",
+    "description": "6.12.112 added the force argument; the old call passed false"
+  },
+  "deepin_patch": {
+    "path": "patches/g-053-fbdev-restore-force.patch",
+    "sha256": "e487da888d165c671ed2480f41027cbdbf7dc9bb717a56a5fd7ba95f126db68e",
+    "apply_level": "-p1"
+  },
+  "review": {
+    "semantics": {
+      "status": "draft",
+      "verdict": "pass-false",
+      "summary": "定性是 g，不是 m。fbdev restore 的 force 参数是内核 API 胶水，不进 i12 构建器。版本门是 DRM_VERSION >= 6.12.112。6.12.111 的单参数实现固定传 false；本补丁传 false，行为不变。传 true 才会忽略当前 DRM master，那才是行为变更。fantdpu_fbdev_init 是 6.12 上唯一会编译的调用。fantgpu_drm.c 的旧调用包在 DRM_VERSION < 6.12.0 里。"
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "Local change in the existing vendor Dual MIT/GPLv2 fb helper. No new dependency, binary, or third-party code."
+    }
+  },
+  "apply": {
+    "patch_sha256": "e487da888d165c671ed2480f41027cbdbf7dc9bb717a56a5fd7ba95f126db68e",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <I12_PLUS_M036_M051_M052> < patches/g-053-fbdev-restore-force.patch",
+    "result": "Forward and reverse --fuzz=0 both rc=0 against the 6.12.113 emerge tree."
+  },
+  "status": "draft",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "applied with --fuzz=0 to the post-m-052 tree that failed emerge",
+        "reverse --fuzz=0 restored the file"
+      ]
+    },
+    "clean_build": {
+      "status": "pass-one-build-installed-running",
+      "kernel": "6.12.113-gentoo-x86_64",
+      "make_rc": 0,
+      "srcversion": "9D9C40B4CD70C06B6AD673F",
+      "installed_module": "loaded",
+      "summary": "磁盘 ko 与正在运行的模块都是 9D9C40B4CD70C06B6AD673F。只编过一次，不是两次构建身份，也未验收。"
+    }
+  }
+}
