@@ -220,7 +220,7 @@
       "rollback": [
         "tools/gentoo/rollback.sh"
       ],
-      "note": "内核补丁没有单独回滚脚本。按 docs/user/gentoo.md 用 --fuzz=0 -R 卸回。firmware_en=0。hwinfo_g0m.bin 只在值为 1 时被请求，非必需。m-052 已在 6.12.111-gentoo 干净构建两次，srcversion 都是 57FE1935E2D4FA68E637455。两次 ko 字节不同。该字符串与 Debian 107/111 的 DKMS 模块相同，不是 101 的 51EF。本行验收身份仍是 D579486A64C340B5178B66B，不改。2026-11-01 20:11 emerge 写入的 111 磁盘 ko 已是 57FE1935E2D4FA68E637455。运行内核是 6.12.113-gentoo-x86_64，模块 9D9C40B4CD70C06B6AD673F 只记在 in_progress。g-053 是内核 API 胶水，已接入 Gentoo 构建，force=false，未验收。",
+      "note": "内核补丁没有单独回滚脚本。按 docs/user/gentoo.md 用 --fuzz=0 -R 卸回。firmware_en=0。hwinfo_g0m.bin 只在值为 1 时被请求，非必需。m-052 已在 6.12.111-gentoo 干净构建两次，srcversion 都是 57FE1935E2D4FA68E637455。两次 ko 字节不同。该字符串与 Debian 107/111 的 DKMS 模块相同，不是 101 的 51EF。本行验收身份仍是 D579486A64C340B5178B66B，不改。2026-11-01 20:11 emerge 写入的 111 磁盘 ko 已是 57FE1935E2D4FA68E637455。113 的验收在自己的 current 行，身份是 9D9C40B4CD70C06B6AD673F。本行不顶替。",
       "version_revision": {
         "package": "5.0.0_p12",
         "iN": "i12",
@@ -229,6 +229,93 @@
       "build_identity": {
         "tree_hash": "b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00",
         "srcversion": "D579486A64C340B5178B66B"
+      },
+      "install_doc": "docs/user/gentoo.md"
+    },
+    {
+      "system": "gentoo",
+      "kernel": "6.12.113-gentoo-x86_64",
+      "acceptance": "accepted",
+      "m_base": [
+        {
+          "id": "i12-builder-through-m-035",
+          "in_i12_builder": true,
+          "tree_hash": "9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee"
+        },
+        {
+          "id": "m-036-bf-shf-rename",
+          "in_i12_builder": false,
+          "tree_hash": "0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce"
+        },
+        {
+          "id": "m-051-hwinfo-connector-fallback",
+          "in_i12_builder": false,
+          "tree_hash": "b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00",
+          "meta_kernel": "6.12.111-gentoo-x86_64"
+        },
+        {
+          "id": "m-052-firmware-en-early-guard",
+          "in_i12_builder": false,
+          "tree_hash": "7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243"
+        }
+      ],
+      "g_set": [
+        "g-053-fbdev-restore-force"
+      ],
+      "linux_patches": {
+        "001-hygon-148c-xhci-reset-on-resume": {
+          "state": "applied",
+          "sha256": "299eb3f3d688a48518278c1ac5c6e97be89c8cc8f2c50bdcbfc4881bd47a5614",
+          "note": "按该内核源码重编。禁止复用其他内核的模块。"
+        },
+        "002-kaitian-x7h-battery-notification-delay": {
+          "state": "applied",
+          "sha256": "d7d6740eaab078eeaa40d87306c4d77fc61436f50ef31061416f0d1689899e1a",
+          "note": "机型 workaround。换内核版本必须重适配，不得直接套用。"
+        },
+        "003-pinctrl-amd-hygon-gpio": {
+          "state": "applied",
+          "sha256": "2f6676f38175a709bb71488de5caa7e8490bf75e17d3a4e21c2b0f4b286ced0e",
+          "note": "内建。改后要整核重编并重启。"
+        },
+        "004-snd-hda-hygon-14c9": {
+          "state": "applied",
+          "sha256": "08dc3079d5b6d8d698afe321b957ae17ec410f269ab379ab1673c67e1891a229",
+          "note": "只对 6.12 的 snd-hda-intel。不能套 6.18。"
+        },
+        "005-drm-display-hdmi-helper-prompt": {
+          "state": "applied",
+          "sha256": "dcb49a6ab33bbb0ee0f5efdd23d0ab3d76bf338f012aab8ac2c79f5a311851ff",
+          "note": "2026-10-20 三证：kernel_tree=APPLIED，运行内核 CONFIG_DRM_DISPLAY_HDMI_HELPER=y，加载模块 srcversion D579486A64C340B5178B66B。只加菜单提示。Debian current 不含。2026-10-22 起上下文不再依赖 HDCP 邻居，6.12 与 6.18 都能套。提示行不变。"
+        },
+        "006-vmap-pfn-prompt": {
+          "state": "applied",
+          "sha256": "ff129b4a9b04b48b76f78bb6e91707b9010a9db63c26820d4c350ea3bc1e4544",
+          "note": "2026-10-20 三证：kernel_tree=APPLIED，运行内核 CONFIG_VMAP_PFN=y，加载模块 srcversion D579486A64C340B5178B66B。只加菜单提示。Debian current 不含。"
+        }
+      },
+      "install": [
+        "tools/gentoo/overlay",
+        "tools/gentoo/build-driver.sh",
+        "tools/gentoo/install-driver.sh",
+        "tools/gentoo/install-kernel-patches.sh"
+      ],
+      "verify": [
+        "tools/gentoo/verify.sh",
+        "tools/gentoo/check-kernel-patches.sh"
+      ],
+      "rollback": [
+        "tools/gentoo/rollback.sh"
+      ],
+      "note": "两次干净构建 srcversion 都是 9D9C40B4CD70C06B6AD673F。第一次磁盘 SHA-256 767c1ddb5a5bcec4433bb4dcce2c0360c576296297b63671a20770cfceaa13e1，第二次 677d2c5411bf280ad5a8eb70ac499ecb9fb020bd09da796aba8763099ed04b14。字节不同。2026-11-02 13:47 启动加载的是第二次。check 与 verify 都是 PASS。八项计数 0。panel_backlight 在。firmware_en=0。请求行 0。117 not found 5 次，195 not found 1 次。用户确认画面正常。g-053 传 false。不改 111 行的 D579486A64C340B5178B66B。回滚槽仍是 srcversion 370AB248D72951EF3C0C4BB，不是换盘前那份。",
+      "version_revision": {
+        "package": "5.0.0_p12",
+        "iN": "i12",
+        "note": "p12 是 portage 修订，不是新 iN。m-051 不进 i12 构建器。"
+      },
+      "build_identity": {
+        "tree_hash": "b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00",
+        "srcversion": "9D9C40B4CD70C06B6AD673F"
       },
       "install_doc": "docs/user/gentoo.md"
     }
@@ -244,23 +331,6 @@
         "patches_applied": [],
         "pending": [
           "封存对象 2284 处 %gs:0x28 与 6.18 无条件 guard-symbol 不兼容（硬阻断）"
-        ]
-      }
-    },
-    {
-      "system": "gentoo",
-      "kernel": "6.12.113-gentoo-x86_64",
-      "stage": "loaded-not-accepted",
-      "next": "两次干净构建得到同一 srcversion 后才能升 current。g-053 未验收。",
-      "breakpoint": {
-        "ko_status": "loaded",
-        "patches_applied": [
-          "g-053-fbdev-restore-force"
-        ],
-        "pending": [
-          "运行模块与磁盘 ko 都是 9D9C40B4CD70C06B6AD673F，firmware_en=0，用户确认画面正常",
-          "只编过一次，不能当验收身份",
-          "不顶替 111 行的 D579486A64C340B5178B66B"
         ]
       }
     }

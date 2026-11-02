@@ -67,7 +67,7 @@ R27 早期八核窗口的 `FAILED_OR_UNVERIFIED` 原记录保留，不通过删�
 
 ## Gentoo 现场（R57 已通过）
 
-R57 已通过，与 INDEX 一致，不是待审查。2026-10-15 当时加载是 i12 构建器树加构建器外的 `m-036-bf-shf-rename` 与 `m-051-hwinfo-connector-fallback`，srcversion `D579486A64C340B5178B66B`。这是 Gentoo 111 行的验收身份，不是 Debian 的 `370AB248D72951EF3C0C4BB`。2026-11-02 运行内核是 `6.12.113-gentoo-x86_64`，加载模块 `9D9C40B4CD70C06B6AD673F`（含 `g-053-fbdev-restore-force`，未验收）。111 磁盘 ko 是 `57FE1935E2D4FA68E637455`。`firmware_en=0`。`hwinfo_g0m.bin` 只在值为 1 时被请求，非必需。温度行与 pll 行未出现，不是通过。
+R57 已通过，与 INDEX 一致，不是待审查。2026-10-15 当时加载是 i12 构建器树加构建器外的 `m-036-bf-shf-rename` 与 `m-051-hwinfo-connector-fallback`，srcversion `D579486A64C340B5178B66B`。这是 Gentoo 111 行的验收身份，不是 Debian 的 `370AB248D72951EF3C0C4BB`。2026-11-02 运行内核是 `6.12.113-gentoo-x86_64`，加载模块 `9D9C40B4CD70C06B6AD673F`（含 `g-053-fbdev-restore-force`，已验收，磁盘 ko SHA-256 `677d2c5411bf280ad5a8eb70ac499ecb9fb020bd09da796aba8763099ed04b14`）。111 磁盘 ko 是 `57FE1935E2D4FA68E637455`。`firmware_en=0`。`hwinfo_g0m.bin` 只在值为 1 时被请求，非必需。温度行与 pll 行未出现，不是通过。
 
 本机 `6.12.111-gentoo` 曾用 i12 加构建器外的 `m-036-bf-shf-rename` 拉起。当时入口记为
 `gentoo-fh2m.sh`（现为 [`fh2m-lib.sh`](../../tools/gentoo/fh2m-lib.sh) 与 `tools/gentoo/build-driver.sh`），portage 包装在

@@ -37,12 +37,12 @@
       ]
     },
     "clean_build": {
-      "status": "pass-one-build-installed-running",
+      "status": "pass",
       "kernel": "6.12.113-gentoo-x86_64",
       "make_rc": 0,
       "srcversion": "9D9C40B4CD70C06B6AD673F",
       "installed_module": "loaded",
-      "summary": "磁盘 ko 与正在运行的模块都是 9D9C40B4CD70C06B6AD673F。只编过一次，不是两次构建身份，也未验收。"
+      "summary": "两次干净构建 srcversion 都是 9D9C40B4CD70C06B6AD673F。第二次 SHA-256 677d2c5411bf280ad5a8eb70ac499ecb9fb020bd09da796aba8763099ed04b14，2026-11-02 13:47 已启动。113 行已验收。force=false。"
     }
   }
 }

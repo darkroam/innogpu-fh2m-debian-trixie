@@ -2,7 +2,7 @@
 
 挂起。不是 6.12 的替代行，也不升 iN。机器可读断点在
 [system-kernel-matrix.json](../../patches/system-kernel-matrix.json) 的 `in_progress`：
-`system=gentoo`，`kernel=6.18`。现行 Gentoo 仍是 `6.12.111-gentoo-x86_64`。
+`system=gentoo`，`kernel=6.18`。现行 Gentoo 是 `6.12.111-gentoo-x86_64` 与 `6.12.113-gentoo-x86_64`。6.18 仍挂起。
 
 新封存对象出现前，不在 6.18 上加载模块。
 

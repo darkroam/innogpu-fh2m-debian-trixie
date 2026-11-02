@@ -5,7 +5,7 @@
 
 ## 这台机器
 
-- 运行内核 `6.12.113-gentoo-x86_64`，加载模块 `9D9C40B4CD70C06B6AD673F`（2026-11-02）。`g-053-fbdev-restore-force` 已应用，未验收。111 行验收身份仍是 `D579486A64C340B5178B66B`。111 磁盘 ko 是 `57FE1935E2D4FA68E637455`。6.18 因封存对象金丝雀硬阻断挂起，见 [6.18-coverage](../planning/6.18-coverage/README.md)。新封存对象出现前不加载。
+- 运行内核 `6.12.113-gentoo-x86_64`，加载模块 `9D9C40B4CD70C06B6AD673F`（2026-11-02）。`g-053-fbdev-restore-force` 已验收。磁盘 ko SHA-256 `677d2c5411bf280ad5a8eb70ac499ecb9fb020bd09da796aba8763099ed04b14`。111 行验收身份仍是 `D579486A64C340B5178B66B`。111 磁盘 ko 是 `57FE1935E2D4FA68E637455`。6.18 因封存对象金丝雀硬阻断挂起，见 [6.18-coverage](../planning/6.18-coverage/README.md)。新封存对象出现前不加载。
 - 模块基座是 i12 构建器树 `9a8d185f…`。构建器外先打 `m-036-bf-shf-rename`，该层整树
   `0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce`，再打
   `m-051-hwinfo-connector-fallback`。m-051 不进 i12 构建器。
@@ -145,7 +145,7 @@ emerge 的回滚件在 `/var/lib/fantgpu/rollback/fantgpu.ko`，不放在 portag
 
 ## 不在本档案里
 
-- `g-037` 到 `g-050` 已按命名规范入库。入库不等于升格：仍标 g，字节不变，不进 i12 构建器。`g-050-fb-helper-alloc` 是 6.12 胶水，不是 6.18。`g-053-fbdev-restore-force` 也是胶水：6.12.112 起给 restore 补 `force`，传 `false`，未验收。
+- `g-037` 到 `g-050` 已按命名规范入库。入库不等于升格：仍标 g，字节不变，不进 i12 构建器。`g-050-fb-helper-alloc` 是 6.12 胶水，不是 6.18。`g-053-fbdev-restore-force` 也是胶水：6.12.112 起给 restore 补 `force`，传 `false`。113 上已验收。
 - 不跑 PM，不改 GRUB。
 - overlay 不装 `sw-inno-gl` 或 `sw-fant-gl`。本机没有这两份服务，与 Debian 现行包 `locked-reference` 不装是同一结果。
 - initramfs 不必重建。模块和固件都在根文件系统挂载之后加载。
