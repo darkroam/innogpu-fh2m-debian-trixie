@@ -25,7 +25,7 @@
 
 `m-052-firmware-en-early-guard` 不改 m-030 字节。`firmware_en=0` 时在进入封闭 OS matcher 前返回。见 [m-052-firmware-en-early-guard](m-052-firmware-en-early-guard.md)。
 
-`m-054-efifb-kick-move` 把拆 efifb 挪到 `drm_fb_helper_initial_config()` 正前方。不进 derive，尚未构建。见 [m-054-efifb-kick-move](m-054-efifb-kick-move.md)。
+`m-054-efifb-kick-move` 把拆 efifb 挪到 `drm_fb_helper_initial_config()` 正前方。不进 derive。Gentoo `6.12.113` 已干净构建并加载，srcversion `227E896A45E34187252CD2D`。不顶替其他行。见 [m-054-efifb-kick-move](m-054-efifb-kick-move.md)。
 
 **以下分类为 Deepin 补丁与组件的历史记录，计数不含 030 链**：
 

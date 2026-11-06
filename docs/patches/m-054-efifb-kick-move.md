@@ -8,7 +8,7 @@
 
 拆点因此晚于 `dr_mtrr_setup()`。WC/uncached-minus 那行只是已知日志，不是已证明的因果。画面不回、卡住，或这行变成失败，就把调用放回 `dev_rsrc_init()`。
 
-不进入 `derive_fantgpu_source`。Debian 包源和 Gentoo 构建链都在 `m-052` 之后、`g-053` 之前打它。`in_i12_builder` 仍是 false。尚未干净构建，不写 srcversion，不顶替已验收身份。iN 不动。
+不进入 `derive_fantgpu_source`。Debian 包源和 Gentoo 构建链都在 `m-052` 之后、`g-053` 之前打它。`in_i12_builder` 仍是 false。Gentoo `6.12.113` 两次干净构建 srcversion 都是 `227E896A45E34187252CD2D`，2026-11-06 已加载。不顶替 111 的 `D579486A64C340B5178B66B` 或 Debian 行。iN 不动。
 
 ```
 bash tests/unit/run-m-054-efifb-kick-move-tests.sh

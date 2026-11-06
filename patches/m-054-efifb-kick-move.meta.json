@@ -53,7 +53,7 @@
     "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <M052_TREE> < patches/m-054-efifb-kick-move.patch",
     "result": "Forward and reverse --fuzz=0 both rc=0 on the post-m-052 tree. g-053 then applies with --fuzz=0."
   },
-  "status": "wired-not-built",
+  "status": "pass",
   "verified": {
     "static": {
       "status": "pass",
@@ -64,8 +64,10 @@
       ]
     },
     "clean_build": {
-      "status": "not-run",
-      "summary": "No clean build yet. Do not write srcversion and do not replace an accepted build identity."
+      "status": "pass",
+      "kernel": "6.12.113-gentoo-x86_64",
+      "srcversion": "227E896A45E34187252CD2D",
+      "summary": "Two clean builds on 6.12.113-gentoo-x86_64 both srcversion 227E896A45E34187252CD2D. Run2 SHA-256 af0a7f0f6bddee2492b8eecf37defd450bd2d46078aec65e9d6b045a84b885ff is the installed and loaded module. This does not replace Gentoo 111 D579486A64C340B5178B66B or the Debian rows."
     }
   }
 }

@@ -24,8 +24,9 @@ package = builder.split("DKMS_SRC_NAME", 1)[1]
 assert package.index("m-052-firmware-en-early-guard.patch") < package.index("m-054-efifb-kick-move.patch")
 assert "builder_efifb_kick_move=PASS" in package
 assert gentoo.index("m-052-firmware-en-early-guard.patch") < gentoo.index("m-054-efifb-kick-move.patch") < gentoo.index("g-053-fbdev-restore-force.patch")
-assert meta["verified"]["clean_build"]["status"] == "not-run"
-assert "srcversion" not in meta["verified"]["clean_build"]
+assert meta["verified"]["clean_build"]["status"] == "pass"
+assert meta["verified"]["clean_build"]["kernel"] == "6.12.113-gentoo-x86_64"
+assert meta["verified"]["clean_build"]["srcversion"] == "227E896A45E34187252CD2D"
 
 subprocess.check_call(["rm", "-rf", str(tmp)])
 tmp.mkdir()

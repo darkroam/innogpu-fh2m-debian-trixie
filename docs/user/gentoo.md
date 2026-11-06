@@ -5,7 +5,7 @@
 
 ## 这台机器
 
-- 运行内核 `6.12.113-gentoo-x86_64`，加载模块 `9D9C40B4CD70C06B6AD673F`（2026-11-02）。`g-053-fbdev-restore-force` 已验收。磁盘 ko SHA-256 `677d2c5411bf280ad5a8eb70ac499ecb9fb020bd09da796aba8763099ed04b14`。111 行验收身份仍是 `D579486A64C340B5178B66B`。111 磁盘 ko 是 `57FE1935E2D4FA68E637455`。6.18 因封存对象金丝雀硬阻断挂起，见 [6.18-coverage](../planning/6.18-coverage/README.md)。新封存对象出现前不加载。
+- 运行内核 `6.12.113-gentoo-x86_64`，加载模块 `227E896A45E34187252CD2D`（2026-11-06，`m-054`）。磁盘 ko SHA-256 `af0a7f0f6bddee2492b8eecf37defd450bd2d46078aec65e9d6b045a84b885ff`。先前 `g-053` 是 `9D9C40B4CD70C06B6AD673F`。111 行验收身份仍是 `D579486A64C340B5178B66B`。111 磁盘 ko 是 `57FE1935E2D4FA68E637455`。6.18 因封存对象金丝雀硬阻断挂起，见 [6.18-coverage](../planning/6.18-coverage/README.md)。新封存对象出现前不加载。
 - 模块基座是 i12 构建器树 `9a8d185f…`。构建器外先打 `m-036-bf-shf-rename`，该层整树
   `0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce`，再打
   `m-051-hwinfo-connector-fallback`。m-051 不进 i12 构建器。
@@ -13,7 +13,7 @@
   `370AB248D72951EF3C0C4BB`，`card0` 在，dwm 在跑，glvnd 选到 `libGLX_fh2m.so.0`，
   渲染器 `Fantasy II-M`。VA-API 打开 `fh2m_drv_video.so`，`va_openDriver()` 返回 0。
   八项计数为 0。oops 为 0。签名 taint 是 `OE`。
-- 2026-10-15 当时加载 srcversion 是 `D579486A64C340B5178B66B`。这是 111 行验收身份，不是 Debian 111 的 `370AB248D72951EF3C0C4BB`，也不是现在正在跑的 `9D9C40B4CD70C06B6AD673F`。
+- 2026-10-15 当时加载 srcversion 是 `D579486A64C340B5178B66B`。这是 111 行验收身份，不是 Debian 111 的 `370AB248D72951EF3C0C4BB`，也不是现在正在跑的 `227E896A45E34187252CD2D`。中间曾跑过 `g-053` 的 `9D9C40B4CD70C06B6AD673F`。
 - 磁盘 ko `f888e32ecaed`（66606896 字节）与工作树 `.build/work/gentoo-fh2m/fantgpu.ko` 的 `ea8c6c60d113`（66606760 字节）不同。两者 srcversion 都是 `D579486A64C340B5178B66B`。构建门是同一棵 m-051 树 `b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00`；本机没有重走两份源树。`.text`、`.data`、`.rodata`、`.modinfo` 逐节相同。整文件多出的 136 字节都在 `.rodata.str1.8`：路径长度差 125，对齐填充 11。磁盘模块嵌 `/var/tmp/portage/x11-drivers/fantgpu-fh2m-5.0.0_p12/temp/gentoo-fh2m/src/`，工作树模块嵌 `.build/work/gentoo-fh2m/src/`。这是构建目录嵌入，不是换源。
 - `firmware_en=0`。源码默认是 0（`fantgpu_pci_drv.c` 的 `int firmware_en = 0`），消费点在封闭对象的 hwinfo 注册。2026-09-13 的 C2 为了对齐 O 血统写成 1，Gentoo 安装脚本照抄了这一行。
 - `hwinfo_g0m.bin` 只在值为 1 时被请求。包里没有，也不是必需。hwinfo 在硬件里。2026-10-30 拿掉 1 之后请求行为 0，画面正常，`panel_backlight` 出现且亮度可调。6.6 对照取消。
