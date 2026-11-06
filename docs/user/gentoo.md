@@ -154,6 +154,10 @@ emerge 的回滚件在 `/var/lib/fantgpu/rollback/fantgpu.ko`，不放在 portag
   `00_fh2m.json` 排在 mesa 前面，并且 `/etc/ld.so.conf.d/0-fantgpu-hwgl.conf`
   指向 `/opt/fantgpu-fh2m/lib`。
 
+2026-11-06 在 `6.12.115-gentoo-x86_64`、模块 `227E896A45E34187252CD2D` 上实测 Wayland。`weston --backend=drm` 已启动。`eglinfo -B -p wayland` rc=0，renderer `Fantasy II-M`，OpenGL 4.3 / ES 3.2。`wayland-info` 有 `wl_drm` v2 和 `zwp_linux_dmabuf_v1` v5，eDP-1 2560x1600@60，DP-1 逻辑 1920x1080。EGL/GBM 路径可用。`vulkaninfo` 有 `VK_KHR_surface`，没有 `VK_KHR_wayland_surface`。库内字符串不算支持。没测 sway、截图、持续 GL 窗口。json 和 ld 顺序没改。
+
+同日 `emerge -1` 装了 7 个包，都不在 `@world`：`dev-libs/weston`、`app-misc/wayland-utils`、`x11-apps/mesa-progs`、`dev-util/vulkan-tools`、`gui-libs/libdecor`、`sys-auth/seatd`、`dev-libs/wayland-protocols`。`/etc/portage/package.use/r72-wayland-probe` 只给 `mesa-progs` 和 `vulkan-tools` 开 `wayland`。`seatd` 没启用。`emerge --depclean --pretend` 会卸这 7 个包。这次没卸。下次清理窗口再处置，现在不要 `depclean`。
+
 ## 依赖
 
 `x11-drivers/fantgpu-fh2m` 的 `RDEPEND` 来自 2026-10-13 对已安装 amd64 载荷的 `readelf -d` `NEEDED` 盘点，外加加载这些插件的包。`libva` 不在 `NEEDED` 里，它是打开 `fh2m_drv_video.so` 的加载器。`libgbm.so.1` 用包内那份，不另拉系统 gbm。`IUSE=+wayland` 默认打开；关掉它不会改已经链接好的 `libwayland-client.so.0` 和 `libwayland-server.so.0`。
