@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0",
+  "id": "m-054-efifb-kick-move",
+  "applicability": [
+    "6.12.101+deb13-amd64",
+    "6.12.107+deb13-amd64",
+    "6.12.111+deb13-amd64",
+    "6.12.111-gentoo-x86_64",
+    "6.12.113-gentoo-x86_64"
+  ],
+  "ledger_ref": {
+    "item": "054",
+    "neutral_record": "F-R57-efifb-kick-move",
+    "mapping": "docs/patches/m-054-efifb-kick-move.md",
+    "description": "move the efifb kick to just before fbdev registration"
+  },
+  "deepin_patch": {
+    "path": "patches/m-054-efifb-kick-move.patch",
+    "sha256": "7c222baa7be9ef822a0118379f35dad8aa9c07629ba2c4e1ecb5dab89bdab60e",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "parent tree is the m-052 tree, not a new archived snapshot",
+      "sha256": "not-a-snapshot-file"
+    },
+    "tree_hash": "7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243"
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "move-kick-before-fbdev-register",
+      "summary": "One existing call moves from dev_rsrc_init to just before drm_fb_helper_initial_config. The nulldisplay gate stays. On 6.12 the kick is aperture_remove_all_conflicting_devices over 0..-1 plus sysfb_disable(NULL); the name argument is not a selector. Registering the new fb first would leave it at fb1. A dummy-free handoff that still occupies fb0 needs a new console state, which this patch does not add. If initial_config fails after the kick, the console stays on the dummy device; a failure before the kick still leaves efifb. The kick now happens after dr_mtrr_setup. The known WC/uncached-minus line is not proven to be caused by efifb, so a wedge or a failed modeset puts the call back."
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "Same pending-audit rule as m-036 and m-052. The edit stays in the existing vendor Dual MIT/GPLv2 files; no new dependency, binary or third-party code. pending-audit is not an unreviewed patch."
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "post-m-052-not-derive",
+      "summary": "Applied after m-052 and before g-053. Not inserted into derive_fantgpu_source. in_i12_builder stays false. g-053 still applies with fuzz=0 after this patch."
+    }
+  },
+  "apply": {
+    "patch_sha256": "7c222baa7be9ef822a0118379f35dad8aa9c07629ba2c4e1ecb5dab89bdab60e",
+    "before_tree_hash": "7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243",
+    "after_tree_hash": "18ceb42dccc358fb6539993857eb6b9f768faee9c1958dd77732b6051a7483a3",
+    "pci_before_sha256": "06fd26f0c746c9b760f14a2145de72ca3f9c3c070e16f57b202847c75e288c57",
+    "pci_after_sha256": "f8930aae8a9ac34a2713eeeba0f8b77e9e3f0b2fe93b2c88fc1faa8e43af5337",
+    "fb_before_sha256": "d48ce6aec09106e45ed5f7dc462397c27154ec0e6321f4ddb634202321e9f910",
+    "fb_after_sha256": "b5a31cce9565334147d27cfca4aad89ac515ad063c706d5a1898f96b9a43a00b",
+    "command": "patch --batch --forward --fuzz=0 --no-backup-if-mismatch -p1 -d <M052_TREE> < patches/m-054-efifb-kick-move.patch",
+    "result": "Forward and reverse --fuzz=0 both rc=0 on the post-m-052 tree. g-053 then applies with --fuzz=0."
+  },
+  "status": "wired-not-built",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "fuzz=0 forward and reverse on the post-m-052 tree",
+        "g-053 still applies after this patch",
+        "kick leaves fantgpu_pci_drv.c and appears once in fantdpu_drm_fb.c"
+      ]
+    },
+    "clean_build": {
+      "status": "not-run",
+      "summary": "No clean build yet. Do not write srcversion and do not replace an accepted build identity."
+    }
+  }
+}

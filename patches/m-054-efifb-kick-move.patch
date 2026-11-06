@@ -1,0 +1,28 @@
+diff --git a/fantgpu/fantgpu_pci_drv.c b/fantgpu/fantgpu_pci_drv.c
+--- a/fantgpu/fantgpu_pci_drv.c
++++ b/fantgpu/fantgpu_pci_drv.c
+@@ -1605,11 +1605,6 @@ static int dev_rsrc_init(struct dev_rsrc* pdev_rsrc, struct pci_dev* pdev)
+ 	dev_rsrc_reinit_nulldisp_by_hwinfo(pdev_rsrc);
+ #endif
+ 
+-	if (!fh2m_hal_get_nulldisplay()) {
+-		pcie_info(&pdev->dev, "remove efifb...");
+-		fh2m_fant_drm_fb_kick_off_efifb();
+-	}
+-
+ 	/*bios and custom cfg */
+ 	hal_powercustom_init(pdev_rsrc);
+ 	fantgpu_acpi_data_init(pdev_rsrc, pdev);
+diff --git a/fantsrvkm/fantdpu_drm_fb.c b/fantsrvkm/fantdpu_drm_fb.c
+--- a/fantsrvkm/fantdpu_drm_fb.c
++++ b/fantsrvkm/fantdpu_drm_fb.c
+@@ -476,6 +471,9 @@ static struct fant_fbdev *fant_fbdev_create(struct fantdpu_drm_private *dev_pri
+ #endif
+ 	fant_fbdev->preferred_bpp = 32;
+ 
++	if (!fh2m_hal_get_nulldisplay())
++		fh2m_fant_drm_fb_kick_off_efifb();
++
+ 	/* drm_fb_helper_initial_config=>drm_fb_helper_single_fb_probe=>Call ->fb_probe() */
+ 	// s_fant_fbdev_helper_funcs.probe()
+ #if (DRM_VERSION >= KERNEL_VERSION(6,3,0))

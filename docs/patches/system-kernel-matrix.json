@@ -31,6 +31,11 @@
           "id": "m-052-firmware-en-early-guard",
           "in_i12_builder": false,
           "tree_hash": "7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243"
+        },
+        {
+          "id": "m-054-efifb-kick-move",
+          "in_i12_builder": false,
+          "tree_hash": "18ceb42dccc358fb6539993857eb6b9f768faee9c1958dd77732b6051a7483a3"
         }
       ],
       "g_set": [],
@@ -46,7 +51,7 @@
           "note": "机型 workaround。换内核版本必须重适配，不得直接套用。"
         }
       },
-      "note": "001/002 已装在 updates/r52。003/004 未实装且实测不必要（触摸板 HYGO0010 正常、板载声卡 SN6180 出声正常）；005/006 不适用（符号已=y）。不补装。firmware_en=0。本行身份仍是 370AB248，树 0eda30cd。m-052 已列入 m_base，in_i12_builder 为 false；meta 干净构建核是 101，所以不写 meta_kernel。构建器入口已恢复。111 磁盘与本次加载都是 57FE1935E2D4FA68E637455，boot 744b7017-9878-40de-a602-6cb6a068ca4d。这个 DKMS 身份不顶替本行 370AB248。107 也加载过同一 srcversion。117/195 查表仍单列。",
+      "note": "001/002 已装在 updates/r52。003/004 未实装且实测不必要（触摸板 HYGO0010 正常、板载声卡 SN6180 出声正常）；005/006 不适用（符号已=y）。不补装。firmware_en=0。本行身份仍是 370AB248，树 0eda30cd。m-052 已列入 m_base，in_i12_builder 为 false；meta 干净构建核是 101，所以不写 meta_kernel。构建器入口已恢复。111 磁盘与本次加载都是 57FE1935E2D4FA68E637455，boot 744b7017-9878-40de-a602-6cb6a068ca4d。这个 DKMS 身份不顶替本行 370AB248。107 也加载过同一 srcversion。117/195 查表仍单列。 m-054 已接线未构建，不顶替本行身份。",
       "install": [
         "tools/debian/build-driver.sh",
         "tools/debian/build-linux-patched-modules.sh",
@@ -101,6 +106,11 @@
           "in_i12_builder": false,
           "tree_hash": "7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243",
           "meta_kernel": "6.12.101+deb13-amd64"
+        },
+        {
+          "id": "m-054-efifb-kick-move",
+          "in_i12_builder": false,
+          "tree_hash": "18ceb42dccc358fb6539993857eb6b9f768faee9c1958dd77732b6051a7483a3"
         }
       ],
       "g_set": [],
@@ -116,7 +126,7 @@
           "note": "101 未安装 001/002。111 的 updates/r52 不跨核复用。"
         }
       },
-      "note": "001/002 未安装。101 没有 updates/r52，只有发行版 battery 与 xhci-pci。111 的 r52 不跨核复用。003–006 不补装。firmware_en=0。2026-10-31 已安装 deb dccfce24e43efb221ead2e145b0ea20738f9562120d6221c66af9358ee28d6f8（包版本仍 5.0.0-i12）并重启。boot 41c84925-6907-4131-8f3f-56a3e8cc1dde，加载 srcversion 51EF2B9AEC2C29D01AFE76E，树 7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243。请求行 0，BUG/Oops 0，panel_backlight 在。117 not found 六次、195 not found in memory 一次仍单列。这只升模块身份，不是完整 R5/显示复验。不顶替 111 的 370AB248，也不顶替 Gentoo 的 D579486A。当时 107 与 111 的磁盘模块是 57FE1935E2D4FA68E637455，那次未启动。其后 107 已加载 57FE1935E2D4FA68E637455，boot b44fd36f-a481-461f-bf50-298d93883ed0。111 随后也加载了同一 srcversion，boot 744b7017-9878-40de-a602-6cb6a068ca4d，不顶替 370AB248。",
+      "note": "001/002 未安装。101 没有 updates/r52，只有发行版 battery 与 xhci-pci。111 的 r52 不跨核复用。003–006 不补装。firmware_en=0。2026-10-31 已安装 deb dccfce24e43efb221ead2e145b0ea20738f9562120d6221c66af9358ee28d6f8（包版本仍 5.0.0-i12）并重启。boot 41c84925-6907-4131-8f3f-56a3e8cc1dde，加载 srcversion 51EF2B9AEC2C29D01AFE76E，树 7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243。请求行 0，BUG/Oops 0，panel_backlight 在。117 not found 六次、195 not found in memory 一次仍单列。这只升模块身份，不是完整 R5/显示复验。不顶替 111 的 370AB248，也不顶替 Gentoo 的 D579486A。当时 107 与 111 的磁盘模块是 57FE1935E2D4FA68E637455，那次未启动。其后 107 已加载 57FE1935E2D4FA68E637455，boot b44fd36f-a481-461f-bf50-298d93883ed0。111 随后也加载了同一 srcversion，boot 744b7017-9878-40de-a602-6cb6a068ca4d，不顶替 370AB248。 m-054 已接线未构建，不顶替本行身份。",
       "install": [
         "tools/debian/build-driver.sh",
         "tools/debian/build-linux-patched-modules.sh",
@@ -170,6 +180,11 @@
           "id": "m-052-firmware-en-early-guard",
           "in_i12_builder": false,
           "tree_hash": "7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243"
+        },
+        {
+          "id": "m-054-efifb-kick-move",
+          "in_i12_builder": false,
+          "tree_hash": "18ceb42dccc358fb6539993857eb6b9f768faee9c1958dd77732b6051a7483a3"
         }
       ],
       "g_set": [
@@ -220,7 +235,7 @@
       "rollback": [
         "tools/gentoo/rollback.sh"
       ],
-      "note": "内核补丁没有单独回滚脚本。按 docs/user/gentoo.md 用 --fuzz=0 -R 卸回。firmware_en=0。hwinfo_g0m.bin 只在值为 1 时被请求，非必需。m-052 已在 6.12.111-gentoo 干净构建两次，srcversion 都是 57FE1935E2D4FA68E637455。两次 ko 字节不同。该字符串与 Debian 107/111 的 DKMS 模块相同，不是 101 的 51EF。本行验收身份仍是 D579486A64C340B5178B66B，不改。2026-11-01 20:11 emerge 写入的 111 磁盘 ko 已是 57FE1935E2D4FA68E637455。113 的验收在自己的 current 行，身份是 9D9C40B4CD70C06B6AD673F。本行不顶替。",
+      "note": "内核补丁没有单独回滚脚本。按 docs/user/gentoo.md 用 --fuzz=0 -R 卸回。firmware_en=0。hwinfo_g0m.bin 只在值为 1 时被请求，非必需。m-052 已在 6.12.111-gentoo 干净构建两次，srcversion 都是 57FE1935E2D4FA68E637455。两次 ko 字节不同。该字符串与 Debian 107/111 的 DKMS 模块相同，不是 101 的 51EF。本行验收身份仍是 D579486A64C340B5178B66B，不改。2026-11-01 20:11 emerge 写入的 111 磁盘 ko 已是 57FE1935E2D4FA68E637455。113 的验收在自己的 current 行，身份是 9D9C40B4CD70C06B6AD673F。本行不顶替。 m-054 已接线未构建，不顶替本行身份。",
       "version_revision": {
         "package": "5.0.0_p12",
         "iN": "i12",
@@ -257,6 +272,11 @@
           "id": "m-052-firmware-en-early-guard",
           "in_i12_builder": false,
           "tree_hash": "7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243"
+        },
+        {
+          "id": "m-054-efifb-kick-move",
+          "in_i12_builder": false,
+          "tree_hash": "18ceb42dccc358fb6539993857eb6b9f768faee9c1958dd77732b6051a7483a3"
         }
       ],
       "g_set": [
@@ -307,7 +327,7 @@
       "rollback": [
         "tools/gentoo/rollback.sh"
       ],
-      "note": "两次干净构建 srcversion 都是 9D9C40B4CD70C06B6AD673F。第一次磁盘 SHA-256 767c1ddb5a5bcec4433bb4dcce2c0360c576296297b63671a20770cfceaa13e1，第二次 677d2c5411bf280ad5a8eb70ac499ecb9fb020bd09da796aba8763099ed04b14。字节不同。2026-11-02 13:47 启动加载的是第二次。check 与 verify 都是 PASS。八项计数 0。panel_backlight 在。firmware_en=0。请求行 0。117 not found 5 次，195 not found 1 次。用户确认画面正常。g-053 传 false。不改 111 行的 D579486A64C340B5178B66B。回滚槽仍是 srcversion 370AB248D72951EF3C0C4BB，不是换盘前那份。",
+      "note": "两次干净构建 srcversion 都是 9D9C40B4CD70C06B6AD673F。第一次磁盘 SHA-256 767c1ddb5a5bcec4433bb4dcce2c0360c576296297b63671a20770cfceaa13e1，第二次 677d2c5411bf280ad5a8eb70ac499ecb9fb020bd09da796aba8763099ed04b14。字节不同。2026-11-02 13:47 启动加载的是第二次。check 与 verify 都是 PASS。八项计数 0。panel_backlight 在。firmware_en=0。请求行 0。117 not found 5 次，195 not found 1 次。用户确认画面正常。g-053 传 false。不改 111 行的 D579486A64C340B5178B66B。回滚槽仍是 srcversion 370AB248D72951EF3C0C4BB，不是换盘前那份。 m-054 已接线未构建，不顶替本行身份。",
       "version_revision": {
         "package": "5.0.0_p12",
         "iN": "i12",

@@ -210,6 +210,14 @@ PY
         < "$ROOT/patches/m-051-hwinfo-connector-fallback.patch"
     patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$STAGE/source" -p1 \
         < "$ROOT/patches/m-052-firmware-en-early-guard.patch"
+    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$STAGE/source" -p1 \
+        < "$ROOT/patches/m-054-efifb-kick-move.patch"
+    grep -Fq 'fh2m_fant_drm_fb_kick_off_efifb' "$STAGE/source/fantsrvkm/fantdpu_drm_fb.c" \
+        || { echo "builder_efifb_kick_move=FAIL"; exit 1; }
+    if grep -Fq 'fh2m_fant_drm_fb_kick_off_efifb' "$STAGE/source/fantgpu/fantgpu_pci_drv.c"; then
+        echo "builder_efifb_kick_move=FAIL"; exit 1
+    fi
+    echo "builder_efifb_kick_move=PASS"
 	APPLIED_SOURCE_FIXES="o-stage-materialized-030-chain-18 (incl. 030-030 audio fallback, 030-031 PM markers, 030-032 PM probe, 030-033 shipped-object ABI correction and 030-034 diagnostic stop-stage; patch-000 no-transform)"
     APPLIED_SOURCE_FIXES+=" i8-cfg-detect-output-order i9-drm-fb-info-ownership i10-input-failure-cleanup i11-vpu-timer-contract 030-035-private-accessor"
     echo "staging_deterministic_transform=PASS (no-transform: fantgpu objects used as-is)"
@@ -314,6 +322,14 @@ if [[ "$FANT_LINEAGE" == 1 ]]; then
         < "$ROOT/patches/m-051-hwinfo-connector-fallback.patch"
     patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$P/usr/src/$DKMS_SRC_NAME" -p1 \
         < "$ROOT/patches/m-052-firmware-en-early-guard.patch"
+    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$P/usr/src/$DKMS_SRC_NAME" -p1 \
+        < "$ROOT/patches/m-054-efifb-kick-move.patch"
+    grep -Fq 'fh2m_fant_drm_fb_kick_off_efifb' "$P/usr/src/$DKMS_SRC_NAME/fantsrvkm/fantdpu_drm_fb.c" \
+        || { echo "builder_efifb_kick_move=FAIL"; exit 1; }
+    if grep -Fq 'fh2m_fant_drm_fb_kick_off_efifb' "$P/usr/src/$DKMS_SRC_NAME/fantgpu/fantgpu_pci_drv.c"; then
+        echo "builder_efifb_kick_move=FAIL"; exit 1
+    fi
+    echo "builder_efifb_kick_move=PASS"
     grep -Fq '!firmware_en' "$P/usr/src/$DKMS_SRC_NAME/fantsrvkm/fantaudio_drv.c" \
         || { echo "builder_firmware_en_guard=FAIL"; exit 1; }
     echo "builder_firmware_en_guard=PASS"

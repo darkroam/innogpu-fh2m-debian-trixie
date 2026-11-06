@@ -135,6 +135,8 @@ base_cmd='    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$s
     patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
         < "$ROOT/patches/m-052-firmware-en-early-guard.patch"
     patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
+        < "$ROOT/patches/m-054-efifb-kick-move.patch"
+    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
         < "$ROOT/patches/g-053-fbdev-restore-force.patch"
 '
 write_derive '' '9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee'

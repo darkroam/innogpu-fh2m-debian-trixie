@@ -8,13 +8,15 @@ D 线 `patches/001`–`029` 不改名。历史文件里的 `030-NNN` 是当时�
 
 | 类 | 数量 | 说明 |
 |---|---|---|
-| m | 22 | 18 链 + `m-035-private-accessor` + `m-036-bf-shf-rename` + `m-051-hwinfo-connector-fallback` + `m-052-firmware-en-early-guard` |
+| m | 23 | 18 链 + `m-035-private-accessor` + `m-036-bf-shf-rename` + `m-051-hwinfo-connector-fallback` + `m-052-firmware-en-early-guard` + `m-054-efifb-kick-move` |
 | g | 15 | `g-037`–`g-050`，加 `g-053-fbdev-restore-force`。`g-051`/`g-052` 空号让给 m。不进 i12 构建器 |
 | D | 18 | `patches/001`–`029`，不改名 |
 | 未入库 | 0 | 原 14 对 `030-037`–`050` 随本提交改名入库。变更理由是编号规范统一，不是把胶水升成主线 |
 
 `g-050-fb-helper-alloc` 是 6.12 胶水，不是 6.18。
 `g-053-fbdev-restore-force` 也是胶水：6.12.112 起 restore 多出 `force`，补丁传 `false`，与 111 的单参数实现相同。传 `true` 才会改行为。不进 i12 构建器。113 上两次构建的 srcversion 都是 `9D9C40B4CD70C06B6AD673F`，已验收。
+
+`m-054-efifb-kick-move` 是显示初始化时机，不是胶水。它把拆 efifb 从 `dev_rsrc_init()` 挪到 fbdev 注册前。不进 derive。已接入 Debian 包源和 Gentoo 构建链，尚未干净构建，不顶替已验收 srcversion。
 
 ## 映射
 
@@ -57,6 +59,7 @@ D 线 `patches/001`–`029` 不改名。历史文件里的 `030-NNN` 是当时�
 | `030-051` | `m-051-hwinfo-connector-fallback` |
 | 无旧名 | `m-052-firmware-en-early-guard` |
 | 无旧名 | `g-053-fbdev-restore-force` |
+| 无旧名 | `m-054-efifb-kick-move` |
 
 ## 系统×内核矩阵
 
