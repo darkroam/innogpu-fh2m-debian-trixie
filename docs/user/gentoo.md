@@ -5,7 +5,7 @@
 
 ## 这台机器
 
-- 运行内核 `6.12.113-gentoo-x86_64`，加载模块 `227E896A45E34187252CD2D`（2026-11-06，`m-054`）。磁盘 ko SHA-256 `af0a7f0f6bddee2492b8eecf37defd450bd2d46078aec65e9d6b045a84b885ff`。先前 `g-053` 是 `9D9C40B4CD70C06B6AD673F`。111 行验收身份仍是 `D579486A64C340B5178B66B`。111 磁盘 ko 是 `57FE1935E2D4FA68E637455`。6.18 因封存对象金丝雀硬阻断挂起，见 [6.18-coverage](../planning/6.18-coverage/README.md)。新封存对象出现前不加载。
+- 运行内核 `6.12.115-gentoo-x86_64`，加载模块 `227E896A45E34187252CD2D`（2026-11-06，`m-054`）。磁盘 ko SHA-256 `15bb694e971ebbc5d3ba3cf617d85eba810e840377c7127685768aa695a75109`，vermagic `6.12.115-gentoo-x86_64`。113 磁盘 ko 仍是 `af0a7f0f6bddee2492b8eecf37defd450bd2d46078aec65e9d6b045a84b885ff`。先前 `g-053` 是 `9D9C40B4CD70C06B6AD673F`。111 行验收身份仍是 `D579486A64C340B5178B66B`。111 磁盘 ko 是 `57FE1935E2D4FA68E637455`。6.18 因封存对象金丝雀硬阻断挂起，见 [6.18-coverage](../planning/6.18-coverage/README.md)。新封存对象出现前不加载。
 - 模块基座是 i12 构建器树 `9a8d185f…`。构建器外先打 `m-036-bf-shf-rename`，该层整树
   `0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce`，再打
   `m-051-hwinfo-connector-fallback`。m-051 不进 i12 构建器。

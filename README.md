@@ -16,7 +16,7 @@
 | --- | --- |
 | 发行版 | Debian Trixie (13) 与 Gentoo。运行状态以 [status](docs/project/status.md) 为准 |
 | Debian 内核 | `6.12.111+deb13-amd64` |
-| Gentoo | 运行内核 `6.12.113-gentoo-x86_64`，加载 `227E896A45E34187252CD2D`（`m-054` 已启动；先前 `g-053` 是 `9D9C40B4CD70C06B6AD673F`）。磁盘 ko SHA-256 `af0a7f0f6bddee2492b8eecf37defd450bd2d46078aec65e9d6b045a84b885ff`。111 磁盘 ko `57FE1935E2D4FA68E637455`。111 行验收身份仍是 `D579486A64C340B5178B66B`。`firmware_en=0`。overlay 在 `tools/gentoo/overlay` |
+| Gentoo | 运行内核 `6.12.115-gentoo-x86_64`，加载 `227E896A45E34187252CD2D`（`m-054` 已启动；先前 `g-053` 是 `9D9C40B4CD70C06B6AD673F`）。磁盘 ko SHA-256 `15bb694e971ebbc5d3ba3cf617d85eba810e840377c7127685768aa695a75109`。113 磁盘 ko 仍是 `af0a7f0f6bddee2492b8eecf37defd450bd2d46078aec65e9d6b045a84b885ff`。111 磁盘 ko `57FE1935E2D4FA68E637455`。111 行验收身份仍是 `D579486A64C340B5178B66B`。`firmware_en=0`。overlay 在 `tools/gentoo/overlay` |
 | CPU 平台 | Hygon x86_64 |
 | GPU | Innosilicon Fantasy II-M，PCI `1ec8:9810`，2 GiB VRAM（PowerVR DDK V119 RTM 谱系） |
 | 回退基线（历史交付） | `4.0.2-i3`：固定 epoch `1788796800`，SHA-256 `177133eebda692092501a27d7d135662ddaedaf3634776b8aa1ea5153c9e1662`；R14 接电/电池、无外屏/外屏 6/6 deep 通过；R16 起主线为 fantgpu 5.0.0-iN |

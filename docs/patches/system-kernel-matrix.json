@@ -338,6 +338,98 @@
         "srcversion": "227E896A45E34187252CD2D"
       },
       "install_doc": "docs/user/gentoo.md"
+    },
+    {
+      "system": "gentoo",
+      "kernel": "6.12.115-gentoo-x86_64",
+      "acceptance": "accepted",
+      "m_base": [
+        {
+          "id": "i12-builder-through-m-035",
+          "in_i12_builder": true,
+          "tree_hash": "9a8d185f2a65892a585b8f8f699f849a46ac6a4ab3c3e39a6a3a09357c2eb2ee"
+        },
+        {
+          "id": "m-036-bf-shf-rename",
+          "in_i12_builder": false,
+          "tree_hash": "0eda30cdce3da3d872c56e7ebb3c89b4dc23a5fead402f0e43300b2130a184ce"
+        },
+        {
+          "id": "m-051-hwinfo-connector-fallback",
+          "in_i12_builder": false,
+          "tree_hash": "b0a46c345c1e0d93baf51c554a1cc9dde0757feb68ce4a9951c3c01458f71c00",
+          "meta_kernel": "6.12.111-gentoo-x86_64"
+        },
+        {
+          "id": "m-052-firmware-en-early-guard",
+          "in_i12_builder": false,
+          "tree_hash": "7a3c89e472666d73d74469f1fe52b6aa98b898eb61aa83ac32a94fa86fc8a243"
+        },
+        {
+          "id": "m-054-efifb-kick-move",
+          "in_i12_builder": false,
+          "tree_hash": "18ceb42dccc358fb6539993857eb6b9f768faee9c1958dd77732b6051a7483a3"
+        }
+      ],
+      "g_set": [
+        "g-053-fbdev-restore-force"
+      ],
+      "linux_patches": {
+        "001-hygon-148c-xhci-reset-on-resume": {
+          "state": "applied",
+          "sha256": "299eb3f3d688a48518278c1ac5c6e97be89c8cc8f2c50bdcbfc4881bd47a5614",
+          "note": "按该内核源码重编。禁止复用其他内核的模块。"
+        },
+        "002-kaitian-x7h-battery-notification-delay": {
+          "state": "applied",
+          "sha256": "d7d6740eaab078eeaa40d87306c4d77fc61436f50ef31061416f0d1689899e1a",
+          "note": "机型 workaround。换内核版本必须重适配，不得直接套用。"
+        },
+        "003-pinctrl-amd-hygon-gpio": {
+          "state": "applied",
+          "sha256": "2f6676f38175a709bb71488de5caa7e8490bf75e17d3a4e21c2b0f4b286ced0e",
+          "note": "内建。改后要整核重编并重启。"
+        },
+        "004-snd-hda-hygon-14c9": {
+          "state": "applied",
+          "sha256": "08dc3079d5b6d8d698afe321b957ae17ec410f269ab379ab1673c67e1891a229",
+          "note": "只对 6.12 的 snd-hda-intel。不能套 6.18。"
+        },
+        "005-drm-display-hdmi-helper-prompt": {
+          "state": "applied",
+          "sha256": "dcb49a6ab33bbb0ee0f5efdd23d0ab3d76bf338f012aab8ac2c79f5a311851ff",
+          "note": "2026-10-20 三证：kernel_tree=APPLIED，运行内核 CONFIG_DRM_DISPLAY_HDMI_HELPER=y，加载模块 srcversion D579486A64C340B5178B66B。只加菜单提示。Debian current 不含。2026-10-22 起上下文不再依赖 HDCP 邻居，6.12 与 6.18 都能套。提示行不变。"
+        },
+        "006-vmap-pfn-prompt": {
+          "state": "applied",
+          "sha256": "ff129b4a9b04b48b76f78bb6e91707b9010a9db63c26820d4c350ea3bc1e4544",
+          "note": "2026-10-20 三证：kernel_tree=APPLIED，运行内核 CONFIG_VMAP_PFN=y，加载模块 srcversion D579486A64C340B5178B66B。只加菜单提示。Debian current 不含。"
+        }
+      },
+      "install": [
+        "tools/gentoo/overlay",
+        "tools/gentoo/build-driver.sh",
+        "tools/gentoo/install-driver.sh",
+        "tools/gentoo/install-kernel-patches.sh"
+      ],
+      "verify": [
+        "tools/gentoo/verify.sh",
+        "tools/gentoo/check-kernel-patches.sh"
+      ],
+      "rollback": [
+        "tools/gentoo/rollback.sh"
+      ],
+      "note": "2026-11-06 两次干净构建 srcversion 都是 227E896A45E34187252CD2D。第一次 15:12 emerge，SHA-256 15bb694e971ebbc5d3ba3cf617d85eba810e840377c7127685768aa695a75109，已安装并在 15:22 启动加载。第二次只跑 build-driver.sh，没有装盘，SHA-256 32fe0f489005029cb7f9a0d63985789e9dc41aaa955609a6bb91effba0df7302，副本在 .build/evidence/k115/。字节不同。vermagic 是 6.12.115-gentoo-x86_64 SMP preempt mod_unload modversions。tree_hash 628adc750d32fb2a21ea84af679a024d61baed06c1d1925a4b45cc29b21047cd。check 与 verify 都是 PASS。八项计数 0。panel_backlight 在。firmware_en=0。请求行 0。117 not found 5 次，195 not found 1 次。没有 BUG 或 Oops。不改 113 行。113 磁盘 ko 仍是 af0a7f0f6bddee2492b8eecf37defd450bd2d46078aec65e9d6b045a84b885ff。",
+      "version_revision": {
+        "package": "5.0.0_p12",
+        "iN": "i12",
+        "note": "p12 是 portage 修订，不是新 iN。m-051 不进 i12 构建器。"
+      },
+      "build_identity": {
+        "tree_hash": "628adc750d32fb2a21ea84af679a024d61baed06c1d1925a4b45cc29b21047cd",
+        "srcversion": "227E896A45E34187252CD2D"
+      },
+      "install_doc": "docs/user/gentoo.md"
     }
   ],
   "in_progress": [
