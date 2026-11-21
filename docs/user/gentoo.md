@@ -93,6 +93,8 @@ Gentoo 与构建器共同 source `tools/internal/derive-fantgpu-source.sh`，再
 
 `001`–`006` 仍由 portage user-patches 打进内核源码。`fantgpu.ko` 不随内核包安装，要另编进该版本的 `extra/`。本包已经拥有 `extra/fantgpu.ko`，所以 `emerge @module-rebuild` 能列出它，不必再做 `MODULESD_*` 注册。genkernel 4.3.17 没有 `post.d`，内核装完后不会自动重编模块。ebuild 不 strip、不压缩、不签名。
 
+内核版本上界守护。`pkg_pretend` 只在真实合并时拒绝 ≥6.13，含 `6.13_rc*`，比 world pin `<sys-kernel/gentoo-sources-6.13` 更严。`emerge -p` 不触发，Scheduler 的 pretend 分支会跳过。`KERNEL=linux` 不是版本；能读到 `kernel.release` 时先用它。6.18.54 没有顶层 Makefile，`get_version` 看不见。升到 6.13 及以上会在 ebuild 里被拦住，不会等到 `check-kernel-patches.sh` 才红。`pkg_setup` 再调 `fantgpu_target_kernel`，目标 build 目录缺失就停。
+
 Debian 靠 `/etc/kernel/postinst.d/dkms` 在安装新内核包时自动重编已注册模块。这边没有这个钩子。
 
 重编写入当前 `KV_FULL` 的 `extra/`。两颗内核的 ko 不能对拷。不要改 GRUB。不要热卸载。

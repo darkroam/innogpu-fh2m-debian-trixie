@@ -4,7 +4,7 @@
 [system-kernel-matrix.json](../../patches/system-kernel-matrix.json) 的 `in_progress`：
 `system=gentoo`，`kernel=6.18`。现行运行内核是 `6.12.115-gentoo-x86_64`。current 还有 `6.12.111-gentoo-x86_64` 与 `6.12.113-gentoo-x86_64`。6.18 仍挂起。
 
-新封存对象出现前，不在 6.18 上加载模块。
+新封存对象出现前，不在 6.18 上加载模块。防护侧已落地：ebuild 上界守护（R68/`9c5d1a6`）在新封存对象到位前防误升 ≥6.13。
 
 ## 硬阻断
 
