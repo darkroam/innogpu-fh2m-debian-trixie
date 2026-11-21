@@ -35,10 +35,10 @@ RDEPEND="
 	sys-libs/glibc
 	sys-devel/gcc
 	wayland? ( dev-libs/wayland )
-	# Not DT_NEEDED. These loaders open the vendor Vulkan/OpenCL ICDs, same as libva.
 	media-libs/vulkan-loader
 	virtual/opencl
 "
+# vulkan-loader and virtual/opencl are not DT_NEEDED. They open the vendor ICDs, same as libva.
 S="${WORKDIR}"
 
 repo_root() {
@@ -57,6 +57,27 @@ fantgpu_target_kernel() {
 	get_version || die "KV_FULL empty"
 	[[ -n ${KV_FULL} ]] || die "KV_FULL empty"
 	[[ -d /lib/modules/${KV_FULL}/build ]] || die "kernel build directory missing"
+}
+
+pkg_pretend() {
+	# Portage sets KERNEL=linux. Only a version string selects a module tree.
+	if [[ ${KERNEL-} =~ ^[0-9]+\.[0-9]+ && -d /lib/modules/${KERNEL}/build ]]; then
+		KERNEL_DIR=/lib/modules/${KERNEL}/build
+	fi
+	# 6.18.54 has no top-level Makefile, so get_version cannot see it.
+	local kv=
+	if [[ ${KERNEL-} =~ ^[0-9]+\.[0-9]+ ]]; then
+		kv=${KERNEL}
+	elif [[ -n ${KERNEL_DIR-} && -r ${KERNEL_DIR}/include/config/kernel.release ]]; then
+		kv=$(<"${KERNEL_DIR}/include/config/kernel.release")
+	fi
+	if [[ ${kv} =~ ^([0-9]+)\.([0-9]+) ]] && ver_test "${BASH_REMATCH[1]}.${BASH_REMATCH[2]}" -ge 6.13; then
+		die "fh2m 不支持内核 ${kv}。上界是 6.12.x；预发布 6.13_rc* 亦拒（比 world pin 更严）。禁止手工删除 pin 后再安装。"
+	fi
+	fantgpu_target_kernel
+	if ver_test "${KV_MAJOR}.${KV_MINOR}" -ge 6.13; then
+		die "fh2m 不支持内核 ${KV_FULL}。上界是 6.12.x；预发布 6.13_rc* 亦拒（比 world pin 更严）。禁止手工删除 pin 后再安装。"
+	fi
 }
 
 pkg_setup() {
