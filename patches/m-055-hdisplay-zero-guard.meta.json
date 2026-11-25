@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "id": "m-055-hdisplay-zero-guard",
+  "applicability": [
+    "6.12.101+deb13-amd64",
+    "6.12.107+deb13-amd64",
+    "6.12.111+deb13-amd64",
+    "6.12.111-gentoo-x86_64",
+    "6.12.113-gentoo-x86_64",
+    "6.12.115-gentoo-x86_64"
+  ],
+  "ledger_ref": {
+    "item": "055",
+    "neutral_record": "F-R73-hdisplay-zero-guard",
+    "mapping": "docs/patches/m-055-hdisplay-zero-guard.md",
+    "description": "skip scaling when hdisplay or vdisplay is 0"
+  },
+  "deepin_patch": {
+    "path": "patches/m-055-hdisplay-zero-guard.patch",
+    "sha256": "eb5f26415a72d429e4f177fff57fadb64ca5e1ff61cb56a80c265456790522d8",
+    "apply_level": "-p1"
+  },
+  "f0_base": {
+    "snapshot": {
+      "path": "parent tree is the m-054 tree, not a new archived snapshot",
+      "sha256": "not-a-snapshot-file"
+    },
+    "tree_hash": "18ceb42dccc358fb6539993857eb6b9f768faee9c1958dd77732b6051a7483a3"
+  },
+  "review": {
+    "semantics": {
+      "status": "reviewed",
+      "verdict": "skip-zero-h-or-vdisplay",
+      "summary": "Before either div_u64, hdisplay==0 or vdisplay==0 sets scale_enable and enhancer_enable false and jumps to mclk_calc. It does not return -EINVAL and does not clamp the divisor to 1. The combine width path needs hdisplay>2048, so it does not meet this guard. Known unguarded form, reachability not proven: src==0 with crtc_w!=0 still reaches div_u64(src_w)."
+    },
+    "license": {
+      "status": "pending-audit",
+      "evidence": "Same pending-audit rule as m-054. The edit stays in the existing vendor Dual MIT/GPLv2 file; no new dependency, binary or third-party code. pending-audit is not an unreviewed patch."
+    },
+    "dependencies": {
+      "status": "reviewed",
+      "verdict": "post-m-054-not-derive",
+      "summary": "Applied after m-054 and before g-053. Not inserted into derive_fantgpu_source. in_i12_builder stays false. g-053 still applies with fuzz=0 after this patch."
+    }
+  },
+  "apply": {
+    "patch_sha256": "eb5f26415a72d429e4f177fff57fadb64ca5e1ff61cb56a80c265456790522d8",
+    "before_tree_hash": "18ceb42dccc358fb6539993857eb6b9f768faee9c1958dd77732b6051a7483a3",
+    "after_tree_hash": "fb0014bdbfa7d49677cae6057678117f4d4cb82355113722c0e519c1518dad41",
+    "crtc_before_sha256": "7b8649c0d01da9a6bce93e9872654f5239892ed0edfd59884ee0942caed562e7",
+    "crtc_after_sha256": "b75322568d638f721edbfd78289538ce6df7132481a43308de0d0a4d5ebaa150"
+  },
+  "status": "wired-not-built",
+  "verified": {
+    "static": {
+      "status": "pass",
+      "checks": [
+        "fuzz=0 forward and reverse on the post-m-054 tree",
+        "g-053 still applies after this patch",
+        "guard is before div_u64 and writes both flags false"
+      ]
+    },
+    "clean_build": {
+      "status": "not-run",
+      "summary": "No clean build yet. Do not replace any accepted srcversion. Two matching srcversions are required before a matrix identity change."
+    }
+  }
+}

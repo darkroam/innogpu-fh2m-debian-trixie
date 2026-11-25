@@ -91,7 +91,7 @@ GitHub 仓库 `main` 分支本身是公开分发面，clone / GitHub 源码归�
 
 **政策追加（2026-10-16，现行；上文 2026-10-09 与下面的 2026-08-28 不删）**：
 
-- 发布制品是 `project-tools`。原创层加上 `patches/m-` 与 `patches/g-`（35 对，70 个文件），补丁文本按 GPL-3.0-or-later。这不把内核模块改成 GPL-3.0-only，也不重许可厂商树或黑盒字节。内核仍是 GPL-2.0-only。
+- 发布制品是 `project-tools`。原创层加上 `patches/m-` 与 `patches/g-`（39 对，78 个文件），补丁文本按 GPL-3.0-or-later。这不把内核模块改成 GPL-3.0-only，也不重许可厂商树或黑盒字节。内核仍是 GPL-2.0-only。
 - 数字名 D 线 18 个补丁不进入制品。其中 5 个仍映射为 `MIT OR GPL-2.0-only`，不改成 GPL-3。
 - `driver-source` 退役。不把空清单写成 PASS。O 线 484 件、confidential ×3、无许可 ×70 只在 tag 与历史里。
 - 本地载荷不进 git、不随制品分发。`binary-manifest-fantgpu.json` 的 `vendor-binary` 是本地输入记录，不是许可证。使用者自行把载荷放到本地路径。

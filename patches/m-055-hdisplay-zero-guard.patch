@@ -1,0 +1,17 @@
+diff --git a/fantsrvkm/pdp0_crtc.c b/fantsrvkm/pdp0_crtc.c
+--- a/fantsrvkm/pdp0_crtc.c
++++ b/fantsrvkm/pdp0_crtc.c
+@@ -735,6 +735,13 @@
+ 		if (!(mp->layer->id & scaling))
+ 			continue;
+
++		if (state->adjusted_mode.hdisplay == 0 ||
++		    state->adjusted_mode.vdisplay == 0) {
++			s->scale_enable = false;
++			s->enhancer_enable = false;
++			goto mclk_calc;
++		}
++
+ 		if ((hwdev->features & FANT_PDP_COMBINE) &&
+ 			(state->adjusted_mode.hdisplay > FANTDPU_COMBINE_WIDTH)) {
+ 			s->input_w = pstate->src_w >> 17;

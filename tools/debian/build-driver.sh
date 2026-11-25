@@ -212,6 +212,11 @@ PY
         < "$ROOT/patches/m-052-firmware-en-early-guard.patch"
     patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$STAGE/source" -p1 \
         < "$ROOT/patches/m-054-efifb-kick-move.patch"
+    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$STAGE/source" -p1 \
+        < "$ROOT/patches/m-055-hdisplay-zero-guard.patch"
+    grep -Fq 's->enhancer_enable = false' "$STAGE/source/fantsrvkm/pdp0_crtc.c" \
+        || { echo "builder_hdisplay_zero_guard=FAIL"; exit 1; }
+    echo "builder_hdisplay_zero_guard=PASS"
     grep -Fq 'fh2m_fant_drm_fb_kick_off_efifb' "$STAGE/source/fantsrvkm/fantdpu_drm_fb.c" \
         || { echo "builder_efifb_kick_move=FAIL"; exit 1; }
     if grep -Fq 'fh2m_fant_drm_fb_kick_off_efifb' "$STAGE/source/fantgpu/fantgpu_pci_drv.c"; then
@@ -324,6 +329,11 @@ if [[ "$FANT_LINEAGE" == 1 ]]; then
         < "$ROOT/patches/m-052-firmware-en-early-guard.patch"
     patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$P/usr/src/$DKMS_SRC_NAME" -p1 \
         < "$ROOT/patches/m-054-efifb-kick-move.patch"
+    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$P/usr/src/$DKMS_SRC_NAME" -p1 \
+        < "$ROOT/patches/m-055-hdisplay-zero-guard.patch"
+    grep -Fq 's->enhancer_enable = false' "$P/usr/src/$DKMS_SRC_NAME/fantsrvkm/pdp0_crtc.c" \
+        || { echo "builder_hdisplay_zero_guard=FAIL"; exit 1; }
+    echo "builder_hdisplay_zero_guard=PASS"
     grep -Fq 'fh2m_fant_drm_fb_kick_off_efifb' "$P/usr/src/$DKMS_SRC_NAME/fantsrvkm/fantdpu_drm_fb.c" \
         || { echo "builder_efifb_kick_move=FAIL"; exit 1; }
     if grep -Fq 'fh2m_fant_drm_fb_kick_off_efifb' "$P/usr/src/$DKMS_SRC_NAME/fantgpu/fantgpu_pci_drv.c"; then

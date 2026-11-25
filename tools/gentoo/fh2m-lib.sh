@@ -1,5 +1,5 @@
 #!/bin/bash
-# Gentoo fallback for i12 plus m-036, m-051, m-052, m-054 and g-053. m-052 and m-054 are also in the Debian package source, not in derive. g-053 is Gentoo-only glue.
+# Gentoo fallback for i12 plus m-036, m-051, m-052, m-054, m-055 and g-053. m-052, m-054 and m-055 are also in the Debian package source, not in derive. g-053 is Gentoo-only glue.
 set -euo pipefail
 umask 022
 
@@ -63,7 +63,7 @@ PY
 
 need_repo() {
     [[ -f $SNAP ]] || die "missing i6 snapshot"
-    [[ -f $ROOT/patches/m-035-private-accessor.patch && -f $ROOT/patches/m-036-bf-shf-rename.patch && -f $ROOT/patches/m-051-hwinfo-connector-fallback.patch && -f $ROOT/patches/m-052-firmware-en-early-guard.patch && -f $ROOT/patches/m-054-efifb-kick-move.patch && -f $ROOT/patches/g-053-fbdev-restore-force.patch ]] || die "missing m-035, m-036, m-051, m-052, m-054 or g-053"
+    [[ -f $ROOT/patches/m-035-private-accessor.patch && -f $ROOT/patches/m-036-bf-shf-rename.patch && -f $ROOT/patches/m-051-hwinfo-connector-fallback.patch && -f $ROOT/patches/m-052-firmware-en-early-guard.patch && -f $ROOT/patches/m-054-efifb-kick-move.patch && -f $ROOT/patches/m-055-hdisplay-zero-guard.patch && -f $ROOT/patches/g-053-fbdev-restore-force.patch ]] || die "missing m-035, m-036, m-051, m-052, m-054, m-055 or g-053"
     [[ -f $ROOT/tools/internal/derive-fantgpu-source.sh ]] || die "derive source missing"
 }
 
@@ -110,6 +110,9 @@ cmd_build() {
         < "$ROOT/patches/m-052-firmware-en-early-guard.patch"
     patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
         < "$ROOT/patches/m-054-efifb-kick-move.patch"
+    patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
+        < "$ROOT/patches/m-055-hdisplay-zero-guard.patch"
+    grep -Fq 's->enhancer_enable = false' "$src/fantsrvkm/pdp0_crtc.c" || die "hdisplay zero guard missing"
     patch --batch --forward --fuzz=0 --no-backup-if-mismatch -s -d "$src" -p1 \
         < "$ROOT/patches/g-053-fbdev-restore-force.patch"
     grep -Fq '!firmware_en' "$src/fantsrvkm/fantaudio_drv.c" || die "firmware_en guard missing"
