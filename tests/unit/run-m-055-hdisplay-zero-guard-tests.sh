@@ -24,8 +24,9 @@ package = builder.split("DKMS_SRC_NAME", 1)[1]
 assert package.index("m-054-efifb-kick-move.patch") < package.index("m-055-hdisplay-zero-guard.patch")
 assert "builder_hdisplay_zero_guard=PASS" in package
 assert gentoo.index("m-054-efifb-kick-move.patch") < gentoo.index("m-055-hdisplay-zero-guard.patch") < gentoo.index("g-053-fbdev-restore-force.patch")
-assert meta["verified"]["clean_build"]["status"] == "not-run"
-assert "srcversion" not in meta["verified"]["clean_build"]
+assert meta["verified"]["clean_build"]["status"] == "pass"
+assert meta["verified"]["clean_build"]["kernel"] == "6.12.115-gentoo-x86_64"
+assert meta["verified"]["clean_build"]["srcversion"] == "B72875836C2992A4FD97B66"
 
 subprocess.check_call(["rm", "-rf", str(tmp)])
 tmp.mkdir()

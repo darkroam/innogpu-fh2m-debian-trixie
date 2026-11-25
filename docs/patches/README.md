@@ -27,7 +27,7 @@
 
 `m-054-efifb-kick-move` 把拆 efifb 挪到 `drm_fb_helper_initial_config()` 正前方。不进 derive。Gentoo `6.12.113` 已干净构建并加载，srcversion `227E896A45E34187252CD2D`。不顶替其他行。见 [m-054-efifb-kick-move](m-054-efifb-kick-move.md)。
 
-`m-055-hdisplay-zero-guard` 在 `hdisplay==0` 或 `vdisplay==0` 时跳过缩放。`src==0` 且 `crtc_w!=0` 未拦，可达性待证。不进 derive。已接线，未构建，不改已验收身份。见 [m-055-hdisplay-zero-guard](m-055-hdisplay-zero-guard.md)。
+`m-055-hdisplay-zero-guard` 在 `hdisplay==0` 或 `vdisplay==0` 时跳过缩放。`src==0` 且 `crtc_w!=0` 未拦，可达性待证。不进 derive。Gentoo `6.12.115` 已加载，srcversion `B72875836C2992A4FD97B66`。不改其他 current 行身份。见 [m-055-hdisplay-zero-guard](m-055-hdisplay-zero-guard.md)。
 
 **以下分类为 Deepin 补丁与组件的历史记录，计数不含 030 链**：
 

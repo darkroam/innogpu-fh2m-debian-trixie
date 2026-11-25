@@ -18,7 +18,7 @@ D 线 `patches/001`–`029` 不改名。历史文件里的 `030-NNN` 是当时�
 
 `m-054-efifb-kick-move` 是显示初始化时机，不是胶水。它把拆 efifb 从 `dev_rsrc_init()` 挪到 fbdev 注册前。不进 derive。已接入 Debian 包源和 Gentoo 构建链。Gentoo `6.12.113` 两次干净构建 srcversion 都是 `227E896A45E34187252CD2D`，2026-11-06 已加载。不顶替 111 的 `D579486A64C340B5178B66B`，也不顶替 Debian 行。
 
-`m-055-hdisplay-zero-guard` 是显示检查守卫，不是胶水。`hdisplay==0` 或 `vdisplay==0` 时在 `div_u64` 前写两个 false 并跳过缩放。`src==0` 且 `crtc_w!=0` 是已知未拦形态，可达性待证。不进 derive。已接入构建链，尚未构建，不改已验收身份。
+`m-055-hdisplay-zero-guard` 是显示检查守卫，不是胶水。`hdisplay==0` 或 `vdisplay==0` 时在 `div_u64` 前写两个 false 并跳过缩放。`src==0` 且 `crtc_w!=0` 是已知未拦形态，可达性待证。不进 derive。已在 Gentoo `6.12.115` 加载，srcversion `B72875836C2992A4FD97B66`。不改其他 current 行身份。
 
 ## 映射
 

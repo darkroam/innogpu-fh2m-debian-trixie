@@ -50,7 +50,7 @@
     "crtc_before_sha256": "7b8649c0d01da9a6bce93e9872654f5239892ed0edfd59884ee0942caed562e7",
     "crtc_after_sha256": "b75322568d638f721edbfd78289538ce6df7132481a43308de0d0a4d5ebaa150"
   },
-  "status": "wired-not-built",
+  "status": "pass",
   "verified": {
     "static": {
       "status": "pass",
@@ -61,8 +61,10 @@
       ]
     },
     "clean_build": {
-      "status": "not-run",
-      "summary": "No clean build yet. Do not replace any accepted srcversion. Two matching srcversions are required before a matrix identity change."
+      "status": "pass",
+      "kernel": "6.12.115-gentoo-x86_64",
+      "srcversion": "B72875836C2992A4FD97B66",
+      "summary": "Two clean builds on 6.12.115-gentoo-x86_64 both srcversion B72875836C2992A4FD97B66. Run2 SHA-256 1370b91b459540af98180e6f2bdbea7067b0a5c601e12cf54f43ad8659108bb2 is installed and loaded, boot ba2bdc9e-fefc-47e1-9f90-6ab29fd1b306. Bytes differ. Source tree after g-053 is 6efe6ffc56a33174f65b9262aaa2fd03d4b362261bc01e14294af981037d2031. This does not replace other current rows. Lid-close with the niri workaround off left only DP-1 and did not oops. src==0 with crtc_w!=0 stays unguarded."
     }
   }
 }
